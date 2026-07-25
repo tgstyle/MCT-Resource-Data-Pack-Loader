@@ -1,0 +1,160 @@
+package mctmods.resourcedatapackloader.recipe;
+
+import mctmods.resourcedatapackloader.Config;
+import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.mixin.InvokerJsonContext;
+import mctmods.resourcedatapackloader.pack.PackManager;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.JsonUtils;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.crafting.CraftingHelper;
+import net.minecraftforge.common.crafting.JsonContext;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistryModifiable;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
+
+import javax.annotation.Nullable;
+
+public final class RecipeOverrides {
+    private static final Gson GSON = new GsonBuilder().create();
+    private static final String CONSTANTS = "_constants.json";
+    private static final String EXTENSION = "." + PackManager.JSON;
+    private static final Map<String, JsonContext> CONTEXTS = new HashMap<>();
+    private static final Set<ResourceLocation> SERVED = new HashSet<>();
+    private static int overridden;
+
+    private RecipeOverrides() {}
+
+    private static boolean disabled() { return Config.settings.disableRecipeOverrides || PackManager.get().isEmpty(); }
+
+    public static BiFunction<Path, Path, Boolean> wrap(BiFunction<Path, Path, Boolean> original) {
+        if (disabled()) { return original; }
+        return (root, file) -> serve(root, file) ? Boolean.TRUE : original.apply(root, file);
+    }
+
+    private static boolean serve(Path root, Path file) {
+        String relative = root.relativize(file).toString().replace('\\', '/');
+        if (!relative.endsWith(EXTENSION) || relative.startsWith("_")) { return false; }
+        String modid = modIdOf(root);
+        if (modid == null) { return false; }
+        String path = relative.substring(0, relative.length() - EXTENSION.length());
+        String contents = PackManager.get().read(modid, path, PackManager.RECIPES, PackManager.JSON);
+        if (contents == null) { return false; }
+        ResourceLocation key = new ResourceLocation(modid, path);
+        IRecipe recipe = build(key, contents, context(modid, root));
+        if (recipe == null) { return false; }
+        setOwner(modid);
+        ForgeRegistries.RECIPES.register(recipe.setRegistryName(key));
+        SERVED.add(key);
+        overridden++;
+        return true;
+    }
+
+    @Nullable private static String modIdOf(Path root) {
+        Path parent = root.getParent();
+        if (parent == null) { return null; }
+        Path name = parent.getFileName();
+        if (name == null) { return null; }
+        String raw = name.toString();
+        if (raw.endsWith("/") || raw.endsWith("\\")) { return raw.substring(0, raw.length() - 1); }
+        return raw;
+    }
+
+    @Nullable private static IRecipe build(ResourceLocation key, String contents, JsonContext ctx) {
+        try {
+            JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+            if (json == null) {
+                MCTMixin.LOGGER.error("Recipe {} is empty or null, leaving the original in place", key);
+                return null;
+            }
+            if (!CraftingHelper.processConditions(json, "conditions", ctx)) {
+                MCTMixin.LOGGER.info("Recipe {} was skipped by its own conditions, leaving the original in place", key);
+                return null;
+            }
+            IRecipe recipe = CraftingHelper.getRecipe(json, ctx);
+            if (recipe == null) { MCTMixin.LOGGER.error("Recipe {} produced no result, leaving the original in place", key); }
+            return recipe;
+        }
+        catch (IllegalArgumentException | JsonParseException ex) {
+            MCTMixin.LOGGER.error("Parsing error in recipe {}, leaving the original in place", key, ex);
+            return null;
+        }
+    }
+
+    private static void setOwner(String modid) {
+        ModContainer owner = Loader.instance().getIndexedModList().get(modid);
+        if (owner != null) { Loader.instance().setActiveModContainer(owner); }
+    }
+
+    private static JsonContext context(String modid, @Nullable Path root) {
+        JsonContext ctx = CONTEXTS.get(modid);
+        if (ctx != null) { return ctx; }
+        ctx = new JsonContext(modid);
+        if (root != null) { loadConstants(root, ctx); }
+        CONTEXTS.put(modid, ctx);
+        return ctx;
+    }
+
+    private static void loadConstants(Path root, JsonContext ctx) {
+        Path file = root.resolve(CONSTANTS);
+        if (!Files.isRegularFile(file)) { return; }
+        try {
+            String contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+            JsonObject[] json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject[].class);
+            if (json != null) { ((InvokerJsonContext) ctx).rdpl$loadConstants(json); }
+        }
+        catch (IOException | IllegalArgumentException | JsonParseException ex) {
+            MCTMixin.LOGGER.error("Could not read {} for {}, recipe constants will be unavailable", CONSTANTS, ctx.getModId(), ex);
+        }
+    }
+
+    public static void registerAdditions(IForgeRegistry<IRecipe> registry) {
+        if (disabled()) { return; }
+        int[] added = new int[1];
+        int[] replaced = new int[1];
+        PackManager.get().forEach(PackManager.RECIPES, PackManager.JSON, (namespace, path, contents) -> {
+            if (path.startsWith("_")) { return; }
+            ResourceLocation key = new ResourceLocation(namespace, path);
+            if (SERVED.contains(key)) { return; }
+            IRecipe recipe = build(key, contents, context(namespace, null));
+            if (recipe == null) { return; }
+            boolean existing = registry.containsKey(key);
+            if (existing && !remove(registry, key)) { return; }
+            setOwner(namespace);
+            registry.register(recipe.setRegistryName(key));
+            if (existing) { replaced[0]++; }
+            else { added[0]++; }
+        });
+        int total = overridden + replaced[0];
+        if (total > 0 || added[0] > 0) { MCTMixin.LOGGER.info("Recipes: {} replaced, {} added", total, added[0]); }
+        SERVED.clear();
+        CONTEXTS.clear();
+        overridden = 0;
+    }
+
+    private static boolean remove(IForgeRegistry<IRecipe> registry, ResourceLocation key) {
+        if (!(registry instanceof IForgeRegistryModifiable)) {
+            MCTMixin.LOGGER.error("Cannot replace recipe {}, the registry does not allow removal", key);
+            return false;
+        }
+        ((IForgeRegistryModifiable<IRecipe>) registry).remove(key);
+        return true;
+    }
+}

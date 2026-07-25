@@ -1,0 +1,147 @@
+plugins {
+    id 'idea'
+    id 'java'
+    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.2'
+}
+
+ext.configFile = file '../common/common-1.12.properties'
+
+configFile.withReader {
+    def prop = new Properties()
+    prop.load(it)
+    ext.common = new ConfigSlurper().parse prop
+}
+
+def versionProps = new Properties()
+file('version.properties').withInputStream { versionProps.load(it) }
+
+def gradleProps = new Properties()
+file('gradle.properties').withInputStream { gradleProps.load(it) }
+
+ext.modversion = versionProps.getProperty('version')
+ext.version_buildnumber = versionProps.getProperty('build_number')?.toInteger() ?: 0
+ext.stage = versionProps.getProperty('stage') ?: ''
+
+version = "${common.mcversion}-${modversion}.${version_buildnumber}-${stage}"
+
+println "-> build.gradle applying version: $version"
+
+group = modgroup
+
+ext {
+    mod_id = gradleProps['mod_id']
+    mod_name = gradleProps['mod_name']
+    mod_authors = gradleProps['mod_authors']
+    mod_description = gradleProps['mod_description']
+    mod_url = gradleProps['mod_url']
+}
+
+base { archivesName = modarchivename }
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
+}
+
+minecraft {
+    mcVersion = common.mcversion
+    mcpMappingChannel = 'stable'
+    mcpMappingVersion = common.mcp_mappings.toString().split('-')[0]
+    username = 'tgstyle'
+    extraRunJvmArguments.addAll(
+            '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.RDPLCore',
+            '-Dforge.logging.console.level=debug'
+    )
+}
+
+repositories {
+    maven {
+        url = "https://cursemaven.com"
+        content { includeGroup "curse.maven" }
+    }
+    maven { url = 'https://jitpack.io' }
+    maven { url = 'https://maven.blamejared.com' }
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    maven { url = 'https://maven.minecraftforge.net' }
+    maven { url = 'https://maven.cleanroommc.com' }
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly rfg.deobf("${common.mjei_version}")
+
+    annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
+    annotationProcessor 'com.google.guava:guava:32.1.2-jre'
+    annotationProcessor 'com.google.code.gson:gson:2.8.9'
+    String mixinBooter = modUtils.enableMixins('zone.rong:mixinbooter:10.7', 'mixins.resourcedatapackloader.refmap.json')
+    api(mixinBooter) { transitive = false }
+    annotationProcessor(mixinBooter) { transitive = false }
+}
+
+tasks.named('runClient').configure {
+    extraArgs.addAll('--width', '1920', '--height', '1080')
+}
+
+tasks.register('runClientGamescope', Exec) {
+    workingDir = projectDir
+    commandLine 'bash', '-c', 'set -o pipefail; flatpak-spawn --host gamescope -W 1920 -H 1080 -- ./gradlew --no-daemon runClient 2>&1 ' + '| grep --line-buffered -v "xdg_backend: Changed refresh"'
+    //flatpack will need override for x11 "flatpak override --user --nosocket=fallback-x11 --socket=x11 com.jetbrains.IntelliJ-IDEA-Ultimate"
+    //flatpack may need perms "flatpak override --user --talk-name=org.freedesktop.Flatpak com.jetbrains.IntelliJ-IDEA-Ultimate"
+}
+
+tasks.named('runServer').configure {
+    workingDir = file('run/server')
+}
+
+tasks.register('bumpVersion') {
+    doLast {
+        def requested = gradle.startParameter.taskNames*.toLowerCase()
+        if (!requested.any { it.contains('build') || it.contains('jar') || it.contains('assemble') }) { return }
+
+        def props = new Properties()
+        file('version.properties').withInputStream { props.load(it) }
+        def currentBuild = props['build_number'].toInteger()
+        def nextBuild = currentBuild + 1
+        props['build_number'] = nextBuild.toString()
+        file('version.properties').withOutputStream { props.store(it, null) }
+
+        ext.version_buildnumber = nextBuild
+        def newStage = props['stage'] ?: ''
+        def newVersion = "${common.mcversion}-${props['version']}.${nextBuild}-${newStage}"
+
+        project.version = newVersion
+        tasks.withType(Jar).configureEach {
+            it.archiveVersion.set(newVersion)
+        }
+    }
+}
+
+build.dependsOn bumpVersion
+processResources.dependsOn bumpVersion
+jar.dependsOn bumpVersion
+
+processResources {
+    inputs.property('version', providers.provider { "${modversion}.${version_buildnumber}" })
+    inputs.property 'mcversion', common.mcversion
+    filesMatching(['mcmod.info', 'pack.mcmeta']) {
+        expand 'version': "${modversion}.${version_buildnumber}", 'mcversion': common.mcversion,
+                'mod_id': mod_id, 'mod_name': mod_name,
+                'mod_authors': mod_authors, 'mod_description': mod_description,
+                'mod_url': mod_url, 'mod_mixin_id': "${mod_id}_mixin"
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+                'FMLCorePlugin': 'mctmods.resourcedatapackloader.core.MCTMixin',
+                'FMLCorePluginContainsFMLMod': 'true'
+        )
+    }
+}
+
+sourceSets.configureEach { it.output.resourcesDir = it.output.classesDirs.getFiles().iterator().next() }

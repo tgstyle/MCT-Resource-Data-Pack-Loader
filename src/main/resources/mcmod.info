@@ -1,0 +1,22 @@
+[
+  {
+    "modid": "${mod_id}",
+    "name": "${mod_name}",
+    "description": "${mod_description}",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "${mod_url}",
+    "authorList": ["${mod_authors}"],
+    "logoFile": "MCTlogo.png",
+    "dependencies": []
+  },
+  {
+    "modid": "${mod_mixin_id}",
+    "name": "RDPL Mixin Loader",
+    "description": "Early mixin loader for Resource Data Pack Loader",
+    "version": "1.0",
+    "mcversion": "${mcversion}",
+    "authorList": ["${mod_authors}"],
+    "dependencies": []
+  }
+]

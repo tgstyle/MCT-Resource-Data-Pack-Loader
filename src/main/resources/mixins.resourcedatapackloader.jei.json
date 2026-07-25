@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "mctmods.resourcedatapackloader.mixin.jei",
+  "refmap": "mixins.resourcedatapackloader.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [
+    "MixinJeiStarter",
+    "MixinModRegistry"
+  ],
+  "server": []
+}

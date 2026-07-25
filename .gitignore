@@ -1,21 +1,30 @@
-.gradle
-**/build/
-!**/src/**/build/
-
 # Ignore Gradle GUI config
 gradle-app.setting
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
-# Avoid ignore Gradle wrappper properties
-!gradle-wrapper.properties
-
 # Cache of project
 .gradletasknamecache
 
-# Eclipse Gradle plugin generated files
-# Eclipse Core
-.project
-# JDT-specific (Eclipse Java Development Tools)
+# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
+# gradle/wrapper/gradle-wrapper.properties
+
+*.launch
+*.cmd
+build.bat
+gradlesetup.bat
 .classpath
+.gradle
+.project
+.settings
+build
+bin
+run
+.idea
+.iml
+.ipr
+.iws
+gradle/wrapper/gradle-wrapper.properties
+*/Thumbs.db
+*/directory.txt
