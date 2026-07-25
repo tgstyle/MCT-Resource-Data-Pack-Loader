@@ -17,6 +17,8 @@ public class Config {
         public boolean warnOnCaseMismatch = true;
         @net.minecraftforge.common.config.Config.Comment("Log every pack found and how many files of each type it provides [Default=false]")
         public boolean logPackContents = false;
+        @net.minecraftforge.common.config.Config.Comment("Log a stack trace the first time a file with a '#' in its name is requested, such as textures/#texture.png. These come from a model whose texture variable was never defined, and the trace names whatever asked for it [Default=false]")
+        public boolean traceUnresolvedVariables = false;
         @net.minecraftforge.common.config.Config.Comment("Stop this mod from replacing or adding recipes. Only needed if another coremod conflicts over recipe loading [Default=false]")
         public boolean disableRecipeOverrides = false;
         @net.minecraftforge.common.config.Config.Comment("Let advancements load when they refer to a recipe that no longer exists, instead of failing. The advancement still works, it just never unlocks that recipe [Default=true]")

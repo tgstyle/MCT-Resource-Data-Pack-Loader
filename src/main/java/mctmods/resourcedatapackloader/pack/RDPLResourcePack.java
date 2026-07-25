@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.Config;
+import mctmods.resourcedatapackloader.core.MCTMixin;
+
 import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
@@ -14,6 +17,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -27,6 +32,7 @@ public final class RDPLResourcePack extends AbstractResourcePack {
     private static final String ICON = "pack.png";
     private static final String PREFIX = RDPLPack.ASSETS + "/";
     private static final String DEFAULT_META = "{\"pack\":{\"pack_format\":3,\"description\":\"Files loaded by Resource Data Pack Loader\"}}";
+    private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());
 
     public RDPLResourcePack(File root) { super(root); }
 
@@ -37,7 +43,16 @@ public final class RDPLResourcePack extends AbstractResourcePack {
     }
 
     @Override public boolean resourceExists(@Nonnull ResourceLocation location) {
+        trace(location);
         return PackManager.get().existsRaw(location.getNamespace(), location.getPath());
+    }
+
+    private static void trace(ResourceLocation location) {
+        if (!Config.settings.traceUnresolvedVariables) { return; }
+        String path = location.getPath();
+        if (path.indexOf('#') < 0) { return; }
+        if (!TRACED.add(location.toString())) { return; }
+        MCTMixin.LOGGER.warn("Something asked for {}, which is an unresolved model variable rather than a real file. The stack trace below shows what requested it.", location, new Throwable("requested here"));
     }
 
     @Override @Nonnull protected InputStream getInputStreamByName(@Nonnull String name) throws IOException {
