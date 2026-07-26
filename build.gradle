@@ -71,6 +71,8 @@ repositories {
 
 dependencies {
     compileOnly rfg.deobf("${common.mjei_version}")
+    compileOnly rfg.deobf("curse.maven:${common.tcon_version}")
+    compileOnly rfg.deobf("curse.maven:${common.cnam_version}")
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'

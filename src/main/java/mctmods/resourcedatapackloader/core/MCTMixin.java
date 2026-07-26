@@ -29,7 +29,7 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Mod.EventHandler public void preInit(FMLPreInitializationEvent event) {
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
-        LOGGER.info("Loaded config: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logPackContents={} disableRecipeOverrides={} tolerateMissingRecipes={}", Config.settings.rootDirectory, Config.settings.overrideResourcePacks, Config.settings.warnOnCaseMismatch, Config.settings.logPackContents, Config.settings.disableRecipeOverrides, Config.settings.tolerateMissingRecipes);
+        LOGGER.info("Loaded config: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logPackContents={} traceUnresolvedVariables={} fixTinkersModelErrors={} disableRecipeOverrides={} tolerateMissingRecipes={}", Config.settings.rootDirectory, Config.settings.overrideResourcePacks, Config.settings.warnOnCaseMismatch, Config.settings.logPackContents, Config.settings.traceUnresolvedVariables, Config.settings.fixTinkersModelErrors, Config.settings.disableRecipeOverrides, Config.settings.tolerateMissingRecipes);
         PackManager.get().report();
     }
 
