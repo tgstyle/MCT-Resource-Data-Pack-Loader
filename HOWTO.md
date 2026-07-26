@@ -4,7 +4,7 @@
 
 ## What it is
 
-Resource Data Pack Loader (RDPL) adds a single folder to your instance: `rdloader`. Drop a file in it, and that file replaces the one the game or a mod would have used.
+Resource Data Pack Loader (RDPL) adds a single folder to your instance: `rdploader`. Drop a file in it, and that file replaces the one the game or a mod would have used.
 
 There is no toggle, no per-world setup, and nothing for players to enable in a menu. If the file is in the folder, it is what the game loads.
 
@@ -21,7 +21,7 @@ assets/minecraft/textures/blocks/iron_ore.png
 So your version goes at:
 
 ```
-rdloader/assets/minecraft/textures/blocks/iron_ore.png
+rdploader/assets/minecraft/textures/blocks/iron_ore.png
 ```
 
 That's the whole system. The path after `assets` is always identical to the path inside the jar, so nothing ever needs renaming or moving.
@@ -50,8 +50,8 @@ That's the whole system. The path after `assets` is always identical to the path
 Loose files work fine, but you can group them instead — as a folder or a zip:
 
 ```
-rdloader/MyTextures/assets/...
-rdloader/MyTextures.zip
+rdploader/MyTextures/assets/...
+rdploader/MyTextures.zip
 ```
 
 Folders are easier while you're working. Zips are easier to hand to someone else. They behave identically.
@@ -59,9 +59,9 @@ Folders are easier while you're working. Zips are easier to hand to someone else
 **Control which pack wins.** If two packs contain the same file, prefix the name with `RDPL` and a number. Higher numbers load later and win:
 
 ```
-rdloader/RDPL0 BaseTextures.zip
-rdloader/RDPL1 SeasonalTextures.zip
-rdloader/RDPL9 ModFixes.zip
+rdploader/RDPL0 BaseTextures.zip
+rdploader/RDPL1 SeasonalTextures.zip
+rdploader/RDPL9 ModFixes.zip
 ```
 
 Upper or lower case both work, and the prefix is hidden from the pack's display name.
