@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class PackManager {
-    public static final String ROOT_DIRECTORY = "rdloader";
+    public static final String ROOT_DIRECTORY = "rdploader";
     public static final String ROOT_PACK = "<loose files>";
     private static final String README = "readme.txt";
     private static final String DISABLED = ".disabled";
