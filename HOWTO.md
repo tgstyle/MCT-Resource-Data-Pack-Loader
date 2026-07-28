@@ -104,12 +104,12 @@ The registry is the one the entry belongs to — usually `minecraft:items` or `m
 | Command | What it does |
 | --- | --- |
 | `/rdpl list` | Every loaded pack, its priority, and what it contains. Click a pack to look up a file in it |
-| `/rdpl which <namespace:path>` | Which pack serves a given file, and which packs it shadows |
+| `/rdpl which <namespace:path>` | Which pack provides a given file, and which packs it shadows. This is what your packs offer, not proof the game asked for it |
 | `/rdpl reload` | Rescan the folder and reload everything |
 | `/rdpl reload <group>` | Reload just one kind of resource — `textures`, `models`, `languages`, `sounds` or `shaders` |
 | `/rdpl unused` | Files in your packs that nothing has asked for yet, usually a typo in a path |
 
-On a dedicated server, an operator uses `/rdplserver reload` to rescan the server's own copy of the folder. `/rdplserver list` and `/rdplserver which` are also available.
+On a dedicated server, an operator uses `/rdplserver reload` to rescan the server's own copy of the folder. `/rdplserver list`, `/rdplserver which` and `/rdplserver unused` are also available.
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 

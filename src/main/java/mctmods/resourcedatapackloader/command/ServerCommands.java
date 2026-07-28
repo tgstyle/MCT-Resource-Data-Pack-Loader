@@ -22,11 +22,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused");
 
     @Override @Nonnull public String getName() { return "rdplserver"; }
 
-    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>>"; }
+    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused>"; }
 
     @Override public int getRequiredPermissionLevel() { return 3; }
 
@@ -40,6 +40,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
+        else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -71,6 +72,17 @@ public class ServerCommands extends CommandBase {
                     + " functions=" + pack.count(PackManager.FUNCTIONS, PackManager.MCFUNCTION)
                     + " namespaces=" + pack.getNamespaces());
         }
+    }
+
+    private void unused(ICommandSender sender) {
+        List<String> unused = PackManager.get().findUnused();
+        if (unused.isEmpty()) {
+            send(sender, TextFormatting.GREEN, "Every file in your packs has been asked for at least once");
+            return;
+        }
+        send(sender, TextFormatting.YELLOW, unused.size() + " file(s) have not been asked for:");
+        for (String entry : unused) { MCTMixin.LOGGER.warn("  {}", entry); }
+        send(sender, TextFormatting.GRAY, "Some only load when they are needed, so check the paths rather than deleting them");
     }
 
     private void which(ICommandSender sender, String target) {

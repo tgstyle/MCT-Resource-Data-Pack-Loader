@@ -32,6 +32,12 @@ commands.<br/>
 - Functions (`.mcfunction`), which vanilla otherwise only reads per world
 - Registry renames, so worlds saved before a mod renamed a block or item keep it
 
+A pack whose name starts with `RDPLO` always overrides the player's selected resource packs, one
+starting with `RDPLN` never does, and anything else follows the `overrideResourcePacks` config.<br/>
+
+`/rdpl unused` lists files in your packs that nothing has asked for, which is usually a typo in a
+path.<br/>
+
 # Requirements
 Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter).<br/>
 
