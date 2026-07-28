@@ -12,11 +12,11 @@ loot tables and recipes cannot be overridden without repacking a mod jar or copy
 save. This mod covers both sides from a single folder, on the client and the server.<br/>
 
 # Usage
-Put loose files or a zip in the `rdloader` folder, alongside `mods` and `config`.<br/>
+Put loose files or a zip in the `rdploader` folder, alongside `mods` and `config`.<br/>
 
 ```
-rdloader/assets/<namespace>/...
-rdloader/<packname>.zip
+rdploader/assets/<namespace>/...
+rdploader/<packname>.zip
 ```
 
 Paths match the layout inside a mod jar, so files can be copied straight across.<br/>

@@ -24,7 +24,7 @@ public abstract class MixinMinecraft {
 
     @ModifyArg(
             method = "refreshResources",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/IReloadableResourceManager;reloadResources(Ljava/util/List;)V"),
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/IReloadableResourceManager;reloadResources(Ljava/util/List;)V", ordinal = 0),
             index = 0
     )
     private List<IResourcePack> rdpl$insertPack(List<IResourcePack> list) {

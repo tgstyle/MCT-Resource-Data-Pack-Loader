@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "mctmods.resourcedatapackloader.mixin.conarm",
+  "refmap": "mixins.resourcedatapackloader.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [
+    "MixinArmorModelLoader"
+  ],
+  "server": []
+}

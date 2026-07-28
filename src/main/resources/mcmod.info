@@ -8,7 +8,7 @@
     "url": "${mod_url}",
     "authorList": ["${mod_authors}"],
     "logoFile": "MCTlogo.png",
-    "dependencies": []
+    "dependencies": ["mixinbooter"]
   },
   {
     "modid": "${mod_mixin_id}",
@@ -17,6 +17,6 @@
     "version": "1.0",
     "mcversion": "${mcversion}",
     "authorList": ["${mod_authors}"],
-    "dependencies": []
+    "dependencies": ["mixinbooter"]
   }
 ]

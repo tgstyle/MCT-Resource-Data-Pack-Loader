@@ -8,7 +8,7 @@ public class Config {
     public static Settings settings = new Settings();
 
     public static class Settings {
-        @net.minecraftforge.common.config.Config.Comment("Folder packs are loaded from, relative to the .minecraft directory. An absolute path also works. Requires a restart [Default=rdloader]")
+        @net.minecraftforge.common.config.Config.Comment("Folder packs are loaded from, relative to the .minecraft directory. An absolute path also works. Requires a restart [Default=rdploader]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public String rootDirectory = PackManager.ROOT_DIRECTORY;
         @net.minecraftforge.common.config.Config.Comment("Insert the asset pack above the player's selected resource packs, so loaded files cannot be overridden by them [Default=true]")

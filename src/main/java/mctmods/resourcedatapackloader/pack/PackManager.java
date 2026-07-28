@@ -16,12 +16,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,12 +40,12 @@ public final class PackManager {
     public static final String JSON = "json";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
-    private final List<RDPLPack> packs = new ArrayList<>();
-    private final Map<String, Map<String, Entry>> merged = new HashMap<>();
-    private final Set<String> warned = new HashSet<>();
-    private Path root;
-    @Nullable private Set<String> namespaces;
-    private int generation;
+    private final List<RDPLPack> packs = new CopyOnWriteArrayList<>();
+    private final Map<String, Map<String, Entry>> merged = new ConcurrentHashMap<>();
+    private final Set<String> warned = ConcurrentHashMap.newKeySet();
+    private volatile Path root;
+    @Nullable private volatile Set<String> namespaces;
+    private final AtomicInteger generation = new AtomicInteger();
 
     private PackManager() {}
 
@@ -55,7 +57,7 @@ public final class PackManager {
 
     @Nullable public Path getRoot() { return root; }
 
-    public int getGeneration() { return generation; }
+    public int getGeneration() { return generation.get(); }
 
     public void scan(Path packRoot) {
         this.root = packRoot;
@@ -84,12 +86,13 @@ public final class PackManager {
         named.sort(Comparator.comparingInt(RDPLPack::getPriority).thenComparing(RDPLPack::getName, String.CASE_INSENSITIVE_ORDER));
         packs.addAll(named);
         buildIndex();
+        namespaces = null;
     }
 
     private void buildIndex() {
         for (RDPLPack pack : packs) {
             for (String namespace : pack.getNamespaces()) {
-                Map<String, Entry> paths = merged.computeIfAbsent(namespace, k -> new HashMap<>());
+                Map<String, Entry> paths = merged.computeIfAbsent(namespace, k -> new ConcurrentHashMap<>());
                 for (String path : pack.getPaths(namespace)) {
                     String lowered = isLowerCase(path) ? path : path.toLowerCase(Locale.ROOT);
                     Entry prev = paths.get(lowered);
@@ -256,7 +259,7 @@ public final class PackManager {
                 "",
                 "so your version goes here:",
                 "",
-                "    rdloader/assets/minecraft/textures/blocks/iron_ore.png",
+                "    rdploader/assets/minecraft/textures/blocks/iron_ore.png",
                 "",
                 "That is the whole rule. The path after 'assets' is always the same as the path",
                 "inside the jar, so nothing ever needs renaming or moving.",
@@ -267,8 +270,8 @@ public final class PackManager {
                 "",
                 "You can group files into a named pack instead, as a folder or a zip:",
                 "",
-                "    rdloader/MyTextures/assets/minecraft/textures/blocks/iron_ore.png",
-                "    rdloader/MyTextures.zip        (with 'assets' at the top level of the zip)",
+                "    rdploader/MyTextures/assets/minecraft/textures/blocks/iron_ore.png",
+                "    rdploader/MyTextures.zip        (with 'assets' at the top level of the zip)",
                 "",
                 "Folders are easier to edit while you work, zips are easier to hand to someone",
                 "else. They behave the same.",
@@ -284,8 +287,8 @@ public final class PackManager {
                 "RDPL and a number to the folder or zip name. RDPL0 loads first, higher numbers",
                 "load later, and the pack loaded last wins:",
                 "",
-                "    rdloader/RDPL0 BaseTextures.zip",
-                "    rdloader/RDPL1 SeasonalTextures",
+                "    rdploader/RDPL0 BaseTextures.zip",
+                "    rdploader/RDPL1 SeasonalTextures",
                 "",
                 "Upper or lower case both work, and a space, dash or underscore after the number",
                 "is optional. The prefix is stripped from the pack's name in the log and in",
@@ -296,7 +299,7 @@ public final class PackManager {
                 "",
                 "To turn a pack off without deleting it, add .disabled to the end of its name:",
                 "",
-                "    rdloader/RDPL1 SeasonalTextures.zip.disabled",
+                "    rdploader/RDPL1 SeasonalTextures.zip.disabled",
                 "",
                 "The pack is skipped and the log says so. Remove the suffix to turn it back on.",
                 "",
@@ -379,7 +382,7 @@ public final class PackManager {
                 "advancement at.",
                 "",
                 "",
-                "The rdloader folder itself can be moved or renamed with the rootDirectory option",
+                "The rdploader folder itself can be moved or renamed with the rootDirectory option",
                 "in config/mct_resourcedatapackloader_mixin.cfg. An absolute path works too, and",
                 "a restart is required.",
                 "",
@@ -422,12 +425,13 @@ public final class PackManager {
     }
 
     public Set<String> getNamespaces() {
-        if (namespaces == null) {
-            Set<String> all = new LinkedHashSet<>();
-            for (RDPLPack pack : packs) { all.addAll(pack.getNamespaces()); }
-            namespaces = Collections.unmodifiableSet(all);
-        }
-        return namespaces;
+        Set<String> cached = namespaces;
+        if (cached != null) { return cached; }
+        Set<String> all = new LinkedHashSet<>();
+        for (RDPLPack pack : packs) { all.addAll(pack.getNamespaces()); }
+        Set<String> built = Collections.unmodifiableSet(all);
+        namespaces = built;
+        return built;
     }
 
     public void close() {
@@ -439,7 +443,7 @@ public final class PackManager {
         merged.clear();
         warned.clear();
         namespaces = null;
-        generation++;
+        generation.incrementAndGet();
     }
 
     private static final class Entry {

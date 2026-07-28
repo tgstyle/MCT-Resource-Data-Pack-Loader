@@ -11,10 +11,7 @@
     "MixinCraftingHelper",
     "MixinLootTableManager",
     "MixinRecipeUnlockedTrigger",
-    "MixinTemplateManager",
-    "conarm.MixinArmorModelLoader",
-    "tconstruct.MixinMaterialModelLoader",
-    "tconstruct.MixinToolModelLoader"
+    "MixinTemplateManager"
   ],
   "client": [
     "MixinMinecraft"
