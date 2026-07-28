@@ -11,7 +11,7 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("Folder packs are loaded from, relative to the .minecraft directory. An absolute path also works. Requires a restart [Default=rdploader]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public String rootDirectory = PackManager.ROOT_DIRECTORY;
-        @net.minecraftforge.common.config.Config.Comment("Insert the asset pack above the player's selected resource packs, so loaded files cannot be overridden by them [Default=true]")
+        @net.minecraftforge.common.config.Config.Comment("Insert the asset pack above the player's selected resource packs, so loaded files cannot be overridden by them. This is only the default, a pack whose name starts with RDPLO always overrides and one starting with RDPLN never does [Default=true]")
         public boolean overrideResourcePacks = true;
         @net.minecraftforge.common.config.Config.Comment("Warn when a file only matches because the filesystem is case-insensitive. Such packs break on Linux [Default=true]")
         public boolean warnOnCaseMismatch = true;
@@ -28,5 +28,9 @@ public class Config {
         public boolean disableRecipeOverrides = false;
         @net.minecraftforge.common.config.Config.Comment("Let advancements load when they refer to a recipe that no longer exists, instead of failing. The advancement still works, it just never unlocks that recipe [Default=true]")
         public boolean tolerateMissingRecipes = true;
+        @net.minecraftforge.common.config.Config.Comment("Load .mcfunction files from packs. Vanilla only reads functions from the world's own data folder, so this makes them global like everything else here. A function saved in the world still wins [Default=true]")
+        public boolean loadFunctions = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]")
+        public boolean applyRegistryRemaps = true;
     }
 }

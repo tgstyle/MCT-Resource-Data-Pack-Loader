@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import mctmods.resourcedatapackloader.Config;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
 
@@ -20,7 +19,9 @@ public abstract class MixinMinecraft {
     @Shadow @Final
     private List<IResourcePack> defaultResourcePacks;
     @Unique
-    private RDPLResourcePack rdpl$pack;
+    private RDPLResourcePack rdpl$normal;
+    @Unique
+    private RDPLResourcePack rdpl$override;
 
     @ModifyArg(
             method = "refreshResources",
@@ -30,10 +31,12 @@ public abstract class MixinMinecraft {
     private List<IResourcePack> rdpl$insertPack(List<IResourcePack> list) {
         PackManager manager = PackManager.get();
         if (manager.isEmpty() || manager.getRoot() == null) { return list; }
-        if (rdpl$pack == null) { rdpl$pack = new RDPLResourcePack(manager.getRoot().toFile()); }
-        list.remove(rdpl$pack);
-        if (Config.settings.overrideResourcePacks) { list.add(rdpl$pack); }
-        else { list.add(Math.min(defaultResourcePacks.size(), list.size()), rdpl$pack); }
+        if (rdpl$normal == null) { rdpl$normal = new RDPLResourcePack(manager.getRoot().toFile(), false); }
+        if (rdpl$override == null) { rdpl$override = new RDPLResourcePack(manager.getRoot().toFile(), true); }
+        list.remove(rdpl$normal);
+        list.remove(rdpl$override);
+        if (manager.hasTier(false)) { list.add(Math.min(defaultResourcePacks.size(), list.size()), rdpl$normal); }
+        if (manager.hasTier(true)) { list.add(rdpl$override); }
         return list;
     }
 }

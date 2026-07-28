@@ -9,6 +9,7 @@
     "MixinAdvancementManager",
     "MixinAdvancementRewards",
     "MixinCraftingHelper",
+    "MixinFunctionManager",
     "MixinLootTableManager",
     "MixinRecipeUnlockedTrigger",
     "MixinTemplateManager"

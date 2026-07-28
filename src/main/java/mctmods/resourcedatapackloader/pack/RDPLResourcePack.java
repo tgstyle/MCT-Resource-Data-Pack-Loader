@@ -27,24 +27,27 @@ import javax.imageio.ImageIO;
 
 @SideOnly(Side.CLIENT)
 public final class RDPLResourcePack extends AbstractResourcePack {
-    private static final String NAME = "RDPL";
     private static final String META = "pack.mcmeta";
     private static final String ICON = "pack.png";
     private static final String PREFIX = RDPLPack.ASSETS + "/";
     private static final String DEFAULT_META = "{\"pack\":{\"pack_format\":3,\"description\":\"Files loaded by Resource Data Pack Loader\"}}";
     private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());
+    private final boolean overriding;
 
-    public RDPLResourcePack(File root) { super(root); }
+    public RDPLResourcePack(File root, boolean overriding) {
+        super(root);
+        this.overriding = overriding;
+    }
 
     @Override @Nonnull public InputStream getInputStream(@Nonnull ResourceLocation location) throws IOException {
-        InputStream stream = PackManager.get().openRaw(location.getNamespace(), location.getPath());
+        InputStream stream = PackManager.get().openRaw(location.getNamespace(), location.getPath(), overriding);
         if (stream == null) { throw new FileNotFoundException(location.toString()); }
         return stream;
     }
 
     @Override public boolean resourceExists(@Nonnull ResourceLocation location) {
         trace(location);
-        return PackManager.get().existsRaw(location.getNamespace(), location.getPath());
+        return PackManager.get().existsRaw(location.getNamespace(), location.getPath(), overriding);
     }
 
     private static void trace(ResourceLocation location) {
@@ -63,13 +66,13 @@ public final class RDPLResourcePack extends AbstractResourcePack {
 
     @Override protected boolean hasResourceName(@Nonnull String name) {
         int split = split(name);
-        if (split > 0) { return PackManager.get().existsRaw(name.substring(PREFIX.length(), split), name.substring(split + 1)); }
+        if (split > 0) { return PackManager.get().existsRaw(name.substring(PREFIX.length(), split), name.substring(split + 1), overriding); }
         return META.equals(name);
     }
 
-    @Nullable private static InputStream openByName(String name) throws IOException {
+    @Nullable private InputStream openByName(String name) throws IOException {
         int split = split(name);
-        if (split > 0) { return PackManager.get().openRaw(name.substring(PREFIX.length(), split), name.substring(split + 1)); }
+        if (split > 0) { return PackManager.get().openRaw(name.substring(PREFIX.length(), split), name.substring(split + 1), overriding); }
         if (!META.equals(name)) { return null; }
         String contents = PackManager.get().readPackFile(META);
         if (contents == null) { contents = DEFAULT_META; }
@@ -81,7 +84,7 @@ public final class RDPLResourcePack extends AbstractResourcePack {
         return name.indexOf('/', PREFIX.length());
     }
 
-    @Override @Nonnull public Set<String> getResourceDomains() { return PackManager.get().getNamespaces(); }
+    @Override @Nonnull public Set<String> getResourceDomains() { return PackManager.get().getNamespaces(overriding); }
 
     @Override @Nonnull public BufferedImage getPackImage() throws IOException {
         Path root = PackManager.get().getRoot();
@@ -94,5 +97,5 @@ public final class RDPLResourcePack extends AbstractResourcePack {
         throw new FileNotFoundException(ICON);
     }
 
-    @Override @Nonnull public String getPackName() { return NAME; }
+    @Override @Nonnull public String getPackName() { return overriding ? "RDPL (overriding)" : "RDPL"; }
 }

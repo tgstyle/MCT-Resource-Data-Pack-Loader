@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.Config;
 import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.core.Summary;
 import mctmods.resourcedatapackloader.mixin.InvokerJsonContext;
 import mctmods.resourcedatapackloader.pack.PackManager;
 
@@ -204,7 +205,7 @@ public final class RecipeOverrides {
     }
 
     public static void registerAdditions(IForgeRegistry<IRecipe> registry) {
-        if (skipped > 0) { MCTMixin.LOGGER.info("Skipped {} recipe(s) that use items which are not registered, usually content a mod's config has disabled", skipped); }
+        if (skipped > 0) { Summary.info("recipes.skipped", "Skipped " + skipped + " recipe(s) that use items which are not registered, usually content a mod's config has disabled"); }
         skipped = 0;
         REGISTERED.clear();
         if (disabled()) { return; }
@@ -224,7 +225,7 @@ public final class RecipeOverrides {
             else { added[0]++; }
         });
         int total = overridden + replaced[0];
-        if (total > 0 || added[0] > 0) { MCTMixin.LOGGER.info("Recipes: {} replaced, {} added", total, added[0]); }
+        if (total > 0 || added[0] > 0) { Summary.info("recipes.applied", "Recipes: " + total + " replaced, " + added[0] + " added"); }
         SERVED.clear();
         CONTEXTS.clear();
         overridden = 0;

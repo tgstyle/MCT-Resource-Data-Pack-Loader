@@ -9,7 +9,7 @@ import mezz.jei.startup.ModRegistry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -28,10 +28,6 @@ public abstract class MixinJeiStarter {
         finally { JEIPluginOrder.end(); }
     }
 
-    @ModifyArg(
-            method = "start",
-            at = @At(value = "INVOKE", target = "Lmezz/jei/startup/JeiStarter;sendRuntime(Ljava/util/List;Lmezz/jei/api/IJeiRuntime;)V"),
-            index = 0
-    )
-    private List<IModPlugin> rdpl$orderRuntime(List<IModPlugin> plugins) { return JEIPluginOrder.reorder(plugins); }
+    @ModifyVariable(method = "sendRuntime", at = @At("HEAD"), argsOnly = true, index = 0)
+    private static List<IModPlugin> rdpl$orderRuntime(List<IModPlugin> plugins) { return JEIPluginOrder.reorder(plugins); }
 }

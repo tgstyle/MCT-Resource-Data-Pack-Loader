@@ -1,15 +1,15 @@
 # Links
 - [Official Discord](https://discord.gg/ujY2mV9)<br/>
 
-- [Resource Data Pack Loader on CurseForge](https://www.curseforge.com/minecraft/mc-mods/resource-data-pack-loader)
-- [Resource Data Pack Loader on Modrinth](https://modrinth.com/mod/resource-data-pack-loader)
+- [Resource Data Pack Loader on CurseForge](https://www.curseforge.com/minecraft/mc-mods/mct-resource-data-pack-loader)
+- [Resource Data Pack Loader on Modrinth](https://modrinth.com/mod/mct-resource-data-pack-loader)
 
 # MCT Resource Data Pack Loader
 Loads resource and data overrides from one global folder, applied to every world.<br/>
 
 Minecraft 1.12.2 has no data pack system, and Resource Loader only covers client assets. Advancements,
-loot tables and recipes cannot be overridden without repacking a mod jar or copying files into every
-save. This mod covers both sides from a single folder, on the client and the server.<br/>
+loot tables, recipes and functions cannot be overridden without repacking a mod jar or copying files
+into every save. This mod covers both sides from a single folder, on the client and the server.<br/>
 
 # Usage
 Put loose files or a zip in the `rdploader` folder, alongside `mods` and `config`.<br/>
@@ -20,6 +20,20 @@ rdploader/<packname>.zip
 ```
 
 Paths match the layout inside a mod jar, so files can be copied straight across.<br/>
+
+See [HOWTO.md](HOWTO.md) for pack priority, resource pack precedence, registry renames and the
+commands.<br/>
+
+# What it covers
+- Textures, models, blockstates, language files, sounds and anything else in a mod's `assets` folder
+- Advancements and loot tables, on dedicated servers as well as singleplayer
+- Recipes, replaced or added
+- Structure templates (`.nbt`)
+- Functions (`.mcfunction`), which vanilla otherwise only reads per world
+- Registry renames, so worlds saved before a mod renamed a block or item keep it
+
+# Requirements
+Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter).<br/>
 
 # Reporting issues
 When you are reporting bugs, please attach the log, mod and forge version.<br/>

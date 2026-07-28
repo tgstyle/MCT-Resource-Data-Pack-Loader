@@ -22,14 +22,16 @@ public final class RDPLPack {
     public static final String ASSETS = "assets";
     private final String name;
     private final int priority;
+    private final boolean overriding;
     private final Path root;
     @Nullable private final FileSystem owned;
     private final Map<String, Set<String>> index = new HashMap<>();
     private int fileCount;
 
-    RDPLPack(String name, int priority, Path root, @Nullable FileSystem owned) {
+    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
         this.name = name;
         this.priority = priority;
+        this.overriding = overriding;
         this.root = root;
         this.owned = owned;
         buildIndex();
@@ -38,6 +40,8 @@ public final class RDPLPack {
     public String getName() { return name; }
 
     public int getPriority() { return priority; }
+
+    public boolean isOverriding() { return overriding; }
 
     public Set<String> getNamespaces() { return Collections.unmodifiableSet(index.keySet()); }
 

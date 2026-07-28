@@ -29,7 +29,7 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Mod.EventHandler public void preInit(FMLPreInitializationEvent event) {
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
-        LOGGER.info("Loaded config: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logPackContents={} traceUnresolvedVariables={} fixTinkersModelErrors={} disableRecipeOverrides={} tolerateMissingRecipes={}", Config.settings.rootDirectory, Config.settings.overrideResourcePacks, Config.settings.warnOnCaseMismatch, Config.settings.logPackContents, Config.settings.traceUnresolvedVariables, Config.settings.fixTinkersModelErrors, Config.settings.disableRecipeOverrides, Config.settings.tolerateMissingRecipes);
+        LOGGER.info("Loaded config: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logPackContents={} traceUnresolvedVariables={} fixTinkersModelErrors={} skipRecipesWithMissingItems={} disableRecipeOverrides={} tolerateMissingRecipes={} loadFunctions={} applyRegistryRemaps={}", Config.settings.rootDirectory, Config.settings.overrideResourcePacks, Config.settings.warnOnCaseMismatch, Config.settings.logPackContents, Config.settings.traceUnresolvedVariables, Config.settings.fixTinkersModelErrors, Config.settings.skipRecipesWithMissingItems, Config.settings.disableRecipeOverrides, Config.settings.tolerateMissingRecipes, Config.settings.loadFunctions, Config.settings.applyRegistryRemaps);
         PackManager.get().report();
     }
 
@@ -53,9 +53,10 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     private static String rootDirectory(File mcDir) {
         try {
-            Configuration cfg = new Configuration(new File(mcDir, "config/mct_resourcedatapackloader_mixin.cfg"));
+            Configuration cfg = new Configuration(new File(new File(mcDir, "config"), ConfigPath.FILE));
             cfg.load();
-            Property prop = cfg.getCategory("settings").get("rootDirectory");
+            if (!cfg.hasCategory(ConfigPath.SETTINGS)) { return PackManager.ROOT_DIRECTORY; }
+            Property prop = cfg.getCategory(ConfigPath.SETTINGS).get("rootDirectory");
             if (prop != null) { return prop.getString(); }
         }
         catch (RuntimeException ex) {

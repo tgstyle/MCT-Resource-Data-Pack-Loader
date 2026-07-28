@@ -37,14 +37,21 @@ public final class PackManager {
     public static final String ADVANCEMENTS = "advancements";
     public static final String LOOT_TABLES = "loot_tables";
     public static final String RECIPES = "recipes";
+    public static final String REGISTRY_REMAP = "registry_remap";
+    public static final String FUNCTIONS = "functions";
+    public static final String STRUCTURES = "structures";
     public static final String JSON = "json";
-    private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)[ _-]?");
+    public static final String MCFUNCTION = "mcfunction";
+    private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?([OoNn])?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
     private final List<RDPLPack> packs = new CopyOnWriteArrayList<>();
-    private final Map<String, Map<String, Entry>> merged = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Entry>> mergedNormal = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Entry>> mergedOverride = new ConcurrentHashMap<>();
     private final Set<String> warned = ConcurrentHashMap.newKeySet();
+    private final Set<String> served = ConcurrentHashMap.newKeySet();
     private volatile Path root;
-    @Nullable private volatile Set<String> namespaces;
+    @Nullable private volatile Set<String> namespacesNormal;
+    @Nullable private volatile Set<String> namespacesOverride;
     private final AtomicInteger generation = new AtomicInteger();
 
     private PackManager() {}
@@ -60,6 +67,11 @@ public final class PackManager {
     public int getGeneration() { return generation.get(); }
 
     public void scan(Path packRoot) {
+        if (packRoot.getNameCount() == 0 || packRoot.equals(packRoot.getRoot())) {
+            MCTMixin.LOGGER.error("rootDirectory resolves to '{}', which would treat the whole folder as the pack root. Set it to a folder name such as '{}'. No packs loaded.", packRoot, ROOT_DIRECTORY);
+            close();
+            return;
+        }
         this.root = packRoot;
         close();
         prepare(packRoot);
@@ -86,13 +98,15 @@ public final class PackManager {
         named.sort(Comparator.comparingInt(RDPLPack::getPriority).thenComparing(RDPLPack::getName, String.CASE_INSENSITIVE_ORDER));
         packs.addAll(named);
         buildIndex();
-        namespaces = null;
+        namespacesNormal = null;
+        namespacesOverride = null;
     }
 
     private void buildIndex() {
         for (RDPLPack pack : packs) {
+            Map<String, Map<String, Entry>> target = pack.isOverriding() ? mergedOverride : mergedNormal;
             for (String namespace : pack.getNamespaces()) {
-                Map<String, Entry> paths = merged.computeIfAbsent(namespace, k -> new ConcurrentHashMap<>());
+                Map<String, Entry> paths = target.computeIfAbsent(namespace, k -> new ConcurrentHashMap<>());
                 for (String path : pack.getPaths(namespace)) {
                     String lowered = isLowerCase(path) ? path : path.toLowerCase(Locale.ROOT);
                     Entry prev = paths.get(lowered);
@@ -128,7 +142,7 @@ public final class PackManager {
 
     @Nullable private RDPLPack loadRoot(Path packRoot) {
         if (!Files.isDirectory(packRoot.resolve(RDPLPack.ASSETS))) { return null; }
-        RDPLPack pack = new RDPLPack(ROOT_PACK, -1, packRoot, null);
+        RDPLPack pack = new RDPLPack(ROOT_PACK, -1, Config.settings.overrideResourcePacks, packRoot, null);
         return pack.getNamespaces().isEmpty() ? null : pack;
     }
 
@@ -159,15 +173,23 @@ public final class PackManager {
     }
 
     private static RDPLPack create(String raw, Path root, @Nullable FileSystem owned) {
+        boolean fallback = Config.settings.overrideResourcePacks;
         Matcher matcher = PRIORITY.matcher(raw);
-        if (!matcher.find()) { return new RDPLPack(raw, -1, root, owned); }
+        if (!matcher.find() || (matcher.group(1) == null && matcher.group(2) == null)) { return new RDPLPack(raw, -1, fallback, root, owned); }
         String clean = raw.substring(matcher.end());
         if (clean.isEmpty()) { clean = raw; }
-        try { return new RDPLPack(clean, Integer.parseInt(matcher.group(1)), root, owned); }
+        boolean overriding = tier(matcher.group(2), fallback);
+        if (matcher.group(1) == null) { return new RDPLPack(clean, -1, overriding, root, owned); }
+        try { return new RDPLPack(clean, Integer.parseInt(matcher.group(1)), overriding, root, owned); }
         catch (NumberFormatException ex) {
             MCTMixin.LOGGER.warn("Pack '{}': priority number is too large, treating the pack as unprioritised", raw);
-            return new RDPLPack(raw, -1, root, owned);
+            return new RDPLPack(raw, -1, overriding, root, owned);
         }
+    }
+
+    private static boolean tier(@Nullable String marker, boolean fallback) {
+        if (marker == null) { return fallback; }
+        return marker.equalsIgnoreCase("O");
     }
 
     private static String stripExtension(String fileName) {
@@ -184,19 +206,38 @@ public final class PackManager {
         if (!Config.settings.logPackContents) { return; }
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
-            MCTMixin.LOGGER.info("  '{}'{}: files={} namespaces={} advancements={} loot_tables={} recipes={}",
-                    pack.getName(), priority, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON));
+            String tier = pack.isOverriding() ? " overriding" : "";
+            MCTMixin.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={}",
+                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON));
         }
     }
 
-    @Nullable private Entry resolve(String namespace, String path) {
-        Map<String, Entry> paths = merged.get(namespace);
+    @Nullable private Entry lookup(String namespace, String path) {
+        Entry entry = lookup(namespace, path, true);
+        if (entry != null) { return entry; }
+        return lookup(namespace, path, false);
+    }
+
+    @Nullable private Entry lookup(String namespace, String path, boolean overriding) {
+        Map<String, Entry> paths = (overriding ? mergedOverride : mergedNormal).get(namespace);
         if (paths == null) { return null; }
         Entry entry = paths.get(isLowerCase(path) ? path : path.toLowerCase(Locale.ROOT));
         if (entry == null) { return null; }
         if (entry.actual.equals(path)) { return entry; }
         if (entry.variants != null && entry.variants.get(path) == entry.pack) { return new Entry(entry.pack, path, null); }
         reportCaseMismatch(namespace, path, entry);
+        return entry;
+    }
+
+    @Nullable private Entry resolve(String namespace, String path) {
+        Entry entry = lookup(namespace, path);
+        if (entry != null) { served.add(namespace + ":" + entry.actual); }
+        return entry;
+    }
+
+    @Nullable private Entry resolve(String namespace, String path, boolean overriding) {
+        Entry entry = lookup(namespace, path, overriding);
+        if (entry != null) { served.add(namespace + ":" + entry.actual); }
         return entry;
     }
 
@@ -214,7 +255,7 @@ public final class PackManager {
         MCTMixin.LOGGER.warn("Pack '{}': loading {}:{} from '{}', the filename case does not match. Rename it to '{}' so it also works outside this mod.", entry.pack.getName(), namespace, requested, entry.actual, requested);
     }
 
-    public boolean existsRaw(String namespace, String path) { return resolve(namespace, path) != null; }
+    public boolean existsRaw(String namespace, String path, boolean overriding) { return resolve(namespace, path, overriding) != null; }
 
     @Nullable public InputStream openRaw(String namespace, String path) throws IOException {
         Entry entry = resolve(namespace, path);
@@ -222,14 +263,40 @@ public final class PackManager {
         return entry.pack.open(namespace, entry.actual);
     }
 
+    @Nullable public InputStream openRaw(String namespace, String path, boolean overriding) throws IOException {
+        Entry entry = resolve(namespace, path, overriding);
+        if (entry == null) { return null; }
+        return entry.pack.open(namespace, entry.actual);
+    }
+
+    public List<String> findUnused() {
+        List<String> unused = new ArrayList<>();
+        for (RDPLPack pack : packs) {
+            for (String namespace : pack.getNamespaces()) {
+                for (String path : pack.getPaths(namespace)) {
+                    if (isData(path)) { continue; }
+                    if (served.contains(namespace + ":" + path)) { continue; }
+                    unused.add(pack.getName() + " -> " + namespace + ":" + path);
+                }
+            }
+        }
+        Collections.sort(unused);
+        return unused;
+    }
+
+    private static boolean isData(String path) {
+        return path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
+                || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/");
+    }
+
     @Nullable public String getPackName(String namespace, String path) {
-        Entry entry = resolve(namespace, path);
+        Entry entry = lookup(namespace, path);
         return entry == null ? null : entry.pack.getName();
     }
 
     public List<RDPLPack> holders(String namespace, String path) {
         List<RDPLPack> result = new ArrayList<>();
-        Entry entry = resolve(namespace, path);
+        Entry entry = lookup(namespace, path);
         if (entry == null) { return result; }
         for (RDPLPack pack : packs) {
             if (pack.getPaths(namespace).contains(entry.actual)) { result.add(pack); }
@@ -294,6 +361,24 @@ public final class PackManager {
                 "is optional. The prefix is stripped from the pack's name in the log and in",
                 "/rdpl list, so RDPL1 SeasonalTextures shows up as SeasonalTextures.",
                 "",
+                "",
+                "RESOURCE PACKS",
+                "--------------",
+                "",
+                "By default the files here sit above the resource packs the player picks in the",
+                "options screen, so a resource pack cannot override them. That is right for",
+                "things like a modpack logo and wrong for textures you would like people to be",
+                "able to reskin.",
+                "",
+                "Add O or N after the RDPL prefix to decide per pack:",
+                "",
+                "    rdploader/RDPLO Branding          always wins, resource packs cannot touch it",
+                "    rdploader/RDPLN BaseTextures      a resource pack can override it",
+                "    rdploader/RDPL1O Seasonal         priority and always wins, both together",
+                "",
+                "Packs with no letter follow the overrideResourcePacks option in the config, and",
+                "/rdpl list marks the ones that override.",
+                "",
                 "Packs without a prefix load before all numbered packs, in alphabetical order,",
                 "so a numbered pack always wins over an unnumbered one.",
                 "",
@@ -321,6 +406,21 @@ public final class PackManager {
                 "only load when the game starts, so a change here needs a restart rather than a",
                 "reload.",
                 "",
+                "Functions, the .mcfunction files under assets/<modid>/functions. Minecraft only",
+                "reads these from the world's own data folder, so putting them here makes them",
+                "work in every world. A function saved in the world still wins over a file here.",
+                "",
+                "Registry renames, so a world saved before a mod renamed one of its blocks keeps",
+                "that block instead of losing it. Put a file in assets/<modid>/registry_remap:",
+                "",
+                "    {",
+                "      \"registry\": \"minecraft:items\",",
+                "      \"mapping\": { \"oldmod:old_name\": \"newmod:new_name\" }",
+                "    }",
+                "",
+                "The registry is the one the entry belongs to, usually minecraft:items or",
+                "minecraft:blocks. Renames chain, so mapping A to B and later B to C sends A to C.",
+                "",
                 "CraftTweaker and GroovyScript still work exactly as before. They run after this",
                 "mod, so anything your scripts remove or change wins over a file here.",
                 "",
@@ -339,17 +439,30 @@ public final class PackManager {
                 "If you add a new file or delete one, use /rdpl reload instead. Editing a file",
                 "that was already there only needs F3+T.",
                 "",
-                "/rdpl list shows every pack loaded and what is in it.",
+                "/rdpl reload textures reloads only textures, which is much faster than F3+T in a",
+                "large pack. models, languages, sounds and shaders work the same way. Leave the",
+                "name off to rescan the folder and reload everything.",
+                "",
+                "/rdpl list shows every pack loaded and what is in it. Click a pack to see it.",
                 "",
                 "/rdpl which minecraft:textures/blocks/stone.png shows which pack serves a file",
                 "and which packs are shadowed underneath it.",
+                "",
+                "These work without being an operator, because they only read files on your own",
+                "computer. On a dedicated server, /rdplserver reload rescans the server's copy.",
                 "",
                 "",
                 "IF SOMETHING DOES NOT WORK",
                 "--------------------------",
                 "",
-                "Check the log first. Every file that gets used is logged along with the pack it",
-                "came from, and anything wrong is logged as a warning saying why.",
+                "Check the log first. Advancements, loot tables, recipes, functions and",
+                "structures are logged with the pack they came from, and anything wrong is logged",
+                "as a warning saying why.",
+                "",
+                "For textures and other assets, /rdpl unused lists any file in your packs that",
+                "nothing has asked for yet, which usually means a typo in the path. Run it after",
+                "the game has finished loading, and bear in mind some files only load when they",
+                "are needed, such as languages other than the one you play in.",
                 "",
                 "Capital letters matter. If your file is Stone.png and the game asked for",
                 "stone.png, it still loads, but a warning tells you to rename it. Do rename it,",
@@ -424,14 +537,24 @@ public final class PackManager {
         for (RDPLPack pack : packs) { pack.forEach(type, ext, consumer); }
     }
 
-    public Set<String> getNamespaces() {
-        Set<String> cached = namespaces;
+    public Set<String> getNamespaces(boolean overriding) {
+        Set<String> cached = overriding ? namespacesOverride : namespacesNormal;
         if (cached != null) { return cached; }
         Set<String> all = new LinkedHashSet<>();
-        for (RDPLPack pack : packs) { all.addAll(pack.getNamespaces()); }
+        for (RDPLPack pack : packs) {
+            if (pack.isOverriding() == overriding) { all.addAll(pack.getNamespaces()); }
+        }
         Set<String> built = Collections.unmodifiableSet(all);
-        namespaces = built;
+        if (overriding) { namespacesOverride = built; }
+        else { namespacesNormal = built; }
         return built;
+    }
+
+    public boolean hasTier(boolean overriding) {
+        for (RDPLPack pack : packs) {
+            if (pack.isOverriding() == overriding) { return true; }
+        }
+        return false;
     }
 
     public void close() {
@@ -440,9 +563,11 @@ public final class PackManager {
             catch (IOException ex) { MCTMixin.LOGGER.error("Could not close pack '{}'", pack.getName(), ex); }
         }
         packs.clear();
-        merged.clear();
+        mergedNormal.clear();
+        mergedOverride.clear();
         warned.clear();
-        namespaces = null;
+        namespacesNormal = null;
+        namespacesOverride = null;
         generation.incrementAndGet();
     }
 

@@ -6,8 +6,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import slimeknights.tconstruct.library.client.model.ToolModelLoader;
 
-@Mixin(targets = "slimeknights.tconstruct.library.client.model.ToolModelLoader", remap = false)
+@Mixin(value = ToolModelLoader.class, remap = false)
 public abstract class MixinToolModelLoader {
 
     @Inject(method = "accepts", at = @At("HEAD"), cancellable = true)

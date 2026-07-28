@@ -11,7 +11,6 @@ import java.util.List;
 
 @SuppressWarnings("unused")
 public class MCTLateMixin implements ILateMixinLoader {
-    private static final String CONFIG_FILE = "mct_resourcedatapackloader_mixin.cfg";
     private static Boolean tinkersFix;
 
     @Override public List<String> getMixinConfigs() {
@@ -35,9 +34,14 @@ public class MCTLateMixin implements ILateMixinLoader {
 
     private static boolean readFlag() {
         try {
-            Configuration cfg = new Configuration(new File(Loader.instance().getConfigDir(), CONFIG_FILE));
+            Configuration cfg = new Configuration(new File(Loader.instance().getConfigDir(), ConfigPath.FILE));
             cfg.load();
-            Property prop = cfg.getCategory("settings").get("fixTinkersModelErrors");
+            String category = ConfigPath.SETTINGS;
+            if (!cfg.hasCategory(category)) {
+                MCTMixin.LOGGER.warn("Config has no '{}' category yet, leaving fixTinkersModelErrors off until the next start", category);
+                return false;
+            }
+            Property prop = cfg.getCategory(category).get("fixTinkersModelErrors");
             if (prop != null) { return prop.getBoolean(); }
         }
         catch (RuntimeException ex) {

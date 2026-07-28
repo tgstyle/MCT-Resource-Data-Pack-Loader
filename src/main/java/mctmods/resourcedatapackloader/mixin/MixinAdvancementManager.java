@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.advancement.AdvancementOverrides;
+import mctmods.resourcedatapackloader.advancement.RecipeTolerance;
 
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementManager;
@@ -17,4 +18,7 @@ public abstract class MixinAdvancementManager {
 
     @Inject(method = "loadBuiltInAdvancements", at = @At("HEAD"))
     private void rdpl$injectPackAdvancements(Map<ResourceLocation, Advancement.Builder> map, CallbackInfo ci) { AdvancementOverrides.apply(map); }
+
+    @Inject(method = "reload", at = @At("TAIL"))
+    private void rdpl$reportMissingRecipes(CallbackInfo ci) { RecipeTolerance.flush(); }
 }
