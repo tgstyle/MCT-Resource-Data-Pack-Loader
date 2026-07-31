@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.jei;
 
-import mctmods.resourcedatapackloader.compat.JEIPluginOrder;
+import mctmods.resourcedatapackloader.util.compat.JEIPluginOrder;
 
 import mezz.jei.api.recipe.IRecipeRegistryPlugin;
 import mezz.jei.startup.ModRegistry;

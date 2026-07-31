@@ -1,12 +1,11 @@
 package mctmods.resourcedatapackloader.advancement;
 
-import mctmods.resourcedatapackloader.Config;
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +19,7 @@ public final class RecipeTolerance {
 
     private RecipeTolerance() {}
 
-    public static boolean disabled() { return !Config.settings.tolerateMissingRecipes; }
+    public static boolean disabled() { return !Config.recipes.tolerateMissingInAdvancements; }
 
     public static IRecipe resolve(ResourceLocation name) {
         IRecipe recipe = CraftingManager.getRecipe(name);
@@ -48,7 +47,7 @@ public final class RecipeTolerance {
             MISSING.clear();
             return;
         }
-        MCTMixin.LOGGER.warn("{} recipe(s) referenced by advancements no longer exist, so those advancements load but never unlock them ({}). Turn on debug logging for the full list.", MISSING.size(), breakdown());
+        ContentLog.LOGGER.warn("{} recipe(s) referenced by advancements no longer exist, so those advancements load but never unlock them ({}). Turn on debug logging for the full list.", MISSING.size(), breakdown());
         REPORTED.clear();
         REPORTED.addAll(MISSING);
         MISSING.clear();
@@ -73,6 +72,6 @@ public final class RecipeTolerance {
 
     private static void report(ResourceLocation name) {
         if (!MISSING.add(name)) { return; }
-        MCTMixin.LOGGER.debug("Recipe {} no longer exists, advancements referring to it will load but never unlock it", name);
+        ContentLog.LOGGER.debug("Recipe {} no longer exists, advancements referring to it will load but never unlock it", name);
     }
 }

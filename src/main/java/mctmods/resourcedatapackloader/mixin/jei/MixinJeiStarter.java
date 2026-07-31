@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.jei;
 
-import mctmods.resourcedatapackloader.compat.JEIPluginOrder;
+import mctmods.resourcedatapackloader.util.compat.JEIPluginOrder;
 
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
 import java.util.List;
 
 @Mixin(value = JeiStarter.class, remap = false)

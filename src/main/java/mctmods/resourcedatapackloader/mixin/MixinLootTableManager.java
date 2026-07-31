@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -17,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +27,14 @@ public abstract class MixinLootTableManager {
     private static Gson GSON_INSTANCE;
     @Unique
     private Map<ResourceLocation, LootTable> rdpl$cache;
+
+    @SuppressWarnings("ConstantConditions")
+    @Inject(method = "getLootTableFromLocation", at = @At("RETURN"))
+    private void rdpl$inject(ResourceLocation ressources, CallbackInfoReturnable<LootTable> cir) {
+        LootTable table = cir.getReturnValue();
+        if (table == null || table == LootTable.EMPTY_LOOT_TABLE) { return; }
+        LootInjections.apply(ressources, table, GSON_INSTANCE);
+    }
 
     @SuppressWarnings("ConstantConditions")
     @Inject(method = "getLootTableFromLocation", at = @At("HEAD"), cancellable = true)
@@ -48,7 +56,7 @@ public abstract class MixinLootTableManager {
             cir.setReturnValue(table);
         }
         catch (IllegalArgumentException | JsonParseException ex) {
-            MCTMixin.LOGGER.error("Parsing error in loot table {}, falling back to the built-in one", ressources, ex);
+            ContentLog.LOGGER.error("Parsing error in loot table {}, falling back to the built-in one", ressources, ex);
         }
     }
 

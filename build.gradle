@@ -51,7 +51,7 @@ minecraft {
     mcpMappingVersion = common.mcp_mappings.toString().split('-')[0]
     username = 'tgstyle'
     extraRunJvmArguments.addAll(
-            '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.RDPLCore',
+            '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin',
             '-Dforge.logging.console.level=debug'
     )
 }
@@ -71,8 +71,23 @@ repositories {
 
 dependencies {
     compileOnly rfg.deobf("${common.mjei_version}")
-    compileOnly rfg.deobf("curse.maven:${common.tcon_version}")
-    compileOnly rfg.deobf("curse.maven:${common.cnam_version}")
+    runtimeOnly rfg.deobf("${common.mjei_version}")
+
+    implementation rfg.deobf("curse.maven:${common.bopl_version}")
+    implementation rfg.deobf("${common.ctwk_version}")
+    implementation("${common.gscr_version}") { transitive = false }
+    implementation rfg.deobf("curse.maven:${common.tcon_version}")
+    implementation rfg.deobf("curse.maven:${common.mant_version}")
+    implementation rfg.deobf("curse.maven:${common.cnam_version}")
+
+    implementation rfg.deobf("curse.maven:${common.arlb_version}")
+    implementation rfg.deobf("curse.maven:${common.quar_version}")
+    implementation rfg.deobf("curse.maven:${common.redf_version}")
+    implementation rfg.deobf("curse.maven:${common.cofh_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.cwor_version}")
+    runtimeOnly rfg.deobf("curse.maven:${common.thfo_version}")
+
+    runtimeOnly rfg.deobf("curse.maven:${common.bf3r_version}")
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'

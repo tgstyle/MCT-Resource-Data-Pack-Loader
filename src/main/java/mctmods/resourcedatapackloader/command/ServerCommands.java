@@ -1,46 +1,63 @@
 package mctmods.resourcedatapackloader.command;
 
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.GateDef;
+import mctmods.resourcedatapackloader.content.gate.ContentGates;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
-
+import net.minecraftforge.common.DimensionManager;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "gate", "dimensions", "biome");
+    private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
 
     @Override @Nonnull public String getName() { return "rdplserver"; }
 
-    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused>"; }
+    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused|oregen|gate <list|check <player>|grant <player> <gate>|revoke <player> <gate>>>"; }
 
     @Override public int getRequiredPermissionLevel() { return 3; }
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, SUBCOMMANDS); }
+        if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
+        if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
+        if (args.length == 4 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, names()); }
         return Collections.emptyList();
     }
 
     @Override public void execute(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
-        MCTMixin.LOGGER.info("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
+        ContentLog.LOGGER.info("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
+        else if (args.length == 1 && "oregen".equals(args[0])) { oregen(sender); }
+        else if (args.length >= 1 && "gate".equals(args[0])) { gate(server, sender, args); }
+        else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
+        else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -74,6 +91,19 @@ public class ServerCommands extends CommandBase {
         }
     }
 
+    private void oregen(ICommandSender sender) {
+        Map<String, Integer> blocked = ContentOreControl.blocked();
+        if (blocked.isEmpty()) {
+            send(sender, TextFormatting.YELLOW, "No ore generation has been blocked. Either the settings are off, or no chunk that would have generated ore has been made yet");
+            return;
+        }
+
+        send(sender, TextFormatting.GREEN, "Ore generation blocked so far:");
+        for (Map.Entry<String, Integer> entry : blocked.entrySet()) {
+            send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
     private void unused(ICommandSender sender) {
         List<String> unused = PackManager.get().findUnused();
         if (unused.isEmpty()) {
@@ -81,7 +111,7 @@ public class ServerCommands extends CommandBase {
             return;
         }
         send(sender, TextFormatting.YELLOW, unused.size() + " file(s) have not been asked for:");
-        for (String entry : unused) { MCTMixin.LOGGER.warn("  {}", entry); }
+        for (String entry : unused) { ContentLog.LOGGER.warn("  {}", entry); }
         send(sender, TextFormatting.GRAY, "Some only load when they are needed, so check the paths rather than deleting them");
     }
 
@@ -101,6 +131,82 @@ public class ServerCommands extends CommandBase {
         }
     }
 
+    private void gate(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        if (!ContentGates.enabled()) {
+            send(sender, TextFormatting.YELLOW, "No gates are loaded, so no dimension is being guarded");
+            return;
+        }
+
+        String action = args.length < 2 ? "list" : args[1];
+        if ("list".equals(action)) {
+            gateList(sender);
+            return;
+        }
+
+        if (args.length < 3) { throw new WrongUsageException(getUsage(sender)); }
+        EntityPlayerMP player = getPlayer(server, sender, args[2]);
+        if ("check".equals(action)) {
+            gateCheck(sender, player);
+            return;
+        }
+
+        if (args.length < 4) { throw new WrongUsageException(getUsage(sender)); }
+        GateDef def = ContentGates.find(args[3]);
+        if (def == null) { throw new CommandException("No gate is named " + args[3]); }
+
+        if ("grant".equals(action)) {
+            ContentGates.unlock(player, def, false);
+            send(sender, TextFormatting.GREEN, "Opened " + def.getKey() + " for " + player.getName() + " (" + def.getScope() + " scope)");
+        }
+        else if ("revoke".equals(action)) {
+            ContentGates.lock(player, def);
+            send(sender, TextFormatting.GREEN, "Closed " + def.getKey() + " for " + player.getName() + " (" + def.getScope() + " scope)");
+        }
+        else { throw new WrongUsageException(getUsage(sender)); }
+    }
+
+    private void biome(ICommandSender sender) {
+        for (String line : ContentBiomeControl.inspect(sender.getEntityWorld(), sender.getPosition())) { send(sender, TextFormatting.WHITE, line); }
+    }
+
+    private void dimensions(ICommandSender sender) {
+        Map<ResourceLocation, DimensionDef> defs = ContentDimensions.all();
+        if (defs.isEmpty()) {
+            send(sender, TextFormatting.YELLOW, "No pack defines a dimension");
+            return;
+        }
+
+        send(sender, TextFormatting.GREEN, defs.size() + " dimension(s) defined:");
+        for (Map.Entry<ResourceLocation, DimensionDef> entry : defs.entrySet()) {
+            DimensionDef def = entry.getValue();
+            boolean live = DimensionManager.isDimensionRegistered(def.id);
+            send(sender, live ? TextFormatting.WHITE : TextFormatting.GRAY, "  " + entry.getKey() + TextFormatting.GRAY
+                    + "  id=" + def.id + " terrain=" + def.terrain + " biomes=" + def.biomeSource
+                    + (live ? " registered" : " NOT registered"));
+        }
+    }
+
+    private void gateList(ICommandSender sender) {
+        send(sender, TextFormatting.GREEN, ContentGates.all().size() + " gate(s):");
+        for (GateDef def : ContentGates.all().values()) {
+            send(sender, TextFormatting.WHITE, "  " + def.getKey() + TextFormatting.GRAY + "  dimension=" + def.dimension + " scope=" + def.getScope() + (def.open ? " open" : ""));
+        }
+    }
+
+    private void gateCheck(ICommandSender sender, EntityPlayerMP player) {
+        send(sender, TextFormatting.GREEN, "Gates for " + player.getName() + ":");
+        for (GateDef def : ContentGates.all().values()) {
+            boolean unlocked = ContentGates.unlocked(player, def);
+            send(sender, unlocked ? TextFormatting.WHITE : TextFormatting.GRAY, "  " + def.getKey() + (unlocked ? " open" : " closed"));
+        }
+    }
+
+    private static List<String> names() {
+        List<String> names = new ArrayList<>();
+        for (GateDef def : ContentGates.all().values()) { names.add(def.registryName.getPath()); }
+        return names;
+    }
+
     private static String elapsed(long start) {
         long time = System.currentTimeMillis() - start;
         return time < 1000L ? (time + "ms") : String.format("%.02fs", time / 1000D);
@@ -108,6 +214,6 @@ public class ServerCommands extends CommandBase {
 
     private static void send(ICommandSender sender, TextFormatting colour, String message) {
         sender.sendMessage(new TextComponentString(colour + message));
-        MCTMixin.LOGGER.info("  {}", message);
+        ContentLog.LOGGER.info("  {}", message);
     }
 }

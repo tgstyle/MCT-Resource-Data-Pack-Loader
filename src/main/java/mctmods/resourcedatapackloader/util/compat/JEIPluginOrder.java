@@ -1,15 +1,13 @@
-package mctmods.resourcedatapackloader.compat;
+package mctmods.resourcedatapackloader.util.compat;
 
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import mezz.jei.api.IModPlugin;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 public final class JEIPluginOrder {
@@ -43,7 +41,7 @@ public final class JEIPluginOrder {
         List<IModPlugin> ordered = new ArrayList<>(providers);
         ordered.addAll(consumers);
         if (!ordered.equals(plugins)) {
-            MCTMixin.LOGGER.info("Reordered JEI runtime notification so recipe registry providers initialise before plugins that query them: {}", names(providers));
+            ContentLog.LOGGER.info("Reordered JEI runtime notification so recipe registry providers initialise before plugins that query them: {}", names(providers));
         }
         return ordered;
     }

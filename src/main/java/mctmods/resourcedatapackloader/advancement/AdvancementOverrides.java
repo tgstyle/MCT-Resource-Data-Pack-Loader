@@ -1,17 +1,15 @@
 package mctmods.resourcedatapackloader.advancement;
 
-import mctmods.resourcedatapackloader.core.MCTMixin;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonParseException;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementManager;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 public final class AdvancementOverrides {
@@ -38,18 +36,21 @@ public final class AdvancementOverrides {
             map.put(entry.getKey(), builder);
             applied++;
         }
-        if (!quiet && applied > 0) { MCTMixin.LOGGER.info("Applied {} advancement override(s)", applied); }
+        if (!quiet && applied > 0) { ContentLog.LOGGER.info("Applied {} advancement override(s)", applied); }
         quiet = true;
     }
 
     @Nullable private static Advancement.Builder parse(ResourceLocation id, String contents) {
         try {
             Advancement.Builder builder = JsonUtils.gsonDeserialize(AdvancementManager.GSON, contents, Advancement.Builder.class);
-            if (builder == null && !quiet) { MCTMixin.LOGGER.error("Advancement {} is empty or null, leaving the built-in one in place", id); }
+            if (builder == null && !quiet) { ContentLog.LOGGER.error("Advancement {} is empty or null, leaving the built-in one in place", id); }
             return builder;
         }
         catch (IllegalArgumentException | JsonParseException ex) {
-            if (!quiet) { MCTMixin.LOGGER.error("Parsing error in advancement {}, leaving the built-in one in place", id, ex); }
+            if (!quiet) {
+                ContentLog.LOGGER.error("Parsing error in advancement {}, leaving the built-in one in place: {}", id, ex.getMessage());
+                ContentLog.LOGGER.debug("Advancement {} could not be parsed", id, ex);
+            }
             return null;
         }
     }

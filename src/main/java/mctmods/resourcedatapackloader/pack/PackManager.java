@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.pack;
 
-import mctmods.resourcedatapackloader.Config;
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +26,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 
 public final class PackManager {
@@ -38,8 +37,30 @@ public final class PackManager {
     public static final String LOOT_TABLES = "loot_tables";
     public static final String RECIPES = "recipes";
     public static final String REGISTRY_REMAP = "registry_remap";
+    public static final String BLOCKS = "blocks";
+    public static final String ITEMS = "items";
+    public static final String FLUIDS = "fluids";
+    public static final String FURNACE = "furnace";
+    public static final String WORLDGEN = "worldgen";
+    public static final String GATES = "gates";
+    public static final String WORLDTEMPLATES = "worldtemplates";
+    public static final String DIMENSIONS = "dimensions";
+    public static final String GAMERULES = "gamerules";
+    public static final String FUELS = "fuels";
+    public static final String OREDICT = "oredict";
+    public static final String SOUNDS = "sounds";
+    public static final String RECIPE_REMOVALS = "recipe_removals";
+    public static final String MATERIALS = "materials";
+    public static final String LOOT_INJECTIONS = "loot_injections";
+    public static final String TABS = "tabs";
     public static final String FUNCTIONS = "functions";
     public static final String STRUCTURES = "structures";
+    public static final String POTIONS = "potions";
+    public static final String POTION_TYPES = "potion_types";
+    public static final String BREWING = "brewing";
+    public static final String VILLAGERS = "villagers";
+    public static final String TRADES = "trades";
+    public static final String BIOMES = "biomes";
     public static final String JSON = "json";
     public static final String MCFUNCTION = "mcfunction";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?([OoNn])?[ _-]?");
@@ -62,13 +83,20 @@ public final class PackManager {
 
     public List<RDPLPack> getPacks() { return Collections.unmodifiableList(packs); }
 
+    public boolean provides(String namespace) {
+        for (RDPLPack pack : packs) {
+            if (pack.getNamespaces().contains(namespace)) { return true; }
+        }
+        return false;
+    }
+
     @Nullable public Path getRoot() { return root; }
 
     public int getGeneration() { return generation.get(); }
 
     public void scan(Path packRoot) {
         if (packRoot.getNameCount() == 0 || packRoot.equals(packRoot.getRoot())) {
-            MCTMixin.LOGGER.error("rootDirectory resolves to '{}', which would treat the whole folder as the pack root. Set it to a folder name such as '{}'. No packs loaded.", packRoot, ROOT_DIRECTORY);
+            ContentLog.LOGGER.error("rootDirectory resolves to '{}', which would treat the whole folder as the pack root. Set it to a folder name such as '{}'. No packs loaded.", packRoot, ROOT_DIRECTORY);
             close();
             return;
         }
@@ -85,7 +113,7 @@ public final class PackManager {
                 if (RDPLPack.ASSETS.equals(fileName)) { continue; }
                 if (README.equals(fileName)) { continue; }
                 if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED)) {
-                    MCTMixin.LOGGER.info("Skipping disabled pack '{}'", fileName);
+                    ContentLog.LOGGER.info("Skipping disabled pack '{}'", fileName);
                     continue;
                 }
                 RDPLPack pack = load(entry);
@@ -93,7 +121,7 @@ public final class PackManager {
             }
         }
         catch (IOException | UncheckedIOException ex) {
-            MCTMixin.LOGGER.error("Could not scan {}", packRoot, ex);
+            ContentLog.LOGGER.error("Could not scan {}", packRoot, ex);
         }
         named.sort(Comparator.comparingInt(RDPLPack::getPriority).thenComparing(RDPLPack::getName, String.CASE_INSENSITIVE_ORDER));
         packs.addAll(named);
@@ -132,17 +160,17 @@ public final class PackManager {
             Path readme = packRoot.resolve(README);
             if (!Files.exists(readme)) {
                 Files.write(readme, readmeText().getBytes(StandardCharsets.UTF_8));
-                MCTMixin.LOGGER.info("Wrote {}", readme);
+                ContentLog.LOGGER.info("Wrote {}", readme);
             }
         }
         catch (IOException ex) {
-            MCTMixin.LOGGER.error("Could not prepare {}", packRoot, ex);
+            ContentLog.LOGGER.error("Could not prepare {}", packRoot, ex);
         }
     }
 
     @Nullable private RDPLPack loadRoot(Path packRoot) {
         if (!Files.isDirectory(packRoot.resolve(RDPLPack.ASSETS))) { return null; }
-        RDPLPack pack = new RDPLPack(ROOT_PACK, -1, Config.settings.overrideResourcePacks, packRoot, null);
+        RDPLPack pack = new RDPLPack(ROOT_PACK, -1, Config.packs.overrideResourcePacks, packRoot, null);
         return pack.getNamespaces().isEmpty() ? null : pack;
     }
 
@@ -150,7 +178,7 @@ public final class PackManager {
         String fileName = entry.getFileName().toString();
         if (Files.isDirectory(entry)) {
             if (!Files.isDirectory(entry.resolve(RDPLPack.ASSETS))) {
-                MCTMixin.LOGGER.warn("Skipping '{}': a pack folder must contain an '{}' directory", fileName, RDPLPack.ASSETS);
+                ContentLog.LOGGER.warn("Skipping '{}': a pack folder must contain an '{}' directory", fileName, RDPLPack.ASSETS);
                 return null;
             }
             return create(fileName, entry, null);
@@ -160,20 +188,20 @@ public final class PackManager {
             FileSystem zip = FileSystems.newFileSystem(entry, null);
             RDPLPack pack = create(stripExtension(fileName), zip.getPath("/"), zip);
             if (pack.getNamespaces().isEmpty()) {
-                MCTMixin.LOGGER.warn("Skipping '{}': no '{}' directory inside the zip", fileName, RDPLPack.ASSETS);
+                ContentLog.LOGGER.warn("Skipping '{}': no '{}' directory inside the zip", fileName, RDPLPack.ASSETS);
                 zip.close();
                 return null;
             }
             return pack;
         }
         catch (IOException ex) {
-            MCTMixin.LOGGER.error("Could not open zip pack '{}'", fileName, ex);
+            ContentLog.LOGGER.error("Could not open zip pack '{}'", fileName, ex);
             return null;
         }
     }
 
     private static RDPLPack create(String raw, Path root, @Nullable FileSystem owned) {
-        boolean fallback = Config.settings.overrideResourcePacks;
+        boolean fallback = Config.packs.overrideResourcePacks;
         Matcher matcher = PRIORITY.matcher(raw);
         if (!matcher.find() || (matcher.group(1) == null && matcher.group(2) == null)) { return new RDPLPack(raw, -1, fallback, root, owned); }
         String clean = raw.substring(matcher.end());
@@ -182,7 +210,7 @@ public final class PackManager {
         if (matcher.group(1) == null) { return new RDPLPack(clean, -1, overriding, root, owned); }
         try { return new RDPLPack(clean, Integer.parseInt(matcher.group(1)), overriding, root, owned); }
         catch (NumberFormatException ex) {
-            MCTMixin.LOGGER.warn("Pack '{}': priority number is too large, treating the pack as unprioritised", raw);
+            ContentLog.LOGGER.warn("Pack '{}': priority number is too large, treating the pack as unprioritised", raw);
             return new RDPLPack(raw, -1, overriding, root, owned);
         }
     }
@@ -197,18 +225,52 @@ public final class PackManager {
         return dot < 0 ? fileName : fileName.substring(0, dot);
     }
 
+    public void warnAboutDisabledFeatures() {
+        if (packs.isEmpty()) { return; }
+
+        List<String[]> off = new ArrayList<>();
+        collect(off, Config.content.load, "content.load", JSON, BLOCKS, ITEMS, FLUIDS, MATERIALS);
+        collect(off, Config.content.sounds, "content.sounds", JSON, SOUNDS);
+        collect(off, Config.content.fuels, "content.fuels", JSON, FUELS);
+        collect(off, Config.content.oreDictionary, "content.oreDictionary", JSON, OREDICT);
+        collect(off, Config.content.potions, "content.potions", JSON, POTIONS, POTION_TYPES);
+        collect(off, Config.content.brewing, "content.brewing", JSON, BREWING);
+        collect(off, Config.content.villagers, "content.villagers", JSON, VILLAGERS, TRADES);
+        collect(off, Config.content.biomes, "content.biomes", JSON, BIOMES);
+        collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);
+        collect(off, Config.recipes.removals, "recipes.removals", JSON, RECIPE_REMOVALS);
+        collect(off, Config.data.lootInjections, "data.lootInjections", JSON, LOOT_INJECTIONS);
+        collect(off, Config.data.registryRemaps, "data.registryRemaps", JSON, REGISTRY_REMAP);
+        collect(off, Config.worldgen.load, "worldgen.load", JSON, WORLDGEN);
+        collect(off, Config.data.functions, "data.functions", MCFUNCTION, FUNCTIONS);
+        if (off.isEmpty()) { return; }
+
+        for (RDPLPack pack : packs) {
+            for (String[] entry : off) {
+                int count = pack.count(entry[0], entry[1]);
+                if (count == 0) { continue; }
+                ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), but {} is off in the config, so they do nothing", pack.getName(), count, entry[0], entry[2]);
+            }
+        }
+    }
+
+    private static void collect(List<String[]> off, boolean enabled, String setting, String ext, String... types) {
+        if (enabled) { return; }
+        for (String type : types) { off.add(new String[] { type, ext, setting }); }
+    }
+
     public void report() {
         if (packs.isEmpty()) {
-            MCTMixin.LOGGER.info("No packs found in {}", root);
+            ContentLog.LOGGER.info("No packs found in {}", root);
             return;
         }
-        MCTMixin.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first", packs.size(), root);
-        if (!Config.settings.logPackContents) { return; }
+        ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first", packs.size(), root);
+        if (!Config.packs.logContents) { return; }
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
             String tier = pack.isOverriding() ? " overriding" : "";
-            MCTMixin.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={}",
-                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON));
+            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={}",
+                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON));
         }
     }
 
@@ -250,9 +312,9 @@ public final class PackManager {
     }
 
     private void reportCaseMismatch(String namespace, String requested, Entry entry) {
-        if (!Config.settings.warnOnCaseMismatch) { return; }
+        if (!Config.packs.warnOnCaseMismatch) { return; }
         if (!warned.add(namespace + ":" + requested)) { return; }
-        MCTMixin.LOGGER.warn("Pack '{}': loading {}:{} from '{}', the filename case does not match. Rename it to '{}' so it also works outside this mod.", entry.pack.getName(), namespace, requested, entry.actual, requested);
+        ContentLog.LOGGER.warn("Pack '{}': loading {}:{} from '{}', the filename case does not match. Rename it to '{}' so it also works outside this mod.", entry.pack.getName(), namespace, requested, entry.actual, requested);
     }
 
     public boolean existsRaw(String namespace, String path, boolean overriding) { return resolve(namespace, path, overriding) != null; }
@@ -286,7 +348,8 @@ public final class PackManager {
 
     private static boolean isData(String path) {
         return path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
-                || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/");
+                || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
+                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/");
     }
 
     @Nullable public String getPackName(String namespace, String path) {
@@ -429,6 +492,106 @@ public final class PackManager {
                 "better tool.",
                 "",
                 "",
+                "ADDING NEW CONTENT",
+                "------------------",
+                "",
+                "A pack can also add blocks, items and fluids of its own, described as JSON. You",
+                "do not need to write or build a mod for this.",
+                "",
+                "The file's path is its name. A block at",
+                "",
+                "    rdploader/MyPack/assets/mypack/blocks/copper_ore.json",
+                "",
+                "registers as mypack:copper_ore. There is no name field to fill in or get wrong.",
+                "If a real mod already registers that name, the mod wins and your file is skipped.",
+                "",
+                "The simplest block is a few lines:",
+                "",
+                "    {",
+                "      \"type\": \"ore\",",
+                "      \"material\": \"rock\",",
+                "      \"harvestTool\": \"pickaxe\",",
+                "      \"variants\": {",
+                "        \"copper_ore\": { \"meta\": 0, \"hardness\": 3.0, \"harvestLevel\": 1 }",
+                "      }",
+                "    }",
+                "",
+                "You still supply the model, blockstate, texture and language entry the same way",
+                "as any other file in this folder.",
+                "",
+                "Each of these is a folder under assets/<yourpack>:",
+                "",
+                "    blocks           items            fluids           materials",
+                "    worldgen         furnace          fuels            oredict",
+                "    sounds           tabs             recipes          recipe_removals",
+                "    loot_tables      loot_injections  advancements     functions",
+                "    structures       registry_remap   potions          potion_types",
+                "    brewing          villagers        trades           biomes",
+                "",
+                "Blocks come in these shapes, set by the \"type\" field:",
+                "",
+                "    basic   ore     falling   slab    stairs   fence",
+                "    pane    wall    ladder    torch   crop",
+                "",
+                "and items in these:",
+                "",
+                "    basic   food    drink     potion  tool     armor    seed",
+                "    potion_bottle",
+                "",
+                "A potion type always appears on the vanilla potion, splash potion, lingering",
+                "potion and tipped arrow, which live in the Brewing and Combat tabs. The tab is",
+                "a property of the item, not of the potion type, so there is no way to move them",
+                "into your own tab. A potion_bottle item is your own container instead: it takes",
+                "a creativeTab like any other item, lists the potion types you name in",
+                "potionTypes, and the brewing stand accepts it wherever a glass bottle works.",
+                "",
+                "A villagers/<name>.json file defines a profession and the careers it offers.",
+                "A trades/*.json file adds trades to any career, whether yours or one of",
+                "Minecraft's, naming the profession, the career and the level the trade appears",
+                "at. Name a career that does not exist and the log lists the ones that do.",
+                "",
+                "A biomes/<name>.json file defines a biome: its climate and colours, the blocks",
+                "it is made of, what decorates it, what spawns in it, and where it generates.",
+                "Its number is chosen for you and written into each world the first time that",
+                "world loads, so it stays put afterwards no matter what else you install. Set",
+                "\"id\" only when a biome has to keep a number something else already used, such",
+                "as when a pack replaces a mod that is being retired. Renaming or deleting a",
+                "biome a world already contains loses it, the same as renumbering a block, so",
+                "use registry_remap for a rename instead.",
+                "",
+                "A villager's displayed name is the lang key entity.Villager.<career>, using the",
+                "career name exactly as you wrote it and nothing else. That key space is shared",
+                "with Minecraft and every other pack, so put your namespace in the career name,",
+                "as in rdpltest.prospector. Only the name is affected: a villager stores its",
+                "career as a number, so renaming one changes what existing villagers are",
+                "called, and reordering the careers list changes which career they have.",
+                "",
+                "A potion type is named for its file the same way, and its displayed name comes",
+                "from the lang key potion.effect.<namespace>.<name>, with splash_potion.effect.,",
+                "lingering_potion.effect. and tipped_arrow.effect. for the other three forms.",
+                "",
+                "",
+                "A WARNING ABOUT META",
+                "--------------------",
+                "",
+                "Every variant has a meta number, and that number is what the world file stores.",
+                "Renumbering a variant people already have in a world turns their blocks into",
+                "something else. Add new variants on the end and never renumber an old one.",
+                "",
+                "A block holds 16 variants, because that is what four bits of metadata allows.",
+                "Slabs get 8, since one bit says top or bottom, and stairs, ladders, torches and",
+                "crops get 1, because facing or age uses the rest. Items are not as tight and",
+                "can skip numbers.",
+                "",
+                "",
+                "WHERE THIS STOPS",
+                "----------------",
+                "",
+                "This describes what a thing is, not what it does over time. Anything needing a",
+                "tile entity, a GUI, an inventory or code running every tick still needs a real",
+                "mod. A machine is out of reach; an ore, a fence, a food or a fluid is not.",
+                "",
+                "",
                 "SEEING YOUR CHANGES",
                 "-------------------",
                 "",
@@ -513,7 +676,7 @@ public final class PackManager {
                 if (contents != null) { return contents; }
             }
             catch (IOException ex) {
-                MCTMixin.LOGGER.error("Pack '{}': could not read {}", pack.getName(), name, ex);
+                ContentLog.LOGGER.error("Pack '{}': could not read {}", pack.getName(), name, ex);
             }
         }
         return null;
@@ -524,11 +687,11 @@ public final class PackManager {
         if (entry == null) { return null; }
         try {
             String contents = entry.pack.read(namespace, entry.actual);
-            MCTMixin.LOGGER.info("Serving {} {}:{} from pack '{}'", type, namespace, path, entry.pack.getName());
+            ContentLog.LOGGER.info("Serving {} {}:{} from pack '{}'", type, namespace, path, entry.pack.getName());
             return contents;
         }
         catch (IOException ex) {
-            MCTMixin.LOGGER.error("Could not read {} {}:{} from pack '{}'", type, namespace, path, entry.pack.getName(), ex);
+            ContentLog.LOGGER.error("Could not read {} {}:{} from pack '{}'", type, namespace, path, entry.pack.getName(), ex);
             return null;
         }
     }
@@ -560,7 +723,7 @@ public final class PackManager {
     public void close() {
         for (RDPLPack pack : packs) {
             try { pack.close(); }
-            catch (IOException ex) { MCTMixin.LOGGER.error("Could not close pack '{}'", pack.getName(), ex); }
+            catch (IOException ex) { ContentLog.LOGGER.error("Could not close pack '{}'", pack.getName(), ex); }
         }
         packs.clear();
         mergedNormal.clear();

@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.core;
+package mctmods.resourcedatapackloader.util;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,6 +10,6 @@ public final class Summary {
 
     public static void info(String key, String message) {
         if (message.equals(LAST.put(key, message))) { return; }
-        MCTMixin.LOGGER.info(message);
+        ContentLog.LOGGER.info(message);
     }
 }

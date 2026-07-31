@@ -5,14 +5,29 @@
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "AccessorChunk",
+    "AccessorEnumCreatureType",
     "InvokerJsonContext",
     "MixinAdvancementManager",
     "MixinAdvancementRewards",
+    "MixinBiomeProvider",
+    "MixinChunk",
+    "MixinChunkGeneratorHell",
+    "MixinChunkGeneratorOverworld",
+    "MixinChunkGeneratorOverworldSpawns",
     "MixinCraftingHelper",
+    "MixinEntityAnimal",
+    "MixinFMLModContainerRequires",
     "MixinFunctionManager",
+    "MixinFurnaceRecipes",
+    "MixinGameRegistry",
     "MixinLootTableManager",
+    "MixinMapGenBase",
+    "MixinMapGenStructure",
     "MixinRecipeUnlockedTrigger",
-    "MixinTemplateManager"
+    "MixinTemplateManager",
+    "MixinWorld",
+    "MixinWorldProvider"
   ],
   "client": [
     "MixinMinecraft"

@@ -1,13 +1,12 @@
 package mctmods.resourcedatapackloader.pack;
 
-import mctmods.resourcedatapackloader.Config;
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -20,7 +19,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
@@ -51,11 +49,11 @@ public final class RDPLResourcePack extends AbstractResourcePack {
     }
 
     private static void trace(ResourceLocation location) {
-        if (!Config.settings.traceUnresolvedVariables) { return; }
+        if (!Config.packs.traceUnresolvedVariables) { return; }
         String path = location.getPath();
         if (path.indexOf('#') < 0) { return; }
         if (!TRACED.add(location.toString())) { return; }
-        MCTMixin.LOGGER.warn("Something asked for {}, which is an unresolved model variable rather than a real file. The stack trace below shows what requested it.", location, new Throwable("requested here"));
+        ContentLog.LOGGER.warn("Something asked for {}, which is an unresolved model variable rather than a real file. The stack trace below shows what requested it.", location, new Throwable("requested here"));
     }
 
     @Override @Nonnull protected InputStream getInputStreamByName(@Nonnull String name) throws IOException {

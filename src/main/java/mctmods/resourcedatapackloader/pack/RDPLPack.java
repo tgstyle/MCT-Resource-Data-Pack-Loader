@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
-import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +15,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import javax.annotation.Nullable;
 
 public final class RDPLPack {
@@ -56,7 +55,7 @@ public final class RDPLPack {
             stream.filter(Files::isDirectory).forEach(this::indexNamespace);
         }
         catch (IOException | UncheckedIOException ex) {
-            MCTMixin.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
+            ContentLog.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
         }
     }
 
@@ -65,16 +64,30 @@ public final class RDPLPack {
         Set<String> paths = new LinkedHashSet<>();
         try (Stream<Path> stream = Files.walk(dir)) {
             stream.filter(Files::isRegularFile)
-                    .map(p -> dir.relativize(p).toString().replace('\\', '/'))
+                    .map(p -> relative(dir, p))
                     .forEach(paths::add);
         }
         catch (IOException | UncheckedIOException ex) {
-            MCTMixin.LOGGER.error("Pack '{}': could not index namespace {}", name, namespace, ex);
+            ContentLog.LOGGER.error("Pack '{}': could not index namespace {}", name, namespace, ex);
             return;
         }
         if (paths.isEmpty()) { return; }
         index.put(namespace, paths);
         fileCount += paths.size();
+    }
+
+    private static String relative(Path dir, Path file) {
+        String base = dir.toString().replace('\\', '/');
+        if (!base.endsWith("/")) { base = base + "/"; }
+        String path = file.toString().replace('\\', '/');
+        if (path.startsWith(base)) { return path.substring(base.length()); }
+        return trimLeadingSeparator(dir.relativize(file).toString().replace('\\', '/'));
+    }
+
+    private static String trimLeadingSeparator(String path) {
+        int start = 0;
+        while (start < path.length() && path.charAt(start) == '/') { start++; }
+        return start == 0 ? path : path.substring(start);
     }
 
     private static String trimSeparator(String raw) {
@@ -105,7 +118,7 @@ public final class RDPLPack {
                 if (!path.startsWith(prefix) || !path.endsWith(suffix)) { continue; }
                 String id = path.substring(prefix.length(), path.length() - suffix.length());
                 try { consumer.accept(namespace, id, read(namespace, path)); }
-                catch (IOException ex) { MCTMixin.LOGGER.error("Pack '{}': could not read {}:{}", name, namespace, path, ex); }
+                catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not read {}:{}", name, namespace, path, ex); }
             }
         }
     }

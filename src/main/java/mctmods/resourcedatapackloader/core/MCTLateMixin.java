@@ -1,11 +1,10 @@
 package mctmods.resourcedatapackloader.core;
 
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
+import mctmods.resourcedatapackloader.core.util.ConfigCore;
+import mctmods.resourcedatapackloader.core.util.ConfigLate;
+
 import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
-
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,36 +16,29 @@ public class MCTLateMixin implements ILateMixinLoader {
         return Arrays.asList(
                 "mixins.resourcedatapackloader.jei.json",
                 "mixins.resourcedatapackloader.tconstruct.json",
-                "mixins.resourcedatapackloader.conarm.json");
+                "mixins.resourcedatapackloader.conarm.json",
+                "mixins.resourcedatapackloader.bop.json",
+                "mixins.resourcedatapackloader.crafttweaker.json",
+                "mixins.resourcedatapackloader.quark.json",
+                "mixins.resourcedatapackloader.vanillaportals.json",
+                "mixins.resourcedatapackloader.vanillagrowth.json");
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (mixinConfig.endsWith(".jei.json")) { return Loader.isModLoaded("jei"); }
         if (mixinConfig.endsWith(".tconstruct.json")) { return tinkersFixEnabled() && Loader.isModLoaded("tconstruct"); }
         if (mixinConfig.endsWith(".conarm.json")) { return tinkersFixEnabled() && Loader.isModLoaded("conarm"); }
+        if (mixinConfig.endsWith(".bop.json")) { return Loader.isModLoaded("biomesoplenty"); }
+        if (mixinConfig.endsWith(".crafttweaker.json")) { return Loader.isModLoaded("crafttweaker"); }
+        if (mixinConfig.endsWith(".quark.json")) { return Loader.isModLoaded("quark"); }
+        if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
+        if (mixinConfig.endsWith(".vanillagrowth.json")) { return !Loader.isModLoaded("universaltweaks"); }
         return true;
     }
 
     private static boolean tinkersFixEnabled() {
-        if (tinkersFix == null) { tinkersFix = readFlag(); }
+        if (tinkersFix == null) { tinkersFix = ConfigCore.read(ConfigLate.COMPAT, "fixTinkersModelErrors"); }
         return tinkersFix;
     }
 
-    private static boolean readFlag() {
-        try {
-            Configuration cfg = new Configuration(new File(Loader.instance().getConfigDir(), ConfigPath.FILE));
-            cfg.load();
-            String category = ConfigPath.SETTINGS;
-            if (!cfg.hasCategory(category)) {
-                MCTMixin.LOGGER.warn("Config has no '{}' category yet, leaving fixTinkersModelErrors off until the next start", category);
-                return false;
-            }
-            Property prop = cfg.getCategory(category).get("fixTinkersModelErrors");
-            if (prop != null) { return prop.getBoolean(); }
-        }
-        catch (RuntimeException ex) {
-            MCTMixin.LOGGER.error("Could not read {} from config, leaving it off", "fixTinkersModelErrors", ex);
-        }
-        return false;
-    }
 }
