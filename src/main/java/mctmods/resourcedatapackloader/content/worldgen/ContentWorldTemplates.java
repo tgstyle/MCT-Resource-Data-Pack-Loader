@@ -125,10 +125,11 @@ public final class ContentWorldTemplates {
         }
 
         if ("auto".equalsIgnoreCase(wanted)) {
+            WorldTemplateDef chosen = null;
             for (WorldTemplateDef def : usable) {
-                if (!"rdpl".equals(def.registryName.getNamespace())) { return def; }
+                if (!"rdpl".equals(def.registryName.getNamespace())) { chosen = def; }
             }
-            return null;
+            return chosen;
         }
 
         ContentLog.LOGGER.error("worldTemplate is '{}' but nothing defines it. Known templates: {}", wanted, DEFS.keySet());

@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.gate.PortalStorage;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -21,12 +22,14 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class ContentBlockPortal extends ContentBlock {
     public static final int MAX_VARIANTS = 16;
@@ -76,6 +79,24 @@ public class ContentBlockPortal extends ContentBlock {
         }
 
         return super.removedByPlayer(state, world, pos, player, willHarvest);
+    }
+
+    @Override public boolean canDropFromExplosion(@Nonnull Explosion explosion) { return !portal.owned; }
+
+    @Override public void onBlockExploded(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull Explosion explosion) {
+        if (!world.isRemote && owned(world, pos)) { return; }
+
+        super.onBlockExploded(world, pos, explosion);
+    }
+
+    @Override public float getExplosionResistance(@Nonnull World world, @Nonnull BlockPos pos, @Nullable Entity exploder, @Nonnull Explosion explosion) {
+        if (owned(world, pos)) { return Float.MAX_VALUE; }
+
+        return super.getExplosionResistance(world, pos, exploder, explosion);
+    }
+
+    private boolean owned(World world, BlockPos pos) {
+        return portalFor(world.getBlockState(pos)).owned && PortalStorage.owner(world, pos) != null;
     }
 
     private boolean mayBreak(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
