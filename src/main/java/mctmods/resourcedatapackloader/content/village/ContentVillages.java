@@ -68,7 +68,7 @@ public final class ContentVillages {
     }
 
     public static boolean filtering() {
-        if (ContentControl.off(ContentControl.VILLAGES)) { return false; }
+        if (ContentControl.off(ContentControl.STRUCTURES)) { return false; }
 
         return !names().isEmpty();
     }
@@ -77,7 +77,7 @@ public final class ContentVillages {
         if (piece == null) { return false; }
 
         String name = piece.getSimpleName().toLowerCase(Locale.ROOT);
-        return names().contains(name) == ContentControl.flag(ContentControl.VILLAGES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist);
+        return names().contains(name) == ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist);
     }
 
     @Nullable public static VillageDef byName(String name) { return DEFS.get(name); }
@@ -89,7 +89,7 @@ public final class ContentVillages {
     }
 
     private static Set<String> names() {
-        if (named == null) { named = Names.lower(ContentControl.list(ContentControl.VILLAGES, "villagePieces", Config.worldgen.villagePieces)); }
+        if (named == null) { named = Names.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces)); }
 
         return named;
     }

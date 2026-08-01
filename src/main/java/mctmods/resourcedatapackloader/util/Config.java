@@ -31,7 +31,7 @@ public class Config {
         public String biomes = "default";
         @net.minecraftforge.common.config.Config.Comment("Blocking other mods' own world generators [default|global|off]")
         public String generators = "default";
-        @net.minecraftforge.common.config.Config.Comment("Caves, ravines, villages and the rest of the structure switches [default|global|off]")
+        @net.minecraftforge.common.config.Config.Comment("Caves, ravines, villages and the rest of the structure switches, where structures are placed, and which vanilla village pieces are used [default|global|off]")
         public String structures = "default";
         @net.minecraftforge.common.config.Config.Comment("Mob caps and the hostile spawn rates [default|global|off]")
         public String spawning = "default";
@@ -45,7 +45,7 @@ public class Config {
         public String terrain = "default";
         @net.minecraftforge.common.config.Config.Comment("Replacing blocks in chunks that already exist [default|global|off]")
         public String replacements = "default";
-        @net.minecraftforge.common.config.Config.Comment("Village plots from packs and the vanilla village piece lists [default|global|off]")
+        @net.minecraftforge.common.config.Config.Comment("Village plots from packs [default|global|off]")
         public String villages = "default";
     }
 
