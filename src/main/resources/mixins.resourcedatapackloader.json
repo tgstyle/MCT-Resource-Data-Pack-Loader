@@ -20,7 +20,6 @@
     "MixinChunkGeneratorOverworldSpawns",
     "MixinCraftingHelper",
     "MixinEntityAnimal",
-    "MixinFMLModContainerRequires",
     "MixinFunctionManager",
     "MixinFurnaceRecipes",
     "MixinGameRegistry",

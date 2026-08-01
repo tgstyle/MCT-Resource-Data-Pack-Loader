@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.mixin;
+package mctmods.resourcedatapackloader.mixin.fml;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.pack.PackRequirements;

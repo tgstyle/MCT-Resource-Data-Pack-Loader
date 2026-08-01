@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockFluid;
 import mctmods.resourcedatapackloader.content.block.ContentFluid;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCofhWorld;
+import mctmods.resourcedatapackloader.core.CofhWorldContainer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.types.*;
@@ -100,7 +101,7 @@ public final class ContentRegistry {
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in worldgen definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
 
-        if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && !Loader.isModLoaded("cofhworld")) {
+        if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
                 if (WORLDGEN_DEFS.containsKey(entry.getKey())) { continue; }
                 try {

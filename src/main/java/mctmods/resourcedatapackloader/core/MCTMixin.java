@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import zone.rong.mixinbooter.IEarlyMixinLoader;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.zip.ZipFile;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,37 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override public String[] getASMTransformerClass() { return new String[0]; }
 
-    @Override public String getModContainerClass() { return null; }
+    @Override public String getModContainerClass() {
+        if (cofhWorldPresent()) { return null; }
+
+        LOGGER.info("CoFH World is not installed, providing an emulated container so mods that require it can load");
+        return "mctmods.resourcedatapackloader.core.CofhWorldContainer";
+    }
+
+    private static boolean cofhWorldPresent() {
+        String marker = "cofh/cofhworld/CoFHWorld.class";
+        if (MCTMixin.class.getClassLoader().getResource(marker) != null) { return true; }
+
+        try {
+            File home = (File) net.minecraftforge.fml.relauncher.FMLInjectionData.data()[6];
+            File[] roots = { new File(home, "mods"), new File(new File(home, "mods"), "1.12.2") };
+            for (File root : roots) {
+                File[] jars = root.listFiles((dir, name) -> name.endsWith(".jar"));
+                if (jars == null) { continue; }
+                for (File jar : jars) {
+                    try (ZipFile zip = new ZipFile(jar)) {
+                        if (zip.getEntry(marker) != null) { return true; }
+                    }
+                    catch (Exception unreadable) { LOGGER.debug("Could not open {} while looking for CoFH World", jar.getName()); }
+                }
+            }
+            return false;
+        }
+        catch (Exception failed) {
+            LOGGER.warn("Could not scan the mods folder for CoFH World, assuming it is absent", failed);
+            return false;
+        }
+    }
 
     @Override public String getSetupClass() { return null; }
 
@@ -88,6 +119,26 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override public String getAccessTransformerClass() { return null; }
 
-    @Override public List<String> getMixinConfigs() { return Arrays.asList("mixins.resourcedatapackloader.json", "mixins.resourcedatapackloader.groovyscript.json", "mixins.resourcedatapackloader.cofhemu.json"); }
+    @Override public List<String> getMixinConfigs() { return Arrays.asList("mixins.resourcedatapackloader.json", "mixins.resourcedatapackloader.fml.json", "mixins.resourcedatapackloader.groovyscript.json"); }
+
+    @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
+        if (mixinConfig.endsWith(".fml.json")) { return !cleanroom(); }
+
+        return true;
+    }
+
+    private static Boolean cleanroomLoader;
+
+    private static boolean cleanroom() {
+        if (cleanroomLoader == null) {
+            try {
+                Class.forName("top.outlands.foundation.boot.Foundation", false, MCTMixin.class.getClassLoader());
+                cleanroomLoader = Boolean.TRUE;
+                LOGGER.warn("Running under Cleanroom, which loads FML before mixins can reach it. Pack 'requires' entries will not stop the game from starting");
+            }
+            catch (ClassNotFoundException absent) { cleanroomLoader = Boolean.FALSE; }
+        }
+        return cleanroomLoader;
+    }
 
 }
