@@ -83,8 +83,9 @@ or turns the group off entirely so no pack can enable it.
 # CoFH World
 Mods that require CoFH World load without it. Their generation files can be read straight out of
 their jars and generated through this mod instead, covering every CoFH generator and distribution
-that produces anything. It is off by default — translating those files into a pack is the supported
-route, and the only way to change what they generate.
+that produces anything. It is off by default, and stands down when the real CoFH World is installed,
+which then generates as normal — translating those files into a pack is the supported route, and the
+only way to change what they generate.
 
 # Good to know
 A pack whose name starts with `RDPLO` always overrides the player's selected resource packs, one

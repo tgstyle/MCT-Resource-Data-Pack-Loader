@@ -1218,7 +1218,7 @@ Mods that require CoFH World load without it — the requirement is removed auto
 
 Their own generation then does not happen, because CoFH World is what reads their `assets/<modid>/world/*.json`. A pack is expected to cover it.
 
-Failing that, `readCofhWorldFiles` reads those files straight out of the mod jars and generates them through this mod. It is off by default. Every CoFH generator and distribution that produces anything is converted, mapped onto the shapes and spreads above. The shapes are this mod's own geometry, so a lake or a spire will not look identical, and a few fine options do not carry — weighted structure lists take the first entry, and rotation tables, ignored-block lists and the curve shaping on stalagmites are dropped.
+Failing that, `readCofhWorldFiles` reads those files straight out of the mod jars and generates them through this mod. It is off by default, and it stands down when the real CoFH World is installed, which then generates as normal. Every CoFH generator and distribution that produces anything is converted, mapped onto the shapes and spreads above. The shapes are this mod's own geometry, so a lake or a spire will not look identical, and a few fine options do not carry — weighted structure lists take the first entry, and rotation tables, ignored-block lists and the curve shaping on stalagmites are dropped.
 
 Translating the files into a pack is the supported route, and the only way to change what they generate.
 
