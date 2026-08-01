@@ -38,6 +38,12 @@ public final class ContentBedrock {
 
     private ContentBedrock() {}
 
+    public static boolean enabled() {
+        if (ContentControl.off(ContentControl.BEDROCK)) { return false; }
+
+        return ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock);
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPopulate(PopulateChunkEvent.Pre event) {
         if (!ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock)) { return; }
