@@ -22,9 +22,13 @@ public final class VillageDef {
     public final String structure;
     public final String ground;
     public final int integrity;
+    public final int villagers;
+    public final int villagerX;
+    public final int villagerY;
+    public final int villagerZ;
     public final List<String> requires;
 
-    public VillageDef(ResourceLocation registryName, String type, int weight, int leastCount, int mostCount, int width, int height, int depth, List<String> crops, String edge, String soil, boolean water, int rowWidth, String structure, String ground, int integrity, List<String> requires) {
+    public VillageDef(ResourceLocation registryName, String type, int weight, int leastCount, int mostCount, int width, int height, int depth, List<String> crops, String edge, String soil, boolean water, int rowWidth, String structure, String ground, int integrity, int villagers, int villagerX, int villagerY, int villagerZ, List<String> requires) {
         this.registryName = registryName;
         this.type = type;
         this.weight = weight;
@@ -41,6 +45,10 @@ public final class VillageDef {
         this.structure = structure;
         this.ground = ground;
         this.integrity = integrity;
+        this.villagers = villagers;
+        this.villagerX = villagerX;
+        this.villagerY = villagerY;
+        this.villagerZ = villagerZ;
         this.requires = requires;
     }
 

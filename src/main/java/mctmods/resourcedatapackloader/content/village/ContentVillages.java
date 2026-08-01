@@ -19,7 +19,6 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -144,6 +143,4 @@ public final class ContentVillages {
             return new ContentVillagePiece(start, type, box, facing, def);
         }
     }
-
-    public static List<String> known() { return new ArrayList<>(DEFS.keySet()); }
 }

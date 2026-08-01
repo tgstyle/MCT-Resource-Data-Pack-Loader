@@ -84,6 +84,8 @@ dependencies {
     implementation rfg.deobf("curse.maven:${common.quar_version}")
     implementation rfg.deobf("curse.maven:${common.redf_version}")
     implementation rfg.deobf("curse.maven:${common.cofh_version}")
+    compileOnly rfg.deobf("curse.maven:${common.gcor_version}")
+    compileOnly rfg.deobf("curse.maven:${common.dngn_version}")
     //runtimeOnly rfg.deobf("curse.maven:${common.cwor_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thfo_version}")
 

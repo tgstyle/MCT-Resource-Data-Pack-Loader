@@ -11,6 +11,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -61,6 +62,8 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         if (def.isTemplate()) { template(world, def, box); }
         else { farm(world, random, def, box); }
 
+        if (def.villagers > 0) { spawnVillagers(world, box, def.villagerX, def.villagerY, def.villagerZ, def.villagers); }
+
         return true;
     }
 
@@ -108,22 +111,30 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             return;
         }
 
-        PlacementSettings settings = new PlacementSettings().setRotation(rotation()).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
-        BlockPos origin = new BlockPos(getXWithOffset(0, 0), getYWithOffset(0), getZWithOffset(0, 0));
-        template.addBlocksToWorld(world, origin, settings);
+        Rotation rotation = rotation();
+        PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
+        template.addBlocksToWorld(world, corner(rotation), settings);
 
         for (int z = 0; z <= def.depth - 1; z++) {
             for (int x = 0; x <= def.width - 1; x++) { replaceAirAndLiquidDownwards(world, state(def.ground, Blocks.DIRT.getDefaultState()), x, -1, z, box); }
         }
     }
 
-    private net.minecraft.util.Rotation rotation() {
-        EnumFacing facing = getCoordBaseMode();
-        if (facing == EnumFacing.WEST) { return net.minecraft.util.Rotation.CLOCKWISE_90; }
-        if (facing == EnumFacing.NORTH) { return net.minecraft.util.Rotation.CLOCKWISE_180; }
-        if (facing == EnumFacing.EAST) { return net.minecraft.util.Rotation.COUNTERCLOCKWISE_90; }
+    private BlockPos corner(Rotation rotation) {
+        if (rotation == Rotation.CLOCKWISE_90) { return new BlockPos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ); }
+        if (rotation == Rotation.CLOCKWISE_180) { return new BlockPos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ); }
+        if (rotation == Rotation.COUNTERCLOCKWISE_90) { return new BlockPos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ); }
 
-        return net.minecraft.util.Rotation.NONE;
+        return new BlockPos(boundingBox.minX, boundingBox.minY, boundingBox.minZ);
+    }
+
+    private Rotation rotation() {
+        EnumFacing facing = getCoordBaseMode();
+        if (facing == EnumFacing.WEST) { return Rotation.CLOCKWISE_90; }
+        if (facing == EnumFacing.NORTH) { return Rotation.CLOCKWISE_180; }
+        if (facing == EnumFacing.EAST) { return Rotation.COUNTERCLOCKWISE_90; }
+
+        return Rotation.NONE;
     }
 
     private IBlockState crop(Random random, VillageDef def) {

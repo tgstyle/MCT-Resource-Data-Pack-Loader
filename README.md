@@ -42,8 +42,8 @@ pack priority, resource pack precedence and the commands.
 Blocks in every common shape — basic, ore, falling, slab, stairs, fence, wall, pane, door, ladder,
 torch, log, leaves, sapling, crop, flower, cane, vine and portal. Items as basic, food, drink, tool,
 armour, seed, potion and potion bottle. Also fluids, tool and armour materials, potion effects,
-potion types, brewing recipes, villager professions with trades, game rules, biomes and whole
-dimensions.
+potion types, brewing recipes, villager professions with trades, game rules, biomes, village plots
+and whole dimensions.
 
 Saplings grow into a tree built from your own log and leaves, or into one of your structure
 templates. Leaves take a tint and drop your sapling. Portal blocks link two dimensions, remember who
@@ -55,8 +55,8 @@ entity, a GUI, an inventory or per-tick logic still needs a real mod.
 
 # Generating it
 Worldgen is a shape and a spread. Shapes cover ore blobs, long wandering veins, flat plates, hollow
-geodes, bowls, tapering spires, rough nodules, narrow vents, surface decoration, whole trees, vines
-and your own `.nbt` templates. Spreads place them evenly, weighted toward a height, sprawling
+geodes, bowls, tapering spires, rough nodules, narrow vents, surface decoration, whole trees, vines,
+belts that span several chunks for stone regions, and your own `.nbt` templates. Spreads place them evenly, weighted toward a height, sprawling
 fractally, following the terrain, on cave floors and ceilings, or under water.
 
 Every entry is filtered by height, attempt count, target block, dimension, biome, temperature,
@@ -66,8 +66,12 @@ rainfall and distance from spawn, and can be generated into chunks that already 
 - Block ore generation by mod or by ore type, in either direction
 - Block biomes by mod or by name, in either direction, with unwanted biomes replaced on the finished
   biome map so oceans, mesas and hill variants are reached too
-- Block other mods' world generators outright, which is how mods add what Forge's events never see
-- Suppress vanilla structures, and set mob spawn rates and caps per biome
+- Block other mods' world generators outright, or by what they make — ores, structures, flora, lakes
+  or terrain — which is how mods add what Forge's events never see
+- Suppress vanilla structures, or set how far apart they are seeded, which biomes they are allowed
+  in, how far from spawn they start, what they spawn and what their mob spawners hold
+- Set mob spawn rates and caps per biome
+- Swap blocks out of chunks that already exist, so an ore that leaked into a world can be cleaned up
 - Block crafting and furnace recipes by mod, with CraftTweaker and GroovyScript additions always
   surviving
 - Flatten bedrock, per dimension and per biome, in new chunks or in ones that already exist

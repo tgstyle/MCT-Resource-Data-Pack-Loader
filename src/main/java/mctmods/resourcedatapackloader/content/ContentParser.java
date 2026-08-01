@@ -638,6 +638,10 @@ public final class ContentParser {
                 structure,
                 JsonUtils.getString(json, "ground", "minecraft:dirt"),
                 Math.max(1, Math.min(100, JsonUtils.getInt(json, "integrity", 100))),
+                Math.max(0, JsonUtils.getInt(json, "villagers", 0)),
+                JsonUtils.getInt(json, "villagerX", 1),
+                JsonUtils.getInt(json, "villagerY", 1),
+                JsonUtils.getInt(json, "villagerZ", 1),
                 strings(json, "requires"));
     }
 

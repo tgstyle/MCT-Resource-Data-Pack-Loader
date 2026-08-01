@@ -12,7 +12,6 @@ import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.ChunkDataEvent;
-import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -71,7 +70,6 @@ public final class ContentRetrogen {
         Set<String> already = done(world.provider.getDimension()).computeIfAbsent(new ChunkPos(chunkX, chunkZ), k -> new HashSet<>());
         for (WorldgenDef def : defs) { already.add(def.getToken()); }
         if (Config.worldgen.flatBedrock) { already.add(bedrockToken()); }
-        if (ContentReplacements.wanted()) { already.add(ContentReplacements.token()); }
     }
 
     private static Map<ChunkPos, Set<String>> done(int dimension) { return DONE.computeIfAbsent(dimension, k -> new HashMap<>()); }
@@ -125,14 +123,7 @@ public final class ContentRetrogen {
         NBTTagList list = new NBTTagList();
         for (String name : already) { list.appendTag(new NBTTagString(name)); }
         event.getData().setTag(TAG, list);
-    }
-
-    @SubscribeEvent
-    public static void onChunkUnload(ChunkEvent.Unload event) {
-        if (event.getWorld().isRemote) { return; }
-
-        Map<ChunkPos, Set<String>> byChunk = DONE.get(event.getWorld().provider.getDimension());
-        if (byChunk != null) { byChunk.remove(event.getChunk().getPos()); }
+        if (!event.getChunk().isLoaded()) { byChunk.remove(event.getChunk().getPos()); }
     }
 
     @SubscribeEvent
@@ -190,7 +181,7 @@ public final class ContentRetrogen {
         Set<String> already = done(world.provider.getDimension()).computeIfAbsent(pending.pos, k -> new HashSet<>());
         for (WorldgenDef def : pending.defs) { already.add(def.getToken()); }
         if (pending.bedrock) { already.add(bedrockToken()); }
-        if (pending.replace) { already.add(ContentReplacements.token()); }
+        if (pending.replace && settled(world, pending.pos)) { already.add(ContentReplacements.token()); }
         world.getChunk(pending.pos.x, pending.pos.z).markDirty();
         completed++;
     }
@@ -208,6 +199,15 @@ public final class ContentRetrogen {
         NBTTagList list = data.getTagList(TAG, 8);
         for (int i = 0; i < list.tagCount(); i++) { already.add(list.getStringTagAt(i)); }
         return already;
+    }
+
+    private static boolean settled(World world, ChunkPos pos) {
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                if (!world.isChunkGeneratedAt(pos.x + x, pos.z + z)) { return false; }
+            }
+        }
+        return true;
     }
 
     private static boolean hasVeinTokens(Set<String> already) {

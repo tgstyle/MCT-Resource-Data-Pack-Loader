@@ -191,16 +191,20 @@ public class Config {
         public String[] generatorWhitelist = { "minecraft" };
         @net.minecraftforge.common.config.Config.Comment("Mod ids, or parts of a generator class name such as slimeisland, blocked outright whatever the whitelist says. One per line")
         public String[] blockedGenerators = {};
-        @net.minecraftforge.common.config.Config.Comment("How many chunks apart villages are seeded. Lower is denser, the lowest that works is 9. 0 leaves vanilla's 32 alone [Default=0]")
-        public int villageSpacing = 0;
-        @net.minecraftforge.common.config.Config.Comment("How far from world spawn, in blocks, before villages start generating [Default=0]")
-        public int villageMinDistanceFromSpawn = 0;
-        @net.minecraftforge.common.config.Config.Comment("Biomes villages generate in, by registry name or biome name, one per line. Empty leaves vanilla's plains, desert, savanna and taiga alone")
-        public String[] villageBiomes = {};
-        @net.minecraftforge.common.config.Config.Comment("Biomes villages generate in, by dictionary type such as PLAINS or SANDY, one per line")
-        public String[] villageBiomeTypes = {};
-        @net.minecraftforge.common.config.Config.Comment("On, the listed biomes are taken out of vanilla's list. Off, the listed biomes become the whole list [Default=false]")
-        public boolean villageBiomesAreBlacklist = false;
+        @net.minecraftforge.common.config.Config.Comment("How far apart a structure is seeded, written as structure=chunks, one per line, such as temples=24. For mineshafts the number is one chunk in that many")
+        public String[] structureSpacing = {};
+        @net.minecraftforge.common.config.Config.Comment("The closest two of a structure may be, written as structure=chunks, one per line. Monuments, mansions, end cities and strongholds use it")
+        public String[] structureSeparation = {};
+        @net.minecraftforge.common.config.Config.Comment("How far from world spawn, in blocks, before a structure starts generating, written as structure=blocks, one per line")
+        public String[] structureMinDistanceFromSpawn = {};
+        @net.minecraftforge.common.config.Config.Comment("Biomes a structure generates in, written as structure=biome,biome, one per line. Names are registry names, biome names or dictionary types such as SANDY")
+        public String[] structureBiomes = {};
+        @net.minecraftforge.common.config.Config.Comment("Mobs a structure spawns whatever the biome says, written as structure=namespace:entity:weight:least:most, comma separated, one structure per line. Temples, monuments and nether fortresses have such a list. An empty list after the equals stops that structure spawning anything")
+        public String[] structureSpawns = {};
+        @net.minecraftforge.common.config.Config.Comment("What the mob spawner inside a vanilla structure spawns, written as structure=namespace:entity, comma separated for a random pick, one structure per line. Only dungeons, mineshafts, netherbridges and strongholds have one. Spawners other mods place are left alone")
+        public String[] structureSpawners = {};
+        @net.minecraftforge.common.config.Config.Comment("Direction of the biome lists, written as structure=true or structure=false, one per line. True takes the listed biomes away, false makes them the only ones [Default=false]")
+        public String[] structureBiomesAreBlacklist = {};
         @net.minecraftforge.common.config.Config.Comment("Vanilla village pieces named here, one per line. The names are house1, house2, house3, house4garden, church, woodhut, hall, field1 and field2")
         public String[] villagePieces = {};
         @net.minecraftforge.common.config.Config.Comment("On, the pieces in villagePieces are blocked. Off, only those pieces generate [Default=true]")

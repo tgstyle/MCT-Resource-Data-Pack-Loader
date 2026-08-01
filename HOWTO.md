@@ -192,6 +192,10 @@ A `template` places one of your `.nbt` structures instead, turned to face the vi
 | `rowWidth` | farm | int | `2` | How wide each row of soil is |
 | `structure` | template | `namespace:name` | none | The template to place |
 | `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
+| `villagers` | all | int | `0` | How many villagers the plot spawns |
+| `villagerX` | all | int | `1` | Where they appear, across the plot |
+| `villagerY` | all | int | `1` | Where they appear, above the floor |
+| `villagerZ` | all | int | `1` | Where they appear, into the plot |
 | `ground` | all | block name | `minecraft:dirt` | What is packed underneath on a slope |
 | `requires` | all | list of mod ids or pack namespaces | none | The plot is left out unless all are present |
 
@@ -1287,13 +1291,49 @@ mekanism:oreblock:0=minecraft:stone
 tconstruct:ore:0=minecraft:netherrack
 ```
 
-Each chunk is done once, as it loads, and marked in the chunk's own data so it is never done twice. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
+Each chunk is done once, as it loads from disk, and marked in the chunk's own data so it is never done twice. A chunk being generated for the first time is cleaned the next time it loads rather than straight away, because neighbouring chunks are still writing into it while it generates. A chunk on the edge of explored land is cleaned but not marked, so it is cleaned again once the land around it exists. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
 
-**Villages.** `villageSpacing` is how many chunks apart villages are seeded, lower being denser, with 9 the lowest that works and 0 leaving vanilla's 32 alone. `villageMinDistanceFromSpawn` keeps them away from the world spawn. `villageBiomes` and `villageBiomeTypes` say where they generate, with `villageBiomesAreBlacklist` choosing whether those are taken out of vanilla's four biomes or become the whole list. Spacing decides where villages are seeded, so changing it in a world that already exists leaves the old villages where they are and puts new ones on a different grid.
+**Villages.** Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. Their spacing has a floor of 9, because vanilla subtracts 8 from it.
 
 `villagePieces` names vanilla village pieces — `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2` — and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top.
 
-**Structures.** Vanilla structures switched off by name, per dimension.
+**Structures.** Vanilla structures switched off by name, per dimension. Placement is controlled with four lists written as `structure=value`, one per line: `structureSpacing` for how far apart they are seeded, `structureSeparation` for the closest two may be, `structureMinDistanceFromSpawn` for how far out they start, and `structureBiomes` with `structureBiomesAreBlacklist` for where they are allowed.
+
+```
+temples=24
+monuments=40
+mineshafts=200
+```
+
+```
+temples=minecraft:desert,SANDY
+monuments=minecraft:deep_ocean
+```
+
+Not every structure understands every setting. Spacing reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many rather than a grid, since that is how vanilla places them. Separation reaches monuments, mansions, end cities and strongholds. Biomes reach every structure except end cities, because the End is one biome in this version and there is nothing to choose between. End cities still pick their own spot within the grid: they only sit on an outer island whose surface reaches y60, so raising their spacing thins them out but cannot put one over the void. Nether fortresses sit on a fixed grid vanilla does not expose, so only the biome and spawn distance lists reach them. Villages keep their own `villageSpacing`, `villageBiomes` and the rest.
+
+`structureSpawns` replaces the mobs a structure spawns whatever the biome around it says, written as `structure=namespace:entity:weight:least:most`, comma separated:
+
+```
+netherbridges=minecraft:blaze:10:2:3,minecraft:wither_skeleton:8:5:5
+temples=minecraft:witch:1:1:1
+monuments=
+```
+
+Only temples, monuments and nether fortresses keep such a list in this version; villages place their villagers from the pieces themselves, and mineshafts, strongholds and end cities use spawners and placed mobs instead. Leaving the line empty after the equals sign, as with monuments above, stops that structure spawning anything of its own.
+
+`structureSpawners` says what the mob spawner inside a vanilla structure spawns, written as `structure=namespace:entity`, comma separated for a random pick per spawner:
+
+```
+dungeons=minecraft:zombie,minecraft:husk
+mineshafts=minecraft:cave_spider
+netherbridges=minecraft:wither_skeleton
+strongholds=minecraft:silverfish
+```
+
+Four vanilla structures place a spawner: the dungeon room, the mineshaft corridor, the nether fortress throne and the stronghold portal room. Each is reached on its own, so spawners placed by other mods are never touched. Dungeons normally pick from the list mods add to through Forge, so naming them here takes that choice over as well.
+
+Spacing decides where a structure is seeded, so changing it in a world that already exists leaves what is there and puts new ones on a different grid.
 
 **Spawning.** Mob spawn rates and caps, per biome.
 

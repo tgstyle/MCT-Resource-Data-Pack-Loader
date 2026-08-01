@@ -23,8 +23,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
-import mctmods.resourcedatapackloader.content.village.ContentVillagePlacement;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
@@ -87,7 +87,6 @@ public class ResourceDataPackLoader {
         ContentDimensions.load();
         ContentGameRules.load();
         if (ContentVillages.load()) { ContentVillages.register(); }
-        ContentVillagePlacement.applyBiomes();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
@@ -122,6 +121,8 @@ public class ResourceDataPackLoader {
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         FurnaceBlocking.apply();
+        ContentReplacements.reload();
+        ContentStructurePlacement.reload();
     }
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }

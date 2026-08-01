@@ -159,9 +159,11 @@ public final class PackManager {
         try {
             Files.createDirectories(packRoot.resolve(RDPLPack.ASSETS));
             Path readme = packRoot.resolve(README);
-            if (!Files.exists(readme)) {
-                Files.write(readme, readmeText().getBytes(StandardCharsets.UTF_8));
-                ContentLog.LOGGER.info("Wrote {}", readme);
+            String text = readmeText();
+            boolean missing = !Files.exists(readme);
+            if (missing || !text.equals(new String(Files.readAllBytes(readme), StandardCharsets.UTF_8))) {
+                Files.write(readme, text.getBytes(StandardCharsets.UTF_8));
+                ContentLog.LOGGER.info("{} {}", missing ? "Wrote" : "Brought up to date", readme);
             }
         }
         catch (IOException ex) {
@@ -534,11 +536,14 @@ public final class PackManager {
                 "    loot_tables      loot_injections  advancements     functions",
                 "    structures       registry_remap   potions          potion_types",
                 "    brewing          villagers        trades           biomes",
+                "    villages         gates            dimensions       gamerules",
+                "    worldtemplates",
                 "",
                 "Blocks come in these shapes, set by the \"type\" field:",
                 "",
-                "    basic   ore     falling   slab    stairs   fence",
-                "    pane    wall    ladder    torch   crop",
+                "    basic   ore     falling   slab    stairs   fence    door",
+                "    pane    wall    ladder    torch   crop     flower   cane",
+                "    log     leaves  sapling   vine    portal",
                 "",
                 "and items in these:",
                 "",
@@ -556,6 +561,11 @@ public final class PackManager {
                 "A trades/*.json file adds trades to any career, whether yours or one of",
                 "Minecraft's, naming the profession, the career and the level the trade appears",
                 "at. Name a career that does not exist and the log lists the ones that do.",
+                "",
+                "A villages/<name>.json file adds a plot villages can build, either a farm you",
+                "describe or one of your .nbt templates. The same settings choose which vanilla",
+                "pieces still appear, how far apart villages are seeded, and which biomes they",
+                "are allowed in.",
                 "",
                 "WHOLE WORLDS",
                 "------------",
@@ -577,8 +587,9 @@ public final class PackManager {
                 "",
                 "worldgen is more than ore. An entry is a shape placed by a spread: blobs, long",
                 "veins, plates, geodes, bowls, spires, nodules, vents, surface decoration, whole",
-                "trees, vines, or one of your own .nbt templates, spread evenly, around a height,",
-                "fractally, along the terrain, on cave floors or ceilings, or under water.",
+                "trees, vines, belts that span several chunks, or one of your own .nbt templates,",
+                "spread evenly, around a height, fractally, along the terrain, on cave floors or",
+                "ceilings, or under water.",
                 "",
                 "",
                 "A biomes/<name>.json file defines a biome: its climate and colours, the blocks",
@@ -695,7 +706,8 @@ public final class PackManager {
                 "",
                 "Put a pack.png next to this file to give the pack an icon.",
                 "",
-                "Delete this file and a fresh copy appears the next time the game starts.",
+                "This file is written by the mod and brought up to date whenever it changes,",
+                "so anything you type into it is replaced the next time the game starts.",
                 "");
     }
 
