@@ -62,6 +62,7 @@ public final class PackManager {
     public static final String TRADES = "trades";
     public static final String BIOMES = "biomes";
     public static final String VILLAGES = "villages";
+    public static final String ENTITIES = "entities";
     public static final String JSON = "json";
     public static final String MCFUNCTION = "mcfunction";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?([OoNn])?[ _-]?");
@@ -241,6 +242,7 @@ public final class PackManager {
         collect(off, Config.content.villagers, "content.villagers", JSON, VILLAGERS, TRADES);
         collect(off, Config.content.biomes, "content.biomes", JSON, BIOMES);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
+        collect(off, Config.content.entities, "content.entities", JSON, ENTITIES);
         collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);
         collect(off, Config.recipes.removals, "recipes.removals", JSON, RECIPE_REMOVALS);
         collect(off, Config.data.lootInjections, "data.lootInjections", JSON, LOOT_INJECTIONS);
@@ -273,8 +275,8 @@ public final class PackManager {
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
             String tier = pack.isOverriding() ? " overriding" : "";
-            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={}",
-                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON));
+            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={}",
+                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON));
         }
     }
 
@@ -353,7 +355,7 @@ public final class PackManager {
     private static boolean isData(String path) {
         return path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
-                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/");
+                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/");
     }
 
     @Nullable public String getPackName(String namespace, String path) {
@@ -536,8 +538,8 @@ public final class PackManager {
                 "    loot_tables      loot_injections  advancements     functions",
                 "    structures       registry_remap   potions          potion_types",
                 "    brewing          villagers        trades           biomes",
-                "    villages         gates            dimensions       gamerules",
-                "    worldtemplates",
+                "    villages         entities         gates            dimensions",
+                "    gamerules        worldtemplates",
                 "",
                 "Blocks come in these shapes, set by the \"type\" field:",
                 "",

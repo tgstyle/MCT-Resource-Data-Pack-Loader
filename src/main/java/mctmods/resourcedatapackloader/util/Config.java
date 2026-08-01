@@ -106,6 +106,9 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("Register the village plots described by villages/*.json in packs so villages can build them. Requires a restart [Default=true]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public boolean villages = true;
+        @net.minecraftforge.common.config.Config.Comment("Register the entity variants described by entities/*.json in packs. Requires a restart [Default=true]")
+        @net.minecraftforge.common.config.Config.RequiresMcRestart
+        public boolean entities = true;
     }
 
     public static class Recipes {

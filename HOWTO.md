@@ -144,6 +144,78 @@ Packs with no letter follow the `overrideResourcePacks` option in the config. `/
 
 A file here replaces the original completely. To change one ingredient or drop one loot entry, CraftTweaker is the better tool.
 
+## Entity variants
+
+A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right — its own registry name, its own name in the world, its own spawn egg, its own loot table at `loot_tables/entities/<name>.json` — built on another entity's behaviour rather than replacing it. Nothing about the entity it copies changes.
+
+```json
+{
+  "entity": "minecraft:cow",
+  "name": "Angry Cow",
+  "hostile": true,
+  "targets": ["minecraft:player"],
+  "attributes": {
+    "maxHealth": 20,
+    "movementSpeed": 0.32,
+    "attackDamage": 4
+  },
+  "spawns": [
+    { "creatureType": "creature", "weight": 4, "min": 1, "max": 2 }
+  ],
+  "biomeTypes": ["PLAINS"]
+}
+```
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `entity` | `namespace:name` | none | The entity to build on. Any mod's, as long as it takes a plain world constructor |
+| `name` | string | none | The name it carries in the world, in death messages and on its egg |
+| `showName` | boolean | `false` | Show the name without looking at it |
+| `texture` | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
+| `jumpMultiplier` | float | `1.0` | How much higher it jumps than the entity it copies |
+| `fallDamage` | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
+| `maxFallHeight` | int | the base's | How far it will drop while pathing |
+| `breathesUnderwater` | boolean | `false` | Never drowns |
+| `waterSlowdown` | float | `0.8` | How much water slows it. Higher is faster |
+| `absorption` | float | `0` | Extra hearts on top of its health |
+| `experience` | int | the base's | How much experience it drops |
+| `creatureAttribute` | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
+| `effects` | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
+| `despawns` | boolean | `true` | Off, it stays even when it would normally be cleared away |
+| `noAI` | boolean | `false` | Stands where it is put and does nothing |
+| `leftHanded` | boolean | `false` | Holds its weapon in the other hand |
+| `invulnerable` | boolean | `false` | Takes no damage from anything but the void and creative |
+| `glowing` | boolean | `false` | Outlined through walls |
+| `invisible` | boolean | `false` | Not drawn, though its gear still is |
+| `dropChance` | 0 to 1 | `0` | How likely each piece of equipment is to drop |
+| `width` | float | the base's | Its hitbox across. The model does not change with it |
+| `height` | float | the base's | Its hitbox up |
+| `pathPriorities` | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
+| `egg` | boolean or object | `true` | A spawn egg, coloured like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colours, `false` leaves the egg out |
+| `attributes` | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
+| `hostile` | boolean | `false` | Attacks what it can reach, and fights back when hurt |
+| `targets` | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
+| `passive` | boolean | `false` | Stops it attacking anything, however it normally behaves |
+| `persistent` | boolean | `false` | Never despawns |
+| `silent` | boolean | `false` | Makes no sound |
+| `picksUpLoot` | boolean | `false` | Picks up what it walks over |
+| `hideArmor` | boolean | `false` | Wears its armour without it being drawn |
+| `equipment` | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
+| `spawns` | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
+| `biomes` | list of biome names | every biome | Where those spawns are added |
+| `biomeTypes` | list of dictionary types | none | The same, by type |
+| `trackingRange` | int | `80` | How far away the client is told about it |
+| `trackingFrequency` | int | `3` | How often, in ticks |
+| `requires` | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+
+A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's — a skin, not a new shape. Layers keep their own textures, so armour still looks like armour on a reskinned zombie.
+
+Armour is only ever drawn on an entity whose renderer has an armour layer, which in this version means the humanoid mobs and villagers. A variant of a cow or a spider can carry armour and gets its protection, but nothing draws it, so `armor` under `attributes` is usually the tidier way to make such a creature tough. `hideArmor` is for the other case: a humanoid that should keep the armour in its slots, for the protection or for a mod that reads them, without it being seen.
+
+`hostile` also takes away the behaviour that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behaviour vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behaviour built the way vanilla builds it — a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
+
+A variant is a class of its own, so a world that contains one depends on the pack that made it, the same way it depends on a mod. Take the file away and the creatures in that world go with it.
+
 ## Village plots
 
 A file in `assets/<modid>/villages/` adds a piece villages can build, alongside the vanilla ones. Two kinds, chosen with `type`.
@@ -192,7 +264,8 @@ A `template` places one of your `.nbt` structures instead, turned to face the vi
 | `rowWidth` | farm | int | `2` | How wide each row of soil is |
 | `structure` | template | `namespace:name` | none | The template to place |
 | `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
-| `villagers` | all | int | `0` | How many villagers the plot spawns |
+| `villagers` | all | int | `0` | How many people the plot spawns |
+| `villagerEntity` | all | `namespace:name` | a villager | Who lives there, such as an entity variant of your own |
 | `villagerX` | all | int | `1` | Where they appear, across the plot |
 | `villagerY` | all | int | `1` | Where they appear, above the floor |
 | `villagerZ` | all | int | `1` | Where they appear, into the plot |

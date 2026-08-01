@@ -6,6 +6,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "AccessorChunk",
+    "AccessorEntity",
     "AccessorEnumCreatureType",
     "AccessorFurnaceRecipes",
     "AccessorLootTable",
@@ -21,6 +22,7 @@
     "MixinChunkGeneratorOverworldSpawns",
     "MixinCraftingHelper",
     "MixinEntityAnimal",
+    "MixinEntityLivingBase",
     "MixinFunctionManager",
     "MixinFurnaceRecipes",
     "MixinGameRegistry",
@@ -47,7 +49,9 @@
     "MixinWorldProvider"
   ],
   "client": [
-    "MixinMinecraft"
+    "MixinLayerArmorBase",
+    "MixinMinecraft",
+    "MixinRender"
   ],
   "server": []
 }

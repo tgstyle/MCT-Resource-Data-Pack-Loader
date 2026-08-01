@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
@@ -34,6 +35,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -218,6 +220,9 @@ public final class ContentRegistry {
             finally { Loader.instance().setActiveModContainer(previous); }
         }
     }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void registerEntities(RegistryEvent.Register<EntityEntry> event) { ContentEntities.register(event.getRegistry()); }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void registerItems(RegistryEvent.Register<Item> event) {

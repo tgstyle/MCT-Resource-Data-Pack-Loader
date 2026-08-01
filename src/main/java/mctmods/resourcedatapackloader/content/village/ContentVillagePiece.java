@@ -7,6 +7,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -62,9 +65,33 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         if (def.isTemplate()) { template(world, def, box); }
         else { farm(world, random, def, box); }
 
-        if (def.villagers > 0) { spawnVillagers(world, box, def.villagerX, def.villagerY, def.villagerZ, def.villagers); }
+        if (def.villagers > 0) { residents(world, def, box); }
 
         return true;
+    }
+
+    private void residents(World world, VillageDef def, StructureBoundingBox box) {
+        if (def.villagerEntity.isEmpty()) {
+            spawnVillagers(world, box, def.villagerX, def.villagerY, def.villagerZ, def.villagers);
+            return;
+        }
+
+        ResourceLocation name = new ResourceLocation(def.villagerEntity);
+        for (int index = 0; index < def.villagers; index++) {
+            int x = getXWithOffset(def.villagerX + index, def.villagerZ);
+            int y = getYWithOffset(def.villagerY);
+            int z = getZWithOffset(def.villagerX + index, def.villagerZ);
+            if (!box.isVecInside(new BlockPos(x, y, z))) { continue; }
+
+            Entity made = EntityList.createEntityByIDFromName(name, world);
+            if (made == null) {
+                ContentLog.LOGGER.error("Village plot {} wants {} to live in it, which nothing registers", def.registryName, name);
+                return;
+            }
+            made.setLocationAndAngles(x + 0.5D, y, z + 0.5D, 0.0F, 0.0F);
+            if (made instanceof EntityLiving) { ((EntityLiving) made).onInitialSpawn(world.getDifficultyForLocation(new BlockPos(made)), null); }
+            world.spawnEntity(made);
+        }
     }
 
     private void farm(World world, Random random, VillageDef def, StructureBoundingBox box) {

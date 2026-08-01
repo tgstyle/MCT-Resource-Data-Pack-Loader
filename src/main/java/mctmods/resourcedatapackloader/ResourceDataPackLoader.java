@@ -25,6 +25,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
@@ -86,6 +87,7 @@ public class ResourceDataPackLoader {
         if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
         ContentDimensions.load();
         ContentGameRules.load();
+        if (ContentEntities.load()) { MinecraftForge.EVENT_BUS.register(ContentEntities.class); }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }

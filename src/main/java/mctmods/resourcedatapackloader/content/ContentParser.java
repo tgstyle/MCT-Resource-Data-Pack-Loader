@@ -1,24 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.content.def.AmountDef;
-import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
-import mctmods.resourcedatapackloader.content.def.BlockWeightDef;
-import mctmods.resourcedatapackloader.content.def.DimensionDef;
-import mctmods.resourcedatapackloader.content.def.DropDef;
-import mctmods.resourcedatapackloader.content.def.FluidDef;
-import mctmods.resourcedatapackloader.content.def.GateDef;
-import mctmods.resourcedatapackloader.content.def.GrowthDef;
-import mctmods.resourcedatapackloader.content.def.ItemDef;
-import mctmods.resourcedatapackloader.content.def.ItemVariant;
-import mctmods.resourcedatapackloader.content.def.PortalDef;
-import mctmods.resourcedatapackloader.content.def.SaplingDef;
-import mctmods.resourcedatapackloader.content.def.ShapeDef;
-import mctmods.resourcedatapackloader.content.def.SpreadDef;
-import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
-import mctmods.resourcedatapackloader.content.def.VillageDef;
-import mctmods.resourcedatapackloader.content.def.WorldgenDef;
+import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
@@ -604,6 +586,124 @@ public final class ContentParser {
                 strings(json, "requires"));
     }
 
+    @Nullable public static EntityVariantDef entityVariant(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Entity file {} is empty, ignoring it", key);
+            return null;
+        }
+
+        String base = JsonUtils.getString(json, "entity", "");
+        if (base.isEmpty()) {
+            ContentLog.LOGGER.error("Entity variant {} names no entity to copy, ignoring it", key);
+            return null;
+        }
+
+        Map<String, Double> attributes = new LinkedHashMap<>();
+        if (json.has("attributes")) {
+            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "attributes").entrySet()) {
+                if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
+                    ContentLog.LOGGER.error("Entity variant {} sets attribute '{}' to something that is not a number, ignoring it", key, entry.getKey());
+                    continue;
+                }
+                attributes.put(entry.getKey(), entry.getValue().getAsDouble());
+            }
+        }
+
+        Map<String, String> equipment = new LinkedHashMap<>();
+        if (json.has("equipment")) {
+            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "equipment").entrySet()) {
+                if (!entry.getValue().isJsonPrimitive()) {
+                    ContentLog.LOGGER.error("Entity variant {} sets slot '{}' to something that is not an item name, ignoring it", key, entry.getKey());
+                    continue;
+                }
+                equipment.put(entry.getKey(), entry.getValue().getAsString());
+            }
+        }
+
+        List<SpawnEntryDef> spawns = new ArrayList<>();
+        if (json.has("spawns")) {
+            for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
+                if (!element.isJsonObject()) {
+                    ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
+                    continue;
+                }
+                JsonObject entry = element.getAsJsonObject();
+                spawns.add(new SpawnEntryDef(JsonUtils.getString(entry, "creatureType", "creature"), "",
+                        Math.max(1, JsonUtils.getInt(entry, "weight", 8)),
+                        Math.max(1, JsonUtils.getInt(entry, "min", 1)),
+                        Math.max(1, JsonUtils.getInt(entry, "max", 4))));
+            }
+        }
+
+        Map<String, Integer> effects = new LinkedHashMap<>();
+        if (json.has("effects")) {
+            for (JsonElement element : JsonUtils.getJsonArray(json, "effects")) {
+                if (!element.isJsonObject()) {
+                    ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
+                    continue;
+                }
+                JsonObject effect = element.getAsJsonObject();
+                effects.put(JsonUtils.getString(effect, "potion", ""), Math.max(0, JsonUtils.getInt(effect, "amplifier", 0)));
+            }
+        }
+
+        Map<String, Float> priorities = new LinkedHashMap<>();
+        if (json.has("pathPriorities")) {
+            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "pathPriorities").entrySet()) {
+                if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
+                    ContentLog.LOGGER.error("Entity variant {} sets path priority '{}' to something that is not a number, ignoring it", key, entry.getKey());
+                    continue;
+                }
+                priorities.put(entry.getKey(), entry.getValue().getAsFloat());
+            }
+        }
+
+        JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? JsonUtils.getJsonObject(json, "egg") : null;
+        boolean wantsEgg = !json.has("egg") || egg != null || JsonUtils.getBoolean(json, "egg", true);
+
+        return new EntityVariantDef(key, new ResourceLocation(base),
+                JsonUtils.getString(json, "name", ""),
+                JsonUtils.getString(json, "texture", ""),
+                Math.max(0.1F, JsonUtils.getFloat(json, "jumpMultiplier", 1.0F)),
+                Math.max(0.0F, JsonUtils.getFloat(json, "fallDamage", 1.0F)),
+                Math.max(0.0F, JsonUtils.getFloat(json, "soundVolume", 1.0F)),
+                Math.max(0.1F, JsonUtils.getFloat(json, "soundPitch", 1.0F)),
+                Math.max(0.0F, JsonUtils.getFloat(json, "waterSlowdown", 0.8F)),
+                Math.max(-1, JsonUtils.getInt(json, "experience", -1)),
+                Math.max(-1, JsonUtils.getInt(json, "maxFallHeight", -1)),
+                Math.max(0.0F, JsonUtils.getFloat(json, "absorption", 0.0F)),
+                JsonUtils.getString(json, "creatureAttribute", ""),
+                JsonUtils.getBoolean(json, "breathesUnderwater", false),
+                JsonUtils.getBoolean(json, "despawns", true),
+                JsonUtils.getBoolean(json, "noAI", false),
+                JsonUtils.getBoolean(json, "leftHanded", false),
+                JsonUtils.getBoolean(json, "invulnerable", false),
+                JsonUtils.getBoolean(json, "glowing", false),
+                JsonUtils.getBoolean(json, "invisible", false),
+                Math.max(0.0F, Math.min(1.0F, JsonUtils.getFloat(json, "dropChance", 0.0F))),
+                Math.max(0.0F, JsonUtils.getFloat(json, "width", 0.0F)),
+                Math.max(0.0F, JsonUtils.getFloat(json, "height", 0.0F)),
+                effects, priorities,
+                wantsEgg,
+                egg == null || !egg.has("primary") ? -1 : ContentTypes.color(JsonUtils.getString(egg, "primary", ""), key + " egg primary"),
+                egg == null || !egg.has("secondary") ? -1 : ContentTypes.color(JsonUtils.getString(egg, "secondary", ""), key + " egg secondary"),
+                Math.max(1, JsonUtils.getInt(json, "trackingRange", 80)),
+                Math.max(1, JsonUtils.getInt(json, "trackingFrequency", 3)),
+                JsonUtils.getBoolean(json, "trackVelocity", true),
+                attributes,
+                JsonUtils.getBoolean(json, "hostile", false),
+                JsonUtils.getBoolean(json, "passive", false),
+                strings(json, "targets"),
+                JsonUtils.getBoolean(json, "persistent", false),
+                JsonUtils.getBoolean(json, "silent", false),
+                JsonUtils.getBoolean(json, "picksUpLoot", false),
+                JsonUtils.getBoolean(json, "hideArmor", false),
+                JsonUtils.getBoolean(json, "showName", false),
+                equipment, spawns,
+                strings(json, "biomes"), strings(json, "biomeTypes"), strings(json, "requires"));
+    }
+
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {
         JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
         if (json == null) {
@@ -639,6 +739,7 @@ public final class ContentParser {
                 JsonUtils.getString(json, "ground", "minecraft:dirt"),
                 Math.max(1, Math.min(100, JsonUtils.getInt(json, "integrity", 100))),
                 Math.max(0, JsonUtils.getInt(json, "villagers", 0)),
+                JsonUtils.getString(json, "villagerEntity", ""),
                 JsonUtils.getInt(json, "villagerX", 1),
                 JsonUtils.getInt(json, "villagerY", 1),
                 JsonUtils.getInt(json, "villagerZ", 1),
