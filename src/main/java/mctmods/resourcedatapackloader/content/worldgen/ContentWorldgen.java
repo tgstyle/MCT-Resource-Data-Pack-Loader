@@ -45,12 +45,17 @@ public final class ContentWorldgen implements IWorldGenerator {
 
             ContentOreControl.beginPack(def.registryName.getNamespace());
             try {
+                if (figure instanceof ContentBelt) {
+                    ((ContentBelt) figure).generateChunk(world, chunkX, chunkZ, source -> allows(def, world, source, filtered));
+                    continue;
+                }
+
                 int tries = def.attempts.pick(random);
                 for (int attempt = 0; attempt < tries; attempt++) {
                     BlockPos pos = ContentSpread.position(def, world, random, region, baseX, baseZ);
                     if (pos == null) { continue; }
                     Biome biome = world.getBiome(pos);
-                    if (filtered && !biomeAllowed(def, biome)) { continue; }
+                    if (filtered && biomeBlocked(def, biome)) { continue; }
                     if (!def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall())) { continue; }
 
                     figure.generate(world, random, pos);
@@ -58,6 +63,13 @@ public final class ContentWorldgen implements IWorldGenerator {
             }
             finally { ContentOreControl.endPack(); }
         }
+    }
+
+    private static boolean allows(WorldgenDef def, World world, BlockPos source, boolean filtered) {
+        Biome biome = world.getBiome(source);
+        if (filtered && biomeBlocked(def, biome)) { return false; }
+
+        return def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall());
     }
 
     private List<WorldgenDef> forDimension(int dimension) {
@@ -86,7 +98,7 @@ public final class ContentWorldgen implements IWorldGenerator {
         return def.dimensions.contains(dimension) != def.dimensionsAreBlacklist;
     }
 
-    private static boolean biomeAllowed(WorldgenDef def, Biome biome) { return matchesBiome(def, biome) != def.biomesAreBlacklist; }
+    private static boolean biomeBlocked(WorldgenDef def, Biome biome) { return matchesBiome(def, biome) == def.biomesAreBlacklist; }
 
     private static boolean matchesBiome(WorldgenDef def, Biome biome) {
         if (biome.getRegistryName() != null && def.getBiomeNames().contains(biome.getRegistryName().toString())) { return true; }

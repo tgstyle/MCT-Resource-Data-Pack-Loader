@@ -16,7 +16,7 @@ public final class PackRequirements {
     private static final List<String> FOLDERS = Collections.unmodifiableList(Arrays.asList(
             PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.BIOMES, PackManager.WORLDGEN,
             PackManager.DIMENSIONS, PackManager.WORLDTEMPLATES, PackManager.GATES, PackManager.POTIONS,
-            PackManager.POTION_TYPES, PackManager.BREWING, PackManager.VILLAGERS, PackManager.TRADES));
+            PackManager.POTION_TYPES, PackManager.BREWING, PackManager.VILLAGERS, PackManager.TRADES, PackManager.VILLAGES));
     private static final Set<String> WANTED = new LinkedHashSet<>();
     private static boolean scanned;
 

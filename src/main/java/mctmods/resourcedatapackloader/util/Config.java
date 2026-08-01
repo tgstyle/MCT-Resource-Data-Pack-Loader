@@ -45,6 +45,8 @@ public class Config {
         public String terrain = "default";
         @net.minecraftforge.common.config.Config.Comment("Replacing blocks in chunks that already exist [default|global|off]")
         public String replacements = "default";
+        @net.minecraftforge.common.config.Config.Comment("Village plots from packs and the vanilla village piece lists [default|global|off]")
+        public String villages = "default";
     }
 
     public static class Packs {
@@ -101,6 +103,9 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("Register the biomes described by biomes/*.json in packs and place them into world generation. Requires a restart [Default=true]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public boolean biomes = true;
+        @net.minecraftforge.common.config.Config.Comment("Register the village plots described by villages/*.json in packs so villages can build them. Requires a restart [Default=true]")
+        @net.minecraftforge.common.config.Config.RequiresMcRestart
+        public boolean villages = true;
     }
 
     public static class Recipes {
@@ -186,6 +191,20 @@ public class Config {
         public String[] generatorWhitelist = { "minecraft" };
         @net.minecraftforge.common.config.Config.Comment("Mod ids, or parts of a generator class name such as slimeisland, blocked outright whatever the whitelist says. One per line")
         public String[] blockedGenerators = {};
+        @net.minecraftforge.common.config.Config.Comment("How many chunks apart villages are seeded. Lower is denser, the lowest that works is 9. 0 leaves vanilla's 32 alone [Default=0]")
+        public int villageSpacing = 0;
+        @net.minecraftforge.common.config.Config.Comment("How far from world spawn, in blocks, before villages start generating [Default=0]")
+        public int villageMinDistanceFromSpawn = 0;
+        @net.minecraftforge.common.config.Config.Comment("Biomes villages generate in, by registry name or biome name, one per line. Empty leaves vanilla's plains, desert, savanna and taiga alone")
+        public String[] villageBiomes = {};
+        @net.minecraftforge.common.config.Config.Comment("Biomes villages generate in, by dictionary type such as PLAINS or SANDY, one per line")
+        public String[] villageBiomeTypes = {};
+        @net.minecraftforge.common.config.Config.Comment("On, the listed biomes are taken out of vanilla's list. Off, the listed biomes become the whole list [Default=false]")
+        public boolean villageBiomesAreBlacklist = false;
+        @net.minecraftforge.common.config.Config.Comment("Vanilla village pieces named here, one per line. The names are house1, house2, house3, house4garden, church, woodhut, hall, field1 and field2")
+        public String[] villagePieces = {};
+        @net.minecraftforge.common.config.Config.Comment("On, the pieces in villagePieces are blocked. Off, only those pieces generate [Default=true]")
+        public boolean villagePiecesAreBlacklist = true;
         @net.minecraftforge.common.config.Config.Comment("World generator types blocked outright, whatever the whitelist says. One of ores, structures, flora, lakes, terrain or unknown, one per line. Types are worked out from the generator class name, so use generatorTypeMap for the ones that guess wrong")
         public String[] generatorTypes = {};
         @net.minecraftforge.common.config.Config.Comment("On, the types in generatorTypes are blocked. Off, only those types generate and everything else is blocked [Default=true]")

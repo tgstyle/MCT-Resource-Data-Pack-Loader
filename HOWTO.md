@@ -144,6 +144,59 @@ Packs with no letter follow the `overrideResourcePacks` option in the config. `/
 
 A file here replaces the original completely. To change one ingredient or drop one loot entry, CraftTweaker is the better tool.
 
+## Village plots
+
+A file in `assets/<modid>/villages/` adds a piece villages can build, alongside the vanilla ones. Two kinds, chosen with `type`.
+
+A `farm` is vanilla's field, described rather than coded: a plot of the size you ask for, edged with a block, filled with rows of soil separated by water channels, planted with a crop picked per block from your list.
+
+```json
+{
+  "type": "farm",
+  "weight": 3,
+  "width": 7,
+  "depth": 9,
+  "crops": ["simplecorn:corn"],
+  "edge": "minecraft:log",
+  "water": true,
+  "rowWidth": 2
+}
+```
+
+A `template` places one of your `.nbt` structures instead, turned to face the village path.
+
+```json
+{
+  "type": "template",
+  "weight": 2,
+  "width": 9,
+  "height": 6,
+  "depth": 9,
+  "structure": "mypack:blacksmith_shed"
+}
+```
+
+| Key | Used by | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `type` | all | `farm` or `template` | `farm` | Which kind of plot |
+| `weight` | all | int | `3` | How often this plot is picked against the pack's others |
+| `leastCount` | all | int | `1` | Fewest per village, before village size is added |
+| `mostCount` | all | int | `4` | Most per village, before village size is added |
+| `width` | all | int | `7` | Size across the path |
+| `height` | all | int | `4` | Height cleared above the ground |
+| `depth` | all | int | `9` | Size away from the path |
+| `crops` | farm | list of block names | wheat | Planted one per block, at a random growth stage |
+| `edge` | farm | block name | `minecraft:log` | The frame around the plot |
+| `soil` | farm | block name | `minecraft:farmland` | What the rows are made of |
+| `water` | farm | boolean | `true` | Put a water channel between the rows |
+| `rowWidth` | farm | int | `2` | How wide each row of soil is |
+| `structure` | template | `namespace:name` | none | The template to place |
+| `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
+| `ground` | all | block name | `minecraft:dirt` | What is packed underneath on a slope |
+| `requires` | all | list of mod ids or pack namespaces | none | The plot is left out unless all are present |
+
+Every pack plot is offered to villages as one entry, so `weight` decides which of your plots is chosen once a village asks for one. Which plot a placement used is written into the village's own data, so it rebuilds correctly on load.
+
 ## Registry renames
 
 When a mod renames one of its blocks or items, worlds saved before the rename lose them. Drop a file in `registry_remap/` to map the old name to the new one:
@@ -1076,6 +1129,7 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `nodule` | A rough ball |
 | `vent` | A narrow column that stops when it hits something |
 | `imprint` | One of your `.nbt` templates |
+| `belt` | A cluster spanning several chunks, for stone regions |
 
 | Key | Used by | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
@@ -1100,6 +1154,8 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `vines` | tree | boolean | `false` | Hang vines from the leaves |
 | `structure` | imprint | `namespace:name` | none | The template to place |
 | `integrity` | imprint | 1 to 100 | `100` | Percentage of the template's blocks that actually appear |
+| `rarity` | belt | int | `400` | One cluster per this many chunks |
+| `rarityIsPerChunk` | belt | boolean | `false` | Turn `rarity` into how many clusters each chunk gets instead |
 
 ```json
 "shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
@@ -1110,6 +1166,18 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 ```
 
 A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
+
+### Belts
+
+A `belt` is a ball far bigger than one chunk, used for stone regions rather than ore veins. Its `radius` is the ball's size, and every chunk works out for itself where the balls near it start, from the world seed and the entry's own name, so a belt comes out whole however the chunks are generated and nothing is ever written into a neighbouring chunk.
+
+```json
+"shape": { "type": "belt", "radius": 32, "rarity": 400 }
+```
+
+A belt ignores `attempts` and `spread`, since it is placed per chunk rather than per attempt. `minHeight` and `maxHeight` are the band the centres sit in, and the ball reaches `radius` beyond that band. `replace` decides what it eats, `biomes` and the temperature and rainfall limits are checked at the centre, so a belt either appears in full or not at all rather than being cut off at a biome edge.
+
+Cost grows with the cube of `radius`, and a low `rarity` multiplies it, so start at the defaults and raise the radius slowly.
 
 ## Spreads
 
@@ -1220,6 +1288,10 @@ tconstruct:ore:0=minecraft:netherrack
 ```
 
 Each chunk is done once, as it loads, and marked in the chunk's own data so it is never done twice. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
+
+**Villages.** `villageSpacing` is how many chunks apart villages are seeded, lower being denser, with 9 the lowest that works and 0 leaving vanilla's 32 alone. `villageMinDistanceFromSpawn` keeps them away from the world spawn. `villageBiomes` and `villageBiomeTypes` say where they generate, with `villageBiomesAreBlacklist` choosing whether those are taken out of vanilla's four biomes or become the whole list. Spacing decides where villages are seeded, so changing it in a world that already exists leaves the old villages where they are and puts new ones on a different grid.
+
+`villagePieces` names vanilla village pieces — `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2` — and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top.
 
 **Structures.** Vanilla structures switched off by name, per dimension.
 

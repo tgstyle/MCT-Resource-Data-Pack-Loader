@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.SpreadDef;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
@@ -56,7 +57,7 @@ public final class ContentParser {
             DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
     private static final Set<String> KNOWN_SHAPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
             ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES,
-            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT)));
+            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT)));
     public static final String PLACEHOLDER = "open";
     public static final String DEFAULT_STILL = "minecraft:blocks/water_still";
     public static final String DEFAULT_FLOW = "minecraft:blocks/water_flow";
@@ -603,6 +604,43 @@ public final class ContentParser {
                 strings(json, "requires"));
     }
 
+    @Nullable public static VillageDef village(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Village file {} is empty, ignoring it", key);
+            return null;
+        }
+
+        String type = JsonUtils.getString(json, "type", VillageDef.FARM).trim().toLowerCase(Locale.ROOT);
+        if (!VillageDef.FARM.equals(type) && !VillageDef.TEMPLATE.equals(type)) {
+            ContentLog.LOGGER.error("Village plot {} asks for type '{}', which is not {} or {}, using {}", key, type, VillageDef.FARM, VillageDef.TEMPLATE, VillageDef.FARM);
+            type = VillageDef.FARM;
+        }
+
+        String structure = JsonUtils.getString(json, "structure", "");
+        if (VillageDef.TEMPLATE.equals(type) && structure.isEmpty()) {
+            ContentLog.LOGGER.error("Village plot {} is a template but names no structure, ignoring it", key);
+            return null;
+        }
+
+        return new VillageDef(key, type,
+                Math.max(1, JsonUtils.getInt(json, "weight", 3)),
+                Math.max(0, JsonUtils.getInt(json, "leastCount", 1)),
+                Math.max(0, JsonUtils.getInt(json, "mostCount", 4)),
+                Math.max(3, JsonUtils.getInt(json, "width", 7)),
+                Math.max(1, JsonUtils.getInt(json, "height", 4)),
+                Math.max(3, JsonUtils.getInt(json, "depth", 9)),
+                strings(json, "crops"),
+                JsonUtils.getString(json, "edge", "minecraft:log"),
+                JsonUtils.getString(json, "soil", "minecraft:farmland"),
+                JsonUtils.getBoolean(json, "water", true),
+                Math.max(1, JsonUtils.getInt(json, "rowWidth", 2)),
+                structure,
+                JsonUtils.getString(json, "ground", "minecraft:dirt"),
+                Math.max(1, Math.min(100, JsonUtils.getInt(json, "integrity", 100))),
+                strings(json, "requires"));
+    }
+
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
         if (!json.has("shape")) { return ShapeDef.cluster(); }
 
@@ -620,7 +658,7 @@ public final class ContentParser {
         }
 
         return new ShapeDef(type,
-                amount(entry, "radius", 6, 0),
+                amount(entry, "radius", ShapeDef.BELT.equals(type) ? 32 : 6, 0),
                 amount(entry, "height", ShapeDef.GEODE.equals(type) ? 8 : ShapeDef.TREE.equals(type) ? 5 : 1, 0),
                 amount(entry, "width", 12, 3),
                 plane,
@@ -639,7 +677,9 @@ public final class ContentParser {
                 JsonUtils.getBoolean(entry, "vines", false),
                 JsonUtils.getBoolean(entry, "hanging", false),
                 JsonUtils.getString(entry, "structure", ""),
-                Math.max(1, Math.min(100, JsonUtils.getInt(entry, "integrity", 100))));
+                Math.max(1, Math.min(100, JsonUtils.getInt(entry, "integrity", 100))),
+                Math.max(1, JsonUtils.getInt(entry, "rarity", 400)),
+                JsonUtils.getBoolean(entry, "rarityIsPerChunk", false));
     }
 
     private static List<String> surface(JsonObject entry) {
