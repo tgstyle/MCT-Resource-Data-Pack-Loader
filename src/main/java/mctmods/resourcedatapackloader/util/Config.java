@@ -41,6 +41,8 @@ public class Config {
         public String voidWorld = "default";
         @net.minecraftforge.common.config.Config.Comment("Recipe and furnace blocking and their whitelists [default|global|off]")
         public String recipes = "default";
+        @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, set through generatorOptions [default|global|off]")
+        public String terrain = "default";
     }
 
     public static class Packs {
@@ -172,6 +174,8 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("The same cap for water mobs such as squid. Vanilla is 5. -1 leaves it alone [Default=-1]")
         @net.minecraftforge.common.config.Config.RangeInt(min = -1, max = 1000)
         public int waterCreatureCap = -1;
+        @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
+        public String generatorOptions = "";
         @net.minecraftforge.common.config.Config.Comment("Generate mod CoFH World files through this mod when CoFH World is missing. Translating them into a pack is the supported way [Default=false]")
         public boolean readCofhWorldFiles = false;
         @net.minecraftforge.common.config.Config.Comment("Stop every other mod from generating anything through its own world generators, which is how mods add things Forge's ore and decoration events never see, such as Tinkers' slime islands. Only the mods in generatorWhitelist still generate. This mod's own pack generation is never blocked [Default=false]")
@@ -250,9 +254,9 @@ public class Config {
     }
 
     public static class Tweaks {
-        @net.minecraftforge.common.config.Config.Comment("Leaves that lose their tree decay within a second instead of waiting on random ticks [Default=false]")
+        @net.minecraftforge.common.config.Config.Comment("Leaves that lose their tree decay within a second instead of waiting on random ticks. Ignored when Universal Tweaks is installed, which does this itself [Default=false]")
         public boolean promptLeafDecay = false;
-        @net.minecraftforge.common.config.Config.Comment("Grass paths can be made under a block and stay there when one is placed above [Default=false]")
+        @net.minecraftforge.common.config.Config.Comment("Grass paths can be made under a block and stay there when one is placed above. Ignored when Universal Tweaks is installed, which does this itself [Default=false]")
         public boolean lenientPaths = false;
     }
 

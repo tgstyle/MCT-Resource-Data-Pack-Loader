@@ -48,6 +48,7 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
                 Config.data.lootInjections, Config.data.functions, Config.data.registryRemaps);
         LOGGER.info("Config worldgen: load={} retrogen={} adoptExistingChunks={} retrogenKey='{}' retrogenChunksPerTick={} blockOres={} oreWhitelist={} oreTypes={} oreTypesAreBlacklist={} flatBedrock={} flatBedrockRetrogen={} blockBiomes={} biomeNames={} biomeNamesAreBlacklist={} worldgenDebug={} readCofhWorldFiles={}",
                 Config.worldgen.load, Config.worldgen.retrogen, Config.worldgen.adoptExistingChunks, Config.worldgen.retrogenKey, Config.worldgen.retrogenChunksPerTick, Config.worldgen.blockOres, Arrays.toString(Config.worldgen.oreWhitelist), Arrays.toString(Config.worldgen.oreTypes), Config.worldgen.oreTypesAreBlacklist, Config.worldgen.flatBedrock, Config.worldgen.flatBedrockRetrogen, Config.worldgen.blockBiomes, Arrays.toString(Config.worldgen.biomeNames), Config.worldgen.biomeNamesAreBlacklist, Config.worldgen.worldgenDebug, Config.worldgen.readCofhWorldFiles);
+        LOGGER.info("Config terrain: generatorOptions='{}'", Config.worldgen.generatorOptions);
         LOGGER.info("Config compat: fixTinkersModelErrors={}", Config.compat.fixTinkersModelErrors);
         LOGGER.info("Config client: loadingScreenPercent={}", Config.client.loadingScreenPercent);
         LOGGER.info("Config tweaks: promptLeafDecay={} lenientPaths={}", Config.tweaks.promptLeafDecay, Config.tweaks.lenientPaths);

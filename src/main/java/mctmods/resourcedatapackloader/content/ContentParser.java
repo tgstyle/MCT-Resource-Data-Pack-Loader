@@ -287,6 +287,9 @@ public final class ContentParser {
                 JsonUtils.getFloat(sky, "starBrightness", -1.0F),
                 cloudColour.isEmpty() ? -1 : ContentTypes.color(cloudColour, key.toString()),
                 JsonUtils.getInt(sky, "respawnDimension", Integer.MIN_VALUE),
+                JsonUtils.getBoolean(sky, "renderSky", true),
+                JsonUtils.getBoolean(sky, "renderClouds", true),
+                JsonUtils.getBoolean(sky, "renderWeather", true),
                 gameRules(key, json),
                 strings(json, "requires"));
     }

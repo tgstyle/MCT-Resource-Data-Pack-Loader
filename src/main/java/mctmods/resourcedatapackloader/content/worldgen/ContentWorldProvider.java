@@ -19,6 +19,7 @@ import net.minecraft.world.gen.ChunkGeneratorFlat;
 import net.minecraft.world.gen.ChunkGeneratorHell;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.IChunkGenerator;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -33,6 +34,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
         this.def = ContentDimensions.byId(getDimension());
         this.hasSkyLight = def == null || def.hasSkyLight;
         this.biomeProvider = provider();
+        if (def != null && FMLCommonHandler.instance().getSide().isClient()) { ContentSkyRenderers.apply(this, def); }
     }
 
     private net.minecraft.world.biome.BiomeProvider provider() {

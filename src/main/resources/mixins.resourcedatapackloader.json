@@ -27,6 +27,7 @@
     "MixinRecipeUnlockedTrigger",
     "MixinTemplateManager",
     "MixinWorld",
+    "MixinWorldInfo",
     "MixinWorldProvider"
   ],
   "client": [

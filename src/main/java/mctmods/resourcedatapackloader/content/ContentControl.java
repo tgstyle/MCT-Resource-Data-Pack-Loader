@@ -24,6 +24,7 @@ public final class ContentControl {
     public static final String BEDROCK = "bedrock";
     public static final String VOID = "void";
     public static final String RECIPES = "recipes";
+    public static final String TERRAIN = "terrain";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -102,6 +103,7 @@ public final class ContentControl {
             case BEDROCK: return Config.control.bedrock;
             case VOID: return Config.control.voidWorld;
             case RECIPES: return Config.control.recipes;
+            case TERRAIN: return Config.control.terrain;
             default: return DEFAULT;
         }
     }
