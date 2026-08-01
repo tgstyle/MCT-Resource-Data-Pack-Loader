@@ -1,12 +1,11 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.vanillatweaks",
+  "package": "mctmods.resourcedatapackloader.mixin.dungeons2",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinBlockGrassPath",
-    "MixinBlockLeaves"
+    "MixinStyleSheetLoader"
   ],
   "client": [],
   "server": []

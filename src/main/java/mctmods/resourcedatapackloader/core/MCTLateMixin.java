@@ -19,6 +19,7 @@ public class MCTLateMixin implements ILateMixinLoader {
                 "mixins.resourcedatapackloader.conarm.json",
                 "mixins.resourcedatapackloader.bop.json",
                 "mixins.resourcedatapackloader.crafttweaker.json",
+                "mixins.resourcedatapackloader.dungeons2.json",
                 "mixins.resourcedatapackloader.quark.json",
                 "mixins.resourcedatapackloader.vanillaportals.json",
                 "mixins.resourcedatapackloader.vanillagrowth.json",
@@ -31,6 +32,7 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (mixinConfig.endsWith(".conarm.json")) { return tinkersFixEnabled() && Loader.isModLoaded("conarm"); }
         if (mixinConfig.endsWith(".bop.json")) { return Loader.isModLoaded("biomesoplenty"); }
         if (mixinConfig.endsWith(".crafttweaker.json")) { return Loader.isModLoaded("crafttweaker"); }
+        if (mixinConfig.endsWith(".dungeons2.json")) { return Loader.isModLoaded("dungeons2"); }
         if (mixinConfig.endsWith(".quark.json")) { return Loader.isModLoaded("quark"); }
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
         if (mixinConfig.endsWith(".vanillagrowth.json")) { return !Loader.isModLoaded("universaltweaks"); }
