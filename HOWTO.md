@@ -52,6 +52,7 @@ There is a working example covering most features: [RDPLExamplePack.zip](https:/
 - [Commands](#commands)
 - [Good to know](#good-to-know)
 - [When something doesn't work](#when-something-doesnt-work)
+- [Bonus: vanilla tweaks](#bonus-vanilla-tweaks)
 - [Bonus: JEI plugin conflict fix](#bonus-jei-plugin-conflict-fix)
 - [Bonus: fewer startup errors](#bonus-fewer-startup-errors)
 
@@ -859,8 +860,11 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of the [creatur
 | `sunriseColors` | no | boolean | `true` | Whether sunrise and sunset are tinted |
 | `ambientLight` | no | float, 0 to 1 | `0.0` | Minimum light everywhere |
 | `starBrightness` | no | float, 0 to 1 | none | How bright the stars are |
+| `renderSky` | no | boolean | `true` | Off, nothing draws the sky, sun, moon or stars, leaving the fog colour |
+| `renderClouds` | no | boolean | `true` | Off, no clouds are drawn |
+| `renderWeather` | no | boolean | `true` | Off, no rain or snow is drawn |
 
-Sky, cloud and weather *renderers* are not covered — those need Java, not JSON.
+Colours and the three render switches are all that is offered. Drawing something of your own up there — a painted dome, your own sun and moon — still needs Java.
 
 ## Portals and gates
 
@@ -892,7 +896,7 @@ A `portal` block carries a `portal` section:
 | `platform` | no | boolean | `true` | Build a landing platform on arrival |
 | `platformBlock` | no | block name | the portal's own frame | What that platform is made of |
 | `sound` | no | sound name | none | Played on passing |
-| `owned` | no | boolean | `true` | Only whoever built it, and those they allow, may use it |
+| `owned` | no | boolean | `true` | Only whoever built it, and those they allow, may use it. An owned portal is also immune to explosions |
 
 `gates/*.json`
 
@@ -956,7 +960,7 @@ A `portal` block carries a `portal` section:
 
 `settings` uses the same key names as the config, so there is no translation table to learn.
 
-Which template is active is decided by the `worldTemplate` config option. Left at `auto`, the first one found wins, so a pack that ships a template should be the only one that does.
+Which template is active is decided by the `worldTemplate` config option. Left at `auto`, the highest priority pack that ships one wins, the same order everything else follows. Naming a template there picks it outright.
 
 ## Game rules
 
@@ -1181,7 +1185,7 @@ Everything that stops or changes generation is grouped, and each group has one k
 | `global` | The config wins. Pack sections are ignored |
 | `off` | The group is disabled entirely and no pack can enable it |
 
-The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld` and `recipes`.
+The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes` and `terrain`.
 
 Settings resolve **biome → world template → config**. A world template's `settings` block uses the same key names as the config, so a pack sets them the same way you would.
 
@@ -1200,6 +1204,8 @@ Settings resolve **biome → world template → config**. A world template's `se
 **Bedrock.** `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone — the original pattern is not recorded anywhere.
 
 **Void world.** `voidWorld` generates an empty overworld with a platform at the spawn point, and stops mobs, animals and structures. The platform's block, size and height are all options.
+
+**Terrain.** `generatorOptions` shapes the overworld itself — sea level, lava oceans and every terrain noise — in the same format the customized world type writes. It is applied to a world as it is created and never afterwards, so a world that already exists is left exactly as it was. Setting it on a world type that is already customized does nothing, and the log names the string it used.
 
 **Recipes.** `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says.
 
@@ -1305,6 +1311,17 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 **A pack folder or zip without an `assets` directory inside it is skipped,** and the log says so.
 
 **`/rdpl which minecraft:textures/blocks/stone.png`** tells you exactly which pack is serving a file and what it's shadowing.
+
+## Bonus: vanilla tweaks
+
+Two small changes to how vanilla behaves, both off by default, in the `tweaks` config category. Both switch themselves off when Universal Tweaks is installed, since it does the same thing.
+
+| Option | What it does |
+| --- | --- |
+| `promptLeafDecay` | Leaves that lose their tree decay within a second instead of waiting on random ticks |
+| `lenientPaths` | Grass paths can be made under a block and stay there when one is placed above |
+
+`lenientPaths` also lifts the same restriction from pack blocks using `behavesAs`, which Universal Tweaks does not touch, so that half stays on either way.
 
 ## Bonus: JEI plugin conflict fix
 

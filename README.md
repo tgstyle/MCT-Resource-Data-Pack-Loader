@@ -1,5 +1,5 @@
 # Links
-- [Official Discord](https://discord.gg/ujY2m)
+- [Official Discord](https://discord.gg/ujY2mV9)
 
 - [Resource Data Pack Loader on CurseForge](https://www.curseforge.com/minecraft/mc-mods/mct-resource-data-pack-loader)
 - [Resource Data Pack Loader on Modrinth](https://modrinth.com/mod/mct-resource-data-pack-loader)
@@ -46,8 +46,9 @@ potion types, brewing recipes, villager professions with trades, game rules, bio
 dimensions.
 
 Saplings grow into a tree built from your own log and leaves, or into one of your structure
-templates. Leaves take a tint and drop your sapling. Portal blocks link two dimensions and remember
-who built them.
+templates. Leaves take a tint and drop your sapling. Portal blocks link two dimensions, remember who
+built them, and survive an explosion when they do. A dimension picks its own sky, fog and cloud
+colours, and can turn the sky, clouds or weather off entirely.
 
 Registration happens at the lowest priority, so a real mod always wins. Anything needing a tile
 entity, a GUI, an inventory or per-tick logic still needs a real mod.
@@ -70,6 +71,8 @@ rainfall and distance from spawn, and can be generated into chunks that already 
 - Block crafting and furnace recipes by mod, with CraftTweaker and GroovyScript additions always
   surviving
 - Flatten bedrock, per dimension and per biome, in new chunks or in ones that already exist
+- Shape the overworld itself — sea level, lava oceans and the terrain noise — applied as a world is
+  created, so worlds that already exist are untouched
 - Generate the overworld as a void with a platform, which also happens by itself if every biome is
   blocked
 
@@ -78,11 +81,10 @@ and every group answers to a config switch that leaves it to the pack, forces th
 or turns the group off entirely so no pack can enable it.
 
 # CoFH World
-Mods that require CoFH World for ore generation load without it (even Thermal Foundation). Their
-generation files can be read straight out of their jars or the cofh/world folder and generated through
-this mod instead, covering every CoFH generator and distribution that produces anything. It is off by
-default — translating those files into a pack is the supported route, but you can use CoFH World jsons
-if needed.
+Mods that require CoFH World load without it. Their generation files can be read straight out of
+their jars and generated through this mod instead, covering every CoFH generator and distribution
+that produces anything. It is off by default — translating those files into a pack is the supported
+route, and the only way to change what they generate.
 
 # Good to know
 A pack whose name starts with `RDPLO` always overrides the player's selected resource packs, one
