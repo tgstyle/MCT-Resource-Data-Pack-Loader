@@ -120,6 +120,18 @@ public final class ContentModels {
 
             event.getItemColors().registerItemColorHandler((stack, layer) -> layer > 0 ? -1 : PotionUtils.getColor(stack), entry.getValue());
         }
+
+        for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
+            BlockDef def = ContentRegistry.blockDef(entry.getKey());
+            if (def == null || def.tint.isEmpty()) { continue; }
+
+            Item item = Item.getItemFromBlock(entry.getValue());
+            if (item == Items.AIR) { continue; }
+
+            int fixed = ContentTints.fixed(def.tint, entry.getKey());
+            String mode = ContentTints.mode(def.tint);
+            event.getItemColors().registerItemColorHandler((stack, layer) -> fixed == ContentTypes.NO_COLOR ? ContentTints.biome(mode, null, null) : fixed, item);
+        }
     }
 
     @SubscribeEvent
