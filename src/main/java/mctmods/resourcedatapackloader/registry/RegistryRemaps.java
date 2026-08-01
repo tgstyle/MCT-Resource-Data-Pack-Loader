@@ -16,7 +16,10 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class RegistryRemaps {
     private static final Gson GSON = new GsonBuilder().create();
@@ -51,17 +54,24 @@ public final class RegistryRemaps {
         Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());
         int count = 0;
         for (Map.Entry<String, JsonElement> entry : mapping.entrySet()) {
-            put(target, new ResourceLocation(entry.getKey()), new ResourceLocation(entry.getValue().getAsString()));
+            target.put(new ResourceLocation(entry.getKey()), new ResourceLocation(entry.getValue().getAsString()));
             count++;
         }
         return count;
     }
 
-    private static void put(Map<ResourceLocation, ResourceLocation> target, ResourceLocation from, ResourceLocation to) {
-        for (Map.Entry<ResourceLocation, ResourceLocation> entry : target.entrySet()) {
-            if (entry.getValue().equals(from)) { entry.setValue(to); }
+    @Nullable private static ResourceLocation follow(Map<ResourceLocation, ResourceLocation> target, ResourceLocation from) {
+        ResourceLocation current = target.get(from);
+        if (current == null) { return null; }
+        Set<ResourceLocation> seen = new HashSet<>();
+        seen.add(from);
+        while (seen.add(current)) {
+            ResourceLocation next = target.get(current);
+            if (next == null) { return current; }
+            current = next;
         }
-        target.put(from, to);
+        ContentLog.LOGGER.error("Registry remap chain from {} loops back on itself, so it is ignored", from);
+        return null;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -72,7 +82,7 @@ public final class RegistryRemaps {
         if (target == null) { return; }
         for (Object raw : event.getAllMappings()) {
             RegistryEvent.MissingMappings.Mapping mapping = (RegistryEvent.MissingMappings.Mapping) raw;
-            ResourceLocation renamed = target.get(mapping.key);
+            ResourceLocation renamed = follow(target, mapping.key);
             if (renamed == null) { continue; }
             IForgeRegistryEntry value = mapping.registry.getValue(renamed);
             if (value == null) {

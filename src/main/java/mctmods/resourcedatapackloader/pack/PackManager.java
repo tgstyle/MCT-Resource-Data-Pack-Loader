@@ -211,7 +211,7 @@ public final class PackManager {
         try { return new RDPLPack(clean, Integer.parseInt(matcher.group(1)), overriding, root, owned); }
         catch (NumberFormatException ex) {
             ContentLog.LOGGER.warn("Pack '{}': priority number is too large, treating the pack as unprioritised", raw);
-            return new RDPLPack(raw, -1, overriding, root, owned);
+            return new RDPLPack(clean, -1, overriding, root, owned);
         }
     }
 
@@ -361,8 +361,13 @@ public final class PackManager {
         List<RDPLPack> result = new ArrayList<>();
         Entry entry = lookup(namespace, path);
         if (entry == null) { return result; }
+        String lowered = isLowerCase(entry.actual) ? entry.actual : entry.actual.toLowerCase(Locale.ROOT);
         for (RDPLPack pack : packs) {
-            if (pack.getPaths(namespace).contains(entry.actual)) { result.add(pack); }
+            for (String held : pack.getPaths(namespace)) {
+                if (!lowered.equals(isLowerCase(held) ? held : held.toLowerCase(Locale.ROOT))) { continue; }
+                result.add(pack);
+                break;
+            }
         }
         return result;
     }
@@ -753,6 +758,7 @@ public final class PackManager {
         mergedNormal.clear();
         mergedOverride.clear();
         warned.clear();
+        served.clear();
         namespacesNormal = null;
         namespacesOverride = null;
         generation.incrementAndGet();

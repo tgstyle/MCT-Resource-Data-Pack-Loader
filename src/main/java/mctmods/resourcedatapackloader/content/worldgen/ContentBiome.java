@@ -46,8 +46,6 @@ public class ContentBiome extends Biome {
 
         if (!def.keepDefaultSpawns) { clearSpawns(); }
 
-        for (SpawnEntryDef entry : def.spawns) { addSpawn(entry); }
-
         decorate(this.decorator, def.decoration);
     }
 
@@ -65,6 +63,10 @@ public class ContentBiome extends Biome {
     }
 
     public BiomeDef getDef() { return def; }
+
+    public void resolveSpawns() {
+        for (SpawnEntryDef entry : def.spawns) { addSpawn(entry); }
+    }
 
     private void clearSpawns() {
         spawnableMonsterList.clear();

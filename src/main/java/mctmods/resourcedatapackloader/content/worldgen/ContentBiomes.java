@@ -201,6 +201,7 @@ public final class ContentBiomes {
         int placed = 0;
         for (ContentBiome biome : REGISTERED) {
             BiomeDef def = biome.getDef();
+            biome.resolveSpawns();
             types(biome, def);
 
             if (def.spawnBiome) { BiomeManager.addSpawnBiome(biome); }

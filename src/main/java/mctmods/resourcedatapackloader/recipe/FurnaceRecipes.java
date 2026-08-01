@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.mixin.AccessorFurnaceRecipes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -87,11 +88,13 @@ public final class FurnaceRecipes {
 
         int removed = 0;
         Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
+        Map<ItemStack, Float> experience = ((AccessorFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
         Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<ItemStack, ItemStack> recipe = iterator.next();
             if (!resultStack.isEmpty() && differs(resultStack, recipe.getValue())) { continue; }
             if (!inputStack.isEmpty() && differs(inputStack, recipe.getKey())) { continue; }
+            experience.remove(recipe.getValue());
             iterator.remove();
             removed++;
         }

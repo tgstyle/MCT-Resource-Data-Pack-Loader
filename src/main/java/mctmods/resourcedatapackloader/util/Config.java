@@ -214,7 +214,7 @@ public class Config {
         public boolean blockBiomeDimensionsAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("Log a per mod count of which biomes were blocked, so you can see what to whitelist [Default=true]")
         public boolean logBlockedBiomes = true;
-        @net.minecraftforge.common.config.Config.Comment("Which world template fills the biomes that blocking removes, such as oceans, rivers and beaches that the biome lists never reach. Built in: void, vanilla, ocean, plains, desert. A pack can add its own in worldtemplates/*.json and you name it here as namespace:name. 'auto' picks the first pack template found. Empty leaves blocked biomes as the void and ignores any pack settings section [Default=auto]")
+        @net.minecraftforge.common.config.Config.Comment("Which world template fills the biomes that blocking removes, such as oceans, rivers and beaches that the biome lists never reach. Built in: void, vanilla, ocean, plains, desert. A pack can add its own in worldtemplates/*.json and you name it here as namespace:name. 'auto' picks the pack template from the highest priority pack. Empty leaves blocked biomes as the void and ignores any pack settings section [Default=auto]")
         public String worldTemplate = "auto";
         @net.minecraftforge.common.config.Config.Comment("Generate the overworld as empty space with a platform at the spawn point, and stop mobs, animals and structures appearing. Only affects new chunks [Default=false]")
         public boolean voidWorld = false;

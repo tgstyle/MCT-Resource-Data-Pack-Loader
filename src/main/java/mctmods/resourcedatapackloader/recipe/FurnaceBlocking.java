@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.mixin.AccessorFurnaceRecipes;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -75,6 +76,7 @@ public final class FurnaceBlocking {
         if (disabled()) { return; }
 
         Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
+        Map<ItemStack, Float> experience = ((AccessorFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
         Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
         int removed = 0;
 
@@ -83,6 +85,7 @@ public final class FurnaceBlocking {
             if (TRUSTED_OUTPUTS.contains(entry.getValue())) { continue; }
             if (!rejects(entry.getValue())) { continue; }
 
+            experience.remove(entry.getValue());
             iterator.remove();
             removed++;
         }

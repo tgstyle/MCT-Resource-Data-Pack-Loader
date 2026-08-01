@@ -176,6 +176,10 @@ public final class ContentParser {
                     ContentLog.LOGGER.error("World template {} names role '{}', which is not one of {}, ignoring it", key, role.getKey(), ContentWorldTemplates.describeRoles());
                     continue;
                 }
+                if (!role.getValue().isJsonPrimitive()) {
+                    ContentLog.LOGGER.error("World template {} sets role '{}' to something that is not a biome name, ignoring it", key, role.getKey());
+                    continue;
+                }
                 roles.put(name, role.getValue().getAsString());
             }
         }
@@ -508,13 +512,15 @@ public final class ContentParser {
             minHeight = maxHeight;
             maxHeight = swap;
         }
+        minHeight = Math.max(0, minHeight);
+        maxHeight = Math.max(minHeight, maxHeight);
 
         return new WorldgenDef(key, new ResourceLocation(block),
                 JsonUtils.getInt(json, "meta", 0),
                 weights(json),
                 amount(json, "size", 8, 1),
                 amount(json, "attempts", 8, 0),
-                Math.max(0, minHeight), maxHeight,
+                minHeight, maxHeight,
                 replaces(key, json),
                 JsonUtils.getBoolean(json, "sparse", false),
                 integers(json),

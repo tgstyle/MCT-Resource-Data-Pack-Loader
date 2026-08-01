@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -27,14 +26,6 @@ public abstract class MixinLootTableManager {
     private static Gson GSON_INSTANCE;
     @Unique
     private Map<ResourceLocation, LootTable> rdpl$cache;
-
-    @SuppressWarnings("ConstantConditions")
-    @Inject(method = "getLootTableFromLocation", at = @At("RETURN"))
-    private void rdpl$inject(ResourceLocation ressources, CallbackInfoReturnable<LootTable> cir) {
-        LootTable table = cir.getReturnValue();
-        if (table == null || table == LootTable.EMPTY_LOOT_TABLE) { return; }
-        LootInjections.apply(ressources, table, GSON_INSTANCE);
-    }
 
     @SuppressWarnings("ConstantConditions")
     @Inject(method = "getLootTableFromLocation", at = @At("HEAD"), cancellable = true)

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.mixin.AccessorLootTable;
+import mctmods.resourcedatapackloader.mixin.AccessorLootTableManager;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -12,6 +14,10 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootPool;
 import net.minecraft.world.storage.loot.LootTable;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.event.LootTableLoadEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,21 +71,25 @@ public final class LootInjections {
         }
     }
 
-    public static void apply(ResourceLocation name, LootTable table, Gson gson) {
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLootTableLoad(LootTableLoadEvent event) {
         if (!Config.data.lootInjections) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
 
-        List<String> pools = BY_TABLE.get(name);
-        if (pools == null || table.isFrozen()) { return; }
+        List<String> pools = BY_TABLE.get(event.getName());
+        LootTable table = event.getTable();
+        if (pools == null || table == null) { return; }
 
+        Gson gson = AccessorLootTableManager.rdpl$gson();
+        ResourceLocation synthetic = new ResourceLocation(event.getName().getNamespace(), event.getName().getPath() + "_rdpl_injection");
         for (String pool : pools) {
             try {
-                LootPool parsed = gson.fromJson(pool, LootPool.class);
+                LootTable parsed = ForgeHooks.loadLootTable(gson, synthetic, "{\"pools\":[" + pool + "]}", true, event.getLootTableManager());
                 if (parsed == null) { continue; }
-                table.addPool(parsed);
+                for (LootPool each : ((AccessorLootTable) parsed).rdpl$getPools()) { table.addPool(each); }
             }
             catch (RuntimeException ex) {
-                ContentLog.LOGGER.error("Could not add an injected pool to loot table {}. A pool with the same name may already be there, give each injected pool its own name", name, ex);
+                ContentLog.LOGGER.error("Could not add an injected pool to loot table {}. A pool with the same name may already be there, give each injected pool its own name", event.getName(), ex);
             }
         }
     }

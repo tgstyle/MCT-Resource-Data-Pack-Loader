@@ -10,8 +10,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -28,6 +30,7 @@ public final class ContentControl {
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
+    private static final Set<String> WARNED = new LinkedHashSet<>();
 
     private ContentControl() {}
 
@@ -37,42 +40,70 @@ public final class ContentControl {
 
     public static boolean flag(String group, String key, boolean fallback) {
         JsonElement value = setting(group, key);
-        return value == null ? fallback : value.getAsBoolean();
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive()) { return rejected(key, "true or false", fallback); }
+
+        return value.getAsBoolean();
     }
 
     public static int number(String group, String key, int fallback) {
         JsonElement value = setting(group, key);
-        return value == null ? fallback : value.getAsInt();
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
+
+        return value.getAsInt();
     }
 
     public static float decimal(String group, String key, float fallback) {
         JsonElement value = setting(group, key);
-        return value == null ? fallback : value.getAsFloat();
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
+
+        return value.getAsFloat();
     }
 
     public static String text(String group, String key, String fallback) {
         JsonElement value = setting(group, key);
-        return value == null ? fallback : value.getAsString();
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
+
+        return value.getAsString();
     }
 
     public static String[] list(String group, String key, String[] fallback) {
         JsonElement value = setting(group, key);
-        if (value == null || !value.isJsonArray()) { return fallback; }
+        if (value == null) { return fallback; }
+        if (!value.isJsonArray()) { return rejected(key, "a list of text values", fallback); }
 
-        JsonArray array = value.getAsJsonArray();
         List<String> found = new ArrayList<>();
-        for (JsonElement entry : array) { found.add(entry.getAsString()); }
+        for (JsonElement entry : value.getAsJsonArray()) {
+            if (!entry.isJsonPrimitive()) { return rejected(key, "a list of text values", fallback); }
+
+            found.add(entry.getAsString());
+        }
         return found.toArray(new String[0]);
     }
 
     public static int[] numbers(String group, String key, int[] fallback) {
         JsonElement value = setting(group, key);
-        if (value == null || !value.isJsonArray()) { return fallback; }
+        if (value == null) { return fallback; }
+        if (!value.isJsonArray()) { return rejected(key, "a list of numbers", fallback); }
 
         JsonArray array = value.getAsJsonArray();
         int[] found = new int[array.size()];
-        for (int i = 0; i < found.length; i++) { found[i] = array.get(i).getAsInt(); }
+        for (int i = 0; i < found.length; i++) {
+            JsonElement entry = array.get(i);
+            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isNumber()) { return rejected(key, "a list of numbers", fallback); }
+
+            found[i] = entry.getAsInt();
+        }
         return found;
+    }
+
+    private static <T> T rejected(String key, String wanted, T fallback) {
+        if (WARNED.add(key)) { ContentLog.LOGGER.error("The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted); }
+
+        return fallback;
     }
 
     @Nullable private static JsonElement setting(String group, String key) {

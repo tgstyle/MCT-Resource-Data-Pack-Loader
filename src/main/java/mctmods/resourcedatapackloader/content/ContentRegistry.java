@@ -23,6 +23,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonParseException;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
@@ -99,7 +100,7 @@ public final class ContentRegistry {
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in worldgen definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
 
-        if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles")) {
+        if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && !Loader.isModLoaded("cofhworld")) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
                 if (WORLDGEN_DEFS.containsKey(entry.getKey())) { continue; }
                 try {
@@ -440,6 +441,7 @@ public final class ContentRegistry {
         for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
             BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
             if (def == null) { continue; }
+            if (Item.getItemFromBlock(entry.getValue()) == Items.AIR) { continue; }
             for (BlockVariant variant : def.visible) {
                 for (String name : variant.oreDict) {
                     OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));

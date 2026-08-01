@@ -71,6 +71,7 @@ public final class ContentCofhWorld {
                     folder = entry.getName().substring(0, entry.getName().lastIndexOf('/') + 1);
                     convert(modid, entry.getName(), new String(bytes(stream, (int) entry.getSize()), StandardCharsets.UTF_8), found);
                 }
+                catch (RuntimeException ex) { ContentLog.LOGGER.error("CoFH World file {} in {} is malformed, leaving it out: {}", entry.getName(), jar.getName(), ex.toString()); }
             }
         }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read CoFH World files from {}: {}", jar.getName(), ex.getMessage()); }
