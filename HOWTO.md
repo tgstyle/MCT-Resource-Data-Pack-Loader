@@ -2,7 +2,10 @@
 
 **One folder that overrides anything Minecraft or a mod provides, defines new content from JSON, and controls what generates — in every world, on clients and servers, with nothing for players to switch on.**
 
-There is a working example covering most features: [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip). Drop it straight into `rdploader` and look at how each file is written.
+Two working examples. Drop either straight into `rdploader` and look at how each file is written.
+
+- [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) covers most features — blocks, items, biomes, a dimension, a world template and every worldgen shape.
+- [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
 
 ---
 
