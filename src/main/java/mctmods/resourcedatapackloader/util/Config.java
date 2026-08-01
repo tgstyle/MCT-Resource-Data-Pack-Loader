@@ -184,6 +184,12 @@ public class Config {
         public String[] generatorWhitelist = { "minecraft" };
         @net.minecraftforge.common.config.Config.Comment("Mod ids, or parts of a generator class name such as slimeisland, blocked outright whatever the whitelist says. One per line")
         public String[] blockedGenerators = {};
+        @net.minecraftforge.common.config.Config.Comment("World generator types blocked outright, whatever the whitelist says. One of ores, structures, flora, lakes, terrain or unknown, one per line. Types are worked out from the generator class name, so use generatorTypeMap for the ones that guess wrong")
+        public String[] generatorTypes = {};
+        @net.minecraftforge.common.config.Config.Comment("On, the types in generatorTypes are blocked. Off, only those types generate and everything else is blocked [Default=true]")
+        public boolean generatorTypesAreBlacklist = true;
+        @net.minecraftforge.common.config.Config.Comment("Types for generators the class name does not describe, written as pattern=type, where pattern is a mod id or part of a generator class name. One per line, checked before the built in patterns")
+        public String[] generatorTypeMap = {};
         @net.minecraftforge.common.config.Config.Comment("Dimensions world generator blocking applies to. Empty means every dimension [Default=0, the overworld]")
         public int[] blockGeneratorDimensions = { 0 };
         @net.minecraftforge.common.config.Config.Comment("On, generator blocking skips these dimensions. Off, it applies only to them [Default=false]")

@@ -1200,6 +1200,17 @@ Settings resolve **biome → world template → config**. A world template's `se
 
 **Generators.** `blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see — slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked.
 
+`generatorTypes` blocks by what a generator makes instead of by which mod owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched. `generatorTypesAreBlacklist` decides the direction — on, the listed types are blocked; off, only the listed types generate. A type blocks whatever the whitelist says, the same way `oreTypes` does, so you can stop every mod adding ore while leaving its dungeons and trees alone.
+
+The type comes from the generator's class name, matched against a built in list of words per type. That reads most mods correctly — `NetherOreGenerator` is ores, `SlimeIslandGenerator` is structures — but a generator named after nothing in particular, such as ProjectRed's `SimpleGenHandler` or Draconic Evolution's `DEWorldGenHandler`, comes out as `unknown`. `generatorTypeMap` fixes those by hand, one `pattern=type` per line, where the pattern is a mod id or part of a generator class name:
+
+```
+mrtjpcore=ores
+deworldgenhandler=structures
+```
+
+Mapped entries are checked before the built in words, so they also correct a generator the words read the wrong way. Turn on `logBlockedGenerators` and each generator is logged with the type it was given the first time it is blocked, and `/rdplserver generators` shows the running totals by mod and type.
+
 **Structures.** Vanilla structures switched off by name, per dimension.
 
 **Spawning.** Mob spawn rates and caps, per biome.

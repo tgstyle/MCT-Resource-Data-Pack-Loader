@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
@@ -31,12 +32,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "gate", "dimensions", "biome");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
 
     @Override @Nonnull public String getName() { return "rdplserver"; }
 
-    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused|oregen|gate <list|check <player>|grant <player> <gate>|revoke <player> <gate>>>"; }
+    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused|oregen|generators|gate <list|check <player>|grant <player> <gate>|revoke <player> <gate>>>"; }
 
     @Override public int getRequiredPermissionLevel() { return 3; }
 
@@ -55,6 +56,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
         else if (args.length == 1 && "oregen".equals(args[0])) { oregen(sender); }
+        else if (args.length == 1 && "generators".equals(args[0])) { generators(sender); }
         else if (args.length >= 1 && "gate".equals(args[0])) { gate(server, sender, args); }
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
@@ -99,6 +101,19 @@ public class ServerCommands extends CommandBase {
         }
 
         send(sender, TextFormatting.GREEN, "Ore generation blocked so far:");
+        for (Map.Entry<String, Integer> entry : blocked.entrySet()) {
+            send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
+    private void generators(ICommandSender sender) {
+        Map<String, Integer> blocked = ContentGeneratorControl.blocked();
+        if (blocked.isEmpty()) {
+            send(sender, TextFormatting.YELLOW, "No world generator has been blocked. Either the settings are off, or no chunk that would have run one has been made yet");
+            return;
+        }
+
+        send(sender, TextFormatting.GREEN, "World generation blocked so far, by mod and type:");
         for (Map.Entry<String, Integer> entry : blocked.entrySet()) {
             send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue());
         }
