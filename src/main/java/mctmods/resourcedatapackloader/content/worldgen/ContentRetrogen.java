@@ -57,7 +57,7 @@ public final class ContentRetrogen {
     public static boolean bedrockWanted() { return Config.worldgen.flatBedrock && Config.worldgen.flatBedrockRetrogen; }
 
     public static boolean wanted() {
-        if (bedrockWanted()) { return true; }
+        if (bedrockWanted() || ContentReplacements.wanted()) { return true; }
 
         for (WorldgenDef def : defs) {
             if (def.retrogen) { return true; }
@@ -71,6 +71,7 @@ public final class ContentRetrogen {
         Set<String> already = done(world.provider.getDimension()).computeIfAbsent(new ChunkPos(chunkX, chunkZ), k -> new HashSet<>());
         for (WorldgenDef def : defs) { already.add(def.getToken()); }
         if (Config.worldgen.flatBedrock) { already.add(bedrockToken()); }
+        if (ContentReplacements.wanted()) { already.add(ContentReplacements.token()); }
     }
 
     private static Map<ChunkPos, Set<String>> done(int dimension) { return DONE.computeIfAbsent(dimension, k -> new HashMap<>()); }
@@ -85,28 +86,32 @@ public final class ContentRetrogen {
 
         int dimension = event.getWorld().provider.getDimension();
         Set<String> already = read(event.getData());
-        if (Config.worldgen.adoptExistingChunks && already.isEmpty() && !defs.isEmpty()) {
+        if (Config.worldgen.adoptExistingChunks && !hasVeinTokens(already) && !defs.isEmpty()) {
             for (WorldgenDef def : defs) { already.add(def.getToken()); }
             ContentLog.LOGGER.debug("Adopted chunk {} as already generated", event.getChunk().getPos());
         }
         done(dimension).put(event.getChunk().getPos(), already);
         ContentLog.LOGGER.debug("Chunk {} loaded with retrogen tokens {}", event.getChunk().getPos(), already);
-        if (!Config.worldgen.retrogen || (defs.isEmpty() && !bedrockWanted())) { return; }
+        boolean replace = ContentReplacements.wanted() && !already.contains(ContentReplacements.token()) && ContentReplacements.appliesTo(dimension);
+        if (!replace && (!Config.worldgen.retrogen || (defs.isEmpty() && !bedrockWanted()))) { return; }
 
         List<WorldgenDef> pending = new ArrayList<>();
-        for (WorldgenDef def : defs) {
-            if (def.retrogen && !already.contains(def.getToken())) { pending.add(def); }
+        boolean bedrock = false;
+        if (Config.worldgen.retrogen) {
+            for (WorldgenDef def : defs) {
+                if (def.retrogen && !already.contains(def.getToken())) { pending.add(def); }
+            }
+            bedrock = bedrockWanted() && !already.contains(bedrockToken()) && ContentBedrock.appliesTo(dimension);
         }
-        boolean bedrock = bedrockWanted() && !already.contains(bedrockToken()) && ContentBedrock.appliesTo(dimension);
-        if (pending.isEmpty() && !bedrock) {
+        if (pending.isEmpty() && !bedrock && !replace) {
             ContentLog.LOGGER.debug("Nothing to do for chunk {}: bedrockToken={} present={} appliesTo={}",
                     event.getChunk().getPos(), bedrockToken(), already.contains(bedrockToken()), ContentBedrock.appliesTo(dimension));
             return;
         }
 
-        QUEUES.computeIfAbsent(dimension, k -> new ArrayDeque<>()).add(new Pending(event.getChunk().getPos(), pending, bedrock));
+        QUEUES.computeIfAbsent(dimension, k -> new ArrayDeque<>()).add(new Pending(event.getChunk().getPos(), pending, bedrock, replace));
         queued++;
-        ContentLog.LOGGER.debug("Queued chunk {} for retrogen: {} vein(s), bedrock={}", event.getChunk().getPos(), pending.size(), bedrock);
+        ContentLog.LOGGER.debug("Queued chunk {} for retrogen: {} vein(s), bedrock={}, replace={}", event.getChunk().getPos(), pending.size(), bedrock, replace);
     }
 
     @SubscribeEvent
@@ -142,7 +147,7 @@ public final class ContentRetrogen {
     @SubscribeEvent
     public static void onWorldTick(TickEvent.WorldTickEvent event) {
         if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END) { return; }
-        if (queued == 0 || !Config.worldgen.retrogen) { return; }
+        if (queued == 0 || (!Config.worldgen.retrogen && !ContentReplacements.wanted())) { return; }
 
         Deque<Pending> queue = QUEUES.get(event.world.provider.getDimension());
         if (queue == null || queue.isEmpty()) { return; }
@@ -156,6 +161,7 @@ public final class ContentRetrogen {
         if (queue.isEmpty() && completed > 0) {
             Summary.info("retrogen", "Caught up " + completed + " existing chunk(s)"
                     + (flattened > 0 ? ", flattening bedrock in " + flattened + " of them" : ""));
+            ContentReplacements.report();
             completed = 0;
             flattened = 0;
         }
@@ -167,6 +173,7 @@ public final class ContentRetrogen {
         boolean falling = BlockFalling.fallInstantly;
         BlockFalling.fallInstantly = true;
         try {
+            if (pending.replace) { ContentReplacements.replace(world, pending.pos.x, pending.pos.z); }
             if (pending.bedrock) {
                 ContentBedrock.flatten(world, pending.pos.x, pending.pos.z, world.provider.getDimension());
                 flattened++;
@@ -183,6 +190,7 @@ public final class ContentRetrogen {
         Set<String> already = done(world.provider.getDimension()).computeIfAbsent(pending.pos, k -> new HashSet<>());
         for (WorldgenDef def : pending.defs) { already.add(def.getToken()); }
         if (pending.bedrock) { already.add(bedrockToken()); }
+        if (pending.replace) { already.add(ContentReplacements.token()); }
         world.getChunk(pending.pos.x, pending.pos.z).markDirty();
         completed++;
     }
@@ -202,15 +210,24 @@ public final class ContentRetrogen {
         return already;
     }
 
+    private static boolean hasVeinTokens(Set<String> already) {
+        for (String token : already) {
+            if (!token.startsWith("bedrock:") && !token.startsWith("replace:")) { return true; }
+        }
+        return false;
+    }
+
     private static final class Pending {
         private final ChunkPos pos;
         private final List<WorldgenDef> defs;
         private final boolean bedrock;
+        private final boolean replace;
 
-        private Pending(ChunkPos pos, List<WorldgenDef> defs, boolean bedrock) {
+        private Pending(ChunkPos pos, List<WorldgenDef> defs, boolean bedrock, boolean replace) {
             this.pos = pos;
             this.defs = defs;
             this.bedrock = bedrock;
+            this.replace = replace;
         }
     }
 }

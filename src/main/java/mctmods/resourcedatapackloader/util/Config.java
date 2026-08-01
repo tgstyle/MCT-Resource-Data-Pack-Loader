@@ -43,6 +43,8 @@ public class Config {
         public String recipes = "default";
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, set through generatorOptions [default|global|off]")
         public String terrain = "default";
+        @net.minecraftforge.common.config.Config.Comment("Replacing blocks in chunks that already exist [default|global|off]")
+        public String replacements = "default";
     }
 
     public static class Packs {
@@ -190,6 +192,20 @@ public class Config {
         public boolean generatorTypesAreBlacklist = true;
         @net.minecraftforge.common.config.Config.Comment("Types for generators the class name does not describe, written as pattern=type, where pattern is a mod id or part of a generator class name. One per line, checked before the built in patterns")
         public String[] generatorTypeMap = {};
+        @net.minecraftforge.common.config.Config.Comment("Blocks swapped out of chunks that already exist, written as block=block, meta optional on either side, such as bigreactors:oreyellorite=minecraft:stone. One per line. Chunks are done once each as they load")
+        public String[] blockReplacements = {};
+        @net.minecraftforge.common.config.Config.Comment("Dimensions block replacement applies to. Empty means every dimension")
+        public int[] blockReplacementDimensions = {};
+        @net.minecraftforge.common.config.Config.Comment("On, block replacement skips these dimensions. Off, it applies only to them [Default=false]")
+        public boolean blockReplacementDimensionsAreBlacklist = false;
+        @net.minecraftforge.common.config.Config.Comment("Lowest y block replacement looks at [Default=0]")
+        public int blockReplacementMinHeight = 0;
+        @net.minecraftforge.common.config.Config.Comment("Highest y block replacement looks at [Default=255]")
+        public int blockReplacementMaxHeight = 255;
+        @net.minecraftforge.common.config.Config.Comment("Change this to make every chunk go through block replacement again [Default=0000]")
+        public String blockReplacementKey = "0000";
+        @net.minecraftforge.common.config.Config.Comment("Log the first time each replacement is made, and a total when a world catches up [Default=true]")
+        public boolean logBlockReplacements = true;
         @net.minecraftforge.common.config.Config.Comment("Dimensions world generator blocking applies to. Empty means every dimension [Default=0, the overworld]")
         public int[] blockGeneratorDimensions = { 0 };
         @net.minecraftforge.common.config.Config.Comment("On, generator blocking skips these dimensions. Off, it applies only to them [Default=false]")

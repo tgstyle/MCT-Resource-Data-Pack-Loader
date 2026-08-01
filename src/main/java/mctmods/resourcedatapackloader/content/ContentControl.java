@@ -27,6 +27,7 @@ public final class ContentControl {
     public static final String VOID = "void";
     public static final String RECIPES = "recipes";
     public static final String TERRAIN = "terrain";
+    public static final String REPLACEMENTS = "replacements";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -135,6 +136,7 @@ public final class ContentControl {
             case VOID: return Config.control.voidWorld;
             case RECIPES: return Config.control.recipes;
             case TERRAIN: return Config.control.terrain;
+            case REPLACEMENTS: return Config.control.replacements;
             default: return DEFAULT;
         }
     }

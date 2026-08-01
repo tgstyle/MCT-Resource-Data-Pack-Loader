@@ -1211,6 +1211,16 @@ deworldgenhandler=structures
 
 Mapped entries are checked before the built in words, so they also correct a generator the words read the wrong way. Turn on `logBlockedGenerators` and each generator is logged with the type it was given the first time it is blocked, and `/rdplserver generators` shows the running totals by mod and type.
 
+**Replacements.** `blockReplacements` swaps blocks out of chunks that already exist, one `block=block` per line, with an optional meta on either side:
+
+```
+bigreactors:oreyellorite=minecraft:stone
+mekanism:oreblock:0=minecraft:stone
+tconstruct:ore:0=minecraft:netherrack
+```
+
+Each chunk is done once, as it loads, and marked in the chunk's own data so it is never done twice. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
+
 **Structures.** Vanilla structures switched off by name, per dimension.
 
 **Spawning.** Mob spawn rates and caps, per biome.
