@@ -6,7 +6,7 @@ import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public final class VanillaPortalLink {
-    private static final String TAG = "rdplNetherPortal";
+    private static final String TAG = "NetherPortal";
     private static final String X = "LastPortalX";
     private static final String Y = "LastPortalY";
     private static final String Z = "LastPortalZ";

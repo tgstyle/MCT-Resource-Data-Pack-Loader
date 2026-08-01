@@ -21,6 +21,8 @@ public class Config {
     public static Compat compat = new Compat();
     @net.minecraftforge.common.config.Config.Comment("What the game shows while a world loads")
     public static Client client = new Client();
+    @net.minecraftforge.common.config.Config.Comment("Small changes to how vanilla behaves")
+    public static Tweaks tweaks = new Tweaks();
 
     public static class Control {
         @net.minecraftforge.common.config.Config.Comment("Ore blocking and the ore whitelists [default|global|off]")
@@ -245,6 +247,13 @@ public class Config {
         public String flatBedrockFiller = "";
         @net.minecraftforge.common.config.Config.Comment("Write per-chunk retrogen lines and cascading worldgen traces to logs/rdpl.log, and the debug lists other messages refer to. Very verbose, about two lines per chunk loaded [Default=false]")
         public boolean worldgenDebug = false;
+    }
+
+    public static class Tweaks {
+        @net.minecraftforge.common.config.Config.Comment("Leaves that lose their tree decay within a second instead of waiting on random ticks [Default=false]")
+        public boolean promptLeafDecay = false;
+        @net.minecraftforge.common.config.Config.Comment("Grass paths can be made under a block and stay there when one is placed above [Default=false]")
+        public boolean lenientPaths = false;
     }
 
     public static class Client {

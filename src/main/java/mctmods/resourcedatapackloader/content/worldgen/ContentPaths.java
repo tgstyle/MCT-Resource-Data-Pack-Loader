@@ -47,17 +47,19 @@ public final class ContentPaths {
                 apply(event, world, pos, face, player, held, named(Config.content.shovelPathReverts, Blocks.DIRT), SoundEvents.ITEM_SHOVEL_FLATTEN);
                 return;
             }
-            if (!ContentSpawning.does("path", block) || !world.isAirBlock(pos.up())) { return; }
+            if (!ContentSpawning.does("path", block) || blocked(world, pos)) { return; }
 
             apply(event, world, pos, face, player, held, named(Config.content.shovelPathBecomes, Blocks.GRASS_PATH), SoundEvents.ITEM_SHOVEL_FLATTEN);
             return;
         }
 
         if (!hoe(held) || !Config.content.hoeTilling) { return; }
-        if (!ContentSpawning.does("till", block) || !world.isAirBlock(pos.up())) { return; }
+        if (!ContentSpawning.does("till", block) || blocked(world, pos)) { return; }
 
         apply(event, world, pos, face, player, held, named(Config.content.hoeTillsInto, Blocks.FARMLAND), SoundEvents.ITEM_HOE_TILL);
     }
+
+    private static boolean blocked(World world, BlockPos pos) { return !Config.tweaks.lenientPaths && !world.isAirBlock(pos.up()); }
 
     private static boolean shovel(ItemStack held) { return held.getItem() instanceof ItemSpade || held.getItem().getToolClasses(held).contains("shovel"); }
 
