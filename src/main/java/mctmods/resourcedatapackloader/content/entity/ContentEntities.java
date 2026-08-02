@@ -173,10 +173,7 @@ public final class ContentEntities {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return 1.0F; }
 
-        float scale = entity.isSprinting() ? def.angryScale : def.scale;
-        Summary.info("entity.scale." + def.registryName, "Drawing " + def.registryName + " at " + scale + " times its size, and its box is " + entity.width + " by " + entity.height);
-
-        return scale;
+        return entity.isSprinting() ? def.angryScale : def.scale;
     }
 
     public static boolean leashable(Entity entity) {
