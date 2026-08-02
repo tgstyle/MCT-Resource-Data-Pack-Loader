@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.world.WorldSettings;
@@ -19,6 +20,26 @@ public abstract class MixinWorldInfo {
 
     @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
     private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
+        String wanted = ContentTerrain.worldType();
+        boolean asked = !wanted.isEmpty() && (terrainType == null || !wanted.equalsIgnoreCase(terrainType.getName()));
+        if (asked && terrainType != null && ContentTerrain.keeps(terrainType.getName())) {
+            ContentLog.LOGGER.info("'{}' was made a {} world, which a pack leaves alone, so it is not made a {} world", name, terrainType.getName(), wanted);
+            asked = false;
+        }
+        if (asked) {
+            boolean made = false;
+            for (WorldType type : WorldType.WORLD_TYPES) {
+                if (type == null || !wanted.equalsIgnoreCase(type.getName())) { continue; }
+
+                terrainType = type;
+                generatorOptions = "";
+                made = true;
+                Summary.info("terrain.worldtype", "Making every new world a " + type.getName() + " world, which is what a pack asks for");
+                break;
+            }
+            if (!made) { ContentLog.LOGGER.error("A pack asks for the world type '{}', which nothing here provides, so '{}' is made the way it was chosen", wanted, name); }
+        }
+
         String options = ContentTerrain.merge(generatorOptions, terrainType == null ? "" : terrainType.getName());
         if (options.isEmpty() || options.equals(generatorOptions)) { return; }
 

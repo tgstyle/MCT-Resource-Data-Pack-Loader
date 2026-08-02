@@ -1232,7 +1232,7 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `spire` | A tapering column |
 | `nodule` | A rough ball |
 | `vent` | A narrow column that stops when it hits something |
-| `imprint` | One of your `.nbt` templates |
+| `imprint` | One of your `.nbt` templates. One that fits inside a chunk is nudged so it lands whole in the chunk being built rather than reaching into a neighbour that has not been made yet, whichever way it is turned; one larger than a chunk is placed only where the ground around it already exists |
 | `belt` | A cluster spanning several chunks, for stone regions |
 
 | Key | Used by | Value | Default | What it does |
@@ -1450,6 +1450,8 @@ Spacing decides where a structure is seeded, so changing it in a world that alre
 **Void world.** `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are all options. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
 
 **The dragon.** `dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
+
+**Terrain.** `worldType` decides what kind of world a new world is, whatever was chosen on the screen where it was made — `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds such as `biomesop` or `realistic`. A pack that is built around one world type names it here and every new world is made that way. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the type it was made with, and a name nothing provides is logged and ignored. `worldTypeExceptions` names the choices that are left to stand — flat and the debug world to begin with, since a pack that wants one world type rarely means to take superflat away from someone testing — and whoever makes a world is told in chat, once they are in it, that the pack chose its type. That message is the config file's to decide with `tellWorldType`, not a pack's, so someone playing can turn it off for themselves and no pack can turn it back on. Settings the world was made with are dropped when the type is changed, since they were written for the type that was chosen.
 
 **Terrain.** `generatorOptions` shapes the overworld itself — sea level, lava oceans and every terrain noise — in the same format the customized world type writes. It is applied to a world as it is created and never afterwards, so a world that already exists is left exactly as it was. A world that already carries options of its own keeps them, and the log names the string it used.
 

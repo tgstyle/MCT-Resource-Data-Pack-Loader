@@ -184,6 +184,12 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("The same cap for water mobs such as squid. Vanilla is 5. -1 leaves it alone [Default=-1]")
         @net.minecraftforge.common.config.Config.RangeInt(min = -1, max = 1000)
         public int waterCreatureCap = -1;
+        @net.minecraftforge.common.config.Config.Comment("The world type every new world is made with, whatever was chosen when it was made, such as default, largebiomes, amplified, customized, biomesop or realistic. Empty leaves the choice alone [Default=empty]")
+        public String worldType = "";
+        @net.minecraftforge.common.config.Config.Comment("Tell a player in chat, as they join a world a pack chose the type of, that the pack chose it. A pack cannot set this [Default=true]")
+        public boolean tellWorldType = true;
+        @net.minecraftforge.common.config.Config.Comment("World types a player picks that worldType leaves alone, such as flat or customized. Empty means every choice is replaced [Default={flat, debug_all_block_states}]")
+        public String[] worldTypeExceptions = { "flat", "debug_all_block_states" };
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
         public String generatorOptions = "";
         @net.minecraftforge.common.config.Config.Comment("Which world types the terrain settings are given to, by name, such as default, customized, biomesop or realistic. Empty means every world type [Default={}]")

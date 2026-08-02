@@ -48,6 +48,7 @@
     "MixinStrongholdPortalRoom",
     "MixinStructureOceanMonument",
     "MixinStructureVillagePieces",
+    "MixinTemplate",
     "MixinTemplateManager",
     "MixinWoodlandMansion",
     "MixinWorld",

@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
@@ -85,6 +86,7 @@ public class ResourceDataPackLoader {
         ContentSpawning.applyCaps();
         if (ContentSpawning.rateControlled()) { MinecraftForge.EVENT_BUS.register(ContentSpawning.class); }
         if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
+        if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }
         ContentDimensions.load();
         ContentGameRules.load();
         if (ContentEntities.load()) { MinecraftForge.EVENT_BUS.register(ContentEntities.class); }

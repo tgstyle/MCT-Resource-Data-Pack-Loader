@@ -9,6 +9,11 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldType;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +36,33 @@ public final class ContentTerrain {
             "useLavaLakes", "lavaLakeChance", "useLavaOceans"));
 
     private ContentTerrain() {}
+
+    public static String worldType() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+
+        return ContentControl.text(ContentControl.TERRAIN, "worldType", Config.worldgen.worldType).trim();
+    }
+
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!Config.worldgen.tellWorldType) { return; }
+
+        String wanted = worldType();
+        World world = event.player.getEntityWorld();
+        if (wanted.isEmpty() || world.provider.getDimension() != 0) { return; }
+
+        WorldType made = world.getWorldInfo().getTerrainType();
+        if (!wanted.equalsIgnoreCase(made.getName())) { return; }
+
+        event.player.sendMessage(new TextComponentString("This world was made a " + made.getName() + " world, which is how the pack you are playing wants it."));
+    }
+
+    public static boolean keeps(String worldType) {
+        for (String name : ContentControl.list(ContentControl.TERRAIN, "worldTypeExceptions", Config.worldgen.worldTypeExceptions)) {
+            if (name.equalsIgnoreCase(worldType)) { return true; }
+        }
+        return false;
+    }
 
     public static boolean leaves(String worldType) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return true; }
