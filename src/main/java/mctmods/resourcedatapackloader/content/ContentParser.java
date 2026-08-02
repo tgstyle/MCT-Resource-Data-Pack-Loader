@@ -686,6 +686,7 @@ public final class ContentParser {
                 JsonUtils.getString(json, "creatureAttribute", ""),
                 JsonUtils.getBoolean(json, "breathesUnderwater", false),
                 JsonUtils.getBoolean(json, "swims", false),
+                JsonUtils.getBoolean(json, "amphibious", false),
                 JsonUtils.getBoolean(json, "despawns", true),
                 JsonUtils.getBoolean(json, "noAI", false),
                 JsonUtils.getBoolean(json, "leftHanded", false),

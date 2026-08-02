@@ -183,6 +183,7 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
 | `breathesUnderwater` | no | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it |
 | `swims` | no | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it |
+| `amphibious` | no | boolean | `false` | Walks on land and swims properly in water, changing how it finds its way as it enters and leaves the water. It never drowns. Whatever it was chasing is forgotten at the water's edge, so it hesitates for a moment each time it crosses |
 | `waterSlowdown` | no | float | `0.8` | How much water slows it. Higher is faster |
 | `absorption` | no | float | `0` | Extra hearts on top of its health |
 | `experience` | no | int | the base's | How much experience it drops |

@@ -28,6 +28,7 @@ public final class EntityVariantDef {
     public final String creatureAttribute;
     public final boolean breathesUnderwater;
     public final boolean swims;
+    public final boolean amphibious;
     public final boolean despawns;
     public final boolean noAI;
     public final boolean leftHanded;
@@ -67,7 +68,7 @@ public final class EntityVariantDef {
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, boolean baby,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
-                            int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean despawns,
+                            int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
@@ -97,6 +98,7 @@ public final class EntityVariantDef {
         this.creatureAttribute = creatureAttribute;
         this.breathesUnderwater = breathesUnderwater;
         this.swims = swims;
+        this.amphibious = amphibious;
         this.despawns = despawns;
         this.noAI = noAI;
         this.leftHanded = leftHanded;

@@ -32,6 +32,7 @@ import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.ai.EntityAIPanic;
 import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityMoveHelper;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
 import net.minecraft.entity.ai.attributes.IAttribute;
@@ -39,6 +40,7 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.pathfinding.PathNavigateGround;
 import net.minecraft.pathfinding.PathNavigateSwimmer;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.Potion;
@@ -192,13 +194,14 @@ public final class ContentEntities {
         if (!(living instanceof EntityLiving)) { return; }
 
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && !def.baby)) { return; }
+        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && !def.baby && !def.amphibious)) { return; }
 
         if (living.world.isRemote) {
-            resize(living, living.isSprinting() ? def.angryScale : def.scale);
+            if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
             return;
         }
 
+        if (def.amphibious) { amphibious((EntityLiving) living); }
         if (def.baby && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
 
         boolean angry = ((EntityLiving) living).getAttackTarget() != null;
@@ -241,7 +244,7 @@ public final class ContentEntities {
 
     public static boolean breathesUnderwater(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
-        return def != null && (def.breathesUnderwater || def.swims);
+        return def != null && (def.breathesUnderwater || def.swims || def.amphibious);
     }
 
     public static boolean sinks(Entity entity) {
@@ -309,10 +312,8 @@ public final class ContentEntities {
         if (!(entity instanceof EntityLiving)) { return; }
 
         EntityLiving living = (EntityLiving) entity;
-        if (def.swims) {
-            ((AccessorEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateSwimmer(living, living.world));
-            ((AccessorEntityLivingNavigator) living).rdpl$setMoveHelper(new SwimmingMoveHelper(living));
-        }
+        if (def.swims) { swimmer(living); }
+        if (def.amphibious && living.getNavigator() instanceof PathNavigateGround) { ((PathNavigateGround) living.getNavigator()).setCanSwim(true); }
         if (def.breathesUnderwater || def.swims) {
             for (EntityAITasks.EntityAITaskEntry task : new ArrayList<>(living.tasks.taskEntries)) {
                 if (task.action instanceof EntityAISwimming) { living.tasks.removeTask(task.action); }
@@ -432,6 +433,27 @@ public final class ContentEntities {
         entity.width = width;
         entity.height = height;
         entity.setEntityBoundingBox(new AxisAlignedBB(centerX - half, before.minY, centerZ - half, centerX + half, before.minY + height, centerZ + half));
+    }
+
+    private static void swimmer(EntityLiving living) {
+        ((AccessorEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateSwimmer(living, living.world));
+        ((AccessorEntityLivingNavigator) living).rdpl$setMoveHelper(new SwimmingMoveHelper(living));
+    }
+
+    private static void amphibious(EntityLiving living) {
+        boolean wet = living.isInWater();
+        boolean swimming = living.getNavigator() instanceof PathNavigateSwimmer;
+        if (wet == swimming) { return; }
+
+        if (wet) {
+            swimmer(living);
+            return;
+        }
+
+        PathNavigateGround ground = new PathNavigateGround(living, living.world);
+        ground.setCanSwim(true);
+        ((AccessorEntityLivingNavigator) living).rdpl$setNavigator(ground);
+        ((AccessorEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
     }
 
     private static void effects(EntityLivingBase living, EntityVariantDef def) {
