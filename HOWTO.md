@@ -146,7 +146,7 @@ A file here replaces the original completely. To change one ingredient or drop o
 
 ## Entity variants
 
-A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right — its own registry name, its own name in the world, its own spawn egg, and a loot table of its own if you give it one — built on another entity's behaviour rather than replacing it. Nothing about the entity it copies changes.
+A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right — its own registry name, its own name in the world, its own spawn egg, and a loot table of its own if you give it one — built on another entity's behavior rather than replacing it. Nothing about the entity it copies changes.
 
 ```json
 {
@@ -166,68 +166,69 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 }
 ```
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `entity` | `namespace:name` | none | The entity to build on. Any mod's, as long as it takes a plain world constructor |
-| `name` | string | none | The name it carries in the world, in death messages and on its egg |
-| `showName` | boolean | `false` | Show the name without looking at it |
-| `texture` | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
-| `lootTable` | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
-| `profession` | `namespace:name` | random | For a villager, the trade it practises |
-| `career` | int | random | Which career within that profession, from 1 upwards |
-| `baby` | boolean | `false` | Stays young, and stays that way |
-| `sounds` | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
-| `immuneTo` | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
-| `jumpMultiplier` | float | `1.0` | How much higher it jumps than the entity it copies |
-| `fallDamage` | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
-| `maxFallHeight` | int | the base's | How far it will drop while pathing |
-| `breathesUnderwater` | boolean | `false` | Never drowns |
-| `waterSlowdown` | float | `0.8` | How much water slows it. Higher is faster |
-| `absorption` | float | `0` | Extra hearts on top of its health |
-| `experience` | int | the base's | How much experience it drops |
-| `creatureAttribute` | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
-| `effects` | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
-| `despawns` | boolean | `true` | Off, it stays even when it would normally be cleared away |
-| `noAI` | boolean | `false` | Stands where it is put and does nothing |
-| `leftHanded` | boolean | `false` | Holds its weapon in the other hand |
-| `fireproof` | boolean | `false` | Never hurt by fire or lava, and stops burning in daylight |
-| `invulnerable` | boolean | `false` | Takes no damage from anything but the void and creative |
-| `glowing` | boolean | `false` | Outlined through walls |
-| `invisible` | boolean | `false` | Not drawn, though its gear still is |
-| `dropChance` | 0 to 1 | `0` | How likely each piece of equipment is to drop |
-| `scale` | float | `1.0` | How big it is drawn, and how big its hitbox is |
-| `angryScale` | float | `scale` | The size it swells to while it has something to attack |
-| `leashable` | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
-| `steerable` | boolean | `false` | Can be steered while ridden |
-| `width` | float | the base's | Its hitbox across, before `scale` is applied |
-| `height` | float | the base's | Its hitbox up, before `scale` is applied |
-| `pathPriorities` | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
-| `egg` | boolean or object | `true` | A spawn egg, coloured like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colours, `false` leaves the egg out |
-| `attributes` | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
-| `hostile` | boolean | `false` | Attacks what it can reach, and fights back when hurt |
-| `targets` | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
-| `passive` | boolean | `false` | Stops it attacking anything, however it normally behaves |
-| `persistent` | boolean | `false` | Never despawns |
-| `silent` | boolean | `false` | Makes no sound |
-| `picksUpLoot` | boolean | `false` | Picks up what it walks over |
-| `hideArmor` | boolean | `false` | Wears its armour without it being drawn |
-| `equipment` | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
-| `spawns` | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
-| `biomes` | list of biome names | every biome | Where those spawns are added |
-| `biomeTypes` | list of dictionary types | none | The same, by type |
-| `trackingRange` | int | `80` | How far away the client is told about it |
-| `trackingFrequency` | int | `3` | How often, in ticks |
-| `requires` | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `entity` | yes | `namespace:name` | none | The entity to build on. Any mod's, as long as it takes a plain world constructor |
+| `name` | no | string | none | The name it carries in the world, in death messages and on its egg |
+| `showName` | no | boolean | `false` | Show the name without looking at it |
+| `texture` | no | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
+| `lootTable` | no | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
+| `profession` | no | `namespace:name` | random | For a villager, the trade it practises |
+| `career` | no | int | random | Which career within that profession, from 1 upwards |
+| `baby` | no | boolean | `false` | Stays young, and stays that way |
+| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
+| `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
+| `jumpMultiplier` | no | float | `1.0` | How much higher it jumps than the entity it copies |
+| `fallDamage` | no | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
+| `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
+| `breathesUnderwater` | no | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it |
+| `swims` | no | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it |
+| `waterSlowdown` | no | float | `0.8` | How much water slows it. Higher is faster |
+| `absorption` | no | float | `0` | Extra hearts on top of its health |
+| `experience` | no | int | the base's | How much experience it drops |
+| `creatureAttribute` | no | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
+| `effects` | no | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
+| `despawns` | no | boolean | `true` | Off, it stays even when it would normally be cleared away |
+| `noAI` | no | boolean | `false` | Stands where it is put and does nothing |
+| `leftHanded` | no | boolean | `false` | Holds its weapon in the other hand |
+| `fireproof` | no | boolean | `false` | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight |
+| `invulnerable` | no | boolean | `false` | Takes no damage from anything but the void and creative |
+| `glowing` | no | boolean | `false` | Outlined through walls |
+| `invisible` | no | boolean | `false` | Not drawn, though its gear still is |
+| `dropChance` | no | 0 to 1 | `0` | How likely each piece of equipment is to drop |
+| `scale` | no | float | `1.0` | How big it is drawn, and how big its hitbox is |
+| `angryScale` | no | float | `scale` | The size it swells to while it has something to attack |
+| `leashable` | no | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
+| `steerable` | no | boolean | `false` | Can be steered while ridden |
+| `width` | no | float | the base's | Its hitbox across, before `scale` is applied |
+| `height` | no | float | the base's | Its hitbox up, before `scale` is applied |
+| `pathPriorities` | no | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
+| `egg` | no | boolean or object | `true` | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out |
+| `attributes` | no | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
+| `hostile` | no | boolean | `false` | Attacks what it can reach, and fights back when hurt |
+| `targets` | no | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
+| `passive` | no | boolean | `false` | Stops it attacking anything, however it normally behaves |
+| `persistent` | no | boolean | `false` | Never despawns |
+| `silent` | no | boolean | `false` | Makes no sound |
+| `picksUpLoot` | no | boolean | `false` | Picks up what it walks over |
+| `hideArmor` | no | boolean | `false` | Wears its armor without it being drawn |
+| `equipment` | no | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
+| `spawns` | no | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
+| `biomes` | no | list of biome names | every biome | Where those spawns are added |
+| `biomeTypes` | no | list of dictionary types | none | The same, by type |
+| `trackingRange` | no | int | `80` | How far away the client is told about it |
+| `trackingFrequency` | no | int | `3` | How often, in ticks |
+| `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
 
 `scale` changes both the model and the hitbox on both sides, so what you see is what you can hit. A creature that changes its own size, an animal growing up or a zombie that is a child, is scaled around whatever size it has chosen, so the two do not fight. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across — it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
 
 A variant drops whatever the entity it copies drops, because the loot table is fixed in that entity's own code rather than looked up by name. `lootTable` points it at a table of your own, which you then supply at `loot_tables/entities/<name>.json` like any other.
 
-A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's — a skin, not a new shape. Layers keep their own textures, so armour still looks like armour on a reskinned zombie.
+A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's — a skin, not a new shape. Layers keep their own textures, so armor still looks like armor on a reskinned zombie.
 
-Armour is only ever drawn on an entity whose renderer has an armour layer, which in this version means the humanoid mobs and villagers. A variant of a cow or a spider can carry armour and gets its protection, but nothing draws it, so `armor` under `attributes` is usually the tidier way to make such a creature tough. `hideArmor` is for the other case: a humanoid that should keep the armour in its slots, for the protection or for a mod that reads them, without it being seen.
+Armor is only ever drawn on an entity whose renderer has an armor layer, which in this version means the humanoid mobs and villagers. A variant of a cow or a spider can carry armor and gets its protection, but nothing draws it, so `armor` under `attributes` is usually the tidier way to make such a creature tough. `hideArmor` is for the other case: a humanoid that should keep the armor in its slots, for the protection or for a mod that reads them, without it being seen.
 
-`hostile` also takes away the behaviour that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behaviour vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behaviour built the way vanilla builds it — a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
+`hostile` also takes away the behavior that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behavior vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behavior built the way vanilla builds it — a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
 
 A variant is a class of its own, so a world that contains one depends on the pack that made it, the same way it depends on a mod. Take the file away and the creatures in that world go with it.
 
@@ -333,10 +334,10 @@ A missing *pack* is different. Pack namespaces are not mods, so they never reach
 
 The mod's own two ids, `resourcedatapackloader` and `resourcedatapackloader_mixin`, are reserved. Defining content under them is ignored and logged, because it would claim ownership of things this mod registers. Overriding this mod's own assets is still fine — only registering content there is not.
 
-**Reading the tables.** Every table says whether a key is required, what it may hold, and what happens if you leave it out. A value the parser doesn't recognise is logged and replaced with the default rather than crashing the game.
+**Reading the tables.** Every table says whether a key is required, what it may hold, and what happens if you leave it out. A value the parser doesn't recognize is logged and replaced with the default rather than crashing the game.
 
 - Blocks and items are named `namespace:name`, and a metadata value can be added as a third part, `namespace:name:meta`.
-- Colours are six hex digits, `A0C8FF`, with or without a leading `#`.
+- Colors are six hex digits, `A0C8FF`, with or without a leading `#`.
 - Where a table says **int or range**, you may write either `8` or `{ "min": 4, "max": 12 }`.
 - Most definitions accept `requires`, a list of mod ids or pack namespaces that must be present or the file is skipped.
 
@@ -383,7 +384,7 @@ The mod's own two ids, `resourcedatapackloader` and `resourcedatapackloader_mixi
 | `falling` | Falls like sand or gravel |
 | `slab` | Bottom, top and double, and two of them merge in hand |
 | `stairs` | Corners and slopes handled for you |
-| `fence` | Connects to its neighbours, and to fences from other mods |
+| `fence` | Connects to its neighbors, and to fences from other mods |
 | `pane` | Connects like glass panes |
 | `wall` | Connects like cobblestone walls, with the post shape |
 | `ladder` | Climbable, placed against a wall |
@@ -403,9 +404,9 @@ The mod's own two ids, `resourcedatapackloader` and `resourcedatapackloader_mixi
 | --- | --- | --- | --- | --- |
 | `variants` | yes | object of variant name to variant | — | One entry per metadata value. The key becomes the registry name |
 | `type` | no | one of the types above | `basic` | Which shape the block takes |
-| `material` | no | one of the [block materials](#value-lists) | `rock` | Mining behaviour, pistons, fire and liquids |
+| `material` | no | one of the [block materials](#value-lists) | `rock` | Mining behavior, pistons, fire and liquids |
 | `soundType` | no | one of the [sound types](#value-lists) | from the material | Footsteps, breaking and placing |
-| `mapColor` | no | one of the [map colours](#value-lists) | from the material | How it looks on a map |
+| `mapColor` | no | one of the [map colors](#value-lists) | from the material | How it looks on a map |
 | `harvestTool` | no | `pickaxe`, `axe`, `shovel` | `pickaxe` | Which tool harvests it |
 | `harvestToolLevel` | no | 0 to 3 | `0` | 0 wood, 1 stone, 2 iron, 3 diamond |
 | `silkHarvest` | no | boolean | `true` | Whether silk touch returns the block itself |
@@ -422,14 +423,14 @@ The mod's own two ids, `resourcedatapackloader` and `resourcedatapackloader_mixi
 | `modelBlock` | no | block name | `minecraft:stone` | Block whose model is borrowed when yours has none |
 | `modelMeta` | no | int | `0` | Which variant of that model |
 | `itemModel` | no | `state`, `item` | `state` | `state` follows the blockstate, `item` looks for its own file |
-| `tint` | no | `biome`, `none`, or a hex colour | none | Needs a `tintindex` in the model to show |
+| `tint` | no | `biome`, `none`, or a hex color | none | Needs a `tintindex` in the model to show |
 | `spawnsAnimals` | no | boolean | `false` | Animals may spawn on it |
 | `plantTypes` | no | list of [plant types](#value-lists) | none | What can be planted on it |
-| `behavesAs` | no | list of `animals`, `till`, `path`, `bush` | none | Vanilla behaviours to take on |
+| `behavesAs` | no | list of `animals`, `till`, `path`, `bush` | none | Vanilla behaviors to take on |
 | `bounds` | no | list of six numbers, 0 to 1 | full block | The collision box, as `[x1, y1, z1, x2, y2, z2]` |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
-| `particle` | torch only | `none`, `flame`, `coloured` | `flame` | The particle above a torch |
-| `particleColor` | torch only | hex colour | `FFFFFF` | Used when `particle` is `coloured` |
+| `particle` | torch only | `none`, `flame`, `colored` | `flame` | The particle above a torch |
+| `particleColor` | torch only | hex color | `FFFFFF` | Used when `particle` is `colored` |
 | `smoke` | torch only | boolean | `true` | Whether it smokes |
 | `leafSapling` | leaves only | block name | none | The sapling they drop |
 | `leafSaplingChance` | leaves only | int | `5` | One in N leaves drops one |
@@ -449,7 +450,7 @@ The mod's own two ids, `resourcedatapackloader` and `resourcedatapackloader_mixi
 | `resistance` | no | float | `5.0` | Blast resistance |
 | `light` | no | 0 to 15 | `0` | Light emitted |
 | `harvestLevel` | no | 0 to 3 | the file's value | Overrides the tool tier for this variant |
-| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name colour in the tooltip |
+| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip |
 | `maxSize` | no | 1 to 64 | `64` | Stack size |
 | `drops` | no | list of drops | drops itself | What breaking it yields |
 
@@ -460,10 +461,12 @@ A `basic` block can hold sixteen variants; a `slab` eight; `log` and `leaves` fo
 ### Drops
 
 ```json
-"drops": [
-  { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "bonusChance": [1, 2, 3] },
-  { "block": "minecraft:coal", "amount": 1, "guaranteed": false }
-]
+{
+  "drops": [
+    { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "bonusChance": [1, 2, 3] },
+    { "block": "minecraft:coal", "amount": 1, "guaranteed": false }
+  ]
+}
 ```
 
 | Key | Required | Value | Default | What it does |
@@ -479,14 +482,16 @@ A `basic` block can hold sixteen variants; a `slab` eight; `log` and `leaves` fo
 For `crop`, `flower`, `cane` and `vine`.
 
 ```json
-"growth": {
-  "stages": 8,
-  "growth": 10,
-  "maxHeight": 3,
-  "needsWater": true,
-  "waterRange": 2,
-  "drop": "mypack:reed",
-  "dropCount": 1
+{
+  "growth": {
+    "stages": 8,
+    "growth": 10,
+    "maxHeight": 3,
+    "needsWater": true,
+    "waterRange": 2,
+    "drop": "mypack:reed",
+    "dropCount": 1
+  }
 }
 ```
 
@@ -494,7 +499,7 @@ For `crop`, `flower`, `cane` and `vine`.
 | --- | --- | --- | --- | --- |
 | `stages` | no | int | `16` | Growth stages before it is done |
 | `growth` | no | int | — | One in N chance per random tick to advance |
-| `spread` | no | int | `0` | How far it spreads to neighbouring blocks |
+| `spread` | no | int | `0` | How far it spreads to neighboring blocks |
 | `maxHeight` | no | int | `3` | Cane only. How tall the column grows |
 | `drop` | no | item name | none | What it drops when broken |
 | `dropCount` | no | int | `1` | How many |
@@ -503,29 +508,33 @@ For `crop`, `flower`, `cane` and `vine`.
 | `waterRange` | no | int | `1` | How far that water may be |
 | `damage` | no | boolean | `false` | Hurts whatever touches it |
 | `damageAmount` | no | float, half hearts | `1.0` | How much it hurts |
-| `breaksNeighbours` | no | boolean | `false` | Breaks blocks placed beside it, like cactus |
+| `breaksNeighbors` | no | boolean | `false` | Breaks blocks placed beside it, like cactus |
 
 ### Saplings
 
 Either a tree built from blocks:
 
 ```json
-"sapling": {
-  "soil": ["minecraft:grass", "minecraft:dirt"],
-  "stages": 3,
-  "chance": 5,
-  "light": 9,
-  "log": "mypack:ruby_log",
-  "leaves": "mypack:ruby_leaves",
-  "height": 5,
-  "vines": false
+{
+  "sapling": {
+    "soil": ["minecraft:grass", "minecraft:dirt"],
+    "stages": 3,
+    "chance": 5,
+    "light": 9,
+    "log": "mypack:ruby_log",
+    "leaves": "mypack:ruby_leaves",
+    "height": 5,
+    "vines": false
+  }
 }
 ```
 
 …or one of your structure templates, which is the way to build something a generator cannot:
 
 ```json
-"sapling": { "structure": "mypack:ruby_tree" }
+{
+  "sapling": { "structure": "mypack:ruby_tree" }
+}
 ```
 
 | Key | Required | Value | Default | What it does |
@@ -668,7 +677,7 @@ Variant keys:
 | --- | --- | --- | --- | --- |
 | `meta` | yes | 0 to 15 | — | The metadata value this variant claims |
 | `maxSize` | no | 1 to 64 | `64` | Stack size |
-| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name colour in the tooltip |
+| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip |
 | `healAmount` | food | int, half drumsticks | `0` | Hunger restored |
 | `saturation` | food | float | `0.0` | Saturation restored |
 
@@ -697,7 +706,7 @@ Variant keys:
 | `name` | no | string | the file name | The fluid's registry name |
 | `still` | no | texture path | vanilla water still | Texture for the still fluid |
 | `flow` | no | texture path | vanilla water flowing | Texture for the flowing fluid |
-| `color` | no | hex colour | none | Tint applied to those textures |
+| `color` | no | hex color | none | Tint applied to those textures |
 | `bucket` | no | boolean | `true` | Register a bucket for it |
 | `luminosity` | no | 0 to 15 | `0` | Light emitted |
 | `density` | no | int | `1000` | Negative floats upward, like a gas |
@@ -735,10 +744,10 @@ Variant keys:
 | `damage` | no | float | `2.0` | Attack damage bonus |
 | `enchantability` | no | int | `14` | How good enchantments are. Gold is 22 |
 | `repairItem` | no | item name | none | What repairs it in an anvil |
-| `reduction` | no | list of four ints | — | Armour points, in the order feet, legs, chest, head |
-| `toughness` | no | float | `0.0` | Armour toughness, as diamond has |
-| `equipSound` | no | sound name | `item.armor.equip_iron` | Sound when armour is put on |
-| `armorTexture` | no | texture prefix | the file name | The worn armour texture |
+| `reduction` | no | list of four ints | — | Armor points, in the order feet, legs, chest, head |
+| `toughness` | no | float | `0.0` | Armor toughness, as diamond has |
+| `equipSound` | no | sound name | `item.armor.equip_iron` | Sound when armor is put on |
+| `armorTexture` | no | texture prefix | the file name | The worn armor texture |
 
 `tabs/*.json`
 
@@ -796,7 +805,7 @@ Variant keys:
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `name` | no | translation key | `effect.<namespace>.<name>` | What the player sees |
-| `color` | no | hex colour | `FFFFFF` | Particle colour |
+| `color` | no | hex color | `FFFFFF` | Particle color |
 | `badEffect` | no | boolean | `false` | Counts as harmful, so a fermented spider eye inverts it |
 | `beneficial` | no | boolean | `false` | Shown as a good effect |
 | `instant` | no | boolean | `false` | Applies once instead of over time |
@@ -914,7 +923,7 @@ A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `
 | `topBlock` | no | block name | grass | The surface block |
 | `fillerBlock` | no | block name | dirt | Just below the surface |
 | `stoneBlock` | no | block name | stone | The bulk of the ground |
-| `waterColor` | no | hex colour | `FFFFFF` | Water tint |
+| `waterColor` | no | hex color | `FFFFFF` | Water tint |
 | `baseBiome` | no | biome name | none | An existing biome to copy settings from |
 | `decoration` | no | object | vanilla counts | Per-chunk counts for trees, grass, flowers, reeds, cacti, lakes, clay and the rest |
 | `spawns` | no | list | vanilla list | See below |
@@ -931,7 +940,7 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of the [creatur
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `climate` | no | string | none | Which vanilla climate group it joins |
-| `weight` | no | int | `10` | How often it is chosen against its neighbours |
+| `weight` | no | int | `10` | How often it is chosen against its neighbors |
 | `villages` | no | boolean | `false` | Villages may generate |
 | `villageSpawn` | no | boolean | `true` | Villagers may spawn in them |
 | `strongholds` | no | boolean | `false` | Strongholds may generate |
@@ -998,21 +1007,21 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of the [creatur
 | `beds` | no | boolean | `true` | Off, beds explode |
 | `waterVaporizes` | no | boolean | `false` | Water evaporates |
 | `cloudHeight` | no | int | `128` | Where clouds sit |
-| `cloudColor` | no | hex colour | none | Cloud tint |
+| `cloudColor` | no | hex color | none | Cloud tint |
 | `groundLevel` | no | int | `63` | Sea level, used for the horizon and spawn searches |
 | `movementFactor` | no | float | `1.0` | Distance ratio to the overworld. The nether uses 8 |
-| `fogColor` | no | hex colour | none | Fog tint |
+| `fogColor` | no | hex color | none | Fog tint |
 | `showFog` | no | boolean | `false` | Thick fog, as in the nether |
-| `skyColor` | no | hex colour | none | Sky tint |
+| `skyColor` | no | hex color | none | Sky tint |
 | `fixedTime` | no | int, ticks | none | Locks the time of day |
 | `sunriseColors` | no | boolean | `true` | Whether sunrise and sunset are tinted |
 | `ambientLight` | no | float, 0 to 1 | `0.0` | Minimum light everywhere |
 | `starBrightness` | no | float, 0 to 1 | none | How bright the stars are |
-| `renderSky` | no | boolean | `true` | Off, nothing draws the sky, sun, moon or stars, leaving the fog colour |
+| `renderSky` | no | boolean | `true` | Off, nothing draws the sky, sun, moon or stars, leaving the fog color |
 | `renderClouds` | no | boolean | `true` | Off, no clouds are drawn |
 | `renderWeather` | no | boolean | `true` | Off, no rain or snow is drawn |
 
-Colours and the three render switches are all that is offered. Drawing something of your own up there — a painted dome, your own sun and moon — still needs Java.
+Colors and the three render switches are all that is offered. Drawing something of your own up there — a painted dome, your own sun and moon — still needs Java.
 
 ## Portals and gates
 
@@ -1176,10 +1185,12 @@ Values are strings, as they are in the `/gamerule` command. These are applied to
 `blocks` replaces `block` when one entry is not enough. Weights are relative, so 80 and 20 is four to one.
 
 ```json
-"blocks": [
-  { "block": "minecraft:wool", "weight": 80, "properties": { "color": "magenta" } },
-  { "block": "minecraft:wool", "weight": 20, "properties": { "color": "lime" } }
-]
+{
+  "blocks": [
+    { "block": "minecraft:wool", "weight": 80, "properties": { "color": "magenta" } },
+    { "block": "minecraft:wool", "weight": 20, "properties": { "color": "lime" } }
+  ]
+}
 ```
 
 | Key | Required | Value | Default | What it does |
@@ -1250,24 +1261,30 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `rarityIsPerChunk` | belt | boolean | `false` | Turn `rarity` into how many clusters each chunk gets instead |
 
 ```json
-"shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
+{
+  "shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
+}
 ```
 
 ```json
-"shape": { "type": "tree", "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves", "height": { "min": 4, "max": 7 }, "surface": ["minecraft:grass"] }
+{
+  "shape": { "type": "tree", "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves", "height": { "min": 4, "max": 7 }, "surface": ["minecraft:grass"] }
+}
 ```
 
 A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
 
 ### Belts
 
-A `belt` is a ball far bigger than one chunk, used for stone regions rather than ore veins. Its `radius` is the ball's size, and every chunk works out for itself where the balls near it start, from the world seed and the entry's own name, so a belt comes out whole however the chunks are generated and nothing is ever written into a neighbouring chunk.
+A `belt` is a ball far bigger than one chunk, used for stone regions rather than ore veins. Its `radius` is the ball's size, and every chunk works out for itself where the balls near it start, from the world seed and the entry's own name, so a belt comes out whole however the chunks are generated and nothing is ever written into a neighboring chunk.
 
 ```json
-"shape": { "type": "belt", "radius": 32, "rarity": 400 }
+{
+  "shape": { "type": "belt", "radius": 32, "rarity": 400 }
+}
 ```
 
-A belt ignores `attempts` and `spread`, since it is placed per chunk rather than per attempt. `minHeight` and `maxHeight` are the band the centres sit in, and the ball reaches `radius` beyond that band. `replace` decides what it eats, `biomes` and the temperature and rainfall limits are checked at the centre, so a belt either appears in full or not at all rather than being cut off at a biome edge.
+A belt ignores `attempts` and `spread`, since it is placed per chunk rather than per attempt. `minHeight` and `maxHeight` are the band the centers sit in, and the ball reaches `radius` beyond that band. `replace` decides what it eats, `biomes` and the temperature and rainfall limits are checked at the center, so a belt either appears in full or not at all rather than being cut off at a biome edge.
 
 Cost grows with the cube of `radius`, and a low `rarity` multiplies it, so start at the defaults and raise the radius slowly.
 
@@ -1278,7 +1295,7 @@ A `spread` block with a `type`.
 | Type | Where it puts things |
 | --- | --- |
 | `even` | Anywhere between the heights, evenly. The default |
-| `centred` | Weighted toward one height, thinning out with distance |
+| `centered` | Weighted toward one height, thinning out with distance |
 | `sprawl` | Fractal veins spanning a height range |
 | `terrain` | Following the surface |
 | `cavern` | On cave floors, or roofs |
@@ -1287,9 +1304,9 @@ A `spread` block with a `type`.
 | Key | Used by | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `type` | all | one of the spreads above | `even` | Which spread |
-| `centre` | centred | int | midpoint of the height range | The height it clusters around |
-| `range` | centred | int | half the height range | How far from that height it reaches |
-| `smoothness` | centred | 1 to 8 | `2` | How many rolls are averaged. Higher is a tighter band |
+| `center` | centered | int | midpoint of the height range | The height it clusters around |
+| `range` | centered | int | half the height range | How far from that height it reaches |
+| `smoothness` | centered | 1 to 8 | `2` | How many rolls are averaged. Higher is a tighter band |
 | `veinHeight` | sprawl | int | the height range | How tall one vein is |
 | `veinDiameter` | sprawl | int | `12` | How wide one vein is |
 | `verticalDensity` | sprawl | 1 to 100 | `16` | How solid it is vertically |
@@ -1299,7 +1316,9 @@ A `spread` block with a `type`.
 | `ceiling` | cavern | boolean | `false` | Attach to the cave roof instead of the floor |
 
 ```json
-"spread": { "type": "centred", "centre": 32, "range": 12, "smoothness": 3 }
+{
+  "spread": { "type": "centered", "center": 32, "range": 12, "smoothness": 3 }
+}
 ```
 
 ## Retrogen
@@ -1312,27 +1331,27 @@ Changing `retrogenKey` in the config makes every chunk eligible again — which 
 
 ## Value lists
 
-These are the names the parser accepts wherever the tables above say "one of the materials", and so on. Anything unrecognised is logged and replaced with the default.
+These are the names the parser accepts wherever the tables above say "one of the materials", and so on. Anything unrecognized is logged and replaced with the default.
 
 **Block materials.** `air`, `grass`, `ground`, `wood`, `rock`, `iron`, `anvil`, `water`, `lava`, `leaves`, `plants`, `vine`, `sponge`, `cloth`, `fire`, `sand`, `circuits`, `carpet`, `glass`, `redstone_light`, `tnt`, `coral`, `ice`, `packed_ice`, `snow`, `crafted_snow`, `cactus`, `clay`, `gourd`, `dragon_egg`, `portal`, `cake`, `web`, `piston`, `barrier`, `structure_void`.
 
 **Sound types.** `wood`, `ground`, `plant`, `stone`, `metal`, `glass`, `cloth`, `sand`, `snow`, `ladder`, `anvil`, `slime`.
 
-**Map colours.** `air`, `grass`, `sand`, `cloth`, `tnt`, `ice`, `iron`, `foliage`, `snow`, `clay`, `dirt`, `stone`, `water`, `wood`, `quartz`, `adobe`, `magenta`, `light_blue`, `yellow`, `lime`, `pink`, `gray`, `silver`, `cyan`, `purple`, `blue`, `brown`, `green`, `red`, `black`, `gold`, `diamond`, `lapis`, `emerald`, `obsidian`, `netherrack`.
+**Map colors.** `air`, `grass`, `sand`, `cloth`, `tnt`, `ice`, `iron`, `foliage`, `snow`, `clay`, `dirt`, `stone`, `water`, `wood`, `quartz`, `adobe`, `magenta`, `light_blue`, `yellow`, `lime`, `pink`, `gray`, `silver`, `cyan`, `purple`, `blue`, `brown`, `green`, `red`, `black`, `gold`, `diamond`, `lapis`, `emerald`, `obsidian`, `netherrack`.
 
 **Render layers.** `solid`, `cutout`, `cutout_mipped`, `translucent`. Left empty, the block picks one to suit its type.
 
 **Rarities.** `common`, `uncommon`, `rare`, `epic`.
 
-**Torch particles.** `none`, `flame`, `coloured`. `coloured` uses `particleColor`.
+**Torch particles.** `none`, `flame`, `colored`. `colored` uses `particleColor`.
 
 **Tool classes.** `pickaxe`, `axe`, `shovel`, `sword`.
 
-**Armour slots.** `head` or `helmet`, `chest` or `chestplate`, `legs` or `leggings`, `feet` or `boots`.
+**Armor slots.** `head` or `helmet`, `chest` or `chestplate`, `legs` or `leggings`, `feet` or `boots`.
 
-**Tints.** `biome`, `none`, or a six digit hex colour. Colours anywhere in a definition are hex, with or without a leading `#`.
+**Tints.** `biome`, `none`, or a six digit hex color. Colors anywhere in a definition are hex, with or without a leading `#`.
 
-**Behaviours** for `behavesAs`. `animals`, `till`, `path`, `bush`.
+**Behaviors** for `behavesAs`. `animals`, `till`, `path`, `bush`.
 
 **Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
 
@@ -1379,7 +1398,7 @@ mekanism:oreblock:0=minecraft:stone
 tconstruct:ore:0=minecraft:netherrack
 ```
 
-Each chunk is done once, as it loads from disk, and marked in the chunk's own data so it is never done twice. A chunk being generated for the first time is cleaned the next time it loads rather than straight away, because neighbouring chunks are still writing into it while it generates. A chunk on the edge of explored land is cleaned but not marked, so it is cleaned again once the land around it exists. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
+Each chunk is done once, as it loads from disk, and marked in the chunk's own data so it is never done twice. A chunk being generated for the first time is cleaned the next time it loads rather than straight away, because neighboring chunks are still writing into it while it generates. A chunk on the edge of explored land is cleaned but not marked, so it is cleaned again once the land around it exists. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
 
 **Villages.** Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
@@ -1427,9 +1446,17 @@ Spacing decides where a structure is seeded, so changing it in a world that alre
 
 **Bedrock.** `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone — the original pattern is not recorded anywhere.
 
-**Void world.** `voidWorld` generates an empty overworld with a platform at the spawn point, and stops mobs, animals and structures. The platform's block, size and height are all options.
+**Void world.** `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are all options. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
 
-**Terrain.** `generatorOptions` shapes the overworld itself — sea level, lava oceans and every terrain noise — in the same format the customized world type writes. It is applied to a world as it is created and never afterwards, so a world that already exists is left exactly as it was. Setting it on a world type that is already customized does nothing, and the log names the string it used.
+**The dragon.** `dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
+
+**Terrain.** `generatorOptions` shapes the overworld itself — sea level, lava oceans and every terrain noise — in the same format the customized world type writes. It is applied to a world as it is created and never afterwards, so a world that already exists is left exactly as it was. A world that already carries options of its own keeps them, and the log names the string it used.
+
+A world type that carries its own settings and never looks at the world's, as Quark's realistic one does, is given the pack's settings merged into its own, so the shape it was built for stays unless a pack asks for something else.
+
+On a Biomes O' Plenty world the same settings are turned into the words that mod reads, so a pack does not need a second copy of them. `biomeSize` becomes one of its five sizes, the noise and scale settings pass through as they are, and anything it never reads is left out with a line in the log saying so. That mod reads far less than the customized world type does, and never reads sea level, caves, lakes or the structure switches from its settings at all — so those are handed to it directly instead, and a pack sets them the same way it would for any other world.
+
+Everything else a pack does — blocking biomes and ores, replacing blocks, flat bedrock, structure placement, its own worldgen — never went through that string at all, and works the same on any world type.
 
 **Recipes.** `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says.
 
@@ -1454,7 +1481,7 @@ Under `assets/<namespace>/`:
 | `blocks` | Block definitions |
 | `items` | Item definitions |
 | `fluids` | Fluids, with a block and a bucket |
-| `materials` | Tool and armour materials |
+| `materials` | Tool and armor materials |
 | `biomes` | Biome definitions |
 | `worldgen` | What generates, and where |
 | `dimensions` | Dimension definitions |

@@ -41,14 +41,14 @@ pack priority, resource pack precedence and the commands.
 # Defining new content
 Blocks in every common shape — basic, ore, falling, slab, stairs, fence, wall, pane, door, ladder,
 torch, log, leaves, sapling, crop, flower, cane, vine and portal. Items as basic, food, drink, tool,
-armour, seed, potion and potion bottle. Also fluids, tool and armour materials, potion effects,
+armor, seed, potion and potion bottle. Also fluids, tool and armor materials, potion effects,
 potion types, brewing recipes, villager professions with trades, game rules, biomes, village plots,
 entity variants and whole dimensions.
 
 Saplings grow into a tree built from your own log and leaves, or into one of your structure
 templates. Leaves take a tint and drop your sapling. Portal blocks link two dimensions, remember who
 built them, and survive an explosion when they do. A dimension picks its own sky, fog and cloud
-colours, and can turn the sky, clouds or weather off entirely.
+colors, and can turn the sky, clouds or weather off entirely.
 
 An entity variant is a new entity built on one that already exists, vanilla or modded — its own
 registry name, name, spawn egg, loot table and skin, with its own health, damage, speed, jump,
