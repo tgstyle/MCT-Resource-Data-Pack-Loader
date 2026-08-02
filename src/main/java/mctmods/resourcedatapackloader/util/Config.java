@@ -186,6 +186,10 @@ public class Config {
         public int waterCreatureCap = -1;
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
         public String generatorOptions = "";
+        @net.minecraftforge.common.config.Config.Comment("Which world types the terrain settings are given to, by name, such as default, customized, biomesop or realistic. Empty means every world type [Default={}]")
+        public String[] terrainWorldTypes = {};
+        @net.minecraftforge.common.config.Config.Comment("Treat terrainWorldTypes as the world types to leave alone instead [Default=false]")
+        public boolean terrainWorldTypesAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("Generate mod CoFH World files through this mod when CoFH World is missing. Translating them into a pack is the supported way [Default=false]")
         public boolean readCofhWorldFiles = false;
         @net.minecraftforge.common.config.Config.Comment("Stop every other mod from generating anything through its own world generators, which is how mods add things Forge's ore and decoration events never see, such as Tinkers' slime islands. Only the mods in generatorWhitelist still generate. This mod's own pack generation is never blocked [Default=false]")

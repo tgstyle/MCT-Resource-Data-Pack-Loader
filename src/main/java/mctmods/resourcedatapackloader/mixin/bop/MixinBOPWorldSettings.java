@@ -33,7 +33,7 @@ public abstract class MixinBOPWorldSettings {
 
     @Inject(method = "fromConfigObj", at = @At("TAIL"), remap = false)
     private void rdpl$packSettings(CallbackInfo ci) {
-        JsonObject settings = ContentTerrain.settings();
+        JsonObject settings = ContentTerrain.settings("BIOMESOP");
         if (settings == null) { return; }
 
         seaLevel = rdpl$number(settings, "seaLevel", seaLevel);

@@ -32,6 +32,23 @@ public final class ContentTerrain {
 
     private ContentTerrain() {}
 
+    public static boolean leaves(String worldType) {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return true; }
+
+        String[] wanted = ContentControl.list(ContentControl.TERRAIN, "terrainWorldTypes", Config.worldgen.terrainWorldTypes);
+        if (wanted.length == 0) { return false; }
+
+        boolean listed = false;
+        for (String name : wanted) {
+            if (name.equalsIgnoreCase(worldType)) {
+                listed = true;
+                break;
+            }
+        }
+
+        return listed == ContentControl.flag(ContentControl.TERRAIN, "terrainWorldTypesAreBlacklist", Config.worldgen.terrainWorldTypesAreBlacklist);
+    }
+
     public static String merge(String existing, String worldType) {
         String options = options(worldType);
         if (options.isEmpty()) { return existing; }
@@ -51,7 +68,7 @@ public final class ContentTerrain {
     }
 
     public static String options(String worldType) {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+        if (leaves(worldType)) { return ""; }
 
         String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
         if (options.isEmpty() || !BOP.equalsIgnoreCase(worldType)) { return options; }
@@ -59,8 +76,8 @@ public final class ContentTerrain {
         return forBiomesOPlenty(options);
     }
 
-    public static String owner() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+    public static String owner(String worldType) {
+        if (leaves(worldType)) { return ""; }
 
         String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
         if (options.isEmpty()) { return ""; }
@@ -69,8 +86,8 @@ public final class ContentTerrain {
         return template == null ? "the settings" : template.name;
     }
 
-    @Nullable public static JsonObject settings() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
+    @Nullable public static JsonObject settings(String worldType) {
+        if (leaves(worldType)) { return null; }
 
         String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
         if (options.isEmpty()) { return null; }
