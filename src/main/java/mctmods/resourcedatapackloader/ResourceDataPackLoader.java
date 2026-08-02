@@ -53,7 +53,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", version = "@VERSION@", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*")
+@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
 
