@@ -22,6 +22,7 @@
     "MixinChunkGeneratorOverworldSpawns",
     "MixinCraftingHelper",
     "MixinEntityAnimal",
+    "MixinEntityLiving",
     "MixinEntityLivingBase",
     "MixinFunctionManager",
     "MixinFurnaceRecipes",
@@ -51,7 +52,8 @@
   "client": [
     "MixinLayerArmorBase",
     "MixinMinecraft",
-    "MixinRender"
+    "MixinRender",
+    "MixinRenderLivingBase"
   ],
   "server": []
 }

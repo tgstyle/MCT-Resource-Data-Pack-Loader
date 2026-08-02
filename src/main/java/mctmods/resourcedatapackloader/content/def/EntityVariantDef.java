@@ -22,10 +22,15 @@ public final class EntityVariantDef {
     public final boolean despawns;
     public final boolean noAI;
     public final boolean leftHanded;
+    public final boolean fireproof;
     public final boolean invulnerable;
     public final boolean glowing;
     public final boolean invisible;
     public final float dropChance;
+    public final float scale;
+    public final float angryScale;
+    public final boolean leashable;
+    public final boolean steerable;
     public final float width;
     public final float height;
     public final Map<String, Integer> effects;
@@ -53,8 +58,8 @@ public final class EntityVariantDef {
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
                             int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean despawns,
-                            boolean noAI, boolean leftHanded, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
-                            float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
+                            boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
+                            float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
                             boolean hostile, boolean passive, List<String> targets, boolean persistent, boolean silent,
                             boolean picksUpLoot, boolean hideArmor, boolean showName, Map<String, String> equipment, List<SpawnEntryDef> spawns,
@@ -76,10 +81,15 @@ public final class EntityVariantDef {
         this.despawns = despawns;
         this.noAI = noAI;
         this.leftHanded = leftHanded;
+        this.fireproof = fireproof;
         this.invulnerable = invulnerable;
         this.glowing = glowing;
         this.invisible = invisible;
         this.dropChance = dropChance;
+        this.scale = scale;
+        this.angryScale = angryScale;
+        this.leashable = leashable;
+        this.steerable = steerable;
         this.width = width;
         this.height = height;
         this.effects = effects;

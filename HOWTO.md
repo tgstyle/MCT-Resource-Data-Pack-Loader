@@ -184,12 +184,17 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `despawns` | boolean | `true` | Off, it stays even when it would normally be cleared away |
 | `noAI` | boolean | `false` | Stands where it is put and does nothing |
 | `leftHanded` | boolean | `false` | Holds its weapon in the other hand |
+| `fireproof` | boolean | `false` | Never hurt by fire or lava, and stops burning in daylight |
 | `invulnerable` | boolean | `false` | Takes no damage from anything but the void and creative |
 | `glowing` | boolean | `false` | Outlined through walls |
 | `invisible` | boolean | `false` | Not drawn, though its gear still is |
 | `dropChance` | 0 to 1 | `0` | How likely each piece of equipment is to drop |
-| `width` | float | the base's | Its hitbox across. The model does not change with it |
-| `height` | float | the base's | Its hitbox up |
+| `scale` | float | `1.0` | How big it is drawn, and how big its hitbox is |
+| `angryScale` | float | `scale` | The size it swells to while it has something to attack |
+| `leashable` | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
+| `steerable` | boolean | `false` | Can be steered while ridden |
+| `width` | float | the base's | Its hitbox across, before `scale` is applied |
+| `height` | float | the base's | Its hitbox up, before `scale` is applied |
 | `pathPriorities` | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
 | `egg` | boolean or object | `true` | A spawn egg, coloured like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colours, `false` leaves the egg out |
 | `attributes` | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
@@ -207,6 +212,8 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `trackingRange` | int | `80` | How far away the client is told about it |
 | `trackingFrequency` | int | `3` | How often, in ticks |
 | `requires` | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+
+`scale` changes both the model and the hitbox, so a bigger variant is bigger in every sense. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across — it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
 
 A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's — a skin, not a new shape. Layers keep their own textures, so armour still looks like armour on a reskinned zombie.
 

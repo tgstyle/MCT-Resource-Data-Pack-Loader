@@ -37,6 +37,7 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
@@ -58,6 +59,7 @@ public final class ContentEntities {
     private static final Map<Class<?>, EntityVariantDef> BY_CLASS = new LinkedHashMap<>();
     private static final List<String> PLAYER_ONLY = Collections.singletonList("minecraft:player");
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
+    private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
     private static boolean loaded;
 
     private ContentEntities() {}
@@ -121,6 +123,38 @@ public final class ContentEntities {
         if (def == null || def.texture.isEmpty()) { return null; }
 
         return TEXTURES.computeIfAbsent(def.texture, ResourceLocation::new);
+    }
+
+    public static float scale(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        if (def == null) { return 1.0F; }
+
+        return entity.isSprinting() ? def.angryScale : def.scale;
+    }
+
+    public static boolean leashable(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.leashable;
+    }
+
+    public static boolean steerable(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.steerable;
+    }
+
+    @SubscribeEvent
+    public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
+        EntityLivingBase living = event.getEntityLiving();
+        if (living.world.isRemote || !(living instanceof EntityLiving)) { return; }
+
+        EntityVariantDef def = BY_CLASS.get(living.getClass());
+        if (def == null || def.scale == def.angryScale) { return; }
+
+        boolean angry = ((EntityLiving) living).getAttackTarget() != null;
+        if (angry == living.isSprinting()) { return; }
+
+        living.setSprinting(angry);
+        resize(living, angry ? def.angryScale : def.scale);
     }
 
     public static float jumpMultiplier(Entity entity) {
@@ -199,8 +233,11 @@ public final class ContentEntities {
         if (def.silent) { entity.setSilent(true); }
         if (def.glowing) { entity.setGlowing(true); }
         if (def.invisible) { entity.setInvisible(true); }
+        if (def.fireproof) { ((AccessorEntity) entity).rdpl$setImmuneToFire(true); }
         if (def.invulnerable) { entity.setEntityInvulnerable(true); }
-        if (def.width > 0.0F && def.height > 0.0F) { ((AccessorEntity) entity).rdpl$setSize(def.width, def.height); }
+        SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
+        if (def.width > 0.0F && def.height > 0.0F) { SIZES.put(entity.getClass(), new float[] { def.width, def.height }); }
+        resize(entity, def.scale);
         if (!(entity instanceof EntityLivingBase)) { return; }
 
         EntityLivingBase alive = (EntityLivingBase) entity;
@@ -271,6 +308,17 @@ public final class ContentEntities {
 
             living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, true));
         }
+    }
+
+    private static void resize(Entity entity, float scale) {
+        float[] base = SIZES.get(entity.getClass());
+        if (base == null) { return; }
+
+        float width = base[0] * scale;
+        float height = base[1] * scale;
+        if (entity.width == width && entity.height == height) { return; }
+
+        ((AccessorEntity) entity).rdpl$setSize(width, height);
     }
 
     private static void effects(EntityLivingBase living, EntityVariantDef def) {
