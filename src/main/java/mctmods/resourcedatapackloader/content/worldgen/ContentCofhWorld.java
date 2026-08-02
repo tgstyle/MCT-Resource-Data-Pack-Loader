@@ -325,14 +325,14 @@ public final class ContentCofhWorld {
         JsonObject spread = new JsonObject();
         switch (distribution) {
             case "gaussian":
-                int centre = integer(source, "center-height", 64);
+                int center = integer(source, "center-height", 64);
                 int range = Math.max(1, integer(source, "spread", 16));
-                spread.addProperty("type", SpreadDef.CENTRED);
-                spread.addProperty("centre", centre);
+                spread.addProperty("type", SpreadDef.CENTERED);
+                spread.addProperty("center", center);
                 spread.addProperty("range", range);
                 spread.addProperty("smoothness", integer(source, "smoothness", 2));
-                out.addProperty("minHeight", Math.max(0, centre - range));
-                out.addProperty("maxHeight", centre + range);
+                out.addProperty("minHeight", Math.max(0, center - range));
+                out.addProperty("maxHeight", center + range);
                 out.add("spread", spread);
                 return;
             case "fractal":

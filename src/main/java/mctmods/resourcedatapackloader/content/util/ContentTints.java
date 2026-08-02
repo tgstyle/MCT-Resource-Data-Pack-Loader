@@ -48,7 +48,7 @@ public final class ContentTints {
 
         try { return BiomeColorHelper.getGrassColorAtPos(world, pos); }
         catch (RuntimeException ex) {
-            ContentLog.LOGGER.debug("Could not read the grass colour at {}", pos, ex);
+            ContentLog.LOGGER.debug("Could not read the grass color at {}", pos, ex);
             return WHITE;
         }
     }
@@ -58,7 +58,7 @@ public final class ContentTints {
 
         try { return BiomeColorHelper.getWaterColorAtPos(world, pos); }
         catch (RuntimeException ex) {
-            ContentLog.LOGGER.debug("Could not read the water colour at {}", pos, ex);
+            ContentLog.LOGGER.debug("Could not read the water color at {}", pos, ex);
             return WHITE;
         }
     }
@@ -68,7 +68,7 @@ public final class ContentTints {
 
         try { return BiomeColorHelper.getFoliageColorAtPos(world, pos); }
         catch (RuntimeException ex) {
-            ContentLog.LOGGER.debug("Could not read the foliage colour at {}", pos, ex);
+            ContentLog.LOGGER.debug("Could not read the foliage color at {}", pos, ex);
             return WHITE;
         }
     }

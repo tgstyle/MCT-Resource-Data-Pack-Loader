@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
@@ -19,12 +19,10 @@ public abstract class MixinWorldInfo {
 
     @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
     private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
-        if (terrainType != WorldType.DEFAULT || (generatorOptions != null && !generatorOptions.isEmpty())) { return; }
-
-        String options = ContentTerrain.options();
-        if (options.isEmpty()) { return; }
+        String options = ContentTerrain.merge(generatorOptions, terrainType == null ? "" : terrainType.getName());
+        if (options.isEmpty() || options.equals(generatorOptions)) { return; }
 
         generatorOptions = options;
-        ContentLog.LOGGER.info("Shaping the overworld of '{}' with {}", name, options);
+        Summary.info("terrain.shaped", "Shaping the overworld of '" + name + "' with " + options);
     }
 }

@@ -155,7 +155,7 @@ public class ContentBlockCane extends Block implements IContentBlock {
         if (under.getBlock() == this) { return true; }
         if (!soil.isEmpty() && !soil.contains(under.getBlock())) { return false; }
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }
-        if (growth.breaksNeighbours && crowded(world, pos)) { return false; }
+        if (growth.breaksNeighbors && crowded(world, pos)) { return false; }
         if (!growth.needsWater) { return true; }
 
         for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) {

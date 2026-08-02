@@ -57,20 +57,20 @@ public final class ContentVein implements IContentShape {
         return blocks;
     }
 
-    private boolean blob(World world, Random random, double centreX, double centreY, double centreZ, double radius) {
+    private boolean blob(World world, Random random, double centerX, double centerY, double centerZ, double radius) {
         if (radius <= 0.0D) { return false; }
 
         boolean placed = false;
-        for (int x = MathHelper.floor(centreX - radius); x <= MathHelper.floor(centreX + radius); x++) {
-            double offX = away(x, centreX, radius);
+        for (int x = MathHelper.floor(centerX - radius); x <= MathHelper.floor(centerX + radius); x++) {
+            double offX = away(x, centerX, radius);
             if (offX >= 1.0D) { continue; }
 
-            for (int y = MathHelper.floor(centreY - radius); y <= MathHelper.floor(centreY + radius); y++) {
-                double offY = offX + away(y, centreY, radius);
+            for (int y = MathHelper.floor(centerY - radius); y <= MathHelper.floor(centerY + radius); y++) {
+                double offY = offX + away(y, centerY, radius);
                 if (offY >= 1.0D) { continue; }
 
-                for (int z = MathHelper.floor(centreZ - radius); z <= MathHelper.floor(centreZ + radius); z++) {
-                    if (offY + away(z, centreZ, radius) >= 1.0D) { continue; }
+                for (int z = MathHelper.floor(centerZ - radius); z <= MathHelper.floor(centerZ + radius); z++) {
+                    if (offY + away(z, centerZ, radius) >= 1.0D) { continue; }
 
                     placed |= placer.place(world, random, x, y, z);
                 }
@@ -79,8 +79,8 @@ public final class ContentVein implements IContentShape {
         return placed;
     }
 
-    private static double away(int block, double centre, double radius) {
-        double offset = (block + 0.5D - centre) / radius;
+    private static double away(int block, double center, double radius) {
+        double offset = (block + 0.5D - center) / radius;
         return offset * offset;
     }
 

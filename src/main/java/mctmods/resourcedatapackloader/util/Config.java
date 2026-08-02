@@ -266,11 +266,17 @@ public class Config {
         public String worldTemplate = "auto";
         @net.minecraftforge.common.config.Config.Comment("Generate the overworld as empty space with a platform at the spawn point, and stop mobs, animals and structures appearing. Only affects new chunks [Default=false]")
         public boolean voidWorld = false;
+        @net.minecraftforge.common.config.Config.Comment("Which dimensions are made void. Empty means the overworld alone [Default={0}]")
+        public int[] voidWorldDimensions = { 0 };
+        @net.minecraftforge.common.config.Config.Comment("Treat voidWorldDimensions as the dimensions to leave alone instead [Default=false]")
+        public boolean voidWorldDimensionsAreBlacklist = false;
+        @net.minecraftforge.common.config.Config.Comment("Let the ender dragon fight happen: the dragon itself, its bar, the crystals and the fountain it stands on. A void end leaves it out unless a pack asks for it [Default=true]")
+        public boolean dragonFight = true;
         @net.minecraftforge.common.config.Config.Comment("The block the void world platform is made of [Default=minecraft:stone]")
         public String voidPlatformBlock = "minecraft:stone";
         @net.minecraftforge.common.config.Config.Comment("How high above the bottom of the world the void world platform sits [Default=64]")
         public int voidPlatformHeight = 64;
-        @net.minecraftforge.common.config.Config.Comment("How wide the void world platform is, in blocks. Rounded down to an odd number so it centres on the spawn point [Default=9]")
+        @net.minecraftforge.common.config.Config.Comment("How wide the void world platform is, in blocks. Rounded down to an odd number so it centers on the spawn point [Default=9]")
         public int voidPlatformSize = 9;
         @net.minecraftforge.common.config.Config.Comment("Replace the jagged bedrock at the bottom of the world with flat layers. Only affects new chunks unless flatBedrockRetrogen is on. Cannot be undone [Default=false]")
         public boolean flatBedrock = false;
@@ -314,7 +320,7 @@ public class Config {
     }
 
     public static class Compat {
-        @net.minecraftforge.common.config.Config.Comment("Silence the 'Could not load material model' and 'Could not load multimodel' errors Tinkers' Construct and Construct's Armory log for every tool, part and armour piece. Does not change which model is used. Requires a restart [Default=false]")
+        @net.minecraftforge.common.config.Config.Comment("Silence the 'Could not load material model' and 'Could not load multimodel' errors Tinkers' Construct and Construct's Armory log for every tool, part and armor piece. Does not change which model is used. Requires a restart [Default=false]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public boolean fixTinkersModelErrors = false;
     }

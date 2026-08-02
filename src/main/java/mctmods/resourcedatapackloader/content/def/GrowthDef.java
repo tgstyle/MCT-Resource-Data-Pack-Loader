@@ -12,14 +12,14 @@ public final class GrowthDef {
     public final boolean needsSky;
     public final boolean damage;
     public final float damageAmount;
-    public final boolean breaksNeighbours;
+    public final boolean breaksNeighbors;
     public final int spread;
     public final String drop;
     public final int dropCount;
 
     public static GrowthDef bush() { return new GrowthDef(1, 16, Collections.emptyList(), false, 1, false, false, 1.0F, false, 0, "", 1); }
 
-    public GrowthDef(int maxHeight, int stages, List<String> soil, boolean needsWater, int waterRange, boolean needsSky, boolean damage, float damageAmount, boolean breaksNeighbours, int spread, String drop, int dropCount) {
+    public GrowthDef(int maxHeight, int stages, List<String> soil, boolean needsWater, int waterRange, boolean needsSky, boolean damage, float damageAmount, boolean breaksNeighbors, int spread, String drop, int dropCount) {
         this.maxHeight = maxHeight;
         this.stages = stages;
         this.soil = soil;
@@ -28,7 +28,7 @@ public final class GrowthDef {
         this.needsSky = needsSky;
         this.damage = damage;
         this.damageAmount = damageAmount;
-        this.breaksNeighbours = breaksNeighbours;
+        this.breaksNeighbors = breaksNeighbors;
         this.spread = spread;
         this.drop = drop;
         this.dropCount = dropCount;

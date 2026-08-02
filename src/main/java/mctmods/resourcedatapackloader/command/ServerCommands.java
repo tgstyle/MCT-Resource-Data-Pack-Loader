@@ -227,8 +227,8 @@ public class ServerCommands extends CommandBase {
         return time < 1000L ? (time + "ms") : String.format("%.02fs", time / 1000D);
     }
 
-    private static void send(ICommandSender sender, TextFormatting colour, String message) {
-        sender.sendMessage(new TextComponentString(colour + message));
+    private static void send(ICommandSender sender, TextFormatting color, String message) {
+        sender.sendMessage(new TextComponentString(color + message));
         ContentLog.LOGGER.info("  {}", message);
     }
 }

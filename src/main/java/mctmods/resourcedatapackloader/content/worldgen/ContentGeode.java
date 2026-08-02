@@ -74,15 +74,15 @@ public final class ContentGeode implements IContentShape {
             double spanX = random.nextDouble() * 6.0D + 3.0D;
             double spanY = random.nextDouble() * 4.0D + 2.0D;
             double spanZ = random.nextDouble() * 6.0D + 3.0D;
-            double centreX = random.nextDouble() * (width - spanX - 2.0D) + 1.0D + spanX / 2.0D;
-            double centreY = random.nextDouble() * (height - spanY - 4.0D) + 2.0D + spanY / 2.0D;
-            double centreZ = random.nextDouble() * (width - spanZ - 2.0D) + 1.0D + spanZ / 2.0D;
+            double centerX = random.nextDouble() * (width - spanX - 2.0D) + 1.0D + spanX / 2.0D;
+            double centerY = random.nextDouble() * (height - spanY - 4.0D) + 2.0D + spanY / 2.0D;
+            double centerZ = random.nextDouble() * (width - spanZ - 2.0D) + 1.0D + spanZ / 2.0D;
             double inner = shape.isHollow() ? random.nextGaussian() * 0.15D + 0.4D : 0.0D;
 
             for (int x = 1; x < width - 1; x++) {
                 for (int z = 1; z < width - 1; z++) {
                     for (int y = 1; y < height - 1; y++) {
-                        double reach = away(x, centreX, spanX) + away(y, centreY, spanY) + away(z, centreZ, spanZ);
+                        double reach = away(x, centerX, spanX) + away(y, centerY, spanY) + away(z, centerZ, spanZ);
                         int at = index(x, z, y, width, height);
                         if (reach < 1.0D) { body[at] = true; }
                         if (shape.isHollow() && reach <= inner) { hollow[at] = true; }
@@ -114,8 +114,8 @@ public final class ContentGeode implements IContentShape {
                 || (y > 0 && body[index(x, z, y - 1, width, height)]);
     }
 
-    private static double away(int block, double centre, double span) {
-        double offset = (block - centre) / (span / 2.0D);
+    private static double away(int block, double center, double span) {
+        double offset = (block - center) / (span / 2.0D);
         return offset * offset;
     }
 

@@ -55,7 +55,7 @@ public final class ContentToolTypes {
         EntityEquipmentSlot slot = SLOTS.get(name == null ? "" : name.toLowerCase(Locale.ROOT));
         if (slot != null) { return slot; }
 
-        ContentLog.LOGGER.error("Unknown armour slot '{}' in {}, the item is skipped. Known slots are {}", name, context, SLOTS.keySet());
+        ContentLog.LOGGER.error("Unknown armor slot '{}' in {}, the item is skipped. Known slots are {}", name, context, SLOTS.keySet());
         return null;
     }
 

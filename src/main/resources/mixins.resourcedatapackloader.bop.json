@@ -5,8 +5,13 @@
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinBiomeProviderBOPHell"
+    "MixinBiomeProviderBOPHell",
+    "MixinBOPWorldSettings",
+    "MixinChunkGeneratorHellBOP",
+    "MixinChunkGeneratorOverworldBOP"
   ],
-  "client": [],
+  "client": [
+    "MixinWorldTypeBOP"
+  ],
   "server": []
 }

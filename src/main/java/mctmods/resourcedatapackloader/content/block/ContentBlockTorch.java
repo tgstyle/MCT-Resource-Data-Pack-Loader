@@ -64,9 +64,9 @@ public class ContentBlockTorch extends BlockTorch implements IContentBlock {
 
         if (def.torchSmoke) { world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0.0, 0.0, 0.0); }
 
-        if (Objects.equals(def.torchParticle, BlockDef.PARTICLE_COLOURED)) {
+        if (Objects.equals(def.torchParticle, BlockDef.PARTICLE_COLORED)) {
             world.spawnParticle(EnumParticleTypes.REDSTONE, x, y, z,
-                    Math.max(MIN_RED, ContentTypes.red(def.torchColour)), ContentTypes.green(def.torchColour), ContentTypes.blue(def.torchColour));
+                    Math.max(MIN_RED, ContentTypes.red(def.torchColor)), ContentTypes.green(def.torchColor), ContentTypes.blue(def.torchColor));
             return;
         }
         world.spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0.0, 0.0, 0.0);

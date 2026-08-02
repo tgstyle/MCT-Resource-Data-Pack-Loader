@@ -12,12 +12,14 @@ import com.google.gson.JsonParseException;
 import net.minecraft.entity.Entity;
 import mctmods.resourcedatapackloader.mixin.AccessorEntity;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityLiving;
+import mctmods.resourcedatapackloader.mixin.AccessorEntityLivingNavigator;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityVillager;
 
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
@@ -29,6 +31,7 @@ import net.minecraft.entity.ai.EntityAIAvoidEntity;
 import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.ai.EntityAIPanic;
+import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
 import net.minecraft.entity.ai.attributes.IAttribute;
@@ -36,6 +39,7 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.pathfinding.PathNavigateSwimmer;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
@@ -116,7 +120,7 @@ public final class ContentEntities {
             builder.entity(made$class).id(entry.getKey(), network++)
                     .name(entry.getKey().getNamespace() + "." + entry.getKey().getPath())
                     .tracker(def.trackingRange, def.trackingFrequency, def.trackVelocity);
-            if (def.egg) { builder.egg(eggColour(def, true), eggColour(def, false)); }
+            if (def.egg) { builder.egg(eggColor(def, true), eggColor(def, false)); }
 
             registry.register(builder.build());
             BY_CLASS.put(made$class, def);
@@ -169,7 +173,10 @@ public final class ContentEntities {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return 1.0F; }
 
-        return entity.isSprinting() ? def.angryScale : def.scale;
+        float scale = entity.isSprinting() ? def.angryScale : def.scale;
+        Summary.info("entity.scale." + def.registryName, "Drawing " + def.registryName + " at " + scale + " times its size, and its box is " + entity.width + " by " + entity.height);
+
+        return scale;
     }
 
     public static boolean leashable(Entity entity) {
@@ -188,7 +195,7 @@ public final class ContentEntities {
         if (!(living instanceof EntityLiving)) { return; }
 
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || (def.scale == def.angryScale && !def.baby)) { return; }
+        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && !def.baby)) { return; }
 
         if (living.world.isRemote) {
             resize(living, living.isSprinting() ? def.angryScale : def.scale);
@@ -237,7 +244,12 @@ public final class ContentEntities {
 
     public static boolean breathesUnderwater(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
-        return def != null && def.breathesUnderwater;
+        return def != null && (def.breathesUnderwater || def.swims);
+    }
+
+    public static boolean sinks(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.breathesUnderwater && !def.swims;
     }
 
     public static boolean despawns(Entity entity, boolean original) {
@@ -254,6 +266,11 @@ public final class ContentEntities {
         }
         ContentLog.LOGGER.error("Entity variant {} names creature attribute '{}', which is not one of undefined, undead, arthropod or illager", def.registryName, def.creatureAttribute);
         return null;
+    }
+
+    public static boolean fireproof(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.fireproof;
     }
 
     public static boolean hidesArmor(Entity entity) {
@@ -295,6 +312,15 @@ public final class ContentEntities {
         if (!(entity instanceof EntityLiving)) { return; }
 
         EntityLiving living = (EntityLiving) entity;
+        if (def.swims) {
+            ((AccessorEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateSwimmer(living, living.world));
+            ((AccessorEntityLivingNavigator) living).rdpl$setMoveHelper(new SwimmingMoveHelper(living));
+        }
+        if (def.breathesUnderwater || def.swims) {
+            for (EntityAITasks.EntityAITaskEntry task : new ArrayList<>(living.tasks.taskEntries)) {
+                if (task.action instanceof EntityAISwimming) { living.tasks.removeTask(task.action); }
+            }
+        }
         ResourceLocation table = lootTable(living);
         if (table != null) { ((AccessorEntityLiving) living).rdpl$setDeathLootTable(table); }
         if (def.baby) { child(living); }
@@ -305,7 +331,7 @@ public final class ContentEntities {
         living.setCanPickUpLoot(def.picksUpLoot);
         priorities(living, def);
         gear(living, def);
-        behaviour(living, def);
+        behavior(living, def);
     }
 
     private static void attributes(EntityLivingBase living, EntityVariantDef def) {
@@ -324,7 +350,7 @@ public final class ContentEntities {
         }
     }
 
-    private static void behaviour(EntityLiving living, EntityVariantDef def) {
+    private static void behavior(EntityLiving living, EntityVariantDef def) {
         if (def.passive) {
             clear(living.targetTasks);
             removeMelee(living.tasks);
@@ -333,7 +359,7 @@ public final class ContentEntities {
         }
         if (!def.hostile) { return; }
         if (!(living instanceof EntityCreature)) {
-            ContentLog.LOGGER.error("Entity variant {} asks to be hostile, but {} does not walk the ground the way the attack behaviour needs", def.registryName, def.base);
+            ContentLog.LOGGER.error("Entity variant {} asks to be hostile, but {} does not walk the ground the way the attack behavior needs", def.registryName, def.base);
             return;
         }
 
@@ -384,11 +410,15 @@ public final class ContentEntities {
             SIZES.put(entity.getClass(), new float[] { def.width, def.height });
             return;
         }
+        if (entity instanceof EntitySlime) { return; }
+
         SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
     }
 
     private static void resize(Entity entity, float scale) {
-        float[] base = SIZES.get(entity.getClass());
+        float[] base = entity instanceof EntitySlime
+                ? new float[] { 0.51000005F * ((EntitySlime) entity).getSlimeSize(), 0.51000005F * ((EntitySlime) entity).getSlimeSize() }
+                : SIZES.get(entity.getClass());
         if (base == null) { return; }
 
         boolean young = entity instanceof EntityAgeable && ((EntityAgeable) entity).isChild()
@@ -399,12 +429,12 @@ public final class ContentEntities {
         if (entity.width == width && entity.height == height) { return; }
 
         AxisAlignedBB before = entity.getEntityBoundingBox();
-        double centreX = (before.minX + before.maxX) / 2.0D;
-        double centreZ = (before.minZ + before.maxZ) / 2.0D;
+        double centerX = (before.minX + before.maxX) / 2.0D;
+        double centerZ = (before.minZ + before.maxZ) / 2.0D;
         double half = width / 2.0D;
         entity.width = width;
         entity.height = height;
-        entity.setEntityBoundingBox(new AxisAlignedBB(centreX - half, before.minY, centreZ - half, centreX + half, before.minY + height, centreZ + half));
+        entity.setEntityBoundingBox(new AxisAlignedBB(centerX - half, before.minY, centerZ - half, centerX + half, before.minY + height, centerZ + half));
     }
 
     private static void effects(EntityLivingBase living, EntityVariantDef def) {
@@ -494,7 +524,7 @@ public final class ContentEntities {
         return false;
     }
 
-    private static int eggColour(EntityVariantDef def, boolean primary) {
+    private static int eggColor(EntityVariantDef def, boolean primary) {
         int wanted = primary ? def.eggPrimary : def.eggSecondary;
         if (wanted >= 0) { return wanted; }
 

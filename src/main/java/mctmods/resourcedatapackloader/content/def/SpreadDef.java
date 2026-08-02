@@ -2,13 +2,13 @@ package mctmods.resourcedatapackloader.content.def;
 
 public final class SpreadDef {
     public static final String EVEN = "even";
-    public static final String CENTRED = "centred";
+    public static final String CENTERED = "centered";
     public static final String SPRAWL = "sprawl";
     public static final String TERRAIN = "terrain";
     public static final String CAVERN = "cavern";
     public static final String SUBMERGED = "submerged";
     public final String type;
-    public final int centre;
+    public final int center;
     public final int range;
     public final int smoothness;
     public final int veinHeight;
@@ -19,9 +19,9 @@ public final class SpreadDef {
     public final int offsetMax;
     public final boolean ceiling;
 
-    public SpreadDef(String type, int centre, int range, int smoothness, int veinHeight, int veinDiameter, int verticalDensity, int horizontalDensity, int offsetMin, int offsetMax, boolean ceiling) {
+    public SpreadDef(String type, int center, int range, int smoothness, int veinHeight, int veinDiameter, int verticalDensity, int horizontalDensity, int offsetMin, int offsetMax, boolean ceiling) {
         this.type = type;
-        this.centre = centre;
+        this.center = center;
         this.range = range;
         this.smoothness = smoothness;
         this.veinHeight = veinHeight;

@@ -144,7 +144,7 @@ public final class ContentTypes {
 
         try { return (int) Long.parseLong(cleaned, 16); }
         catch (NumberFormatException ex) {
-            ContentLog.LOGGER.error("Colour '{}' in {} is not hexadecimal, using white", value, context);
+            ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);
             return 0xFFFFFFFF;
         }
     }

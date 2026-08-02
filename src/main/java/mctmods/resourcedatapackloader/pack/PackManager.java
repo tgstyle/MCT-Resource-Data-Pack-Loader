@@ -601,7 +601,7 @@ public final class PackManager {
                 "ceilings, or under water.",
                 "",
                 "",
-                "A biomes/<name>.json file defines a biome: its climate and colours, the blocks",
+                "A biomes/<name>.json file defines a biome: its climate and colors, the blocks",
                 "it is made of, what decorates it, what spawns in it, and where it generates.",
                 "Its number is chosen for you and written into each world the first time that",
                 "world loads, so it stays put afterwards no matter what else you install. Set",

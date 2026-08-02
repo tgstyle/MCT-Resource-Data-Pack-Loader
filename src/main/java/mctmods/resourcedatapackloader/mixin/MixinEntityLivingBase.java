@@ -66,6 +66,13 @@ public abstract class MixinEntityLivingBase {
     @Inject(method = "getSoundPitch", at = @At("RETURN"), cancellable = true)
     private void rdpl$pitch(CallbackInfoReturnable<Float> cir) { cir.setReturnValue(ContentEntities.sound((EntityLivingBase) (Object) this, cir.getReturnValueF(), true)); }
 
+    @Inject(method = "handleJumpWater", at = @At("HEAD"), cancellable = true)
+    private void rdpl$sink(CallbackInfo ci) {
+        if (!ContentEntities.sinks((EntityLivingBase) (Object) this)) { return; }
+
+        ci.cancel();
+    }
+
     @Redirect(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLivingBase;getWaterSlowDown()F"))
     private float rdpl$waterSpeed(EntityLivingBase self) { return ContentEntities.waterSlowdown(self, getWaterSlowDown()); }
 

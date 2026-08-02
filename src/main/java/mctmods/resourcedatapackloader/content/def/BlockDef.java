@@ -13,7 +13,7 @@ public final class BlockDef {
     public static final int MAX_META = 16;
     public static final String PARTICLE_NONE = "none";
     public static final String PARTICLE_FLAME = "flame";
-    public static final String PARTICLE_COLOURED = "coloured";
+    public static final String PARTICLE_COLORED = "colored";
     public final ResourceLocation registryName;
     public final String type;
     public final Material material;
@@ -42,7 +42,7 @@ public final class BlockDef {
     public final boolean itemModelFromFile;
     public final String torchParticle;
     public final boolean torchSmoke;
-    public final int torchColour;
+    public final int torchColor;
     public final String cropSeed;
     public final String cropProduce;
     public final int cropMaxAge;
@@ -56,7 +56,7 @@ public final class BlockDef {
     public final String leafSapling;
     public final int leafSaplingChance;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColour, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, boolean spawnsAnimals, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, boolean spawnsAnimals, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -85,7 +85,7 @@ public final class BlockDef {
         this.itemModelFromFile = itemModelFromFile;
         this.torchParticle = torchParticle;
         this.torchSmoke = torchSmoke;
-        this.torchColour = torchColour;
+        this.torchColor = torchColor;
         this.cropSeed = cropSeed;
         this.cropProduce = cropProduce;
         this.cropMaxAge = cropMaxAge;

@@ -101,10 +101,14 @@ public final class ContentGeneratorControl {
     public static boolean rejects(IWorldGenerator generator, World world) {
         if (whitelist == null) { load(); }
         if (generator == null || world == null) { return false; }
-        if (!inScope(world)) { return false; }
 
         String owner = owner(generator.getClass());
         if (owner.equals("resourcedatapackloader")) { return false; }
+        if (ContentVoidWorld.appliesTo(world)) {
+            count(owner, generator, kind(generator.getClass(), owner));
+            return true;
+        }
+        if (!inScope(world)) { return false; }
 
         String type = generator.getClass().getName().toLowerCase(Locale.ROOT);
         if (!named.isEmpty() && (named.contains(owner) || matches(type))) {
@@ -204,3 +208,4 @@ public final class ContentGeneratorControl {
         return UNKNOWN;
     }
 }
+

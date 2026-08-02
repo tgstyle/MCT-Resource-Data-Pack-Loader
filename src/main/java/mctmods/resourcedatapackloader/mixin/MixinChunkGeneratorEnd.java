@@ -5,7 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
-import net.minecraft.world.gen.ChunkGeneratorHell;
+import net.minecraft.world.gen.ChunkGeneratorEnd;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(ChunkGeneratorHell.class)
-public abstract class MixinChunkGeneratorHell {
+@Mixin(ChunkGeneratorEnd.class)
+public abstract class MixinChunkGeneratorEnd {
     @Shadow @Final
     private World world;
 

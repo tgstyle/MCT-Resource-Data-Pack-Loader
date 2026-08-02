@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 
 public final class ContentParser {
     private static final Set<String> KNOWN_SPREADS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
-            SpreadDef.EVEN, SpreadDef.CENTRED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED)));
+            SpreadDef.EVEN, SpreadDef.CENTERED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED)));
     private static final Set<String> KNOWN_TERRAIN = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
             DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
     private static final Set<String> KNOWN_SHAPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
@@ -126,7 +126,7 @@ public final class ContentParser {
                 growth(json),
                 strings(json, "plantTypes"),
                 JsonUtils.getBoolean(json, "spawnsAnimals", false),
-                behaviours(key, json),
+                behaviors(key, json),
                 JsonUtils.getString(json, "tint", ""),
                 JsonUtils.getString(json, "leafSapling", ""),
                 Math.max(0, Math.min(100, JsonUtils.getInt(json, "leafSaplingChance", 5))));
@@ -231,8 +231,8 @@ public final class ContentParser {
         JsonObject terrain = json.has("terrain") ? JsonUtils.getJsonObject(json, "terrain") : new JsonObject();
         JsonObject biomes = json.has("biomes") ? JsonUtils.getJsonObject(json, "biomes") : new JsonObject();
         JsonObject sky = json.has("sky") ? JsonUtils.getJsonObject(json, "sky") : new JsonObject();
-        String skyColour = JsonUtils.getString(sky, "skyColor", "").trim();
-        String cloudColour = JsonUtils.getString(sky, "cloudColor", "").trim();
+        String skyColor = JsonUtils.getString(sky, "skyColor", "").trim();
+        String cloudColor = JsonUtils.getString(sky, "cloudColor", "").trim();
 
         String type = JsonUtils.getString(terrain, "type", DimensionDef.OVERWORLD).trim().toLowerCase(Locale.ROOT);
         String source = JsonUtils.getString(biomes, "source", DimensionDef.INHERIT).trim().toLowerCase(Locale.ROOT);
@@ -263,7 +263,7 @@ public final class ContentParser {
                 JsonUtils.getInt(sky, "groundLevel", 63),
                 JsonUtils.getFloat(sky, "movementFactor", 1.0F),
                 fog.isEmpty() ? -1 : ContentTypes.color(fog, key.toString()),
-                skyColour.isEmpty() ? -1 : ContentTypes.color(skyColour, key.toString()),
+                skyColor.isEmpty() ? -1 : ContentTypes.color(skyColor, key.toString()),
                 JsonUtils.getInt(sky, "fixedTime", -1),
                 JsonUtils.getBoolean(sky, "sunriseColors", true),
                 JsonUtils.getBoolean(sky, "nether", false),
@@ -272,7 +272,7 @@ public final class ContentParser {
                 JsonUtils.getBoolean(sky, "showFog", false),
                 Math.max(0.0F, Math.min(1.0F, JsonUtils.getFloat(sky, "ambientLight", 0.0F))),
                 JsonUtils.getFloat(sky, "starBrightness", -1.0F),
-                cloudColour.isEmpty() ? -1 : ContentTypes.color(cloudColour, key.toString()),
+                cloudColor.isEmpty() ? -1 : ContentTypes.color(cloudColor, key.toString()),
                 JsonUtils.getInt(sky, "respawnDimension", Integer.MIN_VALUE),
                 JsonUtils.getBoolean(sky, "renderSky", true),
                 JsonUtils.getBoolean(sky, "renderClouds", true),
@@ -281,7 +281,7 @@ public final class ContentParser {
                 strings(json, "requires"));
     }
 
-    private static List<String> behaviours(ResourceLocation key, JsonObject json) {
+    private static List<String> behaviors(ResourceLocation key, JsonObject json) {
         List<String> found = new ArrayList<>();
         for (String raw : strings(json, "behavesAs")) {
             String name = ContentSpawning.normalise(raw);
@@ -322,7 +322,7 @@ public final class ContentParser {
                 JsonUtils.getBoolean(entry, "needsSky", false),
                 JsonUtils.getBoolean(entry, "damage", false),
                 JsonUtils.getFloat(entry, "damageAmount", 1.0F),
-                JsonUtils.getBoolean(entry, "breaksNeighbours", false),
+                JsonUtils.getBoolean(entry, "breaksNeighbors", false),
                 Math.max(0, JsonUtils.getInt(entry, "spread", 0)),
                 JsonUtils.getString(entry, "drop", ""),
                 Math.max(1, JsonUtils.getInt(entry, "dropCount", 1)));
@@ -532,10 +532,10 @@ public final class ContentParser {
             type = SpreadDef.EVEN;
         }
 
-        int centre = JsonUtils.getInt(entry, "centre", (minHeight + maxHeight) / 2);
+        int center = JsonUtils.getInt(entry, "center", (minHeight + maxHeight) / 2);
         int offsetMin = JsonUtils.getInt(entry, "offsetMin", 0);
         return new SpreadDef(type,
-                centre,
+                center,
                 Math.max(1, JsonUtils.getInt(entry, "range", Math.max(2, (maxHeight - minHeight) / 2))),
                 Math.max(1, Math.min(8, JsonUtils.getInt(entry, "smoothness", 2))),
                 Math.max(1, JsonUtils.getInt(entry, "veinHeight", Math.max(1, maxHeight - minHeight))),
@@ -685,6 +685,7 @@ public final class ContentParser {
                 Math.max(0.0F, JsonUtils.getFloat(json, "absorption", 0.0F)),
                 JsonUtils.getString(json, "creatureAttribute", ""),
                 JsonUtils.getBoolean(json, "breathesUnderwater", false),
+                JsonUtils.getBoolean(json, "swims", false),
                 JsonUtils.getBoolean(json, "despawns", true),
                 JsonUtils.getBoolean(json, "noAI", false),
                 JsonUtils.getBoolean(json, "leftHanded", false),

@@ -19,7 +19,7 @@ public final class ContentPlate implements IContentShape {
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         int radius = Math.min(ShapeDef.MOST_REACH, Math.max(0, shape.radius.pick(random)));
         int thickness = Math.max(0, shape.height.pick(random));
-        int centreY = origin.getY() + 1;
+        int centerY = origin.getY() + 1;
         boolean round = shape.isRound();
         int square = radius * radius;
 
@@ -28,8 +28,8 @@ public final class ContentPlate implements IContentShape {
             for (int offZ = -radius; offZ <= radius; offZ++) {
                 if (round && offX * offX + offZ * offZ > square) { continue; }
 
-                int top = shape.slim ? centreY + thickness - 1 : centreY + thickness;
-                for (int y = centreY - thickness; y <= top; y++) {
+                int top = shape.slim ? centerY + thickness - 1 : centerY + thickness;
+                for (int y = centerY - thickness; y <= top; y++) {
                     placed |= placer.place(world, random, origin.getX() + offX, y, origin.getZ() + offZ);
                 }
             }

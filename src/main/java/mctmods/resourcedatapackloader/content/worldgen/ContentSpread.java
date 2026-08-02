@@ -25,7 +25,7 @@ public final class ContentSpread {
         SpreadDef spread = def.spread;
         switch (spread.type) {
             case SpreadDef.SPRAWL: return sprawl(def, spread, region, baseX, baseZ);
-            case SpreadDef.CENTRED: return centred(def, spread, random, baseX, baseZ);
+            case SpreadDef.CENTERED: return centered(def, spread, random, baseX, baseZ);
             case SpreadDef.TERRAIN: return terrain(spread, world, random, baseX, baseZ);
             case SpreadDef.CAVERN: return cavern(def, spread, world, random, baseX, baseZ);
             case SpreadDef.SUBMERGED: return submerged(def, world, random, baseX, baseZ);
@@ -38,8 +38,8 @@ public final class ContentSpread {
         return new BlockPos(baseX + SAFE_OFFSET + random.nextInt(16), def.minHeight + random.nextInt(span), baseZ + SAFE_OFFSET + random.nextInt(16));
     }
 
-    private static BlockPos centred(WorldgenDef def, SpreadDef spread, Random random, int baseX, int baseZ) {
-        int y = spread.centre;
+    private static BlockPos centered(WorldgenDef def, SpreadDef spread, Random random, int baseX, int baseZ) {
+        int y = spread.center;
         if (spread.range > 1) {
             int rolls = Math.max(1, spread.smoothness);
             for (int roll = 0; roll < rolls; roll++) { y += random.nextInt(spread.range); }

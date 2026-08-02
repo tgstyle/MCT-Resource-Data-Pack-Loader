@@ -31,14 +31,14 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 public final class ContentSpawning {
-    public static final Set<String> BEHAVIOURS = Collections.unmodifiableSet(new LinkedHashSet<>(java.util.Arrays.asList(
+    public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(java.util.Arrays.asList(
             "animals", "path", "till", "bush")));
-    private static final Map<String, Set<Block>> BY_BEHAVIOUR = new HashMap<>();
+    private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
 
     private ContentSpawning() {}
 
     public static void resolve() {
-        BY_BEHAVIOUR.clear();
+        BY_BEHAVIOR.clear();
         for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
             Block block = entry.getValue();
             if (!(block instanceof IContentBlock)) { continue; }
@@ -47,7 +47,7 @@ public final class ContentSpawning {
             if (def == null) { continue; }
 
             if (def.spawnsAnimals) { add("animals", block); }
-            for (String behaviour : def.behavesAs) { add(behaviour, block); }
+            for (String behavior : def.behavesAs) { add(behavior, block); }
         }
     }
 
@@ -112,18 +112,18 @@ public final class ContentSpawning {
 
     public static boolean rateControlled() { return !ContentControl.off(ContentControl.SPAWNING); }
 
-    public static boolean does(String behaviour, Block block) {
-        Set<Block> blocks = BY_BEHAVIOUR.get(behaviour);
+    public static boolean does(String behavior, Block block) {
+        Set<Block> blocks = BY_BEHAVIOR.get(behavior);
         return blocks != null && blocks.contains(block);
     }
 
     public static boolean sustainsAnimals(Block block) { return does("animals", block); }
 
-    public static boolean known(String behaviour) { return BEHAVIOURS.contains(behaviour); }
+    public static boolean known(String behavior) { return BEHAVIORS.contains(behavior); }
 
-    public static String describe() { return String.join(", ", BEHAVIOURS); }
+    public static String describe() { return String.join(", ", BEHAVIORS); }
 
-    public static String normalise(String behaviour) { return behaviour.trim().toLowerCase(Locale.ROOT); }
+    public static String normalise(String behavior) { return behavior.trim().toLowerCase(Locale.ROOT); }
 
-    private static void add(String behaviour, Block block) { BY_BEHAVIOUR.computeIfAbsent(behaviour, key -> new HashSet<>()).add(block); }
+    private static void add(String behavior, Block block) { BY_BEHAVIOR.computeIfAbsent(behavior, key -> new HashSet<>()).add(block); }
 }
