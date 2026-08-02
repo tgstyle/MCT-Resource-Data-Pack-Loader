@@ -11,10 +11,15 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonParseException;
 import net.minecraft.entity.Entity;
 import mctmods.resourcedatapackloader.mixin.AccessorEntity;
+import mctmods.resourcedatapackloader.mixin.AccessorEntityLiving;
+import mctmods.resourcedatapackloader.mixin.AccessorEntityVillager;
 
+import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.monster.EntityZombie;
+import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
@@ -35,6 +40,8 @@ import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -44,6 +51,7 @@ import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +67,7 @@ public final class ContentEntities {
     private static final Map<Class<?>, EntityVariantDef> BY_CLASS = new LinkedHashMap<>();
     private static final List<String> PLAYER_ONLY = Collections.singletonList("minecraft:player");
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
+    private static final Map<String, ResourceLocation> NAMES = new LinkedHashMap<>();
     private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
     private static boolean loaded;
 
@@ -125,6 +134,37 @@ public final class ContentEntities {
         return TEXTURES.computeIfAbsent(def.texture, ResourceLocation::new);
     }
 
+    @Nullable public static ResourceLocation lootTable(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        if (def == null || def.lootTable.isEmpty()) { return null; }
+
+        return NAMES.computeIfAbsent(def.lootTable, ResourceLocation::new);
+    }
+
+    @Nullable public static SoundEvent soundEvent(Entity entity, int which) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        if (def == null) { return null; }
+
+        String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : def.deathSound;
+        if (name.isEmpty()) { return null; }
+
+        ResourceLocation key = new ResourceLocation(name);
+        SoundEvent event = ForgeRegistries.SOUND_EVENTS.containsKey(key) ? ForgeRegistries.SOUND_EVENTS.getValue(key) : null;
+        if (event == null) { ContentLog.LOGGER.error("Entity variant {} names sound {}, which nothing registers", def.registryName, key); }
+
+        return event;
+    }
+
+    public static boolean immune(Entity entity, String damageType) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        if (def == null || def.immuneTo.isEmpty()) { return false; }
+
+        for (String wanted : def.immuneTo) {
+            if (wanted.equalsIgnoreCase(damageType)) { return true; }
+        }
+        return false;
+    }
+
     public static float scale(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return 1.0F; }
@@ -145,15 +185,21 @@ public final class ContentEntities {
     @SubscribeEvent
     public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         EntityLivingBase living = event.getEntityLiving();
-        if (living.world.isRemote || !(living instanceof EntityLiving)) { return; }
+        if (!(living instanceof EntityLiving)) { return; }
 
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || def.scale == def.angryScale) { return; }
+        if (def == null || (def.scale == def.angryScale && !def.baby)) { return; }
+
+        if (living.world.isRemote) {
+            resize(living, living.isSprinting() ? def.angryScale : def.scale);
+            return;
+        }
+
+        if (def.baby && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
 
         boolean angry = ((EntityLiving) living).getAttackTarget() != null;
-        if (angry == living.isSprinting()) { return; }
+        if (angry != living.isSprinting()) { living.setSprinting(angry); }
 
-        living.setSprinting(angry);
         resize(living, angry ? def.angryScale : def.scale);
     }
 
@@ -217,10 +263,14 @@ public final class ContentEntities {
 
     @SubscribeEvent
     public static void onJoin(EntityJoinWorldEvent event) {
-        if (event.getWorld().isRemote) { return; }
-
         EntityVariantDef def = BY_CLASS.get(event.getEntity().getClass());
         if (def == null) { return; }
+
+        remember(event.getEntity(), def);
+        if (event.getWorld().isRemote) {
+            resize(event.getEntity(), event.getEntity().isSprinting() ? def.angryScale : def.scale);
+            return;
+        }
 
         apply(event.getEntity(), def);
     }
@@ -235,8 +285,6 @@ public final class ContentEntities {
         if (def.invisible) { entity.setInvisible(true); }
         if (def.fireproof) { ((AccessorEntity) entity).rdpl$setImmuneToFire(true); }
         if (def.invulnerable) { entity.setEntityInvulnerable(true); }
-        SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
-        if (def.width > 0.0F && def.height > 0.0F) { SIZES.put(entity.getClass(), new float[] { def.width, def.height }); }
         resize(entity, def.scale);
         if (!(entity instanceof EntityLivingBase)) { return; }
 
@@ -247,6 +295,10 @@ public final class ContentEntities {
         if (!(entity instanceof EntityLiving)) { return; }
 
         EntityLiving living = (EntityLiving) entity;
+        ResourceLocation table = lootTable(living);
+        if (table != null) { ((AccessorEntityLiving) living).rdpl$setDeathLootTable(table); }
+        if (def.baby) { child(living); }
+        if (living instanceof EntityVillager && !def.profession.isEmpty()) { profession((EntityVillager) living, def); }
         if (def.persistent) { living.enablePersistence(); }
         if (def.noAI) { living.setNoAI(true); }
         if (def.leftHanded) { living.setLeftHanded(true); }
@@ -310,15 +362,49 @@ public final class ContentEntities {
         }
     }
 
+    private static void child(EntityLiving living) {
+        if (living instanceof EntityZombie) { ((EntityZombie) living).setChild(true); }
+        else if (living instanceof EntityAgeable) { ((EntityAgeable) living).setGrowingAge(-24000); }
+    }
+
+    private static void profession(EntityVillager villager, EntityVariantDef def) {
+        ResourceLocation key = new ResourceLocation(def.profession);
+        VillagerRegistry.VillagerProfession found = ForgeRegistries.VILLAGER_PROFESSIONS.containsKey(key) ? ForgeRegistries.VILLAGER_PROFESSIONS.getValue(key) : null;
+        if (found == null) {
+            ContentLog.LOGGER.error("Entity variant {} names profession {}, which nothing registers", def.registryName, key);
+            return;
+        }
+
+        villager.setProfession(found);
+        if (def.career > 0) { ((AccessorEntityVillager) villager).rdpl$setCareer(def.career); }
+    }
+
+    private static void remember(Entity entity, EntityVariantDef def) {
+        if (def.width > 0.0F && def.height > 0.0F) {
+            SIZES.put(entity.getClass(), new float[] { def.width, def.height });
+            return;
+        }
+        SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
+    }
+
     private static void resize(Entity entity, float scale) {
         float[] base = SIZES.get(entity.getClass());
         if (base == null) { return; }
 
-        float width = base[0] * scale;
-        float height = base[1] * scale;
+        boolean young = entity instanceof EntityAgeable && ((EntityAgeable) entity).isChild()
+                || entity instanceof EntityZombie && ((EntityZombie) entity).isChild();
+        float factor = young ? scale / 2.0F : scale;
+        float width = base[0] * factor;
+        float height = base[1] * factor;
         if (entity.width == width && entity.height == height) { return; }
 
-        ((AccessorEntity) entity).rdpl$setSize(width, height);
+        AxisAlignedBB before = entity.getEntityBoundingBox();
+        double centreX = (before.minX + before.maxX) / 2.0D;
+        double centreZ = (before.minZ + before.maxZ) / 2.0D;
+        double half = width / 2.0D;
+        entity.width = width;
+        entity.height = height;
+        entity.setEntityBoundingBox(new AxisAlignedBB(centreX - half, before.minY, centreZ - half, centreX + half, before.minY + height, centreZ + half));
     }
 
     private static void effects(EntityLivingBase living, EntityVariantDef def) {

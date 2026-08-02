@@ -7,6 +7,8 @@
   "mixins": [
     "AccessorChunk",
     "AccessorEntity",
+    "AccessorEntityLiving",
+    "AccessorEntityVillager",
     "AccessorEnumCreatureType",
     "AccessorFurnaceRecipes",
     "AccessorLootTable",
@@ -21,7 +23,6 @@
     "MixinChunkGeneratorOverworld",
     "MixinChunkGeneratorOverworldSpawns",
     "MixinCraftingHelper",
-    "MixinEntityAnimal",
     "MixinEntityLiving",
     "MixinEntityLivingBase",
     "MixinFunctionManager",

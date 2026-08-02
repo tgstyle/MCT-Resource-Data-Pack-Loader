@@ -146,7 +146,7 @@ A file here replaces the original completely. To change one ingredient or drop o
 
 ## Entity variants
 
-A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right — its own registry name, its own name in the world, its own spawn egg, its own loot table at `loot_tables/entities/<name>.json` — built on another entity's behaviour rather than replacing it. Nothing about the entity it copies changes.
+A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right — its own registry name, its own name in the world, its own spawn egg, and a loot table of its own if you give it one — built on another entity's behaviour rather than replacing it. Nothing about the entity it copies changes.
 
 ```json
 {
@@ -172,6 +172,12 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `name` | string | none | The name it carries in the world, in death messages and on its egg |
 | `showName` | boolean | `false` | Show the name without looking at it |
 | `texture` | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
+| `lootTable` | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
+| `profession` | `namespace:name` | random | For a villager, the trade it practises |
+| `career` | int | random | Which career within that profession, from 1 upwards |
+| `baby` | boolean | `false` | Stays young, and stays that way |
+| `sounds` | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
+| `immuneTo` | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
 | `jumpMultiplier` | float | `1.0` | How much higher it jumps than the entity it copies |
 | `fallDamage` | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
 | `maxFallHeight` | int | the base's | How far it will drop while pathing |
@@ -213,7 +219,9 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `trackingFrequency` | int | `3` | How often, in ticks |
 | `requires` | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
 
-`scale` changes both the model and the hitbox, so a bigger variant is bigger in every sense. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across — it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
+`scale` changes both the model and the hitbox on both sides, so what you see is what you can hit. A creature that changes its own size, an animal growing up or a zombie that is a child, is scaled around whatever size it has chosen, so the two do not fight. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across — it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
+
+A variant drops whatever the entity it copies drops, because the loot table is fixed in that entity's own code rather than looked up by name. `lootTable` points it at a table of your own, which you then supply at `loot_tables/entities/<name>.json` like any other.
 
 A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's — a skin, not a new shape. Layers keep their own textures, so armour still looks like armour on a reskinned zombie.
 

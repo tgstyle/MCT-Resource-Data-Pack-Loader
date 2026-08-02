@@ -636,6 +636,8 @@ public final class ContentParser {
             }
         }
 
+        JsonObject sounds = json.has("sounds") ? JsonUtils.getJsonObject(json, "sounds") : new JsonObject();
+
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (json.has("effects")) {
             for (JsonElement element : JsonUtils.getJsonArray(json, "effects")) {
@@ -665,6 +667,14 @@ public final class ContentParser {
         return new EntityVariantDef(key, new ResourceLocation(base),
                 JsonUtils.getString(json, "name", ""),
                 JsonUtils.getString(json, "texture", ""),
+                JsonUtils.getString(json, "lootTable", ""),
+                JsonUtils.getString(json, "profession", ""),
+                Math.max(0, JsonUtils.getInt(json, "career", 0)),
+                JsonUtils.getBoolean(json, "baby", false),
+                sounds.has("ambient") ? JsonUtils.getString(sounds, "ambient", "") : "",
+                sounds.has("hurt") ? JsonUtils.getString(sounds, "hurt", "") : "",
+                sounds.has("death") ? JsonUtils.getString(sounds, "death", "") : "",
+                strings(json, "immuneTo"),
                 Math.max(0.1F, JsonUtils.getFloat(json, "jumpMultiplier", 1.0F)),
                 Math.max(0.0F, JsonUtils.getFloat(json, "fallDamage", 1.0F)),
                 Math.max(0.0F, JsonUtils.getFloat(json, "soundVolume", 1.0F)),

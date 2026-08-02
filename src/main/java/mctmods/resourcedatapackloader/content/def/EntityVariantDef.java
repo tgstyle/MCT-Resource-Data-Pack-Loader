@@ -9,6 +9,14 @@ public final class EntityVariantDef {
     public final ResourceLocation base;
     public final String name;
     public final String texture;
+    public final String lootTable;
+    public final String profession;
+    public final int career;
+    public final boolean baby;
+    public final String ambientSound;
+    public final String hurtSound;
+    public final String deathSound;
+    public final List<String> immuneTo;
     public final float jumpMultiplier;
     public final float fallDamage;
     public final float soundVolume;
@@ -56,7 +64,8 @@ public final class EntityVariantDef {
     public final List<String> biomeTypes;
     public final List<String> requires;
 
-    public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
+    public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, boolean baby,
+                            String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
                             int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean despawns,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
@@ -68,6 +77,14 @@ public final class EntityVariantDef {
         this.base = base;
         this.name = name;
         this.texture = texture;
+        this.lootTable = lootTable;
+        this.profession = profession;
+        this.career = career;
+        this.baby = baby;
+        this.ambientSound = ambientSound;
+        this.hurtSound = hurtSound;
+        this.deathSound = deathSound;
+        this.immuneTo = immuneTo;
         this.jumpMultiplier = jumpMultiplier;
         this.fallDamage = fallDamage;
         this.soundVolume = soundVolume;
