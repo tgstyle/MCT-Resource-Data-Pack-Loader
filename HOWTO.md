@@ -929,7 +929,7 @@ A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `
 | `decoration` | no | object | vanilla counts | Per-chunk counts for trees, grass, flowers, reeds, cacti, lakes, clay and the rest |
 | `spawns` | no | list | vanilla list | See below |
 | `keepDefaultSpawns` | no | boolean | `false` | Keep vanilla's list alongside yours |
-| `spawnChance` | no | float | `0.1` | How likely a spawn attempt is |
+| `spawnChance` | no | float, below 1 | `0.1` | How likely another herd is placed as the land is first made. The game keeps rolling for as long as it succeeds, so 1 never stops and fills the world until it runs out of room. Anything at or above 0.99 is refused and 0.99 used |
 | `spawnRates` | no | object of creature type to multiplier | none | Scales spawning per type |
 | `placement` | no | object | — | Where it generates. See below |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
@@ -1126,15 +1126,18 @@ Which template is active is decided by the `worldTemplate` config option. Left a
 
 ```json
 {
-  "gameRules": {
+  "0": {
     "doFireTick": "false",
     "keepInventory": "true",
     "randomTickSpeed": "3"
+  },
+  "-1": {
+    "doFireTick": "true"
   }
 }
 ```
 
-Values are strings, as they are in the `/gamerule` command. These are applied to new worlds. A dimension file can carry the same block to apply rules only there.
+Each key is the id of the world the rules belong to, `0` for the overworld, `-1` for the nether, `1` for the end, and whatever a mod uses for its own. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world.
 
 ## Worldgen entries
 
@@ -1368,7 +1371,7 @@ Everything that stops or changes generation is grouped, and each group has one k
 | `global` | The config wins. Pack sections are ignored |
 | `off` | The group is disabled entirely and no pack can enable it |
 
-The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes` and `terrain`.
+The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain` and `entities`.
 
 Settings resolve **biome → world template → config**. A world template's `settings` block uses the same key names as the config, so a pack sets them the same way you would.
 
