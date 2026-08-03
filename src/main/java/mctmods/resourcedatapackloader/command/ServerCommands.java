@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -32,12 +33,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen");
+    private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
 
     @Override @Nonnull public String getName() { return "rdplserver"; }
 
-    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused|oregen|generators|gate <list|check <player>|grant <player> <gate>|revoke <player> <gate>>>"; }
+    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdplserver <reload|list|which <namespace:path>|unused|oregen|generators|gate <list|check <player>|grant <player> <gate>|revoke <player> <gate>>|pregen <radius [relight]|stop|status>>"; }
 
     @Override public int getRequiredPermissionLevel() { return 3; }
 
@@ -45,6 +47,8 @@ public class ServerCommands extends CommandBase {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, SUBCOMMANDS); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
+        if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
+        if (args.length == 3 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("relight")); }
         if (args.length == 4 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, names()); }
         return Collections.emptyList();
     }
@@ -60,7 +64,29 @@ public class ServerCommands extends CommandBase {
         else if (args.length >= 1 && "gate".equals(args[0])) { gate(server, sender, args); }
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
+        else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
         else { throw new WrongUsageException(getUsage(sender)); }
+    }
+
+    private void pregen(ICommandSender sender, String[] args) throws CommandException {
+        if (args.length == 2 && "status".equals(args[1])) {
+            send(sender, TextFormatting.GREEN, ContentPregen.state());
+            return;
+        }
+        if (args.length == 2 && "stop".equals(args[1])) {
+            send(sender, TextFormatting.YELLOW, ContentPregen.stop() ? "Stopping" : "Nothing is being made at the moment");
+            return;
+        }
+        boolean lightOnly = args.length == 3 && "relight".equals(args[2]);
+        if (args.length != 2 && !lightOnly) { throw new WrongUsageException("/rdplserver pregen <radius in chunks> [relight]|stop|status"); }
+        if (ContentPregen.busy()) { throw new CommandException("Something is already being made, stop it first"); }
+
+        int radius = parseInt(args[1], 0, 8192);
+        BlockPos at = sender.getPosition();
+        int dimension = sender.getEntityWorld().provider.getDimension();
+        long total = ContentPregen.start(sender, dimension, at.getX() >> 4, at.getZ() >> 4, radius, lightOnly);
+        if (lightOnly) { send(sender, TextFormatting.GREEN, "Going over " + total + " chunk(s) around " + (at.getX() >> 4) + ", " + (at.getZ() >> 4) + " in dimension " + dimension + ", lighting any the light never reached and making none"); }
+        else { send(sender, TextFormatting.GREEN, "Making " + total + " chunk(s) around " + (at.getX() >> 4) + ", " + (at.getZ() >> 4) + " in dimension " + dimension); }
     }
 
     private void reload(MinecraftServer server, ICommandSender sender) throws CommandException {

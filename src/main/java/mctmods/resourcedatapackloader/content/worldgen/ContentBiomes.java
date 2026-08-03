@@ -31,12 +31,16 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class ContentBiomes {
+    private static final List<String> RATE_KEYS = Collections.unmodifiableList(Arrays.asList(
+            "surfaceDay", "surfaceNight", "undergroundDay", "undergroundNight"));
+
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onCreateDecorator(BiomeEvent.CreateDecorator event) {
         if (!(event.getBiome() instanceof ContentBiome)) { return; }
 
@@ -118,6 +122,12 @@ public final class ContentBiomes {
             decoration.put(entry.getKey(), entry.getValue().getAsInt());
         }
 
+        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "spawnRates", new JsonObject()).entrySet()) {
+            if (RATE_KEYS.contains(entry.getKey())) { continue; }
+
+            ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, entry.getKey(), RATE_KEYS);
+        }
+
         JsonObject placement = JsonUtils.getJsonObject(json, "placement", new JsonObject());
         DEFS.put(key, new BiomeDef(key,
                 JsonUtils.getString(json, "name", key.getPath()),
@@ -141,7 +151,7 @@ public final class ContentBiomes {
                 JsonUtils.getBoolean(placement, "villageSpawn", true),
                 JsonUtils.getBoolean(placement, "strongholds", false),
                 Collections.unmodifiableMap(decoration),
-                Math.max(0.0F, JsonUtils.getFloat(json, "spawnChance", 0.1F)),
+                spawnChance(key, JsonUtils.getFloat(json, "spawnChance", 0.1F)),
                 rate(json, "surfaceDay"),
                 rate(json, "surfaceNight"),
                 rate(json, "undergroundDay"),
@@ -151,6 +161,13 @@ public final class ContentBiomes {
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
                 strings(json, "requires")));
+    }
+
+    private static float spawnChance(ResourceLocation key, float wanted) {
+        if (wanted < 0.99F) { return Math.max(0.0F, wanted); }
+
+        ContentLog.LOGGER.error("Biome {} asks for a spawnChance of {}. The game keeps starting another herd for as long as that roll succeeds, so at 1 it never stops and the world fills until it runs out of room. Using 0.99 instead", key, wanted);
+        return 0.99F;
     }
 
     private static float rate(JsonObject json, String name) {

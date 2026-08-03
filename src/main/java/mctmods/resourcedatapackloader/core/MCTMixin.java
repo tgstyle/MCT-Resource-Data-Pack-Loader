@@ -38,6 +38,15 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Mod.EventHandler public void preInit(FMLPreInitializationEvent event) {
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
+        if (Config.content.vanillaClients) {
+            Config.content.load = false;
+            Config.content.sounds = false;
+            Config.content.potions = false;
+            Config.content.villagers = false;
+            Config.content.biomes = false;
+            Config.content.dimensions = false;
+            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, villagers and their trades, biomes and dimensions in packs are all skipped and named below; everything that lives on the server alone still applies");
+        }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug);
         LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",
                 Config.packs.rootDirectory, Config.packs.overrideResourcePacks, Config.packs.warnOnCaseMismatch, Config.packs.logContents, Config.packs.traceUnresolvedVariables);
@@ -50,6 +59,8 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
         LOGGER.info("Config worldgen: load={} retrogen={} adoptExistingChunks={} retrogenKey='{}' retrogenChunksPerTick={} blockOres={} oreWhitelist={} oreTypes={} oreTypesAreBlacklist={} flatBedrock={} flatBedrockRetrogen={} blockBiomes={} biomeNames={} biomeNamesAreBlacklist={} worldgenDebug={} readCofhWorldFiles={}",
                 Config.worldgen.load, Config.worldgen.retrogen, Config.worldgen.adoptExistingChunks, Config.worldgen.retrogenKey, Config.worldgen.retrogenChunksPerTick, Config.worldgen.blockOres, Arrays.toString(Config.worldgen.oreWhitelist), Arrays.toString(Config.worldgen.oreTypes), Config.worldgen.oreTypesAreBlacklist, Config.worldgen.flatBedrock, Config.worldgen.flatBedrockRetrogen, Config.worldgen.blockBiomes, Arrays.toString(Config.worldgen.biomeNames), Config.worldgen.biomeNamesAreBlacklist, Config.worldgen.worldgenDebug, Config.worldgen.readCofhWorldFiles);
         LOGGER.info("Config terrain: generatorOptions='{}'", Config.worldgen.generatorOptions);
+        LOGGER.info("Config chunks: spawnChunkRadius={} spawnChunkRadii={} hurryWritesAbove={} pregenKeepLoaded={} pregenMillisPerRound={} pregenPauseAbove={}",
+                Config.chunks.spawnChunkRadius, Arrays.toString(Config.chunks.spawnChunkRadii), Config.chunks.hurryWritesAbove, Config.chunks.pregenKeepLoaded, Config.chunks.pregenMillisPerRound, Config.chunks.pregenPauseAbove);
         LOGGER.info("Config compat: fixTinkersModelErrors={}", Config.compat.fixTinkersModelErrors);
         LOGGER.info("Config client: loadingScreenPercent={}", Config.client.loadingScreenPercent);
         LOGGER.info("Config tweaks: promptLeafDecay={} lenientPaths={}", Config.tweaks.promptLeafDecay, Config.tweaks.lenientPaths);

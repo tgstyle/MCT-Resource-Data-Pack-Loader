@@ -10,6 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -41,6 +42,36 @@ public final class ContentTerrain {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
 
         return ContentControl.text(ContentControl.TERRAIN, "worldType", Config.worldgen.worldType).trim();
+    }
+
+    public static String worldSeed() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+
+        return ContentControl.text(ContentControl.TERRAIN, "worldSeed", Config.worldgen.worldSeed).trim();
+    }
+
+    public static String worldName() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+
+        return ContentControl.text(ContentControl.TERRAIN, "worldName", Config.worldgen.worldName).trim();
+    }
+
+    public static String worldGameMode() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+
+        return ContentControl.text(ContentControl.TERRAIN, "worldGameMode", Config.worldgen.worldGameMode).trim();
+    }
+
+    public static GameType gameModeFrom(String written) {
+        for (GameType type : GameType.values()) {
+            if (type != GameType.NOT_SET && written.equalsIgnoreCase(type.getName())) { return type; }
+        }
+        return GameType.NOT_SET;
+    }
+
+    public static long seedFrom(String written) {
+        try { return Long.parseLong(written); }
+        catch (NumberFormatException notANumber) { return written.hashCode(); }
     }
 
     @SubscribeEvent

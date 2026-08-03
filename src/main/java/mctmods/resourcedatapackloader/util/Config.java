@@ -16,6 +16,7 @@ public class Config {
     @net.minecraftforge.common.config.Config.Comment("Loot, advancements, functions and registry names")
     public static Data data = new Data();
     @net.minecraftforge.common.config.Config.Comment("What generates in the world, and what is stopped from generating")
+    public static Entities entities = new Entities();
     public static Worldgen worldgen = new Worldgen();
     @net.minecraftforge.common.config.Config.Comment("Working around other mods")
     public static Compat compat = new Compat();
@@ -23,6 +24,9 @@ public class Config {
     public static Client client = new Client();
     @net.minecraftforge.common.config.Config.Comment("Small changes to how vanilla behaves")
     public static Tweaks tweaks = new Tweaks();
+
+    @net.minecraftforge.common.config.Config.Comment("Chunks held loaded around a world's spawn point")
+    public static Chunks chunks = new Chunks();
 
     public static class Control {
         @net.minecraftforge.common.config.Config.Comment("Ore blocking and the ore whitelists [default|global|off]")
@@ -47,6 +51,10 @@ public class Config {
         public String replacements = "default";
         @net.minecraftforge.common.config.Config.Comment("Village plots from packs [default|global|off]")
         public String villages = "default";
+        @net.minecraftforge.common.config.Config.Comment("Ticking entities less often far from every player [default|global|off]")
+        public String entities = "default";
+        @net.minecraftforge.common.config.Config.Comment("How many chunks are held loaded around a world's spawn point [default|global|off]")
+        public String chunks = "default";
     }
 
     public static class Packs {
@@ -64,6 +72,9 @@ public class Config {
     }
 
     public static class Content {
+        @net.minecraftforge.common.config.Config.Comment("Serve plain vanilla clients: nothing from any pack is registered — no blocks, items, fluids, materials, sounds, potions, villagers or their trades, biomes or dimensions — so a client without the mod can join. Everything that lives on the server alone still applies. See Server-side packs in HOWTO.md. Requires a restart [Default=false]")
+        @net.minecraftforge.common.config.Config.RequiresMcRestart
+        public boolean vanillaClients = false;
         @net.minecraftforge.common.config.Config.Comment("Register the blocks and items described by blocks/*.json and items/*.json in packs. Turning this off leaves worlds containing them with missing blocks. Requires a restart [Default=true]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public boolean load = true;
@@ -149,6 +160,78 @@ public class Config {
         public boolean registryRemaps = true;
     }
 
+    public static class Entities {
+        @net.minecraftforge.common.config.Config.Comment("Tick entities far from every player less often. Nothing is ever left unticked, only ticked at a slower pace [Default=true]")
+        public boolean slowDistantEntities = true;
+        @net.minecraftforge.common.config.Config.Comment("Which kinds are given fewer ticks: items, experience, projectiles. Anything that thinks for itself is always given a slower pace instead, without being named here, and machines are never slowed [Default={items, experience}]")
+        public String[] slowedKinds = { "items", "experience" };
+        @net.minecraftforge.common.config.Config.Comment("How far from the nearest player, in blocks, before a chunk is slowed. The game stops telling a player about most entities beyond 64, so nothing below that [Default=192]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 64, max = 4096)
+        public int slowDistance = 192;
+        @net.minecraftforge.common.config.Config.Comment("One tick in this many is given to a slowed chunk. 1 is no slowing at all, 20 is once a second [Default=4]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 20)
+        public int slowRate = 4;
+        @net.minecraftforge.common.config.Config.Comment("Entities left alone however far away they are, as namespace:name [Default={}]")
+        public String[] neverSlowed = {};
+        @net.minecraftforge.common.config.Config.Comment("How often, in ticks, the distance to the nearest player is worked out again. Every player counts for themselves, so someone alone far away still has their own quiet space around them [Default=20]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 100)
+        public int slowRecheck = 20;
+    }
+
+    public static class Chunks {
+        @net.minecraftforge.common.config.Config.Comment("How far from the spawn point, in blocks, chunks are held loaded whether or not a player is there. 128 is what the game does. 0 holds none, so the spawn area unloads like anywhere else. A dimension only ever holds spawn chunks if it was registered to, so this changes nothing for one that was not [Default=128]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 1024)
+        public int spawnChunkRadius = 128;
+        @net.minecraftforge.common.config.Config.Comment("A radius per dimension. Write dimension=blocks, one per line, as in 7=0. Overrides spawnChunkRadius for the dimensions listed [Default={}]")
+        public String[] spawnChunkRadii = {};
+        @net.minecraftforge.common.config.Config.Comment("How many chunks may be waiting to be written before the game stops resting between writes. It rests a hundredth of a second after each one, which holds it to about a hundred a second however fast the disk is, so anything that makes land faster than that piles up in memory. 0 leaves it resting always, as the game does [Default=100]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 10000)
+        public int hurryWritesAbove = 100;
+        @net.minecraftforge.common.config.Config.Comment("How many chunks a bulk generation run keeps loaded behind itself. Holding a chunk means its neighbours are there when the game comes to decorate and light them, so the work is done once instead of the chunk being fetched back and written again. Higher holds more memory. Below a whole region of 1024 the seams between regions miss their turn and are left for the relight to dress [Default=2048]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 64, max = 16384)
+        public int pregenKeepLoaded = 2048;
+        @net.minecraftforge.common.config.Config.Comment("How many chunks may be waiting to be written before a bulk generation run rests until the writing catches up. 0 never rests [Default=2000]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 100000)
+        public int pregenPauseAbove = 2000;
+        @net.minecraftforge.common.config.Config.Comment("How many milliseconds of each round a bulk generation run may take. A round is fifty milliseconds long, so 50 lets it use a whole one and anything above that lets it run over into the next, which is what makes a world stutter for anybody in it. Turn it up on a world nobody is playing and down on a busy one [Default=50]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1000)
+        public int pregenMillisPerRound = 50;
+        @net.minecraftforge.common.config.Config.Comment("How far around the spawn, in chunks, a brand new world has its land made before anybody plays it. 0 makes none [Default=0]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 8192)
+        public int pregenOnNewWorld = 0;
+        @net.minecraftforge.common.config.Config.Comment("Whether a new world has its land made out to its world border instead of a set number of chunks, centred on the border rather than the spawn. A world whose border was never moved in has no border to reach and is passed over [Default=false]")
+        public boolean pregenToBorder = false;
+        @net.minecraftforge.common.config.Config.Comment({
+                "The furthest a border may reach, in chunks either way, before making land out to it is refused.",
+                "This is here to stop a mistake running for weeks, not to be turned up. A pack cannot set it.",
+                "A square of this reach holds 268 million chunks. At two hundred a second that is a fortnight",
+                "of running, and several terabytes on disk. If a border is being refused, it is nearly always",
+                "the border that is wrong, not this number. Raise it only having worked out how long the run",
+                "will take and where it will be kept [Default=8192]"})
+        @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1875000)
+        public int pregenBorderLimit = 8192;
+        @net.minecraftforge.common.config.Config.Comment("Which dimensions a new world has its land made in, in the order given, one after another [Default=0]")
+        public int[] pregenDimensions = {0};
+        @net.minecraftforge.common.config.Config.Comment("Make the land of every dimension anything registers, modded ones included, the overworld first and the rest in rising order, instead of only those in pregenDimensions. Ones named in pregenDimensionsWhenEntered are still left for their first visitor [Default=false]")
+        public boolean pregenAllDimensions = false;
+        @net.minecraftforge.common.config.Config.Comment("Dimensions whose land is made not up front but the first time anybody sets foot in them, to the same reach, holding everybody the same way until it is done. One named here and in pregenDimensions is simply made up front [Default=]")
+        public int[] pregenDimensionsWhenEntered = {};
+        @net.minecraftforge.common.config.Config.Comment("Whether a run that was stopped or cut short picks up where it left off next time the world is loaded, rather than starting again [Default=false]")
+        public boolean pregenResume = false;
+        @net.minecraftforge.common.config.Config.Comment("What players are told while land is being made, where %d is how far along it is. Empty tells them nothing [Default=World pregeneration running, %d%% done]")
+        public String pregenRunningSays = "World pregeneration running, %d%% done";
+        @net.minecraftforge.common.config.Config.Comment("What players are told while the second pass lights what the first could not reach, where %d is how far along it is. Empty tells them nothing [Default=World relighting, %d%% done]")
+        public String pregenRelightSays = "World relighting, %d%% done";
+        @net.minecraftforge.common.config.Config.Comment("What players are told when it is done. Empty tells them nothing [Default=World pregeneration finished]")
+        public String pregenFinishedSays = "World pregeneration finished";
+        @net.minecraftforge.common.config.Config.Comment("What players are told when it is stopped before it is done. Empty tells them nothing [Default=World pregeneration stopped]")
+        public String pregenStoppedSays = "World pregeneration stopped";
+        @net.minecraftforge.common.config.Config.Comment("What players are shown in the middle of the screen while they are held spectating during the making of land. Empty shows nothing [Default=Spectating until the world is ready]")
+        public String pregenSpectatingSays = "Spectating until the world is ready";
+        @net.minecraftforge.common.config.Config.Comment("What players are greeted with in the middle of the screen once the land is made and they are let go. Empty shows nothing [Default=Welcome to your World!]")
+        public String pregenWelcomeSays = "Welcome to your World!";
+    }
+
     public static class Worldgen {
         @net.minecraftforge.common.config.Config.Comment("Generate the ore veins described by worldgen/*.json in new chunks. Existing chunks are not changed [Default=true]")
         public boolean load = true;
@@ -190,6 +273,12 @@ public class Config {
         public boolean tellWorldType = true;
         @net.minecraftforge.common.config.Config.Comment("World types a player picks that worldType leaves alone, such as flat or customized. Empty means every choice is replaced [Default={flat, debug_all_block_states}]")
         public String[] worldTypeExceptions = { "flat", "debug_all_block_states" };
+        @net.minecraftforge.common.config.Config.Comment("The seed every new world is made with, whatever was typed when it was made, written the same way it would be typed. A number is used as it is, anything else is turned into one the way the game does. Empty leaves the choice alone [Default=empty]")
+        public String worldSeed = "";
+        @net.minecraftforge.common.config.Config.Comment("Which way every new world is started, one of survival, creative, adventure or spectator. Empty leaves it as whoever made the world chose [Default=]")
+        public String worldGameMode = "";
+        @net.minecraftforge.common.config.Config.Comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=]")
+        public String worldName = "";
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
         public String generatorOptions = "";
         @net.minecraftforge.common.config.Config.Comment("Which world types the terrain settings are given to, by name, such as default, customized, biomesop or realistic. Empty means every world type [Default={}]")
@@ -313,15 +402,15 @@ public class Config {
         public String[] flatBedrockFillers = { "-1=minecraft:netherrack", "1=minecraft:end_stone" };
         @net.minecraftforge.common.config.Config.Comment("What replaces the bedrock that is removed. Empty picks per dimension: stone, netherrack, end stone")
         public String flatBedrockFiller = "";
-        @net.minecraftforge.common.config.Config.Comment("Write per-chunk retrogen lines and cascading worldgen traces to logs/rdpl.log, and the debug lists other messages refer to. Very verbose, about two lines per chunk loaded [Default=false]")
+        @net.minecraftforge.common.config.Config.Comment("Write per-chunk retrogen lines, cascading worldgen traces, a snapshot of how the server is keeping up every few seconds, and the debug lists other messages refer to. Very verbose, about two lines per chunk loaded [Default=false]")
         public boolean worldgenDebug = false;
     }
 
     public static class Tweaks {
-        @net.minecraftforge.common.config.Config.Comment("Leaves that lose their tree decay within a second instead of waiting on random ticks. Ignored when Universal Tweaks is installed, which does this itself [Default=false]")
-        public boolean promptLeafDecay = false;
-        @net.minecraftforge.common.config.Config.Comment("Grass paths can be made under a block and stay there when one is placed above. Ignored when Universal Tweaks is installed, which does this itself [Default=false]")
-        public boolean lenientPaths = false;
+        @net.minecraftforge.common.config.Config.Comment("Leaves that lose their tree decay within a second instead of waiting on random ticks. Ignored when Universal Tweaks is installed, which does this itself [Default=true]")
+        public boolean promptLeafDecay = true;
+        @net.minecraftforge.common.config.Config.Comment("Grass paths can be made under a block and stay there when one is placed above. Ignored when Universal Tweaks is installed, which does this itself [Default=true]")
+        public boolean lenientPaths = true;
     }
 
     public static class Client {

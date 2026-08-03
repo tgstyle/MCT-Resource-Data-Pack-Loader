@@ -11,7 +11,9 @@ import javax.annotation.Nonnull;
 public final class GateStorage extends WorldSavedData {
     private static final String NAME = "rdpl_gates";
     private static final String TAG = "rdplGates";
+    private static final String KILLS = "rdplGateKills";
     private NBTTagCompound open = new NBTTagCompound();
+    private NBTTagCompound kills = new NBTTagCompound();
 
     public GateStorage(String name) { super(name); }
 
@@ -31,6 +33,42 @@ public final class GateStorage extends WorldSavedData {
         gates.removeTag(key);
         persisted.setTag(TAG, gates);
         player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+    }
+
+    public static int tallyFor(EntityPlayer player, String key) {
+        NBTTagCompound persisted = persisted(player);
+        NBTTagCompound tally = persisted.getCompoundTag(KILLS);
+        int now = tally.getInteger(key) + 1;
+        tally.setInteger(key, now);
+        persisted.setTag(KILLS, tally);
+        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+        return now;
+    }
+
+    public static int tallyGlobally(World world, String key) {
+        GateStorage data = get(world);
+        if (data == null) { return 0; }
+
+        int now = data.kills.getInteger(key) + 1;
+        data.kills.setInteger(key, now);
+        data.markDirty();
+        return now;
+    }
+
+    public static void clearTallyFor(EntityPlayer player, String key) {
+        NBTTagCompound persisted = persisted(player);
+        NBTTagCompound tally = persisted.getCompoundTag(KILLS);
+        tally.removeTag(key);
+        persisted.setTag(KILLS, tally);
+        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+    }
+
+    public static void clearTallyGlobally(World world, String key) {
+        GateStorage data = get(world);
+        if (data == null) { return; }
+
+        data.kills.removeTag(key);
+        data.markDirty();
     }
 
     public static boolean unlockedGlobally(World world, String key) {
@@ -69,10 +107,14 @@ public final class GateStorage extends WorldSavedData {
         return data;
     }
 
-    @Override public void readFromNBT(@Nonnull NBTTagCompound compound) { open = compound.getCompoundTag(TAG); }
+    @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {
+        open = compound.getCompoundTag(TAG);
+        kills = compound.getCompoundTag(KILLS);
+    }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
         compound.setTag(TAG, open);
+        compound.setTag(KILLS, kills);
         return compound;
     }
 }

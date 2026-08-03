@@ -184,6 +184,8 @@ public final class ContentGeneratorControl {
         }
     }
 
+    public static String owner(IWorldGenerator generator) { return owner(generator.getClass()); }
+
     private static String owner(Class<?> type) {
         String cached = OWNERS.get(type);
         if (cached != null) { return cached; }
@@ -208,4 +210,3 @@ public final class ContentGeneratorControl {
         return UNKNOWN;
     }
 }
-

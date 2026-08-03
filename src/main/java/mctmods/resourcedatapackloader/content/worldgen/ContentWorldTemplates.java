@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
@@ -54,6 +55,7 @@ public final class ContentWorldTemplates {
         });
 
         active = select();
+        ContentControl.check(active);
         ContentStructures.load();
         if (active != null) { Summary.info("worldtemplate", "Using world template " + active.getKey() + " (" + active.name + ") to fill biomes that blocking removes"); }
     }

@@ -14,6 +14,9 @@ import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
+import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -27,6 +30,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
@@ -111,6 +115,12 @@ public class ResourceDataPackLoader {
         }
         ContentReplacements.reload();
         if (ContentRetrogen.wanted()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
+        MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
+        MinecraftForge.EVENT_BUS.register(ContentPregen.class);
+        if (Config.worldgen.worldgenDebug) {
+            MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
+            MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);
+        }
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ClientCommands.register(); }
     }
 
@@ -127,6 +137,7 @@ public class ResourceDataPackLoader {
         FurnaceBlocking.apply();
         ContentReplacements.reload();
         ContentStructurePlacement.reload();
+        ContentEntityTicks.reload();
     }
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }

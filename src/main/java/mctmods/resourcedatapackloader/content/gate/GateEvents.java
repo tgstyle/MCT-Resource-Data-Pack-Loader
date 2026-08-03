@@ -4,12 +4,16 @@ import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -41,6 +45,40 @@ public final class GateEvents {
             if (def.safeReturn) { retreat(player); }
             return;
         }
+    }
+
+    @SubscribeEvent public static void onKill(LivingDeathEvent event) {
+        Entity slayer = event.getSource().getTrueSource();
+        if (!(slayer instanceof EntityPlayerMP)) { return; }
+
+        ResourceLocation fallen = EntityList.getKey(event.getEntity());
+        if (fallen == null) { return; }
+
+        EntityPlayerMP player = (EntityPlayerMP) slayer;
+        for (GateDef def : ContentGates.all().values()) {
+            if (def.killed.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
+            if (!fallen.equals(new ResourceLocation(def.killed))) { continue; }
+
+            int slain = def.global ? GateStorage.tallyGlobally(player.world, def.getKey()) : GateStorage.tallyFor(player, def.getKey());
+            if (slain < def.killedCount) { continue; }
+            if (def.killedDrops.isEmpty()) {
+                ContentGates.unlock(player, def, true);
+                continue;
+            }
+
+            if (def.global) { GateStorage.clearTallyGlobally(player.world, def.getKey()); }
+            else { GateStorage.clearTallyFor(player, def.getKey()); }
+            reward(player, def);
+        }
+    }
+
+    private static void reward(EntityPlayerMP player, GateDef def) {
+        ItemStack key = ContentStacks.parse(def.registryName, def.killedDrops, 1);
+        if (key.isEmpty()) { return; }
+
+        EntityItem drop = new EntityItem(player.world, player.posX, player.posY, player.posZ, key);
+        drop.setDefaultPickupDelay();
+        player.world.spawnEntity(drop);
     }
 
     @SubscribeEvent public static void onCraft(PlayerEvent.ItemCraftedEvent event) {

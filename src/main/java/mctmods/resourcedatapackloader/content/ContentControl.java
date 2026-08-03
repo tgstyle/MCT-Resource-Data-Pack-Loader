@@ -10,9 +10,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -29,12 +31,46 @@ public final class ContentControl {
     public static final String TERRAIN = "terrain";
     public static final String REPLACEMENTS = "replacements";
     public static final String VILLAGES = "villages";
+    public static final String ENTITIES = "entities";
+    public static final String CHUNKS = "chunks";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
     private static final Set<String> WARNED = new LinkedHashSet<>();
+    private static final Set<String> KNOWN = new LinkedHashSet<>(Arrays.asList(
+            "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeWhitelist",
+            "blockBiomeDimensions", "blockBiomeDimensionsAreBlacklist", "blockBiomes", "blockFurnaceRecipes",
+            "blockGeneratorDimensions", "blockGeneratorDimensionsAreBlacklist", "blockOres", "blockRecipes",
+            "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist", "blockReplacementKey",
+            "blockReplacementMaxHeight", "blockReplacementMinHeight", "blockReplacements", "blockWorldGenerators",
+            "blockedFurnaceMods", "blockedGenerators", "blockedRecipeMods", "creatureCap", "dragonFight", "flatBedrock",
+            "flatBedrockBiomeTypes", "flatBedrockBiomes", "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions",
+            "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof",
+            "furnaceWhitelist", "generatorOptions", "generatorTypeMap", "generatorTypes", "generatorTypesAreBlacklist",
+            "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
+            "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "oreWhitelist",
+            "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
+            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "pregenWelcomeSays",
+            "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
+            "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
+            "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners",
+            "structureSpawns", "surfaceDayMonsterRate",
+            "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
+            "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist", "voidPlatformBlock",
+            "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "worldGameMode", "worldName", "worldSeed", "worldType", "worldTypeExceptions"));
 
     private ContentControl() {}
+
+    public static void check(@Nullable WorldTemplateDef template) {
+        if (template == null || template.settings == null) { return; }
+
+        for (Map.Entry<String, JsonElement> entry : template.settings.entrySet()) {
+            if (KNOWN.contains(entry.getKey())) { continue; }
+
+            ContentLog.LOGGER.error("World template {} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", template.getKey(), entry.getKey());
+        }
+    }
 
     public static boolean off(String group) { return OFF.equals(mode(group)); }
 
@@ -139,6 +175,8 @@ public final class ContentControl {
             case TERRAIN: return Config.control.terrain;
             case REPLACEMENTS: return Config.control.replacements;
             case VILLAGES: return Config.control.villages;
+            case ENTITIES: return Config.control.entities;
+            case CHUNKS: return Config.control.chunks;
             default: return DEFAULT;
         }
     }

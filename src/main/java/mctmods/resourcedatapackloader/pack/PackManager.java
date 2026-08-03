@@ -241,6 +241,7 @@ public final class PackManager {
         collect(off, Config.content.brewing, "content.brewing", JSON, BREWING);
         collect(off, Config.content.villagers, "content.villagers", JSON, VILLAGERS, TRADES);
         collect(off, Config.content.biomes, "content.biomes", JSON, BIOMES);
+        collect(off, Config.content.dimensions, "content.dimensions", JSON, DIMENSIONS);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
         collect(off, Config.content.entities, "content.entities", JSON, ENTITIES);
         collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);

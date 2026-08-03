@@ -12,7 +12,7 @@ import java.util.Random;
 @Mixin(targets = "net.minecraft.world.gen.structure.StructureStrongholdPieces$PortalRoom")
 public abstract class MixinStrongholdPortalRoom {
     @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/tileentity/MobSpawnerBaseLogic;setEntityId(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation original) {
-        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.STRONGHOLDS, original, new Random()));
+    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id) {
+        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.STRONGHOLDS, id, new Random()));
     }
 }
