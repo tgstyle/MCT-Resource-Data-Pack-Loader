@@ -1,19 +1,14 @@
 pluginManagement {
     repositories {
-        maven {
-            name = 'GTNH Maven'
-            url = 'https://nexus.gtnewhorizons.com/repository/public/'
-        }
         gradlePluginPortal()
+        maven { url = 'https://maven.parchmentmc.org' }
         mavenCentral()
-    }
-    plugins {
-        id 'org.jetbrains.kotlin.jvm' version '2.4.0'
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     }
 }
 
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.9.0'
 }
 
-rootProject.name = 'MCT-ResourceDataPackLoader'
+rootProject.name = 'MCT-Resource-Data-Pack-Loader-20'
