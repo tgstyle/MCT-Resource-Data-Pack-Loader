@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.block.Block;
+import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 
 public final class DropDef {
@@ -9,7 +9,7 @@ public final class DropDef {
     public final int amount;
     public final boolean guaranteed;
     public final int[] bonusChance;
-    private Block resolved;
+    private Item resolved;
 
     public DropDef(ResourceLocation block, int meta, int amount, boolean guaranteed, int[] bonusChance) {
         this.block = block;
@@ -19,9 +19,9 @@ public final class DropDef {
         this.bonusChance = bonusChance;
     }
 
-    public void resolve(Block block) { this.resolved = block; }
+    public void resolve(Item item) { this.resolved = item; }
 
-    public Block getResolved() { return resolved; }
+    public Item getResolved() { return resolved; }
 
     public int chanceFor(int fortune) {
         if (bonusChance.length == 0) { return 0; }

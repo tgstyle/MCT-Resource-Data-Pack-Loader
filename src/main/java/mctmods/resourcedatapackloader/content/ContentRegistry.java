@@ -389,11 +389,11 @@ public final class ContentRegistry {
         for (BlockDef def : BLOCK_DEFS.values()) {
             for (BlockVariant variant : def.visible) {
                 for (DropDef drop : variant.drops) {
-                    if (!ForgeRegistries.BLOCKS.containsKey(drop.block)) {
-                        ContentLog.LOGGER.error("Drop block {} for {} '{}' is not registered, that drop is skipped", drop.block, def.registryName, variant.name);
+                    if (!ForgeRegistries.ITEMS.containsKey(drop.block)) {
+                        ContentLog.LOGGER.error("Drop {} for {} '{}' is not registered, that drop is skipped", drop.block, def.registryName, variant.name);
                         continue;
                     }
-                    drop.resolve(ForgeRegistries.BLOCKS.getValue(drop.block));
+                    drop.resolve(ForgeRegistries.ITEMS.getValue(drop.block));
                 }
             }
         }

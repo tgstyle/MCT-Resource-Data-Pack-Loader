@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.mixin.AccessorBiomeName;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.util.Blocked;
@@ -184,7 +185,7 @@ public final class ContentBiomeControl {
     public static List<String> inspect(World world, BlockPos pos) {
         List<String> lines = new ArrayList<>();
         Biome biome = world.getBiome(pos);
-        lines.add("Biome here: " + biome.getRegistryName() + " (id " + Biome.getIdForBiome(biome) + ", " + biome.getBiomeName() + ")");
+        lines.add("Biome here: " + biome.getRegistryName() + " (id " + Biome.getIdForBiome(biome) + ", " + shownName(biome) + ")");
         lines.add("  its decorator: treesPerChunk=" + biome.decorator.treesPerChunk + " extraTreeChance=" + biome.decorator.extraTreeChance);
         lines.add("  blocked biome that should have been substituted: " + SUBSTITUTED.contains(biome));
         Integer dimension = DIMENSIONS.get(world.getBiomeProvider());
@@ -218,8 +219,16 @@ public final class ContentBiomeControl {
         return whitelist.contains(name.getNamespace().toLowerCase(Locale.ROOT));
     }
 
+    public static String shownName(Biome biome) {
+        String held = ((AccessorBiomeName) biome).rdpl$biomeName();
+        if (held != null) { return held; }
+
+        ResourceLocation name = biome.getRegistryName();
+        return name == null ? "unknown" : name.getPath();
+    }
+
     private static boolean named(Biome biome, @Nullable ResourceLocation name, Set<String> names) {
-        if (names.contains(biome.getBiomeName().toLowerCase(Locale.ROOT))) { return true; }
+        if (names.contains(shownName(biome).toLowerCase(Locale.ROOT))) { return true; }
         return name != null && names.contains(name.toString().toLowerCase(Locale.ROOT));
     }
 

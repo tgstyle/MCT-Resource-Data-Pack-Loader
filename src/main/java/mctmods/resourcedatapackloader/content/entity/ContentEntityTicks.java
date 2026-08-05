@@ -54,6 +54,11 @@ public final class ContentEntityTicks {
         CHECKED.clear();
     }
 
+    @SubscribeEvent public static void onWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
+        FAR.remove(event.getWorld());
+        CHECKED.remove(event.getWorld());
+    }
+
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
 

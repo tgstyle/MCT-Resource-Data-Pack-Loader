@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.mixin;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 
+import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.MapGenScatteredFeature;
 import org.spongepowered.asm.mixin.Final;
@@ -27,8 +29,12 @@ public abstract class MixinMapGenScatteredFeature {
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true)
     private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }
-        if (ContentStructurePlacement.allows(ContentStructurePlacement.TEMPLES, ((AccessorMapGenBase) this).rdpl$getWorld(), chunkX, chunkZ)) { return; }
 
-        cir.setReturnValue(false);
+        World world = ((AccessorMapGenBase) this).rdpl$getWorld();
+        if (!ContentStructurePlacement.allows(ContentStructurePlacement.TEMPLES, world, chunkX, chunkZ)) {
+            cir.setReturnValue(false);
+            return;
+        }
+        if (ContentBeard.wanted() && ContentBeard.roughGround(world, chunkX * 16 + 8, chunkZ * 16 + 8, 12, 6)) { cir.setReturnValue(false); }
     }
 }

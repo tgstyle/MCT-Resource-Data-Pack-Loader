@@ -6,7 +6,7 @@
 
 # MCT Resource Data Pack Loader
 One global folder that overrides what Minecraft and mods provide, defines new content from JSON, and
-controls what generates — in every world, on clients and servers.
+controls what generates, in every world, on clients and servers.
 
 Minecraft 1.12.2 has no data pack system, and Resource Loader only covers client assets. Advancements,
 loot tables, recipes and functions cannot be overridden without repacking a mod jar or copying files
@@ -22,7 +22,7 @@ rdploader/<packname>.zip
 ```
 
 Override paths match the layout inside a mod jar, so files can be copied straight across. Content is
-defined by adding a JSON file in the matching folder — the path is the identity, so
+defined by adding a JSON file in the matching folder, the path is the identity, so
 `assets/mypack/blocks/ruby_ore.json` registers `mypack:ruby_ore`.
 
 See [HOWTO.md](HOWTO.md) for the full folder list, every block and item type, every worldgen shape,
@@ -39,7 +39,7 @@ pack priority, resource pack precedence and the commands.
 - Ore dictionary names, furnace recipes, fuel burn times, creative tabs and sound events
 
 # Defining new content
-Blocks in every common shape — basic, ore, falling, slab, stairs, fence, wall, pane, door, ladder,
+Blocks in every common shape, basic, ore, falling, slab, stairs, fence, wall, pane, door, ladder,
 torch, log, leaves, sapling, crop, flower, cane, vine and portal. Items as basic, food, drink, tool,
 armor, seed, potion and potion bottle. Also fluids, tool and armor materials, potion effects,
 potion types, brewing recipes, villager professions with trades, game rules, biomes, village plots,
@@ -47,10 +47,13 @@ entity variants and whole dimensions.
 
 Saplings grow into a tree built from your own log and leaves, or into one of your structure
 templates. Leaves take a tint and drop your sapling. Portal blocks link two dimensions, remember who
-built them, and survive an explosion when they do. A dimension picks its own sky, fog and cloud
+built them, and survive an explosion when they do. Gates put conditions on portals and on dimensions
+themselves, vanilla ones included: an item held or paid, a recipe crafted, an advancement earned, or
+a mob slain, once or a counted number of times, per player or for the whole world, with a key laid
+at the slayer's feet when the pack wants the unlock to be a thing that can be handed on. A dimension picks its own sky, fog and cloud
 colors, and can turn the sky, clouds or weather off entirely.
 
-An entity variant is a new entity built on one that already exists, vanilla or modded — its own
+An entity variant is a new entity built on one that already exists, vanilla or modded, its own
 registry name, name, spawn egg, loot table and skin, with its own health, damage, speed, jump,
 size, effects, equipment and temper. An aggressive rabbit that swells when it charges, a zombie
 that trades, a cow that shrugs off fire: all of it a file, and the entity it was built from is
@@ -72,8 +75,8 @@ rainfall and distance from spawn, and can be generated into chunks that already 
 - Block ore generation by mod or by ore type, in either direction
 - Block biomes by mod or by name, in either direction, with unwanted biomes replaced on the finished
   biome map so oceans, mesas and hill variants are reached too
-- Block other mods' world generators outright, or by what they make — ores, structures, flora, lakes
-  or terrain — which is how mods add what Forge's events never see
+- Block other mods' world generators outright, or by what they make, ores, structures, flora, lakes
+  or terrain, which is how mods add what Forge's events never see
 - Suppress vanilla structures, or set how far apart they are seeded, which biomes they are allowed
   in, how far from spawn they start, what they spawn and what their mob spawners hold
 - Set mob spawn rates and caps per biome
@@ -81,7 +84,7 @@ rainfall and distance from spawn, and can be generated into chunks that already 
 - Block crafting and furnace recipes by mod, with CraftTweaker and GroovyScript additions always
   surviving
 - Flatten bedrock, per dimension and per biome, in new chunks or in ones that already exist
-- Shape the overworld itself — sea level, lava oceans and the terrain noise — applied as a world is
+- Shape the overworld itself, sea level, lava oceans and the terrain noise, applied as a world is
   created, so worlds that already exist are untouched
 - Generate the overworld as a void with a platform, which also happens by itself if every biome is
   blocked
@@ -90,11 +93,26 @@ A world template gathers those settings into one file so a pack ships a whole wo
 and every group answers to a config switch that leaves it to the pack, forces the config's own value,
 or turns the group off entirely so no pack can enable it.
 
+# Pregeneration
+A pack can hand a player a world whose land is already there. `pregenOnNewWorld` makes every chunk
+around the spawn the moment a world is created, in the overworld, in a list of dimensions one after
+another, in every dimension anything registers, or out to each dimension's world border. A dimension
+can instead be made the first time somebody sets foot in it, so worlds nobody visits cost nothing.
+
+While it runs everybody is held: made a spectator, kept in place, shown a pulsing line mid-screen,
+the world paused around them, and released into the pack's game mode with a greeting when everything
+is done. Progress is announced with an ETA per pass and a total time at the end, in messages a pack
+words itself. A finished dimension is written into the world and never made again, unless its files
+go missing from the disk, which is noticed and makes that one over, and a remade end brings its
+dragon back. A stopped run can resume where it left off, a wedged one stops itself within a minute
+rather than hanging anybody, and the engineering that makes it fast, a few hundred chunks a second,
+without a single cascading chunk load, is written down in HOWTO.md for whoever wants it.
+
 # CoFH World
 Mods that require CoFH World load without it. Their generation files can be read straight out of
 their jars and generated through this mod instead, covering every CoFH generator and distribution
 that produces anything. It is off by default, and stands down when the real CoFH World is installed,
-which then generates as normal — translating those files into a pack is the supported route, and the
+which then generates as normal, translating those files into a pack is the supported route, and the
 only way to change what they generate.
 
 # Good to know
@@ -105,6 +123,11 @@ starting with `RDPLN` never does, and anything else follows the `overrideResourc
 path. `/rdpl biome` and `/rdpl oregen` report what generated and what was blocked.
 
 The mod's own report goes to `logs/rdpl.log` rather than the main log.
+
+A pack can stay on the server alone, with every player on a plain vanilla client, as long as it
+registers nothing, and the `vanillaClients` config switch enforces exactly that, skipping anything
+a client would have to know about and naming each skipped file in the log. HOWTO.md's Server-side
+packs section has the folder split and the steps.
 
 # Requirements
 Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter).

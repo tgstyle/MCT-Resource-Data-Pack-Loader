@@ -3,17 +3,18 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
-import mctmods.resourcedatapackloader.pack.PackManager;
-import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Summary;
-
-import com.google.gson.JsonParseException;
-import net.minecraft.entity.Entity;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.mixin.AccessorEntity;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityLiving;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityLivingNavigator;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityVillager;
+
+import com.google.gson.JsonParseException;
+import net.minecraft.entity.Entity;
+import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
@@ -533,7 +534,7 @@ public final class ContentEntities {
         ResourceLocation name = biome.getRegistryName();
         for (String wanted : def.biomes) {
             if (name != null && wanted.equalsIgnoreCase(name.toString())) { return true; }
-            if (wanted.equalsIgnoreCase(biome.getBiomeName())) { return true; }
+            if (wanted.equalsIgnoreCase(ContentBiomeControl.shownName(biome))) { return true; }
         }
         for (String wanted : def.biomeTypes) {
             for (net.minecraftforge.common.BiomeDictionary.Type type : net.minecraftforge.common.BiomeDictionary.getTypes(biome)) {

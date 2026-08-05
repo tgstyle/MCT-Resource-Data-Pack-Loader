@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
@@ -85,7 +86,7 @@ public final class ContentTerrain {
         WorldType made = world.getWorldInfo().getTerrainType();
         if (!wanted.equalsIgnoreCase(made.getName())) { return; }
 
-        event.player.sendMessage(new TextComponentString("This world was made a " + made.getName() + " world, which is how the pack you are playing wants it."));
+        event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.gamemode", Lang.vanilla("gameMode." + made.getName()))));
     }
 
     public static boolean keeps(String worldType) {

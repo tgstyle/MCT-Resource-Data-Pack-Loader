@@ -9,13 +9,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -50,10 +45,10 @@ public final class ContentControl {
             "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
             "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "oreWhitelist",
             "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
-            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "pregenWelcomeSays",
+            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "welcomeSays",
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
-            "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners",
+            "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
             "structureSpawns", "surfaceDayMonsterRate",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
             "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist", "voidPlatformBlock",
@@ -155,12 +150,20 @@ public final class ContentControl {
     }
 
     private static String mode(String group) {
-        String value = raw(group).trim().toLowerCase(Locale.ROOT);
-        if (DEFAULT.equals(value) || GLOBAL.equals(value) || OFF.equals(value)) { return value; }
+        String held = raw(group);
+        String[] known = MODES.get(group);
+        if (known != null && Objects.equals(known[0], held)) { return known[1]; }
 
-        ContentLog.LOGGER.error("control.{} is '{}', which is not default, global or off, using default", group, value);
-        return DEFAULT;
+        String value = held.trim().toLowerCase(Locale.ROOT);
+        if (!DEFAULT.equals(value) && !GLOBAL.equals(value) && !OFF.equals(value)) {
+            ContentLog.LOGGER.error("control.{} is '{}', which is not default, global or off, using default", group, value);
+            value = DEFAULT;
+        }
+        MODES.put(group, new String[] {held, value});
+        return value;
     }
+
+    private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();
 
     private static String raw(String group) {
         switch (group) {

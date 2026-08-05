@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.command;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
@@ -58,7 +59,7 @@ public class Commands extends CommandBase {
 
     @Override @Nonnull public String getName() { return "rdpl"; }
 
-    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return "/rdpl <reload [" + String.join("|", GROUPS.keySet()) + "]|list|which <namespace:path>|unused|biome [list [all]|here|find <name>]>"; }
+    @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return Lang.tr(sender, "rdpl.command.usage", String.join("|", GROUPS.keySet())); }
 
     @Override public int getRequiredPermissionLevel() { return 0; }
 
@@ -85,7 +86,7 @@ public class Commands extends CommandBase {
 
     private void reloadAll(ICommandSender sender) throws CommandException {
         Path root = PackManager.get().getRoot();
-        if (root == null) { throw new CommandException("Pack root is not known yet"); }
+        if (root == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.noroot")); }
         long start = System.currentTimeMillis();
         PackManager.get().scan(root);
         PackManager.get().report();
@@ -93,30 +94,30 @@ public class Commands extends CommandBase {
         MinecraftServer integrated = Minecraft.getMinecraft().getIntegratedServer();
         if (integrated != null) { integrated.reload(); }
         int packs = PackManager.get().getPacks().size();
-        send(sender, TextFormatting.GREEN, "Rescanned " + packs + " pack(s) and reloaded resources in " + elapsed(start));
-        if (integrated == null) { send(sender, TextFormatting.GRAY, "Only your own resources were reloaded. On a server, an operator runs /rdplserver reload"); }
-        else { send(sender, TextFormatting.GRAY, "Recipes are not reloadable and still need a restart"); }
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.reloaded", packs, elapsed(start)));
+        if (integrated == null) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.clientonly")); }
+        else { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.recipes")); }
     }
 
     private void reloadGroup(ICommandSender sender, String name) throws CommandException {
         IResourceType type = GROUPS.get(name.toLowerCase(Locale.ROOT));
-        if (type == null) { throw new CommandException("No such group '" + name + "', try one of " + String.join(", ", GROUPS.keySet())); }
+        if (type == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.nogroup", name, String.join(", ", GROUPS.keySet()))); }
         long start = System.currentTimeMillis();
         FMLClientHandler.instance().refreshResources(type);
-        send(sender, TextFormatting.GREEN, "Reloaded " + name.toLowerCase(Locale.ROOT) + " in " + elapsed(start));
-        send(sender, TextFormatting.GRAY, "Files added or removed since startup need /rdpl reload with no group");
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.reloadedgroup", name.toLowerCase(Locale.ROOT), elapsed(start)));
+        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.groupnote"));
     }
 
     private void list(ICommandSender sender) {
         List<RDPLPack> packs = PackManager.get().getPacks();
         if (packs.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, "No packs loaded from " + PackManager.get().getRoot());
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nopacks", PackManager.get().getRoot()));
             return;
         }
-        send(sender, TextFormatting.GREEN, packs.size() + " pack(s), lowest priority first:");
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.packs", packs.size()));
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " [" + pack.getPriority() + "]" : "";
-            String tier = pack.isOverriding() ? " (overriding)" : "";
+            String tier = pack.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : "";
             String detail = "files=" + pack.getFileCount()
                     + "\nnamespaces=" + pack.getNamespaces()
                     + "\nadvancements=" + pack.count(PackManager.ADVANCEMENTS, PackManager.JSON)
@@ -124,7 +125,7 @@ public class Commands extends CommandBase {
                     + " recipes=" + pack.count(PackManager.RECIPES, PackManager.JSON)
                     + "\nfunctions=" + pack.count(PackManager.FUNCTIONS, PackManager.MCFUNCTION)
                     + " remaps=" + pack.count(PackManager.REGISTRY_REMAP, PackManager.JSON)
-                    + "\nClick to look up a file in this namespace";
+                    + "\n" + Lang.tr(sender, "rdpl.command.clickhint");
             ITextComponent line = new TextComponentString("  " + pack.getName() + priority + tier);
             line.getStyle().setColor(pack.isOverriding() ? TextFormatting.AQUA : TextFormatting.WHITE);
             line.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(detail)));
@@ -136,12 +137,12 @@ public class Commands extends CommandBase {
     private void unused(ICommandSender sender) {
         List<String> unused = PackManager.get().findUnused();
         if (unused.isEmpty()) {
-            send(sender, TextFormatting.GREEN, "Every file in your packs has been asked for at least once");
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.allused"));
             return;
         }
-        send(sender, TextFormatting.YELLOW, unused.size() + " file(s) have not been asked for:");
+        send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unused", unused.size()));
         for (String entry : unused) { ContentLog.LOGGER.warn("  {}", entry); }
-        send(sender, TextFormatting.GRAY, "Some only load when they are needed, such as other languages, so check the paths rather than deleting them");
+        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.unusednote"));
     }
 
     private static String firstNamespace(RDPLPack pack) {
@@ -155,14 +156,14 @@ public class Commands extends CommandBase {
         String path = colon < 0 ? target : target.substring(colon + 1);
         List<RDPLPack> holders = PackManager.get().holders(namespace, path);
         if (holders.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, namespace + ":" + path + " is not provided by any pack, Minecraft or a mod will serve it");
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unprovided", namespace + ":" + path));
             return;
         }
         RDPLPack winner = holders.get(holders.size() - 1);
-        send(sender, TextFormatting.GREEN, namespace + ":" + path + " is provided by '" + winner.getName() + "'" + (winner.isOverriding() ? " (overriding)" : ""));
-        send(sender, TextFormatting.GRAY, "This is what your packs offer, not proof the game asked for it. Use /rdpl unused to see what is never requested");
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.provided", namespace + ":" + path, winner.getName(), winner.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : ""));
+        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.providednote"));
         for (int i = holders.size() - 2; i >= 0; i--) {
-            send(sender, TextFormatting.GRAY, "  shadows '" + holders.get(i).getName() + "'");
+            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName()));
         }
     }
 
@@ -188,30 +189,30 @@ public class Commands extends CommandBase {
             shown++;
         }
 
-        send(sender, TextFormatting.WHITE, shown + " biome(s) listed" + (all || vanilla == 0 ? "" : ", plus " + vanilla + " from Minecraft. Add 'all' to see those too"));
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Lang.tr(sender, "rdpl.command.biomesmore", vanilla)));
     }
 
     private void biomeHere(ICommandSender sender) {
         BlockPos pos = sender.getPosition();
         Biome biome = sender.getEntityWorld().getBiome(pos);
-        send(sender, TextFormatting.WHITE, "'" + biome.getBiomeName() + "' " + biome.getRegistryName() + " id " + Biome.getIdForBiome(biome));
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.here", biome.getBiomeName(), biome.getRegistryName(), Biome.getIdForBiome(biome)));
     }
 
     private void biomeFind(ICommandSender sender, String name) throws CommandException {
         Biome target = findBiome(name);
-        if (target == null) { throw new WrongUsageException("No biome matches '" + name + "'. Use /rdpl biome list to see them"); }
+        if (target == null) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.nobiome", name)); }
 
         World world = sender.getEntityWorld();
         BlockPos from = sender.getPosition();
         BlockPos found = world.getBiomeProvider().findBiomePosition(from.getX(), from.getZ(), FIND_RANGE, Collections.singletonList(target), new Random());
 
         if (found == null) {
-            send(sender, TextFormatting.YELLOW, "No '" + target.getBiomeName() + "' within " + FIND_RANGE + " blocks. It may be rare, or not placed into generation at all");
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", target.getBiomeName(), FIND_RANGE));
             return;
         }
 
         int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
-        send(sender, TextFormatting.WHITE, "'" + target.getBiomeName() + "' at " + found.getX() + ", " + found.getZ() + ", " + distance + " blocks away");
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
     }
 
     @Nullable private static Biome findBiome(String name) {

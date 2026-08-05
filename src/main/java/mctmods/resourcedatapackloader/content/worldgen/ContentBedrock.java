@@ -131,7 +131,7 @@ public final class ContentBedrock {
     private static boolean matches(Biome biome) {
         ResourceLocation name = biome.getRegistryName();
         if (name != null && biomeNames.contains(name.toString().toLowerCase(Locale.ROOT))) { return true; }
-        if (biomeNames.contains(biome.getBiomeName().toLowerCase(Locale.ROOT))) { return true; }
+        if (biomeNames.contains(ContentBiomeControl.shownName(biome).toLowerCase(Locale.ROOT))) { return true; }
 
         for (BiomeDictionary.Type type : biomeTypes) {
             if (BiomeDictionary.hasType(biome, type)) { return true; }

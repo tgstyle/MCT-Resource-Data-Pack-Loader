@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.mixin;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 
+import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,11 +22,30 @@ public abstract class MixinMapGenVillage {
         MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, MapGenVillage.VILLAGE_SPAWN_BIOMES);
     }
 
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
+    private void rdpl$flatSite(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (!ContentBeard.wanted()) { return; }
+
+        World world = ((AccessorMapGenBase) this).rdpl$getWorld();
+        if (world == null) { return; }
+
+        Boolean flat = ContentBeard.flatSite(world, chunkX, chunkZ, distance);
+        if (flat == null) { return; }
+        if (!flat) {
+            cir.setReturnValue(false);
+            return;
+        }
+        cir.setReturnValue(ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) && !ContentBeard.mansionCandidateNear(world, chunkX, chunkZ));
+    }
+
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true)
     private void rdpl$spawnDistance(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }
-        if (ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, ((AccessorMapGenBase) this).rdpl$getWorld(), chunkX, chunkZ)) { return; }
-
-        cir.setReturnValue(false);
+        World world = ((AccessorMapGenBase) this).rdpl$getWorld();
+        if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ)) {
+            cir.setReturnValue(false);
+            return;
+        }
+        if (ContentBeard.wanted() && ContentBeard.mansionCandidateNear(world, chunkX, chunkZ)) { cir.setReturnValue(false); }
     }
 }

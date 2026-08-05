@@ -118,6 +118,12 @@ public final class ContentStructurePlacement {
         for (Biome biome : biomes) {
             if (matches(biome, wanted) != blacklist) { kept.add(biome); }
         }
+        if (!blacklist) {
+            for (String name : wanted) {
+                Biome named = Biome.REGISTRY.getObject(new ResourceLocation(name));
+                if (named != null && !kept.contains(named)) { kept.add(named); }
+            }
+        }
 
         if (kept.isEmpty()) {
             ContentLog.LOGGER.warn("Biome settings for {} leave no biome at all, so the vanilla list is left alone", key);
@@ -143,7 +149,7 @@ public final class ContentStructurePlacement {
     private static boolean matches(Biome biome, Set<String> wanted) {
         ResourceLocation name = biome.getRegistryName();
         if (name != null && wanted.contains(name.toString().toLowerCase(Locale.ROOT))) { return true; }
-        if (wanted.contains(biome.getBiomeName().toLowerCase(Locale.ROOT))) { return true; }
+        if (wanted.contains(ContentBiomeControl.shownName(biome).toLowerCase(Locale.ROOT))) { return true; }
 
         for (BiomeDictionary.Type type : BiomeDictionary.getTypes(biome)) {
             if (wanted.contains(type.getName().toLowerCase(Locale.ROOT))) { return true; }

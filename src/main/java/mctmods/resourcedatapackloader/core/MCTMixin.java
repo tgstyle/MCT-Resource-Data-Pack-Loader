@@ -5,12 +5,14 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraftforge.common.config.Config.Type;
 import net.minecraftforge.common.config.ConfigManager;
@@ -38,6 +40,7 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Mod.EventHandler public void preInit(FMLPreInitializationEvent event) {
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
+        Lang.load();
         if (Config.content.vanillaClients) {
             Config.content.load = false;
             Config.content.sounds = false;
@@ -75,6 +78,7 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
             if (ContentBiomes.load()) { MinecraftForge.EVENT_BUS.register(ContentBiomes.class); }
             if (FMLCommonHandler.instance().getSide().isClient()) { MinecraftForge.EVENT_BUS.register(ContentModels.class); }
         }
+        MinecraftForge.EVENT_BUS.register(ContentBeard.class);
     }
 
     @Override public String[] getASMTransformerClass() { return new String[0]; }

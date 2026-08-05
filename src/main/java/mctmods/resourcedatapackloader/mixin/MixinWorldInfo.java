@@ -20,6 +20,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(WorldInfo.class)
 public abstract class MixinWorldInfo implements PregenMemory {
     @Unique private NBTTagCompound rdpl$landMade = new NBTTagCompound();
+    @Unique private NBTTagCompound rdpl$pregenRun = new NBTTagCompound();
+
+    @Override public NBTTagCompound rdpl$pregenRun() { return rdpl$pregenRun; }
+
+    @Override public void rdpl$setPregenRun(NBTTagCompound run) { rdpl$pregenRun = run == null ? new NBTTagCompound() : run; }
 
     @Override public int rdpl$landMadeTo(int dimension) { return rdpl$landMade.getInteger("to" + dimension); }
 
@@ -32,11 +37,13 @@ public abstract class MixinWorldInfo implements PregenMemory {
     @Inject(method = "<init>(Lnet/minecraft/nbt/NBTTagCompound;)V", at = @At("TAIL"))
     private void rdpl$rememberLandMade(NBTTagCompound nbt, CallbackInfo ci) {
         if (nbt.hasKey("RDPLLandMade", 10)) { rdpl$landMade = nbt.getCompoundTag("RDPLLandMade"); }
+        if (nbt.hasKey("RDPLPregenRun", 10)) { rdpl$pregenRun = nbt.getCompoundTag("RDPLPregenRun"); }
     }
 
     @Inject(method = "updateTagCompound", at = @At("TAIL"))
     private void rdpl$writeLandMade(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo ci) {
         if (!rdpl$landMade.isEmpty()) { nbt.setTag("RDPLLandMade", rdpl$landMade); }
+        if (!rdpl$pregenRun.isEmpty()) { nbt.setTag("RDPLPregenRun", rdpl$pregenRun); }
     }
 
     @Shadow private long randomSeed;

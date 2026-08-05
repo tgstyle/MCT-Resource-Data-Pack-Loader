@@ -40,6 +40,7 @@ public final class ShapeDef {
     public final boolean vines;
     public final boolean hanging;
     public final String structure;
+    public String locateAs = "";
     public final int integrity;
     public final int rarity;
     public final boolean perChunk;

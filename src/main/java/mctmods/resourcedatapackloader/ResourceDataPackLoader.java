@@ -53,6 +53,7 @@ import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -141,6 +142,8 @@ public class ResourceDataPackLoader {
     }
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }
+
+    @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ContentPregen.serverStopping(); }
 
     @Mod.EventHandler public void onServerStopped(FMLServerStoppedEvent event) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }

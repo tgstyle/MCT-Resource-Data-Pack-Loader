@@ -218,23 +218,30 @@ public class Config {
         public int[] pregenDimensionsWhenEntered = {};
         @net.minecraftforge.common.config.Config.Comment("Whether a run that was stopped or cut short picks up where it left off next time the world is loaded, rather than starting again [Default=false]")
         public boolean pregenResume = false;
-        @net.minecraftforge.common.config.Config.Comment("What players are told while land is being made, where %d is how far along it is. Empty tells them nothing [Default=World pregeneration running, %d%% done]")
+        @net.minecraftforge.common.config.Config.Comment("The progress message players see while the world generates, where %d is the percentage. Empty tells them nothing. Left at this default it speaks each player's language [Default=World pregeneration running, %d%% done]")
         public String pregenRunningSays = "World pregeneration running, %d%% done";
-        @net.minecraftforge.common.config.Config.Comment("What players are told while the second pass lights what the first could not reach, where %d is how far along it is. Empty tells them nothing [Default=World relighting, %d%% done]")
+        @net.minecraftforge.common.config.Config.Comment("The progress message players see during the relight pass, where %d is the percentage. Empty tells them nothing. Left at this default it speaks each player's language [Default=World relighting, %d%% done]")
         public String pregenRelightSays = "World relighting, %d%% done";
-        @net.minecraftforge.common.config.Config.Comment("What players are told when it is done. Empty tells them nothing [Default=World pregeneration finished]")
+        @net.minecraftforge.common.config.Config.Comment("The message players see when generation finishes. Empty tells them nothing. Left at this default it speaks each player's language [Default=World pregeneration finished]")
         public String pregenFinishedSays = "World pregeneration finished";
-        @net.minecraftforge.common.config.Config.Comment("What players are told when it is stopped before it is done. Empty tells them nothing [Default=World pregeneration stopped]")
+        @net.minecraftforge.common.config.Config.Comment("The message players see when generation is stopped early. Empty tells them nothing. Left at this default it speaks each player's language [Default=World pregeneration stopped]")
         public String pregenStoppedSays = "World pregeneration stopped";
-        @net.minecraftforge.common.config.Config.Comment("What players are shown in the middle of the screen while they are held spectating during the making of land. Empty shows nothing [Default=Spectating until the world is ready]")
+        @net.minecraftforge.common.config.Config.Comment("The mid-screen message players see while held in spectator during world generation. Empty shows nothing. Left at this default it speaks each player's language [Default=Spectating until the world is ready]")
         public String pregenSpectatingSays = "Spectating until the world is ready";
-        @net.minecraftforge.common.config.Config.Comment("What players are greeted with in the middle of the screen once the land is made and they are let go. Empty shows nothing [Default=Welcome to your World!]")
-        public String pregenWelcomeSays = "Welcome to your World!";
+        @net.minecraftforge.common.config.Config.Comment("Welcome lines, shown in green on every login and after land-making. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. -1=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]")
+        public String[] welcomeSays = {"Welcome to your World!"};
     }
 
     public static class Worldgen {
         @net.minecraftforge.common.config.Config.Comment("Generate the ore veins described by worldgen/*.json in new chunks. Existing chunks are not changed [Default=true]")
         public boolean load = true;
+        @net.minecraftforge.common.config.Config.Comment("Disable all pregen/generation optimizations (why would you do this?) [Default=false]")
+        @net.minecraftforge.common.config.Config.RequiresMcRestart
+        @SuppressWarnings("unused") public boolean disableOptimizations = false;
+        @net.minecraftforge.common.config.Config.Comment("Sink the ground up under village pieces the way modern versions do, so they sit seated in the terrain instead of floating on stilts over every dip. Changes the terrain, so a world made with it on differs from one made without [Default=false]")
+        public boolean terrainAdaptation = false;
+        @net.minecraftforge.common.config.Config.Comment("Which structures the terrain adapts to and how, as structure=mode entries. Structures are villages, strongholds, mineshafts, monuments and mansions; modes are none, bury, beard_thin, beard_box and encapsulate, the same five modern versions use. Villages are beard_thin unless overridden, everything else is none unless named [Default=[]]")
+        public String[] structureAdaptation = {};
         @net.minecraftforge.common.config.Config.Comment("Catch existing chunks up on worldgen entries with \"retrogen\": true. Off, chunks that already exist are left alone. Chunks are marked as they generate either way, so turning this on later only touches chunks older than the pack [Default=false]")
         public boolean retrogen = false;
         @net.minecraftforge.common.config.Config.Comment("Treat chunks that already exist as if this pack generated them, marking them instead of leaving them for retrogen. Turn this on when replacing a mod that already generated the same ore, such as CoFH World, so retrogen never doubles it. Worldgen entries added later still retrogen into them [Default=false]")

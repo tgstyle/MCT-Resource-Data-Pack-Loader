@@ -8,4 +8,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(MapGenBase.class)
 public interface AccessorMapGenBase {
     @Accessor("world") World rdpl$getWorld();
+    @Accessor("world") void rdpl$setWorld(World world);
 }

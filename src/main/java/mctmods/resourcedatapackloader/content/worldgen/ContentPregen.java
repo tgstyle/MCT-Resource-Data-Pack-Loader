@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.mixin.AccessorChunk;
 import mctmods.resourcedatapackloader.mixin.AccessorWorldProviderEnd;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.block.BlockFalling;
 import net.minecraft.command.ICommandSender;
@@ -25,7 +26,6 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.end.DragonFightManager;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.server.MinecraftServer;
@@ -53,11 +53,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static ContentPregen running;
     private static final Deque<Integer> PENDING = new ArrayDeque<>();
     private static final Map<UUID, Held> HELD = new HashMap<>();
+    private static final String HELD_MODE = "rdplPregenHeldMode";
     private static long watchedDone = -1L;
     private static long watchedAt;
     private static long chainBegun;
     private static int wantedRadius;
     private static boolean chaining;
+    public static final String HOLD_MARK = "§k§r";
+    public static final String WELCOME_MARK = "§o§r";
+    private static final Config.Chunks SHIPPED = new Config.Chunks();
     private static final double NO_BORDER = 6.0E7D;
     private final ICommandSender asked;
     private final int dimension;
@@ -163,7 +167,33 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (!busy()) { nextDimension(radius); }
     }
 
-    @SubscribeEvent public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) { startWhenEntered(event.toDim); }
+    @SubscribeEvent public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
+        startWhenEntered(event.toDim);
+        if (running != null || !(event.player instanceof EntityPlayerMP)) { return; }
+        if (greetingFor(event.toDim, false) != null) { welcome((EntityPlayerMP) event.player); }
+    }
+
+    private static boolean welcomeAtDefault() {
+        String[] entries = ContentControl.list(ContentControl.CHUNKS, "welcomeSays", Config.chunks.welcomeSays);
+        return entries.length == SHIPPED.welcomeSays.length && entries.length == 1 && entries[0].trim().equals(SHIPPED.welcomeSays[0]);
+    }
+
+    private static String greetingFor(int dimension, boolean fallBack) {
+        String everywhere = null;
+        for (String entry : ContentControl.list(ContentControl.CHUNKS, "welcomeSays", Config.chunks.welcomeSays)) {
+            String[] parts = entry.split("=", 2);
+            Integer named = null;
+            if (parts.length == 2) {
+                try { named = Integer.parseInt(parts[0].trim()); }
+                catch (NumberFormatException ignored) {}
+            }
+            if (named == null) {
+                if (everywhere == null) { everywhere = entry.trim(); }
+            }
+            else if (named == dimension) { return parts[1].trim(); }
+        }
+        return fallBack ? everywhere : null;
+    }
 
     public static boolean reachesTheBorder() {
         return ContentControl.flag(ContentControl.CHUNKS, "pregenToBorder", Config.chunks.pregenToBorder);
@@ -177,14 +207,44 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld));
     }
 
+    public static void serverStopping() {
+        ContentPregen worker = running;
+        if (worker != null) {
+            ContentLog.LOGGER.info("The server is stopping while land is still being made in dimension {}, so the run is wound down at {} chunk(s) to be picked up on the next load", worker.dimension, worker.done);
+            worker.stopping = true;
+            worker.finish(DimensionManager.getWorld(worker.dimension));
+            PregenMemory memory = memory();
+            if (memory != null && !worker.lightOnly) { memory.rdpl$setPregenRun(runRecord(worker.dimension, worker.middleX, worker.middleZ, worker.reach)); }
+        }
+        releaseEveryone(false);
+        PENDING.clear();
+        chaining = false;
+        chainBegun = 0L;
+        wantedRadius = 0;
+    }
+
     @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) {
         World world = event.getWorld();
         if (world.isRemote || world.provider.getDimension() != 0 || busy()) { return; }
 
         int radius = wantedOnNewWorld();
+        PregenMemory memory = (PregenMemory) world.getWorldInfo();
+        NBTTagCompound run = memory.rdpl$pregenRun();
+        if (!run.isEmpty()) {
+            int dimension = run.getInteger("dimension");
+            if (PENDING.isEmpty() && (radius > 0 || reachesTheBorder())) {
+                for (int held : chosenDimensions()) {
+                    if (held != dimension && (reachesTheBorder() || memory.rdpl$landMadeTo(held) < radius)) { PENDING.addLast(held); }
+                }
+                wantedRadius = radius;
+                chaining = !PENDING.isEmpty();
+            }
+            ContentLog.LOGGER.info("Land was still being made in dimension {} when the last session ended, so it is picked up again", dimension);
+            start(null, dimension, run.getInteger("middleX"), run.getInteger("middleZ"), run.getInteger("reach"));
+            return;
+        }
         if ((radius <= 0 && !reachesTheBorder()) || !PENDING.isEmpty()) { return; }
 
-        PregenMemory memory = (PregenMemory) world.getWorldInfo();
         for (int dimension : chosenDimensions()) {
             if (reachesTheBorder() || memory.rdpl$landMadeTo(dimension) < radius) { PENDING.addLast(dimension); }
         }
@@ -202,8 +262,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         private float yaw;
         private float pitch;
 
-        private Held(EntityPlayerMP player) {
-            this.before = player.interactionManager.getGameType();
+        private Held(EntityPlayerMP player, GameType before) {
+            this.before = before;
             rebase(player);
         }
 
@@ -234,17 +294,20 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void hold(EntityPlayerMP player) {
         if (HELD.containsKey(player.getUniqueID())) { return; }
 
-        HELD.put(player.getUniqueID(), new Held(player));
+        NBTTagCompound data = player.getEntityData();
+        GameType before = data.hasKey(HELD_MODE) ? GameType.getByID(data.getInteger(HELD_MODE)) : player.interactionManager.getGameType();
+        data.setInteger(HELD_MODE, before.getID());
+        HELD.put(player.getUniqueID(), new Held(player, before));
         player.setGameType(GameType.SPECTATOR);
         flash(player);
     }
 
     private static void flash(EntityPlayerMP player) {
-        String warning = says("pregenSpectatingSays", Config.chunks.pregenSpectatingSays);
+        String warning = defaulted("pregenSpectatingSays", Config.chunks.pregenSpectatingSays, SHIPPED.pregenSpectatingSays, "rdpl.pregen.spectating", player);
         if (warning.isEmpty()) { return; }
 
         player.connection.sendPacket(new SPacketTitle(0, 15, 10));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(warning).setStyle(new Style().setColor(TextFormatting.RED))));
+        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(HOLD_MARK + warning).setStyle(new Style().setColor(TextFormatting.RED))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
@@ -265,20 +328,25 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     private static void welcome(EntityPlayerMP player) {
-        String greeting = says("pregenWelcomeSays", Config.chunks.pregenWelcomeSays);
-        if (greeting.isEmpty()) { return; }
+        String greeting = welcomeAtDefault() ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player.dimension, true);
+        if (greeting == null || greeting.isEmpty()) { return; }
 
         player.connection.sendPacket(new SPacketTitle(10, 70, 20));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
+        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(WELCOME_MARK + greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
     private static void release(EntityPlayerMP player, Held held) {
-        String mode = ContentTerrain.worldGameMode();
-        GameType asked = mode.isEmpty() ? GameType.NOT_SET : ContentTerrain.gameModeFrom(mode);
-        player.setGameType(asked == GameType.NOT_SET ? held.before : asked);
+        modeBack(player, held.before);
         player.timeUntilPortal = 100;
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.CLEAR, null, -1, -1, -1));
+    }
+
+    private static void modeBack(EntityPlayerMP player, GameType before) {
+        String mode = ContentTerrain.worldGameMode();
+        GameType asked = mode.isEmpty() ? GameType.NOT_SET : ContentTerrain.gameModeFrom(mode);
+        player.setGameType(asked == GameType.NOT_SET ? before : asked);
+        player.getEntityData().removeTag(HELD_MODE);
     }
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -339,13 +407,26 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         startWhenEntered(event.player.dimension);
         ContentPregen worker = running;
-        if (worker == null) { return; }
+        if (worker == null) {
+            if (event.player instanceof EntityPlayerMP) { welcome((EntityPlayerMP) event.player); }
+
+            return;
+        }
         if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player); }
 
         String said = worker.sofar();
         if (said.isEmpty()) { return; }
 
         event.player.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+    }
+
+    private static NBTTagCompound runRecord(int dimension, int middleX, int middleZ, int reach) {
+        NBTTagCompound run = new NBTTagCompound();
+        run.setInteger("dimension", dimension);
+        run.setInteger("middleX", middleX);
+        run.setInteger("middleZ", middleZ);
+        run.setInteger("reach", reach);
+        return run;
     }
 
     private static PregenMemory memory() {
@@ -458,6 +539,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     public static long start(ICommandSender asked, int dimension, int centreX, int centreZ, int radius, boolean lightOnly) {
         ContentPregen worker = new ContentPregen(asked, dimension, centreX, centreZ, radius, lightOnly);
         WorldServer world = DimensionManager.getWorld(dimension);
+        if (!lightOnly) {
+            PregenMemory memory = memory();
+            if (memory != null) { memory.rdpl$setPregenRun(runRecord(dimension, centreX, centreZ, radius)); }
+        }
         if (world != null && picksUpAgain() && !lightOnly) {
             PregenMemory memory = memory();
             int reached = memory == null ? 0 : memory.rdpl$landMadeAt(dimension);
@@ -656,8 +741,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim();
     }
 
+    private static String defaulted(String key, String fallback, String shipped, String langKey, EntityPlayerMP player) {
+        String said = says(key, fallback);
+        if (!said.equals(shipped.trim())) { return said; }
+
+        return player == null ? Lang.tr(langKey) : Lang.tr(player, langKey);
+    }
+
     private String sofar() {
-        String wording = lightOnly ? says("pregenRelightSays", Config.chunks.pregenRelightSays) : says("pregenRunningSays", Config.chunks.pregenRunningSays);
+        String wording = lightOnly ? defaulted("pregenRelightSays", Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted("pregenRunningSays", Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
         if (wording.isEmpty()) { return ""; }
 
         try { return String.format(wording, done * 100L / Math.max(1L, order.total()), dimensionName()) + eta(); }
@@ -672,7 +764,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (begun == 0L || done <= 0L || done >= total) { return ""; }
 
         long left = (System.currentTimeMillis() - begun) * (total - done) / done / 1000L;
-        return String.format(" - ETA %02d:%02d:%02d", left / 3600L, left / 60L % 60L, left % 60L);
+        return Lang.tr("rdpl.pregen.eta", left / 3600L, left / 60L % 60L, left % 60L);
     }
 
     private String dimensionName() {
@@ -705,7 +797,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             PregenMemory memory = memory();
             if (memory != null) {
                 if (whole && !lightOnly && reach > memory.rdpl$landMadeTo(dimension)) { memory.rdpl$setLandMadeTo(dimension, reach); }
-                if (!lightOnly) { memory.rdpl$setLandMadeAt(dimension, whole || !picksUpAgain() ? 0 : (int) done); }
+                if (!lightOnly) {
+                    memory.rdpl$setLandMadeAt(dimension, whole || !picksUpAgain() ? 0 : (int) done);
+                    memory.rdpl$setPregenRun(null);
+                }
             }
         }
         if (world != null) {
@@ -726,15 +821,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         else { chaining = false; }
         if (running == null) {
             BlockFalling.fallInstantly = false;
-            String ending = stopping ? says("pregenStoppedSays", Config.chunks.pregenStoppedSays) : says("pregenFinishedSays", Config.chunks.pregenFinishedSays);
+            String ending = stopping ? defaulted("pregenStoppedSays", Config.chunks.pregenStoppedSays, SHIPPED.pregenStoppedSays, "rdpl.pregen.stopped", null) : defaulted("pregenFinishedSays", Config.chunks.pregenFinishedSays, SHIPPED.pregenFinishedSays, "rdpl.pregen.done", null);
             if (!ending.isEmpty() && chainBegun != 0L) {
                 long took = (System.currentTimeMillis() - chainBegun) / 1000L;
-                ending += String.format(" - Total time %02d:%02d:%02d", took / 3600L, took / 60L % 60L, took % 60L);
+                ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);
             }
             chainBegun = 0L;
             tell(ending, TextFormatting.GREEN);
             releaseEveryone(!stopping);
         }
-        if (asked != null && !(asked instanceof EntityPlayer)) { asked.sendMessage(new TextComponentString("Finished. " + report()).setStyle(new Style().setColor(TextFormatting.GREEN))); }
+        if (asked != null && !(asked instanceof EntityPlayer)) { asked.sendMessage(new TextComponentString(Lang.tr("rdpl.pregen.finished", report())).setStyle(new Style().setColor(TextFormatting.GREEN))); }
     }
 }

@@ -57,6 +57,7 @@ public final class ContentImprint implements IContentShape {
         }
 
         loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS);
+        if (shape.locateAs != null && !shape.locateAs.isEmpty()) { ContentLocate.record(world, shape.locateAs, fitted); }
         return true;
     }
 

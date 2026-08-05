@@ -54,7 +54,7 @@ minecraft {
             '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin',
             '-Dforge.logging.console.level=debug',
             '-XX:+UseG1GC',
-            '-Xmx6G',
+            '-Xmx3G',
             '-XX:+FlightRecorder',
             '-XX:StartFlightRecording=duration=300s,filename=logs/pregen.jfr,settings=profile'
     )
@@ -73,6 +73,13 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    clientRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
 dependencies {
     compileOnly rfg.deobf("${common.mjei_version}")
     runtimeOnly rfg.deobf("${common.mjei_version}")
@@ -86,6 +93,7 @@ dependencies {
 
     implementation rfg.deobf("curse.maven:${common.arlb_version}")
     implementation rfg.deobf("curse.maven:${common.quar_version}")
+    implementation rfg.deobf("curse.maven:${common.wayb_version}")
     implementation rfg.deobf("curse.maven:${common.redf_version}")
     implementation rfg.deobf("curse.maven:${common.cofh_version}")
     compileOnly rfg.deobf("curse.maven:${common.gcor_version}")
@@ -93,7 +101,7 @@ dependencies {
     //runtimeOnly rfg.deobf("curse.maven:${common.cwor_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thfo_version}")
 
-    runtimeOnly rfg.deobf("curse.maven:${common.bf3r_version}")
+    clientRuntime rfg.deobf("curse.maven:${common.bf3r_version}")
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'
@@ -105,6 +113,7 @@ dependencies {
 
 tasks.named('runClient').configure {
     extraArgs.addAll('--width', '1920', '--height', '1080')
+    classpath configurations.clientRuntime
 }
 
 tasks.register('runClientGamescope', Exec) {
@@ -130,7 +139,7 @@ tasks.register('bumpVersion') {
         props['build_number'] = nextBuild.toString()
         file('version.properties').withOutputStream { props.store(it, null) }
 
-        ext.version_buildnumber = nextBuild
+        project.ext.version_buildnumber = nextBuild
         def newStage = props['stage'] ?: ''
         def newVersion = "${common.mcversion}-${props['version']}.${nextBuild}-${newStage}"
 
@@ -155,6 +164,9 @@ processResources {
                 'mod_url': mod_url, 'mod_mixin_id': "${mod_id}_mixin"
     }
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    doLast {
+        new File(destinationDir, 'version.properties').text = "${mod_id}.version=${modversion}.${project.ext.version_buildnumber}\n"
+    }
 }
 
 jar {
