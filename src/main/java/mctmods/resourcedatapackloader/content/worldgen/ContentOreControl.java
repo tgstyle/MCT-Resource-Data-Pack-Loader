@@ -39,6 +39,7 @@ public final class ContentOreControl {
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public static void onGenerateMinable(OreGenEvent.GenerateMinable event) {
         if (oreTypes == null) { load(); }
+        if (outsideScope(event.getWorld().provider.getDimension())) { return; }
 
         if (typeBlocked(event.getType().name())) {
             deny(event, event.getType().name(), owner(event.getGenerator()));
@@ -51,6 +52,17 @@ public final class ContentOreControl {
         if (whitelist.contains(owner)) { return; }
 
         deny(event, event.getType().name(), owner);
+    }
+
+    private static boolean outsideScope(int dimension) {
+        int[] allowed = ContentControl.numbers(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions);
+        if (allowed.length == 0) { return false; }
+
+        boolean listed = false;
+        for (int wanted : allowed) {
+            if (wanted == dimension) { listed = true; }
+        }
+        return listed == ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist);
     }
 
     private static boolean typeBlocked(String type) {

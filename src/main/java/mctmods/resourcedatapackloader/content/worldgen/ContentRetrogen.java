@@ -53,6 +53,10 @@ public final class ContentRetrogen {
                 + "#" + Config.worldgen.flatBedrockRetrogenKey;
     }
 
+    public static boolean retrogenWanted() { return ContentControl.flag(ContentControl.CHUNKS, "retrogen", Config.worldgen.retrogen); }
+
+    private static boolean adoptWanted() { return ContentControl.flag(ContentControl.CHUNKS, "adoptExistingChunks", Config.worldgen.adoptExistingChunks); }
+
     public static boolean bedrockWanted() { return ContentBedrock.enabled() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen); }
 
     public static boolean wanted() {
@@ -79,18 +83,18 @@ public final class ContentRetrogen {
 
         int dimension = event.getWorld().provider.getDimension();
         Set<String> already = read(event.getData());
-        if (Config.worldgen.adoptExistingChunks && !hasVeinTokens(already) && !defs.isEmpty()) {
+        if (adoptWanted() && !hasVeinTokens(already) && !defs.isEmpty()) {
             for (WorldgenDef def : defs) { already.add(def.getToken()); }
             ContentLog.LOGGER.debug("Adopted chunk {} as already generated", event.getChunk().getPos());
         }
         done(dimension).put(event.getChunk().getPos(), already);
         ContentLog.LOGGER.debug("Chunk {} loaded with retrogen tokens {}", event.getChunk().getPos(), already);
         boolean replace = ContentReplacements.wanted() && !already.contains(ContentReplacements.token()) && ContentReplacements.appliesTo(dimension);
-        if (!replace && (!Config.worldgen.retrogen || (defs.isEmpty() && !bedrockWanted()))) { return; }
+        if (!replace && (!retrogenWanted() || (defs.isEmpty() && !bedrockWanted()))) { return; }
 
         List<WorldgenDef> pending = new ArrayList<>();
         boolean bedrock = false;
-        if (Config.worldgen.retrogen) {
+        if (retrogenWanted()) {
             for (WorldgenDef def : defs) {
                 if (def.retrogen && !already.contains(def.getToken())) { pending.add(def); }
             }
@@ -133,7 +137,7 @@ public final class ContentRetrogen {
     @SubscribeEvent
     public static void onWorldTick(TickEvent.WorldTickEvent event) {
         if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END) { return; }
-        if (queued == 0 || (!Config.worldgen.retrogen && !ContentReplacements.wanted())) { return; }
+        if (queued == 0 || (!retrogenWanted() && !ContentReplacements.wanted())) { return; }
 
         Deque<Pending> queue = QUEUES.get(event.world.provider.getDimension());
         if (queue == null || queue.isEmpty()) { return; }

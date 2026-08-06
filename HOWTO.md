@@ -1643,6 +1643,8 @@ A `spread` block with a `type`.
 
 An entry with `"retrogen": true` is generated into chunks that were saved before you added it. Each chunk records what it has had, so nothing is done twice.
 
+The entry flag only marks an entry as eligible. Catching up is switched on by the `retrogen` setting, which a pack can set in its `settings` block or a player can set in the config, and it is off by default. Alongside it, `adoptExistingChunks` decides what happens the first time an old chunk is seen: on, the chunk is stamped as though this pack had already generated it and is never caught up; off, it is caught up like any other. Turning `retrogen` on while `adoptExistingChunks` is also on does nothing, because every old chunk is written off before it can be queued. To fill an existing world, set `retrogen` on and `adoptExistingChunks` off together.
+
 ```json
 {
   "block": "mypack:ruby_ore",
@@ -1734,7 +1736,7 @@ With a group's control at `default` these win, at `global` they are ignored, and
 
 ## What each group does
 
-**Ores.** `blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all.
+**Ores.** `blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all. `blockOreDimensions` limits ore blocking to certain dimensions, empty meaning every one, with `blockOreDimensionsAreBlacklist` turning that list into the dimensions to leave alone. A dimension outside the scope is not touched at all, so another mod's ores generate there untouched while the overworld stays blocked.
 
 **Biomes.** `blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself. `blockBiomeDimensions` limits all of it to certain dimensions, empty meaning every one, and `blockBiomeDimensionsAreBlacklist` turns that list into an exclusion.
 

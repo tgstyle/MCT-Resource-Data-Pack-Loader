@@ -365,6 +365,10 @@ public class Config {
         public String[] oreTypes = {};
         @net.minecraftforge.common.config.Config.Comment("On, oreTypes are blocked. Off, only oreTypes generate [Default=true]")
         public boolean oreTypesAreBlacklist = true;
+        @net.minecraftforge.common.config.Config.Comment("Dimensions ore blocking applies to. Empty means every dimension [Default=]")
+        public int[] blockOreDimensions = {};
+        @net.minecraftforge.common.config.Config.Comment("Treat blockOreDimensions as the dimensions to leave alone instead [Default=false]")
+        public boolean blockOreDimensionsAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("Log the first time each mod and ore type is blocked, so you can see what to whitelist [Default=true]")
         public boolean logBlockedOres = true;
         @net.minecraftforge.common.config.Config.Comment("Stop every biome from generating except the mods in biomeWhitelist. Blocked biomes become the void biome. Blocking every biome makes the overworld a void world [Default=false]")
