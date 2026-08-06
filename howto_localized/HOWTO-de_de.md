@@ -211,7 +211,7 @@ rdploader/RDPL1O Seasonal       Priorität und Override zugleich
 
 Packs ohne Buchstaben folgen der Option `overrideResourcePacks` in der Config. `/rdpl list` markiert die, die überschreiben.
 
-Der Buchstabe muss das Präfix abschließen, also braucht er danach ein Leerzeichen, einen Bindestrich, einen Unterstrich – oder gar nichts. Genau das verhindert, dass bei einem Pack namens `RDPLOverhaul` das `O` als dieser Buchstabe gelesen wird und das Pack als `Overhaul` auftaucht.
+Der Buchstabe muss das Präfix abschließen, also braucht er danach ein Leerzeichen, einen Bindestrich, einen Unterstrich – oder gar nichts. Genau das verhindert, dass bei einem Pack namens `RDPLOverhaul` das `O` als Buchstabe gelesen wird und der Pack als `Overhaul` auftaucht.
 
 ---
 
@@ -334,7 +334,7 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 
 ### Strukturen an genauen Stellen
 
-Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. Eine so festgenagelte Struktur generiert nur in den genannten Chunks, ein Eintrag pro gewünschtem Exemplar, und ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden.
+Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. **x und z sind Blockkoordinaten, keine Chunkkoordinaten**, und die Struktur generiert in dem Chunk, in dem dieser Block liegt. Ein Eintrag pro gewünschtem Exemplar. Ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs, und zwei Pins näher als einen Chunk beieinander setzen zwei Strukturen in denselben Chunk. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden.
 
 Ein `imprint`-Eintrag nagelt genauso fest, mit `"at": [x, z]` in seiner Form, und setzt sie genau einmal an diesen Koordinaten an der Oberfläche, sobald dieser Chunk generiert, statt nach Zufall. Das lässt sich mit `locateAs` kombinieren, eine festgenagelte Struktur ist also auch per /locate auffindbar.
 
