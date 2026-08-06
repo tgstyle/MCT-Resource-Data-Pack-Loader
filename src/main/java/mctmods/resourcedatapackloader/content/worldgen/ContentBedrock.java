@@ -44,9 +44,13 @@ public final class ContentBedrock {
         return ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock);
     }
 
+    public static int layers() { return Math.max(1, Math.min(MAX_LAYERS, ContentControl.number(ContentControl.BEDROCK, "bedrockLayers", Config.worldgen.bedrockLayers))); }
+
+    public static boolean roofWanted() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRoof", Config.worldgen.flatBedrockRoof); }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPopulate(PopulateChunkEvent.Pre event) {
-        if (!ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock)) { return; }
+        if (!enabled()) { return; }
 
         World world = event.getWorld();
         if (world.isRemote) { return; }
@@ -65,7 +69,7 @@ public final class ContentBedrock {
     public static void flatten(World world, int chunkX, int chunkZ, int dimension) {
         int baseX = chunkX * 16;
         int baseZ = chunkZ * 16;
-        int layers = Math.max(1, Math.min(MAX_LAYERS, ContentControl.number(ContentControl.BEDROCK, "bedrockLayers", Config.worldgen.bedrockLayers)));
+        int layers = layers();
 
         if (voidWorld(world, baseX, baseZ)) { return; }
 
@@ -91,7 +95,7 @@ public final class ContentBedrock {
             }
         }
 
-        if (ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRoof", Config.worldgen.flatBedrockRoof)) { roof(world, baseX, baseZ, layers, filler, bedrock, pos); }
+        if (roofWanted()) { roof(world, baseX, baseZ, layers, filler, bedrock, pos); }
     }
 
     private static void roof(World world, int baseX, int baseZ, int layers, IBlockState filler, IBlockState bedrock, BlockPos.MutableBlockPos pos) {
@@ -199,7 +203,7 @@ public final class ContentBedrock {
 
         configured = state(ContentControl.text(ContentControl.BEDROCK, "flatBedrockFiller", Config.worldgen.flatBedrockFiller).trim());
 
-        Summary.info("bedrock", "Flattening bedrock to " + Math.max(1, ContentControl.number(ContentControl.BEDROCK, "bedrockLayers", Config.worldgen.bedrockLayers)) + " layer(s) in "
+        Summary.info("bedrock", "Flattening bedrock to " + layers() + " layer(s) in "
                 + (dimensions.isEmpty() ? "every dimension" : "dimension(s) " + dimensions));
     }
 }

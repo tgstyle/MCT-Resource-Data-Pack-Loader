@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -35,7 +36,6 @@ public final class ContentRetrogen {
     @Nullable private static ContentWorldgen generator;
     private static int completed;
     private static int flattened;
-    private static final Set<Boolean> SEEN = new HashSet<>();
     private static int queued;
 
     private ContentRetrogen() {}
@@ -48,12 +48,12 @@ public final class ContentRetrogen {
     }
 
     public static String bedrockToken() {
-        return "bedrock:" + Math.max(1, Config.worldgen.bedrockLayers)
-                + (Config.worldgen.flatBedrockRoof ? ":roof" : "")
+        return "bedrock:" + ContentBedrock.layers()
+                + (ContentBedrock.roofWanted() ? ":roof" : "")
                 + "#" + Config.worldgen.flatBedrockRetrogenKey;
     }
 
-    public static boolean bedrockWanted() { return Config.worldgen.flatBedrock && Config.worldgen.flatBedrockRetrogen; }
+    public static boolean bedrockWanted() { return ContentBedrock.enabled() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen); }
 
     public static boolean wanted() {
         if (bedrockWanted() || ContentReplacements.wanted()) { return true; }
@@ -69,17 +69,12 @@ public final class ContentRetrogen {
 
         Set<String> already = done(world.provider.getDimension()).computeIfAbsent(new ChunkPos(chunkX, chunkZ), k -> new HashSet<>());
         for (WorldgenDef def : defs) { already.add(def.getToken()); }
-        if (Config.worldgen.flatBedrock) { already.add(bedrockToken()); }
+        if (ContentBedrock.enabled()) { already.add(bedrockToken()); }
     }
 
     private static Map<ChunkPos, Set<String>> done(int dimension) { return DONE.computeIfAbsent(dimension, k -> new HashMap<>()); }
 
-    @SubscribeEvent
-    public static void onChunkLoad(ChunkDataEvent.Load event) {
-        if (SEEN.add(Boolean.TRUE)) {
-            ContentLog.LOGGER.info("Retrogen is seeing chunk loads. retrogen={} adopt={} defs={} bedrock={} remote={}",
-                    Config.worldgen.retrogen, Config.worldgen.adoptExistingChunks, defs.size(), bedrockWanted(), event.getWorld().isRemote);
-        }
+    @SubscribeEvent public static void onChunkLoad(ChunkDataEvent.Load event) {
         if (event.getWorld().isRemote) { return; }
 
         int dimension = event.getWorld().provider.getDimension();

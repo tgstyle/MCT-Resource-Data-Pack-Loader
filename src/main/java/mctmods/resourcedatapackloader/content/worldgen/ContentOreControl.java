@@ -65,7 +65,7 @@ public final class ContentOreControl {
         BLOCKED.count(key);
 
         if (ContentControl.flag(ContentControl.ORES, "logBlockedOres", Config.worldgen.logBlockedOres) && REPORTED.add(key)) {
-            ContentLog.LOGGER.info("Blocking {} ore generation from {}. Use /rdpl oregen to see running totals", type, owner);
+            ContentLog.LOGGER.info("Blocking {} ore generation from {}. Use /rdplserver oregen to see running totals", type, owner);
         }
     }
 

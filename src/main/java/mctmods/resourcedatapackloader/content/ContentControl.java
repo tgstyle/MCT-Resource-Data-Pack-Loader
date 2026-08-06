@@ -40,7 +40,7 @@ public final class ContentControl {
             "blockReplacementMaxHeight", "blockReplacementMinHeight", "blockReplacements", "blockWorldGenerators",
             "blockedFurnaceMods", "blockedGenerators", "blockedRecipeMods", "creatureCap", "dragonFight", "flatBedrock",
             "flatBedrockBiomeTypes", "flatBedrockBiomes", "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions",
-            "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof",
+            "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof", "flatBedrockRetrogen",
             "furnaceWhitelist", "generatorOptions", "generatorTypeMap", "generatorTypes", "generatorTypesAreBlacklist",
             "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
             "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "oreWhitelist",
