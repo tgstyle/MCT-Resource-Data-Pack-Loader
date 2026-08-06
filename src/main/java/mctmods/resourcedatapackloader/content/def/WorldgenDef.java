@@ -116,7 +116,7 @@ public final class WorldgenDef {
         if (ShapeDef.SPIRE.equals(shape.type)) { return new ContentSpire(placer, shape); }
         if (ShapeDef.NODULE.equals(shape.type)) { return new ContentNodule(placer, shape); }
         if (ShapeDef.VENT.equals(shape.type)) { return new ContentVent(placer, shape); }
-        if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(shape, registryName); }
+        if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(placer, shape, registryName); }
         if (ShapeDef.BELT.equals(shape.type)) { return new ContentBelt(placer, shape, minHeight, maxHeight, registryName); }
 
         return new ContentVein(placer, size, sparse);

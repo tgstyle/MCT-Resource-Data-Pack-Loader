@@ -1570,6 +1570,7 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `plane` | plate, basin, spire, vent | `circle`, `square` | `circle` | Its footprint |
 | `slim` | plate, largevein, nodule | boolean | `false` | Plate: one layer thinner. Largevein: single block branches. Nodule: hollow shell |
 | `hanging` | spire, vent | boolean | `false` | Grow downward from a ceiling instead of up from a floor |
+| `taper` | spire | `straight`, `bell`, `needle` | `straight` | How the width falls away toward the tip. `straight` narrows evenly, `bell` keeps its width low down then drops, `needle` thins at once into a long point |
 | `outline` | geode | block name | none | The crust block |
 | `fill` | geode | block name | none | What fills the middle. Left out, the middle is hollow |
 | `surface` | decoration, tree | list of block names | none | What it will sit on |
@@ -1584,6 +1585,9 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `vines` | tree | boolean | `false` | Hang vines from the leaves |
 | `structure` | imprint | `namespace:name` | none | The template to place |
 | `integrity` | imprint | 1 to 100 | `100` | Percentage of the template's blocks that actually appear |
+| `structures` | imprint | list | none | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
+| `turns` | imprint | list | any | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely |
+| `mirrors` | imprint | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight` |
 | `rarity` | belt | int | `400` | One cluster per this many chunks |
 | `rarityIsPerChunk` | belt | boolean | `false` | Turn `rarity` into how many clusters each chunk gets instead |
 
@@ -1992,7 +1996,7 @@ Mods that require CoFH World load without it, the requirement is removed automat
 
 Their own generation then does not happen, because CoFH World is what reads their `assets/<modid>/world/*.json`. A pack is expected to cover it.
 
-Failing that, `readCofhWorldFiles` reads those files straight out of the mod jars and generates them through this mod. It is off by default, and it stands down when the real CoFH World is installed, which then generates as normal. Every CoFH generator and distribution that produces anything is converted, mapped onto the shapes and spreads above. The shapes are this mod's own geometry, so a lake or a spire will not look identical, and a few fine options do not carry, weighted structure lists take the first entry, and rotation tables, ignored-block lists and the curve shaping on stalagmites are dropped.
+Failing that, `readCofhWorldFiles` reads those files straight out of the mod jars and generates them through this mod. It is off by default, and it stands down when the real CoFH World is installed, which then generates as normal. Every CoFH generator and distribution that produces anything is converted, mapped onto the shapes and spreads above. The shapes are this mod's own geometry, so a lake or a spire will not look identical. Weighted structure lists, rotation and mirror tables, ignored-block lists and the taper on stalagmites all carry across. The taper is matched by shape rather than by formula, so a spire's outline is close but not identical.
 
 Translating the files into a pack is the supported route, and the only way to change what they generate.
 

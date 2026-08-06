@@ -20,6 +20,15 @@ public final class ShapeDef {
     public static final String BELT = "belt";
     public static final String CIRCLE = "circle";
     public static final String SQUARE = "square";
+    public static final String STRAIGHT = "straight";
+    public static final String BELL = "bell";
+    public static final String NEEDLE = "needle";
+    public static final String NO_TURN = "none";
+    public static final String QUARTER = "quarter";
+    public static final String HALF = "half";
+    public static final String THREEQUARTER = "threequarter";
+    public static final String LEFTRIGHT = "leftright";
+    public static final String FRONTBACK = "frontback";
     public final String type;
     public final AmountDef radius;
     public final AmountDef height;
@@ -42,11 +51,15 @@ public final class ShapeDef {
     public final String structure;
     public String locateAs = "";
     public int[] at = null;
+    public final List<PickDef> structures;
+    public final List<PickDef> turns;
+    public final List<PickDef> mirrors;
+    public final String taper;
     public final int integrity;
     public final int rarity;
     public final boolean perChunk;
 
-    public ShapeDef(String type, AmountDef radius, AmountDef height, AmountDef width, String plane, boolean slim, String outline, String fill, List<String> surface, AmountDef stack, boolean seeSky, boolean checkStay, int scatterX, int scatterY, int scatterZ, String log, String leaves, boolean vines, boolean hanging, String structure, int integrity, int rarity, boolean perChunk) {
+    public ShapeDef(String type, AmountDef radius, AmountDef height, AmountDef width, String plane, boolean slim, String outline, String fill, List<String> surface, AmountDef stack, boolean seeSky, boolean checkStay, int scatterX, int scatterY, int scatterZ, String log, String leaves, boolean vines, boolean hanging, String structure, List<PickDef> structures, List<PickDef> turns, List<PickDef> mirrors, String taper, int integrity, int rarity, boolean perChunk) {
         this.type = type;
         this.radius = radius;
         this.height = height;
@@ -67,13 +80,17 @@ public final class ShapeDef {
         this.vines = vines;
         this.hanging = hanging;
         this.structure = structure;
+        this.structures = structures;
+        this.turns = turns;
+        this.mirrors = mirrors;
+        this.taper = taper;
         this.integrity = integrity;
         this.rarity = rarity;
         this.perChunk = perChunk;
     }
 
     public static ShapeDef cluster() {
-        return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", Collections.emptyList(), AmountDef.of(1), true, true, 8, 4, 8, "", "", false, false, "", 100, 400, false);
+        return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", Collections.emptyList(), AmountDef.of(1), true, true, 8, 4, 8, "", "", false, false, "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), STRAIGHT, 100, 400, false);
     }
 
     public boolean isRound() { return CIRCLE.equals(plane); }

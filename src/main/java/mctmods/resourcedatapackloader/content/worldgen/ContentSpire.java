@@ -24,7 +24,7 @@ public final class ContentSpire implements IContentShape {
 
         boolean placed = false;
         for (int level = 0; level < height; level++) {
-            int reach = radius - (radius * level) / height;
+            int reach = reach(radius, level / (double) height);
             int span = reach * reach;
             int y = origin.getY() + step * level;
             for (int offX = -reach; offX <= reach; offX++) {
@@ -36,5 +36,12 @@ public final class ContentSpire implements IContentShape {
             }
         }
         return placed;
+    }
+
+    private int reach(int radius, double climbed) {
+        if (ShapeDef.BELL.equals(shape.taper)) { return (int) Math.round(radius * Math.sqrt(Math.max(0.0D, 1.0D - climbed * climbed))); }
+        if (ShapeDef.NEEDLE.equals(shape.taper)) { return (int) Math.round(radius * (1.0D - climbed) * (1.0D - climbed)); }
+
+        return (int) Math.round(radius * (1.0D - climbed));
     }
 }

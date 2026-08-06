@@ -869,9 +869,35 @@ public final class ContentParser {
                 JsonUtils.getBoolean(entry, "vines", false),
                 JsonUtils.getBoolean(entry, "hanging", false),
                 JsonUtils.getString(entry, "structure", ""),
+                picks(entry, "structures", "structure"),
+                picks(entry, "turns", "turn"),
+                picks(entry, "mirrors", "mirror"),
+                taper(key, entry),
                 Math.max(1, Math.min(100, JsonUtils.getInt(entry, "integrity", 100))),
                 Math.max(1, JsonUtils.getInt(entry, "rarity", 400)),
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false));
+    }
+
+    private static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
+        if (!entry.has(listKey)) { return Collections.emptyList(); }
+
+        List<PickDef> picked = new ArrayList<>();
+        for (JsonElement element : JsonUtils.getJsonArray(entry, listKey)) {
+            if (element.isJsonPrimitive()) { picked.add(new PickDef(element.getAsString().trim().toLowerCase(Locale.ROOT), 1)); }
+            else {
+                JsonObject held = element.getAsJsonObject();
+                picked.add(new PickDef(JsonUtils.getString(held, nameKey, "").trim().toLowerCase(Locale.ROOT), JsonUtils.getInt(held, "weight", 1)));
+            }
+        }
+        return Collections.unmodifiableList(picked);
+    }
+
+    private static String taper(ResourceLocation key, JsonObject entry) {
+        String named = JsonUtils.getString(entry, "taper", ShapeDef.STRAIGHT).trim().toLowerCase(Locale.ROOT);
+        if (ShapeDef.STRAIGHT.equals(named) || ShapeDef.BELL.equals(named) || ShapeDef.NEEDLE.equals(named)) { return named; }
+
+        ContentLog.LOGGER.error("Worldgen {} asks for taper '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.STRAIGHT, ShapeDef.BELL, ShapeDef.NEEDLE, ShapeDef.STRAIGHT);
+        return ShapeDef.STRAIGHT;
     }
 
     private static List<String> surface(JsonObject entry) {

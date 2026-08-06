@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,17 @@ import java.util.zip.ZipFile;
 import javax.annotation.Nullable;
 
 public final class ContentCofhWorld {
+    private static final Map<String, String> TURN_NAMES = new HashMap<>();
+
+    static {
+        TURN_NAMES.put("NONE", ShapeDef.NO_TURN);
+        TURN_NAMES.put("CLOCKWISE_90", ShapeDef.QUARTER);
+        TURN_NAMES.put("CLOCKWISE_180", ShapeDef.HALF);
+        TURN_NAMES.put("COUNTERCLOCKWISE_90", ShapeDef.THREEQUARTER);
+        TURN_NAMES.put("LEFT_RIGHT", ShapeDef.LEFTRIGHT);
+        TURN_NAMES.put("FRONT_BACK", ShapeDef.FRONTBACK);
+    }
+
     private static final Gson GSON = new GsonBuilder().create();
     private static final String WORLD = "world";
     private static final Map<String, String> SHAPES = shapes();
@@ -206,7 +218,7 @@ public final class ContentCofhWorld {
         if (weighted.size() > 1 || first.has("properties")) { out.add("blocks", weighted); }
 
         amount(source, "cluster-count", out, "attempts", 1);
-        out.add("replace", material(generator));
+        out.add("replace", ShapeDef.IMPRINT.equals(shape) && generator.has("ignored-block") ? ignored(generator) : material(generator));
         out.addProperty("retrogen", "true".equalsIgnoreCase(JsonUtils.getString(source, "retrogen", "false")));
         if ("sparse-cluster".equals(type) || sparse(generator, type)) { out.addProperty("sparse", true); }
 
@@ -273,6 +285,7 @@ public final class ContentCofhWorld {
             int reach = integer(generator, "gen-size", 2);
             shape.add("radius", range(reach, reach + Math.max(0, integer(generator, "size-variance", 1))));
             shape.addProperty("hanging", "stalactite".equals(type));
+            shape.addProperty("taper", "false".equalsIgnoreCase(JsonUtils.getString(generator, "fat", "true")) ? ShapeDef.NEEDLE : ShapeDef.BELL);
         }
         else if (ShapeDef.NODULE.equals(value)) {
             int across = Math.max(1, Math.max(1, integer(generator, "diameter", 4)) / 2);
@@ -296,6 +309,8 @@ public final class ContentCofhWorld {
             TEMPLATE_ENTRIES.put(id, folder + file);
             shape.addProperty("structure", id.toString());
             shape.addProperty("integrity", (int) Math.round(100.0D * doubled(generator)));
+            addTurns(shape, generator);
+            addStructures(shape, generator, owner, folder, source);
         }
         else {
             amount(generator, "cluster-size", out, "size", 8);
@@ -396,6 +411,28 @@ public final class ContentCofhWorld {
     private static String single(JsonObject generator, String key) {
         JsonArray all = names(generator, key);
         return all.size() == 0 ? "" : all.get(0).getAsString();
+    }
+
+    private static void addStructures(JsonObject shape, JsonObject generator, String owner, String folder, File source) {
+        JsonElement held = generator.get("structure");
+        if (held == null || !held.isJsonArray() || held.getAsJsonArray().size() < 2) { return; }
+
+        JsonArray out = new JsonArray();
+        for (JsonElement element : held.getAsJsonArray()) {
+            boolean object = element.isJsonObject();
+            String file = object ? JsonUtils.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
+            if (file.isEmpty()) { continue; }
+
+            ResourceLocation id = new ResourceLocation(owner, file.toLowerCase(Locale.ROOT).replace(".nbt", "").replaceAll("[^a-z0-9_]", "_"));
+            TEMPLATE_JARS.put(id, source);
+            TEMPLATE_ENTRIES.put(id, folder + file);
+
+            JsonObject pick = new JsonObject();
+            pick.addProperty("structure", id.toString());
+            if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", JsonUtils.getInt(element.getAsJsonObject(), "weight", 1)); }
+            out.add(pick);
+        }
+        if (out.size() > 1) { shape.add("structures", out); }
     }
 
     private static String raw(JsonObject generator) {
@@ -528,6 +565,47 @@ public final class ContentCofhWorld {
     }
 
     private static String qualified(String name) { return name.contains(":") ? name : "minecraft:" + name; }
+
+    private static void addTurns(JsonObject shape, JsonObject generator) {
+        JsonArray turns = named(generator, "rotation", "turn");
+        if (turns.size() > 0) { shape.add("turns", turns); }
+
+        JsonArray mirrors = named(generator, "mirror", "mirror");
+        if (mirrors.size() > 0) { shape.add("mirrors", mirrors); }
+    }
+
+    private static JsonArray named(JsonObject generator, String key, String nameKey) {
+        JsonArray out = new JsonArray();
+        JsonElement held = generator.get(key);
+        if (held == null) { return out; }
+
+        JsonArray listed = new JsonArray();
+        if (held.isJsonArray()) { listed = held.getAsJsonArray(); }
+        else { listed.add(held); }
+
+        for (JsonElement element : listed) {
+            boolean object = element.isJsonObject();
+            String raw = object ? JsonUtils.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
+            String mapped = TURN_NAMES.get(raw.trim().toUpperCase(Locale.ROOT));
+            if (mapped == null) { continue; }
+
+            JsonObject pick = new JsonObject();
+            pick.addProperty(nameKey, mapped);
+            if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", JsonUtils.getInt(element.getAsJsonObject(), "weight", 1)); }
+            out.add(pick);
+        }
+        return out;
+    }
+
+    private static JsonArray ignored(JsonObject generator) {
+        JsonArray out = new JsonArray();
+        JsonElement held = generator.get("ignored-block");
+        if (held == null) { return out; }
+        if (!held.isJsonArray()) { out.add(target(held)); return out; }
+
+        for (JsonElement element : held.getAsJsonArray()) { out.add(target(element)); }
+        return out;
+    }
 
     private static JsonArray material(JsonObject generator) {
         JsonArray out = new JsonArray();
