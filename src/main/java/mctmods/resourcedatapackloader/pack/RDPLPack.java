@@ -103,6 +103,22 @@ public final class RDPLPack {
         return new String(Files.readAllBytes(locate(namespace, path)), StandardCharsets.UTF_8);
     }
 
+    public java.util.List<String> packFiles(String folder, String ext) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        Path home = root.resolve(folder);
+        if (!Files.isDirectory(home)) { return out; }
+
+        try (java.nio.file.DirectoryStream<Path> entries = Files.newDirectoryStream(home)) {
+            for (Path entry : entries) {
+                String name = entry.getFileName().toString();
+                if (name.endsWith("/")) { name = name.substring(0, name.length() - 1); }
+                if (Files.isRegularFile(entry) && name.endsWith("." + ext)) { out.add(name); }
+            }
+        }
+        catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not list {}", this.name, folder, ex); }
+        return out;
+    }
+
     @Nullable public String readPackFile(String fileName) throws IOException {
         Path file = root.resolve(fileName);
         if (!Files.isRegularFile(file)) { return null; }

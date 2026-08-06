@@ -306,6 +306,8 @@ public class Config {
         public String[] structureSeparation = {};
         @net.minecraftforge.common.config.Config.Comment("How far from world spawn, in blocks, before a structure starts generating, written as structure=blocks, one per line")
         public String[] structureMinDistanceFromSpawn = {};
+        @net.minecraftforge.common.config.Config.Comment("Pin structures to exact places as structure=x,z entries, one per line, e.g. villages=1000,-500. A pinned structure generates only in the chunks named, each at its usual ground rules, and its spacing, separation and flat-ground checks stand aside [Default=[]]")
+        public String[] structureAt = {};
         @net.minecraftforge.common.config.Config.Comment("Biomes a structure generates in, written as structure=biome,biome, one per line. Names are registry names, biome names or dictionary types such as SANDY")
         public String[] structureBiomes = {};
         @net.minecraftforge.common.config.Config.Comment("Mobs a structure spawns whatever the biome says, written as structure=namespace:entity:weight:least:most, comma separated, one structure per line. Temples, monuments and nether fortresses have such a list. An empty list after the equals stops that structure spawning anything")

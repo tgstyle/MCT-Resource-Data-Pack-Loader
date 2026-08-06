@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
@@ -52,7 +53,6 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
@@ -602,10 +602,5 @@ public final class ContentEntities {
         return entry.getEntityClass().asSubclass(EntityLivingBase.class);
     }
 
-    private static boolean present(EntityVariantDef def) {
-        for (String name : def.requires) {
-            if (!Loader.isModLoaded(name) && !PackManager.get().provides(name)) { return false; }
-        }
-        return true;
-    }
+    private static boolean present(EntityVariantDef def) { return ContentRegistry.available(def.requires, def.registryName); }
 }

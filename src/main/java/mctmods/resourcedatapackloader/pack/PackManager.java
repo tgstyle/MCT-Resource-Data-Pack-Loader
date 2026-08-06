@@ -112,8 +112,11 @@ public final class PackManager {
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(packRoot)) {
             for (Path entry : entries) {
                 String fileName = entry.getFileName().toString();
-                if (RDPLPack.ASSETS.equals(fileName)) { continue; }
-                if (README.equals(fileName)) { continue; }
+                switch (fileName) {
+                    case RDPLPack.ASSETS:
+                    case README:
+                    case "config": continue;
+                }
                 if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED)) {
                     ContentLog.LOGGER.info("Skipping disabled pack '{}'", fileName);
                     continue;
@@ -130,6 +133,7 @@ public final class PackManager {
         buildIndex();
         namespacesNormal = null;
         namespacesOverride = null;
+        PackOptions.reload(packRoot, packs);
     }
 
     private void buildIndex() {
@@ -159,6 +163,7 @@ public final class PackManager {
     private void prepare(Path packRoot) {
         try {
             Files.createDirectories(packRoot.resolve(RDPLPack.ASSETS));
+            Files.createDirectories(packRoot.resolve("config"));
             Path readme = packRoot.resolve(README);
             String text = readmeText();
             boolean missing = !Files.exists(readme);

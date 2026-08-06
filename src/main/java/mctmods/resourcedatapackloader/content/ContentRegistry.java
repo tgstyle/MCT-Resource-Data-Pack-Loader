@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.content.util.ContentOreDict;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -63,25 +64,25 @@ public final class ContentRegistry {
         loaded = true;
         if (!Config.content.load) { return; }
 
-        PackManager.get().forEach(PackManager.BLOCKS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            if (ContentOwners.reserved(key)) { return; }
+        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
+            ResourceLocation key = held.getKey();
+            if (ContentOwners.reserved(key)) { continue; }
             try {
-                BlockDef def = ContentParser.block(key, contents);
+                BlockDef def = ContentParser.block(key, held.getValue());
                 if (def != null) { BLOCK_DEFS.put(key, def); }
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", key, ex.getMessage()); }
-        });
+        }
 
-        PackManager.get().forEach(PackManager.ITEMS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            if (ContentOwners.reserved(key)) { return; }
+        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
+            ResourceLocation key = held.getKey();
+            if (ContentOwners.reserved(key)) { continue; }
             try {
-                ItemDef def = ContentParser.item(key, contents);
+                ItemDef def = ContentParser.item(key, held.getValue());
                 if (def != null) { ITEM_DEFS.put(key, def); }
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", key, ex.getMessage()); }
-        });
+        }
 
         PackManager.get().forEach(PackManager.FLUIDS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
@@ -121,6 +122,28 @@ public final class ContentRegistry {
 
     public static boolean available(List<String> requires, ResourceLocation key) {
         for (String modid : requires) {
+            if (modid.startsWith("file:")) {
+                String asked = modid.substring("file:".length()).replace('\\', '/');
+                if (asked.contains("..") || asked.startsWith("/") || asked.contains(":")) {
+                    if (WARNED.add(modid)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, whose path must be relative to the game folder, without '..'", modid); }
+                    return false;
+                }
+                java.io.File home = net.minecraft.launchwrapper.Launch.minecraftHome != null ? net.minecraft.launchwrapper.Launch.minecraftHome : new java.io.File(".");
+                if (new java.io.File(home, asked).exists()) { continue; }
+
+                ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
+                return false;
+            }
+            if (modid.startsWith("config:")) {
+                String asked = modid.substring("config:".length());
+                int split = asked.indexOf(':');
+                Boolean held = split < 0 ? PackOptions.anywhere(asked) : PackOptions.option(asked.substring(0, split), asked.substring(split + 1));
+                if (Boolean.TRUE.equals(held)) { continue; }
+
+                if (held == null && WARNED.add(modid)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, which no pack option file defines. Check the name against the files in rdploader/config", modid); }
+                ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
+                return false;
+            }
             if (Loader.isModLoaded(modid) || PackManager.get().provides(modid)) { continue; }
 
             if (WARNED.add(modid)) {

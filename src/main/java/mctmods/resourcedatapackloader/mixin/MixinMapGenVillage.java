@@ -29,6 +29,11 @@ public abstract class MixinMapGenVillage {
         World world = ((AccessorMapGenBase) this).rdpl$getWorld();
         if (world == null) { return; }
 
+        if (ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, chunkX, chunkZ)) {
+            cir.setReturnValue(true);
+            return;
+        }
+
         Boolean flat = ContentBeard.flatSite(world, chunkX, chunkZ, distance);
         if (flat == null) { return; }
         if (!flat) {

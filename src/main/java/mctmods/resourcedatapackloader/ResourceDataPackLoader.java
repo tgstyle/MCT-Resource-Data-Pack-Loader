@@ -122,7 +122,10 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
             MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);
         }
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ClientCommands.register(); }
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            ClientCommands.register();
+            MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
+        }
     }
 
     @Mod.EventHandler public void loadComplete(FMLLoadCompleteEvent event) { FurnaceBlocking.apply(); }

@@ -41,6 +41,7 @@ public final class ContentStructurePlacement {
     private static final Map<String, Boolean> BLACKLISTS = new LinkedHashMap<>();
     private static final Map<String, List<String>> SPAWNS = new LinkedHashMap<>();
     private static final Map<String, List<ResourceLocation>> SPAWNERS = new LinkedHashMap<>();
+    private static final Map<String, List<long[]>> AT = new LinkedHashMap<>();
     private static boolean loaded;
 
     private ContentStructurePlacement() {}
@@ -59,6 +60,14 @@ public final class ContentStructurePlacement {
     public static boolean allows(String key, World world, int chunkX, int chunkZ) {
         load();
         if (ContentControl.off(ContentControl.STRUCTURES) || world == null) { return true; }
+
+        List<long[]> pinned = AT.get(key);
+        if (pinned != null) {
+            for (long[] at : pinned) {
+                if ((int) at[0] >> 4 == chunkX && (int) at[1] >> 4 == chunkZ) { return true; }
+            }
+            return false;
+        }
 
         int least = SPAWN_DISTANCE.getOrDefault(key, 0);
         if (least > 0) {
@@ -164,6 +173,7 @@ public final class ContentStructurePlacement {
         numbers(SPACING, "structureSpacing", Config.worldgen.structureSpacing);
         numbers(SEPARATION, "structureSeparation", Config.worldgen.structureSeparation);
         numbers(SPAWN_DISTANCE, "structureMinDistanceFromSpawn", Config.worldgen.structureMinDistanceFromSpawn);
+        pins(Config.worldgen.structureAt);
         lists(Config.worldgen.structureBiomes);
         spawnLists(Config.worldgen.structureSpawns);
         spawnerLists(Config.worldgen.structureSpawners);
@@ -188,6 +198,33 @@ public final class ContentStructurePlacement {
 
             try { into.put(parts[0], Integer.parseInt(parts[1].trim())); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("{} entry '{}' does not end in a number, ignoring it", setting, entry); }
+        }
+    }
+
+    public static boolean pinned(String key, int chunkX, int chunkZ) {
+        load();
+        List<long[]> pinned = AT.get(key);
+        if (pinned == null) { return false; }
+
+        for (long[] at : pinned) {
+            if ((int) at[0] >> 4 == chunkX && (int) at[1] >> 4 == chunkZ) { return true; }
+        }
+        return false;
+    }
+
+    private static void pins(String[] fallback) {
+        AT.clear();
+        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAt", fallback)) {
+            String[] parts = split(entry, "structureAt");
+            if (parts == null) { continue; }
+
+            String[] coords = parts[1].split(",");
+            if (coords.length != 2) {
+                ContentLog.LOGGER.error("structureAt entry '{}' does not end in x,z, ignoring it", entry);
+                continue;
+            }
+            try { AT.computeIfAbsent(parts[0], held -> new java.util.ArrayList<>()).add(new long[] {Long.parseLong(coords[0].trim()), Long.parseLong(coords[1].trim())}); }
+            catch (NumberFormatException ex) { ContentLog.LOGGER.error("structureAt entry '{}' does not end in x,z, ignoring it", entry); }
         }
     }
 

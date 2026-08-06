@@ -22,6 +22,8 @@ public final class ContentImprint implements IContentShape {
     private final ResourceLocation key;
     private final ResourceLocation template;
 
+    public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
+
     public ContentImprint(ShapeDef shape, ResourceLocation key) {
         this.shape = shape;
         this.key = key;

@@ -41,6 +41,7 @@ public final class ShapeDef {
     public final boolean hanging;
     public final String structure;
     public String locateAs = "";
+    public int[] at = null;
     public final int integrity;
     public final int rarity;
     public final boolean perChunk;

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.village;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
@@ -17,7 +18,6 @@ import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,12 +94,7 @@ public final class ContentVillages {
         return named;
     }
 
-    private static boolean present(VillageDef def) {
-        for (String name : def.requires) {
-            if (!Loader.isModLoaded(name) && !PackManager.get().provides(name)) { return false; }
-        }
-        return true;
-    }
+    private static boolean present(VillageDef def) { return ContentRegistry.available(def.requires, def.registryName); }
 
     @Nullable private static VillageDef pick(Random random) {
         int total = 0;

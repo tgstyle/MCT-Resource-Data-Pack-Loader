@@ -246,6 +246,82 @@ What to do, in order:
 
 RDPL is good for replacing one or two recipes, and recipes for your own content should be added in the pack alongside it. For full recipe control across a modpack, CraftTweaker and GroovyScript are the better options, and a file here still replaces the original completely, so to change one ingredient or drop one loot entry, use those.
 
+### Pack options
+
+A pack can carry a `config` folder beside its `assets`, holding JSON files of true/false options with their defaults:
+
+    PackA.zip/config/options.json
+    { "enableTestingContent": true, "enableLoserBlocks": false }
+
+A file with `"hide": true` at the top level keeps that pack's options out of the options screen and the generated file entirely, while the options still gate content at their defaults, for shipping a pack whose switches are not ready to show yet. Remove the key to publish them. The same works per option: `"hide": true` inside an option's object hides just that one, so a finished pack can carry switches for unfinished content without showing them:
+
+    { "enablePackB": { "default": false, "hide": true } }
+
+Since a hidden option cannot be flipped, one hidden with its default true is effectively forced on, for content that must stay wired through the option machinery but is not a choice.
+
+An option can also be an object carrying a description, shown under its name in the options screen:
+
+    { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
+
+On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start. Options belong to named packs only, a folder or a zip, since the generated file is named after the pack; loose files under `rdploader/assets` have no pack name and carry no options, so wrap loose content in a named folder if it needs a switch.
+
+Any definition's `requires` list can then name an option with a `config:` entry: `"requires": ["config:enableTestingContent"]` registers that content only while the option is true, exactly as a missing mod would skip it. A bare name checks every pack's file and every pack defining it must agree; `"config:PackA:enableTestingContent"` names one pack. An option no pack defines counts as false and is warned about once.
+
+A `file:` entry gates on a file or folder existing under the game folder, for coupling content to something outside RDPL's own packs, such as another mod's resource pack: `"requires": ["file:config/StarMaker/resources/0_jackspace2_celestialpack.zip"]` registers the content only while that exact file is installed. The path is relative to the game folder, always with forward slashes, and may not contain `..`.
+
+### Inheriting definitions
+
+A block or item definition can start from another in the same kind with `"inherits"`, naming any variant's registry name, then override whatever differs:
+
+    { "inherits": "mypack:ruby_ore",
+      "variants": { "sapphire_ore": { "meta": 0, "hardness": 4.0 } } }
+
+The child copies every stat of the parent's file and the named variant, file order never matters, chains resolve parent-first, and a circle or a missing parent is logged and leaves the child as written. Fields the child writes replace the inherited value; nested variant properties override one by one, but lists such as `requires` replace whole, so write the full list wanted. Blocks inherit only from blocks and items only from items.
+
+### Block and item templates
+
+A parent can be a pure template that never enters the game, since inheritance reads the definition files themselves, not what registered. Gate the template behind a hidden option that is forced off, and it registers nothing while its stats stay inheritable:
+
+`config/options.json`
+
+```json
+{
+  "templates": { "default": false, "hide": true, "description": "Never on, parents only" }
+}
+```
+
+`assets/jacksmod/blocks/ore_template.json`
+
+```json
+{
+  "type": "ore",
+  "material": "rock",
+  "soundType": "stone",
+  "harvestTool": "pickaxe",
+  "harvestToolLevel": 2,
+  "creativeTab": "jacksmod:tab",
+  "expDrop": { "min": 2, "max": 5 },
+  "requires": ["config:templates"],
+  "variants": {
+    "ore_template": { "meta": 0, "hardness": 3.0, "resistance": 5.0 }
+  }
+}
+```
+
+`assets/jacksmod/blocks/jacks_ore.json`
+
+```json
+{
+  "inherits": "jacksmod:ore_template",
+  "requires": [],
+  "variants": {
+    "jacks_ore": { "meta": 0, "hardness": 4.0 }
+  }
+}
+```
+
+The template never registers, while `jacks_ore` registers with the template's material, sound, tool, tab, exp drops and resistance, overriding only hardness. The child must write its own `requires`, here cleared to an empty list, because it inherits the parent's otherwise and would vanish with it.
+
 ### Finding placed structures
 
 An `imprint` entry with `"locateAs": "Crypt"` registers every structure it places under that name, and `/locate Crypt` then points at the nearest one, with the name offered in tab completion. Only structures that have already generated can be found, since pack structures are placed by chance as chunks are made rather than on a grid the game could predict. The names live in the world's save, so they survive restarts and work on servers.

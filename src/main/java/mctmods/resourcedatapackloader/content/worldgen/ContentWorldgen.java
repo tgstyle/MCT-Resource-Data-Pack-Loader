@@ -45,6 +45,14 @@ public final class ContentWorldgen implements IWorldGenerator {
 
             ContentOreControl.beginPack(def.registryName.getNamespace());
             try {
+                if (figure instanceof ContentImprint && ((ContentImprint) figure).pinnedAt() != null) {
+                    int[] at = ((ContentImprint) figure).pinnedAt();
+                    if (at[0] >> 4 == chunkX && at[1] >> 4 == chunkZ) {
+                        BlockPos pos = world.getTopSolidOrLiquidBlock(new BlockPos(at[0], 0, at[1]));
+                        figure.generate(world, random, pos);
+                    }
+                    continue;
+                }
                 if (figure instanceof ContentBelt) {
                     ((ContentBelt) figure).generateChunk(world, chunkX, chunkZ, source -> allows(def, world, source, filtered));
                     continue;
