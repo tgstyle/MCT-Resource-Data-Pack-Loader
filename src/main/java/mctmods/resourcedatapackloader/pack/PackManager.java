@@ -66,7 +66,7 @@ public final class PackManager {
     public static final String ENTITIES = "entities";
     public static final String JSON = "json";
     public static final String MCFUNCTION = "mcfunction";
-    private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?([OoNn])?[ _-]?");
+    private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
     private final List<RDPLPack> packs = new CopyOnWriteArrayList<>();
     private final Map<String, Map<String, Entry>> mergedNormal = new ConcurrentHashMap<>();

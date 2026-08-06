@@ -211,6 +211,8 @@ rdploader/RDPL1O Seasonal       priority and override, both at once
 
 Packs with no letter follow the `overrideResourcePacks` option in the config. `/rdpl list` marks the ones that override.
 
+The letter has to be the end of the prefix, so it needs a space, dash or underscore after it, or nothing at all. That is what keeps a pack named `RDPLOverhaul` from having its `O` read as the letter and showing up as `Overhaul`.
+
 ---
 
 ## Server-side packs
