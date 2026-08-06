@@ -90,9 +90,10 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
         return "mctmods.resourcedatapackloader.core.CofhWorldContainer";
     }
 
-    private static boolean cofhWorldPresent() {
-        String marker = "cofh/cofhworld/CoFHWorld.class";
-        if (MCTMixin.class.getClassLoader().getResource(marker) != null) { return true; }
+    private static boolean cofhWorldPresent() { return inModJars(); }
+
+    private static boolean inModJars() {
+        if (MCTMixin.class.getClassLoader().getResource("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
 
         try {
             File home = (File) net.minecraftforge.fml.relauncher.FMLInjectionData.data()[6];
@@ -102,15 +103,15 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
                 if (jars == null) { continue; }
                 for (File jar : jars) {
                     try (ZipFile zip = new ZipFile(jar)) {
-                        if (zip.getEntry(marker) != null) { return true; }
+                        if (zip.getEntry("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
                     }
-                    catch (Exception unreadable) { LOGGER.debug("Could not open {} while looking for CoFH World", jar.getName()); }
+                    catch (Exception unreadable) { LOGGER.debug("Could not open {} while looking for {}", jar.getName(), "CoFH World"); }
                 }
             }
             return false;
         }
         catch (Exception failed) {
-            LOGGER.warn("Could not scan the mods folder for CoFH World, assuming it is absent", failed);
+            LOGGER.warn("Could not scan the mods folder for " + "CoFH World" + ", assuming it is absent", failed);
             return false;
         }
     }
@@ -134,7 +135,8 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override public String getAccessTransformerClass() { return null; }
 
-    @Override public List<String> getMixinConfigs() { return Arrays.asList("mixins.resourcedatapackloader.json", "mixins.resourcedatapackloader.fml.json", "mixins.resourcedatapackloader.groovyscript.json"); }
+    @Override public List<String> getMixinConfigs() { return Arrays.asList("mixins.resourcedatapackloader.json", "mixins.resourcedatapackloader.fml.json", "mixins.resourcedatapackloader.groovyscript.json",
+            "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json"); }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (mixinConfig.endsWith(".fml.json")) { return !cleanroom(); }

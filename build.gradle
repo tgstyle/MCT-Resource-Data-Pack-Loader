@@ -53,6 +53,7 @@ minecraft {
     extraRunJvmArguments.addAll(
             '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin',
             '-Dforge.logging.console.level=debug',
+            '-Dmixin.debug=true',
             '-XX:+UseG1GC',
             '-Xmx3G',
             '-XX:+FlightRecorder',

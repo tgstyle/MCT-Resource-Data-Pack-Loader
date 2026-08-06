@@ -21,6 +21,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "MixinChunkProviderLookup"));
     private Boolean lightingReplaced;
     private Boolean optimizationsOff;
+    private Boolean universalTweaks;
 
     @Override public void onLoad(String mixinPackage) {}
 
@@ -28,6 +29,15 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
+        switch (simple) {
+            case "MixinBlockCactus":
+            case "MixinBlockReed":
+                return standDown(simple, universalTweaksPresent());
+            case "MixinBlockGrassPath":
+                return standDown(simple, universalTweaksPresent() && tweakOn("Lenient Paths"));
+            case "MixinBlockLeaves":
+                return standDown(simple, universalTweaksPresent() && tweakOn("Fast Leaf Decay"));
+        }
         if (OPTIMIZATIONS.contains(simple)) {
             if (optimizationsOff == null) {
                 optimizationsOff = optimizationsDisabled();
@@ -42,6 +52,32 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             if (lightingReplaced) { LogManager.getLogger("RDPL").info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
         }
         return !lightingReplaced;
+    }
+
+    private static boolean standDown(String simple, boolean taken) {
+        if (taken) { LogManager.getLogger("RDPL").info("Universal Tweaks already covers this, so {} is left out", simple); }
+
+        return !taken;
+    }
+
+    private boolean universalTweaksPresent() {
+        if (universalTweaks == null) { universalTweaks = Launch.classLoader.getResource("mod/acgaming/universaltweaks/UniversalTweaks.class") != null; }
+        return universalTweaks;
+    }
+
+    private static boolean tweakOn(String name) {
+        try {
+            File held = new File(Launch.minecraftHome, "config/Universal Tweaks - Tweaks.cfg");
+            if (!held.isFile()) { return true; }
+
+            String wanted = "B:\"" + name + "\"=";
+            for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith(wanted)) { return trimmed.endsWith("true"); }
+            }
+        }
+        catch (Exception ignored) {}
+        return true;
     }
 
     private static boolean optimizationsDisabled() {

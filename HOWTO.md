@@ -53,6 +53,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 **Control**
 - [The control layer](#the-control-layer)
 - [What each group does](#what-each-group-does)
+- [Universal Tweaks](#universal-tweaks)
 - [CoFH World](#cofh-world)
 
 **Reference**
@@ -1967,6 +1968,24 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 
 `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says. The whitelists are `recipeWhitelist` and `furnaceWhitelist`; `blockedRecipeMods` and `blockedFurnaceMods` go the other way and remove a named mod's recipes whatever the whitelist says. `recipeMatch` decides where the mod id is read from when crafting recipes are blocked, from the recipe's own name or from what it produces.
 
+## Universal Tweaks
+
+Universal Tweaks changes several of the same vanilla blocks and behaviors this mod does. Where they overlap, this mod stands down and lets Universal Tweaks have it, rather than both editing the same method and leaving the result to whichever loaded last. Every time that happens it says so in the log, naming what was left out.
+
+| What overlaps | When this mod steps aside |
+| --- | --- |
+| `promptLeafDecay` | Universal Tweaks has `Fast Leaf Decay` on |
+| `lenientPaths` | Universal Tweaks has `Lenient Paths` on |
+| `cactusMaxHeight` | Universal Tweaks is installed |
+| `caneMaxHeight` | Universal Tweaks is installed |
+| Nether portal return | Universal Tweaks is installed |
+
+The first two read Universal Tweaks' own switches out of `config/Universal Tweaks - Tweaks.cfg`, so turning one off there hands that job back here. The height pair has no such switch to read, only `Cactus Size` and `Sugar Cane Size`, so this mod steps aside whenever Universal Tweaks is present at all and you set the height there instead.
+
+**Nether portal return** is the one with no option on this side. Without it, walking back through a nether portal drops you at whatever portal vanilla's search happens to find, which after enough travelling is often not the one you came from. This mod records where you entered the nether and puts you back there. Universal Tweaks has its own handling, so this is skipped entirely when it is installed.
+
+**None of it touches a pack.** Everything above is about Minecraft's own cactus, cane, leaves, paths and portals. Blocks your pack defines carry their own behavior, and pack portals under `portals/*.json` are a separate system that Universal Tweaks never sees.
+
 ## CoFH World
 
 Mods that require CoFH World load without it, the requirement is removed automatically, except for mods that genuinely call its API and would crash.
@@ -2132,7 +2151,17 @@ Small changes to how vanilla behaves, each switched in the `tweaks` config categ
 | `lenientPaths` | on | Grass paths can be made under a block and stay there when one is placed above |
 | `unbreakableSpawners` | off | Mob spawners cannot be mined or blown up |
 
-The first two hand themselves over when Universal Tweaks is installed, since it does the same thing. `lenientPaths` also lifts the same restriction from pack blocks using `behavesAs`, which Universal Tweaks does not touch, so that half stays on either way.
+Three more sit in the `content` category rather than `tweaks`:
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `cactusMaxHeight` | `3` | How tall vanilla cactus grows |
+| `caneMaxHeight` | `3` | How tall vanilla sugar cane grows |
+| `shovelPaths` | on | A shovel turns blocks marked `behavesAs` path into a path, and sneaking reverts one |
+
+**These give way to Universal Tweaks**, which changes the same vanilla blocks. See [Universal Tweaks](#universal-tweaks) for exactly when.
+
+**None of this reaches a pack.** These options only change Minecraft's own cactus, cane, leaves and paths. A block your pack defines with `"type": "cane"` carries its own `growth` section and grows to whatever height you gave it, whatever else is installed. `lenientPaths` also lifts the same restriction from pack blocks using `behavesAs`, which Universal Tweaks does not touch, so that half stays on either way.
 
 ### Unbreakable spawners
 

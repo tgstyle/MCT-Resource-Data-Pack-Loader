@@ -21,9 +21,7 @@ public class MCTLateMixin implements ILateMixinLoader {
                 "mixins.resourcedatapackloader.crafttweaker.json",
                 "mixins.resourcedatapackloader.dungeons2.json",
                 "mixins.resourcedatapackloader.quark.json",
-                "mixins.resourcedatapackloader.vanillaportals.json",
-                "mixins.resourcedatapackloader.vanillagrowth.json",
-                "mixins.resourcedatapackloader.vanillatweaks.json");
+                "mixins.resourcedatapackloader.vanillaportals.json");
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
@@ -35,8 +33,6 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (mixinConfig.endsWith(".dungeons2.json")) { return Loader.isModLoaded("dungeons2"); }
         if (mixinConfig.endsWith(".quark.json")) { return Loader.isModLoaded("quark"); }
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
-        if (mixinConfig.endsWith(".vanillagrowth.json")) { return !Loader.isModLoaded("universaltweaks"); }
-        if (mixinConfig.endsWith(".vanillatweaks.json")) { return !Loader.isModLoaded("universaltweaks"); }
         return true;
     }
 
