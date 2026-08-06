@@ -122,6 +122,10 @@ public final class ContentRegistry {
 
     public static boolean available(List<String> requires, ResourceLocation key) {
         for (String modid : requires) {
+            if (modid.startsWith("config:")) { PackOptions.gating(modid.substring("config:".length())); }
+        }
+
+        for (String modid : requires) {
             if (modid.startsWith("file:")) {
                 String asked = modid.substring("file:".length()).replace('\\', '/');
                 if (asked.contains("..") || asked.startsWith("/") || asked.contains(":")) {

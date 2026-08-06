@@ -64,3 +64,4 @@ rdpl.world.gamemode=This is a %s world
 rdpl.gui.packOptions=Pack Options...
 rdpl.gui.packOptions.title=RDPL Pack Options
 rdpl.gui.packOptions.restart=Changes apply after restarting the game
+rdpl.gui.packOptions.restartRequired=Restart the game before making a world, pack options have changed

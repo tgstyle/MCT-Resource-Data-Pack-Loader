@@ -31,7 +31,13 @@ public class GuiPackOptions extends GuiScreen {
 
     private boolean changed() {
         for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) {
-            if (!entry.getValue().equals(loaded.get(entry.getKey()))) { return true; }
+            Map<String, Boolean> was = loaded.get(entry.getKey());
+            if (was == null) { continue; }
+
+            for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
+                if (!PackOptions.gates(entry.getKey(), option.getKey())) { continue; }
+                if (!option.getValue().equals(was.get(option.getKey()))) { return true; }
+            }
         }
         return false;
     }
@@ -45,6 +51,7 @@ public class GuiPackOptions extends GuiScreen {
     @Override protected void actionPerformed(GuiButton button) {
         if (button.id != 0) { return; }
         for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) { PackOptions.save(entry.getKey(), entry.getValue()); }
+        PackOptions.report();
         mc.displayGuiScreen(parent);
     }
 

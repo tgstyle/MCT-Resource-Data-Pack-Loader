@@ -11,11 +11,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 public final class PackOptions {
     private static final Map<String, Map<String, Boolean>> VALUES = new LinkedHashMap<>();
+    private static final Map<String, Map<String, Boolean>> LOADED = new LinkedHashMap<>();
+    private static final Set<String> GATING = new LinkedHashSet<>();
     private static final Map<String, Map<String, Boolean>> HIDDEN = new LinkedHashMap<>();
     private static final Map<String, Map<String, String>> ABOUT = new LinkedHashMap<>();
     private static Path HOME;
@@ -24,6 +27,7 @@ public final class PackOptions {
 
     public static void reload(Path packRoot, Iterable<RDPLPack> packs) {
         VALUES.clear();
+        LOADED.clear();
         HIDDEN.clear();
         ABOUT.clear();
         Path home = packRoot.resolve("config");
@@ -74,6 +78,7 @@ public final class PackOptions {
             }
             catch (IOException ex) { ContentLog.LOGGER.error("Could not write the options file for pack '{}'", key, ex); }
         }
+        for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) { LOADED.put(entry.getKey(), new LinkedHashMap<>(entry.getValue())); }
         if (!VALUES.isEmpty()) { ContentLog.LOGGER.info("Loaded {} pack option file(s) from {}", VALUES.size(), home); }
     }
 
@@ -146,6 +151,42 @@ public final class PackOptions {
         Map<String, Boolean> held = VALUES.get(fileKey);
         return held == null ? new LinkedHashMap<>() : new LinkedHashMap<>(held);
     }
+
+    public static boolean applied() {
+        for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) {
+            Map<String, Boolean> was = LOADED.get(entry.getKey());
+            if (was == null) { continue; }
+
+            for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
+                if (!gates(entry.getKey(), option.getKey())) { continue; }
+                if (!option.getValue().equals(was.get(option.getKey()))) { return false; }
+            }
+        }
+        return true;
+    }
+
+    public static void gating(String asked) { GATING.add(asked); }
+
+    public static void report() {
+        ContentLog.LOGGER.info("Pack options: {} name(s) gate content: {}", GATING.size(), GATING);
+        for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) {
+            Map<String, Boolean> was = LOADED.get(entry.getKey());
+            if (was == null) {
+                ContentLog.LOGGER.info("Pack options: {} has no loaded snapshot, so nothing there is compared", entry.getKey());
+                continue;
+            }
+
+            for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
+                Boolean before = was.get(option.getKey());
+                if (option.getValue().equals(before)) { continue; }
+
+                ContentLog.LOGGER.info("Pack options: {}:{} went from {} to {}, and gates content: {}", entry.getKey(), option.getKey(), before, option.getValue(), gates(entry.getKey(), option.getKey()));
+            }
+        }
+        ContentLog.LOGGER.info("Pack options: a restart is needed: {}", !applied());
+    }
+
+    public static boolean gates(String fileKey, String name) { return GATING.contains(name) || GATING.contains(fileKey + ":" + name); }
 
     public static void save(String fileKey, Map<String, Boolean> options) {
         Map<String, Boolean> held = VALUES.get(fileKey);
