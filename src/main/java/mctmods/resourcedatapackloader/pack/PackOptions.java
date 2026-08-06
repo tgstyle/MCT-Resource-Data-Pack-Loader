@@ -9,17 +9,21 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public final class PackOptions {
     private static final Map<String, Map<String, Boolean>> VALUES = new LinkedHashMap<>();
     private static final Map<String, Map<String, Boolean>> LOADED = new LinkedHashMap<>();
     private static final Set<String> GATING = new LinkedHashSet<>();
-    private static final java.util.List<String> WORLD_CHANGED = new java.util.ArrayList<>();
+    private static final List<String> WORLD_CHANGED = new ArrayList<>();
     private static final Map<String, Map<String, Boolean>> HIDDEN = new LinkedHashMap<>();
     private static final Map<String, Map<String, String>> ABOUT = new LinkedHashMap<>();
     private static Path HOME;
@@ -38,7 +42,7 @@ public final class PackOptions {
 
             JsonObject defaults = new JsonObject();
             Map<String, String> about = new LinkedHashMap<>();
-            Set<String> shy = new java.util.HashSet<>();
+            Set<String> shy = new HashSet<>();
             for (String fileName : pack.packFiles("config", "json")) {
                 JsonObject read = booleansOf(pack, fileName, about, shy);
                 if (read == null) { continue; }
@@ -81,6 +85,39 @@ public final class PackOptions {
         }
         for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) { LOADED.put(entry.getKey(), new LinkedHashMap<>(entry.getValue())); }
         if (!VALUES.isEmpty()) { ContentLog.LOGGER.info("Loaded {} pack option file(s) from {}", VALUES.size(), home); }
+        List<String> stale = orphans();
+        if (!stale.isEmpty()) { ContentLog.LOGGER.info("{} option file(s) in {} belong to no installed pack, left alone: {}. Use /rdpl config prune to remove them", stale.size(), home, String.join(", ", stale)); }
+    }
+
+    public static List<String> orphans() {
+        List<String> stale = new ArrayList<>();
+        if (HOME == null || !Files.isDirectory(HOME)) { return stale; }
+
+        try (Stream<Path> held = Files.list(HOME)) {
+            held.filter(Files::isRegularFile)
+                    .map(one -> one.getFileName().toString())
+                    .filter(one -> one.endsWith(".json"))
+                    .map(one -> one.substring(0, one.length() - 5))
+                    .filter(one -> !VALUES.containsKey(one))
+                    .sorted()
+                    .forEach(stale::add);
+        }
+        catch (IOException ex) { ContentLog.LOGGER.warn("Could not look through {} for unused option files", HOME, ex); }
+        return stale;
+    }
+
+    public static int prune() {
+        List<String> stale = orphans();
+        int gone = 0;
+        for (String one : stale) {
+            try {
+                Files.delete(HOME.resolve(one + ".json"));
+                ContentLog.LOGGER.info("Removed unused option file '{}.json'", one);
+                gone++;
+            }
+            catch (IOException ex) { ContentLog.LOGGER.error("Could not remove '{}.json'", one, ex); }
+        }
+        return gone;
     }
 
     private static JsonObject booleansOf(RDPLPack pack, String fileName, Map<String, String> about, Set<String> shy) {
@@ -146,7 +183,7 @@ public final class PackOptions {
         return unseen == null ? null : unseen.get(name);
     }
 
-    public static java.util.List<String> files() { return new java.util.ArrayList<>(VALUES.keySet()); }
+    public static List<String> files() { return new ArrayList<>(VALUES.keySet()); }
 
     public static Map<String, Boolean> optionsOf(String fileKey) {
         Map<String, Boolean> held = VALUES.get(fileKey);
@@ -183,12 +220,12 @@ public final class PackOptions {
         return found;
     }
 
-    public static void worldChanged(java.util.List<String> changed) {
+    public static void worldChanged(List<String> changed) {
         WORLD_CHANGED.clear();
         WORLD_CHANGED.addAll(changed);
     }
 
-    public static java.util.List<String> worldChanged() { return WORLD_CHANGED; }
+    public static List<String> worldChanged() { return WORLD_CHANGED; }
 
     public static void worldTold() { WORLD_CHANGED.clear(); }
 

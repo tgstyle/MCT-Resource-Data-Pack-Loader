@@ -3,22 +3,27 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.init.SoundEvents;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GuiPackOptions extends GuiScreen {
     private final GuiScreen parent;
     private final Map<String, Map<String, Boolean>> staged = new LinkedHashMap<>();
     private final Map<String, Map<String, Boolean>> loaded = new LinkedHashMap<>();
+    private final Set<String> folded = new HashSet<>();
     private OptionList list;
 
     public GuiPackOptions(GuiScreen parent) {
@@ -81,9 +86,18 @@ public class GuiPackOptions extends GuiScreen {
 
         OptionList() {
             super(GuiPackOptions.this.mc, GuiPackOptions.this.width, GuiPackOptions.this.height, 28, GuiPackOptions.this.height - 48, 32);
+            rebuild();
+        }
+
+        void rebuild() {
+            rows.clear();
+            boolean first = true;
             for (Map.Entry<String, Map<String, Boolean>> file : staged.entrySet()) {
-                rows.add(new Row(file.getKey(), null));
-                for (String name : file.getValue().keySet()) { rows.add(new Row(file.getKey(), name)); }
+                rows.add(new Row(file.getKey(), null, first));
+                first = false;
+                if (folded.contains(file.getKey())) { continue; }
+
+                for (String name : file.getValue().keySet()) { rows.add(new Row(file.getKey(), name, false)); }
             }
         }
 
@@ -98,11 +112,13 @@ public class GuiPackOptions extends GuiScreen {
         class Row implements IGuiListEntry {
             private final String file;
             private final String name;
+            private final boolean first;
             private final GuiButton toggle;
 
-            Row(String file, String name) {
+            Row(String file, String name, boolean first) {
                 this.file = file;
                 this.name = name;
+                this.first = first;
                 this.toggle = name == null ? null : new GuiButton(0, 0, 0, 60, 20, "");
             }
 
@@ -111,7 +127,11 @@ public class GuiPackOptions extends GuiScreen {
             @Override public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks) {
                 Minecraft held = GuiPackOptions.this.mc;
                 if (name == null) {
-                    held.fontRenderer.drawString(file, x + 2, y + slotHeight / 2 - 4, 0xA0A0A0);
+                    if (!first) { drawRect(x + 2, y + 1, x + listWidth - 2, y + 2, 0x30FFFFFF); }
+
+                    String label = (folded.contains(file) ? "+ " : "- ") + file;
+                    int across = x + listWidth / 2 - held.fontRenderer.getStringWidth(label) / 2;
+                    held.fontRenderer.drawString(label, across, y + slotHeight / 2 - 4, 0xFFD080);
                     return;
                 }
                 String about = PackOptions.about(file, name);
@@ -129,7 +149,14 @@ public class GuiPackOptions extends GuiScreen {
             }
 
             @Override public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY) {
-                if (toggle == null || !toggle.mousePressed(GuiPackOptions.this.mc, mouseX, mouseY)) { return false; }
+                if (toggle == null) {
+                    if (!folded.remove(file)) { folded.add(file); }
+
+                    GuiPackOptions.this.mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                    OptionList.this.rebuild();
+                    return true;
+                }
+                if (!toggle.mousePressed(GuiPackOptions.this.mc, mouseX, mouseY)) { return false; }
 
                 Map<String, Boolean> options = staged.get(file);
                 options.put(name, !options.get(name));

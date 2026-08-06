@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -41,7 +42,8 @@ import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT)
 public class Commands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "biome");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "biome", "config");
+    private static final List<String> CONFIG_SUBCOMMANDS = Arrays.asList("unused", "prune");
     private static final Map<String, IResourceType> GROUPS = groups();
 
     private static final List<String> BIOME_SUBCOMMANDS = Arrays.asList("list", "here", "find");
@@ -69,6 +71,7 @@ public class Commands extends CommandBase {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, SUBCOMMANDS); }
         if (args.length == 2 && "reload".equals(args[0])) { return getListOfStringsMatchingLastWord(args, new ArrayList<>(GROUPS.keySet())); }
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_SUBCOMMANDS); }
+        if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_SUBCOMMANDS); }
         if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { return getListOfStringsMatchingLastWord(args, biomeNames()); }
         return Collections.emptyList();
     }
@@ -81,6 +84,7 @@ public class Commands extends CommandBase {
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
         else if (args.length > 0 && "biome".equals(args[0])) { biome(sender, args); }
+        else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -132,6 +136,24 @@ public class Commands extends CommandBase {
             line.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/rdpl which " + firstNamespace(pack) + ":"));
             send(sender, line, "  " + pack.getName() + priority + tier + " " + detail.replace('\n', ' '));
         }
+    }
+
+    private void config(ICommandSender sender, String action) throws CommandException {
+        List<String> stale = PackOptions.orphans();
+        if (stale.isEmpty()) {
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.none"));
+            return;
+        }
+        if ("unused".equals(action)) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.config.unused", stale.size()));
+            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + ".json"); }
+            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.config.note"));
+            return;
+        }
+        if (!"prune".equals(action)) { throw new WrongUsageException(getUsage(sender)); }
+
+        int gone = PackOptions.prune();
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
     }
 
     private void unused(ICommandSender sender) {
