@@ -53,7 +53,7 @@ public final class ContentControl {
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
             "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
-            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "worldGameMode", "worldName", "worldSeed", "worldSpawn", "worldType", "worldTypeExceptions"));
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "worldBorder", "worldGameMode", "worldName", "worldSeed", "worldSpawn", "worldType", "worldTypeExceptions"));
 
     private ContentControl() {}
 

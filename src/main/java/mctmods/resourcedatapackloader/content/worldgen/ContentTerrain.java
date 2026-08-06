@@ -70,6 +70,12 @@ public final class ContentTerrain {
         return ContentControl.text(ContentControl.TERRAIN, "worldSpawn", Config.worldgen.worldSpawn).trim();
     }
 
+    public static int worldBorder() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return 0; }
+
+        return ContentControl.number(ContentControl.TERRAIN, "worldBorder", Config.worldgen.worldBorder);
+    }
+
     @Nullable public static BlockPos spawnFrom(String written, int groundLevel) {
         String[] parts = written.split(",");
         if (parts.length != 2 && parts.length != 3) {

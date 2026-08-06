@@ -288,6 +288,12 @@ public class Config {
         public String worldName = "";
         @net.minecraftforge.common.config.Config.Comment("Where every new world spawns, written as x,z or x,y,z. Without a y the game's usual ground level for the world type is used. Only applied to a world as it is created, so worlds that already exist are left alone. Empty leaves the choice to the game [Default=empty]")
         public String worldSpawn = "";
+        @net.minecraftforge.common.config.Config.Comment("How far across, in blocks, the world border stands in every new world. Only applied to a world as it is created, so worlds that already exist are left alone. 0 leaves the border where the game puts it [Default=0]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 60000000)
+        public int worldBorder = 0;
+        @net.minecraftforge.common.config.Config.Comment("The widest border a pack is allowed to ask for through worldBorder. A pack asking for more is refused and the border is left where the game puts it. A pack cannot set this [Default=60000000]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 60000000)
+        public int worldBorderLimit = 60000000;
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
         public String generatorOptions = "";
         @net.minecraftforge.common.config.Config.Comment("Which world types the terrain settings are given to, by name, such as default, customized, biomesop or realistic. Empty means every world type [Default={}]")

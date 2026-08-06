@@ -1580,6 +1580,11 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 This is worth knowing on flat worlds in particular. The game picks a spawn by looking for grass at sea level, and on a superflat the block above the layer stack is always air, so that check never passes and it wanders up to a thousand steps looking. A flat world can therefore open hundreds of blocks from the origin, nowhere near where a pack expects. Naming `worldSpawn` settles it.
 
+**The world border** is set with `worldBorder` in the `terrain` group, a whole number of blocks across, the same figure `/worldborder set` takes. It is applied as the world is made, so an existing world keeps the border it has, and `0`, the default, leaves the border where the game puts it. The border is centred wherever the game centres it, and can still be moved afterward by command in the usual way.
+
+A pack cannot set a border of any size it likes. `worldBorderLimit` in the config is the widest a pack is allowed to ask for, and a pack asking for more is refused outright rather than quietly cut down: the reason is logged and the border is left alone. Only the person running the game can raise that limit, so a pack cannot hand a server a border it did not agree to.
+
+
 
 **Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
 
