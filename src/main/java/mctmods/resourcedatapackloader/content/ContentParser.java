@@ -613,6 +613,10 @@ public final class ContentParser {
             }
         }
 
+        List<String> tintParts = new ArrayList<>();
+        for (String part : strings(json, "tintParts")) { tintParts.add(part.trim().toLowerCase(Locale.ROOT)); }
+        if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
+
         Map<String, String> equipment = new LinkedHashMap<>();
         if (json.has("equipment")) {
             for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "equipment").entrySet()) {
@@ -719,7 +723,14 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "silent", false),
                 JsonUtils.getBoolean(json, "picksUpLoot", false),
                 JsonUtils.getBoolean(json, "hideArmor", false),
+                JsonUtils.getBoolean(json, "hideHeld", false),
+                json.has("tint") ? ContentTypes.color(JsonUtils.getString(json, "tint", ""), key + " tint") : 0,
+                tintParts,
                 JsonUtils.getBoolean(json, "showName", false),
+                JsonUtils.getBoolean(json, "explodes", false),
+                Math.max(0.0F, JsonUtils.getFloat(json, "explosionPower", 3.0F)),
+                Math.max(1, JsonUtils.getInt(json, "explosionFuse", 30)),
+                JsonUtils.getBoolean(json, "explosionFire", false),
                 equipment, spawns,
                 strings(json, "biomes"), strings(json, "biomeTypes"), strings(json, "requires"));
     }

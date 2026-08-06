@@ -420,6 +420,9 @@ public class Config {
         public boolean promptLeafDecay = true;
         @net.minecraftforge.common.config.Config.Comment("Grass paths can be made under a block and stay there when one is placed above. Ignored when Universal Tweaks is installed, which does this itself [Default=true]")
         public boolean lenientPaths = true;
+        @net.minecraftforge.common.config.Config.Comment("Mob spawners cannot be mined or blown up. Creative mode still removes them. Requires a restart [Default=false]")
+        @net.minecraftforge.common.config.Config.RequiresMcRestart
+        public boolean unbreakableSpawners = false;
     }
 
     public static class Client {

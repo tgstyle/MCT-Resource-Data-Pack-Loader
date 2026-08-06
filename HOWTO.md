@@ -1931,14 +1931,23 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 ## Bonus: vanilla tweaks
 
-Two small changes to how vanilla behaves, both on by default, each switchable off in the `tweaks` config category. Both hand themselves over when Universal Tweaks is installed, since it does the same thing.
+Small changes to how vanilla behaves, each switched in the `tweaks` config category.
 
-| Option | What it does |
-| --- | --- |
-| `promptLeafDecay` | Leaves that lose their tree decay within a second instead of waiting on random ticks |
-| `lenientPaths` | Grass paths can be made under a block and stay there when one is placed above |
+| Option | Default | What it does |
+| --- | --- | --- |
+| `promptLeafDecay` | on | Leaves that lose their tree decay within a second instead of waiting on random ticks |
+| `lenientPaths` | on | Grass paths can be made under a block and stay there when one is placed above |
+| `unbreakableSpawners` | off | Mob spawners cannot be mined or blown up |
 
-`lenientPaths` also lifts the same restriction from pack blocks using `behavesAs`, which Universal Tweaks does not touch, so that half stays on either way.
+The first two hand themselves over when Universal Tweaks is installed, since it does the same thing. `lenientPaths` also lifts the same restriction from pack blocks using `behavesAs`, which Universal Tweaks does not touch, so that half stays on either way.
+
+### Unbreakable spawners
+
+`unbreakableSpawners` gives the mob spawner block bedrock's numbers, an unbreakable hardness and an explosion resistance nothing survives. A player cannot mine one however good the pickaxe, and neither creepers, TNT, nor a pack entity that `explodes` will take one out. Creative mode still removes them, exactly as it still removes bedrock, so a pack author is never locked out of their own build. It requires a restart, since the values are set once as the game finishes loading.
+
+**It is the block, not the spawner.** There is no per-spawner switch. The option changes `minecraft:mob_spawner` itself, so it reaches every spawner in the world at once: the four vanilla structures that place one, any a mod places, and any your own packs place.
+
+That last one is the answer for a custom structure. A spawner inside one of your `.nbt` templates, placed by an `imprint` entry, is an ordinary mob spawner block carrying its own tile entity, so it is covered the moment the option is on. Build the structure with a spawner in it the usual way, set what it spawns in the template's tile entity data, turn `unbreakableSpawners` on, and the one in your dungeon is as unbreakable as the one in vanilla's. Nothing goes in the pack for this, and there is no way to protect only yours while leaving the rest of the world's breakable.
 
 ## Bonus: JEI plugin conflict fix
 

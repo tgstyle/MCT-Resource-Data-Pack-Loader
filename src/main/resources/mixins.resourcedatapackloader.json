@@ -7,6 +7,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "AccessorBiomeName",
+    "AccessorBlock",
     "AccessorChunk",
     "AccessorChunkGeneratorBeardFields",
     "AccessorChunkGeneratorOverworld",
@@ -99,6 +100,7 @@
     "MixinGuiCreateWorld",
     "MixinGuiNewChat",
     "MixinLayerArmorBase",
+    "MixinLayerHeldItem",
     "MixinMinecraft",
     "MixinRender",
     "MixinRenderLivingBase"

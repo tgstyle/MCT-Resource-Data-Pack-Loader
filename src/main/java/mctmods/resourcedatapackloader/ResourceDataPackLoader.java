@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
+import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -128,7 +129,10 @@ public class ResourceDataPackLoader {
         }
     }
 
-    @Mod.EventHandler public void loadComplete(FMLLoadCompleteEvent event) { FurnaceBlocking.apply(); }
+    @Mod.EventHandler public void loadComplete(FMLLoadCompleteEvent event) {
+        FurnaceBlocking.apply();
+        ContentSpawners.apply();
+    }
 
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {
         Path root = PackManager.get().getRoot();

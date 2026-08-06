@@ -279,6 +279,18 @@ public final class ContentEntities {
         return def != null && def.hideArmor;
     }
 
+    public static boolean hidesHeld(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.hideHeld;
+    }
+
+    public static int tint(Entity entity, String part) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        if (def == null || def.tint == 0 || !def.tintParts.contains(part)) { return 0; }
+
+        return def.tint;
+    }
+
     @SubscribeEvent
     public static void onJoin(EntityJoinWorldEvent event) {
         EntityVariantDef def = BY_CLASS.get(event.getEntity().getClass());
@@ -356,7 +368,10 @@ public final class ContentEntities {
             living.setAttackTarget(null);
             return;
         }
-        if (!def.hostile) { return; }
+        if (!def.hostile) {
+            if (def.explodes) { ContentLog.LOGGER.error("Entity variant {} asks to explode, but is not hostile, so it never takes a target to close on", def.registryName); }
+            return;
+        }
         if (!(living instanceof EntityCreature)) {
             ContentLog.LOGGER.error("Entity variant {} asks to be hostile, but {} does not walk the ground the way the attack behavior needs", def.registryName, def.base);
             return;
@@ -375,6 +390,7 @@ public final class ContentEntities {
             }
         }
         if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
+        if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
 
         living.targetTasks.addTask(1, new EntityAIHurtByTarget(creature, true));
         int priority = 2;

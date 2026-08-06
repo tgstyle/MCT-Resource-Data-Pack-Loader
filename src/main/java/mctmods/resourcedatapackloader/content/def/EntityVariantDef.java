@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class EntityVariantDef {
+    public static final String BODY = "body";
+    public static final String ARMOR = "armor";
+    public static final String HELD = "held";
     public final ResourceLocation registryName;
     public final ResourceLocation base;
     public final String name;
@@ -59,7 +62,14 @@ public final class EntityVariantDef {
     public final boolean silent;
     public final boolean picksUpLoot;
     public final boolean hideArmor;
+    public final boolean hideHeld;
+    public final int tint;
+    public final List<String> tintParts;
     public final boolean showName;
+    public final boolean explodes;
+    public final float explosionPower;
+    public final int explosionFuse;
+    public final boolean explosionFire;
     public final Map<String, String> equipment;
     public final List<SpawnEntryDef> spawns;
     public final List<String> biomes;
@@ -73,7 +83,8 @@ public final class EntityVariantDef {
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
                             boolean hostile, boolean passive, List<String> targets, boolean persistent, boolean silent,
-                            boolean picksUpLoot, boolean hideArmor, boolean showName, Map<String, String> equipment, List<SpawnEntryDef> spawns,
+                            boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
+                            boolean explodes, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
                             List<String> biomes, List<String> biomeTypes, List<String> requires) {
         this.registryName = registryName;
         this.base = base;
@@ -129,7 +140,14 @@ public final class EntityVariantDef {
         this.silent = silent;
         this.picksUpLoot = picksUpLoot;
         this.hideArmor = hideArmor;
+        this.hideHeld = hideHeld;
+        this.tint = tint;
+        this.tintParts = tintParts;
         this.showName = showName;
+        this.explodes = explodes;
+        this.explosionPower = explosionPower;
+        this.explosionFuse = explosionFuse;
+        this.explosionFire = explosionFire;
         this.equipment = equipment;
         this.spawns = spawns;
         this.biomes = biomes;
