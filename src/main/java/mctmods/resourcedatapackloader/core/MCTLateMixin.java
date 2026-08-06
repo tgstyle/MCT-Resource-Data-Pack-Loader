@@ -22,6 +22,7 @@ public class MCTLateMixin implements ILateMixinLoader {
                 "mixins.resourcedatapackloader.dungeons2.json",
                 "mixins.resourcedatapackloader.quark.json",
                 "mixins.resourcedatapackloader.lostcities.json",
+                "mixins.resourcedatapackloader.neoterra.json",
                 "mixins.resourcedatapackloader.vanillaportals.json");
     }
 
@@ -34,6 +35,7 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (mixinConfig.endsWith(".dungeons2.json")) { return Loader.isModLoaded("dungeons2"); }
         if (mixinConfig.endsWith(".quark.json")) { return Loader.isModLoaded("quark"); }
         if (mixinConfig.endsWith(".lostcities.json")) { return Loader.isModLoaded("lostcities"); }
+        if (mixinConfig.endsWith(".neoterra.json")) { return Loader.isModLoaded("neoterra"); }
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
         return true;
     }
