@@ -93,6 +93,7 @@
     "MixinWorldInfo",
     "MixinWorldLight",
     "MixinWorldProvider",
+    "MixinWorldServerSpawn",
     "MixinWorldServerTicks"
   ],
   "client": [

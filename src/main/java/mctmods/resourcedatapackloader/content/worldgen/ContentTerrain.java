@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
@@ -61,6 +62,31 @@ public final class ContentTerrain {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
 
         return ContentControl.text(ContentControl.TERRAIN, "worldGameMode", Config.worldgen.worldGameMode).trim();
+    }
+
+    public static String worldSpawn() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+
+        return ContentControl.text(ContentControl.TERRAIN, "worldSpawn", Config.worldgen.worldSpawn).trim();
+    }
+
+    @Nullable public static BlockPos spawnFrom(String written, int groundLevel) {
+        String[] parts = written.split(",");
+        if (parts.length != 2 && parts.length != 3) {
+            ContentLog.LOGGER.error("worldSpawn is '{}', which is not written as x,z or x,y,z, so the world is spawned the way the game chooses", written);
+            return null;
+        }
+
+        try {
+            int x = Integer.parseInt(parts[0].trim());
+            int y = parts.length == 3 ? Integer.parseInt(parts[1].trim()) : groundLevel;
+            int z = Integer.parseInt(parts[parts.length - 1].trim());
+            return new BlockPos(x, y, z);
+        }
+        catch (NumberFormatException notNumbers) {
+            ContentLog.LOGGER.error("worldSpawn is '{}', which is not written as whole numbers, so the world is spawned the way the game chooses", written);
+            return null;
+        }
     }
 
     public static GameType gameModeFrom(String written) {

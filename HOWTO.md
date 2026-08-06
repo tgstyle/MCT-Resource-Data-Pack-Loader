@@ -1576,6 +1576,11 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 **Game mode** is set with `worldGameMode` in the `terrain` group, one of `survival`, `creative`, `adventure` or `spectator`. Every world made while the pack is on starts that way, and creative also opens commands, the same as ticking the box when making the world by hand. It only decides how a world begins; changing mode in a world afterward is left alone. The screen for making a world starts with that mode already chosen, and with the seed a pack asks for already filled in, so what is shown there is what will happen, and a player is free to change it before making the world even though the pack will set it back. Adventure and spectator are not offered on that screen, so a pack asking for either leaves it showing whatever was chosen and sets the mode as the world is made.
 
+**Where a new world spawns** is set with `worldSpawn` in the `terrain` group, written as `x,z` or `x,y,z`. Without a y the game's usual ground level for the world type is used, which is what vanilla stores anyway, and the player is put down on the surface there. It is applied as the world is made, so a world that already exists keeps the spawn it was born with, and an entry that is not whole numbers is reported and left to the game.
+
+This is worth knowing on flat worlds in particular. The game picks a spawn by looking for grass at sea level, and on a superflat the block above the layer stack is always air, so that check never passes and it wanders up to a thousand steps looking. A flat world can therefore open hundreds of blocks from the origin, nowhere near where a pack expects. Naming `worldSpawn` settles it.
+
+
 **Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
 
 **Creature types** for biome spawns and rates. `creature`, `monster`, `ambient`, `water_creature`.

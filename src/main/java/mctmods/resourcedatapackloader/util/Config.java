@@ -286,6 +286,8 @@ public class Config {
         public String worldGameMode = "";
         @net.minecraftforge.common.config.Config.Comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=]")
         public String worldName = "";
+        @net.minecraftforge.common.config.Config.Comment("Where every new world spawns, written as x,z or x,y,z. Without a y the game's usual ground level for the world type is used. Only applied to a world as it is created, so worlds that already exist are left alone. Empty leaves the choice to the game [Default=empty]")
+        public String worldSpawn = "";
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
         public String generatorOptions = "";
         @net.minecraftforge.common.config.Config.Comment("Which world types the terrain settings are given to, by name, such as default, customized, biomesop or realistic. Empty means every world type [Default={}]")
