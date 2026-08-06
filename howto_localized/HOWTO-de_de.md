@@ -55,6 +55,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Was jede Gruppe macht](#was-jede-gruppe-macht)
 - [Universal Tweaks](#universal-tweaks)
 - [CoFH World](#cofh-world)
+- [Lost Cities](#lost-cities)
 
 **Referenz**
 - [Wertelisten](#wertelisten)
@@ -2001,6 +2002,20 @@ Ihre eigene Generierung findet dann nicht statt, denn CoFH World ist das, was ih
 Andernfalls liest `readCofhWorldFiles` diese Dateien direkt aus den Mod-Jars und generiert sie über diesen Mod. Es ist standardmäßig aus, und es tritt zurück, wenn das echte CoFH World installiert ist, das dann ganz normal generiert. Jeder CoFH-Generator und jede Verteilung, die überhaupt etwas hervorbringt, wird umgesetzt und auf die Formen und Verteilungen oben abgebildet. Die Formen sind die eigene Geometrie dieses Mods, ein See oder eine Spitze sieht also nicht identisch aus. Gewichtete Strukturlisten, Dreh- und Spiegeltabellen, Listen ignorierter Blöcke und die Verjüngung von Stalagmiten kommen alle mit. Die Verjüngung wird über die Form nachgebildet und nicht über die Formel, der Umriss einer Spitze ist also nah dran, aber nicht identisch.
 
 Die Dateien in ein Pack zu übersetzen ist der unterstützte Weg und die einzige Möglichkeit, zu ändern, was sie generieren.
+
+## Lost Cities
+
+Lost Cities ersetzt den Generator der Oberwelt durch einen eigenen, alles, was in den gewöhnlichen Generator eingebaut ist, würde auf seinen Welten also nicht mehr laufen. Kompatibilität, die nur bei installiertem Lost Cities geladen wird, trägt drei Dinge hinüber:
+
+- `generatorOptions` formt das Land zwischen und unter den Städten. Lost Cities liest nur die Einstellungen für das Rauschen, Bodenhöhe, Wasserstand, Höhlen, Seen und die Strukturschalter kommen also aus seinen eigenen Profilen, und `seaLevel` tut auf seinen Welten nichts; die Zusammenfassung im Log sagt das auch. `terrainWorldTypes` begrenzt es wie jeden anderen Typ, unter dem Namen `lostcities`.
+- Eine Void-Welt funktioniert, die eingeschlossen, die eine vollständig blockierte Biomliste mit sich bringt. Städte und Land sind beide weg, und Plattform und Spawn verhalten sich wie überall.
+- Der `stoneBlock` eines Pack-Bioms ersetzt den Stein darunter, auf jedem Landschaftstyp von Lost Cities: normal, schwebend, Weltraum und Kaverne.
+
+Die Städte selbst sind nicht Sache dieses Mods. Wie groß und wie häufig sie sind, woraus die Gebäude bestehen, Boden- und Wasserhöhe, all das liegt in Lost Cities' eigenen Profildateien unter `config/lostcities`, und sein Gebäude-JSON läuft über seine eigene `assets`-Einstellung am selben Ort. Ein Pack, das eine Lost-Cities-Welt ausliefert, legt diese Dateien daneben, genauso wie es die Config jedes anderen Mods beilegt.
+
+`worldType` auf `lostcities` macht jede neue Welt zu einer Lost-Cities-Welt, genauso wie es eine zu `biomesop` oder `realistic` macht. Ein erzwungener Typ verwirft die Einstellungen, die die Welt getragen hätte, die Welt landet also auf dem Standardprofil von Lost Cities, und welches das ist, benennt `defaultProfile` in `config/lostcities/general.cfg`. Umgekehrt nimmt ein Pack, das einen anderen Typ erzwingt, einem Spieler Lost Cities weg, der es gewählt hat, ein Pack, das diese Wahl offenlassen will, trägt `lostcities` also in `worldTypeExceptions` ein.
+
+Alles andere lief nie durch den Generator und funktioniert wie überall: Pack-Worldgen, das Blockieren von Erzen und Biomen, Strukturabstände und ihre Spawner, flacher Bedrock, Retrogen, Vorgenerierung, und seine zwei Truhen-Loot-Tabellen lassen sich überschreiben und ergänzen wie alle anderen.
 
 ---
 
