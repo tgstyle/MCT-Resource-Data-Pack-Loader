@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.gui.GuiCreateWorld;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.world.GameType;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,6 +21,7 @@ public abstract class MixinGuiCreateWorld {
     @Shadow private boolean hardCoreMode;
     @Shadow private boolean allowCheats;
     @Shadow private boolean allowCheatsWasSetByUser;
+    @Shadow private GuiTextField worldSeedField;
 
     @Inject(method = "initGui", at = @At("HEAD"))
     private void rdpl$showPackChoices(CallbackInfo ci) {
@@ -29,7 +31,7 @@ public abstract class MixinGuiCreateWorld {
         ContentLog.LOGGER.debug("The screen for making a world opened. A pack asks for the name '{}', the seed '{}' and the game mode '{}'. The box says '{}' and the game calls a new world '{}', so the name {} be filled in",
                 named, seed, ContentTerrain.worldGameMode(), worldName, fresh, worldName.equals(fresh) ? "will" : "will not");
         if (!named.isEmpty() && worldName.equals(fresh)) { worldName = named; }
-        if (!seed.isEmpty() && worldSeed.isEmpty()) { worldSeed = seed; }
+        if (!seed.isEmpty()) { worldSeed = seed; }
 
         GameType asked = ContentTerrain.gameModeFrom(ContentTerrain.worldGameMode());
         if (asked != GameType.SURVIVAL && asked != GameType.CREATIVE) { return; }
@@ -39,5 +41,12 @@ public abstract class MixinGuiCreateWorld {
         if (allowCheatsWasSetByUser) { return; }
 
         allowCheats = asked == GameType.CREATIVE;
+    }
+
+    @Inject(method = "initGui", at = @At("RETURN"))
+    private void rdpl$lockSeed(CallbackInfo ci) {
+        if (ContentTerrain.worldSeed().isEmpty() || worldSeedField == null) { return; }
+
+        worldSeedField.setEnabled(false);
     }
 }

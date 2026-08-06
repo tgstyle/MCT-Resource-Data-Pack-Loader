@@ -18,12 +18,22 @@ import java.util.Map;
 public class GuiPackOptions extends GuiScreen {
     private final GuiScreen parent;
     private final Map<String, Map<String, Boolean>> staged = new LinkedHashMap<>();
+    private final Map<String, Map<String, Boolean>> loaded = new LinkedHashMap<>();
     private OptionList list;
-    private boolean changed;
 
     public GuiPackOptions(GuiScreen parent) {
         this.parent = parent;
-        for (String file : PackOptions.files()) { staged.put(file, PackOptions.optionsOf(file)); }
+        for (String file : PackOptions.files()) {
+            staged.put(file, PackOptions.optionsOf(file));
+            loaded.put(file, PackOptions.optionsOf(file));
+        }
+    }
+
+    private boolean changed() {
+        for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) {
+            if (!entry.getValue().equals(loaded.get(entry.getKey()))) { return true; }
+        }
+        return false;
     }
 
     @Override public void initGui() {
@@ -56,7 +66,7 @@ public class GuiPackOptions extends GuiScreen {
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         list.drawScreen(mouseX, mouseY, partialTicks);
         drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.title"), width / 2, 12, 0xFFFFFF);
-        if (changed) { drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.restart"), width / 2, height - 42, 0xFF5555); }
+        if (changed()) { drawCenteredString(fontRenderer, I18n.format("rdpl.gui.packOptions.restart"), width / 2, height - 42, 0xFF5555); }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -117,7 +127,6 @@ public class GuiPackOptions extends GuiScreen {
 
                 Map<String, Boolean> options = staged.get(file);
                 options.put(name, !options.get(name));
-                changed = true;
                 toggle.playPressSound(GuiPackOptions.this.mc.getSoundHandler());
                 return true;
             }
