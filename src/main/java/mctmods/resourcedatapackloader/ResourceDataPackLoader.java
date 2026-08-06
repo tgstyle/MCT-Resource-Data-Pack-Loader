@@ -34,8 +34,11 @@ import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.recipe.FurnaceBlocking;
 import mctmods.resourcedatapackloader.recipe.FurnaceRecipes;
@@ -84,6 +87,9 @@ public class ResourceDataPackLoader {
         ContentVillagers.applyTrades();
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
+        ContentWorldIntro.load();
+        RDPLNetwork.register();
+        if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
         ContentBiomeControl.apply();
         ContentSetup.applyFire();
         MinecraftForge.TERRAIN_GEN_BUS.register(ContentBiomes.class);

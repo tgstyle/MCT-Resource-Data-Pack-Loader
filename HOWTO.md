@@ -34,10 +34,13 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Villagers and trades](#villagers-and-trades)
+- [Entity variants](#entity-variants)
+- [Village plots](#village-plots)
 - [Biomes](#biomes)
 - [Dimensions](#dimensions)
 - [Portals and gates](#portals-and-gates)
 - [World templates](#world-templates)
+- [World intro](#world-intro)
 - [Game rules](#game-rules)
 
 **Generating it**
@@ -221,7 +224,7 @@ What stays on the safe side, and what does not:
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders, with no client, leave them out) |
 
-The right-hand registry folders are hard stops, not preferences: a vanilla client sent into a dimension it has never heard of disconnects on the spot, and blocks it does not know cannot even be described to it. The left-hand column works because all of it either happens entirely on the server, generation, loot, functions, removals, the control layer, or reaches the client through packets vanilla already speaks: the crafting result slot is filled by the server in this version, advancements arrive by the ordinary advancement packets, gate refusals are plain status messages, and the pregeneration hold is nothing but vanilla game mode, title and teleport packets, so a vanilla client is held, warned and welcomed exactly like a modded one.
+The right-hand registry folders are hard stops, not preferences: a vanilla client sent into a dimension it has never heard of disconnects on the spot, and blocks it does not know cannot even be described to it. The left-hand column works because all of it either happens entirely on the server, generation, loot, functions, removals, the control layer, or reaches the client through packets vanilla already speaks. The crafting result slot is filled by the server in this version, advancements arrive by the ordinary advancement packets, gate refusals are plain status messages, and the pregeneration hold is nothing but vanilla game mode, title and teleport packets, so a vanilla client is held, warned and welcomed exactly like a modded one.
 
 What to do, in order:
 
@@ -365,6 +368,8 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `career` | no | int | random | Which career within that profession, from 1 upwards |
 | `baby` | no | boolean | `false` | Stays young, and stays that way |
 | `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
+| `soundVolume` | no | number | `1.0` | How loud those sounds are |
+| `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
 | `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
 | `jumpMultiplier` | no | float | `1.0` | How much higher it jumps than the entity it copies |
 | `fallDamage` | no | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
@@ -401,11 +406,20 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `silent` | no | boolean | `false` | Makes no sound |
 | `picksUpLoot` | no | boolean | `false` | Picks up what it walks over |
 | `hideArmor` | no | boolean | `false` | Wears its armor without it being drawn |
+| `hideHeld` | no | boolean | `false` | The same for whatever it is holding |
+| `tint` | no | hex color | none | Colors the entity as it is drawn |
+| `tintParts` | no | list of `body`, `armor`, `held` | `["body"]` | Which parts the tint reaches |
+| `ignoresSpawnRules` | no | boolean | `false` | Spawns wherever it is put, ignoring the rules it inherited |
+| `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
+| `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4 |
+| `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off |
+| `explosionFire` | no | boolean | `false` | Leaves fires behind |
 | `equipment` | no | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
 | `spawns` | no | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
 | `biomes` | no | list of biome names | every biome | Where those spawns are added |
 | `biomeTypes` | no | list of dictionary types | none | The same, by type |
 | `trackingRange` | no | int | `80` | How far away the client is told about it |
+| `trackVelocity` | no | boolean | `true` | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no | int | `3` | How often, in ticks |
 | `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
 
@@ -573,6 +587,7 @@ Most definitions also accept `requires`, a list of mod ids or pack namespaces th
 | `fence` | Connects to its neighbors, and to fences from other mods |
 | `pane` | Connects like glass panes |
 | `wall` | Connects like cobblestone walls, with the post shape |
+| `door` | Two blocks tall, opens by hand and answers to redstone. Uses one variant, since the rest of the metadata carries the hinge, the facing and whether it is open |
 | `ladder` | Climbable, placed against a wall |
 | `torch` | Wall and floor placement, with a particle |
 | `log` | Rotates to the face you place it against |
@@ -841,6 +856,8 @@ Vanilla checks for its own blocks by identity in a dozen places, so a pack block
 | `potion` | Applies your potion effects when used |
 | `potion_bottle` | Holds your potion types, and shows them in a creative tab |
 
+A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion type names such as `["mypack:ruby_tonic"]`. One with an empty list registers nothing, and the log says so.
+
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `variants` | yes | object of variant name to variant |, | One entry per metadata value. The key becomes the registry name |
@@ -952,6 +969,29 @@ Variant keys:
 
 `furnace/*.json` adds and removes smelting recipes.
 
+```json
+{
+  "remove": [
+    "minecraft:iron_ingot",
+    { "input": "minecraft:gold_ore" }
+  ],
+  "add": [
+    { "input": "mypack:ruby_ore", "output": "mypack:ruby", "count": 2, "experience": 1.0 }
+  ]
+}
+```
+
+Entries under `add`:
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `input` | yes | item name | none | What goes in |
+| `output` | yes | item name | none | What comes out |
+| `count` | no | int | `1` | How many come out |
+| `experience` | no | number | `0.0` | Experience per smelt. Iron ore gives 0.7 |
+
+Entries under `remove` are either a bare item name, which removes every recipe producing it, or an object naming `input`, `result`, or both to narrow it down. A removal naming neither is skipped and the log says so.
+
 `fuels/*.json`
 
 ```json
@@ -1036,6 +1076,7 @@ Each entry is either `input`, `ingredient` and `output`, or `from`, `ingredient`
 
 ```json
 {
+  "careers": ["gem_cutter", "appraiser"],
   "texture": "mypack:textures/entity/villager/jeweller.png",
   "zombieTexture": "mypack:textures/entity/zombie_villager/jeweller.png"
 }
@@ -1043,6 +1084,7 @@ Each entry is either `input`, `ingredient` and `output`, or `from`, `ingredient`
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
+| `careers` | yes | list of names | none | The careers this profession offers. A profession with none is refused |
 | `texture` | no | texture path | the vanilla villager | How the villager looks |
 | `zombieTexture` | no | texture path | the vanilla zombie villager | How it looks once zombified |
 
@@ -1109,6 +1151,7 @@ A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `
 | `topBlock` | no | block name | grass | The surface block |
 | `fillerBlock` | no | block name | dirt | Just below the surface |
 | `stoneBlock` | no | block name | stone | The bulk of the ground |
+| `types` | no | list of dictionary types | none | Registers the biome under these, such as `FOREST` or `WET`, so other mods find it |
 | `waterColor` | no | hex color | `FFFFFF` | Water tint |
 | `baseBiome` | no | biome name | none | An existing biome to copy settings from |
 | `decoration` | no | object | vanilla counts | Per-chunk counts for trees, grass, flowers, reeds, cacti, lakes, clay and the rest |
@@ -1268,6 +1311,7 @@ A `portal` block carries a `portal` section:
 | `unlockedMessage` | no | string | `%dim% is now open` | Shown when it opens |
 | `blockedMessage` | no | string | `You need %item% to enter %dim%` | Shown when it refuses |
 | `safeReturn` | no | boolean | `false` | A blocked return still lands somewhere safe rather than refusing |
+| `portalBlocks` | no | list of block names | every portal | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one |
 
 `unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`.
 
@@ -1306,6 +1350,73 @@ A `portal` block carries a `portal` section:
 `settings` uses the same key names as the config, so there is no translation table to learn.
 
 Which template is active is decided by the `worldTemplate` config option. Left at `auto`, the highest priority pack that ships one wins, the same order everything else follows. Naming a template there picks it outright.
+
+## World intro
+
+`worldintro/*.json` shows a run of pages when a player enters the world, before they take control. Scrolling text over a picture, a title card, a slideshow, or all three in a row.
+
+```json
+{
+  "once": true,
+  "music": "minecraft:music.credits",
+  "pages": [
+    {
+      "background": "mypack:textures/gui/sunrise.png",
+      "text": "mypack:texts/opening.txt",
+      "mode": "scroll",
+      "time": 14.0,
+      "direction": "up",
+      "textScale": 3.0,
+      "settle": true
+    },
+    {
+      "backgrounds": [
+        "mypack:textures/gui/logo_a.png",
+        "mypack:textures/gui/logo_b.png"
+      ],
+      "interval": 4.0,
+      "text": "mypack:texts/title.txt",
+      "mode": "static",
+      "textScale": 2.0
+    }
+  ]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `pages` | yes | list of pages | none | Shown in order. A file with no pages is refused with an error |
+| `once` | no | boolean | `false` | Play once per player per world instead of on every join |
+| `music` | no | sound event name | none | One track for the whole run, started with the first page |
+| `requires` | no | list of mod ids or pack namespaces | none | The intro is skipped unless all are present |
+
+Each entry in `pages`:
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `mode` | no | `scroll` or `static` | `scroll` | Text that moves, or text that sits still until the player moves on |
+| `text` | no | path to a `.txt` file | none | The words. Leave it out for a page that is just pictures |
+| `background` | no | texture path | the tiled dirt background | One background |
+| `backgrounds` | no | list of texture paths | none | Several, cycled. Adds to `background` if you give both |
+| `interval` | no | seconds | `5.0` | How long each background is held, when there is more than one |
+| `time` | no | seconds | worked out from the text | How long a scrolling page takes, start to finish |
+| `direction` | no | `up` or `down` | `up` | Which way scrolling text travels |
+| `textScale` | no | number | `1.0` | Multiplies the font size |
+| `settle` | no | boolean | `false` | Finish with the last line centered rather than running clear off the screen |
+
+Text files go in `assets/<namespace>/texts/<name>.txt`. Plain text, one paragraph to a line, and blank lines are kept as blank lines. `PLAYERNAME` is swapped for the player's name, the same substitution the vanilla end poem uses.
+
+`time` sets how long the page lasts, so the same page takes the same time whether it holds one line or twenty. Tune the reading speed by how much you put on the page. Leave `time` out and the page runs at the same speed as the vanilla credits, where more text simply takes longer.
+
+A scrolling page moves to the next one when its time is up. The last page never advances on its own, it waits. Along the bottom are **Next Page** and **Skip All**, or a single **Continue to World** on the last page. Escape does the same as Skip All. Static pages center every line. Scrolling pages keep to a fixed column, the way the credits do.
+
+In singleplayer the world pauses behind the intro, so nothing creeps up on the player while they read. On a server the world keeps running, and a vanilla client never sees the intro at all and joins as normal.
+
+`once` is remembered in the player's saved data and survives death. `/rdplserver intro` clears it for whoever runs it, so the intro plays again the next time they join. It does not replay on the spot, which keeps it from being a way back into the entry sequence in the middle of a game.
+
+Backgrounds are stretched to fill the window, so a 16:9 image suits a 16:9 window and a square one looks squashed. Crop the picture to shape rather than relying on the fit. `music` takes any registered sound event, vanilla or one your own pack adds through `sounds`. It does not loop, so a short track finishes and leaves quiet behind it.
+
+If more than one pack ships an intro, their pages run end to end in pack order rather than one winning. Gate them with `requires` if you only want one.
 
 ## Game rules
 
@@ -1580,7 +1691,7 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 This is worth knowing on flat worlds in particular. The game picks a spawn by looking for grass at sea level, and on a superflat the block above the layer stack is always air, so that check never passes and it wanders up to a thousand steps looking. A flat world can therefore open hundreds of blocks from the origin, nowhere near where a pack expects. Naming `worldSpawn` settles it.
 
-**The world border** is set with `worldBorder` in the `terrain` group, a whole number of blocks across, the same figure `/worldborder set` takes. It is applied as the world is made, so an existing world keeps the border it has, and `0`, the default, leaves the border where the game puts it. The border is centred wherever the game centres it, and can still be moved afterward by command in the usual way.
+**The world border** is set with `worldBorder` in the `terrain` group, a whole number of blocks across, the same figure `/worldborder set` takes. It is applied as the world is made, so an existing world keeps the border it has, and `0`, the default, leaves the border where the game puts it. The border is centered wherever the game centers it, and can still be moved afterward by command in the usual way.
 
 A pack cannot set a border of any size it likes. `worldBorderLimit` in the config is the widest a pack is allowed to ask for, and a pack asking for more is refused outright rather than quietly cut down: the reason is logged and the border is left alone. Only the person running the game can raise that limit, so a pack cannot hand a server a border it did not agree to.
 
@@ -1625,9 +1736,9 @@ With a group's control at `default` these win, at `global` they are ignored, and
 
 **Ores.** `blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all.
 
-**Biomes.** `blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself.
+**Biomes.** `blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself. `blockBiomeDimensions` limits all of it to certain dimensions, empty meaning every one, and `blockBiomeDimensionsAreBlacklist` turns that list into an exclusion.
 
-**Generators.** `blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see, slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked.
+**Generators.** `blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see, slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked. `blockGeneratorDimensions` limits it to certain dimensions, with `blockGeneratorDimensionsAreBlacklist` to invert the list.
 
 `generatorTypes` blocks by what a generator makes instead of by which mod owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched. `generatorTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. A type blocks whatever the whitelist says, the same way `oreTypes` does, so you can stop every mod adding ore while leaving its dungeons and trees alone.
 
@@ -1692,13 +1803,13 @@ Four vanilla structures place a spawner: the dungeon room, the mineshaft corrido
 
 Spacing decides where a structure is seeded, so changing it in a world that already exists leaves what is there and puts new ones on a different grid.
 
-**Spawning.** Mob spawn rates and caps, per biome.
+**Spawning.** Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone.
 
 **Seating structures.** `structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages are `beard_thin` unless overridden and everything else is `none` unless named, matching what modern versions choose for themselves. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
 
 **Seating villages.** `terrainAdaptation` reworks how villages choose their ground and sit on it, ported in spirit from how modern versions seat their structures, then taken further. Villages only found on the flattest chunk their region offers, and never within eight chunks of another village; regions with no flat enough ground found nothing at all. The well seats to the lowest ground touching it with its rim flush with the surface, and the whole village levels from there. Roads are graded as they are laid: the surface follows the lowest natural ground across the road's width, bumps are cut, dips are filled, the slope never exceeds one block per step, and short chasms are bridged with planks. Grass paths go down on earth, gravel on stone and sand, planks over water, so roads no longer vanish where the ground is not grass. Each building seats one block above the road it fronts, read from the laid road or predicted from the ground the road will grade onto when the road has not been built yet, so its doorstep stairs rest on the road surface and its door sits behind them. Farms and lamp posts keep vanilla's own ground level. Pieces refuse ground that varies more than a few blocks under their own footprint, ground is filled beneath each building down to the nearest resting surface in the same material it rests on, walls and doorways are opened out of hillsides, dirt is lifted off roofs, and any tree standing in a structure is felled whole, its leaves going with its wood while every leaf a standing branch still owns is left alone. Mansions and the scattered features (temples, huts, igloos) are held to the same flat-ground standard before they may place. It reshapes the terrain itself as it is made, so a world generated with it on differs from one generated without, the same warning modern versions carry, and it is off unless a pack or the config asks.
 
-**Bedrock.** `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone, the original pattern is not recorded anywhere.
+**Bedrock.** `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone, the original pattern is not recorded anywhere. `bedrockLayers` sets how many layers are left, `flatBedrockRoof` does the ceiling too where a dimension has one, and `flatBedrockFiller` is what replaces the bedrock taken away, left empty to pick per dimension, with `flatBedrockFillers` naming one per dimension instead. Which dimensions and biomes it reaches is `flatBedrockDimensions`, `flatBedrockBiomes` and `flatBedrockBiomeTypes`, with `flatBedrockDimensionsAreBlacklist` and `flatBedrockBiomesAreBlacklist` turning those lists into exclusions.
 
 **Slow ticking far away.** Entities cost a server more than anything else, and most of them are nowhere near a player. `slowDistantEntities` gives a chunk with no player within `slowDistance` blocks one tick in `slowRate`, so what is in it still moves, floats, burns and despawns, only at a slower pace. Nothing is ever left unticked.
 
@@ -1741,7 +1852,7 @@ A last line says how much working scrap was thrown away since the last look, how
 
 Only a dimension that was registered to hold its spawn keeps one, which in the game itself is the overworld alone, the nether and the end never held one, so setting this for them changes nothing. A dimension a mod adds holds one only if that mod asked for it, and a mod that did is often carrying a second 289 chunks a pack never wanted. Whether a world stays loaded at all is a separate thing that this does not touch: a dimension a mod marked as staying loaded still stays loaded at `0`, it simply stops holding chunks. Most mods that use spawn as an anchor want something there rather than 289 chunks of it, so a small number usually keeps them working while a `0` does not.
 
-**Void world.** `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are all options. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
+**Void world.** `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are `voidPlatformBlock`, `voidPlatformSize` and `voidPlatformHeight`; the size is rounded down to an odd number of blocks so the platform sits centered on spawn. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
 
 **The dragon.** `dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
 
@@ -1763,9 +1874,11 @@ Two things it decides for itself. Rivers come out of its own layers and have no 
 
 Everything else a pack does, blocking biomes and ores, replacing blocks, flat bedrock, structure placement, its own worldgen, never went through that string at all, and works the same on any world type.
 
-**Recipes.** `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says.
+**Logging.** `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` and `logBlockReplacements` each log the first time something is turned away, so you can see what a blocking rule actually caught rather than guessing from what is missing. They are the first thing to turn on when a rule seems to be doing nothing, or too much.
 
-## Pregeneration The land-making has its own lighting fast path, and it steps aside on its own when a light engine such as Alfheim or Phosphor is installed, letting the engine do that work instead; both arrangements make finished, fully lit land.
+**Recipes.** `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says. The whitelists are `recipeWhitelist` and `furnaceWhitelist`; `blockedRecipeMods` and `blockedFurnaceMods` go the other way and remove a named mod's recipes whatever the whitelist says. `recipeMatch` decides where the mod id is read from when crafting recipes are blocked, from the recipe's own name or from what it produces.
+
+## Pregeneration
 
 Making a world's land ahead of time, so nobody generates chunks while playing: no chunk lag, a known size on disk, and one wait up front instead of a stuttering first hour. Turned on by a pack with `pregenOnNewWorld`, or run by hand with the command.
 
@@ -1781,7 +1894,7 @@ While a run is going everybody is held: made a spectator, kept in place, shown a
 | `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done | Dimensions most players never visit; the ones who never go pay nothing |
 | `pregenToBorder` | Fill each dimension out to its world border instead of a radius | Bounded worlds |
 | `pregenBorderLimit` | How far a border may reach before the run is refused. Config only, never a pack key | A guard against a runaway run; raise it only knowing the time and disk it allows |
-| `pregenResume` | A stopped or interrupted run picks up where it left off. The run's dimension, centre and radius are written into the save when it starts, so a crash, a power cut or a quit mid-run all resume within about ten seconds of where they died on the next load. A run stopped on purpose, by command or by the watchdog, stays stopped | Long runs on servers; small runs restart cheaply without it |
+| `pregenResume` | A stopped or interrupted run picks up where it left off. The run's dimension, center and radius are written into the save when it starts, so a crash, a power cut or a quit mid-run all resume within about ten seconds of where they died on the next load. A run stopped on purpose, by command or by the watchdog, stays stopped | Long runs on servers; small runs restart cheaply without it |
 | `pregenKeepLoaded` | Chunks kept loaded behind the run so a chunk's neighbors are on hand when it is dressed and lit | Raise it if the relight reports many chunks left for later; costs memory |
 | `pregenPauseAbove` | The run rests when this many chunks are waiting to be written | Lower it for a slow disk |
 | `pregenMillisPerRound` | How long each tick may spend making land | Turn it up on an empty world, down on a server people are playing on |
@@ -1818,6 +1931,8 @@ Run it yourself before shipping, at the radius being shipped, start to finish. C
 ### How it stays fast
 
 Everything below is how, not what: the engineering that makes a run quick, kept so it is not lost. A pack needs none of it to use the keys above.
+
+Land making has its own fast path for lighting, and it stands aside when a light engine such as Alfheim or Phosphor is installed, letting that engine do the work instead. Either way you end up with finished, fully lit land.
 
 The game refuses to light a chunk until all eight around it exist, and while land is being made the ones ahead have not been made yet, so lighting a chunk as it is made almost never works. Instead, as each chunk is made, the nine around that spot are looked at and any whose own ring is now complete and still held is lit then and there.
 
@@ -1865,8 +1980,11 @@ Under `assets/<namespace>/`:
 | `worldgen` | What generates, and where |
 | `dimensions` | Dimension definitions |
 | `worldtemplates` | A whole world's settings in one file |
+| `worldintro` | Pages shown when a player enters the world |
 | `gates` | Conditions on portals and dimensions |
 | `gamerules` | Game rules for new worlds |
+| `entities` | Entity variants built on entities that already exist |
+| `villages` | Plots villages can build |
 | `structures` | `.nbt` templates, for saplings, `imprint` and mod overrides |
 | `recipes` | Crafting recipes, added or replaced |
 | `recipe_removals` | Recipes deleted by name, namespace or output |
@@ -1885,6 +2003,7 @@ Under `assets/<namespace>/`:
 | `functions` | `.mcfunction` files |
 | `registry_remap` | Old names mapped to new ones |
 | `tabs` | Creative tabs |
+| `texts` | Plain text files, used by the world intro |
 | `models`, `blockstates`, `textures`, `lang` | The usual asset folders |
 
 ## Commands
@@ -1917,6 +2036,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver gate check <player>` | Which gates a player has passed |
 | `/rdplserver gate grant <player> <gate>` | Open a gate for a player |
 | `/rdplserver gate revoke <player> <gate>` | Close one again |
+| `/rdplserver intro` | Let the world intro play again on your next join |
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 

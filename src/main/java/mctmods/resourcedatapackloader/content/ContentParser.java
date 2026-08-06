@@ -182,6 +182,61 @@ public final class ContentParser {
                 strings(json, "requires"));
     }
 
+    @Nullable public static WorldIntroDef worldIntro(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+
+        List<IntroPageDef> pages = new ArrayList<>();
+        if (json.has("pages")) {
+            for (JsonElement element : JsonUtils.getJsonArray(json, "pages")) {
+                IntroPageDef page = introPage(key, element.getAsJsonObject());
+                if (page != null) { pages.add(page); }
+            }
+        }
+        if (pages.isEmpty()) {
+            ContentLog.LOGGER.error("World intro {} names no pages, ignoring it", key);
+            return null;
+        }
+
+        String music = JsonUtils.getString(json, "music", "").trim();
+
+        return new WorldIntroDef(key,
+                JsonUtils.getBoolean(json, "once", false),
+                music.isEmpty() ? null : new ResourceLocation(music),
+                Collections.unmodifiableList(pages),
+                strings(json, "requires"));
+    }
+
+    @Nullable private static IntroPageDef introPage(ResourceLocation key, JsonObject json) {
+        List<ResourceLocation> backgrounds = new ArrayList<>();
+        String single = JsonUtils.getString(json, "background", "").trim();
+        if (!single.isEmpty()) { backgrounds.add(new ResourceLocation(single)); }
+        for (String name : strings(json, "backgrounds")) { backgrounds.add(new ResourceLocation(name)); }
+
+        String mode = JsonUtils.getString(json, "mode", IntroPageDef.SCROLL).trim().toLowerCase(Locale.ROOT);
+        if (!IntroPageDef.SCROLL.equals(mode) && !IntroPageDef.STATIC.equals(mode)) {
+            ContentLog.LOGGER.error("World intro {} has a page with mode '{}', which is neither '{}' nor '{}', ignoring the page", key, mode, IntroPageDef.SCROLL, IntroPageDef.STATIC);
+            return null;
+        }
+
+        String direction = JsonUtils.getString(json, "direction", IntroPageDef.UP).trim().toLowerCase(Locale.ROOT);
+        if (!IntroPageDef.UP.equals(direction) && !IntroPageDef.DOWN.equals(direction)) {
+            ContentLog.LOGGER.error("World intro {} has a page with direction '{}', which is neither '{}' nor '{}', taking '{}'", key, direction, IntroPageDef.UP, IntroPageDef.DOWN, IntroPageDef.UP);
+            direction = IntroPageDef.UP;
+        }
+
+        String text = JsonUtils.getString(json, "text", "").trim();
+
+        return new IntroPageDef(Collections.unmodifiableList(backgrounds),
+                JsonUtils.getFloat(json, "interval", 5.0F),
+                text.isEmpty() ? null : new ResourceLocation(text),
+                mode,
+                JsonUtils.getFloat(json, "time", IntroPageDef.DERIVE),
+                direction,
+                JsonUtils.getFloat(json, "textScale", 1.0F),
+                JsonUtils.getBoolean(json, "settle", false));
+    }
+
     public static Map<Integer, Map<String, String>> gameRuleFile(ResourceLocation key, String contents) {
         Map<Integer, Map<String, String>> found = new LinkedHashMap<>();
         JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
@@ -718,6 +773,7 @@ public final class ContentParser {
                 attributes,
                 JsonUtils.getBoolean(json, "hostile", false),
                 JsonUtils.getBoolean(json, "passive", false),
+                JsonUtils.getBoolean(json, "ignoresSpawnRules", false),
                 strings(json, "targets"),
                 JsonUtils.getBoolean(json, "persistent", false),
                 JsonUtils.getBoolean(json, "silent", false),

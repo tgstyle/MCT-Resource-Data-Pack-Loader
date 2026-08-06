@@ -44,6 +44,7 @@ public final class PackManager {
     public static final String WORLDGEN = "worldgen";
     public static final String GATES = "gates";
     public static final String WORLDTEMPLATES = "worldtemplates";
+    public static final String WORLDINTRO = "worldintro";
     public static final String DIMENSIONS = "dimensions";
     public static final String GAMERULES = "gamerules";
     public static final String FUELS = "fuels";
@@ -560,7 +561,7 @@ public final class PackManager {
                 "    structures       registry_remap   potions          potion_types",
                 "    brewing          villagers        trades           biomes",
                 "    villages         entities         gates            dimensions",
-                "    gamerules        worldtemplates",
+                "    gamerules        worldtemplates   worldintro",
                 "",
                 "Blocks come in these shapes, set by the \"type\" field:",
                 "",
@@ -588,7 +589,8 @@ public final class PackManager {
                 "An entities/<name>.json file makes a new entity out of one that is already here.",
                 "It names the entity to build on, and what is different about it: its name, its skin,",
                 "how much health and damage it has, how fast it moves and how high it jumps, how big",
-                "it is drawn, what it wears, what it hunts and what it ignores. It is an entity of",
+                "it is drawn, what it wears, what it hunts and what it ignores, and whether it",
+                "still obeys the spawn rules of the entity it was built from. It is an entity of",
                 "its own, with its own spawn egg and loot table, and the one it was built from is",
                 "left alone. A village plot can be told to house one instead of a villager.",
                 "",
@@ -596,6 +598,11 @@ public final class PackManager {
                 "describe or one of your .nbt templates. The same settings choose which vanilla",
                 "pieces still appear, how far apart villages are seeded, and which biomes they",
                 "are allowed in.",
+                "",
+                "A worldintro/<name>.json file plays a run of pages when somebody enters the",
+                "world, before they take control: scrolling text over a picture, a title card, a",
+                "slideshow, with music behind it if you want. The words are plain .txt files",
+                "under assets/<yourpack>/texts. It can play once per player or on every join.",
                 "",
                 "WHOLE WORLDS",
                 "------------",

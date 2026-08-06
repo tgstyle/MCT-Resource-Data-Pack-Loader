@@ -116,7 +116,7 @@ public final class ContentEntities {
                 continue;
             }
 
-            Class<? extends Entity> made$class = EntityClassMaker.make(base.getEntityClass(), entry.getKey().getNamespace() + "_" + entry.getKey().getPath());
+            Class<? extends Entity> made$class = EntityClassMaker.make(base.getEntityClass(), entry.getKey().getNamespace() + "_" + entry.getKey().getPath(), def.ignoresSpawnRules);
             if (made$class == null) { continue; }
 
             EntityEntryBuilder<Entity> builder = EntityEntryBuilder.create();

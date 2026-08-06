@@ -66,6 +66,7 @@ public final class EntityVariantDef {
     public final int tint;
     public final List<String> tintParts;
     public final boolean showName;
+    public final boolean ignoresSpawnRules;
     public final boolean explodes;
     public final float explosionPower;
     public final int explosionFuse;
@@ -82,7 +83,7 @@ public final class EntityVariantDef {
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
-                            boolean hostile, boolean passive, List<String> targets, boolean persistent, boolean silent,
+                            boolean hostile, boolean passive, boolean ignoresSpawnRules, List<String> targets, boolean persistent, boolean silent,
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
                             boolean explodes, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
                             List<String> biomes, List<String> biomeTypes, List<String> requires) {
@@ -144,6 +145,7 @@ public final class EntityVariantDef {
         this.tint = tint;
         this.tintParts = tintParts;
         this.showName = showName;
+        this.ignoresSpawnRules = ignoresSpawnRules;
         this.explodes = explodes;
         this.explosionPower = explosionPower;
         this.explosionFuse = explosionFuse;

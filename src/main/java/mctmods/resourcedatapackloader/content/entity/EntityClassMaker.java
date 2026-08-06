@@ -13,23 +13,27 @@ import javax.annotation.Nullable;
 
 public final class EntityClassMaker {
     private static final String PACKAGE = "mctmods.resourcedatapackloader.generated.";
+    private static final String[] SPAWN_CHECK = {"func_70601_bi", "getCanSpawnHere"};
     private static Method define;
 
     private EntityClassMaker() {}
 
-    @Nullable public static Class<? extends Entity> make(Class<? extends Entity> base, String key) {
+    @Nullable public static Class<? extends Entity> make(Class<? extends Entity> base, String key, boolean ignoresSpawnRules) {
         try { base.getConstructor(World.class); }
         catch (NoSuchMethodException absent) {
             ContentLog.LOGGER.error("Entity variant {} is based on {}, which has no plain world constructor, so it cannot be copied", key, base.getName());
             return null;
         }
 
+        String check = ignoresSpawnRules ? spawnCheck(base) : null;
+        if (ignoresSpawnRules && check == null) { ContentLog.LOGGER.error("Entity variant {} sets ignoresSpawnRules but {} has no reachable spawn check, so the rules still apply", key, base.getName()); }
+
         String name = PACKAGE + key.replaceAll("[^A-Za-z0-9_]", "_");
         ClassLoader loader = EntityClassMaker.class.getClassLoader();
         try { return loaded(loader.loadClass(name)); }
         catch (ClassNotFoundException expected) { ContentLog.LOGGER.debug("Making a class for entity variant {}", key); }
 
-        byte[] bytes = write(name, base);
+        byte[] bytes = write(name, base, check);
         try { return loaded((Class<?>) definer().invoke(loader, name, bytes, 0, bytes.length)); }
         catch (ReflectiveOperationException ex) {
             ContentLog.LOGGER.error("Could not make a class for entity variant {}", key, ex);
@@ -39,6 +43,14 @@ public final class EntityClassMaker {
 
     @SuppressWarnings("unchecked") private static Class<? extends Entity> loaded(Class<?> type) { return (Class<? extends Entity>) type; }
 
+    @Nullable private static String spawnCheck(Class<?> base) {
+        for (String candidate : SPAWN_CHECK) {
+            try { return base.getMethod(candidate).getName(); }
+            catch (NoSuchMethodException absent) { continue; }
+        }
+        return null;
+    }
+
     private static Method definer() throws ReflectiveOperationException {
         if (define == null) {
             define = ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
@@ -47,7 +59,7 @@ public final class EntityClassMaker {
         return define;
     }
 
-    private static byte[] write(String name, Class<?> base) {
+    private static byte[] write(String name, Class<?> base, @Nullable String check) {
         String self = name.replace('.', '/');
         String parent = Type.getInternalName(base);
         String world = Type.getInternalName(World.class);
@@ -62,6 +74,16 @@ public final class EntityClassMaker {
         made.visitInsn(Opcodes.RETURN);
         made.visitMaxs(2, 2);
         made.visitEnd();
+
+        if (check != null) {
+            MethodVisitor spawn = writer.visitMethod(Opcodes.ACC_PUBLIC, check, "()Z", null, null);
+            spawn.visitCode();
+            spawn.visitInsn(Opcodes.ICONST_1);
+            spawn.visitInsn(Opcodes.IRETURN);
+            spawn.visitMaxs(1, 1);
+            spawn.visitEnd();
+        }
+
         writer.visitEnd();
         return writer.toByteArray();
     }

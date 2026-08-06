@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
@@ -34,7 +35,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
 
@@ -66,6 +67,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
         else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
+        else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -252,6 +254,14 @@ public class ServerCommands extends CommandBase {
     private static String elapsed(long start) {
         long time = System.currentTimeMillis() - start;
         return time < 1000L ? (time + "ms") : String.format("%.02fs", time / 1000D);
+    }
+
+    private void intro(ICommandSender sender) throws CommandException {
+        if (!ContentIntroPlay.enabled()) { throw new CommandException(Lang.tr(sender, "rdpl.command.intronone")); }
+        if (!(sender instanceof EntityPlayerMP)) { throw new CommandException(Lang.tr(sender, "rdpl.command.introplayer")); }
+
+        ContentIntroPlay.replay((EntityPlayerMP) sender);
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.introagain"));
     }
 
     private static void send(ICommandSender sender, TextFormatting color, String message) {

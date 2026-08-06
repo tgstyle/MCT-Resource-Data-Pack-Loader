@@ -9,8 +9,9 @@ One global folder that overrides what Minecraft and mods provide, defines new co
 controls what generates, in every world, on clients and servers.
 
 Minecraft 1.12.2 has no data pack system, and Resource Loader only covers client assets. Advancements,
-loot tables, recipes and functions cannot be overridden without repacking a mod jar or copying files
-into every save. Adding a single ore or a single biome means writing a mod. This mod covers all of it
+loot tables and functions are read from a world's own data folder, so overriding one means copying files
+into every save, and recipes are read from mod jars only, so there is no way to touch them short of
+repacking a jar. Adding a single ore or a single biome means writing a mod. This mod covers all of it
 from one folder.
 
 # Usage
@@ -25,7 +26,7 @@ Override paths match the layout inside a mod jar, so files can be copied straigh
 defined by adding a JSON file in the matching folder, the path is the identity, so
 `assets/mypack/blocks/ruby_ore.json` registers `mypack:ruby_ore`.
 
-See [HOWTO.md](HOWTO.md) for the full folder list, every block and item type, every worldgen shape,
+See [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md) for the full folder list, every block and item type, every worldgen shape,
 pack priority, resource pack precedence and the commands.
 
 # Overriding what already exists
@@ -57,7 +58,8 @@ An entity variant is a new entity built on one that already exists, vanilla or m
 registry name, name, spawn egg, loot table and skin, with its own health, damage, speed, jump,
 size, effects, equipment and temper. An aggressive rabbit that swells when it charges, a zombie
 that trades, a cow that shrugs off fire: all of it a file, and the entity it was built from is
-left exactly as it was.
+left exactly as it was. A variant can also be told to ignore the spawn rules it inherited, so an
+animal turned hostile will come out of a spawner anywhere rather than only on lit grass.
 
 Registration happens at the lowest priority, so a real mod always wins. Anything needing a tile
 entity, a GUI, an inventory or per-tick logic still needs a real mod.
@@ -93,6 +95,15 @@ A world template gathers those settings into one file so a pack ships a whole wo
 and every group answers to a config switch that leaves it to the pack, forces the config's own value,
 or turns the group off entirely so no pack can enable it.
 
+# World intro
+A pack can put a sequence of pages in front of a player as they enter the world. Each page is text
+scrolling over a picture, or text sitting still on one, with a background that can cycle through
+several images, a font size of the pack's choosing, and one music track behind the whole run.
+Scrolling text can run clear off the top or come to rest with its last line centered before the
+page turns itself. The player gets Next Page and Skip All along the bottom, or Continue to World
+on the last one, and the world stays paused behind it in singleplayer. It can play once per player
+per world, remembered in their save, or on every join.
+
 # Pregeneration
 A pack can hand a player a world whose land is already there. `pregenOnNewWorld` makes every chunk
 around the spawn the moment a world is created, in the overworld, in a list of dimensions one after
@@ -106,7 +117,7 @@ words itself. A finished dimension is written into the world and never made agai
 go missing from the disk, which is noticed and makes that one over, and a remade end brings its
 dragon back. A stopped run can resume where it left off, a wedged one stops itself within a minute
 rather than hanging anybody, and the engineering that makes it fast, a few hundred chunks a second,
-without a single cascading chunk load, is written down in HOWTO.md for whoever wants it.
+without a single cascading chunk load, is written down in [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md) for whoever wants it.
 
 # CoFH World
 Mods that require CoFH World load without it. Their generation files can be read straight out of
@@ -126,8 +137,8 @@ The mod's own report goes to `logs/rdpl.log` rather than the main log.
 
 A pack can stay on the server alone, with every player on a plain vanilla client, as long as it
 registers nothing, and the `vanillaClients` config switch enforces exactly that, skipping anything
-a client would have to know about and naming each skipped file in the log. HOWTO.md's Server-side
-packs section has the folder split and the steps.
+a client would have to know about and naming each skipped file in the log. [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md)'s
+Server-side packs section has the folder split and the steps.
 
 # Requirements
 Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter).
