@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.interfaces.PregenMemory;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -16,11 +17,15 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Mixin(WorldInfo.class)
 public abstract class MixinWorldInfo implements PregenMemory {
     @Unique private NBTTagCompound rdpl$landMade = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$pregenRun = new NBTTagCompound();
+    @Unique private NBTTagCompound rdpl$packOptions = new NBTTagCompound();
 
     @Override public NBTTagCompound rdpl$pregenRun() { return rdpl$pregenRun; }
 
@@ -38,12 +43,31 @@ public abstract class MixinWorldInfo implements PregenMemory {
     private void rdpl$rememberLandMade(NBTTagCompound nbt, CallbackInfo ci) {
         if (nbt.hasKey("RDPLLandMade", 10)) { rdpl$landMade = nbt.getCompoundTag("RDPLLandMade"); }
         if (nbt.hasKey("RDPLPregenRun", 10)) { rdpl$pregenRun = nbt.getCompoundTag("RDPLPregenRun"); }
+        if (nbt.hasKey("RDPLPackOptions", 10)) { rdpl$packOptions = nbt.getCompoundTag("RDPLPackOptions"); }
+        rdpl$comparePackOptions();
     }
 
     @Inject(method = "updateTagCompound", at = @At("TAIL"))
     private void rdpl$writeLandMade(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo ci) {
         if (!rdpl$landMade.isEmpty()) { nbt.setTag("RDPLLandMade", rdpl$landMade); }
         if (!rdpl$pregenRun.isEmpty()) { nbt.setTag("RDPLPregenRun", rdpl$pregenRun); }
+        NBTTagCompound options = new NBTTagCompound();
+        for (Map.Entry<String, Boolean> entry : PackOptions.gatingValues().entrySet()) { options.setBoolean(entry.getKey(), entry.getValue()); }
+        if (!options.isEmpty()) { nbt.setTag("RDPLPackOptions", options); }
+    }
+
+    @Unique private void rdpl$comparePackOptions() {
+        List<String> changed = new ArrayList<>();
+        for (Map.Entry<String, Boolean> entry : PackOptions.gatingValues().entrySet()) {
+            if (!rdpl$packOptions.hasKey(entry.getKey())) { continue; }
+
+            boolean was = rdpl$packOptions.getBoolean(entry.getKey());
+            if (was == entry.getValue()) { continue; }
+
+            changed.add(entry.getKey() + " (" + (was ? "on" : "off") + " to " + (entry.getValue() ? "on" : "off") + ")");
+        }
+        PackOptions.worldChanged(changed);
+        if (!changed.isEmpty()) { ContentLog.LOGGER.info("Pack options have changed since this world was last played: {}", changed); }
     }
 
     @Shadow private long randomSeed;
@@ -54,6 +78,7 @@ public abstract class MixinWorldInfo implements PregenMemory {
 
     @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
     private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
+        PackOptions.worldTold();
         String seed = ContentTerrain.worldSeed();
         if (!seed.isEmpty()) {
             randomSeed = ContentTerrain.seedFrom(seed);

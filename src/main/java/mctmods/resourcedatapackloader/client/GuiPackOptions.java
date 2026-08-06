@@ -25,7 +25,7 @@ public class GuiPackOptions extends GuiScreen {
         this.parent = parent;
         for (String file : PackOptions.files()) {
             staged.put(file, PackOptions.optionsOf(file));
-            loaded.put(file, PackOptions.optionsOf(file));
+            loaded.put(file, PackOptions.loadedOptionsOf(file));
         }
     }
 
@@ -51,7 +51,6 @@ public class GuiPackOptions extends GuiScreen {
     @Override protected void actionPerformed(GuiButton button) {
         if (button.id != 0) { return; }
         for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) { PackOptions.save(entry.getKey(), entry.getValue()); }
-        PackOptions.report();
         mc.displayGuiScreen(parent);
     }
 

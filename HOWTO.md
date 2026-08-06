@@ -1584,6 +1584,9 @@ This is worth knowing on flat worlds in particular. The game picks a spawn by lo
 
 A pack cannot set a border of any size it likes. `worldBorderLimit` in the config is the widest a pack is allowed to ask for, and a pack asking for more is refused outright rather than quietly cut down: the reason is logged and the border is left alone. Only the person running the game can raise that limit, so a pack cannot hand a server a border it did not agree to.
 
+**The time of day** is locked with `worldTime` in the `terrain` group, in ticks, the same figure `/time set` takes, so `18000` is midnight and `6000` is noon. The overworld clock stops there and never moves, and anything that reads whether it is day, mob spawning and sleeping among them, is told the locked time. `-1`, the default, leaves time running. This is the overworld's version of the `fixedTime` a dimension of your own can set, and unlike `doDaylightCycle` it does not matter what the clock said when the world was made.
+
+
 
 
 **Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.

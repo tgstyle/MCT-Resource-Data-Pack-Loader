@@ -129,6 +129,7 @@ public final class ContentEntities {
             BY_CLASS.put(made$class, def);
             addSpawns(made$class, def);
             made++;
+            ContentLog.LOGGER.info("Entity variant {} read from the pack with attributes {} and equipment {}", entry.getKey(), def.attributes, def.equipment);
         }
 
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }

@@ -294,6 +294,9 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("The widest border a pack is allowed to ask for through worldBorder. A pack asking for more is refused and the border is left where the game puts it. A pack cannot set this [Default=60000000]")
         @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 60000000)
         public int worldBorderLimit = 60000000;
+        @net.minecraftforge.common.config.Config.Comment("Lock the overworld's time of day, in ticks, the same figure /time set takes, so 18000 is midnight. The clock stops and never moves. -1 leaves time running [Default=-1]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = -1, max = 23999)
+        public int worldTime = -1;
         @net.minecraftforge.common.config.Config.Comment("The overworld's terrain shape, in the same format the customized world type writes. Sets sea level, lava oceans and the terrain noise. Only applied to a world as it is created, so worlds that already exist are left alone [Default=empty]")
         public String generatorOptions = "";
         @net.minecraftforge.common.config.Config.Comment("Which world types the terrain settings are given to, by name, such as default, customized, biomesop or realistic. Empty means every world type [Default={}]")

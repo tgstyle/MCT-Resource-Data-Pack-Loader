@@ -24,6 +24,7 @@ public final class FunctionOverrides {
         int[] added = new int[1];
         packs.forEach(PackManager.FUNCTIONS, PackManager.MCFUNCTION, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
+            ContentLog.LOGGER.info("Function {} read from the pack as {} character(s), first line: {}", key, contents.length(), contents.split("\n", 2)[0]);
             if (functions.containsKey(key)) { return; }
             FunctionObject function = build(manager, key, contents);
             if (function == null) { return; }

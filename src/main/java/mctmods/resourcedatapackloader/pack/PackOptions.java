@@ -19,6 +19,7 @@ public final class PackOptions {
     private static final Map<String, Map<String, Boolean>> VALUES = new LinkedHashMap<>();
     private static final Map<String, Map<String, Boolean>> LOADED = new LinkedHashMap<>();
     private static final Set<String> GATING = new LinkedHashSet<>();
+    private static final java.util.List<String> WORLD_CHANGED = new java.util.ArrayList<>();
     private static final Map<String, Map<String, Boolean>> HIDDEN = new LinkedHashMap<>();
     private static final Map<String, Map<String, String>> ABOUT = new LinkedHashMap<>();
     private static Path HOME;
@@ -152,6 +153,11 @@ public final class PackOptions {
         return held == null ? new LinkedHashMap<>() : new LinkedHashMap<>(held);
     }
 
+    public static Map<String, Boolean> loadedOptionsOf(String fileKey) {
+        Map<String, Boolean> held = LOADED.get(fileKey);
+        return held == null ? new LinkedHashMap<>() : new LinkedHashMap<>(held);
+    }
+
     public static boolean applied() {
         for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) {
             Map<String, Boolean> was = LOADED.get(entry.getKey());
@@ -167,24 +173,24 @@ public final class PackOptions {
 
     public static void gating(String asked) { GATING.add(asked); }
 
-    public static void report() {
-        ContentLog.LOGGER.info("Pack options: {} name(s) gate content: {}", GATING.size(), GATING);
+    public static Map<String, Boolean> gatingValues() {
+        Map<String, Boolean> found = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) {
-            Map<String, Boolean> was = LOADED.get(entry.getKey());
-            if (was == null) {
-                ContentLog.LOGGER.info("Pack options: {} has no loaded snapshot, so nothing there is compared", entry.getKey());
-                continue;
-            }
-
             for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
-                Boolean before = was.get(option.getKey());
-                if (option.getValue().equals(before)) { continue; }
-
-                ContentLog.LOGGER.info("Pack options: {}:{} went from {} to {}, and gates content: {}", entry.getKey(), option.getKey(), before, option.getValue(), gates(entry.getKey(), option.getKey()));
+                if (gates(entry.getKey(), option.getKey())) { found.put(entry.getKey() + ":" + option.getKey(), option.getValue()); }
             }
         }
-        ContentLog.LOGGER.info("Pack options: a restart is needed: {}", !applied());
+        return found;
     }
+
+    public static void worldChanged(java.util.List<String> changed) {
+        WORLD_CHANGED.clear();
+        WORLD_CHANGED.addAll(changed);
+    }
+
+    public static java.util.List<String> worldChanged() { return WORLD_CHANGED; }
+
+    public static void worldTold() { WORLD_CHANGED.clear(); }
 
     public static boolean gates(String fileKey, String name) { return GATING.contains(name) || GATING.contains(fileKey + ":" + name); }
 

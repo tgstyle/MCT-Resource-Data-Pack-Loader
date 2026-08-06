@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -70,6 +71,12 @@ public final class ContentTerrain {
         return ContentControl.text(ContentControl.TERRAIN, "worldSpawn", Config.worldgen.worldSpawn).trim();
     }
 
+    public static int worldTime() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return -1; }
+
+        return ContentControl.number(ContentControl.TERRAIN, "worldTime", Config.worldgen.worldTime);
+    }
+
     public static int worldBorder() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return 0; }
 
@@ -107,8 +114,14 @@ public final class ContentTerrain {
         catch (NumberFormatException notANumber) { return written.hashCode(); }
     }
 
-    @SubscribeEvent
-    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+    @SubscribeEvent public static void onLoginPackOptions(PlayerEvent.PlayerLoggedInEvent event) {
+        if (PackOptions.worldChanged().isEmpty() || event.player.getEntityWorld().provider.getDimension() != 0) { return; }
+
+        event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.packOptions", String.join(", ", PackOptions.worldChanged()))));
+        PackOptions.worldTold();
+    }
+
+    @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!Config.worldgen.tellWorldType) { return; }
 
         String wanted = worldType();
@@ -118,7 +131,7 @@ public final class ContentTerrain {
         WorldType made = world.getWorldInfo().getTerrainType();
         if (!wanted.equalsIgnoreCase(made.getName())) { return; }
 
-        event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.gamemode", Lang.vanilla("gameMode." + made.getName()))));
+        event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.type", Lang.vanilla(made.getTranslationKey()))));
     }
 
     public static boolean keeps(String worldType) {

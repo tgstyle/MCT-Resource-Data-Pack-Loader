@@ -74,6 +74,7 @@
     "MixinRegionFile",
     "MixinRegionFileCache",
     "MixinRegionFileWrite",
+    "MixinStartupQuery",
     "MixinStrongholdPortalRoom",
     "MixinStructureComponentSpace",
     "MixinStructureOceanMonument",
@@ -93,6 +94,7 @@
     "MixinWorldInfo",
     "MixinWorldLight",
     "MixinWorldProvider",
+    "MixinWorldProviderTime",
     "MixinWorldServerBorder",
     "MixinWorldServerSpawn",
     "MixinWorldServerTicks"
