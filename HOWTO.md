@@ -67,6 +67,8 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 
 ---
 
+# Getting started
+
 ## What it is
 
 Resource Data Pack Loader (RDPL) adds a single folder to your instance: `rdploader`. It does three jobs.
@@ -235,6 +237,8 @@ What to do, in order:
 5. Prove it before players do: join once with a clean vanilla client of the same version. Getting it wrong is loud, not subtle, the connection is refused or dropped at the door, not quietly broken later, so one clean join is a real test.
 6. Expect the two cosmetic gaps and decide they are fine: server-added recipes craft normally but do not appear in the recipe book, and behavior-only entity variants wear stock looks. Everything else, the generated world, the rules, the loot, the locked dimensions, the pregeneration with its hold and its greeting, is the same experience the modded client gets.
 
+# Overriding
+
 ## What you can override
 
 - **Anything in a mod's assets folder**, textures, models, blockstates, language files, sounds, fonts, splash texts, guide books, manuals
@@ -256,7 +260,7 @@ A pack can carry a `config` folder beside its `assets`, holding JSON files of tr
     PackA.zip/config/options.json
     { "enableTestingContent": true, "enableLoserBlocks": false }
 
-A file with `"hide": true` at the top level keeps that pack's options out of the options screen and the generated file entirely, while the options still gate content at their defaults, for shipping a pack whose switches are not ready to show yet. Remove the key to publish them. The same works per option: `"hide": true` inside an option's object hides just that one, so a finished pack can carry switches for unfinished content without showing them:
+A file with `"hide": true` at the top level keeps that pack's options out of the options screen and the generated file entirely, while the options still gate content at their defaults. Two things want that: content that is not ready to ship, and template packs, where the options are machinery holding the definitions together rather than a choice anyone should be making. Remove the key to publish them. The same works per option: `"hide": true` inside an option's object hides just that one, so a finished pack can carry a switch for unfinished content, or a template gate, without either showing up:
 
     { "enablePackB": { "default": false, "hide": true } }
 
@@ -335,164 +339,6 @@ An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing e
 
 An `imprint` entry with `"locateAs": "Crypt"` registers every structure it places under that name, and `/locate Crypt` then points at the nearest one, with the name offered in tab completion. Only structures that have already generated can be found, since pack structures are placed by chance as chunks are made rather than on a grid the game could predict. The names live in the world's save, so they survive restarts and work on servers.
 
-## Entity variants
-
-A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right, its own registry name, its own name in the world, its own spawn egg, and a loot table of its own if you give it one, built on another entity's behavior rather than replacing it. Nothing about the entity it copies changes.
-
-```json
-{
-  "entity": "minecraft:cow",
-  "name": "Angry Cow",
-  "hostile": true,
-  "targets": ["minecraft:player"],
-  "attributes": {
-    "maxHealth": 20,
-    "movementSpeed": 0.32,
-    "attackDamage": 4
-  },
-  "spawns": [
-    { "creatureType": "creature", "weight": 4, "min": 1, "max": 2 }
-  ],
-  "biomeTypes": ["PLAINS"]
-}
-```
-
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `entity` | yes | `namespace:name` | none | The entity to build on. Any mod's, as long as it takes a plain world constructor |
-| `name` | no | string | none | The name it carries in the world, in death messages and on its egg |
-| `showName` | no | boolean | `false` | Show the name without looking at it |
-| `texture` | no | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
-| `lootTable` | no | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
-| `profession` | no | `namespace:name` | random | For a villager, the trade it practices |
-| `career` | no | int | random | Which career within that profession, from 1 upwards |
-| `baby` | no | boolean | `false` | Stays young, and stays that way |
-| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
-| `soundVolume` | no | number | `1.0` | How loud those sounds are |
-| `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
-| `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
-| `jumpMultiplier` | no | float | `1.0` | How much higher it jumps than the entity it copies |
-| `fallDamage` | no | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
-| `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
-| `breathesUnderwater` | no | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it |
-| `swims` | no | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it |
-| `amphibious` | no | boolean | `false` | Walks on land and swims properly in water, changing how it finds its way as it enters and leaves the water. It never drowns. Whatever it was chasing is forgotten at the water's edge, so it hesitates for a moment each time it crosses |
-| `waterSlowdown` | no | float | `0.8` | How much water slows it. Higher is faster |
-| `absorption` | no | float | `0` | Extra hearts on top of its health |
-| `experience` | no | int | the base's | How much experience it drops |
-| `creatureAttribute` | no | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
-| `effects` | no | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
-| `despawns` | no | boolean | `true` | Off, it stays even when it would normally be cleared away |
-| `noAI` | no | boolean | `false` | Stands where it is put and does nothing |
-| `leftHanded` | no | boolean | `false` | Holds its weapon in the other hand |
-| `fireproof` | no | boolean | `false` | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight |
-| `invulnerable` | no | boolean | `false` | Takes no damage from anything but the void and creative |
-| `glowing` | no | boolean | `false` | Outlined through walls |
-| `invisible` | no | boolean | `false` | Not drawn, though its gear still is |
-| `dropChance` | no | 0 to 1 | `0` | How likely each piece of equipment is to drop |
-| `scale` | no | float | `1.0` | How big it is drawn, and how big its hitbox is |
-| `angryScale` | no | float | `scale` | The size it swells to while it has something to attack |
-| `leashable` | no | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
-| `steerable` | no | boolean | `false` | Can be steered while ridden |
-| `width` | no | float | the base's | Its hitbox across, before `scale` is applied |
-| `height` | no | float | the base's | Its hitbox up, before `scale` is applied |
-| `pathPriorities` | no | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
-| `egg` | no | boolean or object | `true` | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out |
-| `attributes` | no | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
-| `hostile` | no | boolean | `false` | Attacks what it can reach, and fights back when hurt |
-| `targets` | no | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
-| `passive` | no | boolean | `false` | Stops it attacking anything, however it normally behaves |
-| `persistent` | no | boolean | `false` | Never despawns |
-| `silent` | no | boolean | `false` | Makes no sound |
-| `picksUpLoot` | no | boolean | `false` | Picks up what it walks over |
-| `hideArmor` | no | boolean | `false` | Wears its armor without it being drawn |
-| `hideHeld` | no | boolean | `false` | The same for whatever it is holding |
-| `tint` | no | hex color | none | Colors the entity as it is drawn |
-| `tintParts` | no | list of `body`, `armor`, `held` | `["body"]` | Which parts the tint reaches |
-| `ignoresSpawnRules` | no | boolean | `false` | Spawns wherever it is put, ignoring the rules it inherited |
-| `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
-| `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4 |
-| `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off |
-| `explosionFire` | no | boolean | `false` | Leaves fires behind |
-| `equipment` | no | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
-| `spawns` | no | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
-| `biomes` | no | list of biome names | every biome | Where those spawns are added |
-| `biomeTypes` | no | list of dictionary types | none | The same, by type |
-| `trackingRange` | no | int | `80` | How far away the client is told about it |
-| `trackVelocity` | no | boolean | `true` | Send its speed as well as its position. Off saves traffic on things that barely move |
-| `trackingFrequency` | no | int | `3` | How often, in ticks |
-| `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
-
-`scale` changes both the model and the hitbox on both sides, so what you see is what you can hit. A creature that changes its own size, an animal growing up or a zombie that is a child, is scaled around whatever size it has chosen, so the two do not fight. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across, it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
-
-A variant drops whatever the entity it copies drops, because the loot table is fixed in that entity's own code rather than looked up by name. `lootTable` points it at a table of your own, which you then supply at `loot_tables/entities/<name>.json` like any other.
-
-A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's, a skin, not a new shape. Layers keep their own textures, so armor still looks like armor on a reskinned zombie.
-
-Armor is only ever drawn on an entity whose renderer has an armor layer, which in this version means the humanoid mobs and villagers. A variant of a cow or a spider can carry armor and gets its protection, but nothing draws it, so `armor` under `attributes` is usually the tidier way to make such a creature tough. `hideArmor` is for the other case: a humanoid that should keep the armor in its slots, for the protection or for a mod that reads them, without it being seen.
-
-`hostile` also takes away the behavior that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behavior vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behavior built the way vanilla builds it, a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
-
-A variant is a class of its own, so a world that contains one depends on the pack that made it, the same way it depends on a mod. Take the file away and the creatures in that world go with it.
-
-## Village plots
-
-A file in `assets/<modid>/villages/` adds a piece villages can build, alongside the vanilla ones. Two kinds, chosen with `type`.
-
-A `farm` is vanilla's field, described rather than coded: a plot of the size you ask for, edged with a block, filled with rows of soil separated by water channels, planted with a crop picked per block from your list.
-
-```json
-{
-  "type": "farm",
-  "weight": 3,
-  "width": 7,
-  "depth": 9,
-  "crops": ["simplecorn:corn"],
-  "edge": "minecraft:log",
-  "water": true,
-  "rowWidth": 2
-}
-```
-
-A `template` places one of your `.nbt` structures instead, turned to face the village path.
-
-```json
-{
-  "type": "template",
-  "weight": 2,
-  "width": 9,
-  "height": 6,
-  "depth": 9,
-  "structure": "mypack:blacksmith_shed"
-}
-```
-
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `type` | all | `farm` or `template` | `farm` | Which kind of plot |
-| `weight` | all | int | `3` | How often this plot is picked against the pack's others |
-| `leastCount` | all | int | `1` | Fewest per village, before village size is added |
-| `mostCount` | all | int | `4` | Most per village, before village size is added |
-| `width` | all | int | `7` | Size across the path |
-| `height` | all | int | `4` | Height cleared above the ground |
-| `depth` | all | int | `9` | Size away from the path |
-| `crops` | farm | list of block names | wheat | Planted one per block, at a random growth stage |
-| `edge` | farm | block name | `minecraft:log` | The frame around the plot |
-| `soil` | farm | block name | `minecraft:farmland` | What the rows are made of |
-| `water` | farm | boolean | `true` | Put a water channel between the rows |
-| `rowWidth` | farm | int | `2` | How wide each row of soil is |
-| `structure` | template | `namespace:name` | none | The template to place |
-| `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
-| `villagers` | all | int | `0` | How many people the plot spawns |
-| `villagerEntity` | all | `namespace:name` | a villager | Who lives there, such as an entity variant of your own |
-| `villagerX` | all | int | `1` | Where they appear, across the plot |
-| `villagerY` | all | int | `1` | Where they appear, above the floor |
-| `villagerZ` | all | int | `1` | Where they appear, into the plot |
-| `ground` | all | block name | `minecraft:dirt` | What is packed underneath on a slope |
-| `requires` | all | list of mod ids or pack namespaces | none | The plot is left out unless all are present |
-
-Every pack plot is offered to villages as one entry, so `weight` decides which of your plots is chosen once a village asks for one. Which plot a placement used is written into the village's own data, so it rebuilds correctly on load.
-
 ## Registry renames
 
 When a mod renames one of its blocks or items, worlds saved before the rename lose them. Drop a file in `registry_remap/` to map the old name to the new one:
@@ -507,6 +353,8 @@ When a mod renames one of its blocks or items, worlds saved before the rename lo
 The registry is the one the entry belongs to, usually `minecraft:items` or `minecraft:blocks`. Renames chain, so mapping A to B and later B to C sends A straight to C.
 
 ---
+
+# Defining new content
 
 ## How definitions work
 
@@ -1114,6 +962,164 @@ Each entry is either `input`, `ingredient` and `output`, or `from`, `ingredient`
 
 A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `min`.
 
+## Entity variants
+
+A file in `assets/<modid>/entities/` makes a new entity out of one that already exists. It is a real entity in its own right, its own registry name, its own name in the world, its own spawn egg, and a loot table of its own if you give it one, built on another entity's behavior rather than replacing it. Nothing about the entity it copies changes.
+
+```json
+{
+  "entity": "minecraft:cow",
+  "name": "Angry Cow",
+  "hostile": true,
+  "targets": ["minecraft:player"],
+  "attributes": {
+    "maxHealth": 20,
+    "movementSpeed": 0.32,
+    "attackDamage": 4
+  },
+  "spawns": [
+    { "creatureType": "creature", "weight": 4, "min": 1, "max": 2 }
+  ],
+  "biomeTypes": ["PLAINS"]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `entity` | yes | `namespace:name` | none | The entity to build on. Any mod's, as long as it takes a plain world constructor |
+| `name` | no | string | none | The name it carries in the world, in death messages and on its egg |
+| `showName` | no | boolean | `false` | Show the name without looking at it |
+| `texture` | no | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
+| `lootTable` | no | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
+| `profession` | no | `namespace:name` | random | For a villager, the trade it practices |
+| `career` | no | int | random | Which career within that profession, from 1 upwards |
+| `baby` | no | boolean | `false` | Stays young, and stays that way |
+| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
+| `soundVolume` | no | number | `1.0` | How loud those sounds are |
+| `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
+| `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
+| `jumpMultiplier` | no | float | `1.0` | How much higher it jumps than the entity it copies |
+| `fallDamage` | no | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
+| `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
+| `breathesUnderwater` | no | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it |
+| `swims` | no | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it |
+| `amphibious` | no | boolean | `false` | Walks on land and swims properly in water, changing how it finds its way as it enters and leaves the water. It never drowns. Whatever it was chasing is forgotten at the water's edge, so it hesitates for a moment each time it crosses |
+| `waterSlowdown` | no | float | `0.8` | How much water slows it. Higher is faster |
+| `absorption` | no | float | `0` | Extra hearts on top of its health |
+| `experience` | no | int | the base's | How much experience it drops |
+| `creatureAttribute` | no | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
+| `effects` | no | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
+| `despawns` | no | boolean | `true` | Off, it stays even when it would normally be cleared away |
+| `noAI` | no | boolean | `false` | Stands where it is put and does nothing |
+| `leftHanded` | no | boolean | `false` | Holds its weapon in the other hand |
+| `fireproof` | no | boolean | `false` | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight |
+| `invulnerable` | no | boolean | `false` | Takes no damage from anything but the void and creative |
+| `glowing` | no | boolean | `false` | Outlined through walls |
+| `invisible` | no | boolean | `false` | Not drawn, though its gear still is |
+| `dropChance` | no | 0 to 1 | `0` | How likely each piece of equipment is to drop |
+| `scale` | no | float | `1.0` | How big it is drawn, and how big its hitbox is |
+| `angryScale` | no | float | `scale` | The size it swells to while it has something to attack |
+| `leashable` | no | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
+| `steerable` | no | boolean | `false` | Can be steered while ridden |
+| `width` | no | float | the base's | Its hitbox across, before `scale` is applied |
+| `height` | no | float | the base's | Its hitbox up, before `scale` is applied |
+| `pathPriorities` | no | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
+| `egg` | no | boolean or object | `true` | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out |
+| `attributes` | no | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
+| `hostile` | no | boolean | `false` | Attacks what it can reach, and fights back when hurt |
+| `targets` | no | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
+| `passive` | no | boolean | `false` | Stops it attacking anything, however it normally behaves |
+| `persistent` | no | boolean | `false` | Never despawns |
+| `silent` | no | boolean | `false` | Makes no sound |
+| `picksUpLoot` | no | boolean | `false` | Picks up what it walks over |
+| `hideArmor` | no | boolean | `false` | Wears its armor without it being drawn |
+| `hideHeld` | no | boolean | `false` | The same for whatever it is holding |
+| `tint` | no | hex color | none | Colors the entity as it is drawn |
+| `tintParts` | no | list of `body`, `armor`, `held` | `["body"]` | Which parts the tint reaches |
+| `ignoresSpawnRules` | no | boolean | `false` | Spawns wherever it is put, ignoring the rules it inherited |
+| `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
+| `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4 |
+| `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off |
+| `explosionFire` | no | boolean | `false` | Leaves fires behind |
+| `equipment` | no | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
+| `spawns` | no | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
+| `biomes` | no | list of biome names | every biome | Where those spawns are added |
+| `biomeTypes` | no | list of dictionary types | none | The same, by type |
+| `trackingRange` | no | int | `80` | How far away the client is told about it |
+| `trackVelocity` | no | boolean | `true` | Send its speed as well as its position. Off saves traffic on things that barely move |
+| `trackingFrequency` | no | int | `3` | How often, in ticks |
+| `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+
+`scale` changes both the model and the hitbox on both sides, so what you see is what you can hit. A creature that changes its own size, an animal growing up or a zombie that is a child, is scaled around whatever size it has chosen, so the two do not fight. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across, it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
+
+A variant drops whatever the entity it copies drops, because the loot table is fixed in that entity's own code rather than looked up by name. `lootTable` points it at a table of your own, which you then supply at `loot_tables/entities/<name>.json` like any other.
+
+A `texture` is bound in place of the one the entity would normally use, whatever renderer it inherits, so it works for modded entities as well as vanilla ones. It has to match the model it is drawn on, since the model is the base entity's, a skin, not a new shape. Layers keep their own textures, so armor still looks like armor on a reskinned zombie.
+
+Armor is only ever drawn on an entity whose renderer has an armor layer, which in this version means the humanoid mobs and villagers. A variant of a cow or a spider can carry armor and gets its protection, but nothing draws it, so `armor` under `attributes` is usually the tidier way to make such a creature tough. `hideArmor` is for the other case: a humanoid that should keep the armor in its slots, for the protection or for a mod that reads them, without it being seen.
+
+`hostile` also takes away the behavior that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behavior vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behavior built the way vanilla builds it, a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
+
+A variant is a class of its own, so a world that contains one depends on the pack that made it, the same way it depends on a mod. Take the file away and the creatures in that world go with it.
+
+## Village plots
+
+A file in `assets/<modid>/villages/` adds a piece villages can build, alongside the vanilla ones. Two kinds, chosen with `type`.
+
+A `farm` is vanilla's field, described rather than coded: a plot of the size you ask for, edged with a block, filled with rows of soil separated by water channels, planted with a crop picked per block from your list.
+
+```json
+{
+  "type": "farm",
+  "weight": 3,
+  "width": 7,
+  "depth": 9,
+  "crops": ["simplecorn:corn"],
+  "edge": "minecraft:log",
+  "water": true,
+  "rowWidth": 2
+}
+```
+
+A `template` places one of your `.nbt` structures instead, turned to face the village path.
+
+```json
+{
+  "type": "template",
+  "weight": 2,
+  "width": 9,
+  "height": 6,
+  "depth": 9,
+  "structure": "mypack:blacksmith_shed"
+}
+```
+
+| Key | Used by | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `type` | all | `farm` or `template` | `farm` | Which kind of plot |
+| `weight` | all | int | `3` | How often this plot is picked against the pack's others |
+| `leastCount` | all | int | `1` | Fewest per village, before village size is added |
+| `mostCount` | all | int | `4` | Most per village, before village size is added |
+| `width` | all | int | `7` | Size across the path |
+| `height` | all | int | `4` | Height cleared above the ground |
+| `depth` | all | int | `9` | Size away from the path |
+| `crops` | farm | list of block names | wheat | Planted one per block, at a random growth stage |
+| `edge` | farm | block name | `minecraft:log` | The frame around the plot |
+| `soil` | farm | block name | `minecraft:farmland` | What the rows are made of |
+| `water` | farm | boolean | `true` | Put a water channel between the rows |
+| `rowWidth` | farm | int | `2` | How wide each row of soil is |
+| `structure` | template | `namespace:name` | none | The template to place |
+| `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
+| `villagers` | all | int | `0` | How many people the plot spawns |
+| `villagerEntity` | all | `namespace:name` | a villager | Who lives there, such as an entity variant of your own |
+| `villagerX` | all | int | `1` | Where they appear, across the plot |
+| `villagerY` | all | int | `1` | Where they appear, above the floor |
+| `villagerZ` | all | int | `1` | Where they appear, into the plot |
+| `ground` | all | block name | `minecraft:dirt` | What is packed underneath on a slope |
+| `requires` | all | list of mod ids or pack namespaces | none | The plot is left out unless all are present |
+
+Every pack plot is offered to villages as one entry, so `weight` decides which of your plots is chosen once a village asks for one. Which plot a placement used is written into the village's own data, so it rebuilds correctly on load.
+
 ## Biomes
 
 `biomes/*.json`
@@ -1437,6 +1443,8 @@ If more than one pack ships an intro, their pages run end to end in pack order r
 
 Each key is the id of the world the rules belong to, `0` for the overworld, `-1` for the nether, `1` for the end, and whatever a mod uses for its own. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world.
 
+# Generating it
+
 ## Worldgen entries
 
 `worldgen/*.json` describes something that generates. Every entry is a **shape** placed by a **spread**, filtered by where it is allowed.
@@ -1661,225 +1669,6 @@ Changing `retrogenKey` in the config makes every chunk eligible again, which add
 
 ---
 
-## Value lists
-
-These are the names the parser accepts wherever the tables above say "one of the materials", and so on. Anything unrecognized is logged and replaced with the default.
-
-**Block materials.** `air`, `grass`, `ground`, `wood`, `rock`, `iron`, `anvil`, `water`, `lava`, `leaves`, `plants`, `vine`, `sponge`, `cloth`, `fire`, `sand`, `circuits`, `carpet`, `glass`, `redstone_light`, `tnt`, `coral`, `ice`, `packed_ice`, `snow`, `crafted_snow`, `cactus`, `clay`, `gourd`, `dragon_egg`, `portal`, `cake`, `web`, `piston`, `barrier`, `structure_void`.
-
-**Sound types.** `wood`, `ground`, `plant`, `stone`, `metal`, `glass`, `cloth`, `sand`, `snow`, `ladder`, `anvil`, `slime`.
-
-**Map colors.** `air`, `grass`, `sand`, `cloth`, `tnt`, `ice`, `iron`, `foliage`, `snow`, `clay`, `dirt`, `stone`, `water`, `wood`, `quartz`, `adobe`, `magenta`, `light_blue`, `yellow`, `lime`, `pink`, `gray`, `silver`, `cyan`, `purple`, `blue`, `brown`, `green`, `red`, `black`, `gold`, `diamond`, `lapis`, `emerald`, `obsidian`, `netherrack`.
-
-**Render layers.** `solid`, `cutout`, `cutout_mipped`, `translucent`. Left empty, the block picks one to suit its type.
-
-**Rarities.** `common`, `uncommon`, `rare`, `epic`.
-
-**Torch particles.** `none`, `flame`, `colored`. `colored` uses `particleColor`.
-
-**Tool classes.** `pickaxe`, `axe`, `shovel`, `sword`.
-
-**Armor slots.** `head` or `helmet`, `chest` or `chestplate`, `legs` or `leggings`, `feet` or `boots`.
-
-**Tints.** `biome`, `none`, or a six digit hex color. Colors anywhere in a definition are hex, with or without a leading `#`.
-
-**Behaviors** for `behavesAs`. `animals`, `till`, `path`, `bush`.
-
-**The name of a new world** is set with `worldName` in the `terrain` group. The screen for making a world opens with that name already in the box, and the folder the world is saved in follows from it as it always does. It only fills the box while it still says what the game called it, so a name typed by the player is never taken away, and unlike the seed and the game mode it is not put back afterward: whatever is in the box when the world is made is what it is called.
-
-**Game mode** is set with `worldGameMode` in the `terrain` group, one of `survival`, `creative`, `adventure` or `spectator`. Every world made while the pack is on starts that way, and creative also opens commands, the same as ticking the box when making the world by hand. It only decides how a world begins; changing mode in a world afterward is left alone. The screen for making a world starts with that mode already chosen, and with the seed a pack asks for already filled in, so what is shown there is what will happen, and a player is free to change it before making the world even though the pack will set it back. Adventure and spectator are not offered on that screen, so a pack asking for either leaves it showing whatever was chosen and sets the mode as the world is made.
-
-**Where a new world spawns** is set with `worldSpawn` in the `terrain` group, written as `x,z` or `x,y,z`. Without a y the game's usual ground level for the world type is used, which is what vanilla stores anyway, and the player is put down on the surface there. It is applied as the world is made, so a world that already exists keeps the spawn it was born with, and an entry that is not whole numbers is reported and left to the game.
-
-This is worth knowing on flat worlds in particular. The game picks a spawn by looking for grass at sea level, and on a superflat the block above the layer stack is always air, so that check never passes and it wanders up to a thousand steps looking. A flat world can therefore open hundreds of blocks from the origin, nowhere near where a pack expects. Naming `worldSpawn` settles it.
-
-**The world border** is set with `worldBorder` in the `terrain` group, a whole number of blocks across, the same figure `/worldborder set` takes. It is applied as the world is made, so an existing world keeps the border it has, and `0`, the default, leaves the border where the game puts it. The border is centered wherever the game centers it, and can still be moved afterward by command in the usual way.
-
-A pack cannot set a border of any size it likes. `worldBorderLimit` in the config is the widest a pack is allowed to ask for, and a pack asking for more is refused outright rather than quietly cut down: the reason is logged and the border is left alone. Only the person running the game can raise that limit, so a pack cannot hand a server a border it did not agree to.
-
-**The time of day** is locked with `worldTime` in the `terrain` group, in ticks, the same figure `/time set` takes, so `18000` is midnight and `6000` is noon. The overworld clock stops there and never moves, and anything that reads whether it is day, mob spawning and sleeping among them, is told the locked time. `-1`, the default, leaves time running. This is the overworld's version of the `fixedTime` a dimension of your own can set, and unlike `doDaylightCycle` it does not matter what the clock said when the world was made.
-
-
-
-
-**Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
-
-**Creature types** for biome spawns and rates. `creature`, `monster`, `ambient`, `water_creature`.
-
-## The control layer
-
-Everything that stops or changes generation is grouped, and each group has one key in the config's `control` category with three values:
-
-| Value | What it means |
-| --- | --- |
-| `default` | The pack decides. Config values are the fallback |
-| `global` | The config wins. Pack sections are ignored |
-| `off` | The group is disabled entirely and no pack can enable it |
-
-The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities` and `chunks`.
-
-Settings resolve **biome → world template → config**. A world template's `settings` block uses the same key names as the config, so a pack sets them the same way you would:
-
-```json
-{
-  "settings": {
-    "monsterCap": 40,
-    "flatBedrock": true,
-    "worldGameMode": "creative",
-    "oreWhitelist": ["minecraft", "mypack"],
-    "pregenOnNewWorld": 63
-  }
-}
-```
-
-With a group's control at `default` these win, at `global` they are ignored, and at `off` the whole group does nothing no matter what any pack says.
-
-## What each group does
-
-**Ores.** `blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all. `blockOreDimensions` limits ore blocking to certain dimensions, empty meaning every one, with `blockOreDimensionsAreBlacklist` turning that list into the dimensions to leave alone. A dimension outside the scope is not touched at all, so another mod's ores generate there untouched while the overworld stays blocked.
-
-**Biomes.** `blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself. `blockBiomeDimensions` limits all of it to certain dimensions, empty meaning every one, and `blockBiomeDimensionsAreBlacklist` turns that list into an exclusion.
-
-**Generators.** `blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see, slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked. `blockGeneratorDimensions` limits it to certain dimensions, with `blockGeneratorDimensionsAreBlacklist` to invert the list.
-
-`generatorTypes` blocks by what a generator makes instead of by which mod owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched. `generatorTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. A type blocks whatever the whitelist says, the same way `oreTypes` does, so you can stop every mod adding ore while leaving its dungeons and trees alone.
-
-The type comes from the generator's class name, matched against a built in list of words per type. That reads most mods correctly, `NetherOreGenerator` is ores, `SlimeIslandGenerator` is structures, but a generator named after nothing in particular, such as ProjectRed's `SimpleGenHandler` or Draconic Evolution's `DEWorldGenHandler`, comes out as `unknown`. `generatorTypeMap` fixes those by hand, one `pattern=type` per line, where the pattern is a mod id or part of a generator class name:
-
-```
-mrtjpcore=ores
-deworldgenhandler=structures
-```
-
-Mapped entries are checked before the built in words, so they also correct a generator the words read the wrong way. Turn on `logBlockedGenerators` and each generator is logged with the type it was given the first time it is blocked, and `/rdplserver generators` shows the running totals by mod and type.
-
-**Replacements.** `blockReplacements` swaps blocks out of chunks that already exist, one `block=block` per line, with an optional meta on either side:
-
-```
-bigreactors:oreyellorite=minecraft:stone
-mekanism:oreblock:0=minecraft:stone
-tconstruct:ore:0=minecraft:netherrack
-```
-
-Each chunk is done once, as it loads from disk, and marked in the chunk's own data so it is never done twice. A chunk being generated for the first time is cleaned the next time it loads rather than straight away, because neighboring chunks are still writing into it while it generates. A chunk on the edge of explored land is cleaned but not marked, so it is cleaned again once the land around it exists. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
-
-**Villages.** Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
-
-`villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top.
-
-**Structures.** Vanilla structures switched off by name, per dimension. Placement is controlled with four lists written as `structure=value`, one per line: `structureSpacing` for how far apart they are seeded, `structureSeparation` for the closest two may be, `structureMinDistanceFromSpawn` for how far out they start, and `structureBiomes` with `structureBiomesAreBlacklist` for where they are allowed.
-
-```
-temples=24
-monuments=40
-mineshafts=200
-```
-
-```
-temples=minecraft:desert,SANDY
-monuments=minecraft:deep_ocean
-```
-
-Not every structure understands every setting. Spacing reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many rather than a grid, since that is how vanilla places them. Separation reaches monuments, mansions, end cities and strongholds. Biomes reach every structure except end cities, because the End is one biome in this version and there is nothing to choose between. End cities still pick their own spot within the grid: they only sit on an outer island whose surface reaches y60, so raising their spacing thins them out but cannot put one over the void. Nether fortresses sit on a fixed grid vanilla does not expose, so only the biome and spawn distance lists reach them. Villages keep their own `villageSpacing`, `villageBiomes` and the rest.
-
-`structureSpawns` replaces the mobs a structure spawns whatever the biome around it says, written as `structure=namespace:entity:weight:least:most`, comma separated:
-
-```
-netherbridges=minecraft:blaze:10:2:3,minecraft:wither_skeleton:8:5:5
-temples=minecraft:witch:1:1:1
-monuments=
-```
-
-Only temples, monuments and nether fortresses keep such a list in this version; villages place their villagers from the pieces themselves, and mineshafts, strongholds and end cities use spawners and placed mobs instead. Leaving the line empty after the equals sign, as with monuments above, stops that structure spawning anything of its own.
-
-`structureSpawners` says what the mob spawner inside a vanilla structure spawns, written as `structure=namespace:entity`, comma separated for a random pick per spawner:
-
-```
-dungeons=minecraft:zombie,minecraft:husk
-mineshafts=minecraft:cave_spider
-netherbridges=minecraft:wither_skeleton
-strongholds=minecraft:silverfish
-```
-
-Four vanilla structures place a spawner: the dungeon room, the mineshaft corridor, the nether fortress throne and the stronghold portal room. Each is reached on its own, so spawners placed by other mods are never touched. Dungeons normally pick from the list mods add to through Forge, so naming them here takes that choice over as well.
-
-Spacing decides where a structure is seeded, so changing it in a world that already exists leaves what is there and puts new ones on a different grid.
-
-**Spawning.** Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone.
-
-**Seating structures.** `structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages are `beard_thin` unless overridden and everything else is `none` unless named, matching what modern versions choose for themselves. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
-
-**Seating villages.** `terrainAdaptation` reworks how villages choose their ground and sit on it, ported in spirit from how modern versions seat their structures, then taken further. Villages only found on the flattest chunk their region offers, and never within eight chunks of another village; regions with no flat enough ground found nothing at all. The well seats to the lowest ground touching it with its rim flush with the surface, and the whole village levels from there. Roads are graded as they are laid: the surface follows the lowest natural ground across the road's width, bumps are cut, dips are filled, the slope never exceeds one block per step, and short chasms are bridged with planks. Grass paths go down on earth, gravel on stone and sand, planks over water, so roads no longer vanish where the ground is not grass. Each building seats one block above the road it fronts, read from the laid road or predicted from the ground the road will grade onto when the road has not been built yet, so its doorstep stairs rest on the road surface and its door sits behind them. Farms and lamp posts keep vanilla's own ground level. Pieces refuse ground that varies more than a few blocks under their own footprint, ground is filled beneath each building down to the nearest resting surface in the same material it rests on, walls and doorways are opened out of hillsides, dirt is lifted off roofs, and any tree standing in a structure is felled whole, its leaves going with its wood while every leaf a standing branch still owns is left alone. Mansions and the scattered features (temples, huts, igloos) are held to the same flat-ground standard before they may place. It reshapes the terrain itself as it is made, so a world generated with it on differs from one generated without, the same warning modern versions carry, and it is off unless a pack or the config asks.
-
-**Bedrock.** `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone, the original pattern is not recorded anywhere. `bedrockLayers` sets how many layers are left, `flatBedrockRoof` does the ceiling too where a dimension has one, and `flatBedrockFiller` is what replaces the bedrock taken away, left empty to pick per dimension, with `flatBedrockFillers` naming one per dimension instead. Which dimensions and biomes it reaches is `flatBedrockDimensions`, `flatBedrockBiomes` and `flatBedrockBiomeTypes`, with `flatBedrockDimensionsAreBlacklist` and `flatBedrockBiomesAreBlacklist` turning those lists into exclusions.
-
-**Slow ticking far away.** Entities cost a server more than anything else, and most of them are nowhere near a player. `slowDistantEntities` gives a chunk with no player within `slowDistance` blocks one tick in `slowRate`, so what is in it still moves, floats, burns and despawns, only at a slower pace. Nothing is ever left unticked.
-
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `slowDistantEntities` | no | boolean | `true` | Whether anything is slowed at all |
-| `slowedKinds` | no | list of `items`, `experience`, `projectiles` | `{items, experience}` | Which kinds are given fewer ticks. Anything that thinks for itself is always slowed instead, and is not named here. Machines are never slowed |
-| `slowDistance` | no | int, 64 and up | `192` | How far from the nearest player before a chunk is slowed |
-| `slowRate` | no | int, 1 to 20 | `4` | One tick in this many is given to a slowed chunk. `1` slows nothing |
-| `neverSlowed` | no | list of entity names | none | Left alone however far away they are |
-| `slowRecheck` | no | int, 1 to 100 | `20` | How often the distance to the nearest player is worked out again |
-
-Anything that thinks for itself, every mob, animal, villager and golem, whatever mod it came from, is treated differently from the rest, and is not named in `slowedKinds` at all. It is never given fewer ticks, because a player can watch it walk. Instead it is left ticking every tick and made to think less often: the part of its mind that decides what to do next, which is also the expensive part of it, is asked one time in `slowRate` rather than every third tick. It keeps moving, falling, drowning, burning and pathing exactly as it would, and simply changes its mind less often while nobody is near it. There is nothing to see, no stepping and no catching up, and one a player walks up on is back to its ordinary self before it is in view. Because it cannot be noticed, it is not a choice: it happens wherever slowing is on at all.
-
-What is given fewer ticks still ages at the ordinary pace. A dropped item and an experience orb each carry their own counter that decides when it disappears, and on a tick a slowed chunk does not take, that counter is moved on anyway. So an item still lies on the ground for five minutes rather than twenty. Only what it does each tick is reduced, never how long it lasts.
-
-A chunk something is deliberately holding loaded is never slowed, however far away it is. Those are the chunks a chunk loader keeps, and the whole point of keeping one is that what is in it carries on running, so a farm left working while its owner is elsewhere works at the pace it was built for. The chunks around a world's spawn are not these, since nothing asked for them, so they are slowed like anywhere else.
-
-A whole chunk is slowed or not slowed together, so what is inside it still behaves as it should: items land in the same pile, a mob still follows the one beside it. Every player counts for themselves, so someone off on their own still has quiet space around them wherever they are. Something ridden, named, tamed, leashed, glowing, kept from despawning, under an effect, or already chasing a player is left alone however far away it is, as are all machines. It applies to every world, including ones a mod adds.
-
-**Watching chunk work.** With `worldgenDebug` on, a line every hundred rounds says how the world is spending its chunk work: how many chunks were made fresh, how many had to be fetched back after being let go, how many of those came off the disk rather than out of the queue still waiting to be written, how many region files were opened and how often they were all closed at once, and the most chunks held and writes outstanding at any point. It is written for working out whether generating land is costing time in generation or in fetching the same ground back, so it is worth turning on before a large pregeneration and off afterward.
-
-Three more lines follow it: one for writing chunks back to storage, one for lighting them, and one splitting the making of the land itself into the ground, the dressing the game puts on it, and the dressing each mod puts on it, worst five named. A slow world can then be read as four separate costs rather than one, and the mod responsible named rather than guessed at.
-
-**Making land ahead of time.** Large enough to have a section of its own, see [Pregeneration](#pregeneration).
-
-**Blocks waiting their turn.** Water spreading, lava cooling and crops growing are all blocks waiting a while before they do something, and the game keeps every one of them in a single heap. Each time a chunk is written it walks that whole heap from end to end looking for the few that belong to it, so the more of them a world has the slower every write becomes, whether or not the chunk being written has any at all. They are sorted by which chunk they sit in and the sorting is thrown away and done again the moment the heap changes or the round moves on, so writing a chunk looks only at the handful about it.
-
-**Growing room for the blocks in a chunk.** A chunk is kept in slices, and each slice holds a list of the kinds of block in it, starting with room for sixteen. Passing sixteen means making a bigger list and copying every one of the four thousand blocks in the slice across, and then again at thirty two, and again at sixty four. Ground with a few sorts of stone and ore in it passes all of those, so it is done four times over for the sake of a little room. It now goes straight to the largest of those sizes the first time it runs out, which is one copying instead of four and costs a few kilobytes a slice that is being used within moments anyway.
-
-**Getting chunks ready to write.** Before a chunk can be written it is turned into the form that goes on the disk, which walks every one of its blocks and looks each one up in a table by name. Ground comes in long runs of the same thing, so the same lookup is done thousands of times over for the same stone, and the answer to the last one is simply kept and used again when the next block is the same. It is not something that can be turned off, since there is nothing to weigh up: the answer is the same either way.
-
-**Writing chunks out.** The game writes finished chunks on a thread of its own, one at a time, resting a hundredth of a second after each. That holds it to about a hundred chunks a second no matter how quick the disk is, which is plenty while somebody plays and nowhere near enough while land is being made in bulk, so the unwritten chunks pile up in memory instead. `hurryWritesAbove` says how many may be waiting before it stops resting and simply writes as fast as it can. `100` is the default and matches the point at which the game itself starts holding generation back; `0` leaves it resting always, as the game does. Nothing changes while the number waiting is small, which is every ordinary moment of play.
-
-Each time the tidying runs a line is written for it as it happens, naming which sweeper ran, how long it took, what was held before and after, and how much room the game had at the time. If that room changes it is said so, because the room growing is itself what causes the longest of these pauses: a game started with less room than it ends up needing will stop to grow it, repeatedly, at moments that have nothing to do with what it is doing. Starting it with as much room as it is allowed avoids that entirely.
-
-A last line says how much working scrap was thrown away since the last look, how long the tidying up of it took and how many sweeps that was, and how much of the room it is allowed the game is currently holding. Making land throws away a great deal by its nature, since every chunk is turned into fresh arrays before it is written, and that tidying happens between rounds rather than during them, so it shows up as a hitch rather than as time in any of the counts above.
-
-**Spawn chunks.** The game holds the chunks around a world's spawn point loaded whether or not anyone is there, so mods have somewhere that always ticks. It is 128 blocks in every direction, about 289 chunks, and it is not adjustable in the game. `spawnChunkRadius` sets that distance. `128` is what the game does and is the default, a smaller number keeps a smaller anchor, and `0` holds none at all, so the spawn area unloads like anywhere else. `spawnChunkRadii` sets a radius for one dimension at a time, written as `dimension=blocks`, one per line, and overrides `spawnChunkRadius` for the dimensions named.
-
-Only a dimension that was registered to hold its spawn keeps one, which in the game itself is the overworld alone, the nether and the end never held one, so setting this for them changes nothing. A dimension a mod adds holds one only if that mod asked for it, and a mod that did is often carrying a second 289 chunks a pack never wanted. Whether a world stays loaded at all is a separate thing that this does not touch: a dimension a mod marked as staying loaded still stays loaded at `0`, it simply stops holding chunks. Most mods that use spawn as an anchor want something there rather than 289 chunks of it, so a small number usually keeps them working while a `0` does not.
-
-**Void world.** `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are `voidPlatformBlock`, `voidPlatformSize` and `voidPlatformHeight`; the size is rounded down to an odd number of blocks so the platform sits centered on spawn. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
-
-**The dragon.** `dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
-
-**Terrain.** `worldType` decides what kind of world a new world is, whatever was chosen on the screen where it was made, `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds such as `biomesop` or `realistic`. A pack that is built around one world type names it here and every new world is made that way. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the type it was made with, and a name nothing provides is logged and ignored. `worldTypeExceptions` names the choices that are left to stand, flat and the debug world to begin with, since a pack that wants one world type rarely means to take superflat away from someone testing, and whoever makes a world is told in chat, once they are in it, that the pack chose its type. That message is the config file's to decide with `tellWorldType`, not a pack's, so someone playing can turn it off for themselves and no pack can turn it back on. Settings the world was made with are dropped when the type is changed, since they were written for the type that was chosen.
-
-**Terrain.** `worldSeed` decides the seed every new world is made with, whatever was typed on the screen where it was made. It is written the same way it would be typed: a number is used as it is, and anything else is turned into a number the way the game turns a word into one, so `Hollow Ridge` and `-4172144997902289642` are both allowed and both always give the same world. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the seed it was made with, so this only ever decides what a new one gets. A pack built around one map names its seed here and every world made with that pack is that map.
-
-**Terrain.** `generatorOptions` shapes the overworld itself, sea level, lava oceans and every terrain noise, in the same format the customized world type writes. It is applied to a world as it is created and never afterward, so a world that already exists is left exactly as it was. A world that already carries options of its own keeps them, and the log names the string it used.
-
-A world type that carries its own settings and never looks at the world's, as Quark's realistic one does, is given the pack's settings merged into its own, so the shape it was built for stays unless a pack asks for something else.
-
-`terrainWorldTypes` names the world types the settings are given to at all, `default`, `customized`, `biomesop`, `realistic` and so on, and `terrainWorldTypesAreBlacklist` turns that into the list to leave alone. Empty, the default, means every world type. A pack that shapes the ordinary world but wants a mod's world type left exactly as that mod made it names it here and is done: nothing is merged, nothing is handed over, and the mod's own customize screen stays open. The names are matched against whatever world type a world was made with, so naming one that nothing here provides simply never matches and costs nothing.
-
-Everything below about Biomes O' Plenty only happens when that mod is installed, since the work is done by compatibility that is only loaded when it is present. Without it there is no `biomesop` world type to pick, and a pack that names one is left with whatever world type the world was actually made with.
-
-On a Biomes O' Plenty world the same settings are turned into the words that mod reads, so a pack does not need a second copy of them. `biomeSize` becomes one of its five sizes, the noise and scale settings pass through as they are, and anything it never reads is left out with a line in the log saying so. That mod reads far less than the customized world type does, and never reads sea level, caves, lakes or the structure switches from its settings at all, so those are handed to it directly instead, and a pack sets them the same way it would for any other world.
-
-Two things it decides for itself. Rivers come out of its own layers and have no setting, so `riverSize` means nothing there. And where oceans, mountains and regions actually sit is its layers too, reachable only through `landScheme`, `tempScheme`, `rainScheme` and `biomeSize`, so a pack shapes that world in that mod's terms rather than the customized world type's. A world of a single biome is still a pack's to make: block every biome and name the one you want as the template's `default`, which works the same on its world type as on any other.
-
-Everything else a pack does, blocking biomes and ores, replacing blocks, flat bedrock, structure placement, its own worldgen, never went through that string at all, and works the same on any world type.
-
-**Logging.** `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` and `logBlockReplacements` each log the first time something is turned away, so you can see what a blocking rule actually caught rather than guessing from what is missing. They are the first thing to turn on when a rule seems to be doing nothing, or too much.
-
-**Recipes.** `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says. The whitelists are `recipeWhitelist` and `furnaceWhitelist`; `blockedRecipeMods` and `blockedFurnaceMods` go the other way and remove a named mod's recipes whatever the whitelist says. `recipeMatch` decides where the mod id is read from when crafting recipes are blocked, from the recipe's own name or from what it produces.
-
 ## Pregeneration
 
 Making a world's land ahead of time, so nobody generates chunks while playing: no chunk lag, a known size on disk, and one wait up front instead of a stuttering first hour. Turned on by a pack with `pregenOnNewWorld`, or run by hand with the command.
@@ -1956,6 +1745,228 @@ That also means the light is put in after the trees, ore and lakes rather than b
 
 A line says how often each of these shortcuts failed and the long way had to be taken: chunks looked up in earnest, blocks asked what they are made of, blocks named for the writing, and how many times Quark's stone generator was spared reading the world for ground too far from the middle of its cluster to be used. Only the failures are counted, since counting the successes would cost more than the successes save.
 
+# Control
+
+## The control layer
+
+Everything that stops or changes generation is grouped, and each group has one key in the config's `control` category with three values:
+
+| Value | What it means |
+| --- | --- |
+| `default` | The pack decides. Config values are the fallback |
+| `global` | The config wins. Pack sections are ignored |
+| `off` | The group is disabled entirely and no pack can enable it |
+
+The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities` and `chunks`.
+
+Settings resolve **biome → world template → config**. A world template's `settings` block uses the same key names as the config, so a pack sets them the same way you would:
+
+```json
+{
+  "settings": {
+    "monsterCap": 40,
+    "flatBedrock": true,
+    "worldGameMode": "creative",
+    "oreWhitelist": ["minecraft", "mypack"],
+    "pregenOnNewWorld": 63
+  }
+}
+```
+
+With a group's control at `default` these win, at `global` they are ignored, and at `off` the whole group does nothing no matter what any pack says.
+
+## What each group does
+
+### Ores
+
+`blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all. `blockOreDimensions` limits ore blocking to certain dimensions, empty meaning every one, with `blockOreDimensionsAreBlacklist` turning that list into the dimensions to leave alone. A dimension outside the scope is not touched at all, so another mod's ores generate there untouched while the overworld stays blocked.
+
+### Biomes
+
+`blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself. `blockBiomeDimensions` limits all of it to certain dimensions, empty meaning every one, and `blockBiomeDimensionsAreBlacklist` turns that list into an exclusion.
+
+### Generators
+
+`blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see, slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked. `blockGeneratorDimensions` limits it to certain dimensions, with `blockGeneratorDimensionsAreBlacklist` to invert the list.
+
+`generatorTypes` blocks by what a generator makes instead of by which mod owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched. `generatorTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. A type blocks whatever the whitelist says, the same way `oreTypes` does, so you can stop every mod adding ore while leaving its dungeons and trees alone.
+
+The type comes from the generator's class name, matched against a built in list of words per type. That reads most mods correctly, `NetherOreGenerator` is ores, `SlimeIslandGenerator` is structures, but a generator named after nothing in particular, such as ProjectRed's `SimpleGenHandler` or Draconic Evolution's `DEWorldGenHandler`, comes out as `unknown`. `generatorTypeMap` fixes those by hand, one `pattern=type` per line, where the pattern is a mod id or part of a generator class name:
+
+```
+mrtjpcore=ores
+deworldgenhandler=structures
+```
+
+Mapped entries are checked before the built in words, so they also correct a generator the words read the wrong way. Turn on `logBlockedGenerators` and each generator is logged with the type it was given the first time it is blocked, and `/rdplserver generators` shows the running totals by mod and type.
+
+### Replacements
+
+`blockReplacements` swaps blocks out of chunks that already exist, one `block=block` per line, with an optional meta on either side:
+
+```
+bigreactors:oreyellorite=minecraft:stone
+mekanism:oreblock:0=minecraft:stone
+tconstruct:ore:0=minecraft:netherrack
+```
+
+Each chunk is done once, as it loads from disk, and marked in the chunk's own data so it is never done twice. A chunk being generated for the first time is cleaned the next time it loads rather than straight away, because neighboring chunks are still writing into it while it generates. A chunk on the edge of explored land is cleaned but not marked, so it is cleaned again once the land around it exists. `blockReplacementDimensions` and `blockReplacementDimensionsAreBlacklist` choose where, `blockReplacementMinHeight` and `blockReplacementMaxHeight` choose the band of the world to look at, and `blockReplacementKey` is a string you change to make every chunk go through it again. It runs whether or not `retrogen` is on, since a world that needs cleaning up is usually one you do not want new veins added to. It only swaps blocks: something a mod generated as a structure cannot be taken back out this way, because the terrain it replaced was never recorded.
+
+### Villages
+
+Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
+
+`villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top.
+
+### Structures
+
+Vanilla structures switched off by name, per dimension. Placement is controlled with four lists written as `structure=value`, one per line: `structureSpacing` for how far apart they are seeded, `structureSeparation` for the closest two may be, `structureMinDistanceFromSpawn` for how far out they start, and `structureBiomes` with `structureBiomesAreBlacklist` for where they are allowed.
+
+```
+temples=24
+monuments=40
+mineshafts=200
+```
+
+```
+temples=minecraft:desert,SANDY
+monuments=minecraft:deep_ocean
+```
+
+Not every structure understands every setting. Spacing reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many rather than a grid, since that is how vanilla places them. Separation reaches monuments, mansions, end cities and strongholds. Biomes reach every structure except end cities, because the End is one biome in this version and there is nothing to choose between. End cities still pick their own spot within the grid: they only sit on an outer island whose surface reaches y60, so raising their spacing thins them out but cannot put one over the void. Nether fortresses sit on a fixed grid vanilla does not expose, so only the biome and spawn distance lists reach them. Villages keep their own `villageSpacing`, `villageBiomes` and the rest.
+
+`structureSpawns` replaces the mobs a structure spawns whatever the biome around it says, written as `structure=namespace:entity:weight:least:most`, comma separated:
+
+```
+netherbridges=minecraft:blaze:10:2:3,minecraft:wither_skeleton:8:5:5
+temples=minecraft:witch:1:1:1
+monuments=
+```
+
+Only temples, monuments and nether fortresses keep such a list in this version; villages place their villagers from the pieces themselves, and mineshafts, strongholds and end cities use spawners and placed mobs instead. Leaving the line empty after the equals sign, as with monuments above, stops that structure spawning anything of its own.
+
+`structureSpawners` says what the mob spawner inside a vanilla structure spawns, written as `structure=namespace:entity`, comma separated for a random pick per spawner:
+
+```
+dungeons=minecraft:zombie,minecraft:husk
+mineshafts=minecraft:cave_spider
+netherbridges=minecraft:wither_skeleton
+strongholds=minecraft:silverfish
+```
+
+Four vanilla structures place a spawner: the dungeon room, the mineshaft corridor, the nether fortress throne and the stronghold portal room. Each is reached on its own, so spawners placed by other mods are never touched. Dungeons normally pick from the list mods add to through Forge, so naming them here takes that choice over as well.
+
+Spacing decides where a structure is seeded, so changing it in a world that already exists leaves what is there and puts new ones on a different grid.
+
+### Spawning
+
+Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone.
+
+### Seating structures
+
+`structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages are `beard_thin` unless overridden and everything else is `none` unless named, matching what modern versions choose for themselves. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
+
+### Seating villages
+
+`terrainAdaptation` reworks how villages choose their ground and sit on it, ported in spirit from how modern versions seat their structures, then taken further. Villages only found on the flattest chunk their region offers, and never within eight chunks of another village; regions with no flat enough ground found nothing at all. The well seats to the lowest ground touching it with its rim flush with the surface, and the whole village levels from there. Roads are graded as they are laid: the surface follows the lowest natural ground across the road's width, bumps are cut, dips are filled, the slope never exceeds one block per step, and short chasms are bridged with planks. Grass paths go down on earth, gravel on stone and sand, planks over water, so roads no longer vanish where the ground is not grass. Each building seats one block above the road it fronts, read from the laid road or predicted from the ground the road will grade onto when the road has not been built yet, so its doorstep stairs rest on the road surface and its door sits behind them. Farms and lamp posts keep vanilla's own ground level. Pieces refuse ground that varies more than a few blocks under their own footprint, ground is filled beneath each building down to the nearest resting surface in the same material it rests on, walls and doorways are opened out of hillsides, dirt is lifted off roofs, and any tree standing in a structure is felled whole, its leaves going with its wood while every leaf a standing branch still owns is left alone. Mansions and the scattered features (temples, huts, igloos) are held to the same flat-ground standard before they may place. It reshapes the terrain itself as it is made, so a world generated with it on differs from one generated without, the same warning modern versions carry, and it is off unless a pack or the config asks.
+
+### Bedrock
+
+`flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone, the original pattern is not recorded anywhere. `bedrockLayers` sets how many layers are left, `flatBedrockRoof` does the ceiling too where a dimension has one, and `flatBedrockFiller` is what replaces the bedrock taken away, left empty to pick per dimension, with `flatBedrockFillers` naming one per dimension instead. Which dimensions and biomes it reaches is `flatBedrockDimensions`, `flatBedrockBiomes` and `flatBedrockBiomeTypes`, with `flatBedrockDimensionsAreBlacklist` and `flatBedrockBiomesAreBlacklist` turning those lists into exclusions.
+
+### Slow ticking far away
+
+Entities cost a server more than anything else, and most of them are nowhere near a player. `slowDistantEntities` gives a chunk with no player within `slowDistance` blocks one tick in `slowRate`, so what is in it still moves, floats, burns and despawns, only at a slower pace. Nothing is ever left unticked.
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `slowDistantEntities` | no | boolean | `true` | Whether anything is slowed at all |
+| `slowedKinds` | no | list of `items`, `experience`, `projectiles` | `{items, experience}` | Which kinds are given fewer ticks. Anything that thinks for itself is always slowed instead, and is not named here. Machines are never slowed |
+| `slowDistance` | no | int, 64 and up | `192` | How far from the nearest player before a chunk is slowed |
+| `slowRate` | no | int, 1 to 20 | `4` | One tick in this many is given to a slowed chunk. `1` slows nothing |
+| `neverSlowed` | no | list of entity names | none | Left alone however far away they are |
+| `slowRecheck` | no | int, 1 to 100 | `20` | How often the distance to the nearest player is worked out again |
+
+Anything that thinks for itself, every mob, animal, villager and golem, whatever mod it came from, is treated differently from the rest, and is not named in `slowedKinds` at all. It is never given fewer ticks, because a player can watch it walk. Instead it is left ticking every tick and made to think less often: the part of its mind that decides what to do next, which is also the expensive part of it, is asked one time in `slowRate` rather than every third tick. It keeps moving, falling, drowning, burning and pathing exactly as it would, and simply changes its mind less often while nobody is near it. There is nothing to see, no stepping and no catching up, and one a player walks up on is back to its ordinary self before it is in view. Because it cannot be noticed, it is not a choice: it happens wherever slowing is on at all.
+
+What is given fewer ticks still ages at the ordinary pace. A dropped item and an experience orb each carry their own counter that decides when it disappears, and on a tick a slowed chunk does not take, that counter is moved on anyway. So an item still lies on the ground for five minutes rather than twenty. Only what it does each tick is reduced, never how long it lasts.
+
+A chunk something is deliberately holding loaded is never slowed, however far away it is. Those are the chunks a chunk loader keeps, and the whole point of keeping one is that what is in it carries on running, so a farm left working while its owner is elsewhere works at the pace it was built for. The chunks around a world's spawn are not these, since nothing asked for them, so they are slowed like anywhere else.
+
+A whole chunk is slowed or not slowed together, so what is inside it still behaves as it should: items land in the same pile, a mob still follows the one beside it. Every player counts for themselves, so someone off on their own still has quiet space around them wherever they are. Something ridden, named, tamed, leashed, glowing, kept from despawning, under an effect, or already chasing a player is left alone however far away it is, as are all machines. It applies to every world, including ones a mod adds.
+
+### Watching chunk work
+
+With `worldgenDebug` on, a line every hundred rounds says how the world is spending its chunk work: how many chunks were made fresh, how many had to be fetched back after being let go, how many of those came off the disk rather than out of the queue still waiting to be written, how many region files were opened and how often they were all closed at once, and the most chunks held and writes outstanding at any point. It is written for working out whether generating land is costing time in generation or in fetching the same ground back, so it is worth turning on before a large pregeneration and off afterward.
+
+Three more lines follow it: one for writing chunks back to storage, one for lighting them, and one splitting the making of the land itself into the ground, the dressing the game puts on it, and the dressing each mod puts on it, worst five named. A slow world can then be read as four separate costs rather than one, and the mod responsible named rather than guessed at.
+
+### Making land ahead of time
+
+Large enough to have a section of its own, see [Pregeneration](#pregeneration).
+
+### Blocks waiting their turn
+
+Water spreading, lava cooling and crops growing are all blocks waiting a while before they do something, and the game keeps every one of them in a single heap. Each time a chunk is written it walks that whole heap from end to end looking for the few that belong to it, so the more of them a world has the slower every write becomes, whether or not the chunk being written has any at all. They are sorted by which chunk they sit in and the sorting is thrown away and done again the moment the heap changes or the round moves on, so writing a chunk looks only at the handful about it.
+
+### Growing room for the blocks in a chunk
+
+A chunk is kept in slices, and each slice holds a list of the kinds of block in it, starting with room for sixteen. Passing sixteen means making a bigger list and copying every one of the four thousand blocks in the slice across, and then again at thirty two, and again at sixty four. Ground with a few sorts of stone and ore in it passes all of those, so it is done four times over for the sake of a little room. It now goes straight to the largest of those sizes the first time it runs out, which is one copying instead of four and costs a few kilobytes a slice that is being used within moments anyway.
+
+### Getting chunks ready to write
+
+Before a chunk can be written it is turned into the form that goes on the disk, which walks every one of its blocks and looks each one up in a table by name. Ground comes in long runs of the same thing, so the same lookup is done thousands of times over for the same stone, and the answer to the last one is simply kept and used again when the next block is the same. It is not something that can be turned off, since there is nothing to weigh up: the answer is the same either way.
+
+### Writing chunks out
+
+The game writes finished chunks on a thread of its own, one at a time, resting a hundredth of a second after each. That holds it to about a hundred chunks a second no matter how quick the disk is, which is plenty while somebody plays and nowhere near enough while land is being made in bulk, so the unwritten chunks pile up in memory instead. `hurryWritesAbove` says how many may be waiting before it stops resting and simply writes as fast as it can. `100` is the default and matches the point at which the game itself starts holding generation back; `0` leaves it resting always, as the game does. Nothing changes while the number waiting is small, which is every ordinary moment of play.
+
+Each time the tidying runs a line is written for it as it happens, naming which sweeper ran, how long it took, what was held before and after, and how much room the game had at the time. If that room changes it is said so, because the room growing is itself what causes the longest of these pauses: a game started with less room than it ends up needing will stop to grow it, repeatedly, at moments that have nothing to do with what it is doing. Starting it with as much room as it is allowed avoids that entirely.
+
+A last line says how much working scrap was thrown away since the last look, how long the tidying up of it took and how many sweeps that was, and how much of the room it is allowed the game is currently holding. Making land throws away a great deal by its nature, since every chunk is turned into fresh arrays before it is written, and that tidying happens between rounds rather than during them, so it shows up as a hitch rather than as time in any of the counts above.
+
+### Spawn chunks
+
+The game holds the chunks around a world's spawn point loaded whether or not anyone is there, so mods have somewhere that always ticks. It is 128 blocks in every direction, about 289 chunks, and it is not adjustable in the game. `spawnChunkRadius` sets that distance. `128` is what the game does and is the default, a smaller number keeps a smaller anchor, and `0` holds none at all, so the spawn area unloads like anywhere else. `spawnChunkRadii` sets a radius for one dimension at a time, written as `dimension=blocks`, one per line, and overrides `spawnChunkRadius` for the dimensions named.
+
+Only a dimension that was registered to hold its spawn keeps one, which in the game itself is the overworld alone, the nether and the end never held one, so setting this for them changes nothing. A dimension a mod adds holds one only if that mod asked for it, and a mod that did is often carrying a second 289 chunks a pack never wanted. Whether a world stays loaded at all is a separate thing that this does not touch: a dimension a mod marked as staying loaded still stays loaded at `0`, it simply stops holding chunks. Most mods that use spawn as an anchor want something there rather than 289 chunks of it, so a small number usually keeps them working while a `0` does not.
+
+### Void world
+
+`voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are `voidPlatformBlock`, `voidPlatformSize` and `voidPlatformHeight`; the size is rounded down to an odd number of blocks so the platform sits centered on spawn. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
+
+### The dragon
+
+`dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
+
+### Terrain
+
+`worldType` decides what kind of world a new world is, whatever was chosen on the screen where it was made, `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds such as `biomesop` or `realistic`. A pack that is built around one world type names it here and every new world is made that way. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the type it was made with, and a name nothing provides is logged and ignored. `worldTypeExceptions` names the choices that are left to stand, flat and the debug world to begin with, since a pack that wants one world type rarely means to take superflat away from someone testing, and whoever makes a world is told in chat, once they are in it, that the pack chose its type. That message is the config file's to decide with `tellWorldType`, not a pack's, so someone playing can turn it off for themselves and no pack can turn it back on. Settings the world was made with are dropped when the type is changed, since they were written for the type that was chosen.
+
+`worldSeed` decides the seed every new world is made with, whatever was typed on the screen where it was made. It is written the same way it would be typed: a number is used as it is, and anything else is turned into a number the way the game turns a word into one, so `Hollow Ridge` and `-4172144997902289642` are both allowed and both always give the same world. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the seed it was made with, so this only ever decides what a new one gets. A pack built around one map names its seed here and every world made with that pack is that map.
+
+`generatorOptions` shapes the overworld itself, sea level, lava oceans and every terrain noise, in the same format the customized world type writes. It is applied to a world as it is created and never afterward, so a world that already exists is left exactly as it was. A world that already carries options of its own keeps them, and the log names the string it used.
+
+A world type that carries its own settings and never looks at the world's, as Quark's realistic one does, is given the pack's settings merged into its own, so the shape it was built for stays unless a pack asks for something else.
+
+`terrainWorldTypes` names the world types the settings are given to at all, `default`, `customized`, `biomesop`, `realistic` and so on, and `terrainWorldTypesAreBlacklist` turns that into the list to leave alone. Empty, the default, means every world type. A pack that shapes the ordinary world but wants a mod's world type left exactly as that mod made it names it here and is done: nothing is merged, nothing is handed over, and the mod's own customize screen stays open. The names are matched against whatever world type a world was made with, so naming one that nothing here provides simply never matches and costs nothing.
+
+Everything below about Biomes O' Plenty only happens when that mod is installed, since the work is done by compatibility that is only loaded when it is present. Without it there is no `biomesop` world type to pick, and a pack that names one is left with whatever world type the world was actually made with.
+
+On a Biomes O' Plenty world the same settings are turned into the words that mod reads, so a pack does not need a second copy of them. `biomeSize` becomes one of its five sizes, the noise and scale settings pass through as they are, and anything it never reads is left out with a line in the log saying so. That mod reads far less than the customized world type does, and never reads sea level, caves, lakes or the structure switches from its settings at all, so those are handed to it directly instead, and a pack sets them the same way it would for any other world.
+
+Two things it decides for itself. Rivers come out of its own layers and have no setting, so `riverSize` means nothing there. And where oceans, mountains and regions actually sit is its layers too, reachable only through `landScheme`, `tempScheme`, `rainScheme` and `biomeSize`, so a pack shapes that world in that mod's terms rather than the customized world type's. A world of a single biome is still a pack's to make: block every biome and name the one you want as the template's `default`, which works the same on its world type as on any other.
+
+Everything else a pack does, blocking biomes and ores, replacing blocks, flat bedrock, structure placement, its own worldgen, never went through that string at all, and works the same on any world type.
+
+### Logging
+
+`logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` and `logBlockReplacements` each log the first time something is turned away, so you can see what a blocking rule actually caught rather than guessing from what is missing. They are the first thing to turn on when a rule seems to be doing nothing, or too much.
+
+### Recipes
+
+`blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says. The whitelists are `recipeWhitelist` and `furnaceWhitelist`; `blockedRecipeMods` and `blockedFurnaceMods` go the other way and remove a named mod's recipes whatever the whitelist says. `recipeMatch` decides where the mod id is read from when crafting recipes are blocked, from the recipe's own name or from what it produces.
+
 ## CoFH World
 
 Mods that require CoFH World load without it, the requirement is removed automatically, except for mods that genuinely call its API and would crash.
@@ -1967,6 +1978,53 @@ Failing that, `readCofhWorldFiles` reads those files straight out of the mod jar
 Translating the files into a pack is the supported route, and the only way to change what they generate.
 
 ---
+
+# Reference
+
+## Value lists
+
+These are the names the parser accepts wherever the tables above say "one of the materials", and so on. Anything unrecognized is logged and replaced with the default.
+
+**Block materials.** `air`, `grass`, `ground`, `wood`, `rock`, `iron`, `anvil`, `water`, `lava`, `leaves`, `plants`, `vine`, `sponge`, `cloth`, `fire`, `sand`, `circuits`, `carpet`, `glass`, `redstone_light`, `tnt`, `coral`, `ice`, `packed_ice`, `snow`, `crafted_snow`, `cactus`, `clay`, `gourd`, `dragon_egg`, `portal`, `cake`, `web`, `piston`, `barrier`, `structure_void`.
+
+**Sound types.** `wood`, `ground`, `plant`, `stone`, `metal`, `glass`, `cloth`, `sand`, `snow`, `ladder`, `anvil`, `slime`.
+
+**Map colors.** `air`, `grass`, `sand`, `cloth`, `tnt`, `ice`, `iron`, `foliage`, `snow`, `clay`, `dirt`, `stone`, `water`, `wood`, `quartz`, `adobe`, `magenta`, `light_blue`, `yellow`, `lime`, `pink`, `gray`, `silver`, `cyan`, `purple`, `blue`, `brown`, `green`, `red`, `black`, `gold`, `diamond`, `lapis`, `emerald`, `obsidian`, `netherrack`.
+
+**Render layers.** `solid`, `cutout`, `cutout_mipped`, `translucent`. Left empty, the block picks one to suit its type.
+
+**Rarities.** `common`, `uncommon`, `rare`, `epic`.
+
+**Torch particles.** `none`, `flame`, `colored`. `colored` uses `particleColor`.
+
+**Tool classes.** `pickaxe`, `axe`, `shovel`, `sword`.
+
+**Armor slots.** `head` or `helmet`, `chest` or `chestplate`, `legs` or `leggings`, `feet` or `boots`.
+
+**Tints.** `biome`, `none`, or a six digit hex color. Colors anywhere in a definition are hex, with or without a leading `#`.
+
+**Behaviors** for `behavesAs`. `animals`, `till`, `path`, `bush`.
+
+**The name of a new world** is set with `worldName` in the `terrain` group. The screen for making a world opens with that name already in the box, and the folder the world is saved in follows from it as it always does. It only fills the box while it still says what the game called it, so a name typed by the player is never taken away, and unlike the seed and the game mode it is not put back afterward: whatever is in the box when the world is made is what it is called.
+
+**Game mode** is set with `worldGameMode` in the `terrain` group, one of `survival`, `creative`, `adventure` or `spectator`. Every world made while the pack is on starts that way, and creative also opens commands, the same as ticking the box when making the world by hand. It only decides how a world begins; changing mode in a world afterward is left alone. The screen for making a world starts with that mode already chosen, and with the seed a pack asks for already filled in, so what is shown there is what will happen, and a player is free to change it before making the world even though the pack will set it back. Adventure and spectator are not offered on that screen, so a pack asking for either leaves it showing whatever was chosen and sets the mode as the world is made.
+
+**Where a new world spawns** is set with `worldSpawn` in the `terrain` group, written as `x,z` or `x,y,z`. Without a y the game's usual ground level for the world type is used, which is what vanilla stores anyway, and the player is put down on the surface there. It is applied as the world is made, so a world that already exists keeps the spawn it was born with, and an entry that is not whole numbers is reported and left to the game.
+
+This is worth knowing on flat worlds in particular. The game picks a spawn by looking for grass at sea level, and on a superflat the block above the layer stack is always air, so that check never passes and it wanders up to a thousand steps looking. A flat world can therefore open hundreds of blocks from the origin, nowhere near where a pack expects. Naming `worldSpawn` settles it.
+
+**The world border** is set with `worldBorder` in the `terrain` group, a whole number of blocks across, the same figure `/worldborder set` takes. It is applied as the world is made, so an existing world keeps the border it has, and `0`, the default, leaves the border where the game puts it. The border is centered wherever the game centers it, and can still be moved afterward by command in the usual way.
+
+A pack cannot set a border of any size it likes. `worldBorderLimit` in the config is the widest a pack is allowed to ask for, and a pack asking for more is refused outright rather than quietly cut down: the reason is logged and the border is left alone. Only the person running the game can raise that limit, so a pack cannot hand a server a border it did not agree to.
+
+**The time of day** is locked with `worldTime` in the `terrain` group, in ticks, the same figure `/time set` takes, so `18000` is midnight and `6000` is noon. The overworld clock stops there and never moves, and anything that reads whether it is day, mob spawning and sleeping among them, is told the locked time. `-1`, the default, leaves time running. This is the overworld's version of the `fixedTime` a dimension of your own can set, and unlike `doDaylightCycle` it does not matter what the clock said when the world was made.
+
+
+
+
+**Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
+
+**Creature types** for biome spawns and rates. `creature`, `monster`, `ambient`, `water_creature`.
 
 ## Folder list
 
