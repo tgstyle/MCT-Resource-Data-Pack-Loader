@@ -322,6 +322,12 @@ A parent can be a pure template that never enters the game, since inheritance re
 
 The template never registers, while `jacks_ore` registers with the template's material, sound, tool, tab, exp drops and resistance, overriding only hardness. The child must write its own `requires`, here cleared to an empty list, because it inherits the parent's otherwise and would vanish with it.
 
+### Structures at exact places
+
+Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. A pinned structure generates only in the chunks named, one entry per wanted instance, and its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility. The structure seats to the ground at its chunk by the usual rules once founded.
+
+An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing exactly once at those coordinates on the surface when that chunk generates, instead of by chance. It composes with `locateAs`, so a pinned structure can also be found with /locate.
+
 ### Finding placed structures
 
 An `imprint` entry with `"locateAs": "Crypt"` registers every structure it places under that name, and `/locate Crypt` then points at the nearest one, with the name offered in tab completion. Only structures that have already generated can be found, since pack structures are placed by chance as chunks are made rather than on a grid the game could predict. The names live in the world's save, so they survive restarts and work on servers.
