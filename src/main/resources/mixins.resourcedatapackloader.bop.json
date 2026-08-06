@@ -10,7 +10,8 @@
     "MixinBOPWorldSettings",
     "MixinChunkGeneratorHellBOP",
     "MixinChunkGeneratorOverworldBOP",
-    "MixinGeneratorDoubleFlora"
+    "MixinGeneratorDoubleFlora",
+    "MixinGeneratorOreSingle"
   ],
   "client": [
     "MixinWorldTypeBOP"

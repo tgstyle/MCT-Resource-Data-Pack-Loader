@@ -58,11 +58,14 @@ public final class ContentOreControl {
         int[] allowed = ContentControl.numbers(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions);
         if (allowed.length == 0) { return false; }
 
-        boolean listed = false;
+        return listed(allowed, dimension) == ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist);
+    }
+
+    private static boolean listed(int[] allowed, int dimension) {
         for (int wanted : allowed) {
-            if (wanted == dimension) { listed = true; }
+            if (wanted == dimension) { return true; }
         }
-        return listed == ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist);
+        return false;
     }
 
     private static boolean typeBlocked(String type) {
@@ -72,7 +75,20 @@ public final class ContentOreControl {
 
     private static void deny(OreGenEvent.GenerateMinable event, String type, String owner) {
         event.setResult(Event.Result.DENY);
+        denied(type, owner);
+    }
 
+    public static boolean blocks(String type, String owner, int dimension) {
+        if (!enabled()) { return false; }
+        if (oreTypes == null) { load(); }
+        if (outsideScope(dimension)) { return false; }
+        if (typeBlocked(type)) { return true; }
+        if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres)) { return false; }
+
+        return !whitelist.contains(owner);
+    }
+
+    public static void denied(String type, String owner) {
         String key = owner + " " + type;
         BLOCKED.count(key);
 
