@@ -86,7 +86,7 @@ public final class PackOptions {
         for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) { LOADED.put(entry.getKey(), new LinkedHashMap<>(entry.getValue())); }
         if (!VALUES.isEmpty()) { ContentLog.LOGGER.info("Loaded {} pack option file(s) from {}", VALUES.size(), home); }
         List<String> stale = orphans();
-        if (!stale.isEmpty()) { ContentLog.LOGGER.info("{} option file(s) in {} belong to no installed pack, left alone: {}. Use /rdpl config prune to remove them", stale.size(), home, String.join(", ", stale)); }
+        if (!stale.isEmpty()) { ContentLog.LOGGER.info("{} option file(s) in {} belong to no installed pack, left alone: {}. Use /rdpl config prune, or /rdplserver config prune on a dedicated server, to remove them", stale.size(), home, String.join(", ", stale)); }
     }
 
     public static List<String> orphans() {

@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -35,9 +36,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
+    private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
 
     @Override @Nonnull public String getName() { return "rdplserver"; }
 
@@ -50,6 +52,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
+        if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_ACTIONS); }
         if (args.length == 3 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("relight")); }
         if (args.length == 4 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, names()); }
         return Collections.emptyList();
@@ -68,7 +71,26 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
         else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
+        else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
+    }
+
+    private void config(ICommandSender sender, String action) throws CommandException {
+        List<String> stale = PackOptions.orphans();
+        if (stale.isEmpty()) {
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.none"));
+            return;
+        }
+        if ("unused".equals(action)) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.config.unused", stale.size()));
+            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + ".json"); }
+            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.config.servernote"));
+            return;
+        }
+        if (!"prune".equals(action)) { throw new WrongUsageException(getUsage(sender)); }
+
+        int gone = PackOptions.prune();
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
     }
 
     private void pregen(ICommandSender sender, String[] args) throws CommandException {
