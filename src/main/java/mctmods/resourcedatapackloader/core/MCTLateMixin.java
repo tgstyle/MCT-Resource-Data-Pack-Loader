@@ -21,8 +21,13 @@ public class MCTLateMixin implements ILateMixinLoader {
                 "mixins.resourcedatapackloader.crafttweaker.json",
                 "mixins.resourcedatapackloader.dungeons2.json",
                 "mixins.resourcedatapackloader.quark.json",
+                "mixins.resourcedatapackloader.aether.json",
+                "mixins.resourcedatapackloader.betweenlands.json",
                 "mixins.resourcedatapackloader.lostcities.json",
                 "mixins.resourcedatapackloader.neoterra.json",
+                "mixins.resourcedatapackloader.otg.json",
+                "mixins.resourcedatapackloader.rtg.json",
+                "mixins.resourcedatapackloader.twilightforest.json",
                 "mixins.resourcedatapackloader.vanillaportals.json");
     }
 
@@ -34,8 +39,13 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (mixinConfig.endsWith(".crafttweaker.json")) { return Loader.isModLoaded("crafttweaker"); }
         if (mixinConfig.endsWith(".dungeons2.json")) { return Loader.isModLoaded("dungeons2"); }
         if (mixinConfig.endsWith(".quark.json")) { return Loader.isModLoaded("quark"); }
+        if (mixinConfig.endsWith(".aether.json")) { return Loader.isModLoaded("aether_legacy"); }
+        if (mixinConfig.endsWith(".betweenlands.json")) { return Loader.isModLoaded("thebetweenlands"); }
         if (mixinConfig.endsWith(".lostcities.json")) { return Loader.isModLoaded("lostcities"); }
         if (mixinConfig.endsWith(".neoterra.json")) { return Loader.isModLoaded("neoterra"); }
+        if (mixinConfig.endsWith(".otg.json")) { return Loader.isModLoaded("openterraingenerator"); }
+        if (mixinConfig.endsWith(".rtg.json")) { return Loader.isModLoaded("rtg"); }
+        if (mixinConfig.endsWith(".twilightforest.json")) { return Loader.isModLoaded("twilightforest"); }
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
         return true;
     }

@@ -25,6 +25,7 @@
     "AccessorMapGenBase",
     "AccessorMapGenStructure",
     "AccessorMapGenStructureSpawn",
+    "AccessorMinecraftServerMessage",
     "AccessorPlayerLanguage",
     "AccessorStructureComponentBox",
     "AccessorWorldProviderEnd",
@@ -97,7 +98,8 @@
     "MixinWorldProviderTime",
     "MixinWorldServerBorder",
     "MixinWorldServerSpawn",
-    "MixinWorldServerTicks"
+    "MixinWorldServerTicks",
+    "MixinWorldServerTime"
   ],
   "client": [
     "AccessorGuiIngame",

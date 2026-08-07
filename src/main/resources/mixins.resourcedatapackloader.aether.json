@@ -1,12 +1,12 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.dungeons2",
+  "package": "mctmods.resourcedatapackloader.mixin.aether",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinGCLootTableManager",
-    "MixinStyleSheetLoader"
+    "MixinAetherBiomeProvider",
+    "MixinChunkProviderAether"
   ],
   "client": [],
   "server": []
