@@ -149,6 +149,7 @@ public final class ContentBiomes {
                 JsonUtils.getBoolean(placement, "playerSpawn", false),
                 JsonUtils.getBoolean(placement, "villages", false),
                 JsonUtils.getBoolean(placement, "villageSpawn", true),
+                villageKind(JsonUtils.getString(json, "villageType", ""), key),
                 JsonUtils.getBoolean(placement, "strongholds", false),
                 Collections.unmodifiableMap(decoration),
                 spawnChance(key, JsonUtils.getFloat(json, "spawnChance", 0.1F)),
@@ -161,6 +162,17 @@ public final class ContentBiomes {
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
                 strings(json, "requires")));
+    }
+
+    private static int villageKind(String written, ResourceLocation key) {
+        if (written.isEmpty()) { return -1; }
+        if ("oak".equalsIgnoreCase(written)) { return 0; }
+        if ("sandstone".equalsIgnoreCase(written)) { return 1; }
+        if ("acacia".equalsIgnoreCase(written)) { return 2; }
+        if ("spruce".equalsIgnoreCase(written)) { return 3; }
+
+        ContentLog.LOGGER.error("Biome {} sets villageType '{}', which is not oak, sandstone, acacia or spruce, so villages here build with oak as they would without it", key, written);
+        return -1;
     }
 
     private static float spawnChance(ResourceLocation key, float wanted) {

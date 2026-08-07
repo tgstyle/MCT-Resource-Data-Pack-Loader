@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.mixin.*;
 import mctmods.resourcedatapackloader.util.Config;
@@ -32,6 +33,7 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.ArrayDeque;
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +75,7 @@ public final class ContentBeard {
     private static final int SITE_SEPARATION = 8;
     private static final int FOOTING_STEP = 4;
     private static final int FOOTING_TOLERANCE = 3;
-    private static final long NO_SITE = Long.MIN_VALUE;
+    public static final long NO_SITE = Long.MIN_VALUE;
     private static final ChunkPrimer UNUSED = new ChunkPrimer();
     private static ChunkGeneratorOverworld sampler;
     private static World samplerWorld;
@@ -114,8 +116,20 @@ public final class ContentBeard {
     }
 
     public static int lowestIn(World worldIn, int minX, int minZ, int maxX, int maxZ, StructureBoundingBox clip) {
-        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int floor = worldIn.provider.getAverageGroundLevel() - 1;
+        if (samplerFor(worldIn) != null) {
+            int lowest = Integer.MAX_VALUE;
+            for (int z = minZ; z <= maxZ; z++) {
+                for (int x = minX; x <= maxX; x++) {
+                    int sampled = surfaceAt(worldIn, x, z);
+                    if (sampled < 0) { continue; }
+
+                    lowest = Math.min(lowest, Math.max(sampled, floor));
+                }
+            }
+            if (lowest != Integer.MAX_VALUE) { return lowest; }
+        }
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int lowest = Integer.MAX_VALUE;
         for (int z = minZ; z <= maxZ; z++) {
             for (int x = minX; x <= maxX; x++) {
@@ -191,6 +205,75 @@ public final class ContentBeard {
         long chosen = siteFor(world, known, Math.floorDiv(chunkX, spacing), Math.floorDiv(chunkZ, spacing), spacing);
         return chosen != NO_SITE && chosen == packedChunk(chunkX, chunkZ);
     }
+
+    public static boolean adapts(World world) { return samplerFor(world) != null; }
+
+    public static int villageSpacing(World world) {
+        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return 32; }
+
+        IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        if (!(maker instanceof ChunkGeneratorOverworld)) { return 32; }
+
+        return ((AccessorMapGenVillage) ((AccessorChunkGeneratorBeardFields) maker).rdpl$villages()).rdpl$distance();
+    }
+
+    public static BlockPos nearestSite(World world, BlockPos from, int spacing, boolean findUnexplored, long budgetNanos) {
+        List<long[]> pinned = ContentStructurePlacement.pins(ContentStructurePlacement.VILLAGES);
+        if (pinned != null) {
+            BlockPos best = null;
+            long bestAway = Long.MAX_VALUE;
+            for (long[] pin : pinned) {
+                int chunkX = (int) pin[0] >> 4;
+                int chunkZ = (int) pin[1] >> 4;
+                if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { continue; }
+
+                long awayX = pin[0] - from.getX();
+                long awayZ = pin[1] - from.getZ();
+                long away = awayX * awayX + awayZ * awayZ;
+                if (away >= bestAway) { continue; }
+
+                bestAway = away;
+                best = new BlockPos((int) pin[0], 64, (int) pin[1]);
+            }
+            return best;
+        }
+
+        ContentSites known = ContentSites.of(world, spacing);
+        int cellX = Math.floorDiv(from.getX() >> 4, spacing);
+        int cellZ = Math.floorDiv(from.getZ() >> 4, spacing);
+        long ending = System.nanoTime() + budgetNanos;
+        BlockPos best = null;
+        long bestAway = Long.MAX_VALUE;
+        int stopAt = 100;
+        for (int ring = 0; ring <= stopAt; ring++) {
+            for (int dx = -ring; dx <= ring; dx++) {
+                for (int dz = -ring; dz <= ring; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) { continue; }
+                    if (known.get(packedChunk(cellX + dx, cellZ + dz)) == null && System.nanoTime() >= ending) { return best; }
+
+                    long chosen = siteFor(world, known, cellX + dx, cellZ + dz, spacing);
+                    if (chosen == NO_SITE) { continue; }
+
+                    int chunkX = (int) (chosen >> 32);
+                    int chunkZ = (int) chosen;
+                    if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { continue; }
+                    if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) || mansionCandidateNear(world, chunkX, chunkZ)) { continue; }
+
+                    long awayX = (chunkX * 16L + 8) - from.getX();
+                    long awayZ = (chunkZ * 16L + 8) - from.getZ();
+                    long away = awayX * awayX + awayZ * awayZ;
+                    if (away >= bestAway) { continue; }
+
+                    bestAway = away;
+                    best = new BlockPos(chunkX * 16 + 8, 64, chunkZ * 16 + 8);
+                    stopAt = Math.min(stopAt, ring + 1);
+                }
+            }
+        }
+        return best;
+    }
+
+    public static long siteIn(World world, ContentSites known, int cellX, int cellZ, int spacing) { return siteFor(world, known, cellX, cellZ, spacing); }
 
     private static long siteFor(World world, ContentSites known, int cellX, int cellZ, int spacing) {
         long cell = packedChunk(cellX, cellZ);
@@ -309,10 +392,11 @@ public final class ContentBeard {
         List<BlockPos> trunk = new ArrayList<>();
         ArrayDeque<BlockPos> spreading = new ArrayDeque<>();
         int felled = 0;
+        int top = piece instanceof StructureVillagePieces.Well ? box.maxY + 1 : box.maxY;
         for (int x = box.minX - 2; x <= box.maxX + 2; x++) {
             for (int z = box.minZ - 2; z <= box.maxZ + 2; z++) {
                 for (int y = box.minY + 1; y <= box.maxY + 8; y++) {
-                    if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && y <= box.maxY) { continue; }
+                    if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && y <= top) { continue; }
 
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || insideAnother(start, piece, at)) { continue; }
@@ -326,7 +410,7 @@ public final class ContentBeard {
         while (!spreading.isEmpty() && trunk.size() < 256) {
             BlockPos log = spreading.poll();
             if (!clip.isVecInside(log) || trunk.contains(log) || insideAnother(start, piece, log)) { continue; }
-            if (log.getX() >= box.minX && log.getX() <= box.maxX && log.getZ() >= box.minZ && log.getZ() <= box.maxZ && log.getY() <= box.maxY) { continue; }
+            if (log.getX() >= box.minX && log.getX() <= box.maxX && log.getZ() >= box.minZ && log.getZ() <= box.maxZ && log.getY() <= top) { continue; }
             if (world.getBlockState(log).getMaterial() != Material.WOOD) { continue; }
 
             at.setPos(log.getX(), log.getY(), log.getZ());
@@ -474,8 +558,19 @@ public final class ContentBeard {
 
         StructureBoundingBox well = start.getComponents().get(0).getBoundingBox();
         int nominal = well.maxY - 3;
-        int level = surface(generator, world, (well.minX + well.maxX) / 2, (well.minZ + well.maxZ) / 2);
-        if (level < 0) { return; }
+        int[] sampled = new int[(well.maxX - well.minX + 1) * (well.maxZ - well.minZ + 1)];
+        int count = 0;
+        for (int z = well.minZ; z <= well.maxZ; z++) {
+            for (int x = well.minX; x <= well.maxX; x++) {
+                int found = surfaceAt(world, x, z);
+                if (found >= 0) { sampled[count++] = found; }
+            }
+        }
+        if (count == 0) { return; }
+
+        Arrays.sort(sampled, 0, count);
+        int level = sampled[count / 2];
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The well footprint at {}, {} samples y {}..{} across {} column(s), founding on the median y {}", well.minX, well.minZ, sampled[0], sampled[count - 1], count, level); }
 
         int shift = level - nominal;
         int roads = 0;
@@ -488,7 +583,7 @@ public final class ContentBeard {
     }
 
     public static void openAround(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
-        if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path || piece instanceof StructureVillagePieces.Torch) { return; }
+        if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path) { return; }
 
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -612,6 +707,26 @@ public final class ContentBeard {
                 }
             }
         }
+        int banked = 0;
+        for (int x = box.minX - 2; x <= box.maxX + 2; x++) {
+            for (int z = box.minZ - 2; z <= box.maxZ + 2; z++) {
+                if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { continue; }
+
+                at.setPos(x, box.minY - 1, z);
+                if (!clip.isVecInside(at) || insideAnother(start, piece, at)) { continue; }
+                if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
+
+                for (int y = box.minY - 1; y >= box.minY - 6; y--) {
+                    at.setPos(x, y, z);
+                    IBlockState held = world.getBlockState(at);
+                    if (held.getMaterial().isLiquid()) { break; }
+                    if (held.getMaterial().isSolid()) { break; }
+
+                    world.setBlockState(at, Blocks.DIRT.getDefaultState(), 2);
+                    banked++;
+                }
+            }
+        }
         int opened = 0;
         int spared = 0;
         int notGround = 0;
@@ -668,7 +783,7 @@ public final class ContentBeard {
 
             bridged += bridge(world, start, piece, box, ((AccessorStructureComponentBox) other).rdpl$box(), clip, at);
         }
-        if (opened + spared + notGround + hangingOver + grounded + overhead + bridged + doorways > 0) { ContentLog.LOGGER.debug("Opened {} block(s) around {} at {}, {}, spared {} inside neighbouring pieces, left {} that were not ground, stood {} block(s) of ground under it, lifted {} off its roof, bridged {} between it and a neighbour, freed {} in front of its doors, and the hillside still hangs over {} column(s)", opened, piece.getClass().getSimpleName(), box.minX, box.minZ, spared, notGround, grounded, overhead, bridged, doorways, hangingOver); }
+        if (opened + spared + notGround + hangingOver + grounded + overhead + bridged + doorways + banked > 0) { ContentLog.LOGGER.debug("Opened {} block(s) around {} at {}, {}, spared {} inside neighbouring pieces, left {} that were not ground, stood {} block(s) of ground under it, banked {} up to its grade, lifted {} off its roof, bridged {} between it and a neighbour, freed {} in front of its doors, and the hillside still hangs over {} column(s)", opened, piece.getClass().getSimpleName(), box.minX, box.minZ, spared, notGround, grounded, banked, overhead, bridged, doorways, hangingOver); }
     }
 
     private static int restingFloor(int[] tops, int depth, int spot, int from) {
@@ -872,63 +987,72 @@ public final class ContentBeard {
         return cleared;
     }
 
-    public static void pave(StructureComponent piece, World world, StructureBoundingBox clip, IBlockState path, IBlockState gravel, IBlockState planks) {
+    public static boolean pathChosen() { return !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock).isEmpty(); }
+
+    public static int pathExtraWidth() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathExtraWidth", Config.worldgen.villagePathExtraWidth)); }
+
+    public static IBlockState pathBlock(String key, String fromConfig, IBlockState vanilla) {
+        String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig);
+        if (named.isEmpty()) { return vanilla; }
+
+        IBlockState state = ContentStates.parse(named, key);
+        if (state == null) {
+            ContentLog.LOGGER.error("{} '{}' is not a registered block, using the vanilla road block", key, named);
+            return vanilla;
+        }
+        return state;
+    }
+
+    public static void pave(StructureComponent piece, World world, StructureBoundingBox clip, IBlockState path, IBlockState gravel, IBlockState planks, boolean chosenSurface) {
         StructureBoundingBox box = piece.getBoundingBox();
         boolean alongX = box.maxX - box.minX >= box.maxZ - box.minZ;
         int least = Math.max(alongX ? box.minX : box.minZ, alongX ? clip.minX : clip.minZ);
         int most = Math.min(alongX ? box.maxX : box.maxZ, alongX ? clip.maxX : clip.maxZ);
         if (most < least) { return; }
 
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paving the road at {}, {}, {} across, with surface {} (chosen={}), support {}, bridge {}", box.minX, box.minZ, (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1, path, chosenSurface, gravel, planks); }
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
-        int rows = most - least + 1;
-        int[] profile = new int[rows];
-        for (int i = 0; i < rows; i++) {
-            int found = Integer.MAX_VALUE;
-            for (int across = acrossLeast; across <= acrossMost; across++) {
-                int x = alongX ? least + i : across;
-                int z = alongX ? across : least + i;
-                BlockPos spot = new BlockPos(x, 64, z);
-                if (!clip.isVecInside(spot)) { continue; }
-
-                BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
-                if (top.getY() < world.getSeaLevel() - 1 || world.getBlockState(top).getMaterial().isLiquid()) { continue; }
-                if (top.getY() < found) { found = top.getY(); }
-            }
-            profile[i] = found == Integer.MAX_VALUE ? Integer.MIN_VALUE : found;
+        int start = least;
+        boolean computed = false;
+        int[] profile = noiseProfile(world, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, acrossLeast, acrossMost);
+        if (profile != null) {
+            start = alongX ? box.minX : box.minZ;
+            computed = true;
         }
-        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; } }
-        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; } }
-        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; } }
-        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; } }
-        for (int i = 1; i < rows - 1; i++) {
-            if (!joined(profile, i) || profile[i + 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; }
-        }
-        boolean[] bridged = new boolean[rows];
-        for (int i = 0; i < rows; i++) {
-            if (profile[i] != Integer.MIN_VALUE) { continue; }
+        else {
+            int rows = most - least + 1;
+            profile = new int[rows];
+            for (int i = 0; i < rows; i++) {
+                int found = Integer.MAX_VALUE;
+                for (int across = acrossLeast; across <= acrossMost; across++) {
+                    int x = alongX ? least + i : across;
+                    int z = alongX ? across : least + i;
+                    BlockPos spot = new BlockPos(x, 64, z);
+                    if (!clip.isVecInside(spot)) { continue; }
 
-            int gapEnd = i;
-            while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
-            if (i > 0 && gapEnd < rows && gapEnd - i <= 12) {
-                int fromY = profile[i - 1];
-                int toY = profile[gapEnd];
-                for (int held = i; held < gapEnd; held++) {
-                    profile[held] = fromY + (toY - fromY) * (held - i + 1) / (gapEnd - i + 1);
-                    bridged[held] = true;
+                    BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
+                    if (top.getY() < world.getSeaLevel() - 1 || world.getBlockState(top).getMaterial().isLiquid()) { continue; }
+                    if (top.getY() < found) { found = top.getY(); }
                 }
+                profile[i] = found == Integer.MAX_VALUE ? Integer.MIN_VALUE : found;
             }
-            i = gapEnd;
+            int before = roadAnchor(world, alongX, least - 1, acrossLeast, acrossMost, path, gravel);
+            if (before != Integer.MIN_VALUE && profile[0] != Integer.MIN_VALUE) { profile[0] = Math.max(before - 1, Math.min(before + 1, profile[0])); }
+            int after = roadAnchor(world, alongX, most + 1, acrossLeast, acrossMost, path, gravel);
+            if (after != Integer.MIN_VALUE && profile[rows - 1] != Integer.MIN_VALUE) { profile[rows - 1] = Math.max(after - 1, Math.min(after + 1, profile[rows - 1])); }
         }
+        boolean[] bridged = smooth(profile);
+        if (computed) { clampToWell(alongX, start, acrossLeast, acrossMost, profile); }
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} grades from y {} to y {} along its length", box.minX, box.minZ, profile[0] == Integer.MIN_VALUE ? "water" : profile[0], profile[profile.length - 1] == Integer.MIN_VALUE ? "water" : profile[profile.length - 1]); }
         int cut = 0;
         int filled = 0;
         int paved = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int i = 0; i < rows; i++) {
+        for (int i = Math.max(0, least - start); i < profile.length && start + i <= most; i++) {
             for (int across = acrossLeast; across <= acrossMost; across++) {
-                int x = alongX ? least + i : across;
-                int z = alongX ? across : least + i;
+                int x = alongX ? start + i : across;
+                int z = alongX ? across : start + i;
                 BlockPos spot = new BlockPos(x, 64, z);
                 if (!clip.isVecInside(spot)) { continue; }
 
@@ -983,11 +1107,106 @@ public final class ContentBeard {
                 }
                 at.setPos(x, target, z);
                 boolean earthy = base == Blocks.GRASS || base == Blocks.DIRT || base == Blocks.MYCELIUM || base == Blocks.GRASS_PATH || base == Blocks.AIR || !world.getBlockState(at).getMaterial().isSolid();
-                world.setBlockState(at, earthy ? path : gravel, 2);
+                world.setBlockState(at, chosenSurface || earthy ? path : gravel, 2);
                 paved++;
             }
         }
         if ((cut + filled + paved > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips", box.minX, box.minZ, paved, cut, filled); }
+    }
+
+    @Nullable private static int[] noiseProfile(World world, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost) {
+        if (samplerFor(world) == null) { return null; }
+
+        int[] profile = new int[rowMost - rowLeast + 1];
+        for (int i = 0; i < profile.length; i++) {
+            int found = Integer.MAX_VALUE;
+            for (int across = acrossLeast; across <= acrossMost; across++) {
+                int sampled = surfaceAt(world, alongX ? rowLeast + i : across, alongX ? across : rowLeast + i);
+                if (sampled < world.getSeaLevel() - 1) { continue; }
+                if (sampled < found) { found = sampled; }
+            }
+            profile[i] = found == Integer.MAX_VALUE ? Integer.MIN_VALUE : found;
+        }
+        return profile;
+    }
+
+    private static boolean[] smooth(int[] profile) {
+        int rows = profile.length;
+        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; } }
+        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; } }
+        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; } }
+        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; } }
+        for (int i = 1; i < rows - 1; i++) {
+            if (!joined(profile, i) || profile[i + 1] == Integer.MIN_VALUE) { continue; }
+            if (profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; }
+        }
+        boolean[] bridged = new boolean[rows];
+        for (int i = 0; i < rows; i++) {
+            if (profile[i] != Integer.MIN_VALUE) { continue; }
+
+            int gapEnd = i;
+            while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
+            if (i > 0 && gapEnd < rows && gapEnd - i <= 12) {
+                int fromY = profile[i - 1];
+                int toY = profile[gapEnd];
+                for (int held = i; held < gapEnd; held++) {
+                    profile[held] = fromY + (toY - fromY) * (held - i + 1) / (gapEnd - i + 1);
+                    bridged[held] = true;
+                }
+            }
+            i = gapEnd;
+        }
+        return bridged;
+    }
+
+    public static int noiseAverage(World world, StructureBoundingBox box) {
+        if (samplerFor(world) == null) { return Integer.MIN_VALUE; }
+
+        long total = 0;
+        int count = 0;
+        for (int z = box.minZ; z <= box.maxZ; z++) {
+            for (int x = box.minX; x <= box.maxX; x++) {
+                int sampled = surfaceAt(world, x, z);
+                if (sampled < 0) { continue; }
+
+                total += sampled + 1;
+                count++;
+            }
+        }
+        return count == 0 ? Integer.MIN_VALUE : (int) (total / count);
+    }
+
+    private static void clampToWell(boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile) {
+        StructureStart building = current();
+        if (building == null || building.getComponents().isEmpty()) { return; }
+
+        StructureBoundingBox well = building.getComponents().get(0).getBoundingBox();
+        if (acrossMost < (alongX ? well.minZ : well.minX) - 1 || acrossLeast > (alongX ? well.maxZ : well.maxX) + 1) { return; }
+
+        int ground = well.maxY - 3;
+        int rowLeast = (alongX ? well.minX : well.minZ) - 1;
+        int rowMost = (alongX ? well.maxX : well.maxZ) + 1;
+        int clamped = 0;
+        for (int row = Math.max(start, rowLeast); row <= Math.min(start + profile.length - 1, rowMost); row++) {
+            if (profile[row - start] == Integer.MIN_VALUE || profile[row - start] == ground) { continue; }
+
+            profile[row - start] = ground;
+            clamped++;
+        }
+        if (clamped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Clamped {} road row(s) beside the well to its ground at y {}", clamped, ground); }
+    }
+
+    private static int roadAnchor(World world, boolean alongX, int row, int acrossLeast, int acrossMost, IBlockState path, IBlockState gravel) {
+        for (int across = acrossLeast; across <= acrossMost; across++) {
+            int x = alongX ? row : across;
+            int z = alongX ? across : row;
+            BlockPos spot = new BlockPos(x, 64, z);
+            if (!world.isBlockLoaded(spot)) { continue; }
+
+            IBlockState held = world.getBlockState(world.getTopSolidOrLiquidBlock(spot).down());
+            if (held == path || held == gravel) { return world.getTopSolidOrLiquidBlock(spot).down().getY(); }
+        }
+        return Integer.MIN_VALUE;
     }
 
     private static boolean joined(int[] profile, int i) { return profile[i] != Integer.MIN_VALUE && profile[i - 1] != Integer.MIN_VALUE; }
@@ -1000,7 +1219,10 @@ public final class ContentBeard {
     private static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-            if (other.getBoundingBox().isVecInside(at)) { return true; }
+
+            StructureBoundingBox box = other.getBoundingBox();
+            if (box.isVecInside(at)) { return true; }
+            if (other instanceof StructureVillagePieces.Well && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
         }
         return false;
     }

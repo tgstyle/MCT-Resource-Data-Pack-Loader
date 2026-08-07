@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import org.spongepowered.asm.mixin.Mixin;
@@ -40,6 +41,13 @@ public abstract class MixinMapGenVillage {
             return;
         }
         cir.setReturnValue(ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) && !ContentBeard.mansionCandidateNear(world, chunkX, chunkZ));
+    }
+
+    @Inject(method = "getNearestStructurePos", at = @At("HEAD"), cancellable = true)
+    private void rdpl$nearestSite(World worldIn, BlockPos pos, boolean findUnexplored, CallbackInfoReturnable<BlockPos> cir) {
+        if (!ContentBeard.wanted() || !ContentBeard.adapts(worldIn)) { return; }
+
+        cir.setReturnValue(ContentBeard.nearestSite(worldIn, pos, distance, findUnexplored, 100_000_000L));
     }
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true)

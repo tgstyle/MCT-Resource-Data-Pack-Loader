@@ -26,6 +26,7 @@ public final class BiomeDef {
     public final boolean spawnBiome;
     public final boolean villageBiome;
     public final boolean villageSpawn;
+    public final int villageType;
     public final boolean strongholdBiome;
     public final Map<String, Integer> decoration;
     public final float spawnChance;
@@ -39,7 +40,7 @@ public final class BiomeDef {
     public final List<SpawnEntryDef> spawns;
     public final List<String> requires;
 
-    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires) {
+    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires) {
         this.registryName = registryName;
         this.name = name;
         this.id = id;
@@ -60,6 +61,7 @@ public final class BiomeDef {
         this.spawnBiome = spawnBiome;
         this.villageBiome = villageBiome;
         this.villageSpawn = villageSpawn;
+        this.villageType = villageType;
         this.strongholdBiome = strongholdBiome;
         this.decoration = decoration;
         this.spawnChance = spawnChance;

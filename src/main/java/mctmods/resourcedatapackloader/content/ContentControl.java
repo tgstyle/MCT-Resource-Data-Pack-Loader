@@ -51,7 +51,8 @@ public final class ContentControl {
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
             "structureSpawns", "surfaceDayMonsterRate",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
-            "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist", "voidPlatformBlock",
+            "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist",
+            "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "worldBorder", "worldGameMode", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 

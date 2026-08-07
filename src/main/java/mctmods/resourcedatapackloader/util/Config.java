@@ -331,6 +331,14 @@ public class Config {
         public String[] villagePieces = {};
         @net.minecraftforge.common.config.Config.Comment("On, the pieces in villagePieces are blocked. Off, only those pieces generate [Default=true]")
         public boolean villagePiecesAreBlacklist = true;
+        @net.minecraftforge.common.config.Config.Comment("The block village roads are paved with when terrainAdaptation lays them. Empty keeps the vanilla biome road block [Default=empty]")
+        public String villagePathBlock = "";
+        @net.minecraftforge.common.config.Config.Comment("The block placed under the road surface. Empty keeps vanilla gravel [Default=empty]")
+        public String villagePathSupportBlock = "";
+        @net.minecraftforge.common.config.Config.Comment("The block the road crosses water with. Empty keeps vanilla planks [Default=empty]")
+        public String villagePathBridgeBlock = "";
+        @net.minecraftforge.common.config.Config.Comment("Extra blocks of road width on each side beyond the vanilla 3, when terrainAdaptation lays the roads. Widens the road pieces themselves, so houses stand back from wide streets. Only shapes villages seeded after the change; where space is too tight a segment falls back to vanilla width [Default=0]")
+        public int villagePathExtraWidth = 0;
         @net.minecraftforge.common.config.Config.Comment("World generator types blocked outright, whatever the whitelist says. One of ores, structures, flora, lakes, terrain or unknown, one per line. Types are worked out from the generator class name, so use generatorTypeMap for the ones that guess wrong")
         public String[] generatorTypes = {};
         @net.minecraftforge.common.config.Config.Comment("On, the types in generatorTypes are blocked. Off, only those types generate and everything else is blocked [Default=true]")

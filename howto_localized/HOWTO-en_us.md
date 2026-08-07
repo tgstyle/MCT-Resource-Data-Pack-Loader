@@ -335,7 +335,7 @@ The template never registers, while `jacks_ore` registers with the template's ma
 
 ### Structures at exact places
 
-Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. **The x and z are block coordinates, not chunk coordinates**, and the structure generates in the chunk that holds that block. One entry per wanted instance. Its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility, and two pins closer than a chunk apart put two structures in the same chunk. The structure seats to the ground at its chunk by the usual rules once founded. A pin decides where the game founds a structure, not whether it can be built: a start that cannot raise enough pieces at that spot — a village pinned to a cliffside under terrain adaptation, say — is dropped and never written to the world's structure data.
+Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. **The x and z are block coordinates, not chunk coordinates**, and the structure generates in the chunk that holds that block. One entry per wanted instance. Its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility, and two pins closer than a chunk apart put two structures in the same chunk. The structure seats to the ground at its chunk by the usual rules once founded.
 
 An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing exactly once at those coordinates on the surface when that chunk generates, instead of by chance. It composes with `locateAs`, so a pinned structure can also be found with /locate.
 
@@ -2130,23 +2130,13 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver which <namespace:path>` | Which pack provides a given file, and which packs it shadows |
 | `/rdplserver unused` | Files in the server's packs that nothing has asked for |
 | `/rdplserver oregen` | Running totals of ore generation that was blocked, per mod and type |
-| `/rdplserver generators` | Running totals of world generators that were blocked, per mod and type |
-| `/rdplserver biome` | What biome control did where you stand: the biome, whether it was substituted, what is blocked, and the ground it laid |
-| `/rdplserver biome list [all]` | Every biome that can generate, and its id; `all` includes vanilla |
-| `/rdplserver biome here` | The biome you are standing in |
-| `/rdplserver biome find <name>` | The nearest place a biome generates, without generating chunks to look |
+| `/rdplserver biome` | Every biome that can generate on the server |
 | `/rdplserver dimensions` | Every dimension, including the ones packs added |
 | `/rdplserver gate list` | Every gate and whether it is open |
 | `/rdplserver gate check <player>` | Which gates a player has passed |
 | `/rdplserver gate grant <player> <gate>` | Open a gate for a player |
 | `/rdplserver gate revoke <player> <gate>` | Close one again |
-| `/rdplserver pregen <radius> [relight]` | Make every chunk within that many chunks of you, or relight what already exists |
-| `/rdplserver pregen status` | How far along the running pregen is |
-| `/rdplserver pregen stop` | End the running pregen |
-| `/rdplserver goto <structure>` | Teleport to the nearest structure of that kind, set down on the nearest safe ground. Takes the `/locate` names, the `structureAt` names such as `villages`, and imprint `locateAs` names, and searches the dimension you are in |
 | `/rdplserver intro` | Let the world intro play again on your next join |
-| `/rdplserver config unused` | Pack option files whose pack is gone |
-| `/rdplserver config prune` | Delete those files |
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 

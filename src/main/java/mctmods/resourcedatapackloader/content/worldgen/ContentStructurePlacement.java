@@ -57,6 +57,11 @@ public final class ContentStructurePlacement {
         return 1.0D / wanted;
     }
 
+    public static List<long[]> pins(String key) {
+        load();
+        return AT.get(key);
+    }
+
     public static boolean allows(String key, World world, int chunkX, int chunkZ) {
         load();
         if (ContentControl.off(ContentControl.STRUCTURES) || world == null) { return true; }

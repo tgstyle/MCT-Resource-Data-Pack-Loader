@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
@@ -111,22 +112,25 @@ public class ServerCommands extends CommandBase {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         World world = player.world;
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
-        BlockPos found = ContentLocate.names(world).contains(name) ? ContentLocate.nearest(world, name, player.getPosition()) : world.findNearestStructure(name, player.getPosition(), false);
-        if (found == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonothing", name)); }
+        if (ContentLocate.names(world).contains(name)) {
+            BlockPos found = ContentLocate.nearest(world, name, player.getPosition());
+            if (found == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonothing", name)); }
 
-        BlockPos landing = landing(world, found);
-        if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, found.getX(), found.getZ())); }
+            BlockPos landing = ContentStructureSearch.landing(world, found);
+            if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, found.getX(), found.getZ())); }
 
-        player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
+            player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
+            return;
+        }
+        if (ContentStructureSearch.looking()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotobusy")); }
+
+        ContentStructureSearch.start(player, name, keyFor(name), true);
     }
 
-    @Nullable private static BlockPos landing(World world, BlockPos found) {
-        int start = world.provider.hasSkyLight() ? world.getActualHeight() - 1 : 118;
-        for (int y = start; y > 0; y--) {
-            BlockPos ground = new BlockPos(found.getX(), y, found.getZ());
-            if (!world.getBlockState(ground).getMaterial().blocksMovement()) { continue; }
-            if (world.isAirBlock(ground.up()) && world.isAirBlock(ground.up(2))) { return ground.up(); }
+    private static String keyFor(String name) {
+        for (Map.Entry<String, String> entry : STRUCTURE_ALIASES.entrySet()) {
+            if (entry.getValue().equals(name)) { return entry.getKey(); }
         }
         return null;
     }
