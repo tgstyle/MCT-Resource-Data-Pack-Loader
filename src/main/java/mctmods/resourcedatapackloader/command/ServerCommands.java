@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -25,21 +26,40 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
+    private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
+    private static final int FIND_RANGE = 6400;
+    private static final List<String> STRUCTURE_NAMES = Arrays.asList("Village", "Temple", "Mansion", "Monument", "Mineshaft", "Stronghold", "Fortress", "EndCity");
+    private static final Map<String, String> STRUCTURE_ALIASES = new HashMap<>();
+    static {
+        STRUCTURE_ALIASES.put("villages", "Village");
+        STRUCTURE_ALIASES.put("temples", "Temple");
+        STRUCTURE_ALIASES.put("mansions", "Mansion");
+        STRUCTURE_ALIASES.put("monuments", "Monument");
+        STRUCTURE_ALIASES.put("mineshafts", "Mineshaft");
+        STRUCTURE_ALIASES.put("strongholds", "Stronghold");
+        STRUCTURE_ALIASES.put("netherbridges", "Fortress");
+        STRUCTURE_ALIASES.put("endcities", "EndCity");
+    }
 
     @Override @Nonnull public String getName() { return "rdplserver"; }
 
@@ -53,8 +73,16 @@ public class ServerCommands extends CommandBase {
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_ACTIONS); }
+        if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_ACTIONS); }
+        if (args.length == 3 && "biome".equals(args[0]) && "list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("all")); }
+        if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { return getListOfStringsMatchingLastWord(args, biomeNames()); }
         if (args.length == 3 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("relight")); }
         if (args.length == 4 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, names()); }
+        if (args.length == 2 && "goto".equals(args[0])) {
+            List<String> known = new ArrayList<>(STRUCTURE_NAMES);
+            known.addAll(ContentLocate.names(sender.getEntityWorld()));
+            return getListOfStringsMatchingLastWord(args, known);
+        }
         return Collections.emptyList();
     }
 
@@ -69,10 +97,38 @@ public class ServerCommands extends CommandBase {
         else if (args.length >= 1 && "gate".equals(args[0])) { gate(server, sender, args); }
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
+        else if (args.length >= 2 && "biome".equals(args[0]) && "list".equals(args[1])) { biomeList(sender, args.length > 2 && "all".equals(args[2])); }
+        else if (args.length == 2 && "biome".equals(args[0]) && "here".equals(args[1])) { biomeHere(sender); }
+        else if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { biomeFind(sender, args[2]); }
         else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
+        else if (args.length == 2 && "goto".equals(args[0])) { goTo(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
+    }
+
+    private void goTo(ICommandSender sender, String asked) throws CommandException {
+        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        World world = player.world;
+        String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        BlockPos found = ContentLocate.names(world).contains(name) ? ContentLocate.nearest(world, name, player.getPosition()) : world.findNearestStructure(name, player.getPosition(), false);
+        if (found == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonothing", name)); }
+
+        BlockPos landing = landing(world, found);
+        if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, found.getX(), found.getZ())); }
+
+        player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
+    }
+
+    @Nullable private static BlockPos landing(World world, BlockPos found) {
+        int start = world.provider.hasSkyLight() ? world.getActualHeight() - 1 : 118;
+        for (int y = start; y > 0; y--) {
+            BlockPos ground = new BlockPos(found.getX(), y, found.getZ());
+            if (!world.getBlockState(ground).getMaterial().blocksMovement()) { continue; }
+            if (world.isAirBlock(ground.up()) && world.isAirBlock(ground.up(2))) { return ground.up(); }
+        }
+        return null;
     }
 
     private void config(ICommandSender sender, String action) throws CommandException {
@@ -233,6 +289,66 @@ public class ServerCommands extends CommandBase {
 
     private void biome(ICommandSender sender) {
         for (String line : ContentBiomeControl.inspect(sender.getEntityWorld(), sender.getPosition())) { send(sender, TextFormatting.WHITE, line); }
+    }
+
+    private void biomeList(ICommandSender sender, boolean all) {
+        int vanilla = 0;
+        int shown = 0;
+
+        for (Biome biome : ForgeRegistries.BIOMES) {
+            ResourceLocation name = biome.getRegistryName();
+            if (name == null) { continue; }
+            if (!all && "minecraft".equals(name.getNamespace())) {
+                vanilla++;
+                continue;
+            }
+            send(sender, TextFormatting.GRAY, "  " + Biome.getIdForBiome(biome) + "  " + name + "  '" + biome.getBiomeName() + "'");
+            shown++;
+        }
+
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Lang.tr(sender, "rdpl.command.biomesmore", vanilla)));
+    }
+
+    private void biomeHere(ICommandSender sender) {
+        BlockPos pos = sender.getPosition();
+        Biome biome = sender.getEntityWorld().getBiome(pos);
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.here", biome.getBiomeName(), biome.getRegistryName(), Biome.getIdForBiome(biome)));
+    }
+
+    private void biomeFind(ICommandSender sender, String name) throws CommandException {
+        Biome target = findBiome(name);
+        if (target == null) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.nobiome", name)); }
+
+        World world = sender.getEntityWorld();
+        BlockPos from = sender.getPosition();
+        BlockPos found = world.getBiomeProvider().findBiomePosition(from.getX(), from.getZ(), FIND_RANGE, Collections.singletonList(target), new Random());
+
+        if (found == null) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", target.getBiomeName(), FIND_RANGE));
+            return;
+        }
+
+        int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
+    }
+
+    @Nullable private static Biome findBiome(String name) {
+        ResourceLocation location = new ResourceLocation(name);
+        if (ForgeRegistries.BIOMES.containsKey(location)) { return ForgeRegistries.BIOMES.getValue(location); }
+
+        for (Biome biome : ForgeRegistries.BIOMES) {
+            if (biome.getBiomeName().equalsIgnoreCase(name)) { return biome; }
+        }
+        return null;
+    }
+
+    private static List<String> biomeNames() {
+        List<String> names = new ArrayList<>();
+        for (Biome biome : ForgeRegistries.BIOMES) {
+            ResourceLocation name = biome.getRegistryName();
+            if (name != null) { names.add(name.toString()); }
+        }
+        return names;
     }
 
     private void dimensions(ICommandSender sender) {
