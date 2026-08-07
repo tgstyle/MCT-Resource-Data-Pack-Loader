@@ -24,6 +24,11 @@ public abstract class MixinMapGenEndCity {
     @ModifyConstant(method = "getNearestStructurePos", constant = @Constant(intValue = 11))
     private int rdpl$locateSeparation(int original) { return ContentStructurePlacement.separation(ContentStructurePlacement.ENDCITIES, original); }
 
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
+    private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (ContentStructurePlacement.pinned(ContentStructurePlacement.ENDCITIES, chunkX, chunkZ)) { cir.setReturnValue(true); }
+    }
+
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true)
     private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }

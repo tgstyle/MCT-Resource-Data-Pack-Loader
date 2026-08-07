@@ -574,7 +574,8 @@ public final class ContentParser {
                 JsonUtils.getFloat(json, "minTemperature", -100.0F),
                 JsonUtils.getFloat(json, "maxTemperature", 100.0F),
                 JsonUtils.getFloat(json, "minRainfall", -100.0F),
-                JsonUtils.getFloat(json, "maxRainfall", 100.0F));
+                JsonUtils.getFloat(json, "maxRainfall", 100.0F),
+                json.has("replace"));
     }
 
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {

@@ -122,10 +122,9 @@ public final class ContentChunkWatch {
     public static void spread(long began, boolean sky) {
         if (!watching()) { return; }
 
-        boolean timed = (spread & SAMPLE) == 0L;
         spread++;
         if (sky) { spreadSky++; }
-        if (!timed) { return; }
+        if (began == 0L) { return; }
 
         long took = System.nanoTime() - began;
         sampled++;

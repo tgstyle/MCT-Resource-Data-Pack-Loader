@@ -32,6 +32,7 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -67,7 +68,6 @@ public final class ContentBeard {
     private static WorldTemplateDef wantedFrom;
     private static boolean wantedHeld;
     private static boolean wantedKnown;
-    private static final Map<World, Map<Long, Long>> SITES = new WeakHashMap<>();
     private static final int SITE_REACH = 2;
     private static final int SITE_TOLERANCE = 16;
     private static final int SITE_SEPARATION = 8;
@@ -153,6 +153,21 @@ public final class ContentBeard {
         return made;
     }
 
+    private static int surfaceAt(World world, ChunkGeneratorOverworld sampled, Biome[] region, int originX, int originZ, int size, int blockX, int blockZ) {
+        Map<Long, Integer> tops = TOPS.computeIfAbsent(world, held -> new HashMap<>());
+        long column = ((long) blockX << 32) | (blockZ & 0xFFFFFFFFL);
+        Integer known = tops.get(column);
+        if (known != null) { return known; }
+
+        Biome[] window = new Biome[25];
+        int nx = blockX >> 2;
+        int nz = blockZ >> 2;
+        for (int dz = 0; dz < 5; dz++) { System.arraycopy(region, nx - 2 - originX + (nz - 2 + dz - originZ) * size, window, dz * 5, 5); }
+        int made = surface(sampled, window, blockX, blockZ);
+        tops.put(column, made);
+        return made;
+    }
+
     public static boolean roughGround(World world, int blockX, int blockZ, int halfWidth, int tolerance) {
         int middle = surfaceAt(world, blockX, blockZ);
         if (middle < 0) { return false; }
@@ -172,83 +187,72 @@ public final class ContentBeard {
     public static Boolean flatSite(World world, int chunkX, int chunkZ, int spacing) {
         if (samplerFor(world) == null) { return null; }
 
-        Map<Long, Long> known = SITES.computeIfAbsent(world, k -> new HashMap<>());
+        ContentSites known = ContentSites.of(world, spacing);
         long chosen = siteFor(world, known, Math.floorDiv(chunkX, spacing), Math.floorDiv(chunkZ, spacing), spacing);
         return chosen != NO_SITE && chosen == packedChunk(chunkX, chunkZ);
     }
 
-    private static long siteFor(World world, Map<Long, Long> known, int cellX, int cellZ, int spacing) {
+    private static long siteFor(World world, ContentSites known, int cellX, int cellZ, int spacing) {
         long cell = packedChunk(cellX, cellZ);
         Long held = known.get(cell);
         if (held != null) { return held; }
+        if (world.getMinecraftServer() != null) { ((AccessorMinecraftServerMessage) world.getMinecraftServer()).rdpl$setUserMessage("menu.generatingTerrain"); }
 
-        long[] taken = new long[8];
-        int count = 0;
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                if ((dx == 0 && dz == 0) || !outranks(cellX + dx, cellZ + dz, cellX, cellZ)) { continue; }
-
-                long beside = siteFor(world, known, cellX + dx, cellZ + dz, spacing);
-                if (beside != NO_SITE) { taken[count++] = beside; }
-            }
-        }
-        long chosen = chooseSite(world, cellX, cellZ, spacing, taken, count);
+        long chosen = chooseSite(world, cellX, cellZ, spacing);
         known.put(cell, chosen);
         if (chosen == NO_SITE) { ContentLog.LOGGER.debug("Village cell {}, {} has no chunk both flat within {} block(s) and {} chunk(s) clear of its neighbours, so nothing is founded there", cellX, cellZ, SITE_TOLERANCE, SITE_SEPARATION); }
         else { ContentLog.LOGGER.debug("Village cell {}, {} founds on chunk {}, {}, the flattest ground it has", cellX, cellZ, (int) (chosen >> 32), (int) chosen); }
         return chosen;
     }
 
-    private static boolean outranks(int aX, int aZ, int bX, int bZ) {
-        long a = scramble(aX, aZ);
-        long b = scramble(bX, bZ);
-        if (a != b) { return a < b; }
-        return aX != bX ? aX < bX : aZ < bZ;
-    }
+    private static long chooseSite(World world, int cellX, int cellZ, int spacing) {
+        ChunkGeneratorOverworld sampled = samplerFor(world);
+        if (sampled == null) { return NO_SITE; }
 
-    private static long scramble(int cellX, int cellZ) {
-        long mixed = cellX * 341873128712L ^ cellZ * 132897987541L;
-        mixed = (mixed ^ (mixed >>> 33)) * 0xFF51AFD7ED558CCDL;
-        return mixed ^ (mixed >>> 33);
-    }
-
-    private static long chooseSite(World world, int cellX, int cellZ, int spacing, long[] taken, int count) {
+        int margin = SITE_SEPARATION / 2;
         int baseX = cellX * spacing;
         int baseZ = cellZ * spacing;
         int span = spacing + SITE_REACH * 2;
+        int size = span * 4 + 1;
+        int originX = (baseX - SITE_REACH) * 4;
+        int originZ = (baseZ - SITE_REACH) * 4;
+        Biome[] region = world.getBiomeProvider().getBiomesForGeneration(new Biome[size * size], originX, originZ, size, size);
         int[] heights = new int[span * span];
-        for (int x = 0; x < span; x++) {
-            for (int z = 0; z < span; z++) { heights[x * span + z] = surfaceAt(world, (baseX + x - SITE_REACH) * 16 + 8, (baseZ + z - SITE_REACH) * 16 + 8); }
-        }
+        Arrays.fill(heights, Integer.MIN_VALUE);
         long chosen = NO_SITE;
         int bestSpread = Integer.MAX_VALUE;
         int bestPull = Integer.MAX_VALUE;
-        for (int x = 0; x < spacing; x++) {
-            for (int z = 0; z < spacing; z++) {
+        for (int x = margin; x < spacing - margin; x++) {
+            for (int z = margin; z < spacing - margin; z++) {
+                if (!MapGenVillage.VILLAGE_SPAWN_BIOMES.contains(region[(x + SITE_REACH) * 4 + 2 + ((z + SITE_REACH) * 4 + 2) * size])) { continue; }
+
                 int lowest = Integer.MAX_VALUE;
                 int highest = Integer.MIN_VALUE;
                 for (int dx = 0; dx <= SITE_REACH * 2; dx++) {
                     for (int dz = 0; dz <= SITE_REACH * 2; dz++) {
-                        int sampled = heights[(x + dx) * span + z + dz];
-                        if (sampled < 0) {
+                        int at = (x + dx) * span + z + dz;
+                        int sampledHeight = heights[at];
+                        if (sampledHeight == Integer.MIN_VALUE) {
+                            sampledHeight = surfaceAt(world, sampled, region, originX, originZ, size, (baseX + x + dx - SITE_REACH) * 16 + 8, (baseZ + z + dz - SITE_REACH) * 16 + 8);
+                            heights[at] = sampledHeight;
+                        }
+                        if (sampledHeight < 0) {
                             lowest = Integer.MAX_VALUE;
                             highest = Integer.MIN_VALUE;
                             dx = SITE_REACH * 2;
                             break;
                         }
-                        if (sampled < lowest) { lowest = sampled; }
-                        if (sampled > highest) { highest = sampled; }
+                        if (sampledHeight < lowest) { lowest = sampledHeight; }
+                        if (sampledHeight > highest) { highest = sampledHeight; }
                     }
                 }
                 if (lowest == Integer.MAX_VALUE) { continue; }
 
                 int spread = highest - lowest;
                 if (spread > SITE_TOLERANCE || spread > bestSpread) { continue; }
-                if (crowded(baseX + x, baseZ + z, taken, count)) { continue; }
 
                 int pull = Math.abs(x * 2 - spacing) + Math.abs(z * 2 - spacing);
                 if (spread == bestSpread && pull >= bestPull) { continue; }
-                if (!world.getBiomeProvider().areBiomesViable((baseX + x) * 16 + 8, (baseZ + z) * 16 + 8, 0, MapGenVillage.VILLAGE_SPAWN_BIOMES)) { continue; }
 
                 bestSpread = spread;
                 bestPull = pull;
@@ -256,13 +260,6 @@ public final class ContentBeard {
             }
         }
         return chosen;
-    }
-
-    private static boolean crowded(int chunkX, int chunkZ, long[] taken, int count) {
-        for (int i = 0; i < count; i++) {
-            if (Math.max(Math.abs(chunkX - (int) (taken[i] >> 32)), Math.abs(chunkZ - (int) taken[i])) < SITE_SEPARATION) { return true; }
-        }
-        return false;
     }
 
     private static long packedChunk(int chunkX, int chunkZ) { return ((long) chunkX << 32) | (chunkZ & 0xFFFFFFFFL); }
@@ -407,11 +404,15 @@ public final class ContentBeard {
     }
 
     private static int surface(ChunkGeneratorOverworld generator, World world, int blockX, int blockZ) {
+        Biome[] biomes = world.getBiomeProvider().getBiomesForGeneration(new Biome[25], (blockX >> 2) - 2, (blockZ >> 2) - 2, 5, 5);
+        return surface(generator, biomes, blockX, blockZ);
+    }
+
+    private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ) {
         AccessorChunkGeneratorOverworld inside = (AccessorChunkGeneratorOverworld) generator;
         ChunkGeneratorSettings settings = inside.rdpl$settings();
         int nx = blockX >> 2;
         int nz = blockZ >> 2;
-        Biome[] biomes = world.getBiomeProvider().getBiomesForGeneration(new Biome[25], nx - 2, nz - 2, 5, 5);
         double[] depth = inside.rdpl$depthNoise().generateNoiseOctaves(new double[1], nx, nz, 1, 1, settings.depthNoiseScaleX, settings.depthNoiseScaleZ, settings.depthNoiseScaleExponent);
         float coordinate = settings.coordinateScale;
         float height = settings.heightScale;

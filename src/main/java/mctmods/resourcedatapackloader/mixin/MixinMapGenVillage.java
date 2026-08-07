@@ -24,15 +24,14 @@ public abstract class MixinMapGenVillage {
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
     private void rdpl$flatSite(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
-        if (!ContentBeard.wanted()) { return; }
-
-        World world = ((AccessorMapGenBase) this).rdpl$getWorld();
-        if (world == null) { return; }
-
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, chunkX, chunkZ)) {
             cir.setReturnValue(true);
             return;
         }
+        if (!ContentBeard.wanted()) { return; }
+
+        World world = ((AccessorMapGenBase) this).rdpl$getWorld();
+        if (world == null) { return; }
 
         Boolean flat = ContentBeard.flatSite(world, chunkX, chunkZ, distance);
         if (flat == null) { return; }

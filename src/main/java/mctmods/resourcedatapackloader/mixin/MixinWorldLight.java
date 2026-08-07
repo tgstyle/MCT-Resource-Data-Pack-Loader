@@ -135,7 +135,7 @@ public abstract class MixinWorldLight implements LightAreaHolder {
 
     @Inject(method = "checkLightFor", at = @At("HEAD"))
     private void rdpl$startSpread(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentChunkWatch.timingThisOne()) { rdpl$spreadStart.set(System.nanoTime()); }
+        rdpl$spreadStart.set(ContentChunkWatch.timingThisOne() ? System.nanoTime() : 0L);
     }
 
     @Inject(method = "checkLightFor", at = @At("RETURN"))

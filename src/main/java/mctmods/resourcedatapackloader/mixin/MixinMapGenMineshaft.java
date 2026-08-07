@@ -17,6 +17,11 @@ public abstract class MixinMapGenMineshaft {
     @Inject(method = "<init>()V", at = @At("RETURN"))
     private void rdpl$chance(CallbackInfo ci) { chance = ContentStructurePlacement.chance(ContentStructurePlacement.MINESHAFTS, chance); }
 
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
+    private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (ContentStructurePlacement.pinned(ContentStructurePlacement.MINESHAFTS, chunkX, chunkZ)) { cir.setReturnValue(true); }
+    }
+
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true)
     private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }

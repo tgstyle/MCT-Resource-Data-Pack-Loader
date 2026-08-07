@@ -38,8 +38,8 @@ public abstract class MixinChunkLight {
 
     @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V"))
     private void rdpl$countRetry(Chunk chunk) {
+        if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }
         if (ContentChunkWatch.watching()) { ContentChunkWatch.retried(); }
-        if (ContentPregen.busy() && ContentPregen.holds(chunk.x, chunk.z)) { return; }
 
         chunk.checkLight();
     }

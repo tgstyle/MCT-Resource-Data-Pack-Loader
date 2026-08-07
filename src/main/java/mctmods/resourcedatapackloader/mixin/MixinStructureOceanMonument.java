@@ -29,6 +29,11 @@ public abstract class MixinStructureOceanMonument {
         SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.MONUMENTS, SPAWN_BIOMES);
     }
 
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
+    private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (ContentStructurePlacement.pinned(ContentStructurePlacement.MONUMENTS, chunkX, chunkZ)) { cir.setReturnValue(true); }
+    }
+
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true)
     private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }

@@ -24,13 +24,15 @@ public final class ContentImprint implements IContentShape {
     private final ContentPlacer placer;
     private final ShapeDef shape;
     private final ResourceLocation key;
+    private final boolean filtered;
 
     public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
 
-    public ContentImprint(ContentPlacer placer, ShapeDef shape, ResourceLocation key) {
+    public ContentImprint(ContentPlacer placer, ShapeDef shape, ResourceLocation key, boolean filtered) {
         this.placer = placer;
         this.shape = shape;
         this.key = key;
+        this.filtered = filtered;
     }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
@@ -64,7 +66,8 @@ public final class ContentImprint implements IContentShape {
             if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return false; }
         }
 
-        loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(), settings, WORLDGEN_FLAGS);
+        if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(), settings, WORLDGEN_FLAGS); }
+        else { loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS); }
         if (shape.locateAs != null && !shape.locateAs.isEmpty()) { ContentLocate.record(world, shape.locateAs, fitted); }
         return true;
     }

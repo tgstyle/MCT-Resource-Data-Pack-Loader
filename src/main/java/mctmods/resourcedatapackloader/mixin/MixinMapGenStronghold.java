@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 @Mixin(MapGenStronghold.class)
@@ -23,5 +24,10 @@ public abstract class MixinMapGenStronghold {
         distance = ContentStructurePlacement.spacing(ContentStructurePlacement.STRONGHOLDS, (int) distance);
         spread = ContentStructurePlacement.separation(ContentStructurePlacement.STRONGHOLDS, spread);
         ContentStructurePlacement.filter(ContentStructurePlacement.STRONGHOLDS, allowedBiomes);
+    }
+
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
+    private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (ContentStructurePlacement.pinned(ContentStructurePlacement.STRONGHOLDS, chunkX, chunkZ)) { cir.setReturnValue(true); }
     }
 }

@@ -31,6 +31,11 @@ public abstract class MixinWoodlandMansion {
         ALLOWED_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.MANSIONS, ALLOWED_BIOMES);
     }
 
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
+    private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (ContentStructurePlacement.pinned(ContentStructurePlacement.MANSIONS, chunkX, chunkZ)) { cir.setReturnValue(true); }
+    }
+
     @ModifyConstant(method = "canSpawnStructureAtCoords", constant = @Constant(intValue = 80))
     private int rdpl$spacing(int original) { return ContentStructurePlacement.spacing(ContentStructurePlacement.MANSIONS, original); }
 

@@ -335,7 +335,7 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 
 ### Strukturen an genauen Stellen
 
-Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. **x und z sind Blockkoordinaten, keine Chunkkoordinaten**, und die Struktur generiert in dem Chunk, in dem dieser Block liegt. Ein Eintrag pro gewünschtem Exemplar. Ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs, und zwei Pins näher als einen Chunk beieinander setzen zwei Strukturen in denselben Chunk. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden.
+Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. **x und z sind Blockkoordinaten, keine Chunkkoordinaten**, und die Struktur generiert in dem Chunk, in dem dieser Block liegt. Ein Eintrag pro gewünschtem Exemplar. Ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs, und zwei Pins näher als einen Chunk beieinander setzen zwei Strukturen in denselben Chunk. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden. Ein Pin bestimmt, wo das Spiel eine Struktur gründet, nicht ob sie gebaut werden kann: Ein Start, der an dieser Stelle nicht genug Teile zusammenbringt – etwa ein Dorf, das bei aktiver Geländeanpassung an einen Berghang genagelt wurde – wird verworfen und nie in die Strukturdaten der Welt geschrieben.
 
 Ein `imprint`-Eintrag nagelt genauso fest, mit `"at": [x, z]` in seiner Form, und setzt sie genau einmal an diesen Koordinaten an der Oberfläche, sobald dieser Chunk generiert, statt nach Zufall. Das lässt sich mit `locateAs` kombinieren, eine festgenagelte Struktur ist also auch per /locate auffindbar.
 
@@ -2127,13 +2127,23 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver which <namespace:path>` | Welches Pack eine bestimmte Datei liefert und welche Packs es dabei verdeckt |
 | `/rdplserver unused` | Dateien in den Packs des Servers, nach denen nichts gefragt hat |
 | `/rdplserver oregen` | Laufende Summen der blockierten Erzgenerierung, pro Mod und Typ |
-| `/rdplserver biome` | Jedes Biom, das auf dem Server generieren kann |
+| `/rdplserver generators` | Laufende Summen der blockierten Weltgeneratoren, pro Mod und Typ |
+| `/rdplserver biome` | Was die Biomkontrolle an deinem Standort getan hat: das Biom, ob es ersetzt wurde, was blockiert ist und welchen Boden sie gelegt hat |
+| `/rdplserver biome list [all]` | Jedes Biom, das generieren kann, und seine id; `all` schließt Vanilla ein |
+| `/rdplserver biome here` | Das Biom, in dem du stehst |
+| `/rdplserver biome find <name>` | Die nächste Stelle, an der ein Biom generiert, ohne dafür Chunks zu erzeugen |
 | `/rdplserver dimensions` | Jede Dimension, auch die, die Packs hinzugefügt haben |
 | `/rdplserver gate list` | Jedes Tor und ob es offen ist |
 | `/rdplserver gate check <player>` | Welche Tore ein Spieler passiert hat |
 | `/rdplserver gate grant <player> <gate>` | Ein Tor für einen Spieler öffnen |
 | `/rdplserver gate revoke <player> <gate>` | Es wieder schließen |
+| `/rdplserver pregen <radius> [relight]` | Jeden Chunk in diesem Chunkradius um dich herum erzeugen, oder nur das Licht über bereits Bestehendem neu legen |
+| `/rdplserver pregen status` | Wie weit der laufende Durchgang ist |
+| `/rdplserver pregen stop` | Den laufenden Durchgang beenden |
+| `/rdplserver goto <structure>` | Zur nächsten Struktur dieser Art teleportieren, abgesetzt auf dem nächsten sicheren Boden. Nimmt die `/locate`-Namen, die `structureAt`-Namen wie `villages` und die `locateAs`-Namen von Imprints, und sucht in der Dimension, in der du stehst |
 | `/rdplserver intro` | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen |
+| `/rdplserver config unused` | Pack-Optionsdateien, deren Pack verschwunden ist |
+| `/rdplserver config prune` | Diese Dateien löschen |
 
 **Beim täglichen Arbeiten:** `/rdpl reload textures` ist in einem großen Modpack viel schneller als F3+T. F3+T funktioniert weiterhin und lädt alles neu. Nimm das schlichte `/rdpl reload`, wenn du eine Datei *hinzufügst* oder *löschst*, weil sich damit ändert, was der Ordner enthält.
 

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.PregenMemory;
 import mctmods.resourcedatapackloader.mixin.AccessorChunk;
+import mctmods.resourcedatapackloader.mixin.AccessorMinecraftServerMessage;
 import mctmods.resourcedatapackloader.mixin.AccessorWorldProviderEnd;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -532,6 +533,16 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return worker != null && worker.held.contains(ChunkPos.asLong(chunkX, chunkZ));
     }
 
+    public static boolean covers(World world, int chunkX, int chunkZ) {
+        ContentPregen worker = running;
+        return worker != null && world.provider.getDimension() == worker.dimension && chunkX >= worker.lowX && chunkX <= worker.highX && chunkZ >= worker.lowZ && chunkZ <= worker.highZ;
+    }
+
+    public static boolean busyIn(World world) {
+        ContentPregen worker = running;
+        return worker != null && world.provider.getDimension() == worker.dimension;
+    }
+
     public static long start(ICommandSender asked, int dimension, int centreX, int centreZ, int radius) {
         return start(asked, dimension, centreX, centreZ, radius, false);
     }
@@ -579,9 +590,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     @Override public boolean hasWork() { return !over; }
 
     @Override public boolean doWork() {
-        if (begun == 0L) { begun = System.currentTimeMillis(); }
-
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (begun == 0L) {
+            begun = System.currentTimeMillis();
+            tellScreen(server);
+        }
         WorldServer world = DimensionManager.getWorld(dimension);
         if (world == null || stopping || !order.hasNext()) {
             finish(world);
@@ -622,6 +635,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         }
         roundSpent += System.nanoTime() - began;
         speak();
+        if ((done & 63L) == 0L) { tellScreen(server); }
         int tenth = (int) (done * 10L / Math.max(1L, order.total()));
         if (tenth > toldAt) {
             toldAt = tenth;
@@ -723,6 +737,12 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             else { dark++; }
         }
         provider.queueUnload(chunk);
+    }
+
+    private void tellScreen(MinecraftServer server) {
+        if (server == null) { return; }
+
+        ((AccessorMinecraftServerMessage) server).rdpl$setUserMessage("Building terrain - " + done + " / " + order.total());
     }
 
     private void speak() {

@@ -37,6 +37,7 @@ public final class WorldgenDef {
     public final int minHeight;
     public final int maxHeight;
     public final List<BlockMatchDef> replaces;
+    public final boolean replacesGiven;
     public final boolean sparse;
     public final ShapeDef shape;
     public final float leastTemperature;
@@ -59,7 +60,7 @@ public final class WorldgenDef {
     private Set<String> biomeNames = Collections.emptySet();
     private List<BiomeDictionary.Type> types = Collections.emptyList();
 
-    public WorldgenDef(ResourceLocation registryName, ResourceLocation block, int meta, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, List<BlockMatchDef> replaces, boolean sparse, List<Integer> dimensions, boolean dimensionsAreBlacklist, List<String> biomes, List<String> biomeTypes, boolean biomesAreBlacklist, List<String> requires, boolean retrogen, String retrogenKey, int minDistanceFromSpawn, SpreadDef spread, ShapeDef shape, float leastTemperature, float mostTemperature, float leastRainfall, float mostRainfall) {
+    public WorldgenDef(ResourceLocation registryName, ResourceLocation block, int meta, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, List<BlockMatchDef> replaces, boolean sparse, List<Integer> dimensions, boolean dimensionsAreBlacklist, List<String> biomes, List<String> biomeTypes, boolean biomesAreBlacklist, List<String> requires, boolean retrogen, String retrogenKey, int minDistanceFromSpawn, SpreadDef spread, ShapeDef shape, float leastTemperature, float mostTemperature, float leastRainfall, float mostRainfall, boolean replacesGiven) {
         this.registryName = registryName;
         this.block = block;
         this.meta = meta;
@@ -69,6 +70,7 @@ public final class WorldgenDef {
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
         this.replaces = replaces;
+        this.replacesGiven = replacesGiven;
         this.sparse = sparse;
         this.dimensions = dimensions;
         this.dimensionsAreBlacklist = dimensionsAreBlacklist;
@@ -116,7 +118,7 @@ public final class WorldgenDef {
         if (ShapeDef.SPIRE.equals(shape.type)) { return new ContentSpire(placer, shape); }
         if (ShapeDef.NODULE.equals(shape.type)) { return new ContentNodule(placer, shape); }
         if (ShapeDef.VENT.equals(shape.type)) { return new ContentVent(placer, shape); }
-        if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(placer, shape, registryName); }
+        if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(placer, shape, registryName, replacesGiven); }
         if (ShapeDef.BELT.equals(shape.type)) { return new ContentBelt(placer, shape, minHeight, maxHeight, registryName); }
 
         return new ContentVein(placer, size, sparse);
