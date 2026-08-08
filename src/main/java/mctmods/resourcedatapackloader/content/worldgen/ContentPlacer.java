@@ -16,10 +16,16 @@ public final class ContentPlacer {
     private final int[] ladder;
     private final int weight;
     private final Predicate<IBlockState> replaceable;
+    private final Set<Block> nearby;
+    private final Set<IBlockState> nearbyExact;
+    private final boolean wantsNearby;
 
-    public ContentPlacer(List<IBlockState> states, List<Integer> weights, Set<Block> targets, Set<IBlockState> exact) {
+    public ContentPlacer(List<IBlockState> states, List<Integer> weights, Set<Block> targets, Set<IBlockState> exact, Set<Block> nearby, Set<IBlockState> nearbyExact) {
         this.states = Collections.unmodifiableList(states);
         this.replaceable = state -> state != null && (targets.contains(state.getBlock()) || exact.contains(state));
+        this.nearby = nearby;
+        this.nearbyExact = nearbyExact;
+        this.wantsNearby = !nearby.isEmpty() || !nearbyExact.isEmpty();
 
         int[] steps = new int[states.size()];
         int running = 0;
@@ -48,7 +54,30 @@ public final class ContentPlacer {
 
         BlockPos pos = new BlockPos(x, y, z);
         IBlockState found = world.getBlockState(pos);
-        return !found.getBlock().isReplaceableOreGen(found, world, pos, replaceable);
+        if (!found.getBlock().isReplaceableOreGen(found, world, pos, replaceable)) { return true; }
+
+        return wantsNearby && !beside(world, x, y, z);
+    }
+
+    private boolean beside(World world, int x, int y, int z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int offX = -1; offX <= 1; offX++) {
+            for (int offY = -1; offY <= 1; offY++) {
+                int nearY = y + offY;
+                if (nearY < 0 || nearY >= world.getHeight()) { continue; }
+
+                for (int offZ = -1; offZ <= 1; offZ++) {
+                    if (offX == 0 && offY == 0 && offZ == 0) { continue; }
+
+                    pos.setPos(x + offX, nearY, z + offZ);
+                    if (!ContentCascade.loaded(world, pos)) { continue; }
+
+                    IBlockState state = world.getBlockState(pos);
+                    if (nearby.contains(state.getBlock()) || nearbyExact.contains(state)) { return true; }
+                }
+            }
+        }
+        return false;
     }
 
     public IBlockState choose(Random random) {

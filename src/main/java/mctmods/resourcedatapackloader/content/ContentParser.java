@@ -19,6 +19,7 @@ import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.JsonUtils;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public final class ContentParser {
             DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
     private static final Set<String> KNOWN_SHAPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
             ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES,
-            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT)));
+            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD)));
     public static final String PLACEHOLDER = "open";
     public static final String DEFAULT_STILL = "minecraft:blocks/water_still";
     public static final String DEFAULT_FLOW = "minecraft:blocks/water_flow";
@@ -144,6 +145,39 @@ public final class ContentParser {
                 JsonUtils.getString(entry, "platformBlock", ""),
                 JsonUtils.getString(entry, "sound", ""),
                 JsonUtils.getBoolean(entry, "owned", true));
+    }
+
+    @Nullable public static PathIntersectDef pathIntersect(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+
+        Map<Character, IBlockState> legend = new LinkedHashMap<>();
+        if (json.has("legend")) {
+            JsonObject entry = JsonUtils.getJsonObject(json, "legend");
+            for (Map.Entry<String, JsonElement> mark : entry.entrySet()) {
+                String symbol = mark.getKey().trim();
+                if (symbol.length() != 1 || "rlsc.".indexOf(symbol.charAt(0)) >= 0) {
+                    ContentLog.LOGGER.error("Path intersect {} legend symbol '{}' must be a single character and not one of the role letters r, l, s, c or .", key, mark.getKey());
+                    continue;
+                }
+                IBlockState state = ContentStates.parse(mark.getValue().getAsString(), key + " legend " + symbol);
+                if (state != null) { legend.put(symbol.charAt(0), state); }
+            }
+        }
+
+        List<String> mouth = strings(json, "mouth");
+        List<String> corner = strings(json, "corner");
+        for (String row : mouth) {
+            for (char held : row.toCharArray()) {
+                if ("rlsc.".indexOf(held) < 0 && !legend.containsKey(held)) { ContentLog.LOGGER.error("Path intersect {} mouth uses '{}', which is neither a role letter nor in the legend", key, held); }
+            }
+        }
+        for (String row : corner) {
+            for (char held : row.toCharArray()) {
+                if ("rlsc.".indexOf(held) < 0 && !legend.containsKey(held)) { ContentLog.LOGGER.error("Path intersect {} corner uses '{}', which is neither a role letter nor in the legend", key, held); }
+            }
+        }
+        return new PathIntersectDef(JsonUtils.getString(json, "name", key.getPath()), Math.max(1, JsonUtils.getInt(json, "weight", 1)), legend, mouth.toArray(new String[0]), corner.toArray(new String[0]));
     }
 
     @Nullable public static WorldTemplateDef worldTemplate(ResourceLocation key, String contents) {
@@ -560,6 +594,7 @@ public final class ContentParser {
                 amount(json, "attempts", 8, 0),
                 minHeight, maxHeight,
                 replaces(key, json),
+                adjacent(key, json),
                 JsonUtils.getBoolean(json, "sparse", false),
                 integers(json),
                 JsonUtils.getBoolean(json, "dimensionsAreBlacklist", false),
@@ -876,7 +911,9 @@ public final class ContentParser {
                 taper(key, entry),
                 Math.max(1, Math.min(100, JsonUtils.getInt(entry, "integrity", 100))),
                 Math.max(1, JsonUtils.getInt(entry, "rarity", 400)),
-                JsonUtils.getBoolean(entry, "rarityIsPerChunk", false));
+                JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
+                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(entry) : null,
+                JsonUtils.getFloat(entry, "threshold", 0.5F));
     }
 
     private static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
@@ -919,6 +956,17 @@ public final class ContentParser {
         List<BlockMatchDef> values = new ArrayList<>();
         for (JsonElement name : element.getAsJsonArray()) { values.add(match(key, name)); }
         return values.isEmpty() ? Collections.singletonList(match(key, "minecraft:stone")) : Collections.unmodifiableList(values);
+    }
+
+    private static List<BlockMatchDef> adjacent(ResourceLocation key, JsonObject json) {
+        if (!json.has("adjacent")) { return Collections.emptyList(); }
+
+        JsonElement element = json.get("adjacent");
+        if (!element.isJsonArray()) { return Collections.singletonList(match(key, element)); }
+
+        List<BlockMatchDef> values = new ArrayList<>();
+        for (JsonElement name : element.getAsJsonArray()) { values.add(match(key, name)); }
+        return Collections.unmodifiableList(values);
     }
 
     private static BlockMatchDef match(ResourceLocation key, JsonElement element) {

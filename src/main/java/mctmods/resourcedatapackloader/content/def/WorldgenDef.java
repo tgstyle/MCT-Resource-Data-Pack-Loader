@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBasin;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBelt;
+import mctmods.resourcedatapackloader.content.worldgen.ContentFieldShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDecoration;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeode;
 import mctmods.resourcedatapackloader.content.worldgen.ContentImprint;
@@ -37,6 +38,7 @@ public final class WorldgenDef {
     public final int minHeight;
     public final int maxHeight;
     public final List<BlockMatchDef> replaces;
+    public final List<BlockMatchDef> adjacent;
     public final boolean replacesGiven;
     public final boolean sparse;
     public final ShapeDef shape;
@@ -60,7 +62,7 @@ public final class WorldgenDef {
     private Set<String> biomeNames = Collections.emptySet();
     private List<BiomeDictionary.Type> types = Collections.emptyList();
 
-    public WorldgenDef(ResourceLocation registryName, ResourceLocation block, int meta, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, List<BlockMatchDef> replaces, boolean sparse, List<Integer> dimensions, boolean dimensionsAreBlacklist, List<String> biomes, List<String> biomeTypes, boolean biomesAreBlacklist, List<String> requires, boolean retrogen, String retrogenKey, int minDistanceFromSpawn, SpreadDef spread, ShapeDef shape, float leastTemperature, float mostTemperature, float leastRainfall, float mostRainfall, boolean replacesGiven) {
+    public WorldgenDef(ResourceLocation registryName, ResourceLocation block, int meta, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, List<BlockMatchDef> replaces, List<BlockMatchDef> adjacent, boolean sparse, List<Integer> dimensions, boolean dimensionsAreBlacklist, List<String> biomes, List<String> biomeTypes, boolean biomesAreBlacklist, List<String> requires, boolean retrogen, String retrogenKey, int minDistanceFromSpawn, SpreadDef spread, ShapeDef shape, float leastTemperature, float mostTemperature, float leastRainfall, float mostRainfall, boolean replacesGiven) {
         this.registryName = registryName;
         this.block = block;
         this.meta = meta;
@@ -70,6 +72,7 @@ public final class WorldgenDef {
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
         this.replaces = replaces;
+        this.adjacent = adjacent;
         this.replacesGiven = replacesGiven;
         this.sparse = sparse;
         this.dimensions = dimensions;
@@ -94,9 +97,9 @@ public final class WorldgenDef {
 
     public String getToken() { return token; }
 
-    public void resolve(List<IBlockState> states, List<Integer> weights, Set<Block> targets, Set<IBlockState> exact, Set<Block> surface, @Nullable IBlockState outline, @Nullable IBlockState fill) {
+    public void resolve(List<IBlockState> states, List<Integer> weights, Set<Block> targets, Set<IBlockState> exact, Set<Block> nearby, Set<IBlockState> nearbyExact, Set<Block> surface, @Nullable IBlockState outline, @Nullable IBlockState fill) {
         this.state = states.isEmpty() ? null : states.get(0);
-        this.figure = states.isEmpty() ? null : build(new ContentPlacer(states, weights, targets, exact), surface, outline, fill);
+        this.figure = states.isEmpty() ? null : build(new ContentPlacer(states, weights, targets, exact, nearby, nearbyExact), surface, outline, fill);
         this.biomeNames = biomes.isEmpty() ? Collections.emptySet() : new HashSet<>(biomes);
 
         if (biomeTypes.isEmpty()) { return; }
@@ -120,6 +123,7 @@ public final class WorldgenDef {
         if (ShapeDef.VENT.equals(shape.type)) { return new ContentVent(placer, shape); }
         if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(placer, shape, registryName, replacesGiven); }
         if (ShapeDef.BELT.equals(shape.type)) { return new ContentBelt(placer, shape, minHeight, maxHeight, registryName); }
+        if (ShapeDef.FIELD.equals(shape.type) && shape.field != null) { return new ContentFieldShape(placer, shape, minHeight, maxHeight, registryName); }
 
         return new ContentVein(placer, size, sparse);
     }

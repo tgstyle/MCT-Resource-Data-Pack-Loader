@@ -17,6 +17,7 @@ rdpl.command.gennone=Es wurde kein Weltgenerator blockiert. Die Einstellungen si
 rdpl.command.gotobusy=Eine Suche läuft bereits, warte bis sie ankommt
 rdpl.command.gotodone=Du wurdest zur nächsten Struktur %s bei %d, %d, %d gebracht
 rdpl.command.gotolooking=Suche nach der nächsten unberührten Struktur %s, du wirst dorthin gebracht, sobald sie gefunden ist
+rdpl.command.gotomakingland=Die Welt wird noch erzeugt, warte bis sie fertig ist
 rdpl.command.gotonoground=%s bei %d, %d gefunden, aber dort ist nichts zum Stehen
 rdpl.command.gotonothing=In der Nähe ist keine Struktur %s bekannt oder zu erwarten
 rdpl.command.groupnote=Seit dem Start hinzugefügte oder entfernte Dateien brauchen /rdpl reload ohne Gruppe

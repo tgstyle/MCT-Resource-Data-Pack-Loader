@@ -42,6 +42,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Weltvorlagen](#weltvorlagen)
 - [Welt-Intro](#welt-intro)
 - [Spielregeln](#spielregeln)
+- [Härtegruppen](#härtegruppen)
 
 **Generieren**
 - [Worldgen-Einträge](#worldgen-einträge)
@@ -1447,6 +1448,98 @@ Bringt mehr als ein Pack ein Intro mit, laufen ihre Seiten in Pack-Reihenfolge h
 
 Jeder Schlüssel ist die ID der Welt, zu der die Regeln gehören: `0` für die Oberwelt, `-1` für den Nether, `1` für das Ende und was ein Mod für seine eigene nutzt. Werte sind Strings, so wie im Befehl `/gamerule`, also `"false"` statt `false`. Sie werden auf neue Welten angewendet. Eine Dimensionsdatei trägt dieselben Regeln stattdessen in einem `gameRules`-Block, der immer nur für diese eine Welt gilt.
 
+
+## Härtegruppen
+
+`hardness/*.json` gibt einer Gruppe von Blöcken einen Faktor für die Abbauzeit, der pro Blockposition gewürfelt wird. Der Block selbst wird nie verändert: Nichts wird registriert, nichts in die Welt geschrieben, und eine Welt ohne das Pack ist ganz gewöhnliches Vanilla.
+
+```json
+{
+  "blocks": ["minecraft:stone:0"],
+  "miningTime": { "min": 1.0, "max": 20.0 },
+  "buckets": 10,
+  "field": { "type": "speckle", "spread": 0.15 }
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `blocks` | ja | Liste von Blocknamen oder Objekten |, | Die Gruppe. Dieselben drei Formen wie `replace` bei der Weltgenerierung |
+| `except` | nein | Liste von Blocknamen oder Objekten | keine | Wieder aus der Gruppe genommen, was auch immer `blocks` sagt |
+| `miningTime` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Um wie viel länger der Block zum Abbauen braucht |
+| `blastResistance` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Multipliziert den Explosionswiderstand des Blocks |
+| `buckets` | nein | 1 bis 256 | `10` | In wie viele Stufen die Spanne geteilt wird |
+| `minHeight` | nein | Ganzzahl | `0` | Darunter ist der Wurf die härteste Stufe |
+| `maxHeight` | nein | Ganzzahl | `255` | Darüber ist der Wurf die härteste Stufe |
+| `field` | nein | Objekt | siehe unten | Die Form, zu der sich der Wurf zusammenballt |
+| `requires` | nein | Liste von Mod-Ids oder Pack-Namensräumen | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
+
+Eine einzelne Zahl gibt jedem Block der Gruppe denselben Faktor, und nichts wird gewürfelt. Ein `min` und ein `max` würfeln pro Position: `max`, wo das Feld leer ist, `min` in der Mitte eines Nestes, und die Stufen dazwischen entscheidet `buckets`.
+
+### Das Feld
+
+Der Wurf geschieht nicht für jeden Block ganz allein, sonst wären hart und weich reines Rauschen ohne jede Form. `field` bestimmt, welche Form dabei herauskommt, und `type` wählt zwischen zwei Wegen dorthin.
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `type` | nein | `speckle` oder `seeded` | `speckle` | Welches der beiden unten genommen wird |
+
+#### speckle
+
+Jeder Block zieht seine eigene Stufe, und ein Block eine Fläche weiter kann eine schwächere Stufe an ihn weitergeben. Das gibt dichte, feine Sprenkel, meist einzelne Blöcke, mit hier und da einem größeren Nest, wo sie zusammentreffen. Von beiden kommt das dem Gefühl beim Abbauen in der Vorlage am nächsten.
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `chances` | nein | Liste von Ganzzahlen, je Tausend | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | Wie oft ein Block auf welcher Stufe anfängt, weichste zuletzt. Was übrig bleibt, ist die härteste Stufe |
+| `spread` | nein | 0.0 bis 1.0 | `0.15` | Wie oft eine Stufe an den Nachbarblock weitergeht, eine bis drei Stufen schwächer |
+
+Die Liste wird von hinten als weichste gelesen, der letzte Eintrag ist also die weichste Stufe und der erste liegt eine über der härtesten. Mit den Zahlen oben sind etwa sieben von zehn Blöcken die härteste Stufe, der Rest liegt verstreut dazwischen.
+
+#### seeded
+
+Saatpunkte sitzen auf einem Gitter, das sich aus der Welt und der Position ergibt, und die Stufe eines Blocks kommt daher, wie nah er am nächsten liegt. Das gibt weniger, größere, rundere Nester, die ineinanderlaufen, und es kann Arme treiben.
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `cell` | nein | Ganzzahl, Blöcke | `8` | Wie weit die Saatpunkte auseinanderliegen |
+| `seeds` | nein | 1 bis 4 | `1` | Saatpunkte je Zelle |
+| `reach` | nein | Kommazahl, Blöcke | `3.0` | Wie weit ein Saatpunkt wirkt |
+| `arms` | nein | 0 bis 6 | `0` | Arme, die von jedem Saatpunkt ausgehen |
+| `armReach` | nein | Kommazahl, Blöcke | `0.0` | Wie weit die Arme reichen |
+
+Ohne `arms` sind die Nester rund. Gibt man einem Saatpunkt Arme, wird er zu einem Knoten mit Ranken, und Arme benachbarter Knoten strecken sich einander entgegen – das ist dann eine Ader statt eines Klumpens. Halte `reach` über der Hälfte von `cell`, sonst können die Nester einander nicht berühren und es bleiben einzelne Kugeln mit nichts dazwischen.
+
+### Sichtbar machen
+
+Der Faktor allein ist unsichtbar. Damit ein Spieler sieht, welche Blöcke zäh sind, gib dem Block einen Blockstate mit einer Variante je Stufe, alle mit gleichem Gewicht, die härteste zuerst:
+
+```json
+{
+  "variants": {
+    "normal": [
+      { "model": "mypack:stone_step0", "weight": 1 },
+      { "model": "mypack:stone_step1", "weight": 1 }
+    ]
+  }
+}
+```
+
+Minecraft wählt eine Variante ohnehin schon anhand der Position eines Blocks, und eine Härtegruppe gibt ihm stattdessen die Stufe, so passen Textur und Faktor immer zusammen.
+
+Drei Dinge müssen stimmen, und keines davon meldet sich, wenn es falsch ist.
+
+**Genau `buckets` Einträge, alle gleich schwer.** Die Stufe wird als Platz in der Liste genommen, eine Liste anderer Länge oder mit unterschiedlichen Gewichten zeigt also stillschweigend auf die falsche Textur.
+
+**Ein Modellname ohne `block/` davor.** Ein Blockstate setzt `block/` selbst davor, `"model": "mypack:step_stone"` liest also die Datei unter `models/block/step_stone.json`. Schreibt man `mypack:block/step_stone`, wird nach `models/block/block/step_stone.json` gesucht, was es nicht gibt, und der Eintrag fällt kommentarlos weg.
+
+**Derselbe Schlüssel, nach dem das Spiel fragt.** Nicht jeder Block ist so verschlüsselt, wie seine Eigenschaften sich lesen. Vanilla-Stein legt alles unter `normal` ab, nicht unter `variant=stone`, eine Ersetzung, die nur `variant=stone` schreibt, wird also zusammengeführt und danach nie angesehen. Beide Schlüssel zu schreiben ist unbedenklich, denn zusammengeführt wird je Schlüssel, und ein Pack sticht, was vorher da war.
+
+Schalte `worldgenDebug` ein, dann wird jede Härtegruppe beim Betreten einer Welt gegen ihr gebackenes Modell geprüft: welcher Blockstate, wie viele Varianten übrig blieben, welche Textur jede davon bekam und welche Packs das Spiel dafür zusammengeführt hat. Das ist der schnellste Weg zu allen drei Punkten oben, und es warnt auch, wenn das Ersetzen eines geteilten Blockstates einen Zustand verändert hat, den die Gruppe nie genannt hat.
+
+### Was nicht erreicht wird
+
+Nur das Abbauen durch einen Spieler wird verändert. Maschinen, die Blöcke abbauen, lesen die Härte des Blocks direkt und merken nichts davon. Blöcke, die ein Spieler setzt, werden wie alle anderen gewürfelt, denn der Wurf gehört zum Ort und nicht zum Block, und ein anderswohin getragener Block nimmt an, was sein neuer Ort sagt.
+
 # Generieren
 
 ## Worldgen-Einträge
@@ -1491,6 +1584,7 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 | `size` | nein | int oder Bereich | `8` | Wie viele Blöcke ein Versuch setzt, oder wie groß eine Form mit Radius ausfällt |
 | `attempts` | nein | int oder Bereich | `1` | Wie oft es pro Chunk versucht wird |
 | `replace` | nein | Liste von Blocknamen oder Objekten | `["minecraft:stone"]` | Was ersetzt werden darf. Siehe unten |
+| `adjacent` | nein | Liste von Blocknamen oder Objekten | keine | Setzt nur dort, wo einer davon unter den 26 Blöcken steht, die die Stelle berühren. Dieselben drei Formen wie `replace` |
 | `minHeight` | nein | int | `0` | Niedrigstes y, auf dem gesetzt wird |
 | `maxHeight` | nein | int | `64` | Höchstes y, auf dem gesetzt wird |
 | `dimensions` | nein | Liste von Ints | jede Dimension | In welchen Dimensionen es läuft |
@@ -1544,6 +1638,24 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 
 Die Objektform nimmt statt `properties` auch `meta`, was dasselbe ist wie die Form mit Doppelpunkt. Nimm `"minecraft:air"`, um in offenem Raum zu generieren.
 
+### Benachbarte Blöcke
+
+`adjacent` nimmt dieselben drei Formen wie `replace` und legt eine zweite Bedingung darüber: Die Stelle wird nur genommen, wenn mindestens einer der 26 Blöcke, die sie berühren, also Flächen, Kanten und Ecken, auf die Liste passt. Ohne den Eintrag wird nichts geprüft.
+
+```json
+{
+  "block": "mypack:sulfur_ore",
+  "replace": ["minecraft:sandstone"],
+  "adjacent": ["minecraft:air"]
+}
+```
+
+Das setzt Schwefel nur dort in Sandstein, wo er ohnehin schon zu einer Höhle oder zur Oberfläche offen liegt, und lässt vergrabenen Sandstein in Ruhe. Nachbarn in Chunks, die es noch nicht gibt, gelten als nicht passend, statt gelesen zu werden, so löst die Prüfung nie die Generierung eines Chunks aus.
+
+Jede Form hält sich daran, weil es dazugehört zu entscheiden, ob ein einzelner Block genommen werden darf. Eine `geode` nennt ihre Kruste und ihre Füllung getrennt, und diese beiden werden ohne die Prüfung gesetzt.
+
+Ein Eintrag, der nur Blöcke nennt, die nicht registriert sind, wird mit einem Fehler übersprungen, statt überall zu generieren.
+
 ## Formen
 
 Ein `shape`-Block mit einem `type`. Schlüssel, die bei einem Typ nicht aufgeführt sind, ignoriert er.
@@ -1563,6 +1675,7 @@ Ein `shape`-Block mit einem `type`. Schlüssel, die bei einem Typ nicht aufgefü
 | `vent` | Eine schmale Säule, die aufhört, sobald sie auf etwas trifft |
 | `imprint` | Eine deiner `.nbt`-Vorlagen. Eine, die in einen Chunk passt, wird so verschoben, dass sie ganz im gerade gebauten Chunk landet, statt in einen Nachbarn zu ragen, den es noch nicht gibt – egal, wie herum sie gedreht ist; eine, die größer als ein Chunk ist, wird nur dort gesetzt, wo der Boden ringsum schon existiert |
 | `belt` | Ein Cluster über mehrere Chunks hinweg, für Gesteinsregionen |
+| `field` | Adern, die für jeden Block auf einmal ermittelt werden, mit derselben Form wie Härtegruppen |
 
 | Schlüssel | Genutzt von | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
@@ -1726,6 +1839,34 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
 ```
 
 Lass ihn vor der Auslieferung einmal selbst durchlaufen, mit dem Radius, den du ausliefern willst, von Anfang bis Ende. Die Zahl der Chunks wächst mit dem Quadrat des Radius: 63 in jede Richtung sind sechzehntausend Chunks, 500 sind über eine Million, bei rund zehn Kilobyte pro Stück – der Region-Ordner deiner Testwelt und die Uhr an der Wand sind also die ehrlichen Zahlen, die du den Spielern nennen kannst. Liefere keinen Radius aus, der nie durchgelaufen ist.
+
+
+### Felder
+
+Ein `field` setzt nichts an einem Punkt und alles auf einmal. Statt eine Stelle zu wählen und darum herum eine Form zu bauen, stellt es jedem Block im Chunk zwischen `minHeight` und `maxHeight` eine Frage und setzt dort, wo die Antwort mindestens `threshold` ist. Es ist dieselbe Frage, die Härtegruppen stellen, beide beschreiben also dieselben Adern, und ein Pack kann eine Gruppe und einen Eintrag bauen, die zusammenpassen.
+
+```json
+{
+  "block": "mypack:sulfur_ore",
+  "replace": ["minecraft:stone"],
+  "minHeight": 8,
+  "maxHeight": 48,
+  "shape": {
+    "type": "field",
+    "threshold": 0.6,
+    "field": { "type": "speckle", "spread": 0.15 }
+  }
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `threshold` | nein | 0.0 bis 1.0 | `0.5` | Wie stark das Feld sein muss, bevor ein Block gesetzt wird |
+| `field` | ja | Objekt | keiner | Dasselbe Objekt wie bei einer Härtegruppe, mit denselben Arten `speckle` und `seeded` |
+
+Ein niedriger `threshold` nimmt fast das ganze Feld und gibt breite Bänder, ein hoher nimmt nur die Mitte jedes Nestes und gibt kleine verstreute Taschen. Mit `speckle` bekommst du viele feine Sprenkel, mit `seeded` rundere Nester oder, sobald es Arme hat, Knoten mit Ranken, die sich einander entgegenstrecken.
+
+Wie ein Gürtel übergeht ein Feld `attempts` und `spread`, da es je Chunk statt je Versuch gefragt wird, und es schreibt nie in einen Nachbar-Chunk. Es ergibt sich aus dem Weltsamen und dem eigenen Namen des Eintrags, derselbe Samen gibt also immer dieselben Adern, und zwei Einträge mit verschiedenen Namen decken sich nie. `replace`, `adjacent`, `biomes` und die Klimagrenzen gelten wie sonst auch.
 
 ### Wie es schnell bleibt
 
@@ -2081,6 +2222,7 @@ Unter `assets/<namespace>/`:
 | `gates` | Bedingungen für Portale und Dimensionen |
 | `gamerules` | Spielregeln für neue Welten |
 | `entities` | Entity-Varianten, aufgebaut auf vorhandenen Entities |
+| `hardness` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen |
 | `villages` | Grundstücke, die Dörfer bauen können |
 | `structures` | `.nbt`-Vorlagen, für Setzlinge, `imprint` und Mod-Overrides |
 | `recipes` | Handwerksrezepte, hinzugefügt oder ersetzt |

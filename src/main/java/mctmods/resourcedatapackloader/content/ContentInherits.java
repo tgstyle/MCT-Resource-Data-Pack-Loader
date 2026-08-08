@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class ContentInherits {
     private ContentInherits() {}
@@ -64,6 +65,12 @@ public final class ContentInherits {
         String asked = held.get("inherits").getAsString();
         ResourceLocation parentName = asked.contains(":") ? new ResourceLocation(asked) : new ResourceLocation(key.getNamespace(), asked);
         ResourceLocation parentFile = owners.get(parentName);
+        String parentVariantName = parentName.getPath();
+        if (parentFile == null && parsed.containsKey(parentName)) {
+            parentFile = parentName;
+            parentVariantName = baseVariant(parsed.get(parentName), parentName);
+            if (parentVariantName == null) { ContentLog.LOGGER.warn("Definition {} inherits file '{}', which holds several variants and none named '{}', so only its shared stats are inherited. Name a variant instead", key, asked, tail(parentName)); }
+        }
         JsonObject parent = parentFile == null ? null : resolve(parentFile, parsed, owners, resolved, walking);
         if (parent == null) {
             ContentLog.LOGGER.error("Definition {} inherits '{}', which is not a definition of the same kind, ignoring its inherits", key, asked);
@@ -78,8 +85,8 @@ public final class ContentInherits {
             if (!"variants".equals(entry.getKey()) && !"inherits".equals(entry.getKey())) { made.add(entry.getKey(), entry.getValue()); }
         }
 
-        JsonObject parentVariant = parent.has("variants") && parent.getAsJsonObject("variants").has(parentName.getPath())
-                ? parent.getAsJsonObject("variants").getAsJsonObject(parentName.getPath()) : new JsonObject();
+        JsonObject parentVariant = parentVariantName != null && parent.has("variants") && parent.get("variants").isJsonObject() && parent.getAsJsonObject("variants").has(parentVariantName)
+                ? parent.getAsJsonObject("variants").getAsJsonObject(parentVariantName) : new JsonObject();
         JsonObject variants = new JsonObject();
         if (held.has("variants") && held.get("variants").isJsonObject()) {
             for (Map.Entry<String, JsonElement> entry : held.getAsJsonObject("variants").entrySet()) {
@@ -93,6 +100,20 @@ public final class ContentInherits {
         made.add("variants", variants);
         resolved.put(key, made);
         return made;
+    }
+
+    @Nullable private static String baseVariant(JsonObject file, ResourceLocation name) {
+        if (!file.has("variants") || !file.get("variants").isJsonObject()) { return null; }
+        JsonObject variants = file.getAsJsonObject("variants");
+        String tail = tail(name);
+        if (variants.has(tail)) { return tail; }
+        if (variants.entrySet().size() == 1) { return variants.entrySet().iterator().next().getKey(); }
+        return null;
+    }
+
+    private static String tail(ResourceLocation name) {
+        String path = name.getPath();
+        return path.substring(path.lastIndexOf('/') + 1);
     }
 
     private static JsonObject copy(JsonObject held) { return new JsonParser().parse(held.toString()).getAsJsonObject(); }

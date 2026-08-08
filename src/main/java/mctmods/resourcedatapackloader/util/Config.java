@@ -78,6 +78,8 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("Register the blocks and items described by blocks/*.json and items/*.json in packs. Turning this off leaves worlds containing them with missing blocks. Requires a restart [Default=true]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         public boolean load = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]")
+        public boolean hardness = true;
         @net.minecraftforge.common.config.Config.Comment("Register the sound events named by sounds/*.json, so packs can ship their own audio [Default=true]")
         public boolean sounds = true;
         @net.minecraftforge.common.config.Config.Comment("Apply fuels/*.json files, which give items a furnace burn time [Default=true]")

@@ -183,6 +183,10 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     private static void arrive(EntityPlayerMP player, String name, BlockPos best) {
+        if (ContentPregen.busy()) {
+            tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotomakingland"));
+            return;
+        }
         if (best == null) {
             tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name));
             return;

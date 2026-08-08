@@ -44,6 +44,7 @@ public final class PackManager {
     public static final String WORLDGEN = "worldgen";
     public static final String GATES = "gates";
     public static final String WORLDTEMPLATES = "worldtemplates";
+    public static final String PATHINTERSECTS = "pathintersects";
     public static final String WORLDINTRO = "worldintro";
     public static final String DIMENSIONS = "dimensions";
     public static final String GAMERULES = "gamerules";
@@ -64,6 +65,7 @@ public final class PackManager {
     public static final String BIOMES = "biomes";
     public static final String VILLAGES = "villages";
     public static final String ENTITIES = "entities";
+    public static final String HARDNESS = "hardness";
     public static final String JSON = "json";
     public static final String MCFUNCTION = "mcfunction";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
@@ -250,6 +252,7 @@ public final class PackManager {
         collect(off, Config.content.dimensions, "content.dimensions", JSON, DIMENSIONS);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
         collect(off, Config.content.entities, "content.entities", JSON, ENTITIES);
+        collect(off, Config.content.hardness, "content.hardness", JSON, HARDNESS);
         collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);
         collect(off, Config.recipes.removals, "recipes.removals", JSON, RECIPE_REMOVALS);
         collect(off, Config.data.lootInjections, "data.lootInjections", JSON, LOOT_INJECTIONS);
@@ -282,8 +285,8 @@ public final class PackManager {
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
             String tier = pack.isOverriding() ? " overriding" : "";
-            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={}",
-                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON));
+            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={} hardness={}",
+                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON), pack.count(HARDNESS, JSON));
         }
     }
 
@@ -362,7 +365,7 @@ public final class PackManager {
     private static boolean isData(String path) {
         return path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
-                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/");
+                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
     }
 
     @Nullable public String getPackName(String namespace, String path) {
@@ -483,21 +486,6 @@ public final class PackManager {
                 "The pack is skipped and the log says so. Remove the suffix to turn it back on.",
                 "",
                 "",
-                "PACK OPTIONS",
-                "------------",
-                "",
-                "A pack can offer options, and those live here under config/, one generated",
-                "file per pack, named after it:",
-                "",
-                "    rdploader/config/MyPack.json",
-                "",
-                "Edit the values freely, true turns an option on and false turns it off. Your",
-                "choices survive pack updates, new options arrive with their defaults, and a",
-                "deleted file comes back with defaults on the next start. The same options can",
-                "be set in game from the Pack Options button on the create world screen.",
-                "Changes apply when the game next starts.",
-                "",
-                "",
                 "WHAT YOU CAN CHANGE",
                 "-------------------",
                 "",
@@ -576,7 +564,7 @@ public final class PackManager {
                 "    structures       registry_remap   potions          potion_types",
                 "    brewing          villagers        trades           biomes",
                 "    villages         entities         gates            dimensions",
-                "    gamerules        worldtemplates   worldintro",
+                "    gamerules        worldtemplates   worldintro       pathintersects",
                 "",
                 "Blocks come in these shapes, set by the \"type\" field:",
                 "",

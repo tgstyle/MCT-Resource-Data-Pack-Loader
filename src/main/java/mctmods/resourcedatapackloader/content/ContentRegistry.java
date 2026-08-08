@@ -325,6 +325,23 @@ public final class ContentRegistry {
                 continue;
             }
 
+            Set<Block> nearby = new LinkedHashSet<>();
+            Set<IBlockState> nearbyExact = new LinkedHashSet<>();
+            for (BlockMatchDef name : def.adjacent) {
+                Block target = ForgeRegistries.BLOCKS.containsKey(name.block) ? ForgeRegistries.BLOCKS.getValue(name.block) : null;
+                if (target == null) {
+                    ContentLog.LOGGER.error("Worldgen {} names adjacent block {}, which is not registered, leaving it out", entry.getKey(), name.block);
+                    continue;
+                }
+                if (!name.properties.isEmpty()) { nearbyExact.add(ContentStates.of(target, 0, name.properties, entry.getKey())); }
+                else if (name.meta >= 0) { nearbyExact.add(ContentStates.of(target, name.meta)); }
+                else { nearby.add(target); }
+            }
+            if (!def.adjacent.isEmpty() && nearby.isEmpty() && nearbyExact.isEmpty()) {
+                ContentLog.LOGGER.error("Worldgen {} has no registered adjacent block, skipping it so it does not generate everywhere", entry.getKey());
+                continue;
+            }
+
             Set<Block> surface = new LinkedHashSet<>();
             if (ShapeDef.DECORATION.equals(def.shape.type) || ShapeDef.TREE.equals(def.shape.type)) {
                 Set<String> unknown = new LinkedHashSet<>();
@@ -373,10 +390,11 @@ public final class ContentRegistry {
             }
             if (states.isEmpty()) { continue; }
 
-            def.resolve(states, weights, targets, exact, surface, extra(entry.getKey(), def.shape.outline), extra(entry.getKey(), def.shape.fill));
+            def.resolve(states, weights, targets, exact, nearby, nearbyExact, surface, extra(entry.getKey(), def.shape.outline), extra(entry.getKey(), def.shape.fill));
             active.add(def);
         }
 
+        active.sort(Comparator.comparing(def -> def.registryName.toString()));
         if (!active.isEmpty()) { Summary.info("worldgen", "Generating " + active.size() + " vein type(s) from packs"); }
         return active;
     }

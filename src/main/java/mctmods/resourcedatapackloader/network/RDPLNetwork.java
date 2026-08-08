@@ -21,17 +21,25 @@ public final class RDPLNetwork {
         else { channel.registerMessage(MessageIntroPlay.Idle.class, MessageIntroPlay.class, 0, Side.CLIENT); }
 
         channel.registerMessage(MessageIntroDone.Handler.class, MessageIntroDone.class, 1, Side.SERVER);
+        channel.registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class, 2, Side.CLIENT);
     }
 
-    public static boolean modded(EntityPlayerMP player) {
-        if (player.connection == null) { return false; }
+    public static boolean vanilla(EntityPlayerMP player) {
+        if (player.connection == null) { return true; }
+
         Boolean marked = player.connection.netManager.channel().attr(NetworkRegistry.FML_MARKER).get();
-        return marked != null && marked;
+        return marked == null || !marked;
     }
 
     public static void playIntro(EntityPlayerMP player) {
-        if (channel == null || !modded(player)) { return; }
+        if (channel == null || vanilla(player)) { return; }
         channel.sendTo(new MessageIntroPlay(), player);
+    }
+
+    public static void sendHardnessSalt(EntityPlayerMP player, long salt) {
+        if (channel == null || vanilla(player)) { return; }
+
+        channel.sendTo(new MessageHardnessSalt(salt), player);
     }
 
     public static void introDone() {

@@ -109,6 +109,8 @@ public class ServerCommands extends CommandBase {
     }
 
     private void goTo(ICommandSender sender, String asked) throws CommandException {
+        if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
+
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         World world = player.world;
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);

@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final Set<String> OPTIMIZATIONS = new HashSet<>(Arrays.asList(
-            "MixinWorldLight", "MixinChunkLight", "MixinChunkColumnLight",
+            "MixinWorldLight", "MixinChunkLight", "MixinChunkColumnLight", "MixinChunkDressLight",
             "MixinBlockState", "MixinBlockStateContainer", "MixinBlockStatePalette", "MixinChunkPrimer",
             "MixinThreadedFileIOBase", "MixinRegionFile", "MixinRegionFileCache", "MixinRegionFileWrite",
             "MixinChunkProviderLookup"));
@@ -45,7 +45,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             }
             if (optimizationsOff) { return false; }
         }
-        if (!mixinClassName.endsWith(".MixinWorldLight") && !mixinClassName.endsWith(".MixinChunkLight") && !mixinClassName.endsWith(".MixinChunkColumnLight")) { return true; }
+        if (!mixinClassName.endsWith(".MixinWorldLight") && !mixinClassName.endsWith(".MixinChunkLight") && !mixinClassName.endsWith(".MixinChunkColumnLight") && !mixinClassName.endsWith(".MixinChunkDressLight")) { return true; }
         if (lightingReplaced == null) {
             lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null
                     || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null;

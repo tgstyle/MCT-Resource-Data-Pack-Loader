@@ -42,6 +42,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [World templates](#world-templates)
 - [World intro](#world-intro)
 - [Game rules](#game-rules)
+- [Hardness groups](#hardness-groups)
 
 **Generating it**
 - [Worldgen entries](#worldgen-entries)
@@ -1447,6 +1448,98 @@ If more than one pack ships an intro, their pages run end to end in pack order r
 
 Each key is the id of the world the rules belong to, `0` for the overworld, `-1` for the nether, `1` for the end, and whatever a mod uses for its own. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world.
 
+
+## Hardness groups
+
+`hardness/*.json` gives a group of blocks a mining time multiplier, rolled per block position. The block itself is never changed: nothing is registered, nothing is written into the world, and a world opened without the pack is ordinary vanilla.
+
+```json
+{
+  "blocks": ["minecraft:stone:0"],
+  "miningTime": { "min": 1.0, "max": 20.0 },
+  "buckets": 10,
+  "field": { "type": "speckle", "spread": 0.15 }
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `blocks` | yes | list of block names or objects |, | The group. Same three forms as a worldgen `replace` |
+| `except` | no | list of block names or objects | none | Taken back out of the group, whatever `blocks` says |
+| `miningTime` | no | number, or object with `min` and `max` | `1.0` | How many times longer the block takes to break |
+| `blastResistance` | no | number, or object with `min` and `max` | `1.0` | Multiplies the block's blast resistance |
+| `buckets` | no | 1 to 256 | `10` | How many steps the range is divided into |
+| `minHeight` | no | int | `0` | Below this the roll is the hardest step |
+| `maxHeight` | no | int | `255` | Above this the roll is the hardest step |
+| `field` | no | object | see below | The shape the roll clumps into |
+| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+
+A single number gives every block in the group the same multiplier, and nothing is rolled. A `min` and `max` roll per position: `max` where the field is empty, `min` at the middle of a clump, and the steps between decided by `buckets`.
+
+### The field
+
+The roll is not made for each block entirely on its own, or hard and soft would be pure static with no shape to them. `field` decides what shape it takes, and `type` picks between two ways of getting there.
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `type` | no | `speckle` or `seeded` | `speckle` | Which of the two below is used |
+
+#### speckle
+
+Every block draws its own step, and a block one face away can pass a weaker step on to it. That gives dense, fine-grained specks, most of them a single block, with the odd larger patch where they meet. It is the closer of the two to how mining feels in the mod this borrows from.
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `chances` | no | list of ints, per thousand | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | How often a block starts at each step, softest last. Anything left over is the hardest step |
+| `spread` | no | 0.0 to 1.0 | `0.15` | How often a step carries to the block next to it, one step weaker or three |
+
+The list is read softest-last, so the final entry is the softest step and the first is one above hardest. With the numbers above about seven blocks in ten are the hardest step and the rest are scattered through it.
+
+#### seeded
+
+Seeds sit on a lattice worked out from the world and the position, and a block's step comes from how close it is to the nearest one. That gives fewer, larger, rounder patches that run into one another, and it can grow arms.
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `cell` | no | int, blocks | `8` | How far apart the seeds are |
+| `seeds` | no | 1 to 4 | `1` | Seeds in each cell |
+| `reach` | no | float, blocks | `3.0` | How far a seed's influence carries |
+| `arms` | no | 0 to 6 | `0` | Arms radiating from each seed |
+| `armReach` | no | float, blocks | `0.0` | How far the arms carry |
+
+With `arms` left out the patches are round. Giving a seed arms turns it into a knot with tendrils, and arms from neighboring knots reach toward each other, which is a vein rather than a blob. Keep `reach` above half of `cell` or the patches cannot touch and you get separate balls with nothing between them.
+
+### Showing it
+
+The multiplier is invisible on its own. To let a player see which blocks are tough, give the block a blockstate with one variant per bucket, all of equal weight, listed hardest first:
+
+```json
+{
+  "variants": {
+    "normal": [
+      { "model": "mypack:stone_step0", "weight": 1 },
+      { "model": "mypack:stone_step1", "weight": 1 }
+    ]
+  }
+}
+```
+
+Minecraft already picks a variant from a block's position, and a hardness group hands it the bucket instead, so the texture and the multiplier always agree.
+
+Three things have to be right, and none of them announce themselves when they are wrong.
+
+**Exactly `buckets` entries, all weighing the same.** The bucket is used as a place in the list, so a list of a different length, or one where the weights differ, quietly points at the wrong texture.
+
+**A model name without `block/` in front.** A blockstate adds `block/` itself, so `"model": "mypack:step_stone"` reads the file at `models/block/step_stone.json`. Writing `mypack:block/step_stone` looks for `models/block/block/step_stone.json`, which is not there, and the entry is dropped without a word.
+
+**The same key the game asks for.** Not every block is keyed the way its properties read. Vanilla stone keys everything under `normal`, not `variant=stone`, so an override that only writes `variant=stone` is merged in and then never looked at. Writing both keys is safe, since the merge is per key and a pack outranks what came before it.
+
+Turn on `worldgenDebug` and every hardness group is checked against its baked model when a world is entered, naming the blockstate, how many variants survived, what texture each one ended up with, and which packs the game merged to get there. That is the quickest way to find any of the three above, and it also warns when overriding a shared blockstate has changed a state the group never named.
+
+### What it does not reach
+
+Only a player's own mining is changed. Machines that break blocks read the block's hardness directly and are not affected. Blocks a player places are rolled the same as any other, since the roll belongs to the place rather than to the block, and a block carried elsewhere takes on whatever its new place says.
+
 # Generating it
 
 ## Worldgen entries
@@ -1491,6 +1584,7 @@ Only `block` is required; everything else may be left out and takes its default.
 | `size` | no | int or range | `8` | How many blocks one attempt places, or how large a shape with a radius is |
 | `attempts` | no | int or range | `1` | How many times per chunk it tries |
 | `replace` | no | list of block names or objects | `["minecraft:stone"]` | What it may replace. See below |
+| `adjacent` | no | list of block names or objects | none | Only place where one of these is among the 26 blocks touching the spot. Same three forms as `replace` |
 | `minHeight` | no | int | `0` | Lowest y it will place at |
 | `maxHeight` | no | int | `64` | Highest y it will place at |
 | `dimensions` | no | list of ints | every dimension | Which dimensions it runs in |
@@ -1544,6 +1638,24 @@ Only `block` is required; everything else may be left out and takes its default.
 
 The object form also takes `meta` instead of `properties`, which is the same as the colon form. Use `"minecraft:air"` to generate in open space.
 
+### Adjacent blocks
+
+`adjacent` takes the same three forms as `replace` and adds a second condition on top of it: the spot is only used when at least one of the 26 blocks touching it, faces, edges and corners, matches the list. Left out, nothing is checked.
+
+```json
+{
+  "block": "mypack:sulfur_ore",
+  "replace": ["minecraft:sandstone"],
+  "adjacent": ["minecraft:air"]
+}
+```
+
+That places sulfur in sandstone only where it is already open to a cave or the surface, and leaves buried sandstone alone. Neighbors in chunks that do not exist yet are treated as not matching rather than being read, so the check never causes a chunk to generate.
+
+Every shape honors it, since it is part of deciding whether a single block may be taken. A `geode` names its crust and filling separately, and those two are placed without the check.
+
+An entry naming only blocks that are not registered is skipped with an error rather than generating everywhere.
+
 ## Shapes
 
 A `shape` block with a `type`. Keys not listed for a type are ignored by it.
@@ -1563,6 +1675,7 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `vent` | A narrow column that stops when it hits something |
 | `imprint` | One of your `.nbt` templates. One that fits inside a chunk is nudged so it lands whole in the chunk being built rather than reaching into a neighbor that has not been made yet, whichever way it is turned; one larger than a chunk is placed only where the ground around it already exists |
 | `belt` | A cluster spanning several chunks, for stone regions |
+| `field` | Veins worked out for every block at once, sharing their shape with hardness groups |
 
 | Key | Used by | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
@@ -1726,6 +1839,34 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
 ```
 
 Run it yourself before shipping, at the radius being shipped, start to finish. Chunks grow with the square of the radius, 63 either way is sixteen thousand chunks, 500 is over a million, at roughly ten kilobytes each, so your test world's region folder and wall clock are the honest numbers to put in front of players. Do not ship a radius that was never run.
+
+
+### Fields
+
+A `field` places nothing at a point and everything at once. Instead of picking a spot and building a shape around it, it asks a question of every block in the chunk, within `minHeight` and `maxHeight`, and places where the answer is at least `threshold`. The question is the same one hardness groups ask, so the two describe the same veins, and a pack can make a group and an entry that agree.
+
+```json
+{
+  "block": "mypack:sulfur_ore",
+  "replace": ["minecraft:stone"],
+  "minHeight": 8,
+  "maxHeight": 48,
+  "shape": {
+    "type": "field",
+    "threshold": 0.6,
+    "field": { "type": "speckle", "spread": 0.15 }
+  }
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `threshold` | no | 0.0 to 1.0 | `0.5` | How strong the field has to be before a block is placed |
+| `field` | yes | object | none | The same object a hardness group takes, with the same `speckle` and `seeded` types |
+
+A low `threshold` takes most of the field and gives broad seams, a high one takes only the middle of each clump and gives small scattered pockets. With `speckle` you get many tiny specks, with `seeded` you get rounder patches or, once it has arms, knots with tendrils reaching between them.
+
+Like a belt, a field ignores `attempts` and `spread`, since it is asked per chunk rather than per attempt, and it never writes into a neighboring chunk. It is worked out from the world seed and the entry's own name, so the same seed always gives the same veins, and two entries with different names never line up. `replace`, `adjacent`, `biomes` and the climate limits all apply as usual.
 
 ### How it stays fast
 
@@ -2084,6 +2225,7 @@ Under `assets/<namespace>/`:
 | `gates` | Conditions on portals and dimensions |
 | `gamerules` | Game rules for new worlds |
 | `entities` | Entity variants built on entities that already exist |
+| `hardness` | Mining time and blast multipliers for groups of blocks |
 | `villages` | Plots villages can build |
 | `structures` | `.nbt` templates, for saplings, `imprint` and mod overrides |
 | `recipes` | Crafting recipes, added or replaced |

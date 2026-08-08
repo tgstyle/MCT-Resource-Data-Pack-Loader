@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
+import mctmods.resourcedatapackloader.content.ContentHardness;
+import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -36,6 +38,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
@@ -87,6 +90,7 @@ public class ResourceDataPackLoader {
         ContentVillagers.applyTrades();
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
+        ContentPathIntersects.load();
         ContentWorldIntro.load();
         RDPLNetwork.register();
         if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
@@ -121,6 +125,10 @@ public class ResourceDataPackLoader {
         if (Config.worldgen.blockOres && veins.isEmpty()) {
             ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above");
         }
+        if (ContentHardness.load()) {
+            ContentHardness.resolve();
+            MinecraftForge.EVENT_BUS.register(ContentHardness.class);
+        }
         ContentReplacements.reload();
         if (ContentRetrogen.wanted()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
         MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
@@ -131,6 +139,8 @@ public class ResourceDataPackLoader {
         }
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             ClientCommands.register();
+            MinecraftForge.EVENT_BUS.register(ContentHardnessCheck.class);
+            ContentHardnessCheck.watching();
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
         }
     }

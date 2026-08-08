@@ -17,6 +17,7 @@ rdpl.command.gennone=Ни один генератор мира не был за�
 rdpl.command.gotobusy=Поиск уже идёт, дождитесь его окончания
 rdpl.command.gotodone=Вы перенесены к ближайшей структуре %s на %d, %d, %d
 rdpl.command.gotolooking=Идёт поиск ближайшей нетронутой структуры %s, вы будете перенесены, как только она найдётся
+rdpl.command.gotomakingland=Мир ещё генерируется, дождитесь окончания
 rdpl.command.gotonoground=Структура %s найдена на %d, %d, но там не на чем стоять
 rdpl.command.gotonothing=Структуры %s поблизости нет и не ожидается
 rdpl.command.groupnote=Файлам, добавленным или удалённым после запуска, нужен /rdpl reload без группы

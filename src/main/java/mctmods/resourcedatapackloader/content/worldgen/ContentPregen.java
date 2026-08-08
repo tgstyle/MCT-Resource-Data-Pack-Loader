@@ -32,6 +32,8 @@ import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.WorldWorkerManager;
+import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -355,6 +357,14 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (held == null || !(event.player instanceof EntityPlayerMP)) { return; }
 
         release((EntityPlayerMP) event.player, held);
+    }
+
+    @SubscribeEvent public static void onTravelWhileMakingLand(EntityTravelToDimensionEvent event) {
+        if (busy()) { event.setCanceled(true); }
+    }
+
+    @SubscribeEvent public static void onEnderTeleportWhileMakingLand(EnderTeleportEvent event) {
+        if (busy()) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHoldTick(TickEvent.ServerTickEvent event) {

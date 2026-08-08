@@ -93,10 +93,10 @@ dependencies {
     implementation rfg.deobf("curse.maven:${common.cnam_version}")
 
     implementation rfg.deobf("curse.maven:${common.arlb_version}")
-    implementation rfg.deobf("curse.maven:${common.quar_version}")
     implementation rfg.deobf("curse.maven:${common.wayb_version}")
     implementation rfg.deobf("curse.maven:${common.redf_version}")
     implementation rfg.deobf("curse.maven:${common.cofh_version}")
+    compileOnly rfg.deobf("curse.maven:${common.quar_version}")
     compileOnly rfg.deobf("curse.maven:${common.gcor_version}")
     compileOnly rfg.deobf("curse.maven:${common.dngn_version}")
     compileOnly rfg.deobf("curse.maven:${common.lstc_version}")

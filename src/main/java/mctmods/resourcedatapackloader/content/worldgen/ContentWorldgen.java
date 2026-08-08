@@ -57,6 +57,10 @@ public final class ContentWorldgen implements IWorldGenerator {
                     ((ContentBelt) figure).generateChunk(world, chunkX, chunkZ, source -> allows(def, world, source, filtered));
                     continue;
                 }
+                if (figure instanceof ContentFieldShape) {
+                    ((ContentFieldShape) figure).generateChunk(world, chunkX, chunkZ, source -> allows(def, world, source, filtered));
+                    continue;
+                }
 
                 int tries = def.attempts.pick(random);
                 for (int attempt = 0; attempt < tries; attempt++) {
