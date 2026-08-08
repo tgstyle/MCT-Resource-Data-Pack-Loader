@@ -112,6 +112,7 @@
   ],
   "client": [
     "AccessorGuiIngame",
+    "AccessorGuiScreenResourcePacks",
     "AccessorWeightedBakedModel",
     "AccessorWeightedModel",
     "MixinBlockModelSeed",
@@ -122,7 +123,8 @@
     "MixinLayerHeldItem",
     "MixinMinecraft",
     "MixinRender",
-    "MixinRenderLivingBase"
+    "MixinRenderLivingBase",
+    "MixinSimpleReloadableResourceManager"
   ],
   "server": []
 }

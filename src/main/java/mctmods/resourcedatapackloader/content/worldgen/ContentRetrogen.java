@@ -41,10 +41,11 @@ public final class ContentRetrogen {
     private ContentRetrogen() {}
 
     public static void setup(List<WorldgenDef> active, @Nullable ContentWorldgen worldgen) {
-        ContentLog.LOGGER.info("Retrogen armed: {} vein definition(s), bedrock={}", active.size(), bedrockWanted());
         defs = active;
         generator = worldgen;
         for (WorldgenDef def : defs) { def.buildToken(Config.worldgen.retrogenKey); }
+        if (wanted()) { ContentLog.LOGGER.info("Retrogen armed: {} vein definition(s), bedrock={}", defs.size(), bedrockWanted()); }
+        else { ContentLog.LOGGER.debug("Retrogen not armed: {} vein definition(s), bedrock={}", defs.size(), bedrockWanted()); }
     }
 
     public static String bedrockToken() {

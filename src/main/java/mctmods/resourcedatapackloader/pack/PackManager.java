@@ -3,6 +3,9 @@ package mctmods.resourcedatapackloader.pack;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -30,6 +33,8 @@ import javax.annotation.Nullable;
 
 public final class PackManager {
     public static final String ROOT_DIRECTORY = "rdploader";
+    public static final String PACK_META = "pack.mcmeta";
+    public static final String PACK_ICON = "pack.png";
     public static final String ROOT_PACK = "<loose files>";
     private static final String README = "readme.txt";
     private static final String DISABLED = ".disabled";
@@ -79,6 +84,8 @@ public final class PackManager {
     @Nullable private volatile Set<String> namespacesNormal;
     @Nullable private volatile Set<String> namespacesOverride;
     private final AtomicInteger generation = new AtomicInteger();
+    private static final Gson GSON = new GsonBuilder().create();
+    @Nullable private volatile String packMeta;
 
     private PackManager() {}
 
@@ -136,6 +143,7 @@ public final class PackManager {
         buildIndex();
         namespacesNormal = null;
         namespacesOverride = null;
+        packMeta = resolvePackMeta();
         PackOptions.reload(packRoot, packs);
     }
 
@@ -751,18 +759,70 @@ public final class PackManager {
                 "");
     }
 
-    @Nullable public String readPackFile(String name) {
+    @Nullable public InputStream openPackFile(String name) {
         for (int i = packs.size() - 1; i >= 0; i--) {
             RDPLPack pack = packs.get(i);
             try {
-                String contents = pack.readPackFile(name);
-                if (contents != null) { return contents; }
+                InputStream stream = pack.openPackFile(name);
+                if (stream != null) { return stream; }
             }
             catch (IOException ex) {
                 ContentLog.LOGGER.error("Pack '{}': could not read {}", pack.getName(), name, ex);
             }
         }
+        Path file = rootFile(name);
+        if (file == null) { return null; }
+
+        try { return Files.newInputStream(file); }
+        catch (IOException ex) { ContentLog.LOGGER.error("Could not read {}", file, ex); }
         return null;
+    }
+
+    @Nullable private Path rootFile(String name) {
+        Path base = root;
+        if (base == null) { return null; }
+
+        Path file = base.resolve(name);
+        return Files.isRegularFile(file) ? file : null;
+    }
+
+    @Nullable public String packMeta() { return packMeta; }
+
+    @Nullable private String resolvePackMeta() {
+        for (int i = packs.size() - 1; i >= 0; i--) {
+            RDPLPack pack = packs.get(i);
+            String contents;
+            try { contents = pack.readPackFile(PACK_META); }
+            catch (IOException ex) {
+                ContentLog.LOGGER.error("Pack '{}': could not read {}", pack.getName(), PACK_META, ex);
+                continue;
+            }
+            if (contents == null) { continue; }
+            if (validMeta(contents)) { return contents; }
+
+            ContentLog.LOGGER.warn("Pack '{}': {} is not valid JSON with a 'pack' section, so it is being ignored", pack.getName(), PACK_META);
+        }
+        Path file = rootFile(PACK_META);
+        if (file == null) { return null; }
+
+        String contents;
+        try { contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8); }
+        catch (IOException ex) {
+            ContentLog.LOGGER.error("Could not read {}", file, ex);
+            return null;
+        }
+        if (validMeta(contents)) { return contents; }
+
+        ContentLog.LOGGER.warn("{} is not valid JSON with a 'pack' section, so it is being ignored", file);
+        return null;
+    }
+
+    private static boolean validMeta(String contents) {
+        try {
+            JsonObject json = GSON.fromJson(contents, JsonObject.class);
+            return json != null && json.has("pack") && json.get("pack").isJsonObject();
+        }
+        catch (RuntimeException malformed) { return false; }
     }
 
     @Nullable public String read(String namespace, String path, String type, String ext) {
@@ -815,6 +875,7 @@ public final class PackManager {
         served.clear();
         namespacesNormal = null;
         namespacesOverride = null;
+        packMeta = null;
         generation.incrementAndGet();
     }
 

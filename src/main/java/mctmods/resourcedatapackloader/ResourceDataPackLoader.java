@@ -139,9 +139,12 @@ public class ResourceDataPackLoader {
         }
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             ClientCommands.register();
-            MinecraftForge.EVENT_BUS.register(ContentHardnessCheck.class);
-            ContentHardnessCheck.watching();
+            if (Config.worldgen.worldgenDebug) {
+                MinecraftForge.EVENT_BUS.register(ContentHardnessCheck.class);
+                ContentHardnessCheck.watching();
+            }
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
+            MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
         }
     }
 

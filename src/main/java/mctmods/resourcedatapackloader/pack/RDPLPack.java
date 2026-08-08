@@ -125,6 +125,12 @@ public final class RDPLPack {
         return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
     }
 
+    @Nullable public InputStream openPackFile(String fileName) throws IOException {
+        Path file = root.resolve(fileName);
+        if (!Files.isRegularFile(file)) { return null; }
+        return Files.newInputStream(file);
+    }
+
     public void forEach(String type, String ext, PackConsumer consumer) {
         String prefix = type + "/";
         String suffix = "." + ext;

@@ -14,8 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,8 +23,8 @@ import javax.imageio.ImageIO;
 
 @SideOnly(Side.CLIENT)
 public final class RDPLResourcePack extends AbstractResourcePack {
-    private static final String META = "pack.mcmeta";
-    private static final String ICON = "pack.png";
+    private static final String META = PackManager.PACK_META;
+    private static final String ICON = PackManager.PACK_ICON;
     private static final String PREFIX = RDPLPack.ASSETS + "/";
     private static final String DEFAULT_META = "{\"pack\":{\"pack_format\":3,\"description\":\"Files loaded by Resource Data Pack Loader\"}}";
     private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());
@@ -72,7 +70,7 @@ public final class RDPLResourcePack extends AbstractResourcePack {
         int split = split(name);
         if (split > 0) { return PackManager.get().openRaw(name.substring(PREFIX.length(), split), name.substring(split + 1), overriding); }
         if (!META.equals(name)) { return null; }
-        String contents = PackManager.get().readPackFile(META);
+        String contents = PackManager.get().packMeta();
         if (contents == null) { contents = DEFAULT_META; }
         return new ByteArrayInputStream(contents.getBytes(StandardCharsets.UTF_8));
     }
@@ -85,9 +83,8 @@ public final class RDPLResourcePack extends AbstractResourcePack {
     @Override @Nonnull public Set<String> getResourceDomains() { return PackManager.get().getNamespaces(overriding); }
 
     @Override @Nonnull public BufferedImage getPackImage() throws IOException {
-        Path root = PackManager.get().getRoot();
-        if (root != null && Files.isRegularFile(root.resolve(ICON))) {
-            try (InputStream stream = Files.newInputStream(root.resolve(ICON))) {
+        try (InputStream stream = PackManager.get().openPackFile(ICON)) {
+            if (stream != null) {
                 BufferedImage image = ImageIO.read(stream);
                 if (image != null) { return image; }
             }
