@@ -25,12 +25,25 @@ public abstract class MixinVillageGround extends StructureComponent {
 
         StructureBoundingBox box = getBoundingBox();
         int average = ContentBeard.noiseAverage(worldIn, box);
+        if (average != Integer.MIN_VALUE && average < worldIn.getSeaLevel()) { average = worldIn.getSeaLevel(); }
         if (average != Integer.MIN_VALUE) {
             if (average != found) { cir.setReturnValue(average); }
             ContentLog.LOGGER.debug("{} at {}, {} measures its ground at y {} from the noise surface{}", getClass().getSimpleName(), box.minX, box.minZ, average, average == found ? ", agreeing with the world" : " instead of y " + found);
             found = average;
         }
-        if ((Object) this instanceof StructureVillagePieces.Well || (Object) this instanceof StructureVillagePieces.Field1 || (Object) this instanceof StructureVillagePieces.Field2 || (Object) this instanceof StructureVillagePieces.Torch) { return; }
+        if (!((Object) this instanceof StructureVillagePieces.Well)) {
+            int grade = ContentBeard.roadGradeBeside(worldIn, box);
+            if (grade != Integer.MIN_VALUE) {
+                int seat = (Object) this instanceof StructureVillagePieces.Torch || getClass().getName().toLowerCase().contains("waystone") ? grade : grade - 1;
+                if (seat != found) {
+                    cir.setReturnValue(seat);
+                    ContentLog.LOGGER.debug("{} at {}, {} stands at the grade of the road beside it, y {}, instead of y {}", getClass().getSimpleName(), box.minX, box.minZ, seat, found);
+                }
+                return;
+            }
+        }
+        if ((Object) this instanceof StructureVillagePieces.Torch) { return; }
+        if ((Object) this instanceof StructureVillagePieces.Well || (Object) this instanceof StructureVillagePieces.Field1 || (Object) this instanceof StructureVillagePieces.Field2) { return; }
 
         int lowest = ContentBeard.lowestIn(worldIn, box.minX, box.minZ, box.maxX, box.maxZ, structurebb);
         if (lowest == Integer.MAX_VALUE || found <= lowest + 3) { return; }

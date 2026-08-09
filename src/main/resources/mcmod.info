@@ -8,7 +8,8 @@
     "url": "${mod_url}",
     "authorList": ["${mod_authors}"],
     "logoFile": "MCTlogo.png",
-    "dependencies": ["mixinbooter"]
+    "dependencies": ["mixinbooter", "blastplaster@[1.0.5,)"],
+    "requiredMods": ["blastplaster@[1.0.5,)"]
   },
   {
     "modid": "${mod_mixin_id}",

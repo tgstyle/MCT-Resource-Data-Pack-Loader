@@ -6,9 +6,12 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Random;
 
 @Mixin(StructureStart.class)
@@ -18,10 +21,29 @@ public abstract class MixinStructureStart {
         StructureStart self = StructureStart.class.cast(this);
         ContentBeard.building(self);
         boolean built;
-        try { built = piece.addComponentParts(world, rand, clip); }
+        try {
+            if (ContentBeard.wanted()) {
+                ContentBeard.attach(self, piece);
+                ContentBeard.fellFor(self, piece, world, clip);
+            }
+            built = piece.addComponentParts(world, rand, clip);
+            if (built && ContentBeard.wanted()) { ContentBeard.openAround(self, piece, world, clip); }
+        }
         finally { ContentBeard.building(null); }
-        if (built && ContentBeard.wanted()) { ContentBeard.openAround(self, piece, world, clip); }
 
         return built;
+    }
+
+    @Inject(method = "generateStructure", at = @At("RETURN"))
+    private void rdpl$plaza(World worldIn, Random rand, StructureBoundingBox structurebb, CallbackInfo ci) {
+        StructureStart self = StructureStart.class.cast(this);
+        if (!ContentBeard.wanted() || self.getComponents().isEmpty()) { return; }
+
+        StructureComponent well = self.getComponents().get(0);
+        if (!(well instanceof StructureVillagePieces.Start)) { return; }
+
+        ContentBeard.building(self);
+        try { ContentBeard.wellPlaza(self, well, worldIn, structurebb); }
+        finally { ContentBeard.building(null); }
     }
 }

@@ -84,6 +84,7 @@ public class ServerCommands extends CommandBase {
             known.addAll(ContentLocate.names(sender.getEntityWorld()));
             return getListOfStringsMatchingLastWord(args, known);
         }
+        if (args.length == 3 && "goto".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Arrays.asList("next", "back")); }
         return Collections.emptyList();
     }
 
@@ -104,30 +105,48 @@ public class ServerCommands extends CommandBase {
         else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
-        else if (args.length == 2 && "goto".equals(args[0])) { goTo(sender, args[1]); }
+        else if (args.length == 2 && "goto".equals(args[0])) { goTo(sender, args[1], false); }
+        else if (args.length == 3 && "goto".equals(args[0]) && "next".equals(args[2])) { goTo(sender, args[1], true); }
+        else if (args.length == 3 && "goto".equals(args[0]) && "back".equals(args[2])) { goBack(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
-    private void goTo(ICommandSender sender, String asked) throws CommandException {
+    private void goTo(ICommandSender sender, String asked, boolean next) throws CommandException {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
 
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         World world = player.world;
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
         if (ContentLocate.names(world).contains(name)) {
-            BlockPos found = ContentLocate.nearest(world, name, player.getPosition());
+            BlockPos found = ContentLocate.nearest(world, name, player.getPosition(), next ? 128.0D : 0.0D);
             if (found == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonothing", name)); }
 
             BlockPos landing = ContentStructureSearch.landing(world, found);
             if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, found.getX(), found.getZ())); }
 
+            ContentStructureSearch.remember(player, name, found);
             player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
             send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
             return;
         }
         if (ContentStructureSearch.looking()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotobusy")); }
 
-        ContentStructureSearch.start(player, name, keyFor(name), true);
+        ContentStructureSearch.start(player, name, keyFor(name), !next, next);
+    }
+
+    private void goBack(ICommandSender sender, String asked) throws CommandException {
+        if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
+
+        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        BlockPos previous = ContentStructureSearch.stepBack(player, name);
+        if (previous == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoback", name)); }
+
+        BlockPos landing = ContentStructureSearch.landing(player.world, previous);
+        if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, previous.getX(), previous.getZ())); }
+
+        player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
     }
 
     private static String keyFor(String name) {

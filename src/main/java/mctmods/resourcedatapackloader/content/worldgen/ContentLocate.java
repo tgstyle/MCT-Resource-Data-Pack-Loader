@@ -4,6 +4,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
+
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class ContentLocate extends WorldSavedData {
 
     @Override public void readFromNBT(NBTTagCompound nbt) { placed = nbt.getCompoundTag("Placed"); }
 
-    @Override public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+    @Override @Nonnull public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         nbt.setTag("Placed", placed);
         return nbt;
     }
@@ -43,13 +45,16 @@ public class ContentLocate extends WorldSavedData {
 
     public static List<String> names(World world) { return new ArrayList<>(of(world).placed.getKeySet()); }
 
-    public static BlockPos nearest(World world, String name, BlockPos from) {
+    public static BlockPos nearest(World world, String name, BlockPos from) { return nearest(world, name, from, 0.0D); }
+
+    public static BlockPos nearest(World world, String name, BlockPos from, double beyond) {
         long[] known = readLongs(of(world).placed, name);
         BlockPos best = null;
         double closest = Double.MAX_VALUE;
         for (long packed : known) {
             BlockPos at = BlockPos.fromLong(packed);
             double away = at.distanceSq(from);
+            if (away < beyond * beyond) { continue; }
             if (away < closest) {
                 closest = away;
                 best = at;

@@ -44,6 +44,8 @@ public final class ContentLightArea {
         }
     }
 
+    public static boolean inside(World world) { return of(world).inside != null; }
+
     public static void leave(World world) {
         ContentLightArea area = of(world);
         area.inside = null;

@@ -249,7 +249,7 @@ public final class ContentStructurePlacement {
             String[] parts = split(entry, "structureBiomes");
             if (parts == null) { continue; }
 
-            Set<String> names = new LinkedHashSet<>();
+            Set<String> names = new LinkedHashSet<>(BIOMES.getOrDefault(parts[0], Collections.emptySet()));
             for (String name : parts[1].split(",")) {
                 String plain = name.trim().toLowerCase(Locale.ROOT);
                 if (!plain.isEmpty()) { names.add(plain); }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin;
 import mctmods.resourcedatapackloader.content.interfaces.LightAreaHolder;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLightArea;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.state.IBlockState;
@@ -82,6 +83,13 @@ public abstract class MixinWorldLight implements LightAreaHolder {
         if (rdpl$nobodyListening()) { return; }
 
         world.notifyLightSet(pos);
+    }
+
+    @Inject(method = "checkLightFor", at = @At("HEAD"), cancellable = true)
+    private void rdpl$lightAfterwards(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        World world = (World) (Object) this;
+        if (world.isRemote) { return; }
+        if (ContentPregen.quenches(world, pos.getX() >> 4, pos.getZ() >> 4)) { cir.setReturnValue(true); }
     }
 
     @Redirect(method = "checkLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isAreaLoaded(Lnet/minecraft/util/math/BlockPos;IZ)Z"))

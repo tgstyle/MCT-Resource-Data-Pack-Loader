@@ -55,6 +55,8 @@ public class Config {
         public String entities = "default";
         @net.minecraftforge.common.config.Config.Comment("How many chunks are held loaded around a world's spawn point [default|global|off]")
         public String chunks = "default";
+        @net.minecraftforge.common.config.Config.Comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]")
+        public String blastPlaster = "default";
     }
 
     public static class Packs {
@@ -195,10 +197,10 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("How many chunks may be waiting to be written before a bulk generation run rests until the writing catches up. 0 never rests [Default=2000]")
         @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 100000)
         public int pregenPauseAbove = 2000;
-        @net.minecraftforge.common.config.Config.Comment("How many milliseconds of each round a bulk generation run may take. A round is fifty milliseconds long, so 50 lets it use a whole one and anything above that lets it run over into the next, which is what makes a world stutter for anybody in it. Turn it up on a world nobody is playing and down on a busy one [Default=50]")
+        @net.minecraftforge.common.config.Config.Comment("How many milliseconds of each round a bulk generation run may take. Players are held spectating while it runs, so nobody is in the world to feel it overrun; higher generates faster and only the write queue, governed by pregenPauseAbove, pushes back. 50 keeps to a single round for the rare setup where something else must stay responsive [Default=200]")
         @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1000)
-        public int pregenMillisPerRound = 50;
-        @net.minecraftforge.common.config.Config.Comment("How far around the spawn, in chunks, a brand new world has its land made before anybody plays it. 0 makes none [Default=0]")
+        public int pregenMillisPerRound = 200;
+        @net.minecraftforge.common.config.Config.Comment("How far around the spawn, in chunks, a brand new world has its land made before anybody plays it. The game makes 12 chunks around the spawn on its own when a world is created, so any figure below that is raised to 12, letting the run adopt and light that ground in one organized pass instead of leaving it to trickle. 0 makes none [Default=0]")
         @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 8192)
         public int pregenOnNewWorld = 0;
         @net.minecraftforge.common.config.Config.Comment("Whether a new world has its land made out to its world border instead of a set number of chunks, centred on the border rather than the spawn. A world whose border was never moved in has no border to reach and is passed over [Default=false]")
@@ -333,35 +335,35 @@ public class Config {
         public String[] villagePieces = {};
         @net.minecraftforge.common.config.Config.Comment("On, the pieces in villagePieces are blocked. Off, only those pieces generate [Default=true]")
         public boolean villagePiecesAreBlacklist = true;
-        @net.minecraftforge.common.config.Config.Comment("The block village roads are paved with when terrainAdaptation lays them. Empty keeps the vanilla biome road block [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block village roads are paved with when terrainAdaptation lays them. Empty keeps the vanilla biome road block [Default=empty]")
         public String villagePathBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("The block placed under the road surface. Empty keeps vanilla gravel [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block placed under the road surface. Empty keeps vanilla gravel [Default=empty]")
         public String villagePathSupportBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("The block the road crosses water with. Empty keeps vanilla planks [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block the road crosses water with. Empty keeps vanilla planks [Default=empty]")
         public String villagePathBridgeBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("Extra blocks of road width on each side beyond the vanilla 3, when terrainAdaptation lays the roads. Widens the road pieces themselves, so houses stand back from wide streets. Only shapes villages seeded after the change; where space is too tight a segment falls back to vanilla width [Default=0]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. Extra blocks of road width on each side beyond the vanilla 3, when terrainAdaptation lays the roads. Widens the road pieces themselves, so houses stand back from wide streets. Only shapes villages seeded after the change; where space is too tight a segment falls back to vanilla width [Default=0]")
         public int villagePathExtraWidth = 0;
-        @net.minecraftforge.common.config.Config.Comment("The block of the center line down the middle of village roads, when terrainAdaptation lays them. Empty draws no center line [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block of the center line down the middle of village roads, when terrainAdaptation lays them. Empty draws no center line [Default=empty]")
         public String villagePathCenterBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("Dashes the center line: N blocks of line, then one of road, anchored to world coordinates so segments continue each other. 0 keeps the line solid [Default=0]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. Dashes the center line: N blocks of line, then one of road, anchored to world coordinates so segments continue each other. 0 keeps the line solid [Default=0]")
         public int villagePathCenterDash = 0;
-        @net.minecraftforge.common.config.Config.Comment("The block of the edge lines between road and sidewalk. Empty draws no edge lines [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block of the edge lines between road and sidewalk. Empty draws no edge lines [Default=empty]")
         public String villagePathLineBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("The block sidewalks are laid with, level with the road, outside the edge lines. Empty lays no sidewalks [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block sidewalks are laid with, level with the road, outside the edge lines. Empty lays no sidewalks [Default=empty]")
         public String villagePathSidewalkBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("How many blocks wide each sidewalk is, when villagePathSidewalkBlock is set [Default=2]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. How many blocks wide each sidewalk is, when villagePathSidewalkBlock is set [Default=2]")
         public int villagePathSidewalkWidth = 2;
-        @net.minecraftforge.common.config.Config.Comment("The narrowest road allowed. A segment that cannot fit its full dress falls back to a bare 3-wide alley; below this width it does not happen at all, and the village lays out around it. 0 never refuses [Default=0]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The narrowest road allowed. A segment that cannot fit its full dress falls back to a bare 3-wide alley; below this width it does not happen at all, and the village lays out around it. 0 never refuses [Default=0]")
         public int villagePathMinimumWidth = 0;
-        @net.minecraftforge.common.config.Config.Comment("Path intersect designs to paint at junctions, by registry key from pathintersects/ in a pack. One entry paints every junction the same; several pick per junction, weighted by each design's weight. Empty paints nothing [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. Path intersect designs to paint at junctions, by registry key from pathintersects/ in a pack. One entry paints every junction the same; several pick per junction, weighted by each design's weight. Empty paints nothing [Default=empty]")
         public String[] villagePathIntersects = {};
-        @net.minecraftforge.common.config.Config.Comment("Roads hold each grade for at least this many blocks before stepping, anchored to world coordinates so segments agree across pieces. 0 lets roads step every block as vanilla slopes do [Default=0]")
-        public int villagePathFlatRun = 0;
-        @net.minecraftforge.common.config.Config.Comment("The block bridge sidewalks are decked with where a road crosses water. Empty keeps the normal sidewalk block on bridges [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. Roads hold each grade for at least this many blocks before stepping, anchored to world coordinates so segments agree across pieces. 0 lets roads step every block as vanilla slopes do [Default=6]")
+        public int villagePathFlatRun = 6;
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block bridge sidewalks are decked with where a road crosses water. Empty keeps the normal sidewalk block on bridges [Default=empty]")
         public String villagePathBridgeSidewalkBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("The block bridge barriers are built from, stacked along both edges of the deck over water. Empty builds no barriers [Default=empty]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block bridge barriers are built from, stacked along both edges of the deck over water. Empty builds no barriers [Default=empty]")
         public String villagePathBridgeBarrierBlock = "";
-        @net.minecraftforge.common.config.Config.Comment("How many blocks tall the bridge barriers stand [Default=1]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. How many blocks tall the bridge barriers stand [Default=1]")
         public int villagePathBridgeBarrierHeight = 1;
         @net.minecraftforge.common.config.Config.Comment("World generator types blocked outright, whatever the whitelist says. One of ores, structures, flora, lakes, terrain or unknown, one per line. Types are worked out from the generator class name, so use generatorTypeMap for the ones that guess wrong")
         public String[] generatorTypes = {};

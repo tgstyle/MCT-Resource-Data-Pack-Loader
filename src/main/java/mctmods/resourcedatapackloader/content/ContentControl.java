@@ -28,6 +28,7 @@ public final class ContentControl {
     public static final String VILLAGES = "villages";
     public static final String ENTITIES = "entities";
     public static final String CHUNKS = "chunks";
+    public static final String BLAST_PLASTER = "blastPlaster";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -52,7 +53,10 @@ public final class ContentControl {
             "structureSpawns", "surfaceDayMonsterRate",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
             "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist",
-            "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth", "voidPlatformBlock",
+            "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
+            "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
+            "villagePathSidewalkWidth", "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
+            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "worldBorder", "worldGameMode", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
@@ -181,6 +185,7 @@ public final class ContentControl {
             case VILLAGES: return Config.control.villages;
             case ENTITIES: return Config.control.entities;
             case CHUNKS: return Config.control.chunks;
+            case BLAST_PLASTER: return Config.control.blastPlaster;
             default: return DEFAULT;
         }
     }

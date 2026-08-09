@@ -15,10 +15,6 @@ import java.util.List;
 public abstract class MixinStructureComponentSpace {
     @Inject(method = "findIntersecting", at = @At("HEAD"), cancellable = true)
     private static void rdpl$betweenBuildings(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn, CallbackInfoReturnable<StructureComponent> cir) {
-        if (ContentBeard.seatingVillage() && !listIn.isEmpty() && ContentBeard.roughFooting(boundingboxIn)) {
-            cir.setReturnValue(listIn.get(0));
-            return;
-        }
         if (!ContentBeard.spacedLayout()) { return; }
 
         StructureBoundingBox grown = new StructureBoundingBox(boundingboxIn.minX - 1, 0, boundingboxIn.minZ - 1, boundingboxIn.maxX + 1, 255, boundingboxIn.maxZ + 1);

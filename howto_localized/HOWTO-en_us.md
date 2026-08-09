@@ -57,6 +57,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [Universal Tweaks](#universal-tweaks)
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
+- [Blast Plaster](#blast-plaster-integration)
 
 **Reference**
 - [Value lists](#value-lists)
@@ -1800,7 +1801,7 @@ While a run is going everybody is held: made a spectator, kept in place, shown a
 
 | Key | What it does | Why you would set it |
 | --- | --- | --- |
-| `pregenOnNewWorld` | Radius in chunks made around the spawn the moment a world is created. 0 is off | The one key that turns pregeneration on for a pack |
+| `pregenOnNewWorld` | Radius in chunks made around the spawn the moment a world is created. 0 is off. Any figure below 12 is raised to 12, since the game makes that much around the spawn on its own before a run can start, and a run that does not own that ground waits behind it being lit a chunk at a time | The one key that turns pregeneration on for a pack |
 | `pregenDimensions` | Which dimensions are made, in order, each around its own spawn | Add the nether, the end, or your own dimensions |
 | `pregenAllDimensions` | Every registered dimension instead of a list, overworld first | Packs with many dimensions. Every mod's dimensions count, so mind the size |
 | `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done | Dimensions most players never visit; the ones who never go pay nothing |
@@ -1967,6 +1968,10 @@ Villages use the same `structure=value` lists as every other structure, under th
 
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top.
 
+### Blast Plaster
+
+What happens after an explosion, from `blastplaster/*.json`. `default` lets packs decide, `global` ignores pack files and leaves this mod's own defaults over Blast Plaster's config, and `off` hands Blast Plaster back to its own config entirely.
+
 ### Structures
 
 Vanilla structures switched off by name, per dimension. Placement is controlled with four lists written as `structure=value`, one per line: `structureSpacing` for how far apart they are seeded, `structureSeparation` for the closest two may be, `structureMinDistanceFromSpawn` for how far out they start, and `structureBiomes` with `structureBiomesAreBlacklist` for where they are allowed.
@@ -2017,7 +2022,9 @@ Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMo
 
 ### Seating villages
 
-`terrainAdaptation` reworks how villages choose their ground and sit on it, ported in spirit from how modern versions seat their structures, then taken further. Villages only found on the flattest chunk their region offers, and never within eight chunks of another village; regions with no flat enough ground found nothing at all. The well seats to the lowest ground touching it with its rim flush with the surface, and the whole village levels from there. Roads are graded as they are laid: the surface follows the lowest natural ground across the road's width, bumps are cut, dips are filled, the slope never exceeds one block per step, and short chasms are bridged with planks. Grass paths go down on earth, gravel on stone and sand, planks over water, so roads no longer vanish where the ground is not grass. Each building seats one block above the road it fronts, read from the laid road or predicted from the ground the road will grade onto when the road has not been built yet, so its doorstep stairs rest on the road surface and its door sits behind them. Farms and lamp posts keep vanilla's own ground level. Pieces refuse ground that varies more than a few blocks under their own footprint, ground is filled beneath each building down to the nearest resting surface in the same material it rests on, walls and doorways are opened out of hillsides, dirt is lifted off roofs, and any tree standing in a structure is felled whole, its leaves going with its wood while every leaf a standing branch still owns is left alone. Mansions and the scattered features (temples, huts, igloos) are held to the same flat-ground standard before they may place. It reshapes the terrain itself as it is made, so a world generated with it on differs from one generated without, the same warning modern versions carry, and it is off unless a pack or the config asks.
+**This one is experimental and still moving.** Use it at your own risk. It reshapes the terrain as the world is made, so whatever it lays down is permanent in that save, and a bug in it can leave you with a village that is half graded or a road standing on an embankment. Its behavior changes from build to build while it is being worked on, so two worlds made from the same seed on two different versions of the mod will not match, and a village laid down by an older build is never revisited or repaired by a newer one. If you care about a world, either leave this off or keep a backup, and expect the villages in it to be a snapshot of whatever the mod was doing the day those chunks generated.
+
+`terrainAdaptation` reworks how villages choose their ground and sit on it, ported in spirit from how modern versions seat their structures, then taken further. Villages only found on the flattest chunk their region offers, and never within eight chunks of another village; regions with no flat enough ground found nothing at all. The well seats to the lowest ground touching it with its rim flush with the surface, and the whole village levels from there. Roads are graded as they are laid: the surface follows the lowest natural ground across the road's width, bumps are cut, dips are filled, the slope never exceeds one block per step, and short chasms are bridged with planks. The road surface follows the ground it crosses: grass paths on earth, sandstone on sand, hardened clay on mesa, gravel on stone and on gravel, planks over water, so a desert village gets sandstone streets rather than a dirt track and roads no longer vanish where the ground is not grass. Each building seats one block above the road it fronts, read from the laid road or predicted from the ground the road will grade onto when the road has not been built yet, so its doorstep stairs rest on the road surface and its door sits behind them. Farms and lamp posts keep vanilla's own ground level. Pieces refuse ground that varies more than a few blocks under their own footprint, ground is filled beneath each building down to the nearest resting surface in the same material it rests on, walls and doorways are opened out of hillsides, dirt is lifted off roofs, and any tree standing in a structure is felled whole, its leaves going with its wood while every leaf a standing branch still owns is left alone. Mansions and the scattered features (temples, huts, igloos) are held to the same flat-ground standard before they may place. It reshapes the terrain itself as it is made, so a world generated with it on differs from one generated without, the same warning modern versions carry, and it is off unless a pack or the config asks.
 
 ### Bedrock
 
@@ -2158,6 +2165,55 @@ The cities themselves are not this mod's to change. How big and how common they 
 
 Everything else never went through the generator to begin with and works the same as anywhere: pack worldgen, ore and biome blocking, structure spacing and spawners, flat bedrock, retrogen, pregeneration, and its two chest loot tables override and inject like any others.
 
+## Blast Plaster integration
+
+Explosions were the last thing a pack could not describe. Everything else a world looks like is a file in this folder, but what a creeper leaves behind was fixed by whichever mod happened to own it. Blast Plaster already solved the hard half of that, putting a crater back together block by block and knowing where one tree ends and the next begins, so rather than write a second version of it this mod builds on it and ships it as a dependency.
+
+What that buys you is control it does not have on its own. Blast Plaster reads one config for the whole game; driven from a pack it answers per dimension, so an overworld can keep its scars while the nether mends itself behind you, and a pack ships that decision along with everything else instead of asking players to edit a config. The same work also pays off where you would not expect it: village tree felling uses Blast Plaster's tree geometry, which is why a tree leaning over a new road comes down whole instead of being sheared off at the boundary.
+
+Installed alone, Blast Plaster works from its own config exactly as it always has. This mod only takes the wheel when a pack asks for it.
+
+Files go in `assets/<namespace>/blastplaster/*.json`. Keys written at the top of the file apply everywhere; a `dimensions` block overrides them for one dimension by id. Anything a pack never names keeps whatever Blast Plaster's own config says, so a pack sets the handful it cares about and leaves the rest alone.
+
+```json
+{
+  "explosionMode": "EJECT_DROPS",
+  "healFullTrees": true,
+  "maxTreeSize": 400,
+  "dimensions": {
+    "-1": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
+    "1": { "enableExplosionSmoke": false }
+  }
+}
+```
+
+`explosionMode` is the one that decides the shape of everything else. `HEAL` blows the blocks out and then puts the world back together, `EJECT_DROPS` leaves the hole and drops about a third of what was there, the way a creeper does in an untouched game, and `VISUAL_TOSS` leaves the hole and drops nothing. Whenever this mod is driving, the default is `EJECT_DROPS` rather than Blast Plaster's own `HEAL`, so a pack that installs both and writes nothing gets explosions that behave the way the game they know behaves. A pack that wants the world to mend itself asks for `HEAL`, everywhere or in one dimension.
+
+| Key | Value | What it does |
+| --- | --- | --- |
+| `explosionMode` | `HEAL`, `EJECT_DROPS`, `VISUAL_TOSS` | What happens after the bang |
+| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | true or false | Which explosions are handled at all |
+| `processPlayerIgnitedTNT` | true or false | Whether TNT a player lit is handled with the rest |
+| `customEntitiesToHeal` | list of entity names | Explosions from other mods, named as `modid:entity` |
+| `healFullTrees` | true or false | A tree clipped by a blast is taken or restored whole, rather than sheared through |
+| `maxTreeSize` | number | The most blocks one tree may claim before it is left alone |
+| `minimumTicksBeforeHeal`, `randomTickVar` | numbers | How long before mending starts, and how ragged its pace is |
+| `overrideBlocks` | true or false | Whether mending overwrites what has since been built in the hole |
+| `enableFakeTossedBlocks` | true or false | The debris that flies out of the blast |
+| `enableExplosionFlash` | true or false | The bright flash at the moment of the blast |
+| `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | numbers | How long the flash lasts, how bright it burns, how many particles it throws and how many times it pulses |
+| `enableExplosionSmoke` | true or false | The column of smoke afterwards |
+| `explosionSmokeDuration`, `explosionSmokeParticleCount` | numbers | How long the smoke lingers and how thick it stands |
+| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true or false | What a player's own TNT leaves behind |
+| `enableDropSuppression`, `dtSpecialDrops` | true or false | Drops inside a blast, and Dynamic Trees' own drops |
+| `preventMobDrops` | true or false | Whether mobs killed by a blast still drop |
+
+**Vanilla to the eye.** A pack that wants explosions nobody could tell from an untouched game writes `EJECT_DROPS` and turns off `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` and `playerTNTAlwaysDrops`. Everything else is Blast Plaster showing its hand, and each of those keys can also be set per dimension, so the overworld can look untouched while another dimension mends itself.
+
+**Players without the mod** see nothing unusual either way. The flash is the one part that puts a block of its own into the world, so when a pack sets `vanillaClients` the flash is turned off no matter what any file says, and the rest is particles and items a plain client already understands.
+
+Two of Blast Plaster's settings are not pack keys: its debug logging, and the list pairing each kind of log with its leaves. The pairing is what tells the mod a tree is a tree, here as much as there, so it stays one answer for the whole game rather than a different one per dimension. Both live in Blast Plaster's own config.
+
 ---
 
 # Reference
@@ -2227,6 +2283,7 @@ Under `assets/<namespace>/`:
 | `entities` | Entity variants built on entities that already exist |
 | `hardness` | Mining time and blast multipliers for groups of blocks |
 | `villages` | Plots villages can build |
+| `blastplaster` | What Blast Plaster does after an explosion, per dimension |
 | `structures` | `.nbt` templates, for saplings, `imprint` and mod overrides |
 | `recipes` | Crafting recipes, added or replaced |
 | `recipe_removals` | Recipes deleted by name, namespace or output |
@@ -2279,6 +2336,9 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver gate grant <player> <gate>` | Open a gate for a player |
 | `/rdplserver gate revoke <player> <gate>` | Close one again |
 | `/rdplserver intro` | Let the world intro play again on your next join |
+| `/rdplserver goto <structure>` | Take you to the nearest one nobody has been to yet, looking without generating the land on the way |
+| `/rdplserver goto <structure> next` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before |
+| `/rdplserver goto <structure> back` | Take you to the one before it, stepping back through where this session has sent you |
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 

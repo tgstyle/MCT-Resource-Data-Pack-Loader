@@ -36,6 +36,13 @@ public abstract class MixinChunkLight {
         if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - rdpl$litStart.get(), isLightPopulated); }
     }
 
+    @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;recheckGaps(Z)V"))
+    private void rdpl$gapsAfterwards(Chunk chunk, boolean onlyOne) {
+        if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }
+
+        ((AccessorChunkGaps) chunk).rdpl$recheckGaps(onlyOne);
+    }
+
     @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V"))
     private void rdpl$countRetry(Chunk chunk) {
         if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }

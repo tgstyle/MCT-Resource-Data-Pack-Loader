@@ -141,7 +141,9 @@ a client would have to know about and naming each skipped file in the log. [HOWT
 Server-side packs section has the folder split and the steps.
 
 # Requirements
-Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter).
+Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter) and
+[MCT Blast Plaster](https://www.curseforge.com/minecraft/mc-mods/mct-blast-plaster). Both are hard
+dependencies, the game will not start without them.
 
 # Reporting issues
 When you are reporting bugs, please attach `logs/latest.log` and `logs/rdpl.log`, plus your mod and

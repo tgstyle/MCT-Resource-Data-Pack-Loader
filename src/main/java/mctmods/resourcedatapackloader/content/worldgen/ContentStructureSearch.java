@@ -22,11 +22,18 @@ import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.MapGenStructure;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraftforge.common.WorldWorkerManager;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ContentStructureSearch implements WorldWorkerManager.IWorker {
     private static final long SLICE_NANOS = 40_000_000L;
     private static final int CHUNK_REACH = 512;
+    private static final long BEEN_NEAR = 128L * 128L;
+    private static final Map<String, Deque<BlockPos>> VISITED = new ConcurrentHashMap<>();
     private static ContentStructureSearch running;
     private final EntityPlayerMP player;
     private final World world;
@@ -37,6 +44,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private final int middleX;
     private final int middleZ;
     private final boolean findUnexplored;
+    private final boolean skipHere;
+    private final List<BlockPos> been;
     private int ring;
     private int step;
     private int foundOn = Integer.MAX_VALUE;
@@ -44,7 +53,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private long bestAway = Long.MAX_VALUE;
     private boolean over;
 
-    private ContentStructureSearch(EntityPlayerMP player, String name, MapGenStructure generator, boolean cells, int spacing, boolean findUnexplored) {
+    private ContentStructureSearch(EntityPlayerMP player, String name, MapGenStructure generator, boolean cells, int spacing, boolean findUnexplored, boolean skipHere) {
+        this.been = skipHere ? been(player, name) : new ArrayList<>();
         this.player = player;
         this.world = player.world;
         this.name = name;
@@ -52,6 +62,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         this.cells = cells;
         this.spacing = spacing;
         this.findUnexplored = findUnexplored;
+        this.skipHere = skipHere;
         int chunkX = (int) player.posX >> 4;
         int chunkZ = (int) player.posZ >> 4;
         this.middleX = cells ? Math.floorDiv(chunkX, spacing) : chunkX;
@@ -60,12 +71,14 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     public static boolean looking() { return running != null; }
 
-    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored) {
+    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored) { start(player, name, key, findUnexplored, false); }
+
+    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored, boolean skipHere) {
         World world = player.world;
         if (key != null) {
             List<long[]> pinned = ContentStructurePlacement.pins(key);
             if (pinned != null) {
-                settleOnPins(player, name, pinned, findUnexplored);
+                settleOnPins(player, name, pinned, findUnexplored, skipHere);
                 return;
             }
         }
@@ -77,7 +90,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
         boolean cells = generator instanceof MapGenVillage && ContentBeard.wanted() && ContentBeard.adapts(world);
         int spacing = cells ? ContentBeard.villageSpacing(world) : 0;
-        ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored);
+        ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored, skipHere);
         running = worker;
         WorldWorkerManager.addWorker(worker);
         tell(player, TextFormatting.GREEN, Lang.tr(player, "rdpl.command.gotolooking", name));
@@ -123,6 +136,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 step++;
                 int atX = (int) (spot >> 32);
                 int atZ = (int) spot;
+                if (skipHere && Math.abs(atX - middleX) <= 8 && Math.abs(atZ - middleZ) <= 8) { continue; }
+                if (beenNear(atX * 16 + 8, atZ * 16 + 8)) { continue; }
                 if (findUnexplored && world.isChunkGeneratedAt(atX, atZ)) { continue; }
 
                 MapGenBase.setupChunkSeed(world.getSeed(), ((AccessorMapGenBase) generator).rdpl$rand(), atX, atZ);
@@ -145,6 +160,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
         int chunkX = (int) (chosen >> 32);
         int chunkZ = (int) chosen;
+        if (skipHere && Math.floorDiv(chunkX, spacing) == middleX && Math.floorDiv(chunkZ, spacing) == middleZ) { return; }
+        if (beenNear(chunkX * 16 + 8, chunkZ * 16 + 8)) { return; }
         if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { return; }
         if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) || ContentBeard.mansionCandidateNear(world, chunkX, chunkZ)) { return; }
 
@@ -158,7 +175,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         if (foundOn == Integer.MAX_VALUE) { foundOn = ring; }
     }
 
-    private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, boolean findUnexplored) {
+    private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, boolean findUnexplored, boolean skipHere) {
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
         for (long[] pin : pinned) {
@@ -169,6 +186,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             long awayX = pin[0] - (long) player.posX;
             long awayZ = pin[1] - (long) player.posZ;
             long away = awayX * awayX + awayZ * awayZ;
+            if (skipHere && away < BEEN_NEAR) { continue; }
+            if (skipHere && beenNear(player, name, (int) pin[0], (int) pin[1])) { continue; }
             if (away >= bestAway) { continue; }
 
             bestAway = away;
@@ -197,8 +216,46 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonoground", name, best.getX(), best.getZ()));
             return;
         }
+        remember(player, name, best);
         player.setPositionAndUpdate(ground.getX() + 0.5D, ground.getY(), ground.getZ() + 0.5D);
         tell(player, TextFormatting.GREEN, Lang.tr(player, "rdpl.command.gotodone", name, ground.getX(), ground.getY(), ground.getZ()));
+    }
+
+    public static void remember(EntityPlayerMP player, String name, BlockPos site) {
+        Deque<BlockPos> held = VISITED.computeIfAbsent(player.getUniqueID() + ":" + name, unused -> new ArrayDeque<>());
+        BlockPos last = held.peekLast();
+        if (last == null || last.distanceSq(site) > BEEN_NEAR) { held.addLast(site.toImmutable()); }
+    }
+
+    public static BlockPos stepBack(EntityPlayerMP player, String name) {
+        Deque<BlockPos> held = VISITED.get(player.getUniqueID() + ":" + name);
+        if (held == null || held.size() < 2) { return null; }
+
+        held.pollLast();
+        return held.peekLast();
+    }
+
+    private static List<BlockPos> been(EntityPlayerMP player, String name) {
+        Deque<BlockPos> held = VISITED.get(player.getUniqueID() + ":" + name);
+        return held == null ? new ArrayList<>() : new ArrayList<>(held);
+    }
+
+    private boolean beenNear(int x, int z) {
+        for (BlockPos at : been) {
+            long awayX = x - (long) at.getX();
+            long awayZ = z - (long) at.getZ();
+            if (awayX * awayX + awayZ * awayZ < BEEN_NEAR) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean beenNear(EntityPlayerMP player, String name, int x, int z) {
+        for (BlockPos at : been(player, name)) {
+            long awayX = x - (long) at.getX();
+            long awayZ = z - (long) at.getZ();
+            if (awayX * awayX + awayZ * awayZ < BEEN_NEAR) { return true; }
+        }
+        return false;
     }
 
     private void finish() {
@@ -207,6 +264,9 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     public static BlockPos landing(World world, BlockPos found) {
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) { world.getChunk((found.getX() >> 4) + dx, (found.getZ() >> 4) + dz); }
+        }
         int start = world.provider.hasSkyLight() ? world.getActualHeight() - 1 : 118;
         for (int y = start; y > 0; y--) {
             BlockPos ground = new BlockPos(found.getX(), y, found.getZ());

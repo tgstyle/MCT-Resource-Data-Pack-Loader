@@ -207,7 +207,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     public static int wantedOnNewWorld() {
-        return Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld));
+        int asked = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld));
+        return asked == 0 ? 0 : Math.max(asked, 12);
     }
 
     public static void serverStopping() {
@@ -546,6 +547,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     public static boolean covers(World world, int chunkX, int chunkZ) {
         ContentPregen worker = running;
         return worker != null && world.provider.getDimension() == worker.dimension && chunkX >= worker.lowX && chunkX <= worker.highX && chunkZ >= worker.lowZ && chunkZ <= worker.highZ;
+    }
+
+    public static boolean quenches(World world, int chunkX, int chunkZ) {
+        ContentPregen worker = running;
+        if (worker == null || worker.lightOnly) { return false; }
+        if (world.provider.getDimension() != worker.dimension) { return false; }
+        if (chunkX < worker.lowX || chunkX > worker.highX || chunkZ < worker.lowZ || chunkZ > worker.highZ) { return false; }
+
+        return !ContentLightArea.inside(world);
     }
 
     public static boolean busyIn(World world) {

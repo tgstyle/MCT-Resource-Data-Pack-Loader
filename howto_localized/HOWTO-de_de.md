@@ -57,6 +57,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Universal Tweaks](#universal-tweaks)
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
+- [Blast Plaster](#blast-plaster-integration)
 
 **Referenz**
 - [Wertelisten](#wertelisten)
@@ -1800,7 +1801,7 @@ Während ein Durchlauf läuft, wird jeder festgehalten: zum Zuschauer gemacht, a
 
 | Schlüssel | Was er macht | Warum du ihn setzen würdest |
 | --- | --- | --- |
-| `pregenOnNewWorld` | Radius in Chunks, der um den Spawn gebaut wird, sobald eine Welt erzeugt wird. 0 ist aus | Der eine Schlüssel, der die Vorgenerierung für ein Pack einschaltet |
+| `pregenOnNewWorld` | Radius in Chunks, der um den Spawn gebaut wird, sobald eine Welt erzeugt wird. 0 ist aus. Jede Zahl unter 12 wird auf 12 angehoben, denn so viel baut das Spiel von sich aus um den Spawn, bevor ein Lauf beginnen kann, und ein Lauf, dem dieser Boden nicht gehört, wartet darauf, dass er Chunk für Chunk beleuchtet wird | Der eine Schlüssel, der die Vorgenerierung für ein Pack einschaltet |
 | `pregenDimensions` | Welche Dimensionen gebaut werden, der Reihe nach, jede um ihren eigenen Spawn | Den Nether, das Ende oder deine eigenen Dimensionen dazunehmen |
 | `pregenAllDimensions` | Jede registrierte Dimension statt einer Liste, die Oberwelt zuerst | Packs mit vielen Dimensionen. Die Dimensionen jedes Mods zählen mit, achte also auf die Größe |
 | `pregenDimensionsWhenEntered` | Diese werden gebaut, wenn zum ersten Mal jemand einen Fuß hineinsetzt, und halten dabei wieder alle fest, bis es fertig ist | Dimensionen, die die meisten Spieler nie besuchen; wer nie hingeht, zahlt nichts |
@@ -1967,6 +1968,10 @@ Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter
 
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Pack-Grundstücke berührt die Liste nicht; sie kommen obendrauf.
 
+### Blast Plaster
+
+Was nach einer Explosion geschieht, aus `blastplaster/*.json`. `default` lässt Packs entscheiden, `global` übergeht Pack-Dateien und legt die Vorgaben dieses Mods über Blast Plasters Config, und `off` gibt Blast Plaster ganz an seine eigene Config zurück.
+
 ### Strukturen
 
 Vanilla-Strukturen, nach Namen und pro Dimension abgeschaltet. Die Platzierung steuern vier Listen in der Form `structure=wert`, eine pro Zeile: `structureSpacing` für den Abstand, in dem sie gesät werden, `structureSeparation` dafür, wie nah zwei einander kommen dürfen, `structureMinDistanceFromSpawn` dafür, wie weit draußen sie anfangen, und `structureBiomes` mit `structureBiomesAreBlacklist` dafür, wo sie erlaubt sind.
@@ -2017,7 +2022,9 @@ Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wir
 
 ### Dörfer aufsetzen
 
-`terrainAdaptation` arbeitet um, wie Dörfer ihren Boden wählen und darauf sitzen, dem Geist nach übernommen davon, wie moderne Versionen ihre Strukturen aufsetzen, und dann weitergetrieben. Dörfer werden nur auf dem flachsten Chunk gegründet, den ihre Region hergibt, und nie näher als acht Chunks an einem anderen Dorf; Regionen ohne ausreichend flachen Boden gründen gar nichts. Der Brunnen setzt sich auf den tiefsten Boden, den er berührt, mit seinem Rand bündig zur Oberfläche, und das ganze Dorf richtet sich von dort aus ein. Wege werden beim Legen abgezogen: Die Oberfläche folgt über die Wegbreite dem tiefsten natürlichen Boden, Buckel werden abgetragen, Senken gefüllt, das Gefälle überschreitet nie einen Block pro Schritt, und kurze Schluchten werden mit Brettern überbrückt. Trampelpfade kommen auf Erde, Kies auf Stein und Sand, Bretter über Wasser, Wege verschwinden also nicht mehr dort, wo der Boden kein Gras ist. Jedes Gebäude sitzt einen Block über dem Weg, an dem es steht, abgelesen vom gelegten Weg oder vorhergesagt aus der Höhe, auf die der Weg den Boden abziehen wird, wenn er noch nicht gebaut ist – so ruhen seine Türstufen auf der Wegoberfläche und seine Tür sitzt dahinter. Felder und Laternenpfähle behalten Vanillas eigene Bodenhöhe. Bauteile lehnen Boden ab, der unter ihrer eigenen Grundfläche um mehr als ein paar Blöcke schwankt, unter jedem Gebäude wird bis zur nächsten tragenden Fläche mit demselben Material aufgefüllt, auf dem es steht, Wände und Türöffnungen werden aus Hängen herausgeschnitten, Erde wird von Dächern gehoben, und jeder Baum, der in einer Struktur steht, wird ganz gefällt, seine Blätter gehen mit seinem Holz, während jedes Blatt, das noch zu einem stehenden Ast gehört, in Ruhe gelassen wird. Herrenhäuser und die verstreuten Bauwerke (Tempel, Hütten, Iglus) müssen dieselbe Anforderung an flachen Boden erfüllen, bevor sie gesetzt werden dürfen. Es formt das Gelände selbst beim Entstehen um, eine Welt, die damit generiert wurde, unterscheidet sich also von einer, die ohne generiert wurde – dieselbe Warnung, die moderne Versionen mitbringen –, und es ist aus, solange ein Pack oder die Config nicht darum bittet.
+**Diese Einstellung ist experimentell und noch in Bewegung.** Die Nutzung erfolgt auf eigene Gefahr. Sie formt das Gelände schon beim Erzeugen der Welt um, alles, was sie legt, ist in diesem Spielstand also endgültig, und ein Fehler darin kann ein halb abgetragenes Dorf oder eine Straße auf einem Damm hinterlassen. Solange daran gearbeitet wird, ändert sich ihr Verhalten von Build zu Build. Zwei Welten aus demselben Seed, aber mit unterschiedlichen Mod-Versionen erzeugt, sehen deshalb nicht gleich aus, und ein Dorf aus einem älteren Build wird von einem neueren weder erneut besucht noch ausgebessert. Wenn dir eine Welt wichtig ist, lass die Einstellung aus oder leg eine Sicherung an und rechne damit, dass die Dörfer darin genau den Stand zeigen, den der Mod an dem Tag hatte, an dem diese Chunks entstanden sind.
+
+`terrainAdaptation` arbeitet um, wie Dörfer ihren Boden wählen und darauf sitzen, dem Geist nach übernommen davon, wie moderne Versionen ihre Strukturen aufsetzen, und dann weitergetrieben. Dörfer werden nur auf dem flachsten Chunk gegründet, den ihre Region hergibt, und nie näher als acht Chunks an einem anderen Dorf; Regionen ohne ausreichend flachen Boden gründen gar nichts. Der Brunnen setzt sich auf den tiefsten Boden, den er berührt, mit seinem Rand bündig zur Oberfläche, und das ganze Dorf richtet sich von dort aus ein. Wege werden beim Legen abgezogen: Die Oberfläche folgt über die Wegbreite dem tiefsten natürlichen Boden, Buckel werden abgetragen, Senken gefüllt, das Gefälle überschreitet nie einen Block pro Schritt, und kurze Schluchten werden mit Brettern überbrückt. Die Wegoberfläche richtet sich nach dem Boden, über den sie führt: Trampelpfade auf Erde, Sandstein auf Sand, gebrannter Ton in der Mesa, Kies auf Stein und auf Kies, Bretter über Wasser. Ein Wüstendorf bekommt so Sandsteinstraßen statt eines Feldwegs, und Wege verschwinden nicht mehr dort, wo der Boden kein Gras ist. Jedes Gebäude sitzt einen Block über dem Weg, an dem es steht, abgelesen vom gelegten Weg oder vorhergesagt aus der Höhe, auf die der Weg den Boden abziehen wird, wenn er noch nicht gebaut ist – so ruhen seine Türstufen auf der Wegoberfläche und seine Tür sitzt dahinter. Felder und Laternenpfähle behalten Vanillas eigene Bodenhöhe. Bauteile lehnen Boden ab, der unter ihrer eigenen Grundfläche um mehr als ein paar Blöcke schwankt, unter jedem Gebäude wird bis zur nächsten tragenden Fläche mit demselben Material aufgefüllt, auf dem es steht, Wände und Türöffnungen werden aus Hängen herausgeschnitten, Erde wird von Dächern gehoben, und jeder Baum, der in einer Struktur steht, wird ganz gefällt, seine Blätter gehen mit seinem Holz, während jedes Blatt, das noch zu einem stehenden Ast gehört, in Ruhe gelassen wird. Herrenhäuser und die verstreuten Bauwerke (Tempel, Hütten, Iglus) müssen dieselbe Anforderung an flachen Boden erfüllen, bevor sie gesetzt werden dürfen. Es formt das Gelände selbst beim Entstehen um, eine Welt, die damit generiert wurde, unterscheidet sich also von einer, die ohne generiert wurde – dieselbe Warnung, die moderne Versionen mitbringen –, und es ist aus, solange ein Pack oder die Config nicht darum bittet.
 
 ### Grundgestein
 
@@ -2158,6 +2165,55 @@ Die Städte selbst sind nicht Sache dieses Mods. Wie groß und wie häufig sie s
 
 Alles andere lief nie durch den Generator und funktioniert wie überall: Pack-Worldgen, das Blockieren von Erzen und Biomen, Strukturabstände und ihre Spawner, flacher Bedrock, Retrogen, Vorgenerierung, und seine zwei Truhen-Loot-Tabellen lassen sich überschreiben und ergänzen wie alle anderen.
 
+## Blast Plaster Integration
+
+Explosionen waren das Letzte, was ein Pack nicht beschreiben konnte. Alles andere am Aussehen einer Welt ist eine Datei in diesem Ordner, aber was ein Creeper hinterlässt, gab der Mod vor, dem es gerade gehörte. Die schwierige Hälfte davon hatte Blast Plaster längst gelöst: einen Krater Block für Block wieder zusammensetzen und dabei wissen, wo ein Baum aufhört und der nächste anfängt. Statt das ein zweites Mal zu schreiben, setzt dieser Mod darauf auf und liefert es als Abhängigkeit mit.
+
+Was dabei herausspringt, ist eine Kontrolle, die es allein nicht hat. Blast Plaster liest eine Config für das ganze Spiel; aus einem Pack gesteuert antwortet es pro Dimension. Die Oberwelt darf ihre Narben behalten, während der Nether hinter dir zuwächst, und ein Pack liefert diese Entscheidung gleich mit, statt Spieler an die Config zu schicken. Dieselbe Arbeit zahlt sich an unerwarteter Stelle noch einmal aus: Das Fällen von Bäumen in Dörfern nutzt die Baumgeometrie von Blast Plaster, deshalb kommt ein Baum, der über eine neue Straße ragt, ganz herunter, statt an der Grenze abgeschnitten zu werden.
+
+Allein installiert arbeitet Blast Plaster genau wie bisher aus seiner eigenen Config. Dieser Mod übernimmt das Steuer erst, wenn ein Pack darum bittet.
+
+Die Dateien liegen unter `assets/<namespace>/blastplaster/*.json`. Was oben in der Datei steht, gilt überall; ein `dimensions`-Block überschreibt es für eine Dimension anhand ihrer Id. Alles, was ein Pack nie nennt, behält das, was Blast Plasters eigene Config sagt, ein Pack setzt also die Handvoll, um die es ihm geht, und lässt den Rest in Ruhe.
+
+```json
+{
+  "explosionMode": "EJECT_DROPS",
+  "healFullTrees": true,
+  "maxTreeSize": 400,
+  "dimensions": {
+    "-1": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
+    "1": { "enableExplosionSmoke": false }
+  }
+}
+```
+
+`explosionMode` gibt allem anderen seine Form. `HEAL` sprengt die Blöcke heraus und setzt die Welt danach wieder zusammen, `EJECT_DROPS` lässt das Loch stehen und wirft etwa ein Drittel dessen ab, was dort war, so wie es ein Creeper im unangetasteten Spiel tut, und `VISUAL_TOSS` lässt das Loch stehen und wirft nichts ab. Sobald dieser Mod steuert, ist die Vorgabe `EJECT_DROPS` und nicht Blast Plasters eigenes `HEAL`, ein Pack, das beides installiert und nichts schreibt, bekommt also Explosionen, die sich verhalten wie in dem Spiel, das seine Spieler kennen. Wer will, dass die Welt sich selbst flickt, verlangt `HEAL`, überall oder in einer Dimension.
+
+| Schlüssel | Wert | Was er tut |
+| --- | --- | --- |
+| `explosionMode` | `HEAL`, `EJECT_DROPS`, `VISUAL_TOSS` | Was nach dem Knall geschieht |
+| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | true oder false | Welche Explosionen überhaupt behandelt werden |
+| `processPlayerIgnitedTNT` | true oder false | Ob von Spielern gezündetes TNT mitbehandelt wird |
+| `customEntitiesToHeal` | Liste von Entity-Namen | Explosionen aus anderen Mods, benannt als `modid:entity` |
+| `healFullTrees` | true oder false | Ein angeschnittener Baum wird ganz mitgenommen oder ganz wiederhergestellt, statt durchtrennt zu werden |
+| `maxTreeSize` | Zahl | Wie viele Blöcke ein Baum höchstens für sich beanspruchen darf, bevor er in Ruhe gelassen wird |
+| `minimumTicksBeforeHeal`, `randomTickVar` | Zahlen | Wie lange es dauert, bis geflickt wird, und wie ungleichmäßig das geschieht |
+| `overrideBlocks` | true oder false | Ob das Flicken überschreibt, was inzwischen ins Loch gebaut wurde |
+| `enableFakeTossedBlocks` | true oder false | Der Schutt, der aus der Explosion fliegt |
+| `enableExplosionFlash` | true oder false | Der helle Blitz im Moment der Explosion |
+| `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | Zahlen | Wie lange der Blitz dauert, wie hell er brennt, wie viele Partikel er wirft und wie oft er pulst |
+| `enableExplosionSmoke` | true oder false | Die Rauchsäule danach |
+| `explosionSmokeDuration`, `explosionSmokeParticleCount` | Zahlen | Wie lange der Rauch bleibt und wie dicht er steht |
+| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true oder false | Was das eigene TNT eines Spielers hinterlässt |
+| `enableDropSuppression`, `dtSpecialDrops` | true oder false | Drops innerhalb einer Explosion, und die eigenen Drops von Dynamic Trees |
+| `preventMobDrops` | true oder false | Ob von einer Explosion getötete Mobs noch etwas fallen lassen |
+
+**Dem Auge nach Vanilla.** Ein Pack, dessen Explosionen niemand vom unangetasteten Spiel unterscheiden soll, schreibt `EJECT_DROPS` und schaltet `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` und `playerTNTAlwaysDrops` ab. Alles andere ist Blast Plaster, das seine Karten zeigt, und jeder dieser Schlüssel lässt sich auch pro Dimension setzen, die Oberwelt kann also unangetastet aussehen, während eine andere Dimension sich selbst flickt.
+
+**Spieler ohne den Mod** merken so oder so nichts Ungewöhnliches. Der Blitz ist das Einzige, was einen eigenen Block in die Welt setzt, wenn ein Pack `vanillaClients` setzt, wird er deshalb abgeschaltet, ganz gleich was in einer Datei steht, und der Rest sind Partikel und Items, die ein blanker Client ohnehin versteht.
+
+Zwei Einstellungen von Blast Plaster sind keine Pack-Schlüssel: sein Debug-Log und die Liste, die jede Holzart mit ihrem Laub paart. Diese Paarung ist es, die dem Mod sagt, dass ein Baum ein Baum ist, hier wie dort, sie bleibt deshalb eine Antwort für das ganze Spiel statt einer je Dimension. Beides steht in Blast Plasters eigener Config.
+
 ---
 
 # Referenz
@@ -2224,6 +2280,7 @@ Unter `assets/<namespace>/`:
 | `entities` | Entity-Varianten, aufgebaut auf vorhandenen Entities |
 | `hardness` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen |
 | `villages` | Grundstücke, die Dörfer bauen können |
+| `blastplaster` | Was Blast Plaster nach einer Explosion tut, pro Dimension |
 | `structures` | `.nbt`-Vorlagen, für Setzlinge, `imprint` und Mod-Overrides |
 | `recipes` | Handwerksrezepte, hinzugefügt oder ersetzt |
 | `recipe_removals` | Rezepte, gelöscht nach Name, Namespace oder Ergebnis |
@@ -2276,6 +2333,9 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver gate grant <player> <gate>` | Ein Tor für einen Spieler öffnen |
 | `/rdplserver gate revoke <player> <gate>` | Es wieder schließen |
 | `/rdplserver intro` | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen |
+| `/rdplserver goto <struktur>` | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen |
+| `/rdplserver goto <struktur> next` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht |
+| `/rdplserver goto <struktur> back` | Bringt dich zur vorherigen zurück und geht Schritt für Schritt durch das, wohin diese Sitzung dich geschickt hat |
 
 **Beim täglichen Arbeiten:** `/rdpl reload textures` ist in einem großen Modpack viel schneller als F3+T. F3+T funktioniert weiterhin und lädt alles neu. Nimm das schlichte `/rdpl reload`, wenn du eine Datei *hinzufügst* oder *löschst*, weil sich damit ändert, was der Ordner enthält.
 

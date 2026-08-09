@@ -81,7 +81,26 @@ configurations {
     }
 }
 
+def bpJar = null
+def bpDir = file('../MCT-Blast-Plaster-Legacy/build/libs')
+def bpJars = bpDir.exists() ? fileTree(bpDir) {
+    include '*-dev.jar'
+    exclude '**/*-sources.jar'
+}.files : []
+
+if (!bpJars.isEmpty()) {
+    bpJar = bpJars.sort { a, b -> a.lastModified() <=> b.lastModified() }.last()
+    logger.lifecycle("Found Blast Plaster dev JAR: ${bpJar.name}")
+} else {
+    logger.warn('No Blast Plaster dev JAR found in ../MCT-Blast-Plaster-Legacy/build/libs, falling back to the CurseForge version')
+}
+
 dependencies {
+    if (bpJar != null) {
+        implementation files(bpJar)
+    } else {
+        implementation rfg.deobf("curse.maven:${common.blpl_version}")
+    }
     compileOnly rfg.deobf("${common.mjei_version}")
     runtimeOnly rfg.deobf("${common.mjei_version}")
 
@@ -106,8 +125,10 @@ dependencies {
     compileOnly rfg.deobf("curse.maven:${common.otgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.rtgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.twfo_version}")
-    //runtimeOnly rfg.deobf("curse.maven:${common.cwor_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thfo_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.cwor_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.cucm_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.mace_version}")
 
     clientRuntime rfg.deobf("curse.maven:${common.bf3r_version}")
 

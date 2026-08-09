@@ -140,6 +140,17 @@ public final class ContentBiomeControl {
         }
     }
 
+    public static boolean viable(BiomeProvider provider, Biome held, List<Biome> allowed) {
+        Biome fallback = replacement;
+        if (fallback == null || SUBSTITUTED.isEmpty() || !SUBSTITUTED.contains(held)) { return allowed.contains(held); }
+        if (outsideScope(provider)) { return allowed.contains(held); }
+
+        Integer dimension = dimensionOf(provider);
+        boolean templated = dimension == null || ContentWorldTemplates.appliesTo(dimension);
+        Biome mapped = templated ? ContentWorldTemplates.replacement(held) : null;
+        return allowed.contains(mapped == null ? fallback : mapped);
+    }
+
     private static boolean outsideScope(BiomeProvider provider) {
         Set<Integer> allowed = dimensions;
         if (allowed == null || allowed.isEmpty()) { return false; }
