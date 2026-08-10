@@ -34,6 +34,7 @@ pack priority, resource pack precedence and the commands.
 - Advancements and loot tables, on dedicated servers as well as singleplayer
 - Recipes, replaced or added, and recipe removals by name, namespace or output
 - Loot injections, which add a pool to an existing table instead of replacing the whole thing
+- Player loot, a loot table rolled when a player dies, dropped alongside what they were carrying or in place of it
 - Structure templates (`.nbt`)
 - Functions (`.mcfunction`), which vanilla otherwise only reads per world
 - Registry renames, so worlds saved before a mod renamed a block or item keep it
@@ -138,6 +139,10 @@ starting with `RDPLN` never does, and anything else follows the `overrideResourc
 
 `/rdpl unused` lists files in your packs that nothing has asked for, which is usually a typo in a
 path. `/rdpl biome` and `/rdpl oregen` report what generated and what was blocked.
+
+Grave mods need nothing set up. Player loot is put down as an ordinary death drop before any of them
+looks, so a grave collects it along with the inventory, and `dropLoose` on a `player_loot` entry
+leaves it on the ground for the killer instead.
 
 The mod's own report goes to `logs/rdpl.log` rather than the main log.
 

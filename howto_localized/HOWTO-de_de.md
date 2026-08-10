@@ -22,6 +22,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 **Überschreiben**
 - [Was du überschreiben kannst](#was-du-überschreiben-kannst)
 - [Registry-Umbenennungen](#registry-umbenennungen)
+- [Spielerbeute](#spielerbeute)
 
 **Neuen Inhalt beschreiben**
 - [Wie Definitionen funktionieren](#wie-definitionen-funktionieren)
@@ -58,6 +59,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
 - [Blast Plaster](#blast-plaster-integration)
+- [Grab-Mods](#grab-mods)
 
 **Referenz**
 - [Wertelisten](#wertelisten)
@@ -228,7 +230,7 @@ Was auf der sicheren Seite bleibt und was nicht:
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `advancements`, `functions` | `biomes`, `dimensions` |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung | `models`, `blockstates`, `textures`, `lang` (Client-Ordner; ohne Client lässt du sie weg) |
 
@@ -255,6 +257,7 @@ Was zu tun ist, der Reihe nach:
 - **Registry-Umbenennungen**: alte Welten am Leben halten, wenn ein Mod einen Block oder ein Item umbenennt
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
+- **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
 - **Ore-Dictionary-Namen, Ofenrezepte, Brenndauern, Kreativtabs und Sound-Events**
 
 RDPL eignet sich gut dafür, ein oder zwei Rezepte zu ersetzen, und Rezepte für eigenen Inhalt gehören mit in dasselbe Pack. Für volle Rezeptkontrolle über ein ganzes Modpack sind CraftTweaker und GroovyScript die besseren Werkzeuge, und eine Datei hier ersetzt das Original weiterhin vollständig – um also eine einzelne Zutat zu ändern oder einen einzelnen Beuteeintrag zu streichen, nimm die beiden.
@@ -357,6 +360,40 @@ Wenn ein Mod einen seiner Blöcke oder Items umbenennt, verlieren Welten, die vo
 ```
 
 Die Registry ist die, zu der der Eintrag gehört, meist `minecraft:items` oder `minecraft:blocks`. Umbenennungen verketten sich: Bildest du A auf B ab und später B auf C, geht A direkt auf C.
+
+## Spielerbeute
+
+Spieler haben in dieser Version keine eigene Beutetabelle. Bei ihrem Tod fällt nichts außer dem Inventar, und es gibt keinen Namen, auf den ein Pack zeigen könnte, um das zu ändern. Eine Datei in `player_loot/` gibt ihnen eine:
+
+```json
+{
+  "table": "mypack:entities/player",
+  "mode": "add",
+  "rollOnKeepInventory": false,
+  "dropLoose": false
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `table` | ja | Tabellenname | | Die Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird |
+| `mode` | nein | `add` oder `replace` | `add` | Ob die Items der Tabelle zum Inventar dazukommen oder an dessen Stelle treten |
+| `rollOnKeepInventory` | nein | Boolean | `false` | Ob die Tabelle bei einem Tod überhaupt ausgewürfelt wird, der das Inventar behalten hat |
+| `dropLoose` | nein | Boolean | `false` | Ob die Items direkt auf den Boden gelegt werden, statt zu den Todesdrops zu kommen |
+
+`add` lässt den Tod, wie er ist, und legt die Items der Tabelle neben alles, was der Spieler dabeihatte – die richtige Wahl, wenn die Tabelle ein Kopfgeld auf den Kill sein soll und keine Strafe fürs Sterben. `replace` wirft das Inventar weg, und es fällt nur, was die Tabelle auswürfelt: So entscheidet ein Pack, was ein Tod kostet und was er übrig lässt, bis hinunter auf einen einzelnen Knochen.
+
+`keepInventory` heißt normalerweise, dass gar nichts fällt, und ein Eintrag stellt sich dem nicht in den Weg: Steht `rollOnKeepInventory` auf aus, wird er bei solchen Toden überhaupt nicht ausgewürfelt. Wer im Zuschauermodus stirbt, behält sein Inventar ebenfalls, ganz gleich was die Spielregel sagt, und zählt hier als dieselbe Art Tod. Ihn anzuschalten ist der Weg, das Sterben auch auf einer Welt teuer zu halten, auf der Inventare erhalten bleiben – ein Wegzoll bei jedem Mal statt gleich die ganze Tasche.
+
+Mehrere Dateien stapeln sich, und jede wird für sich entschieden: Ein Pack kann also einen Eintrag mitbringen, der immer würfelt, und einen zweiten, der nur zubeißt, wenn das Inventar wirklich verloren geht. Ist auch nur ein zutreffender Eintrag `replace`, wird das Inventar einmal geleert, bevor irgendetwas gewürfelt wird – ein `add`-Eintrag daneben landet also trotzdem.
+
+Die Tabelle ist eine ganz gewöhnliche Beutetabelle, die wie jede andere über ihren Namen gesucht wird. Sie darf also in deinem Pack unter `loot_tables/entities/player.json` liegen, sie darf eine Tabelle von Vanilla oder einem Mod sein, die du nie geschrieben hast, und `loot_injections` erreichen sie wie jede andere Tabelle. Bedingungen bekommen den sterbenden Spieler als erbeutete Entity, den Töter als Spieler, wenn der Tod ein Kill war, und die Schadensquelle: `killed_by_player`, `entity_properties`, `random_chance_with_looting` und `looting_enchant` lesen also genau das, was man erwartet, und das Glück des Töters erreicht `quality`.
+
+**Grab-Mods.** Die gewürfelten Items werden als ganz normale Todesdrops abgelegt, bevor irgendein Grab-Mod sie zu sehen bekommt. Ein Grab-Mod, der die Drops eines Spielers einsammelt, sammelt sie also mit ein: Sie liegen mit allem anderen im Grab statt lose daneben, und bei `replace` bekommt das Grab den Inhalt der Tabelle statt des Inventars. Das gilt für Gravestone, GraveStone Mod, Corail Tombstone und alles andere, was mit den Drops arbeitet, die der Tod erzeugt hat. Dafür muss nichts installiert und nichts eingestellt werden, und es gibt nichts anzuschalten.
+
+`dropLoose` ist für die Fälle, in denen genau das die falsche Antwort ist. Die Items kommen gar nicht erst zu den Todesdrops dazu, sie werden für sich in die Welt gesetzt, und nichts, was diese Liste liest, bekommt sie je zu Gesicht: Das Inventar wandert ins Grab wie eh und je, und die Items der Tabelle liegen daneben auf dem Boden, für den, der den Kill gemacht hat. Das ist die Einstellung für Beute – ein Kopf, ein Herz, was der Körper eben zurücklassen soll –, die dem Töter gehört und nicht im Grab des Opfers eingeschlossen darauf wartet, dass der zurückläuft. Ohne Grab-Mod ändert sie fast nichts, die Items landen so oder so an derselben Stelle; sie entscheidet erst, wem sie gehören, wenn einer installiert ist. Sie bedeutet allerdings auch, dass die Items in der Welt sind, bevor irgendwas weiter hinten die Drops noch hätte aufhalten können – ein Eintrag, der einen abgebrochenen Tod nicht überleben darf, bleibt also besser aus.
+
+Setz `playerLoot` in der Config-Kategorie `data` auf `false`, um den Ordner ganz abzuschalten.
 
 ---
 
@@ -1962,6 +1999,8 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 
 Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter dem Namen `villages`, `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` und `structureBiomesAreBlacklist` erreichen sie also alle. Eine `structureBiomes`-Liste, die keine Blacklist ist, fügt außerdem jedes genannte Biom hinzu, das die eigene Liste der Struktur nie enthielt – so lassen sich Dörfer ins Gebirge schicken; nenne sie dafür beim Registry-Namen, denn nur Registry-Namen können hinzufügen. Ihr Abstand hat eine Untergrenze von 9, weil Vanilla 8 davon abzieht. `villagePieces` gehört zur selben Gruppe, ein Schalter deckt also alles darüber ab, wo Dörfer hinkommen und woraus sie gebaut sind, während die Gruppe `villages` nur die Grundstücke abdeckt, die ein Pack hinzufügt.
 
+`villageBlocks` ersetzt die Blöcke, aus denen ein Dorf gebaut wird, als `original=ersatz`-Paare: `minecraft:cobblestone=meinpack:ruby_brick`. Es greift, nachdem jeder andere Mod sein Wort hatte, ein Pack setzt sich also immer durch, auch gegen Mods, die Dorfmaterialien je Biom austauschen. Beide Seiten akzeptieren einen einfachen Blocknamen oder einen Namen mit Zuständen. Wege werden getrennt über `villagePathBlock` und seine Geschwister benannt.
+
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Ein Pack-Grundstück wird über seine eigene Vorlage benannt: entweder mit dem vollen Namen, `meinpack:big_house`, oder einfach `big_house`, oder wahlweise über den Namen des Grundstücks selbst. Ein Pack kann also zehn Grundstücke mitbringen, und eine Weltvorlage lässt eines davon weg, ohne die anderen neun anzurühren. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
 
 ### Blast Plaster
@@ -2210,6 +2249,16 @@ Die Dateien liegen unter `assets/<namespace>/blastplaster/*.json`. Was oben in d
 
 Zwei Einstellungen von Blast Plaster sind keine Pack-Schlüssel: sein Debug-Log und die Liste, die jede Holzart mit ihrem Laub paart. Diese Paarung ist es, die dem Mod sagt, dass ein Baum ein Baum ist, hier wie dort, sie bleibt deshalb eine Antwort für das ganze Spiel statt einer je Dimension. Beides steht in Blast Plasters eigener Config.
 
+## Grab-Mods
+
+Hier muss nichts installiert, nichts eingestellt und nichts angeschaltet werden. Ein Grab-Mod und dieser hier teilen sich genau ein Stück Boden – die Beutetabelle, die ein Pack beim Tod eines Spielers auswürfelt –, und das ist im Voraus geklärt, damit keiner der beiden vom anderen wissen muss.
+
+RDPL legt diese Items als ganz gewöhnliche Todesdrops ab, und zwar bevor irgendein Grab-Mod sich den Tod ansieht. Ein Grab-Mod arbeitet mit den Drops, die der Tod erzeugt hat, findet sie dort also mit allem anderen zusammen und legt sie ins Grab: Die Beute landet da, wo auch das Inventar gelandet ist, und genau das erwartet jemand, der sich einen Grab-Mod installiert hat. Gravestone, GraveStone Mod und Corail Tombstone arbeiten alle so, und alles andere, was auf denselben Drops aufsetzt, ebenfalls.
+
+`dropLoose` in einer `player_loot`-Datei ist der Schalter für die andere Absicht, je Eintrag. Die Items gehen gar nicht erst durch die Drops, sondern werden für sich in die Welt gesetzt, kein Grab-Mod bekommt sie also zu sehen: Das Inventar wandert ins Grab wie immer, und die Beute liegt daneben auf dem Boden, für den, der den Kill gemacht hat. Das ist die Einstellung für Trophäen – einen Kopf, ein Herz –, die dem Töter gehören sollten, statt im Grab des Opfers eingeschlossen zu sein.
+
+[Spielerbeute](#spielerbeute) hat die Schlüssel, das übrige Verhalten und den einen Vorbehalt, der mit `dropLoose` einhergeht.
+
 ---
 
 # Referenz
@@ -2291,6 +2340,7 @@ Unter `assets/<namespace>/`:
 | `oredict` | Ore-Dictionary-Namen |
 | `loot_tables` | Beutetabellen, ersetzt |
 | `loot_injections` | Ein Pool, der zu einer bestehenden Tabelle dazukommt |
+| `player_loot` | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird |
 | `advancements` | Fortschritte |
 | `functions` | `.mcfunction`-Dateien |
 | `registry_remap` | Alte Namen, auf neue abgebildet |

@@ -158,6 +158,8 @@ public class Config {
     public static class Data {
         @net.minecraftforge.common.config.Config.Comment("Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table [Default=true]")
         public boolean lootInjections = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory [Default=true]")
+        public boolean playerLoot = true;
         @net.minecraftforge.common.config.Config.Comment("Load .mcfunction files from packs, so they work in every world. A function saved in the world still wins [Default=true]")
         public boolean functions = true;
         @net.minecraftforge.common.config.Config.Comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]")
@@ -335,6 +337,8 @@ public class Config {
         public String[] villagePieces = {};
         @net.minecraftforge.common.config.Config.Comment("On, the pieces in villagePieces are blocked. Off, only those pieces generate [Default=true]")
         public boolean villagePiecesAreBlacklist = true;
+        @net.minecraftforge.common.config.Config.Comment("Blocks village pieces are built from, as original=replacement pairs, minecraft:cobblestone=mypack:ruby_brick. Applied after any other mod has had its say, so a pack always wins. Empty leaves every block as the game and other mods chose [Default=none]")
+        public String[] villageBlocks = {};
         @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block village roads are paved with when terrainAdaptation lays them. Empty keeps the vanilla biome road block [Default=empty]")
         public String villagePathBlock = "";
         @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block placed under the road surface. Empty keeps vanilla gravel [Default=empty]")

@@ -60,6 +60,7 @@ public final class PackManager {
     public static final String RECIPE_REMOVALS = "recipe_removals";
     public static final String MATERIALS = "materials";
     public static final String LOOT_INJECTIONS = "loot_injections";
+    public static final String PLAYER_LOOT = "player_loot";
     public static final String TABS = "tabs";
     public static final String FUNCTIONS = "functions";
     public static final String STRUCTURES = "structures";
@@ -265,6 +266,7 @@ public final class PackManager {
         collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);
         collect(off, Config.recipes.removals, "recipes.removals", JSON, RECIPE_REMOVALS);
         collect(off, Config.data.lootInjections, "data.lootInjections", JSON, LOOT_INJECTIONS);
+        collect(off, Config.data.playerLoot, "data.playerLoot", JSON, PLAYER_LOOT);
         collect(off, Config.data.registryRemaps, "data.registryRemaps", JSON, REGISTRY_REMAP);
         collect(off, Config.worldgen.load, "worldgen.load", JSON, WORLDGEN);
         collect(off, Config.data.functions, "data.functions", MCFUNCTION, FUNCTIONS);
@@ -294,8 +296,8 @@ public final class PackManager {
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
             String tier = pack.isOverriding() ? " overriding" : "";
-            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={} hardness={}",
-                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON), pack.count(HARDNESS, JSON));
+            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} player_loot={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={} hardness={}",
+                    pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(PLAYER_LOOT, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON), pack.count(HARDNESS, JSON));
         }
     }
 
@@ -376,7 +378,7 @@ public final class PackManager {
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
                 || path.startsWith(GATES + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/")
                 || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(GAMERULES + "/")
-                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
+                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
     }
 
     @Nullable public String getPackName(String namespace, String path) {
@@ -529,6 +531,20 @@ public final class PackManager {
                 "The registry is the one the entry belongs to, usually minecraft:items or",
                 "minecraft:blocks. Renames chain, so mapping A to B and later B to C sends A to C.",
                 "",
+                "Player loot, a thing the game has no name for at all. Players drop their",
+                "inventory and nothing else, so a file in assets/<modid>/player_loot gives them",
+                "a loot table of their own:",
+                "",
+                "    {",
+                "      \"table\": \"mypack:entities/player\",",
+                "      \"mode\": \"add\",",
+                "      \"rollOnKeepInventory\": false",
+                "    }",
+                "",
+                "\"add\" drops what the table rolls alongside everything they were carrying,",
+                "\"replace\" drops it instead of their inventory, and rollOnKeepInventory decides",
+                "whether the table is rolled at all on a world where inventories are kept.",
+                "",
                 "CraftTweaker and GroovyScript still work exactly as before. They run after this",
                 "mod, so anything your scripts remove or change wins over a file here.",
                 "",
@@ -576,7 +592,7 @@ public final class PackManager {
                 "    brewing          villagers        trades           biomes",
                 "    villages         entities         gates            dimensions",
                 "    gamerules        worldtemplates   worldintro       pathintersects",
-                "    hardness         blastplaster",
+                "    hardness         blastplaster     player_loot",
                 "",
                 "Blocks come in these shapes, set by the \"type\" field:",
                 "",

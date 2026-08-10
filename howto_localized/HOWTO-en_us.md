@@ -22,6 +22,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 **Overriding**
 - [What you can override](#what-you-can-override)
 - [Registry renames](#registry-renames)
+- [Player loot](#player-loot)
 
 **Defining new content**
 - [How definitions work](#how-definitions-work)
@@ -58,6 +59,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
 - [Blast Plaster](#blast-plaster-integration)
+- [Grave mods](#grave-mods)
 
 **Reference**
 - [Value lists](#value-lists)
@@ -228,7 +230,7 @@ What stays on the safe side, and what does not:
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `advancements`, `functions` | `biomes`, `dimensions` |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders, with no client, leave them out) |
 
@@ -255,6 +257,7 @@ What to do, in order:
 - **Registry renames**, keep old worlds working when a mod renames a block or item
 - **Recipe removals**, delete a crafting recipe by name, namespace or output
 - **Loot injections**, add a pool to a loot table instead of replacing the whole thing
+- **Player loot**, roll a loot table when a player dies, on top of what they were carrying or instead of it
 - **Ore dictionary names, furnace recipes, fuel burn times, creative tabs and sound events**
 
 RDPL is good for replacing one or two recipes, and recipes for your own content should be added in the pack alongside it. For full recipe control across a modpack, CraftTweaker and GroovyScript are the better options, and a file here still replaces the original completely, so to change one ingredient or drop one loot entry, use those.
@@ -357,6 +360,40 @@ When a mod renames one of its blocks or items, worlds saved before the rename lo
 ```
 
 The registry is the one the entry belongs to, usually `minecraft:items` or `minecraft:blocks`. Renames chain, so mapping A to B and later B to C sends A straight to C.
+
+## Player loot
+
+Players have no loot table of their own in this version. Their death drops nothing but the inventory, and there is no name a pack can point at to change that. A file in `player_loot/` gives them one:
+
+```json
+{
+  "table": "mypack:entities/player",
+  "mode": "add",
+  "rollOnKeepInventory": false,
+  "dropLoose": false
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `table` | yes | table name | | The loot table rolled when a player dies |
+| `mode` | no | `add` or `replace` | `add` | Whether the table's items join the inventory or take its place |
+| `rollOnKeepInventory` | no | boolean | `false` | Whether the table is rolled at all on a death that kept the inventory |
+| `dropLoose` | no | boolean | `false` | Whether the items are put on the ground directly instead of joining the death drops |
+
+`add` leaves the death alone and puts the table's items down beside everything the player was carrying, which is the one to reach for when the table is a bounty on a kill rather than a punishment for dying. `replace` throws the inventory away and drops only what the table rolls, so a pack can decide what death costs and what it leaves behind, down to a single bone.
+
+`keepInventory` normally means nothing drops, and an entry stays out of the way of that: with `rollOnKeepInventory` off it does not roll on those deaths at all. A player who dies while spectating keeps their inventory too, whatever the game rule says, and counts as the same kind of death here. Turning it on is how a pack keeps a death expensive on a world where inventories are kept, a toll paid every time rather than the whole bag.
+
+Several files stack, and each is decided on its own, so a pack can carry one entry that always rolls and another that only bites when the inventory is really lost. If any entry that applies is `replace`, the inventory is cleared once before anything is rolled, so an `add` entry sitting alongside it still lands.
+
+The table is an ordinary loot table, looked up by name like any other, which means it can live in your pack at `loot_tables/entities/player.json`, be a vanilla or mod table you never wrote, and be reached by `loot_injections` the same as any table. Conditions have the dying player as the looted entity, the killer as the player who did it when the death was a kill, and the damage source, so `killed_by_player`, `entity_properties`, `random_chance_with_looting` and `looting_enchant` all read what you would expect, and the killer's luck reaches `quality`.
+
+**Grave mods.** The rolled items are put down as ordinary death drops before any grave mod looks at them, so a grave mod that sweeps up a player's drops sweeps these up too: they go in the grave with everything else rather than lying loose beside it, and `replace` gives the grave the table's contents instead of the inventory. This holds for Gravestone, GraveStone Mod, Corail Tombstone and anything else that works from the drops the death produced. Nothing needs to be installed or configured for it, and there is nothing to switch on.
+
+`dropLoose` is for when that is the wrong answer. The items never join the death drops at all, they are put into the world on their own, so nothing that reads that list ever sees them: the inventory goes into the grave as it always did and the table's items lie on the ground beside the stone, for whoever did the killing to pick up. That is the setting for spoils, a head, a heart, whatever the body is supposed to leave behind, which belong to the killer rather than locked in the victim's grave waiting for them to walk back. With no grave mod installed it changes almost nothing, the items land in the same place either way; what it really decides is who gets them when one is. It does mean the items are in the world before anything downstream could have stopped the drops, so an entry that must not survive a cancelled death should stay off it.
+
+Set `playerLoot` in the `data` config category to `false` to turn the folder off entirely.
 
 ---
 
@@ -1962,6 +1999,8 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 
 Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
+`villageBlocks` replaces the blocks a village is built from, as `original=replacement` pairs: `minecraft:cobblestone=mypack:ruby_brick`. It is applied after every other mod has had its say, so a pack always wins, even against mods that swap village materials per biome. Both sides accept a plain block name or a name with states. Roads are named separately by `villagePathBlock` and its siblings.
+
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. A pack plot is named by its own template: either the full name, `mypack:big_house`, or just `big_house`, or the plot's own name if you prefer. So a pack can ship ten plots and a world template can drop one of them without touching the other nine. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
 
 ### Blast Plaster
@@ -2210,6 +2249,16 @@ Files go in `assets/<namespace>/blastplaster/*.json`. Keys written at the top of
 
 Two of Blast Plaster's settings are not pack keys: its debug logging, and the list pairing each kind of log with its leaves. The pairing is what tells the mod a tree is a tree, here as much as there, so it stays one answer for the whole game rather than a different one per dimension. Both live in Blast Plaster's own config.
 
+## Grave mods
+
+Nothing here needs installing, configuring or switching on. A grave mod and this one share exactly one piece of ground, the loot table a pack rolls when a player dies, and it is settled in advance so that neither has to know about the other.
+
+RDPL puts those items down as ordinary death drops, and it does so before any grave mod looks at the death. A grave mod works from the drops the death produced, so it finds them there with everything else and puts them in the grave: the loot ends up wherever the player's inventory ended up, which is what somebody who installed a grave mod expects. Gravestone, GraveStone Mod and Corail Tombstone all work this way, as does anything else built on the same drops.
+
+`dropLoose` in a `player_loot` file is the switch for the other intent, per entry. The items skip the drops entirely and are put in the world on their own, so no grave mod sees them: the inventory goes into the grave as always, and the loot lies on the ground beside the stone for whoever did the killing. That is the setting for spoils, a head or a heart that ought to belong to the killer rather than sit locked in the victim's grave.
+
+[Player loot](#player-loot) has the keys, the rest of the behavior, and the one caveat that comes with `dropLoose`.
+
 ---
 
 # Reference
@@ -2294,6 +2343,7 @@ Under `assets/<namespace>/`:
 | `oredict` | Ore dictionary names |
 | `loot_tables` | Loot tables, replaced |
 | `loot_injections` | A pool added to a table that already exists |
+| `player_loot` | A loot table rolled when a player dies |
 | `advancements` | Advancements |
 | `functions` | `.mcfunction` files |
 | `registry_remap` | Old names mapped to new ones |

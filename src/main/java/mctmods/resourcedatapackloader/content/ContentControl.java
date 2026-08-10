@@ -52,7 +52,7 @@ public final class ContentControl {
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
             "structureSpawns", "surfaceDayMonsterRate",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
-            "undergroundNightMonsterRate", "villagePieces", "villagePiecesAreBlacklist",
+            "undergroundNightMonsterRate", "villageBlocks", "villagePieces", "villagePiecesAreBlacklist",
             "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
             "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
             "villagePathSidewalkWidth", "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",

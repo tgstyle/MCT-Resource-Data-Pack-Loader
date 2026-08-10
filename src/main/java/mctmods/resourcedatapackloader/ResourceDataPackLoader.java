@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
 import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.loot.LootInjections;
+import mctmods.resourcedatapackloader.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
@@ -83,6 +84,7 @@ public class ResourceDataPackLoader {
     @Mod.EventHandler public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
+        MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
