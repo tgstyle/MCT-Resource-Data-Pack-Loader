@@ -72,7 +72,7 @@ public final class BeardGround {
         int soiled = 0;
         for (int x = box.minX; x <= box.maxX; x++) {
             for (int z = box.minZ; z <= box.maxZ; z++) {
-                for (int y = box.minY - 3; y <= box.minY; y++) {
+                for (int y = box.minY - 8; y <= box.minY; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at)) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
@@ -186,8 +186,6 @@ public final class BeardGround {
                         if (embedded >= 2 && world.getBlockState(at.down()).getMaterial().isSolid()) {
                             IBlockState laid = BeardBlocks.fillGround(world, x, z);
                             if (laid.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { laid = Blocks.GRASS.getDefaultState(); }
-                            if (BeardKeep.holds(x, at.getY(), z)) { continue; }
-
                             world.setBlockState(at, laid, 2);
                             opened++;
                         }

@@ -244,7 +244,7 @@ public class Config {
         @net.minecraftforge.common.config.Config.Comment("Disable all pregen/generation optimizations (why would you do this?) [Default=false]")
         @net.minecraftforge.common.config.Config.RequiresMcRestart
         @SuppressWarnings("unused") public boolean disableOptimizations = false;
-        @net.minecraftforge.common.config.Config.Comment("Sink the ground up under village pieces the way modern versions do, so they sit seated in the terrain instead of floating on stilts over every dip. Changes the terrain, so a world made with it on differs from one made without [Default=false]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. Sink the ground up under village pieces the way modern versions do, so they sit seated in the terrain instead of floating on stilts over every dip. Changes the terrain, so a world made with it on differs from one made without [Default=false]")
         public boolean terrainAdaptation = false;
         @net.minecraftforge.common.config.Config.Comment("Which structures the terrain adapts to and how, as structure=mode entries. Structures are villages, strongholds, mineshafts, monuments and mansions; modes are none, bury, beard_thin, beard_box and encapsulate, the same five modern versions use. Villages are beard_thin unless overridden, everything else is none unless named [Default=[]]")
         public String[] structureAdaptation = {};
@@ -337,7 +337,7 @@ public class Config {
         public String[] villagePieces = {};
         @net.minecraftforge.common.config.Config.Comment("On, the pieces in villagePieces are blocked. Off, only those pieces generate [Default=true]")
         public boolean villagePiecesAreBlacklist = true;
-        @net.minecraftforge.common.config.Config.Comment("Blocks village pieces are built from, as original=replacement pairs, minecraft:cobblestone=mypack:ruby_brick. Applied after any other mod has had its say, so a pack always wins. Empty leaves every block as the game and other mods chose [Default=none]")
+        @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. Blocks village pieces are built from, as original=replacement pairs, minecraft:cobblestone=mypack:ruby_brick. Applied after any other mod has had its say, so a pack always wins. Empty leaves every block as the game and other mods chose [Default=none]")
         public String[] villageBlocks = {};
         @net.minecraftforge.common.config.Config.Comment("EXPERIMENTAL, a work in progress. Use at your own risk of corrupting villages. The block village roads are paved with when terrainAdaptation lays them. Empty keeps the vanilla biome road block [Default=empty]")
         public String villagePathBlock = "";

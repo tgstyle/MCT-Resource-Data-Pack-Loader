@@ -129,9 +129,15 @@ public final class ContentStructurePlacement {
 
         boolean blacklist = BLACKLISTS.getOrDefault(key, Boolean.FALSE);
         List<Biome> kept = new ArrayList<>();
+        int empty = 0;
         for (Biome biome : biomes) {
+            if (biome == null) {
+                empty++;
+                continue;
+            }
             if (matches(biome, wanted) != blacklist) { kept.add(biome); }
         }
+        if (empty > 0) { ContentLog.LOGGER.warn("Something put {} empty biome slot(s) in the list of biomes {} may generate in. They are left out, since nothing can be built in a biome that is not there", empty, key); }
         if (!blacklist) {
             for (String name : wanted) {
                 Biome named = Biome.REGISTRY.getObject(new ResourceLocation(name));
@@ -161,6 +167,8 @@ public final class ContentStructurePlacement {
     }
 
     private static boolean matches(Biome biome, Set<String> wanted) {
+        if (biome == null) { return false; }
+
         ResourceLocation name = biome.getRegistryName();
         if (name != null && wanted.contains(name.toString().toLowerCase(Locale.ROOT))) { return true; }
         if (wanted.contains(ContentBiomeControl.shownName(biome).toLowerCase(Locale.ROOT))) { return true; }

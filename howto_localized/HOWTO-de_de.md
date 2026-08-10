@@ -56,6 +56,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Die Steuerungsebene](#die-steuerungsebene)
 - [Was jede Gruppe macht](#was-jede-gruppe-macht)
 - [Universal Tweaks](#universal-tweaks)
+- [Mo' Villages](#mo-villages)
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
 - [Blast Plaster](#blast-plaster-integration)
@@ -2001,9 +2002,35 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 
 Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter dem Namen `villages`, `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` und `structureBiomesAreBlacklist` erreichen sie also alle. Eine `structureBiomes`-Liste, die keine Blacklist ist, fügt außerdem jedes genannte Biom hinzu, das die eigene Liste der Struktur nie enthielt – so lassen sich Dörfer ins Gebirge schicken; nenne sie dafür beim Registry-Namen, denn nur Registry-Namen können hinzufügen. Ihr Abstand hat eine Untergrenze von 9, weil Vanilla 8 davon abzieht. `villagePieces` gehört zur selben Gruppe, ein Schalter deckt also alles darüber ab, wo Dörfer hinkommen und woraus sie gebaut sind, während die Gruppe `villages` nur die Grundstücke abdeckt, die ein Pack hinzufügt.
 
-`villageBlocks` ersetzt die Blöcke, aus denen ein Dorf gebaut wird, als `original=ersatz`-Paare: `minecraft:cobblestone=meinpack:ruby_brick`. Es greift, nachdem jeder andere Mod sein Wort hatte, ein Pack setzt sich also immer durch, auch gegen Mods, die Dorfmaterialien je Biom austauschen. Beide Seiten akzeptieren einen einfachen Blocknamen oder einen Namen mit Zuständen. Wege werden getrennt über `villagePathBlock` und seine Geschwister benannt.
+`villageBlocks` ist wie die übrige Dorfarbeit experimentell und greift nur, solange `terrainAdaptation` an ist. Es ersetzt die Blöcke, aus denen ein Dorf gebaut wird, als `original=ersatz`-Paare: `minecraft:cobblestone=meinpack:ruby_brick`. Es greift, nachdem jeder andere Mod sein Wort hatte, ein Pack setzt sich also immer durch, auch gegen Mods, die Dorfmaterialien je Biom austauschen. Beide Seiten akzeptieren einen einfachen Blocknamen oder einen Namen mit Zuständen. Wege werden getrennt über `villagePathBlock` und seine Geschwister benannt.
 
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Ein Pack-Grundstück wird über seine eigene Vorlage benannt: entweder mit dem vollen Namen, `meinpack:big_house`, oder einfach `big_house`, oder wahlweise über den Namen des Grundstücks selbst. Ein Pack kann also zehn Grundstücke mitbringen, und eine Weltvorlage lässt eines davon weg, ohne die anderen neun anzurühren. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
+
+#### Dorfwege
+
+Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, solange `terrainAdaptation` an ist. Jede dieser Einstellungen ist standardmäßig leer oder null, was Vanillas Wege genau so lässt, wie sie waren.
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `villagePathBlock` | Block | leer | Die Wegoberfläche. Leer behält den Block, den das Biom nehmen würde: Sandstein über Sand, gebrannter Ton in der Mesa, Trampelpfad über Erde |
+| `villagePathSupportBlock` | Block | leer | Der Block unter der Oberfläche, und die Oberfläche selbst dort, wo der Boden blanker Fels ist. Leer behält Vanilla-Kies |
+| `villagePathBridgeBlock` | Block | leer | Womit ein Weg Wasser überquert. Leer behält Vanilla-Bretter |
+| `villagePathBridgeBarrierBlock` | Block | leer | Geländer, an beiden Kanten eines Brückendecks aufgestapelt. Leer baut keine |
+| `villagePathBridgeBarrierHeight` | Zahl | `1` | Wie viele Blöcke hoch diese Geländer stehen |
+| `villagePathBridgeSidewalkBlock` | Block | leer | Deckt den Gehweg dort, wo ein Weg Wasser überquert. Leer führt den normalen Gehwegblock hinüber |
+| `villagePathCenterBlock` | Block | leer | Eine Mittellinie den Weg entlang. Leer zeichnet keine |
+| `villagePathCenterDash` | Zahl | `0` | Strichelt diese Linie: N Blöcke Linie, dann einer Weg. An Weltkoordinaten verankert, sodass die Striche eines Wegstücks im nächsten weiterlaufen. `0` lässt sie durchgezogen |
+| `villagePathLineBlock` | Block | leer | Randlinien zwischen Weg und Gehweg. Leer zeichnet keine |
+| `villagePathSidewalkBlock` | Block | leer | Gehwege, auf Weghöhe außerhalb der Randlinien gelegt. Leer legt keine |
+| `villagePathSidewalkWidth` | Zahl | `2` | Wie breit jeder Gehweg ist, sobald `villagePathSidewalkBlock` gesetzt ist |
+| `villagePathExtraWidth` | Zahl | `0` | Zusätzliche Wegblöcke je Seite über Vanillas 3 hinaus. Verbreitert die Wegteile selbst, sodass Häuser von einer breiten Straße zurücktreten |
+| `villagePathMinimumWidth` | Zahl | `0` | Der schmalste Weg, der sich noch lohnt. Ein Stück, das seinen vollen Ausbau nicht unterbringt, fällt auf eine schlichte 3 breite Gasse zurück; unterhalb dieser Breite wird es gar nicht gelegt und das Dorf ordnet sich darum an. `0` lehnt nie ab |
+| `villagePathFlatRun` | Zahl | `6` | Wie viele Blöcke ein Weg eine Höhe hält, bevor er stuft. An Weltkoordinaten verankert, damit benachbarte Stücke übereinstimmen. `0` stuft jeden Block, wie Vanillas Hänge es tun |
+| `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
+
+Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Randlinien, dann Gehwege. Breiten, die nicht passen, fallen zurück statt überzulaufen, ein schmales Stück verliert also still seinen Gehweg, bevor es seinen Weg verliert.
+
+`villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
 
 ### Blast Plaster
 
@@ -2177,6 +2204,20 @@ Die ersten beiden lesen die eigenen Schalter von Universal Tweaks aus `config/Un
 **Der Rückweg durchs Netherportal** ist der eine Punkt ohne Option auf dieser Seite. Ohne ihn landest du beim Zurückgehen durch ein Netherportal an irgendeinem Portal, das Vanillas Suche gerade findet, und nach genug Reiserei ist das oft nicht das, aus dem du kamst. Dieser Mod merkt sich, wo du den Nether betreten hast, und setzt dich dorthin zurück. Universal Tweaks hat dafür eine eigene Behandlung, das hier wird also komplett übersprungen, wenn es installiert ist.
 
 **Nichts davon berührt ein Pack.** Alles oben betrifft Minecrafts eigene Kakteen, Zuckerrohre, Blätter, Pfade und Portale. Blöcke, die dein Pack definiert, bringen ihr eigenes Verhalten mit, und Pack-Portale unter `portals/*.json` sind ein eigenes System, das Universal Tweaks nie zu sehen bekommt.
+
+## Mo' Villages
+
+Mo' Villages setzt Dörfer in Biome, in die das Spiel sie nie setzen würde, und baut sie aus anderen Blöcken. Über beides hat auch dieser Mod eine Meinung, und anders als bei Universal Tweaks behält er hier das letzte Wort.
+
+| Was sich überschneidet | Was passiert |
+| --- | --- |
+| `structureSpacing` für Dörfer | Mo' Villages setzt seinen eigenen Abstand aus `villageDistance`, nachdem dieser Mod schon gefragt hat. Hat ein Pack einen Abstand genannt, trägt dieser Mod seine Zahl wieder ein und sagt es einmal im Log |
+| `villageBlocks` | Mo' Villages tauscht Dorfmaterialien je Biom aus und erklärt den Tausch für endgültig. Die Zuordnung eines Packs greift danach, also gewinnt das Pack |
+| `structureBiomes` für Dörfer | Mo' Villages fügt seine Biome der spieleigenen Liste hinzu. Eine Positivliste im Pack entscheidet weiterhin, was übrig bleibt |
+
+Hier muss nichts eingeschaltet werden. Nennt ein Pack weder Abstand noch Blockzuordnung, darf Mo' Villages ungestört machen, was es will.
+
+Zwei Dinge sind gut zu wissen, wenn beide installiert sind. Mo' Villages setzt auch `minTownSeparation`, was in 1.12 überhaupt nichts bewirkt: Das Feld wird einmal geschrieben und nie gelesen, weder vom Spiel noch von diesem Mod. Und die Blöcke eines Dorfes legt Mo' Villages je Biom fest, bevor `villageBlocks` läuft. Wer sowohl den ursprünglichen Block als auch den von Mo' Villages eingetauschten zuordnet, erwischt ein Dorf in jedem Fall, also `minecraft:cobblestone=...` und `minecraft:brick_block=...` zusammen.
 
 ## CoFH World
 

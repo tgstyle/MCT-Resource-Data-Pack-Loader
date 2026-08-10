@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
@@ -533,11 +534,16 @@ public final class BeardRoads {
 
     public static IBlockState pathForGround(World world, int x, int z, IBlockState path, IBlockState gravel, boolean earthy) {
         Block ground = BeardBlocks.fillGround(world, x, z).getBlock();
-        if (ground == Blocks.SAND) { return Blocks.SANDSTONE.getDefaultState(); }
-        if (ground == Blocks.HARDENED_CLAY) { return Blocks.HARDENED_CLAY.getDefaultState(); }
-        if (ground == Blocks.GRAVEL) { return Blocks.GRAVEL.getDefaultState(); }
+        if (ground == Blocks.SAND) { return asked(Blocks.SANDSTONE.getDefaultState()); }
+        if (ground == Blocks.HARDENED_CLAY) { return asked(Blocks.HARDENED_CLAY.getDefaultState()); }
+        if (ground == Blocks.GRAVEL) { return asked(Blocks.GRAVEL.getDefaultState()); }
 
         return earthy ? path : gravel;
+    }
+
+    private static IBlockState asked(IBlockState picked) {
+        IBlockState wanted = ContentVillages.swap(picked);
+        return wanted != null ? wanted : picked;
     }
 
     public static boolean pathChosen() { return !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock).isEmpty(); }

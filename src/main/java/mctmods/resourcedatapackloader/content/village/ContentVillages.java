@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.village;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -12,6 +13,7 @@ import mctmods.resourcedatapackloader.util.Names;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -24,6 +26,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +40,7 @@ public final class ContentVillages {
     private static final String COMPONENT = "RDPL:Plot";
     private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> GROWN = new HashSet<>();
+    @Nullable private static Map<IBlockState, IBlockState> BLOCKS;
     private static Set<String> named;
     private static boolean loaded;
     private static boolean registered;
@@ -94,6 +98,7 @@ public final class ContentVillages {
 
     public static void reload() {
         DEFS.clear();
+        BLOCKS = null;
         named = null;
         loaded = false;
     }
@@ -105,6 +110,33 @@ public final class ContentVillages {
     }
 
     private static boolean present(VillageDef def) { return ContentRegistry.available(def.requires, def.registryName); }
+
+    @Nullable public static IBlockState swap(IBlockState original) {
+        if (BLOCKS == null) { loadBlocks(); }
+        if (BLOCKS.isEmpty()) { return null; }
+
+        IBlockState wanted = BLOCKS.get(original);
+        if (wanted != null) { return wanted; }
+
+        return BLOCKS.get(original.getBlock().getDefaultState());
+    }
+
+    private static void loadBlocks() {
+        BLOCKS = new HashMap<>();
+        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
+            int split = entry.indexOf('=');
+            if (split <= 0 || split == entry.length() - 1) {
+                ContentLog.LOGGER.error("villageBlocks entry '{}' is not written as original=replacement, ignoring it", entry);
+                continue;
+            }
+            IBlockState from = ContentStates.parse(entry.substring(0, split).trim(), "villageBlocks");
+            IBlockState to = ContentStates.parse(entry.substring(split + 1).trim(), "villageBlocks");
+            if (from == null || to == null) { continue; }
+
+            BLOCKS.put(from, to);
+        }
+        if (!BLOCKS.isEmpty()) { ContentLog.LOGGER.info("Villages build with {} replaced block(s), whatever any other mod asks for", BLOCKS.size()); }
+    }
 
     public static boolean blockedTemplate(ResourceLocation template) {
         if (template == null || !filtering()) { return false; }

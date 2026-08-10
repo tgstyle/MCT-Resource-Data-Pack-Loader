@@ -31,16 +31,20 @@ public abstract class MixinMapGenVillage {
         MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, MapGenVillage.VILLAGE_SPAWN_BIOMES);
     }
 
-    @Unique private void rdpl$tellOnce() {
-        if (rdpl$told || !rdpl$stated || distance == rdpl$asked) { return; }
+    @Unique private void rdpl$hold() {
+        if (!rdpl$stated || distance == rdpl$asked) { return; }
+
+        int found = distance;
+        distance = rdpl$asked;
+        if (rdpl$told) { return; }
 
         rdpl$told = true;
-        ContentLog.LOGGER.warn("The pack asked for villages every {} chunk(s), but another mod has since set {}, so {} is what generates. Mo' Villages does this from its own villageDistance setting", rdpl$asked, distance, distance);
+        ContentLog.LOGGER.warn("The pack asks for villages every {} chunk(s). Another mod set {} after this mod had already asked, Mo' Villages does this from its own villageDistance setting, so the pack's number is put back and is what generates", rdpl$asked, found);
     }
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
     private void rdpl$flatSite(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
-        rdpl$tellOnce();
+        rdpl$hold();
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, chunkX, chunkZ)) {
             cir.setReturnValue(true);
             return;
@@ -61,6 +65,7 @@ public abstract class MixinMapGenVillage {
 
     @Inject(method = "getNearestStructurePos", at = @At("HEAD"), cancellable = true)
     private void rdpl$nearestSite(World worldIn, BlockPos pos, boolean findUnexplored, CallbackInfoReturnable<BlockPos> cir) {
+        rdpl$hold();
         if (!ContentBeard.wanted() || !ContentBeard.adapts(worldIn)) { return; }
 
         cir.setReturnValue(ContentBeard.nearestSite(worldIn, pos, distance, findUnexplored, 100_000_000L));

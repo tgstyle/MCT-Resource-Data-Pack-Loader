@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.mixin.AccessorVillagePiece;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -101,7 +102,7 @@ public final class BeardPlaza {
         int walk = BeardRoads.pathSidewalkWidth();
         int lines = BeardRoads.pathLineColumns();
         boolean chosen = BeardRoads.pathChosen();
-        IBlockState surface = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, Blocks.GRASS_PATH.getDefaultState());
+        IBlockState surface = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((AccessorVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
         IBlockState line = BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
         IBlockState sidewalk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
         int paved = 0;
@@ -117,7 +118,7 @@ public final class BeardPlaza {
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, ground + 4);
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);
                 at.setPos(x, ground, z);
-                IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, Blocks.GRAVEL.getDefaultState(), true);
+                IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, ((AccessorVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()), true);
                 IBlockState held = band > reach - walk ? sidewalk : lines > 0 && band == reach - walk ? line : natural;
                 if (held != natural && BeardPlots.roadCore(start, piece, x, z)) { held = natural; }
                 if (!chosen) { held = natural; }

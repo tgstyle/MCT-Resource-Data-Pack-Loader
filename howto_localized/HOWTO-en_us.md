@@ -56,6 +56,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [The control layer](#the-control-layer)
 - [What each group does](#what-each-group-does)
 - [Universal Tweaks](#universal-tweaks)
+- [Mo' Villages](#mo-villages)
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
 - [Blast Plaster](#blast-plaster-integration)
@@ -2001,9 +2002,35 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 
 Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
-`villageBlocks` replaces the blocks a village is built from, as `original=replacement` pairs: `minecraft:cobblestone=mypack:ruby_brick`. It is applied after every other mod has had its say, so a pack always wins, even against mods that swap village materials per biome. Both sides accept a plain block name or a name with states. Roads are named separately by `villagePathBlock` and its siblings.
+`villageBlocks` is experimental like the rest of the village work, and only does anything while `terrainAdaptation` is on. It replaces the blocks a village is built from, as `original=replacement` pairs: `minecraft:cobblestone=mypack:ruby_brick`. It is applied after every other mod has had its say, so a pack always wins, even against mods that swap village materials per biome. Both sides accept a plain block name or a name with states. Roads are named separately by `villagePathBlock` and its siblings.
 
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. A pack plot is named by its own template: either the full name, `mypack:big_house`, or just `big_house`, or the plot's own name if you prefer. So a pack can ship ten plots and a world template can drop one of them without touching the other nine. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
+
+#### Village roads
+
+Everything below is experimental with the rest of the village work, and only does anything while `terrainAdaptation` is on. Every one of them is empty or zero by default, which leaves vanilla's roads exactly as they were.
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `villagePathBlock` | block | empty | The road surface. Empty keeps the block the biome would use, sandstone over sand, hardened clay over mesa, grass path over earth |
+| `villagePathSupportBlock` | block | empty | The block under the surface, and the surface itself where the ground is bare rock. Empty keeps vanilla gravel |
+| `villagePathBridgeBlock` | block | empty | What a road crosses water with. Empty keeps vanilla planks |
+| `villagePathBridgeBarrierBlock` | block | empty | Barriers stacked along both edges of a bridge deck. Empty builds none |
+| `villagePathBridgeBarrierHeight` | number | `1` | How many blocks tall those barriers stand |
+| `villagePathBridgeSidewalkBlock` | block | empty | Decks the sidewalk where a road crosses water. Empty carries the normal sidewalk block across |
+| `villagePathCenterBlock` | block | empty | A center line down the middle of the road. Empty draws none |
+| `villagePathCenterDash` | number | `0` | Dashes that line: N blocks of line, then one of road. Anchored to world coordinates, so the dashes of one road piece continue into the next. `0` keeps it solid |
+| `villagePathLineBlock` | block | empty | Edge lines between road and sidewalk. Empty draws none |
+| `villagePathSidewalkBlock` | block | empty | Sidewalks, laid level with the road outside the edge lines. Empty lays none |
+| `villagePathSidewalkWidth` | number | `2` | How wide each sidewalk is, once `villagePathSidewalkBlock` is set |
+| `villagePathExtraWidth` | number | `0` | Extra blocks of road on each side beyond vanilla's 3. Widens the road pieces themselves, so houses stand back from a wide street |
+| `villagePathMinimumWidth` | number | `0` | The narrowest road worth laying. A segment that cannot fit its full dress drops to a bare 3 wide alley; below this width it is not laid at all and the village lays out around it. `0` never refuses |
+| `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighbouring pieces agree. `0` steps every block, as vanilla slopes do |
+| `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
+
+A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
+
+`villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolours it.
 
 ### Blast Plaster
 
@@ -2177,6 +2204,20 @@ The first two read Universal Tweaks' own switches out of `config/Universal Tweak
 **Nether portal return** is the one with no option on this side. Without it, walking back through a nether portal drops you at whatever portal vanilla's search happens to find, which after enough travelling is often not the one you came from. This mod records where you entered the nether and puts you back there. Universal Tweaks has its own handling, so this is skipped entirely when it is installed.
 
 **None of it touches a pack.** Everything above is about Minecraft's own cactus, cane, leaves, paths and portals. Blocks your pack defines carry their own behavior, and pack portals under `portals/*.json` are a separate system that Universal Tweaks never sees.
+
+## Mo' Villages
+
+Mo' Villages puts villages in biomes the game never would and rebuilds them from different blocks. Both of those are things this mod also has an opinion about, and unlike Universal Tweaks, here this mod keeps the last word.
+
+| What overlaps | What happens |
+| --- | --- |
+| `structureSpacing` for villages | Mo' Villages sets its own spacing from `villageDistance` after this mod has asked. If a pack named a spacing, this mod puts its number back and says so once in the log |
+| `villageBlocks` | Mo' Villages swaps village materials per biome and marks the swap final. A pack's map is applied after that, so the pack wins |
+| `structureBiomes` for villages | Mo' Villages adds its biomes to the game's own list. A pack whitelist still decides what survives |
+
+Nothing here needs turning on. If a pack states no spacing and no block map, Mo' Villages is left alone to do as it likes.
+
+Two things worth knowing when both are installed. Mo' Villages sets `minTownSeparation` as well, which does nothing at all in 1.12: the field is written once and never read, by the game or by this mod. And a village's blocks are decided per biome by Mo' Villages before `villageBlocks` runs, so mapping both the original block and the block Mo' Villages swapped it to catches a village either way, `minecraft:cobblestone=...` and `minecraft:brick_block=...` together.
 
 ## CoFH World
 

@@ -94,6 +94,8 @@
     "MixinTemplate",
     "MixinTemplateManager",
     "MixinThreadedFileIOBase",
+    "MixinVillageBlocks",
+    "MixinVillageChurch",
     "MixinVillageGround",
     "MixinVillageGrowth",
     "MixinVillageLayout",

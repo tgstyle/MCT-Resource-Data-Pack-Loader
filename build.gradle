@@ -125,8 +125,9 @@ dependencies {
     compileOnly rfg.deobf("curse.maven:${common.otgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.rtgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.twfo_version}")
+
     compileOnly rfg.deobf("curse.maven:${common.tekt_version}")
-    compileOnly rfg.deobf("curse.maven:${common.movl_version}")
+    implementation rfg.deobf("curse.maven:${common.movl_version}")
     compileOnly rfg.deobf("curse.maven:${common.rcmp_version}")
     compileOnly rfg.deobf("curse.maven:${common.mcal_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.cstd_version}")
