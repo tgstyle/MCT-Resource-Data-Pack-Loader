@@ -90,6 +90,12 @@ rainfall and distance from spawn, and can be generated into chunks that already 
   created, so worlds that already exist are untouched
 - Generate the overworld as a void with a platform, which also happens by itself if every biome is
   blocked
+- Adapt the terrain to structures as they generate, in the spirit of how modern versions seat
+  theirs, with villages taken further: roads graded to a walkable slope and surfaced to suit the
+  ground they cross, buildings seated on the road they front and refused ground that would put them
+  on a plinth, lamp posts lit at road height, and hillsides opened rather than buildings buried.
+  This one is experimental, reshapes terrain permanently in whatever save it touches, changes
+  between builds, and stays off unless a pack or the config asks for it
 
 A world template gathers those settings into one file so a pack ships a whole world shape at once,
 and every group answers to a config switch that leaves it to the pack, forces the config's own value,
