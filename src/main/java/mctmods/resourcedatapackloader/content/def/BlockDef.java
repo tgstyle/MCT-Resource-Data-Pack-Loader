@@ -50,13 +50,12 @@ public final class BlockDef {
     @Nullable public final PortalDef portal;
     @Nullable public final GrowthDef growth;
     public final List<String> plantTypes;
-    public final boolean spawnsAnimals;
     public final List<String> behavesAs;
     public final String tint;
     public final String leafSapling;
     public final int leafSaplingChance;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, boolean spawnsAnimals, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -93,7 +92,6 @@ public final class BlockDef {
         this.portal = portal;
         this.growth = growth;
         this.plantTypes = plantTypes;
-        this.spawnsAnimals = spawnsAnimals;
         this.behavesAs = behavesAs;
         this.tint = tint;
         this.leafSapling = leafSapling;

@@ -479,9 +479,8 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 | `modelMeta` | nein | int | `0` | Welche Variante dieses Modells |
 | `itemModel` | nein | `state`, `item` | `state` | `state` folgt dem Blockstate, `item` sucht eine eigene Datei |
 | `tint` | nein | `biome`, `none` oder eine Hex-Farbe | keine | Braucht einen `tintindex` im Modell, um zu wirken |
-| `spawnsAnimals` | nein | boolean | `false` | Tiere dürfen darauf spawnen |
 | `plantTypes` | nein | Liste von [Pflanzentypen](#wertelisten) | keine | Was darauf gepflanzt werden kann |
-| `behavesAs` | nein | Liste aus `animals`, `till`, `path`, `bush` | keine | Vanilla-Verhalten, das er übernimmt |
+| `behavesAs` | nein | Liste aus `till`, `path` | keine | Vanilla-Verhalten, das er übernimmt |
 | `bounds` | nein | Liste aus sechs Zahlen, 0 bis 1 | ganzer Block | Die Kollisionsbox, als `[x1, y1, z1, x2, y2, z2]` |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 | `particle` | nur `torch` | `none`, `flame`, `colored` | `flame` | Der Partikel über einer Fackel |
@@ -664,8 +663,7 @@ Vanilla erkennt seine eigenen Blöcke an einem Dutzend Stellen an ihrer Identit�
 {
   "material": "ground",
   "plantTypes": ["Plains", "Crop"],
-  "behavesAs": ["animals", "till", "path"],
-  "spawnsAnimals": true,
+  "behavesAs": ["till", "path"],
   "variants": { "ruby_grass": { "meta": 0, "hardness": 0.6 } }
 }
 ```
@@ -676,10 +674,8 @@ Vanilla erkennt seine eigenen Blöcke an einem Dutzend Stellen an ihrer Identit�
 
 | Wert | Was er macht |
 | --- | --- |
-| `animals` | Tiere spawnen darauf und laufen darauf zu, wie auf Gras |
 | `till` | Eine Hacke macht Ackerboden daraus |
 | `path` | Eine Schaufel macht einen Trampelpfad daraus |
-| `bush` | Zählt als Boden, auf dem ein Busch oder Setzling stehen bleibt |
 
 ## Items
 
@@ -1966,7 +1962,7 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 
 Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter dem Namen `villages`, `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` und `structureBiomesAreBlacklist` erreichen sie also alle. Eine `structureBiomes`-Liste, die keine Blacklist ist, fügt außerdem jedes genannte Biom hinzu, das die eigene Liste der Struktur nie enthielt – so lassen sich Dörfer ins Gebirge schicken; nenne sie dafür beim Registry-Namen, denn nur Registry-Namen können hinzufügen. Ihr Abstand hat eine Untergrenze von 9, weil Vanilla 8 davon abzieht. `villagePieces` gehört zur selben Gruppe, ein Schalter deckt also alles darüber ab, wo Dörfer hinkommen und woraus sie gebaut sind, während die Gruppe `villages` nur die Grundstücke abdeckt, die ein Pack hinzufügt.
 
-`villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Pack-Grundstücke berührt die Liste nicht; sie kommen obendrauf.
+`villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Pack-Grundstücke berührt die Liste nicht; sie kommen obendrauf. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
 
 ### Blast Plaster
 
@@ -2240,7 +2236,7 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 
 **Färbungen.** `biome`, `none` oder eine sechsstellige Hex-Farbe. Farben sind überall in einer Definition Hex-Werte, mit oder ohne führendes `#`.
 
-**Verhalten** für `behavesAs`. `animals`, `till`, `path`, `bush`.
+**Verhalten** für `behavesAs`. `till`, `path`.
 
 **Der Name einer neuen Welt** wird mit `worldName` in der Gruppe `terrain` gesetzt. Der Bildschirm zum Erstellen einer Welt öffnet sich mit diesem Namen bereits im Feld, und der Ordner, in dem die Welt gespeichert wird, folgt daraus wie immer. Er füllt das Feld nur, solange dort noch steht, was das Spiel hineingeschrieben hat, ein vom Spieler getippter Name wird also nie weggenommen; und anders als Seed und Spielmodus wird er hinterher nicht wieder gesetzt: Was beim Erstellen im Feld steht, ist der Name.
 

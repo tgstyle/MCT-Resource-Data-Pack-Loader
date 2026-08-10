@@ -32,7 +32,7 @@ import javax.annotation.Nonnull;
 
 public final class ContentSpawning {
     public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(java.util.Arrays.asList(
-            "animals", "path", "till", "bush")));
+            "path", "till")));
     private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
 
     private ContentSpawning() {}
@@ -46,7 +46,6 @@ public final class ContentSpawning {
             BlockDef def = ((IContentBlock) block).getDef();
             if (def == null) { continue; }
 
-            if (def.spawnsAnimals) { add("animals", block); }
             for (String behavior : def.behavesAs) { add(behavior, block); }
         }
     }
@@ -116,8 +115,6 @@ public final class ContentSpawning {
         Set<Block> blocks = BY_BEHAVIOR.get(behavior);
         return blocks != null && blocks.contains(block);
     }
-
-    public static boolean sustainsAnimals(Block block) { return does("animals", block); }
 
     public static boolean known(String behavior) { return BEHAVIORS.contains(behavior); }
 

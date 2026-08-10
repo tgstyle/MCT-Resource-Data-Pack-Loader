@@ -126,7 +126,6 @@ public final class ContentParser {
                 portal(json),
                 growth(json),
                 strings(json, "plantTypes"),
-                JsonUtils.getBoolean(json, "spawnsAnimals", false),
                 behaviors(key, json),
                 JsonUtils.getString(json, "tint", ""),
                 JsonUtils.getString(json, "leafSapling", ""),

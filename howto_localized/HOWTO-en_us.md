@@ -479,9 +479,8 @@ Most definitions also accept `requires`, a list of mod ids or pack namespaces th
 | `modelMeta` | no | int | `0` | Which variant of that model |
 | `itemModel` | no | `state`, `item` | `state` | `state` follows the blockstate, `item` looks for its own file |
 | `tint` | no | `biome`, `none`, or a hex color | none | Needs a `tintindex` in the model to show |
-| `spawnsAnimals` | no | boolean | `false` | Animals may spawn on it |
 | `plantTypes` | no | list of [plant types](#value-lists) | none | What can be planted on it |
-| `behavesAs` | no | list of `animals`, `till`, `path`, `bush` | none | Vanilla behaviors to take on |
+| `behavesAs` | no | list of `till`, `path` | none | Vanilla behaviors to take on |
 | `bounds` | no | list of six numbers, 0 to 1 | full block | The collision box, as `[x1, y1, z1, x2, y2, z2]` |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
 | `particle` | torch only | `none`, `flame`, `colored` | `flame` | The particle above a torch |
@@ -664,8 +663,7 @@ Vanilla checks for its own blocks by identity in a dozen places, so a pack block
 {
   "material": "ground",
   "plantTypes": ["Plains", "Crop"],
-  "behavesAs": ["animals", "till", "path"],
-  "spawnsAnimals": true,
+  "behavesAs": ["till", "path"],
   "variants": { "ruby_grass": { "meta": 0, "hardness": 0.6 } }
 }
 ```
@@ -676,10 +674,8 @@ Vanilla checks for its own blocks by identity in a dozen places, so a pack block
 
 | Value | What it does |
 | --- | --- |
-| `animals` | Animals spawn on it and pathfind toward it, as they do on grass |
 | `till` | A hoe turns it into farmland |
 | `path` | A shovel turns it into a grass path |
-| `bush` | Counts as ground a bush or sapling will stay on |
 
 ## Items
 
@@ -1966,7 +1962,7 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 
 Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
-`villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top.
+`villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. Pack plots are unaffected by the list; they are added on top. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
 
 ### Blast Plaster
 
@@ -2240,7 +2236,7 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 **Tints.** `biome`, `none`, or a six digit hex color. Colors anywhere in a definition are hex, with or without a leading `#`.
 
-**Behaviors** for `behavesAs`. `animals`, `till`, `path`, `bush`.
+**Behaviors** for `behavesAs`. `till`, `path`.
 
 **The name of a new world** is set with `worldName` in the `terrain` group. The screen for making a world opens with that name already in the box, and the folder the world is saved in follows from it as it always does. It only fills the box while it still says what the game called it, so a name typed by the player is never taken away, and unlike the seed and the game mode it is not put back afterward: whatever is in the box when the world is made is what it is called.
 
