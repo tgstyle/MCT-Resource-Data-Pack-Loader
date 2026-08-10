@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
-import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import mctmods.blastplaster.util.TreeCollector;
@@ -197,9 +196,7 @@ public final class BeardGround {
                 }
             }
         }
-        Predicate<BlockPos> within = spot -> world.isChunkGeneratedAt(spot.getX() >> 4, spot.getZ() >> 4)
-                && !BeardPlots.insideAnother(start, piece, spot)
-                && !(spot.getX() >= box.minX && spot.getX() <= box.maxX && spot.getZ() >= box.minZ && spot.getZ() <= box.maxZ && spot.getY() <= box.maxY);
+        Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, true, box.maxY);
         Set<BlockPos> felledLogs = new HashSet<>();
         for (BlockPos leaf : overhangs) {
             if (!BeardBlocks.overhang(world.getBlockState(leaf))) { continue; }
@@ -229,7 +226,7 @@ public final class BeardGround {
     public static int bankRing(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         int banked = 0;
         int cut = 0;
-        int roadGrade = ContentBeard.roadGradeBeside(world, box);
+        int roadGrade = BeardRoads.roadGradeBeside(world, box);
         int bank = roadGrade == Integer.MIN_VALUE ? box.minY - 1 : roadGrade - 1;
         ContentLog.LOGGER.debug("{} at {}, {} banks its ring at y {} against road grade {}", piece.getClass().getSimpleName(), box.minX, box.minZ, bank, roadGrade == Integer.MIN_VALUE ? "none" : roadGrade);
         int deepWidth = box.maxX - box.minX + 5;

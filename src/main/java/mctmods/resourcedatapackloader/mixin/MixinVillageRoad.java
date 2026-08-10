@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.EnumFacing;
@@ -26,7 +27,7 @@ public abstract class MixinVillageRoad {
         List<StructureComponent> held = ContentBeard.laid();
         int kept;
         ContentBeard.laying(p_175848_1_);
-        try { kept = ContentBeard.roadReach(box, facing); }
+        try { kept = BeardRoads.roadReach(box, facing); }
         finally { ContentBeard.laying(held); }
         if (kept >= rows) { return; }
 

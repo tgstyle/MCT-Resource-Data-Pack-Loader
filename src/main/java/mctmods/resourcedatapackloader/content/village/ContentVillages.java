@@ -106,13 +106,41 @@ public final class ContentVillages {
 
     private static boolean present(VillageDef def) { return ContentRegistry.available(def.requires, def.registryName); }
 
+    public static boolean blockedTemplate(ResourceLocation template) {
+        if (template == null || !filtering()) { return false; }
+
+        boolean listed = names().contains(template.toString().toLowerCase(Locale.ROOT)) || names().contains(template.getPath().toLowerCase(Locale.ROOT));
+        if (!ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return false; }
+
+        return listed;
+    }
+
+    public static boolean blocked(VillageDef def) {
+        boolean listed = false;
+        if (def.isTemplate() && !def.structure.isEmpty()) {
+            ResourceLocation template = new ResourceLocation(def.structure);
+            listed = names().contains(template.toString().toLowerCase(Locale.ROOT)) || names().contains(template.getPath().toLowerCase(Locale.ROOT));
+        }
+        if (!listed) { listed = names().contains(def.registryName.toString().toLowerCase(Locale.ROOT)) || names().contains(def.registryName.getPath().toLowerCase(Locale.ROOT)); }
+        if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return listed; }
+
+        return !listed;
+    }
+
     @Nullable private static VillageDef pick(Random random) {
+        boolean filtering = filtering();
         int total = 0;
-        for (VillageDef def : DEFS.values()) { total += Math.max(1, def.weight); }
+        for (VillageDef def : DEFS.values()) {
+            if (filtering && blocked(def)) { continue; }
+
+            total += Math.max(1, def.weight);
+        }
         if (total <= 0) { return null; }
 
         int roll = random.nextInt(total);
         for (VillageDef def : DEFS.values()) {
+            if (filtering && blocked(def)) { continue; }
+
             roll -= Math.max(1, def.weight);
             if (roll < 0) { return def; }
         }
@@ -158,6 +186,8 @@ public final class ContentVillages {
         @Override public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
             VillageDef def = pick(random);
             if (def == null) { return null; }
+
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Village plot {} is laid from template {}", def.registryName, def.isTemplate() ? def.structure : "none, it is a farm"); }
 
             BlockPos size = plotSize(def);
             StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x, y, z, 0, 0, 0, size.getX(), size.getY(), size.getZ(), facing);

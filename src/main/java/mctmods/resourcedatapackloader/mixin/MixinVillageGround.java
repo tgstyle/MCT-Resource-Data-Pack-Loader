@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.World;
@@ -32,9 +34,9 @@ public abstract class MixinVillageGround extends StructureComponent {
             found = average;
         }
         if (!((Object) this instanceof StructureVillagePieces.Well)) {
-            int grade = ContentBeard.roadGradeBeside(worldIn, box);
+            int grade = BeardRoads.roadGradeBeside(worldIn, box);
             if (grade != Integer.MIN_VALUE) {
-                int seat = getClass().getName().toLowerCase().contains("waystone") ? grade : grade - 1;
+                int seat = BeardPlots.waystone(this) ? grade : grade - 1;
                 if (seat != found) {
                     cir.setReturnValue(seat);
                     ContentLog.LOGGER.debug("{} at {}, {} stands at the grade of the road beside it, y {}, instead of y {}", getClass().getSimpleName(), box.minX, box.minZ, seat, found);

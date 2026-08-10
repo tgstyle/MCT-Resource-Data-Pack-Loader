@@ -22,6 +22,8 @@ public final class BeardBlocks {
     public static boolean opening(Material material) {
         return material == Material.ROCK || material == Material.GROUND || material == Material.GRASS || material == Material.SAND || material == Material.CLAY || material == Material.SNOW;
     }
+    public static boolean loose(Material material) { return opening(material) || material == Material.CRAFTED_SNOW || material == Material.ICE; }
+
     public static boolean overhang(IBlockState held) {
         if (held.getMaterial() != Material.LEAVES) { return false; }
 
@@ -69,7 +71,7 @@ public final class BeardBlocks {
         at.move(EnumFacing.UP);
         return cleared;
     }
-    public static int clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) { return clearAbove(world, at, x, z, from, roof, "Clearing above"); }
+    public static void clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) { clearAbove(world, at, x, z, from, roof, "Clearing above"); }
 
     private static int clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof, String pass) {
         int cleared = 0;

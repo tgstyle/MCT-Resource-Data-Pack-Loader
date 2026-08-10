@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -48,7 +49,7 @@ public abstract class MixinVillagePath extends StructureVillagePieces.Village {
             return;
         }
 
-        int half = (ContentBeard.pathFullWidth() - 3) / 2;
+        int half = (BeardRoads.pathFullWidth() - 3) / 2;
         if (half > 0) {
             StructureBoundingBox wide = new StructureBoundingBox(found);
             if (facing == EnumFacing.NORTH || facing == EnumFacing.SOUTH) {
@@ -64,14 +65,14 @@ public abstract class MixinVillagePath extends StructureVillagePieces.Village {
                 return;
             }
         }
-        if (3 < ContentBeard.pathMinimumWidth()) { cir.setReturnValue(null); }
+        if (3 < BeardRoads.pathMinimumWidth()) { cir.setReturnValue(null); }
     }
 
     @Unique private static boolean rdpl$acrossPlaza(List<StructureComponent> components, StructureBoundingBox road) {
-        if (!ContentBeard.pathChosen() || components.isEmpty()) { return false; }
+        if (!BeardRoads.pathChosen() || components.isEmpty()) { return false; }
 
         StructureBoundingBox well = components.get(0).getBoundingBox();
-        int reach = ContentBeard.pathFullWidth();
+        int reach = BeardRoads.pathFullWidth();
         if (road.maxX < well.minX - reach || road.minX > well.maxX + reach || road.maxZ < well.minZ - reach || road.minZ > well.maxZ + reach) { return false; }
 
         boolean alongX = road.maxX - road.minX >= road.maxZ - road.minZ;
@@ -83,11 +84,11 @@ public abstract class MixinVillagePath extends StructureVillagePieces.Village {
     private void rdpl$grade(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
         if (!ContentBeard.wanted()) { return; }
 
-        ContentBeard.pave(this, worldIn, structureBoundingBoxIn,
-                ContentBeard.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState())),
-                ContentBeard.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState())),
-                ContentBeard.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, getBiomeSpecificBlockState(Blocks.PLANKS.getDefaultState())),
-                ContentBeard.pathChosen());
+        BeardRoads.pave(this, worldIn, structureBoundingBoxIn,
+                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState())),
+                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState())),
+                BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, getBiomeSpecificBlockState(Blocks.PLANKS.getDefaultState())),
+                BeardRoads.pathChosen());
         cir.setReturnValue(true);
     }
 }

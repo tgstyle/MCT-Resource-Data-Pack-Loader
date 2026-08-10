@@ -1,14 +1,16 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
-import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.AccessorStructureComponentBox;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.util.Locale;
+import java.util.function.Predicate;
 
 public final class BeardPlots {
     private BeardPlots() {}
@@ -20,6 +22,16 @@ public final class BeardPlots {
         StructureBoundingBox box = piece.getBoundingBox();
         return box.maxX - box.minX >= box.maxZ - box.minZ;
     }
+
+    public static boolean roadAlongX(StructureBoundingBox box) { return box.maxX - box.minX >= box.maxZ - box.minZ; }
+
+    public static Predicate<BlockPos> outside(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean inOwn, int top) {
+        return spot -> world.isChunkGeneratedAt(spot.getX() >> 4, spot.getZ() >> 4)
+                && !insideAnother(start, piece, spot)
+                && !(inOwn && spot.getX() >= box.minX && spot.getX() <= box.maxX && spot.getZ() >= box.minZ && spot.getZ() <= box.maxZ && spot.getY() <= top);
+    }
+
+    public static boolean waystone(StructureComponent piece) { return piece.getClass().getName().toLowerCase(Locale.ROOT).contains("waystone"); }
     public static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
@@ -77,7 +89,7 @@ public final class BeardPlots {
             int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
             int offset = Math.abs((alongX ? z : x) - center);
             int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
-            if (offset <= Math.min(1 + ContentBeard.pathExtraWidth(), (span - 1) / 2)) { return true; }
+            if (offset <= Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2)) { return true; }
         }
         return false;
     }

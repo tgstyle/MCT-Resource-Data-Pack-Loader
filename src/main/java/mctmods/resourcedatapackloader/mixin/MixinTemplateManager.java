@@ -1,13 +1,17 @@
 package mctmods.resourcedatapackloader.mixin;
 
+import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCofhWorld;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -16,7 +20,17 @@ import java.io.InputStream;
 
 @Mixin(TemplateManager.class)
 public abstract class MixinTemplateManager {
+    @Unique private static final Template rdpl$empty = new Template();
+
     @Shadow protected abstract void readTemplateFromStream(String id, InputStream stream) throws IOException;
+
+    @Inject(method = "get", at = @At("RETURN"), cancellable = true)
+    private void rdpl$blockTemplate(MinecraftServer server, ResourceLocation templatePath, CallbackInfoReturnable<Template> cir) {
+        if (cir.getReturnValue() == null || !ContentVillages.blockedTemplate(templatePath)) { return; }
+
+        ContentLog.LOGGER.debug("Structure {} is left empty by the pack's piece list, so whatever asked for it places nothing", templatePath);
+        cir.setReturnValue(rdpl$empty);
+    }
 
     @Inject(method = "readTemplateFromJar", at = @At("HEAD"), cancellable = true)
     private void rdpl$serveFromPack(ResourceLocation id, CallbackInfoReturnable<Boolean> cir) {

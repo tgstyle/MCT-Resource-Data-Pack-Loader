@@ -18,7 +18,7 @@ public final class BeardPlaza {
     private BeardPlaza() {}
 
     public static void bankWell(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, StructureBoundingBox box, BlockPos.MutableBlockPos at) {
-        int rim = box.maxY - 3;
+        int rim = BeardSite.wellNominal(box);
         int banked = 0;
         int opened = 0;
         for (int x = box.minX - 2; x <= box.maxX + 2; x++) {
@@ -97,13 +97,13 @@ public final class BeardPlaza {
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int reach = ContentBeard.plazaReach();
-        int ground = box.maxY - 3;
-        int walk = ContentBeard.pathSidewalkWidth();
-        int lines = ContentBeard.pathLineColumns();
-        boolean chosen = ContentBeard.pathChosen();
-        IBlockState surface = ContentBeard.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, Blocks.GRASS_PATH.getDefaultState());
-        IBlockState line = ContentBeard.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
-        IBlockState sidewalk = ContentBeard.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
+        int ground = BeardSite.wellNominal(box);
+        int walk = BeardRoads.pathSidewalkWidth();
+        int lines = BeardRoads.pathLineColumns();
+        boolean chosen = BeardRoads.pathChosen();
+        IBlockState surface = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, Blocks.GRASS_PATH.getDefaultState());
+        IBlockState line = BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
+        IBlockState sidewalk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
         int paved = 0;
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
@@ -117,7 +117,7 @@ public final class BeardPlaza {
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, ground + 4);
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);
                 at.setPos(x, ground, z);
-                IBlockState natural = chosen ? surface : ContentBeard.pathForGround(world, x, z, surface, Blocks.GRAVEL.getDefaultState(), true);
+                IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, Blocks.GRAVEL.getDefaultState(), true);
                 IBlockState held = band > reach - walk ? sidewalk : lines > 0 && band == reach - walk ? line : natural;
                 if (held != natural && BeardPlots.roadCore(start, piece, x, z)) { held = natural; }
                 if (!chosen) { held = natural; }
@@ -168,7 +168,7 @@ public final class BeardPlaza {
             if (BeardKeep.holds(x, y, z)) { continue; }
 
             Material material = world.getBlockState(at).getMaterial();
-            if (material == Material.ROCK || material == Material.GROUND || material == Material.GRASS || material == Material.SAND || material == Material.CLAY || material == Material.SNOW || material == Material.CRAFTED_SNOW || material == Material.ICE) {
+            if (BeardBlocks.loose(material)) {
                 BeardBlocks.note(world, at, "The plaza");
                 world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
                 cleared++;
