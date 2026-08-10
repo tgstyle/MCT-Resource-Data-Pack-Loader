@@ -479,6 +479,8 @@ Most definitions also accept `requires`, a list of mod ids or pack namespaces th
 | `pane` | Connects like glass panes |
 | `wall` | Connects like cobblestone walls, with the post shape |
 | `door` | Two blocks tall, opens by hand and answers to redstone. Uses one variant, since the rest of the metadata carries the hinge, the facing and whether it is open |
+| `trapdoor` | A hinged flap on the top or bottom of a block, opened by hand or by redstone. One variant, the metadata carries the facing, the half and whether it is open |
+| `fence_gate` | A gate in a fence line, opened by hand or by redstone, and lowered where it meets a wall. One variant, and always the wood material, which is fixed in the block it is built on |
 | `ladder` | Climbable, placed against a wall |
 | `torch` | Wall and floor placement, with a particle |
 | `log` | Rotates to the face you place it against |

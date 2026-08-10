@@ -41,8 +41,8 @@ pack priority, resource pack precedence and the commands.
 - Ore dictionary names, furnace recipes, fuel burn times, creative tabs and sound events
 
 # Defining new content
-Blocks in every common shape, basic, ore, falling, slab, stairs, fence, wall, pane, door, ladder,
-torch, log, leaves, sapling, crop, flower, cane, vine and portal. Items as basic, food, drink, tool,
+Blocks in every common shape, basic, ore, falling, slab, stairs, fence, fence gate, wall, pane, door,
+trapdoor, ladder, torch, log, leaves, sapling, crop, flower, cane, vine and portal. Items as basic, food, drink, tool,
 armor, seed, potion and potion bottle. Also fluids, tool and armor materials, potion effects,
 potion types, brewing recipes, villager professions with trades, game rules, biomes, village plots,
 entity variants and whole dimensions.

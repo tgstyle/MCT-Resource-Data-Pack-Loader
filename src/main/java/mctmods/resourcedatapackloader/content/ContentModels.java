@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlockDoor;
+import mctmods.resourcedatapackloader.content.block.ContentBlockFenceGate;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFalling;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFence;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
@@ -23,6 +24,7 @@ import mctmods.resourcedatapackloader.content.util.ContentTints;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockFenceGate;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -71,6 +73,10 @@ public final class ContentModels {
                 Item doorItem = ((ContentBlockDoor) block).getDoorItem();
                 if (doorItem != null) { ModelLoader.setCustomModelResourceLocation(doorItem, 0, new ModelResourceLocation(entry.getKey(), INVENTORY)); }
                 continue;
+            }
+
+            if (block instanceof ContentBlockFenceGate) {
+                ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockFenceGate.POWERED).build());
             }
 
             if (property == null) {

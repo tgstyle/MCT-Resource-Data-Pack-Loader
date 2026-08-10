@@ -479,6 +479,8 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 | `pane` | Verbindet sich wie Glasscheiben |
 | `wall` | Verbindet sich wie Bruchsteinmauern, mit der Pfostenform |
 | `door` | Zwei Blöcke hoch, öffnet sich per Hand und hört auf Redstone. Nutzt eine einzige Variante, weil die übrigen Metadaten Scharnier, Ausrichtung und Offenstand tragen |
+| `trapdoor` | Eine Klappe oben oder unten an einem Block, per Hand oder per Redstone zu öffnen. Eine Variante, die Metadaten tragen Ausrichtung, Hälfte und Offenstand |
+| `fence_gate` | Ein Tor in einer Zaunreihe, per Hand oder per Redstone zu öffnen, und abgesenkt, wo es auf eine Mauer trifft. Eine Variante, und immer das Material Holz, das im zugrunde liegenden Block festgelegt ist |
 | `ladder` | Kletterbar, an eine Wand gesetzt |
 | `torch` | Wand- und Bodenplatzierung, mit Partikel |
 | `log` | Dreht sich zu der Fläche, gegen die du ihn setzt |

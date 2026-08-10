@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
 import mctmods.resourcedatapackloader.content.block.ContentBlockDoor;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFalling;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFence;
+import mctmods.resourcedatapackloader.content.block.ContentBlockFenceGate;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
 import mctmods.resourcedatapackloader.content.block.ContentBlockLadder;
 import mctmods.resourcedatapackloader.content.block.ContentBlockLeaves;
@@ -17,6 +18,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockSapling;
 import mctmods.resourcedatapackloader.content.block.ContentBlockSlab;
 import mctmods.resourcedatapackloader.content.block.ContentBlockStairs;
 import mctmods.resourcedatapackloader.content.block.ContentBlockTorch;
+import mctmods.resourcedatapackloader.content.block.ContentBlockTrapDoor;
 import mctmods.resourcedatapackloader.content.block.ContentBlockVine;
 import mctmods.resourcedatapackloader.content.block.ContentBlockWall;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
@@ -135,6 +137,16 @@ public final class ContentBlockTypes {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockDoor(def)); }
 
             @Override public int maxVariants() { return ContentBlockDoor.MAX_VARIANTS; }
+        });
+        register("trapdoor", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockTrapDoor(def)); }
+
+            @Override public int maxVariants() { return ContentBlockTrapDoor.MAX_VARIANTS; }
+        });
+        register("fence_gate", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockFenceGate(def)); }
+
+            @Override public int maxVariants() { return ContentBlockFenceGate.MAX_VARIANTS; }
         });
         register("stairs", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockStairs.create(def)); }
