@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -13,12 +14,17 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonParseException;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +36,7 @@ import javax.annotation.Nullable;
 public final class ContentVillages {
     private static final String COMPONENT = "RDPL:Plot";
     private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
+    private static final Set<String> GROWN = new HashSet<>();
     private static Set<String> named;
     private static boolean loaded;
     private static boolean registered;
@@ -76,8 +83,11 @@ public final class ContentVillages {
     public static boolean blocked(Class<?> piece) {
         if (piece == null) { return false; }
 
-        String name = piece.getSimpleName().toLowerCase(Locale.ROOT);
-        return names().contains(name) == ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist);
+        boolean listed = names().contains(piece.getSimpleName().toLowerCase(Locale.ROOT));
+        if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return listed; }
+        if (listed) { return false; }
+
+        return piece.getEnclosingClass() == StructureVillagePieces.class;
     }
 
     @Nullable public static VillageDef byName(String name) { return DEFS.get(name); }
@@ -126,11 +136,31 @@ public final class ContentVillages {
 
         @Override public Class<?> getComponentClass() { return ContentVillagePiece.class; }
 
+        private static BlockPos plotSize(VillageDef def) {
+            BlockPos declared = new BlockPos(def.width, def.height, def.depth);
+            if (!def.isTemplate()) { return declared; }
+
+            World world = ContentBeard.samplerWorld;
+            if (!(world instanceof WorldServer)) { return declared; }
+
+            Template template = ((WorldServer) world).getStructureTemplateManager().get(world.getMinecraftServer(), new ResourceLocation(def.structure));
+            if (template == null) { return declared; }
+
+            BlockPos size = template.getSize();
+            if (size.getX() <= def.width && size.getY() <= def.height && size.getZ() <= def.depth) { return declared; }
+
+            if (GROWN.add(def.registryName.toString())) {
+                ContentLog.LOGGER.warn("Village plot {} declares {}x{}x{} but its template {} measures {}x{}x{}, so the plot is grown to fit rather than cutting the template short", def.registryName, def.width, def.height, def.depth, def.structure, size.getX(), size.getY(), size.getZ());
+            }
+            return new BlockPos(Math.max(def.width, size.getX()), Math.max(def.height, size.getY()), Math.max(def.depth, size.getZ()));
+        }
+
         @Override public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
             VillageDef def = pick(random);
             if (def == null) { return null; }
 
-            StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x, y, z, 0, 0, 0, def.width, def.height, def.depth, facing);
+            BlockPos size = plotSize(def);
+            StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x, y, z, 0, 0, 0, size.getX(), size.getY(), size.getZ(), facing);
             for (StructureComponent piece : placed) {
                 if (piece.getBoundingBox().intersectsWith(box)) { return null; }
             }

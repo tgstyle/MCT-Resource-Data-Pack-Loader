@@ -217,7 +217,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             return;
         }
         remember(player, name, best);
-        player.setPositionAndUpdate(ground.getX() + 0.5D, ground.getY(), ground.getZ() + 0.5D);
+        player.setPositionAndUpdate(ground.getX() + 0.5D, stand(player.world, ground), ground.getZ() + 0.5D);
         tell(player, TextFormatting.GREEN, Lang.tr(player, "rdpl.command.gotodone", name, ground.getX(), ground.getY(), ground.getZ()));
     }
 
@@ -261,6 +261,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private void finish() {
         over = true;
         if (running == this) { running = null; }
+    }
+
+    public static double stand(World world, BlockPos landing) {
+        BlockPos below = landing.down();
+        return below.getY() + world.getBlockState(below).getBoundingBox(world, below).maxY;
     }
 
     public static BlockPos landing(World world, BlockPos found) {

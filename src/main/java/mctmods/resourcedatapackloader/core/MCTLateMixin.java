@@ -28,6 +28,7 @@ public class MCTLateMixin implements ILateMixinLoader {
                 "mixins.resourcedatapackloader.otg.json",
                 "mixins.resourcedatapackloader.rtg.json",
                 "mixins.resourcedatapackloader.twilightforest.json",
+                "mixins.resourcedatapackloader.waystones.json",
                 "mixins.resourcedatapackloader.vanillaportals.json");
     }
 
@@ -46,6 +47,7 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (mixinConfig.endsWith(".otg.json")) { return Loader.isModLoaded("openterraingenerator"); }
         if (mixinConfig.endsWith(".rtg.json")) { return Loader.isModLoaded("rtg"); }
         if (mixinConfig.endsWith(".twilightforest.json")) { return Loader.isModLoaded("twilightforest"); }
+        if (mixinConfig.endsWith(".waystones.json")) { return Loader.isModLoaded("waystones"); }
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
         return true;
     }

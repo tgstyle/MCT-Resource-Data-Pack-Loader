@@ -24,12 +24,15 @@ public abstract class MixinVillageLayout {
     private static int rdpl$standBackZ(int placed, StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType) { return ContentBeard.wanted() && facing != null ? placed + facing.getZOffset() : placed; }
 
     @Inject(method = "generateAndAddComponent", at = @At("HEAD"))
-    private static void rdpl$beginBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) { ContentBeard.layingBuilding(true); }
+    private static void rdpl$beginBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        ContentBeard.laying(structureComponents);
+        ContentBeard.layingBuilding(true);
+    }
 
     @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true)
     private static void rdpl$sparePlaza(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         StructureComponent placed = cir.getReturnValue();
-        if (placed == null || placed instanceof StructureVillagePieces.Path || placed instanceof StructureVillagePieces.Torch) { return; }
+        if (placed == null || placed instanceof StructureVillagePieces.Path) { return; }
         if (!ContentBeard.wanted() || start == null) { return; }
 
         StructureBoundingBox well = start.getBoundingBox();
@@ -46,13 +49,13 @@ public abstract class MixinVillageLayout {
     @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true)
     private static void rdpl$flatterFooting(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         StructureComponent placed = cir.getReturnValue();
-        if (placed == null || placed instanceof StructureVillagePieces.Path || placed instanceof StructureVillagePieces.Torch) { return; }
+        if (placed == null || placed instanceof StructureVillagePieces.Path) { return; }
         if (!ContentBeard.wanted() || start == null || facing == null) { return; }
 
         StructureBoundingBox box = placed.getBoundingBox();
         structureComponents.remove(placed);
         int misfit = ContentBeard.footingMisfit(box, structureComponents);
-        if (misfit <= 2) {
+        if (misfit == 0) {
             structureComponents.add(placed);
             return;
         }
@@ -74,21 +77,24 @@ public abstract class MixinVillageLayout {
             if (triedMisfit < bestMisfit) {
                 bestMisfit = triedMisfit;
                 bestSlide = slide;
-                if (bestMisfit <= 2) { break; }
+                if (bestMisfit == 0) { break; }
             }
         }
-        if (bestMisfit > 4) {
-            ContentLog.LOGGER.debug("{} at {}, {} found no fit better than {} within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, bestMisfit == Integer.MAX_VALUE ? "attachment" : bestMisfit);
+        if (bestMisfit == Integer.MAX_VALUE) {
+            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than 2 block(s) and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
             cir.setReturnValue(null);
             return;
         }
         structureComponents.add(placed);
         if (bestSlide != 0) {
             box.offset(alongX * bestSlide, 0, (1 - alongX) * bestSlide);
-            ContentLog.LOGGER.debug("{} at {}, {} slid {} along its road to a better fit, misfit {} instead of {}", placed.getClass().getSimpleName(), box.minX, box.minZ, bestSlide, bestMisfit, misfit);
+            ContentLog.LOGGER.debug("{} at {}, {} slid {} along its road to a better fit, {} block(s) of apron in total instead of {}", placed.getClass().getSimpleName(), box.minX, box.minZ, bestSlide, bestMisfit, misfit == Integer.MAX_VALUE ? "too deep" : String.valueOf(misfit));
         }
     }
 
     @Inject(method = "generateAndAddComponent", at = @At("RETURN"))
-    private static void rdpl$endBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) { ContentBeard.layingBuilding(false); }
+    private static void rdpl$endBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        ContentBeard.layingBuilding(false);
+        ContentBeard.laying(null);
+    }
 }

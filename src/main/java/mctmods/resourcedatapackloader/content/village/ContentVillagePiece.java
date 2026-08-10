@@ -59,7 +59,7 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             averageGroundLvl = getAverageGroundLevel(world, box);
             if (averageGroundLvl < 0) { return true; }
 
-            boundingBox.offset(0, averageGroundLvl - boundingBox.maxY + def.height - 1, 0);
+            boundingBox.offset(0, averageGroundLvl - boundingBox.minY, 0);
         }
 
         if (def.isTemplate()) { template(world, def, box); }
@@ -142,8 +142,11 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
         template.addBlocksToWorld(world, corner(rotation), settings);
 
-        for (int z = 0; z <= def.depth - 1; z++) {
-            for (int x = 0; x <= def.width - 1; x++) { replaceAirAndLiquidDownwards(world, state(def.ground, Blocks.DIRT.getDefaultState()), x, -1, z, box); }
+        boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
+        int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;
+        int depth = (turned ? boundingBox.maxX - boundingBox.minX : boundingBox.maxZ - boundingBox.minZ) + 1;
+        for (int z = 0; z < depth; z++) {
+            for (int x = 0; x < width; x++) { replaceAirAndLiquidDownwards(world, state(def.ground, Blocks.DIRT.getDefaultState()), x, -1, z, box); }
         }
     }
 

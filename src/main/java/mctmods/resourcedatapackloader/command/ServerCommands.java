@@ -125,7 +125,7 @@ public class ServerCommands extends CommandBase {
             if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, found.getX(), found.getZ())); }
 
             ContentStructureSearch.remember(player, name, found);
-            player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
+            player.setPositionAndUpdate(landing.getX() + 0.5D, ContentStructureSearch.stand(world, landing), landing.getZ() + 0.5D);
             send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
             return;
         }
@@ -145,7 +145,7 @@ public class ServerCommands extends CommandBase {
         BlockPos landing = ContentStructureSearch.landing(player.world, previous);
         if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, previous.getX(), previous.getZ())); }
 
-        player.setPositionAndUpdate(landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D);
+        player.setPositionAndUpdate(landing.getX() + 0.5D, ContentStructureSearch.stand(player.world, landing), landing.getZ() + 0.5D);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
     }
 

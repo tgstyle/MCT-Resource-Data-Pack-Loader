@@ -2,12 +2,14 @@ package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,15 +18,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MapGenVillage.class)
 public abstract class MixinMapGenVillage {
     @Shadow private int distance;
+    @Unique private int rdpl$asked;
+    @Unique private boolean rdpl$stated;
+    @Unique private boolean rdpl$told;
 
     @Inject(method = "<init>()V", at = @At("RETURN"))
     private void rdpl$placement(CallbackInfo ci) {
-        distance = Math.max(9, ContentStructurePlacement.spacing(ContentStructurePlacement.VILLAGES, distance));
+        int stated = ContentStructurePlacement.spacing(ContentStructurePlacement.VILLAGES, distance);
+        rdpl$stated = stated != distance;
+        rdpl$asked = Math.max(9, stated);
+        distance = rdpl$asked;
         MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, MapGenVillage.VILLAGE_SPAWN_BIOMES);
+    }
+
+    @Unique private void rdpl$tellOnce() {
+        if (rdpl$told || !rdpl$stated || distance == rdpl$asked) { return; }
+
+        rdpl$told = true;
+        ContentLog.LOGGER.warn("The pack asked for villages every {} chunk(s), but another mod has since set {}, so {} is what generates. Mo' Villages does this from its own villageDistance setting", rdpl$asked, distance, distance);
     }
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true)
     private void rdpl$flatSite(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        rdpl$tellOnce();
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, chunkX, chunkZ)) {
             cir.setReturnValue(true);
             return;

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -25,8 +26,10 @@ public abstract class MixinStructureStart {
             if (ContentBeard.wanted()) {
                 ContentBeard.attach(self, piece);
                 ContentBeard.fellFor(self, piece, world, clip);
+                BeardKeep.watch(world, piece, clip);
             }
             built = piece.addComponentParts(world, rand, clip);
+            if (ContentBeard.wanted()) { BeardKeep.learn(world); }
             if (built && ContentBeard.wanted()) { ContentBeard.openAround(self, piece, world, clip); }
         }
         finally { ContentBeard.building(null); }

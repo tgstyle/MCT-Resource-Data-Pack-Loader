@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,6 +18,11 @@ public abstract class MixinStructureVillagePieces {
         List<StructureVillagePieces.PieceWeight> list = cir.getReturnValue();
         if (list == null || !ContentVillages.filtering()) { return; }
 
-        list.removeIf(weight -> ContentVillages.blocked(weight.villagePieceClass));
+        list.removeIf(weight -> {
+            if (!ContentVillages.blocked(weight.villagePieceClass)) { return false; }
+
+            ContentLog.LOGGER.debug("Village piece {} is left out of the layout by the pack's piece list", weight.villagePieceClass.getSimpleName());
+            return true;
+        });
     }
 }
