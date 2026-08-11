@@ -775,7 +775,8 @@ public final class ContentParser {
                 JsonUtils.getString(json, "lootTable", ""),
                 JsonUtils.getString(json, "profession", ""),
                 Math.max(0, JsonUtils.getInt(json, "career", 0)),
-                JsonUtils.getBoolean(json, "baby", false),
+                baby(json),
+                picks(json, "becomes", "variant"),
                 sounds.has("ambient") ? JsonUtils.getString(sounds, "ambient", "") : "",
                 sounds.has("hurt") ? JsonUtils.getString(sounds, "hurt", "") : "",
                 sounds.has("death") ? JsonUtils.getString(sounds, "death", "") : "",
@@ -921,6 +922,15 @@ public final class ContentParser {
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
                 JsonUtils.getFloat(entry, "threshold", 0.5F));
+    }
+
+    private static float baby(JsonObject json) {
+        if (!json.has("baby")) { return 0.0F; }
+
+        JsonElement held = json.get("baby");
+        if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isBoolean()) { return held.getAsBoolean() ? 1.0F : 0.0F; }
+
+        return Math.max(0.0F, Math.min(1.0F, JsonUtils.getFloat(json, "baby", 0.0F)));
     }
 
     private static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {

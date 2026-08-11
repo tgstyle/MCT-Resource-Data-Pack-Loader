@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
+import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.mixin.AccessorEntity;
@@ -48,6 +49,7 @@ import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.world.biome.Biome;
@@ -65,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -196,7 +199,7 @@ public final class ContentEntities {
         if (!(living instanceof EntityLiving)) { return; }
 
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && !def.baby && !def.amphibious)) { return; }
+        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious)) { return; }
 
         if (living.world.isRemote) {
             if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
@@ -204,7 +207,7 @@ public final class ContentEntities {
         }
 
         if (def.amphibious) { amphibious((EntityLiving) living); }
-        if (def.baby && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
+        if (def.baby >= 1.0F && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
 
         boolean angry = ((EntityLiving) living).getAttackTarget() != null;
         if (angry != living.isSprinting()) { living.setSprinting(angry); }
@@ -297,6 +300,8 @@ public final class ContentEntities {
         EntityVariantDef def = BY_CLASS.get(event.getEntity().getClass());
         if (def == null) { return; }
 
+        if (!event.getWorld().isRemote && swapped(event, def)) { return; }
+
         remember(event.getEntity(), def);
         if (event.getWorld().isRemote) {
             resize(event.getEntity(), event.getEntity().isSprinting() ? def.angryScale : def.scale);
@@ -304,6 +309,47 @@ public final class ContentEntities {
         }
 
         apply(event.getEntity(), def);
+    }
+
+    private static boolean swapped(EntityJoinWorldEvent event, EntityVariantDef def) {
+        if (def.becomes.isEmpty() || SWAPPING.get() == Boolean.TRUE) { return false; }
+
+        PickDef chosen = pick(def.becomes, event.getWorld().rand);
+        if (chosen == null || chosen.name.equals(def.registryName.toString())) { return false; }
+
+        ResourceLocation wanted = new ResourceLocation(chosen.name);
+        if (!EntityList.isRegistered(wanted)) {
+            ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.registryName, chosen.name);
+            return false;
+        }
+
+        Entity was = event.getEntity();
+        SWAPPING.set(Boolean.TRUE);
+        try {
+            Entity becomes = EntityList.createEntityByIDFromName(wanted, event.getWorld());
+            if (becomes == null) { return false; }
+
+            becomes.setLocationAndAngles(was.posX, was.posY, was.posZ, was.rotationYaw, was.rotationPitch);
+            if (becomes instanceof EntityLiving) { ((EntityLiving) becomes).onInitialSpawn(event.getWorld().getDifficultyForLocation(new BlockPos(becomes)), null); }
+            event.getWorld().spawnEntity(becomes);
+        }
+        finally { SWAPPING.set(Boolean.FALSE); }
+
+        event.setCanceled(true);
+        return true;
+    }
+
+    @Nullable private static PickDef pick(List<PickDef> pool, Random random) {
+        int total = 0;
+        for (PickDef entry : pool) { total += entry.weight; }
+        if (total <= 0) { return null; }
+
+        int roll = random.nextInt(total);
+        for (PickDef entry : pool) {
+            roll -= entry.weight;
+            if (roll < 0) { return entry; }
+        }
+        return null;
     }
 
     private static void apply(Entity entity, EntityVariantDef def) {
@@ -335,7 +381,7 @@ public final class ContentEntities {
         }
         ResourceLocation table = lootTable(living);
         if (table != null) { ((AccessorEntityLiving) living).rdpl$setDeathLootTable(table); }
-        if (def.baby) { child(living); }
+        if (def.baby > 0.0F && living.world.rand.nextFloat() < def.baby) { child(living); }
         if (living instanceof EntityVillager && !def.profession.isEmpty()) { profession((EntityVillager) living, def); }
         if (def.persistent) { living.enablePersistence(); }
         if (def.noAI) { living.setNoAI(true); }
@@ -403,6 +449,8 @@ public final class ContentEntities {
             living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, true));
         }
     }
+
+    private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private static void child(EntityLiving living) {
         if (living instanceof EntityZombie) { ((EntityZombie) living).setChild(true); }

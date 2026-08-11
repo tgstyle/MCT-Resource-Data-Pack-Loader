@@ -15,7 +15,8 @@ public final class EntityVariantDef {
     public final String lootTable;
     public final String profession;
     public final int career;
-    public final boolean baby;
+    public final float baby;
+    public final List<PickDef> becomes;
     public final String ambientSound;
     public final String hurtSound;
     public final String deathSound;
@@ -77,7 +78,7 @@ public final class EntityVariantDef {
     public final List<String> biomeTypes;
     public final List<String> requires;
 
-    public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, boolean baby,
+    public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, List<PickDef> becomes,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
                             int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
@@ -95,6 +96,7 @@ public final class EntityVariantDef {
         this.profession = profession;
         this.career = career;
         this.baby = baby;
+        this.becomes = becomes;
         this.ambientSound = ambientSound;
         this.hurtSound = hurtSound;
         this.deathSound = deathSound;
