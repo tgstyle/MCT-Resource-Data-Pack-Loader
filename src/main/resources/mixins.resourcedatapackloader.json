@@ -85,6 +85,7 @@
     "MixinRegionFile",
     "MixinRegionFileCache",
     "MixinRegionFileWrite",
+    "MixinServerTimePacket",
     "MixinStartupQuery",
     "MixinStrongholdPortalRoom",
     "MixinStructureComponentSpace",
