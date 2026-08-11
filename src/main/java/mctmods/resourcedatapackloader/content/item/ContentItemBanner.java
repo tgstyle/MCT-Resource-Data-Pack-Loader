@@ -14,7 +14,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
@@ -28,7 +27,7 @@ public class ContentItemBanner extends ItemBlock {
         setMaxDamage(0);
     }
 
-    @Override @Nonnull public EnumActionResult onItemUse(@NotNull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
+    @Override @Nonnull public EnumActionResult onItemUse(@Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
         IBlockState state = world.getBlockState(pos);
         boolean replaceable = state.getBlock().isReplaceable(world, pos);
         if (facing == EnumFacing.DOWN) { return EnumActionResult.FAIL; }
