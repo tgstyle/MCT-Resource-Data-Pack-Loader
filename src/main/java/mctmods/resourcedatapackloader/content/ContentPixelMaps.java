@@ -269,7 +269,7 @@ public final class ContentPixelMaps {
     @Nullable private static byte[] paint(String namespace, String path, Resolved resolved) {
         int[] size = resolved.size;
         Map<String, String> palette = resolved.palette;
-        if (resolved.base != null) { return repaint(namespace, path, resolved); }
+        if (resolved.base != null) { return repaint(namespace, path, resolved, resolved.base); }
 
         List<String> rows = resolved.rows;
         Map<Character, Integer> colours = new LinkedHashMap<>();
@@ -438,7 +438,7 @@ public final class ContentPixelMaps {
         catch (NoSuchAlgorithmException ex) { return Integer.toHexString(sources.hashCode()); }
     }
 
-    @Nullable private static byte[] repaint(String namespace, String path, Resolved resolved) {
+    @Nullable private static byte[] repaint(String namespace, String path, Resolved resolved, int[] base) {
         Map<Integer, Integer> swaps = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : resolved.palette.entrySet()) {
             Integer was = colour(entry.getKey());
@@ -454,7 +454,7 @@ public final class ContentPixelMaps {
         BufferedImage image = new BufferedImage(size[0], size[1], BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < size[1]; y++) {
             for (int x = 0; x < size[0]; x++) {
-                int was = resolved.base[y * size[0] + x];
+                int was = base[y * size[0] + x];
                 Integer becomes = swaps.get(was);
                 image.setRGB(x, y, becomes == null ? was : becomes);
             }
