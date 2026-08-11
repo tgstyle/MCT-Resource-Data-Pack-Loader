@@ -34,6 +34,7 @@ public class ContentBlockBannerWall extends BlockBanner.BlockBannerHanging imple
     public ContentBlockBannerWall(BlockDef def) {
         this.def = def;
         BlockVariant variant = def.at(0);
+        ContentSetup.material(this, def);
 
         setRegistryName(new ResourceLocation(def.registryName.getNamespace(), def.registryName.getPath() + WALL_SUFFIX));
         setTranslationKey(def.registryName + "." + variant.name);

@@ -35,6 +35,7 @@ public class ContentBlockBanner extends BlockBanner.BlockBannerStanding implemen
     public ContentBlockBanner(BlockDef def) {
         this.def = def;
         BlockVariant variant = def.at(0);
+        ContentSetup.material(this, def);
 
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);

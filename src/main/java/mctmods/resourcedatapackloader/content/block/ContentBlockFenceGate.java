@@ -28,6 +28,7 @@ public class ContentBlockFenceGate extends BlockFenceGate implements IContentBlo
         super(BlockPlanks.EnumType.OAK);
         this.def = def;
         BlockVariant variant = def.at(0);
+        ContentSetup.material(this, def);
 
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);

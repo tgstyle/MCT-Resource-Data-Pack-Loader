@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.mixin.AccessorBlock;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.util.ContentCreativeTab;
 import mctmods.resourcedatapackloader.content.util.ContentTabs;
@@ -37,6 +38,14 @@ public final class ContentSetup {
             if (def.byMeta[meta].name.equals(name)) { return meta; }
         }
         return 0;
+    }
+
+    public static void material(Block block, BlockDef def) {
+        if (def.material == null) { return; }
+
+        AccessorBlock inside = (AccessorBlock) block;
+        inside.rdpl$setMaterial(def.material);
+        inside.rdpl$setMapColor(def.material.getMaterialMapColor());
     }
 
     public static void apply(Block block, BlockDef def) {
