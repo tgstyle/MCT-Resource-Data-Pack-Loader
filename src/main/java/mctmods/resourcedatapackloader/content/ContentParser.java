@@ -457,9 +457,13 @@ public final class ContentParser {
 
     @Nullable private static DropDef drop(ResourceLocation key, String name, JsonObject json) {
         String block = JsonUtils.getString(json, "block", "");
-        if (block.isEmpty()) {
-            ContentLog.LOGGER.error("A drop for '{}' in {} has no block, skipping it", name, key);
+        String entity = JsonUtils.getString(json, "entity", "");
+        if (block.isEmpty() && entity.isEmpty()) {
+            ContentLog.LOGGER.error("A drop for '{}' in {} names neither a block nor an entity, skipping it", name, key);
             return null;
+        }
+        if (!block.isEmpty() && !entity.isEmpty()) {
+            ContentLog.LOGGER.error("A drop for '{}' in {} names both block {} and entity {}, using the entity", name, key, block, entity);
         }
 
         int[] chances = NO_CHANCE;
@@ -469,10 +473,14 @@ public final class ContentParser {
             for (int i = 0; i < array.size(); i++) { chances[i] = array.get(i).getAsInt(); }
         }
 
-        return new DropDef(new ResourceLocation(block),
+        boolean guaranteed = JsonUtils.getBoolean(json, "guaranteed", true);
+        return new DropDef(block.isEmpty() ? null : new ResourceLocation(block),
+                entity.isEmpty() ? null : new ResourceLocation(entity),
                 JsonUtils.getInt(json, "meta", 0),
-                JsonUtils.getInt(json, "amount", 1),
-                JsonUtils.getBoolean(json, "guaranteed", true),
+                amount(json, "amount", 1, 0),
+                guaranteed,
+                Math.max(0, Math.min(100, JsonUtils.getInt(json, "chance", guaranteed ? 100 : 0))),
+                Math.max(0, JsonUtils.getInt(json, "weight", 0)),
                 chances);
     }
 

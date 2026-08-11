@@ -559,18 +559,30 @@ A `basic` block can hold sixteen variants; a `slab` eight; `log` and `leaves` fo
 {
   "drops": [
     { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "bonusChance": [1, 2, 3] },
-    { "block": "minecraft:coal", "amount": 1, "guaranteed": false }
+    { "block": "minecraft:coal", "amount": 1, "chance": 25 },
+    { "block": "minecraft:diamond", "weight": 1 },
+    { "block": "minecraft:emerald", "weight": 4 },
+    { "entity": "minecraft:silverfish", "amount": { "min": 1, "max": 2 }, "chance": 15 }
   ]
 }
 ```
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `block` | yes | block or item name |, | What is dropped |
+| `block` | one of the two | block or item name |, | What is dropped |
+| `entity` | one of the two | entity name |, | An entity let out when the block breaks, instead of an item |
 | `meta` | no | int | `0` | Which variant of it |
 | `amount` | no | int or range | `1` | How many |
+| `chance` | no | 0 to 100 | `100`, or `0` when `guaranteed` is off | How often the drop happens at all |
+| `weight` | no | int | `0` | Above zero, the entry joins a pool that yields exactly one drop. See below |
 | `bonusChance` | no | list of ints | none | Extra drops per fortune level, one entry per level |
-| `guaranteed` | no | boolean | `true` | Off, the drop can fail |
+| `guaranteed` | no | boolean | `true` | Legacy shorthand for `chance`. On is `100`, off is `0` |
+
+Every entry with no `weight` is decided on its own, so a block with three of them can drop all three, or none. Give entries a `weight` and they stop being independent: they form one pool, exactly one of which is chosen each time the block breaks, the odds in proportion to the weights. Above, diamond and emerald share a pool at one to four, so one of the two always comes out and it is emerald four times in five, while the ruby and the coal are decided separately and the silverfish is its own thing again. Items and entities pool separately, so a weighted item and a weighted entity do not compete.
+
+An entry naming an `entity` lets one out where the block stood, facing a random way, and a mob is given its usual spawn treatment for the local difficulty, so it arrives with the equipment and the effects it would have had. `amount` decides how many, `chance` how often, `weight` puts it in the entity pool. It happens as the block breaks, however it broke, so an explosion or a piston sets them loose the same as a pickaxe does. `meta`, `bonusChance` and fortune mean nothing to an entity and are ignored.
+
+A drop naming both a `block` and an `entity` uses the entity and says so in the log.
 
 ### Growth
 

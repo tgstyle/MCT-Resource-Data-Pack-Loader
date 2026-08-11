@@ -559,18 +559,30 @@ Ein `basic`-Block fasst sechzehn Varianten, ein `slab` acht, `log` und `leaves` 
 {
   "drops": [
     { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "bonusChance": [1, 2, 3] },
-    { "block": "minecraft:coal", "amount": 1, "guaranteed": false }
+    { "block": "minecraft:coal", "amount": 1, "chance": 25 },
+    { "block": "minecraft:diamond", "weight": 1 },
+    { "block": "minecraft:emerald", "weight": 4 },
+    { "entity": "minecraft:silverfish", "amount": { "min": 1, "max": 2 }, "chance": 15 }
   ]
 }
 ```
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `block` | ja | Block- oder Itemname |, | Was gedroppt wird |
+| `block` | eines von beiden | Block- oder Itemname |, | Was gedroppt wird |
+| `entity` | eines von beiden | Entity-Name |, | Eine Entity, die beim Brechen des Blocks frei wird, statt eines Items |
 | `meta` | nein | int | `0` | Welche Variante davon |
 | `amount` | nein | int oder Bereich | `1` | Wie viele |
+| `chance` | nein | 0 bis 100 | `100`, bzw. `0` wenn `guaranteed` aus ist | Wie oft der Drop überhaupt kommt |
+| `weight` | nein | int | `0` | Über null tritt der Eintrag einem Topf bei, aus dem genau ein Drop kommt. Siehe unten |
 | `bonusChance` | nein | Liste von Ints | keine | Zusätzliche Drops pro Glücksstufe, ein Eintrag pro Stufe |
-| `guaranteed` | nein | boolean | `true` | Aus kann der Drop ausbleiben |
+| `guaranteed` | nein | boolean | `true` | Altes Kürzel für `chance`. An heißt `100`, aus heißt `0` |
+
+Jeder Eintrag ohne `weight` wird für sich entschieden, ein Block mit dreien kann also alle drei droppen oder keinen. Gibst du Einträgen ein `weight`, hören sie auf, unabhängig zu sein: Sie bilden einen Topf, aus dem bei jedem Brechen genau einer gezogen wird, mit den Gewichten als Verhältnis. Oben teilen sich Diamant und Smaragd einen Topf im Verhältnis eins zu vier, es kommt also immer einer von beiden heraus und in vier von fünf Fällen der Smaragd, während Rubin und Kohle getrennt entschieden werden und der Silberfisch wieder für sich steht. Items und Entities haben getrennte Töpfe, ein gewichtetes Item und eine gewichtete Entity treten also nicht gegeneinander an.
+
+Ein Eintrag mit `entity` lässt dort, wo der Block stand, eine frei, in eine zufällige Richtung gedreht, und ein Mob bekommt seine übliche Spawn-Behandlung für die Schwierigkeit vor Ort, kommt also mit der Ausrüstung und den Effekten an, die er sonst auch hätte. `amount` bestimmt wie viele, `chance` wie oft, `weight` steckt ihn in den Entity-Topf. Es passiert, während der Block bricht, ganz gleich wodurch, eine Explosion oder ein Kolben setzt sie also genauso frei wie eine Spitzhacke. `meta`, `bonusChance` und Glück bedeuten einer Entity nichts und werden ignoriert.
+
+Ein Drop, der sowohl `block` als auch `entity` nennt, nimmt die Entity und schreibt es ins Log.
 
 ### Wachstum
 

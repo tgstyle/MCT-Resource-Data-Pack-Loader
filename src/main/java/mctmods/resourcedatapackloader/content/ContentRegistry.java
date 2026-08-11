@@ -25,6 +25,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityList;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -434,6 +435,11 @@ public final class ContentRegistry {
         for (BlockDef def : BLOCK_DEFS.values()) {
             for (BlockVariant variant : def.visible) {
                 for (DropDef drop : variant.drops) {
+                    ResourceLocation entity = drop.entity;
+                    if (entity != null) {
+                        if (!EntityList.isRegistered(entity)) { ContentLog.LOGGER.error("Drop entity {} for {} '{}' is not registered, that drop is skipped", entity, def.registryName, variant.name); }
+                        continue;
+                    }
                     if (!ForgeRegistries.ITEMS.containsKey(drop.block)) {
                         ContentLog.LOGGER.error("Drop {} for {} '{}' is not registered, that drop is skipped", drop.block, def.registryName, variant.name);
                         continue;
