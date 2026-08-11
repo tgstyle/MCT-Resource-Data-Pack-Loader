@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.mixin.AccessorChunkGeneratorHell;
 import mctmods.resourcedatapackloader.mixin.AccessorChunkGeneratorStructures;
 import mctmods.resourcedatapackloader.mixin.AccessorMapGenBase;
 import mctmods.resourcedatapackloader.mixin.AccessorMapGenStructureSpawn;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.block.material.Material;
@@ -22,10 +23,14 @@ import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.MapGenStructure;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.StructureStart;
+import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraftforge.common.WorldWorkerManager;
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -103,6 +108,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             return;
         }
 
+        generator = theRealOne(generator);
         if (((AccessorMapGenBase) generator).rdpl$getWorld() == null) { ((AccessorMapGenBase) generator).rdpl$setWorld(world); }
 
         boolean cells = generator instanceof MapGenVillage && ContentBeard.wanted() && ContentBeard.adapts(world);
@@ -121,8 +127,13 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             return false;
         }
 
-        long ending = System.nanoTime() + SLICE_NANOS;
-        return cells ? cellRings(ending) : chunkRings(ending);
+        long began = System.nanoTime();
+        long ending = began + SLICE_NANOS;
+        boolean more = cells ? cellRings(ending) : chunkRings(ending);
+        long took = System.nanoTime() - began;
+        if (took > SLICE_NANOS * 10L) { ContentLog.LOGGER.warn("Looking for the nearest {} held the server for {} ms in one go, far past the {} ms it is allowed. Whatever it asked the game for is slower than it should be", name, took / 1_000_000L, SLICE_NANOS / 1_000_000L); }
+
+        return more;
     }
 
     private boolean cellRings(long ending) {
@@ -160,7 +171,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 MapGenBase.setupChunkSeed(world.getSeed(), ((AccessorMapGenBase) generator).rdpl$rand(), atX, atZ);
                 ((AccessorMapGenBase) generator).rdpl$rand().nextInt();
                 if (!((AccessorMapGenStructureSpawn) generator).rdpl$canSpawnStructureAtCoords(atX, atZ)) { continue; }
-                if (!((AccessorMapGenStructureSpawn) generator).rdpl$getStructureStart(atX, atZ).isSizeableStructure()) { continue; }
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Chunk {}, {} says a {} may stand there. The game was asked as {}, pinned {}, ground managed {}", atX, atZ, name, generator.getClass().getName(), ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, atX, atZ), ContentBeard.wanted()); }
+
+                StructureStart would = ((AccessorMapGenStructureSpawn) generator).rdpl$getStructureStart(atX, atZ);
+                if (!would.isSizeableStructure()) { continue; }
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A {} would stand on chunk {}, {} with {} piece(s) in it, {} of them not road, and the game counts that as worth keeping", name, atX, atZ, would.getComponents().size(), pieces(would)); }
 
                 best = new BlockPos(atX * 16 + 8, 64, atZ * 16 + 8);
                 settle();
@@ -219,6 +234,14 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         finish();
         if (report) { point(player, name, best); }
         else { arrive(player, name, best); }
+    }
+
+    private static int pieces(StructureStart start) {
+        int standing = 0;
+        for (StructureComponent piece : start.getComponents()) {
+            if (!(piece instanceof StructureVillagePieces.Road)) { standing++; }
+        }
+        return standing;
     }
 
     private static void point(EntityPlayerMP player, String name, @Nullable BlockPos best) {
@@ -323,6 +346,34 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             Material material = world.getBlockState(ground).getMaterial();
             if (!material.blocksMovement() && !material.isLiquid()) { continue; }
             if (open(world, ground.up()) && open(world, ground.up(2))) { return ground.up(); }
+        }
+        return null;
+    }
+
+    private static MapGenStructure theRealOne(MapGenStructure wrapper) {
+        MapGenStructure real = wrapper;
+        for (int depth = 0; depth < 8; depth++) {
+            MapGenStructure inside = delegateOf(real);
+            if (inside == null || inside == real) { break; }
+
+            ContentLog.LOGGER.debug("The game's {} is wrapped by another mod as {}, so the one underneath is asked instead", inside.getClass().getSimpleName(), real.getClass().getName());
+            real = inside;
+        }
+        return real;
+    }
+
+    @Nullable private static MapGenStructure delegateOf(MapGenStructure held) {
+        for (Class<?> owner = held.getClass(); owner != null && owner != Object.class; owner = owner.getSuperclass()) {
+            for (Field field : owner.getDeclaredFields()) {
+                if (!MapGenStructure.class.isAssignableFrom(field.getType())) { continue; }
+
+                try {
+                    field.setAccessible(true);
+                    Object inside = field.get(held);
+                    if (inside instanceof MapGenStructure && inside != held) { return (MapGenStructure) inside; }
+                }
+                catch (Exception ignored) { }
+            }
         }
         return null;
     }
