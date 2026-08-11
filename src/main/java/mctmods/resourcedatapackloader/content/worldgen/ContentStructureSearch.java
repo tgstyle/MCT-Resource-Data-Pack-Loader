@@ -12,6 +12,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.ChunkGeneratorEnd;
@@ -41,6 +42,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private final World world;
     private final String name;
     private final MapGenStructure generator;
+    private final boolean report;
+    private static boolean reporting;
     private final boolean cells;
     private final int spacing;
     private final int middleX;
@@ -67,6 +70,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         this.skipHere = skipHere;
         int chunkX = (int) player.posX >> 4;
         int chunkZ = (int) player.posZ >> 4;
+        this.report = reporting;
         this.middleX = cells ? Math.floorDiv(chunkX, spacing) : chunkX;
         this.middleZ = cells ? Math.floorDiv(chunkZ, spacing) : chunkZ;
     }
@@ -74,6 +78,15 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     public static boolean looking() { return running != null; }
 
     public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored) { start(player, name, key, findUnexplored, false); }
+
+    public static boolean point(EntityPlayerMP player, String name, String key) {
+        if (looking()) { return false; }
+
+        reporting = true;
+        try { start(player, name, key, false, false); }
+        finally { reporting = false; }
+        return looking();
+    }
 
     public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored, boolean skipHere) {
         World world = player.world;
@@ -90,12 +103,14 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             return;
         }
 
+        if (((AccessorMapGenBase) generator).rdpl$getWorld() == null) { ((AccessorMapGenBase) generator).rdpl$setWorld(world); }
+
         boolean cells = generator instanceof MapGenVillage && ContentBeard.wanted() && ContentBeard.adapts(world);
         int spacing = cells ? ContentBeard.villageSpacing(world) : 0;
         ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored, skipHere);
         running = worker;
         WorldWorkerManager.addWorker(worker);
-        tell(player, TextFormatting.GREEN, Lang.tr(player, "rdpl.command.gotolooking", name));
+        tell(player, TextFormatting.GREEN, Lang.tr(player, reporting ? "rdpl.command.locatelooking" : "rdpl.command.gotolooking", name));
     }
 
     @Override public boolean hasWork() { return !over; }
@@ -143,7 +158,9 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 if (findUnexplored && world.isChunkGeneratedAt(atX, atZ)) { continue; }
 
                 MapGenBase.setupChunkSeed(world.getSeed(), ((AccessorMapGenBase) generator).rdpl$rand(), atX, atZ);
+                ((AccessorMapGenBase) generator).rdpl$rand().nextInt();
                 if (!((AccessorMapGenStructureSpawn) generator).rdpl$canSpawnStructureAtCoords(atX, atZ)) { continue; }
+                if (!((AccessorMapGenStructureSpawn) generator).rdpl$getStructureStart(atX, atZ).isSizeableStructure()) { continue; }
 
                 best = new BlockPos(atX * 16 + 8, 64, atZ * 16 + 8);
                 settle();
@@ -200,7 +217,16 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     private void settle() {
         finish();
-        arrive(player, name, best);
+        if (report) { point(player, name, best); }
+        else { arrive(player, name, best); }
+    }
+
+    private static void point(EntityPlayerMP player, String name, @Nullable BlockPos best) {
+        if (best == null) {
+            tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name));
+            return;
+        }
+        player.sendMessage(new TextComponentTranslation("commands.locate.success", name, best.getX(), best.getZ()));
     }
 
     private static void arrive(EntityPlayerMP player, String name, BlockPos best) {

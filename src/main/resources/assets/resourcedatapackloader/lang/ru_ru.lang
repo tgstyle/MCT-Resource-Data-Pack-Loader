@@ -24,6 +24,7 @@ rdpl.command.pixelmaprows=  строки взяты из %s
 rdpl.command.pixelmapkey=  %s  %s  пикселей: %s  задан в %s  %s
 rdpl.command.gotodone=Вы перенесены к ближайшей структуре %s на %d, %d, %d
 rdpl.command.gotolooking=Идёт поиск ближайшей нетронутой структуры %s, вы будете перенесены, как только она найдётся
+rdpl.command.locatelooking=Идёт поиск ближайшего %s, его место будет названо, как только найдётся
 rdpl.command.gotomakingland=Мир ещё генерируется, дождитесь окончания
 rdpl.command.gotonoground=Структура %s найдена на %d, %d, но там не на чем стоять
 rdpl.command.gotonothing=Структуры %s поблизости нет и не ожидается

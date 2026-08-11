@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 
 import net.minecraft.command.CommandLocate;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -28,6 +30,15 @@ public abstract class MixinCommandLocate {
         if (found == null) { return; }
 
         sender.sendMessage(new TextComponentTranslation("commands.locate.success", args[0], found.getX(), found.getZ()));
+        ci.cancel();
+    }
+
+    @Inject(method = "execute", at = @At("HEAD"), cancellable = true)
+    private void rdpl$askInEarnest(MinecraftServer server, ICommandSender sender, String[] args, CallbackInfo ci) {
+        if (args.length != 1 || !(sender instanceof EntityPlayerMP)) { return; }
+        if (ContentLocate.names(sender.getEntityWorld()).contains(args[0])) { return; }
+        if (!ContentStructureSearch.point((EntityPlayerMP) sender, args[0], null)) { return; }
+
         ci.cancel();
     }
 

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -48,6 +49,7 @@ public class Commands extends CommandBase {
     private static final Map<String, IResourceType> GROUPS = groups();
 
     private static final List<String> BIOME_SUBCOMMANDS = Arrays.asList("list", "here", "find");
+    private static final List<String> FORWARDED = Arrays.asList("oregen", "generators", "gate", "dimensions", "pregen", "intro", "goto");
     private static final int FIND_RANGE = 6400;
 
     private static Map<String, IResourceType> groups() {
@@ -69,7 +71,11 @@ public class Commands extends CommandBase {
     @Override public boolean checkPermission(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) { return true; }
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        if (args.length == 1) { return getListOfStringsMatchingLastWord(args, SUBCOMMANDS); }
+        if (args.length == 1) {
+            List<String> offered = new ArrayList<>(SUBCOMMANDS);
+            offered.addAll(FORWARDED);
+            return getListOfStringsMatchingLastWord(args, offered);
+        }
         if (args.length == 2 && "reload".equals(args[0])) { return getListOfStringsMatchingLastWord(args, new ArrayList<>(GROUPS.keySet())); }
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_SUBCOMMANDS); }
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_SUBCOMMANDS); }
@@ -87,6 +93,7 @@ public class Commands extends CommandBase {
         else if (args.length > 0 && "biome".equals(args[0])) { biome(sender, args); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
         else if (args.length == 2 && "pixelmap".equals(args[0])) { pixelmap(sender, args[1]); }
+        else if (args.length > 0 && FORWARDED.contains(args[0])) { forward(args); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -172,6 +179,13 @@ public class Commands extends CommandBase {
     private static String firstNamespace(RDPLPack pack) {
         for (String namespace : pack.getNamespaces()) { return namespace; }
         return "minecraft";
+    }
+
+    private static void forward(String[] args) {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        if (player == null) { return; }
+
+        player.sendChatMessage("/rdplserver " + String.join(" ", args));
     }
 
     private void pixelmap(ICommandSender sender, String target) throws CommandException {
