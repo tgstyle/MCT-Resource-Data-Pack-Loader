@@ -1813,6 +1813,8 @@ Ein `shape`-Block mit einem `type`. Schlüssel, die bei einem Typ nicht aufgefü
 | `structures` | imprint | Liste | keine | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
 | `turns` | imprint | Liste | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich |
 | `mirrors` | imprint | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight` |
+| `field` | field | Objekt | `{ "type": "speckle" }` | Wie das Feld errechnet wird. Dieselben Schlüssel wie das `field` einer Härtegruppe, beschrieben unter [Das Feld](#das-feld): `speckle` mit `chances` und `spread`, oder `seeded` mit `cell`, `seeds`, `reach`, `arms` und `armReach` |
+| `threshold` | field | 0,0 bis 1,0 | `0,5` | Wie stark das Feld an einem Block sein muss, bevor dort gesetzt wird. Niedriger füllt mehr |
 | `rarity` | belt | int | `400` | Ein Cluster pro so vielen Chunks |
 | `rarityIsPerChunk` | belt | boolean | `false` | Macht aus `rarity` stattdessen die Anzahl Cluster pro Chunk |
 
@@ -1829,6 +1831,22 @@ Ein `shape`-Block mit einem `type`. Schlüssel, die bei einem Typ nicht aufgefü
 ```
 
 Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
+
+Ein `field`-Gang ist die eine Form, die du beschreibst statt auswählst. Er nutzt dasselbe Gitter wie die Härtegruppen: `seeded` mit ein paar Armen ergibt Knoten mit Ranken, die zu ihren Nachbarn hinüberreichen, also einen Gang statt eines Klumpens, und `threshold` entscheidet, wie viel davon fest genug zum Setzen ist:
+
+```json
+{
+  "shape": {
+    "type": "field",
+    "threshold": 0.4,
+    "field": { "type": "seeded", "cell": 10, "reach": 6.0, "arms": 3, "armReach": 5.0 }
+  }
+}
+```
+
+Diese Schlüssel kommen in ein eigenes `field`-Objekt, nicht neben `type`, denn `type` sagt an der Form ja bereits `field`.
+
+Für eine Form, die kein eingebauter Typ abdeckt, ist `imprint` der Weg: Bau sie als `.nbt`-Vorlage und setz diese, mit `structures` zum Abwechseln, `turns` und `mirrors` zum Drehen und `integrity`, um sie rauer aufzulösen als die Datei, die du gezeichnet hast.
 
 ### Gürtel
 

@@ -1813,6 +1813,8 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `structures` | imprint | list | none | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
 | `turns` | imprint | list | any | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely |
 | `mirrors` | imprint | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight` |
+| `field` | field | object | `{ "type": "speckle" }` | How the field is worked out. Same keys as a hardness group's `field`, described under [The field](#the-field): `speckle` with `chances` and `spread`, or `seeded` with `cell`, `seeds`, `reach`, `arms` and `armReach` |
+| `threshold` | field | 0.0 to 1.0 | `0.5` | How strong the field must be at a block before it is placed. Lower fills more |
 | `rarity` | belt | int | `400` | One cluster per this many chunks |
 | `rarityIsPerChunk` | belt | boolean | `false` | Turn `rarity` into how many clusters each chunk gets instead |
 
@@ -1829,6 +1831,22 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 ```
 
 A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
+
+A `field` vein is the one shape you describe rather than pick. It runs the same lattice the hardness groups use, so `seeded` with a few arms gives knots with tendrils reaching toward their neighbors, which is a vein rather than a blob, and `threshold` decides how much of it is solid enough to place:
+
+```json
+{
+  "shape": {
+    "type": "field",
+    "threshold": 0.4,
+    "field": { "type": "seeded", "cell": 10, "reach": 6.0, "arms": 3, "armReach": 5.0 }
+  }
+}
+```
+
+The keys go in a `field` object of their own, not beside `type`, since `type` on the shape already says `field`.
+
+For a shape no built-in type covers, `imprint` is the way: build it as an `.nbt` template and place that, with `structures` to vary it, `turns` and `mirrors` to turn it about, and `integrity` to dissolve it into something rougher than the file you drew.
 
 ### Belts
 

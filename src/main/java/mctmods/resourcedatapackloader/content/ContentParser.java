@@ -911,7 +911,7 @@ public final class ContentParser {
                 Math.max(1, Math.min(100, JsonUtils.getInt(entry, "integrity", 100))),
                 Math.max(1, JsonUtils.getInt(entry, "rarity", 400)),
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
-                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(entry) : null,
+                ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
                 JsonUtils.getFloat(entry, "threshold", 0.5F));
     }
 
