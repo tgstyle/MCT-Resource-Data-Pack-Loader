@@ -56,6 +56,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static ContentPregen running;
     private static final Deque<Integer> PENDING = new ArrayDeque<>();
     private static final Map<UUID, Held> HELD = new HashMap<>();
+    public static final int VANILLA_SPAWN_REACH = 12;
     private static final String HELD_MODE = "rdplPregenHeldMode";
     private static long watchedDone = -1L;
     private static long watchedAt;
@@ -208,7 +209,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     public static int wantedOnNewWorld() {
         int asked = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld));
-        return asked == 0 ? 0 : Math.max(asked, 12);
+        return Math.max(asked, VANILLA_SPAWN_REACH);
     }
 
     public static void serverStopping() {

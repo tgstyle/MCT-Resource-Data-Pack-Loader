@@ -1931,7 +1931,9 @@ Changing `retrogenKey` in the config makes every chunk eligible again, which add
 
 ## Pregeneration
 
-Making a world's land ahead of time, so nobody generates chunks while playing: no chunk lag, a known size on disk, and one wait up front instead of a stuttering first hour. Turned on by a pack with `pregenOnNewWorld`, or run by hand with the command.
+Making a world's land ahead of time, so nobody generates chunks while playing: no chunk lag, a known size on disk, and one wait up front instead of a stuttering first hour.
+
+The first 12 chunks around the spawn are always taken in hand, whatever a pack or the config says, because the game makes exactly that much itself before anyone joins. Left alone that ground arrives unlit and gets dressed a chunk at a time as the player walks it; adopted, it is finished in one pass and the player lands on ground that is already done. `pregenOnNewWorld` sets how much further to reach, and the command runs one by hand.
 
 `/rdplserver pregen <radius>` makes every chunk within that many chunks of where it is run. `status` says how far along it is, `stop` ends it, and `<radius> relight` runs only the lighting pass over land that already exists, dressing the seams the run could not reach and leaving anything never made alone.
 
@@ -1939,7 +1941,7 @@ While a run is going everybody is held: made a spectator, kept in place, shown a
 
 | Key | What it does | Why you would set it |
 | --- | --- | --- |
-| `pregenOnNewWorld` | Radius in chunks made around the spawn the moment a world is created. 0 is off. Any figure below 12 is raised to 12, since the game makes that much around the spawn on its own before a run can start, and a run that does not own that ground waits behind it being lit a chunk at a time | The one key that turns pregeneration on for a pack |
+| `pregenOnNewWorld` | Radius in chunks made around the spawn before anybody plays. 12 is the floor and 0 means that floor rather than nothing, since the game makes 12 chunks around the spawn on its own anyway: the run adopts that ground and lights it in one pass instead of leaving it to trickle in behind the player. Raise it to reach further than the game does | Sets how far a pack reaches past the ground the game already makes |
 | `pregenDimensions` | Which dimensions are made, in order, each around its own spawn | Add the nether, the end, or your own dimensions |
 | `pregenAllDimensions` | Every registered dimension instead of a list, overworld first | Packs with many dimensions. Every mod's dimensions count, so mind the size |
 | `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done | Dimensions most players never visit; the ones who never go pay nothing |

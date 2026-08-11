@@ -1931,7 +1931,9 @@ Das Flag am Eintrag markiert ihn nur als infrage kommend. Das Nachholen selbst s
 
 ## Vorgenerierung
 
-Das Land einer Welt im Voraus bauen, damit niemand beim Spielen Chunks generiert: kein Chunk-Lag, eine bekannte Größe auf der Platte und ein einziges Warten am Anfang statt einer ruckelnden ersten Stunde. Wird von einem Pack über `pregenOnNewWorld` eingeschaltet oder von Hand mit dem Befehl gestartet.
+Das Land einer Welt im Voraus bauen, damit niemand beim Spielen Chunks generiert: kein Chunk-Lag, eine bekannte Größe auf der Platte und ein einziges Warten am Anfang statt einer ruckelnden ersten Stunde.
+
+Die ersten 12 Chunks um den Spawn werden immer in die Hand genommen, ganz gleich was ein Pack oder die Config sagt, denn genau so viel baut das Spiel selbst, bevor jemand beitritt. Sich selbst überlassen kommt dieser Boden unbeleuchtet an und wird Chunk für Chunk nachgezogen, während der Spieler darüber läuft; übernommen wird er in einem Zug fertig, und der Spieler landet auf Boden, der schon steht. `pregenOnNewWorld` legt fest, wie viel weiter gereicht wird, und der Befehl startet einen Lauf von Hand.
 
 `/rdplserver pregen <radius>` baut jeden Chunk innerhalb so vieler Chunks um die Stelle, an der er ausgeführt wird. `status` sagt, wie weit es ist, `stop` beendet es, und `<radius> relight` lässt nur den Beleuchtungsdurchgang über Land laufen, das es schon gibt – es glättet die Nähte, die der Durchlauf nicht erreichen konnte, und lässt alles in Ruhe, was nie gebaut wurde.
 
@@ -1939,7 +1941,7 @@ Während ein Durchlauf läuft, wird jeder festgehalten: zum Zuschauer gemacht, a
 
 | Schlüssel | Was er macht | Warum du ihn setzen würdest |
 | --- | --- | --- |
-| `pregenOnNewWorld` | Radius in Chunks, der um den Spawn gebaut wird, sobald eine Welt erzeugt wird. 0 ist aus. Jede Zahl unter 12 wird auf 12 angehoben, denn so viel baut das Spiel von sich aus um den Spawn, bevor ein Lauf beginnen kann, und ein Lauf, dem dieser Boden nicht gehört, wartet darauf, dass er Chunk für Chunk beleuchtet wird | Der eine Schlüssel, der die Vorgenerierung für ein Pack einschaltet |
+| `pregenOnNewWorld` | Radius in Chunks, der um den Spawn gebaut wird, bevor jemand spielt. 12 ist die Untergrenze, und 0 meint diese Untergrenze statt gar nichts, denn 12 Chunks um den Spawn baut das Spiel ohnehin von sich aus: Der Lauf übernimmt diesen Boden und beleuchtet ihn in einem Zug, statt ihn hinter dem Spieler her tröpfeln zu lassen. Höher setzen, um weiter zu reichen als das Spiel | Legt fest, wie weit ein Pack über den Boden hinausreicht, den das Spiel ohnehin baut |
 | `pregenDimensions` | Welche Dimensionen gebaut werden, der Reihe nach, jede um ihren eigenen Spawn | Den Nether, das Ende oder deine eigenen Dimensionen dazunehmen |
 | `pregenAllDimensions` | Jede registrierte Dimension statt einer Liste, die Oberwelt zuerst | Packs mit vielen Dimensionen. Die Dimensionen jedes Mods zählen mit, achte also auf die Größe |
 | `pregenDimensionsWhenEntered` | Diese werden gebaut, wenn zum ersten Mal jemand einen Fuß hineinsetzt, und halten dabei wieder alle fest, bis es fertig ist | Dimensionen, die die meisten Spieler nie besuchen; wer nie hingeht, zahlt nichts |
