@@ -481,7 +481,7 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 | `wall` | Verbindet sich wie Bruchsteinmauern, mit der Pfostenform |
 | `door` | Zwei Blöcke hoch, öffnet sich per Hand und hört auf Redstone. Nutzt eine einzige Variante, weil die übrigen Metadaten Scharnier, Ausrichtung und Offenstand tragen |
 | `trapdoor` | Eine Klappe oben oder unten an einem Block, per Hand oder per Redstone zu öffnen. Eine Variante, die Metadaten tragen Ausrichtung, Hälfte und Offenstand |
-| `fence_gate` | Ein Tor in einer Zaunreihe, per Hand oder per Redstone zu öffnen, und abgesenkt, wo es auf eine Mauer trifft. Eine Variante, und immer das Material Holz, das im zugrunde liegenden Block festgelegt ist |
+| `fence_gate` | Ein Tor in einer Zaunreihe, per Hand oder per Redstone zu öffnen, und abgesenkt, wo es auf eine Mauer trifft. Eine Variante |
 | `banner` | Ein Banner auf einem Pfosten oder an einer Wand, sechzehn stehende Drehungen, mit deinem eigenen Muster. Registriert für das hängende einen zweiten Block namens `<name>_wall` |
 | `ladder` | Kletterbar, an eine Wand gesetzt |
 | `torch` | Wand- und Bodenplatzierung, mit Partikel |
@@ -724,7 +724,7 @@ Lass also keinen leeren Rand. Räumst du am Rand ein paar Spalten frei, weil du 
 
 **Ihre Items unterscheiden sich je nach Typ.** Das einer Tür ist ein flaches Sprite, `item/generated` über ihrem eigenen `textures/items/<name>.png`, denn eine Tür in der Hand wird als Bild gezeichnet und nicht als Form. Die von Falltür und Tor erben stattdessen ein Blockmodell, die untere Hälfte und das geschlossene Tor, so wie das Spiel es bei seinen eigenen macht.
 
-**Ein Tor ist immer aus Holz**, festgelegt in dem Block, auf dem es aufsetzt, `material` wird daran also ignoriert, und die Axt ist das schnelle Werkzeug. Türen und Falltüren nehmen das `material`, das du ihnen gibst.
+Alle drei nehmen das `material`, das du ihnen gibst. Ein Tor setzt auf einem Block auf, der sich selbst auf Holz festlegt, deshalb setzt dieser Mod das Material beim Registrieren wieder auf deins, und ein steinernes Tor wird mit der Spitzhacke abgebaut, wie es der Stein verlangt, für den es sich ausgibt.
 
 ### Banner
 
@@ -767,7 +767,105 @@ Ein stehendes Banner reicht also bis `29,33`, fast zwei Blöcke, und ein Wandban
 
 **Farben und Muster gibt es daran nicht.** Ein Pack-Banner hat keine Tile Entity, es trägt also nichts die Liste der Lagen, die Vanilla-Banner in ihrer führen. Das Muster ist die Textur, so wie das Aussehen einer Tür ihre Textur ist, und eine Definition ist ein Banner. Es zu färben und Muster darauf zu stapeln liegt außerhalb dessen, was ein Pack erreichen kann.
 
-**Sein Material ist immer Holz**, festgelegt in dem Block, auf dem es aufsetzt, `material` wird also ignoriert, und die Axt ist das schnelle Werkzeug daran, woraus es auch gemacht sein soll.
+**Es nimmt das `material`, das du ihm gibst.** Der Block, auf dem es aufsetzt, legt sich selbst auf Holz fest, deshalb setzt dieser Mod das Material beim Registrieren wieder auf deins, und ein steinernes Banner wird mit der Spitzhacke abgebaut, wie es der Stein verlangt, für den es sich ausgibt.
+
+### Texturen als Pixelkarte
+
+Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die PNG gelandet wäre, und häng `.json` an den ganzen Namen: `textures/blocks/panel.png.json` beantwortet dann jede Anfrage nach `textures/blocks/panel.png`. Sonst ändert sich nichts – Modelle zeigen weiter auf `meinpack:blocks/panel`, Atlas, Mipmaps und eine Animations-`.mcmeta` funktionieren wie gehabt, denn was das Spiel bekommt, ist nach wie vor eine PNG.
+
+```json
+{
+  "size": "16x16",
+  "palette": { "s": "#EDE9E2", "d": "#C6C1B5", "e": "#9E988C", "p": "#F6F4EF" },
+  "notes": {
+    "s": "the flat surface",
+    "d": "shadow inside the border",
+    "e": "the outer edge",
+    "p": "the raised panel"
+  },
+  "rows": [
+    "eeeeeeeeeeeeeeee",
+    "edddddddddddddde",
+    "edssssssssssssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edssssssssssssde",
+    "edssssssssssssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edssssssssssssde",
+    "edddddddddddddde",
+    "eeeeeeeeeeeeeeee"
+  ]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er macht |
+| --- | --- | --- | --- | --- |
+| `size` | ja, oder geerbt | `breitexhöhe` | | Wie viele Pixel quer und hinunter |
+| `rows` | ja, oder geerbt | Liste von Text | | Eine Zeichenkette je Pixelzeile, ein Zeichen je Pixel, von oben nach unten |
+| `palette` | ja, oder geerbt | Objekt | | Ein Zeichen zu einer Farbe, `#RRGGBB` oder `#AARRGGBB` |
+| `extends` | nein | eine andere Pixelkarte | | Die Karte, von der diese ausgeht |
+| `notes` | nein | Objekt | | Ein Zeichen zu einer Zeile, die sagt, wofür es da ist; wird vererbt und nie gezeichnet |
+
+**Es gibt keinen Namen anzugeben.** Der Pfad der Datei ist ihr Name, genau wie bei einer PNG: Eine Karte unter `assets/meinpack/textures/blocks/panel.png.json` heißt im Modell `meinpack:blocks/panel`, eine unter `assets/meinpack/textures/items/gem.png.json` heißt im Item-Modell `meinpack:items/gem`. Nichts zeigt eigens auf eine Pixelkarte; ein Block oder ein Item nennt seine Textur wie eh und je und erfährt nie, welche von beiden es bekommen hat. Damit bleiben Block- und Item-Ordner auch getrennt wie bei PNGs: `textures/blocks/gem.png.json` und `textures/items/gem.png.json` sind zwei verschiedene Texturen und werden als zwei verschiedene Dateien zwischengespeichert.
+
+**Jede Größe, die du willst**, bis 4096 je Seite, und die beiden Seiten müssen nicht gleich sein. `16x16` ist eine gewöhnliche Blockfläche, `16x32` der hohe Streifen, wie ihn eine Türhälfte oder eine Animation braucht. Die Größe wird geprüft und nicht erraten: Gib eine Zeile je Pixelzeile und ein Zeichen je Pixel quer, sonst wird die Karte abgelehnt und das Log nennt die Zeile und was es vorgefunden hat. Ein Zeichen ohne Farbe in der Palette bleibt frei, `.` oder ein Leerzeichen ist also ein Loch.
+
+**Vorlagen sind der eigentliche Sinn.** `extends` nennt eine andere Pixelkarte, als `namespace:pfad` oder als bloßer Pfad im selben Pack, und die erbende Datei übernimmt deren `size`, `rows` und `palette`. Was sie selbst nennt, gewinnt, und sie muss nicht alles nennen – eine ganze Variante kann also aus einer Handvoll Farben bestehen:
+
+```json
+{
+  "extends": "meinpack:textures/blocks/panel.png",
+  "palette": { "s": "#AA7EB1", "d": "#8B6292", "e": "#6B4A72", "p": "#C5A1CB" }
+}
+```
+
+Das ist eine vollständige zweite Textur: dieselbe Form in Purpur, und wird die Form in der Vorlage je neu gezeichnet, ziehen alle Varianten mit. Eine Variante darf stattdessen eigene `rows` mitbringen und die Palette der Vorlage behalten – andersherum also: dieselben Farben in einem anderen Muster. Die Vererbung geht bis zu acht Stufen tief, eine Schleife wird erkannt und gemeldet, und eine Karte, die eine Vorlage nennt, die es nicht gibt, wird gemeldet statt leer gezeichnet.
+
+**Eine Vorlage darf auch ein echtes Bild sein.** Zeigt `extends` auf eine PNG, die irgendein Pack oder das Spiel selbst liefert, ändert die Palette ihre Bedeutung: Die Schlüssel sind dann die Farben, die im Bild schon stecken, die Werte die Farben, die an ihre Stelle treten. Nichts wird abgepaust und keine `rows` werden geschrieben, ein Pack kann eine Vanilla- oder Mod-Textur also an Ort und Stelle umfärben:
+
+```json
+{
+  "extends": "minecraft:textures/blocks/coal_ore.png",
+  "palette": {
+    "#3F3F3F": "#C4353F",
+    "#343434": "#8E2029",
+    "#373737": "#A32A33",
+    "#454545": "#DE5F68"
+  }
+}
+```
+
+Das ist ein Rubinerz in Vanillas eigenem Stein: Die vier Sprenkeltöne werden getauscht, jedes andere Pixel bleibt, wie es war. Eine Farbe, die das Bild nicht enthält, passt schlicht nie, und die Größe kommt aus dem Bild, sofern du keine nennst – dann muss sie übereinstimmen.
+
+`extends` bevorzugt eine Pixelkarte: Es sucht zuerst die Karte unter diesem Pfad und weicht erst auf das Bild aus, wenn kein Pack eine liefert. Ein Name, der weder das eine noch das andere ist, wird gemeldet statt leer gezeichnet. Auf einem Bild aufzubauen ist Client-Arbeit, denn dabei werden die Ressourcen des Spiels gelesen, ein dedizierter Server tut es also nie.
+
+**Zu wissen, was die Zeichen einer Vorlage bedeuten**, ist beim Erben das Unangenehme, und genau dafür ist der `notes`-Block oben da: ein Zeichen zu einer kurzen Zeile, vererbt wie die Palette und nie gezeichnet. Beschrifte die Zeichen einer Vorlage, und wer sie erbt, weiß, welche er überschreiben muss.
+
+`/rdpl pixelmap <namespace:pfad>` berichtet dann, was eine Karte tatsächlich geworden ist, und das ist der verlässliche Weg, eine Variante zu schreiben, ohne jede Datei die Kette hinauf zu öffnen:
+
+```
+oretest:textures/blocks/ruby_ore.png is 16x16
+  built from oretest:textures/blocks/ruby_ore.png.json
+  built from oretest:textures/blocks/gem_ore.png.json
+  rows come from oretest:textures/blocks/gem_ore.png.json
+  1  #C4353F  17 pixel(s)  set by ruby_ore.png.json  ore body, most of every lump
+  2  #8E2029   8 pixel(s)  set by ruby_ore.png.json  ore shadow, the darkest tone
+  a  #747474  86 pixel(s)  set by gem_ore.png.json   stone, the commonest tone
+```
+
+Jedes Zeichen steht da mit seiner Farbe, wie viele Pixel es abdeckt, welche Datei der Kette es gesetzt hat und wofür diese Datei es hält. Der Pfad darf kurz angegeben werden, `meinpack:blocks/panel`, oder vollständig. Ein Zeichen mit 0 Pixeln ist eines, das die Palette nennt und die Zeilen nie benutzen – meist ein Tippfehler in einer Zeile.
+
+**Gezeichnete Bilder bleiben auf der Platte**, in `rdploader/pixelmap-cache`, in je einem Ordner pro Namespace und benannt nach der Textur mit einem Hash ihrer Quelle am Ende. Der Hash umfasst die ganze Kette, die Karte selbst und jede Vorlage darüber, das Bearbeiten einer Vorlage ändert also den Stempel jeder erbenden Variante, und alle werden neu gezeichnet. Wird eine Karte neu gezeichnet, werden ihre älteren Dateien weggeräumt.
+
+Der Ordner wird außerdem bei jedem Durchsuchen der Packs durchgegangen, und jedes Bild, dessen Karte kein Pack mehr liefert, wird gelöscht, samt jedem leer gebliebenen Ordner. Benenn eine Textur um, lass ein Pack weg, lösch eine Karte – ihr Bild geht mit, statt für immer liegen zu bleiben. Den ganzen Ordner zu löschen kostet nichts außer der Zeit, sie erneut zu zeichnen, und beim Suchen nach Packs wird er übersprungen, also nie für ein Pack gehalten.
+
+Eine PNG gewinnt immer. Gibt es sowohl `panel.png` als auch `panel.png.json`, wird die PNG ausgeliefert und die Karte nie gezeichnet; eine erzeugte Textur lässt sich später also durch eine gemalte ersetzen, ohne irgendetwas anzufassen, das darauf zeigt.
 
 ### Fallen, die man kennen sollte
 
@@ -2562,6 +2660,8 @@ Die Tab-Vervollständigung hält sich an dieselben Regeln: Nach `goto` werden nu
 
 Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der Config, ob ein Pack sie überhaupt setzen darf, und `off` dort hält alles bei Operator, ganz gleich was ein Pack verlangt.
 
+
+**`/rdpl` erreicht auch den Server-Befehl.** Alles, was `/rdpl` nicht selbst erledigt – `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` und `goto` –, wird unverändert an `/rdplserver` weitergereicht und in der Tab-Vervollständigung mit angeboten, im Einzelspieler gibt es also nur einen Befehl zu tippen. Weitergereicht wird Wort für Wort, und der Server entscheidet wie immer, Berechtigungen eingeschlossen; durch den kürzeren Namen wird also nichts geöffnet. Die Unterbefehle, die es doppelt gibt – `reload`, `list`, `which`, `unused`, `biome` und `config` –, bleiben bei `/rdpl` und meinen die Packs des Clients.
 
 **Beim täglichen Arbeiten:** `/rdpl reload textures` ist in einem großen Modpack viel schneller als F3+T. F3+T funktioniert weiterhin und lädt alles neu. Nimm das schlichte `/rdpl reload`, wenn du eine Datei *hinzufügst* oder *löschst*, weil sich damit ändert, was der Ordner enthält.
 

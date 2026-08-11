@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
@@ -42,7 +43,7 @@ import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT)
 public class Commands extends CommandBase {
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "biome", "config");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "biome", "config", "pixelmap");
     private static final List<String> CONFIG_SUBCOMMANDS = Arrays.asList("unused", "prune");
     private static final Map<String, IResourceType> GROUPS = groups();
 
@@ -85,6 +86,7 @@ public class Commands extends CommandBase {
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
         else if (args.length > 0 && "biome".equals(args[0])) { biome(sender, args); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
+        else if (args.length == 2 && "pixelmap".equals(args[0])) { pixelmap(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -170,6 +172,30 @@ public class Commands extends CommandBase {
     private static String firstNamespace(RDPLPack pack) {
         for (String namespace : pack.getNamespaces()) { return namespace; }
         return "minecraft";
+    }
+
+    private void pixelmap(ICommandSender sender, String target) throws CommandException {
+        int colon = target.indexOf(':');
+        if (colon < 1) { throw new CommandException(Lang.tr(sender, "rdpl.command.pixelmapname")); }
+
+        String namespace = target.substring(0, colon);
+        String path = target.substring(colon + 1);
+        if (!path.startsWith("textures/")) { path = "textures/" + path; }
+        if (!path.endsWith(ContentPixelMaps.PNG)) { path = path + ContentPixelMaps.PNG; }
+
+        ContentPixelMaps.Resolved resolved = ContentPixelMaps.resolve(namespace, path, false);
+        if (resolved == null) { resolved = ContentPixelMaps.resolve(namespace, path, true); }
+        if (resolved == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.pixelmapnone", namespace + ":" + path)); }
+
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.pixelmapis", namespace + ":" + path, resolved.size[0], resolved.size[1]));
+        for (String held : resolved.chain) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.pixelmapfrom", held)); }
+        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.pixelmaprows", resolved.rowsFrom));
+        for (Map.Entry<String, String> entry : resolved.palette.entrySet()) {
+            String note = resolved.notes.get(entry.getKey());
+            send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.pixelmapkey",
+                    entry.getKey(), entry.getValue(), resolved.used(entry.getKey()),
+                    resolved.from.getOrDefault(entry.getKey(), "?"), note == null ? "" : note));
+        }
     }
 
     private void which(ICommandSender sender, String target) {

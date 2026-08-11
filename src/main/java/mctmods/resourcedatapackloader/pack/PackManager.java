@@ -1,11 +1,13 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -147,6 +149,7 @@ public final class PackManager {
         namespacesOverride = null;
         packMeta = resolvePackMeta();
         PackOptions.reload(packRoot, packs);
+        ContentPixelMaps.tidy();
     }
 
     private void buildIndex() {
@@ -198,6 +201,7 @@ public final class PackManager {
 
     @Nullable private RDPLPack load(Path entry) {
         String fileName = entry.getFileName().toString();
+        if (ContentPixelMaps.CACHE_DIRECTORY.equals(fileName)) { return null; }
         if (Files.isDirectory(entry)) {
             if (!Files.isDirectory(entry.resolve(RDPLPack.ASSETS))) {
                 ContentLog.LOGGER.warn("Skipping '{}': a pack folder must contain an '{}' directory", fileName, RDPLPack.ASSETS);
@@ -344,7 +348,10 @@ public final class PackManager {
         ContentLog.LOGGER.warn("Pack '{}': loading {}:{} from '{}', the filename case does not match. Rename it to '{}' so it also works outside this mod.", entry.pack.getName(), namespace, requested, entry.actual, requested);
     }
 
-    public boolean existsRaw(String namespace, String path, boolean overriding) { return resolve(namespace, path, overriding) != null; }
+    public boolean existsRaw(String namespace, String path, boolean overriding) {
+        if (resolve(namespace, path, overriding) != null) { return true; }
+        return ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding);
+    }
 
     @Nullable public InputStream openRaw(String namespace, String path) throws IOException {
         Entry entry = resolve(namespace, path);
@@ -354,8 +361,11 @@ public final class PackManager {
 
     @Nullable public InputStream openRaw(String namespace, String path, boolean overriding) throws IOException {
         Entry entry = resolve(namespace, path, overriding);
-        if (entry == null) { return null; }
-        return entry.pack.open(namespace, entry.actual);
+        if (entry != null) { return entry.pack.open(namespace, entry.actual); }
+        if (!ContentPixelMaps.couldBeDrawn(path)) { return null; }
+
+        byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
+        return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
 
     public List<String> findUnused() {
@@ -556,6 +566,14 @@ public final class PackManager {
                 "are each decided on their own, unless you give them a weight, in which case",
                 "they share one pot and exactly one of them comes out. An entry naming an",
                 "entity instead of a block lets that entity loose where the block stood.",
+                "",
+                "A texture can be written out as JSON instead of drawn. Name the file after the",
+                "PNG with .json on the end, textures/blocks/panel.png.json, and give it a size",
+                "such as 16x16 or 16x32, a palette of one character to one colour, and rows of",
+                "those characters from the top down. Another such file can extend it and name",
+                "only the colours it wants different, so one shape can be recoloured as many",
+                "times as you like without a single image file. What they draw is kept in",
+                "pixelmap-cache here and redrawn whenever a map or its template changes.",
                 "",
                 "CraftTweaker and GroovyScript still work exactly as before. They run after this",
                 "mod, so anything your scripts remove or change wins over a file here.",
@@ -906,6 +924,7 @@ public final class PackManager {
         mergedOverride.clear();
         warned.clear();
         served.clear();
+        ContentPixelMaps.forget();
         namespacesNormal = null;
         namespacesOverride = null;
         packMeta = null;

@@ -481,7 +481,7 @@ Most definitions also accept `requires`, a list of mod ids or pack namespaces th
 | `wall` | Connects like cobblestone walls, with the post shape |
 | `door` | Two blocks tall, opens by hand and answers to redstone. Uses one variant, since the rest of the metadata carries the hinge, the facing and whether it is open |
 | `trapdoor` | A hinged flap on the top or bottom of a block, opened by hand or by redstone. One variant, the metadata carries the facing, the half and whether it is open |
-| `fence_gate` | A gate in a fence line, opened by hand or by redstone, and lowered where it meets a wall. One variant, and always the wood material, which is fixed in the block it is built on |
+| `fence_gate` | A gate in a fence line, opened by hand or by redstone, and lowered where it meets a wall. One variant |
 | `banner` | A banner on a post or against a wall, sixteen standing rotations, carrying your own design. Registers a second block named `<name>_wall` for the hanging one |
 | `ladder` | Climbable, placed against a wall |
 | `torch` | Wall and floor placement, with a particle |
@@ -724,7 +724,7 @@ So leave no empty margin. Clear a few columns at one edge, thinking the shape is
 
 **Their items differ by type.** A door's is a flat sprite, `item/generated` over its own `textures/items/<name>.png`, since a door in the hand is drawn as a picture rather than a shape. A trapdoor's and a gate's parent a block model instead, the bottom half and the closed gate, which is what the game does with its own.
 
-**A gate is always wood**, fixed in the block it is built on, so `material` is ignored on it and an axe is the quick tool. Doors and trapdoors take whatever `material` you give them.
+All three take whatever `material` you give them. A gate is built on a block that fixes itself to wood, so this mod sets the material back to yours as it registers, and a stone gate is mined with a pickaxe like the stone it says it is.
 
 ### Banners
 
@@ -767,7 +767,105 @@ So a standing banner reaches to `29.33`, most of two blocks, and a wall banner h
 
 **There are no colours or patterns on it.** A pack banner has no tile entity, so nothing carries the layer list vanilla banners keep in theirs. The design is the texture, the same way a door's look is its texture, and one definition is one banner. Dyeing it and stacking patterns on it is not something a pack can reach.
 
-**Its material is always wood**, fixed by the block it is built on, so `material` is ignored and an axe is the quick tool on it whatever it is meant to be made of.
+**It takes the `material` you give it.** The block it is built on fixes itself to wood, so this mod sets the material back to yours as it registers, and a stone banner is mined with a pickaxe like the stone it says it is.
+
+### Textures written as pixel maps
+
+A texture can be a JSON file instead of a PNG. Put it where the PNG would have gone with `.json` on the end of the whole name, so `textures/blocks/panel.png.json` answers every request for `textures/blocks/panel.png`. Nothing else changes: models point at `mypack:blocks/panel` as they always did, and the atlas, mipmaps and an animation `.mcmeta` all work, because what the game receives is still a PNG.
+
+```json
+{
+  "size": "16x16",
+  "palette": { "s": "#EDE9E2", "d": "#C6C1B5", "e": "#9E988C", "p": "#F6F4EF" },
+  "notes": {
+    "s": "the flat surface",
+    "d": "shadow inside the border",
+    "e": "the outer edge",
+    "p": "the raised panel"
+  },
+  "rows": [
+    "eeeeeeeeeeeeeeee",
+    "edddddddddddddde",
+    "edssssssssssssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edssssssssssssde",
+    "edssssssssssssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edssssssssssssde",
+    "edddddddddddddde",
+    "eeeeeeeeeeeeeeee"
+  ]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `size` | yes, or inherited | `widthxheight` | | How many pixels across and down |
+| `rows` | yes, or inherited | list of text | | One string per row of pixels, one character per pixel, from the top down |
+| `palette` | yes, or inherited | object | | A character to a colour, `#RRGGBB` or `#AARRGGBB` |
+| `extends` | no | another pixel map | | The map this one starts from |
+| `notes` | no | object | | A character to a line saying what it is for, inherited and never drawn |
+
+**There is no name to declare.** The file's own path is its name, exactly as a PNG's is, so a map at `assets/mypack/textures/blocks/panel.png.json` is `mypack:blocks/panel` in a model and a map at `assets/mypack/textures/items/gem.png.json` is `mypack:items/gem` in an item model. Nothing points at a pixel map specially; a block or an item names its texture the way it always did and never learns which of the two it got. That also means the block and item folders stay apart, as they do for PNGs: `textures/blocks/gem.png.json` and `textures/items/gem.png.json` are two different textures and are cached as two different files.
+
+**Any size you like**, up to 4096 a side, and the two sides need not match. `16x16` is an ordinary block face, `16x32` is the sort of tall strip a door half or an animation wants. The size is checked rather than guessed: give one row per line of pixels and one character per pixel across, or the map is refused and the log names the row and what it found. A character with no colour in the palette is left clear, so `.` or a space is a hole.
+
+**Templates are the point of it.** `extends` names another pixel map, as `namespace:path` or a bare path in the same pack, and the file that extends it inherits its `size`, its `rows` and its `palette`. Anything it names itself wins, and it need not name everything, so a whole variant can be a handful of colours:
+
+```json
+{
+  "extends": "mypack:textures/blocks/panel.png",
+  "palette": { "s": "#AA7EB1", "d": "#8B6292", "e": "#6B4A72", "p": "#C5A1CB" }
+}
+```
+
+That is a complete second texture: the same shape in purpur, and if the shape is ever redrawn in the template every variant follows. A variant may instead give its own `rows` and keep the template's palette, which is the other way round, the same colours in a different pattern. Inheritance runs up to eight deep, a loop is caught and reported, and a map naming a template nothing provides is reported rather than drawn blank.
+
+**A template can be a real image instead of a map.** Point `extends` at a PNG that any pack or the game itself provides and the palette changes meaning: keys become the colours already in that image, values the colours to put in their place. Nothing is traced and no `rows` are written, so a pack can recolour a vanilla or mod texture where it stands:
+
+```json
+{
+  "extends": "minecraft:textures/blocks/coal_ore.png",
+  "palette": {
+    "#3F3F3F": "#C4353F",
+    "#343434": "#8E2029",
+    "#373737": "#A32A33",
+    "#454545": "#DE5F68"
+  }
+}
+```
+
+That is a ruby ore in vanilla's own stone: the four speck tones are swapped and every other pixel is left as it was. A colour the image does not contain simply never matches, and the size comes from the image unless you name one, which must then agree.
+
+`extends` prefers a pixel map: it looks for the map at that path first and only falls back to the image when no pack provides one. A name that is neither is reported rather than drawn blank. Building on an image is client-side work, since it is the game's own resources being read, so a dedicated server never does it.
+
+**Knowing what a template's characters mean** is the awkward part of extending one, which is what the `notes` block above is for: a character to a short line, inherited the same way the palette is and never drawn. Label a template's characters and whoever extends it knows which to override.
+
+`/rdpl pixelmap <namespace:path>` then reports what a map actually came out as, which is the reliable way to write a variant without opening every file up the chain:
+
+```
+oretest:textures/blocks/ruby_ore.png is 16x16
+  built from oretest:textures/blocks/ruby_ore.png.json
+  built from oretest:textures/blocks/gem_ore.png.json
+  rows come from oretest:textures/blocks/gem_ore.png.json
+  1  #C4353F  17 pixel(s)  set by ruby_ore.png.json  ore body, most of every lump
+  2  #8E2029   8 pixel(s)  set by ruby_ore.png.json  ore shadow, the darkest tone
+  a  #747474  86 pixel(s)  set by gem_ore.png.json   stone, the commonest tone
+```
+
+Every character is listed with its colour, how many pixels it covers, which file in the chain set it and what that file says it is for. The path may be given the short way, `mypack:blocks/panel`, or in full. A character showing 0 pixels is one the palette names and the rows never use, which is usually a typo in a row.
+
+**Drawn images are kept on disk** in `rdploader/pixelmap-cache`, under a folder per namespace and named after the texture with a hash of its source on the end. The hash covers the whole chain, the map itself and every template above it, so editing a template changes the stamp of every variant that inherits from it and they are all redrawn. When a map is redrawn its older files are swept away.
+
+The folder is also gone over every time the packs are scanned, and any image whose map no pack provides any more is deleted, along with any folder left empty. Rename a texture, drop a pack, delete a map, and its cached image goes with it rather than sitting there for good. Deleting the whole folder costs nothing but the time to draw them again, and it is skipped when packs are scanned, so it is never mistaken for a pack.
+
+A PNG always wins. If both `panel.png` and `panel.png.json` exist, the PNG is served and the map is never drawn, so a generated texture can be replaced by a painted one later without changing anything that points at it.
 
 ### Traps worth knowing
 
@@ -2564,6 +2662,8 @@ An entry sets one level for all three forms of that place, since a place either 
 Tab completion follows the same rules, so after `goto` a sender is offered only the places they may actually be carried to.
 
 These sit in the `commands` group, so `control.commands` in the config decides whether a pack may set them at all, and `off` there keeps everything at operator whatever a pack asks for.
+
+**`/rdpl` reaches the server command too.** Anything `/rdpl` does not handle itself, `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` and `goto`, is passed straight through to `/rdplserver` and offered in tab completion, so there is one command to type in single player. It is passed on word for word and the server decides as it always would, permissions and all, so nothing is opened up by typing the shorter name. The subcommands both have, `reload`, `list`, `which`, `unused`, `biome` and `config`, stay with `/rdpl` and mean the client's own packs.
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 
