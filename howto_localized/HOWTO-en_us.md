@@ -482,6 +482,7 @@ Most definitions also accept `requires`, a list of mod ids or pack namespaces th
 | `door` | Two blocks tall, opens by hand and answers to redstone. Uses one variant, since the rest of the metadata carries the hinge, the facing and whether it is open |
 | `trapdoor` | A hinged flap on the top or bottom of a block, opened by hand or by redstone. One variant, the metadata carries the facing, the half and whether it is open |
 | `fence_gate` | A gate in a fence line, opened by hand or by redstone, and lowered where it meets a wall. One variant, and always the wood material, which is fixed in the block it is built on |
+| `banner` | A banner on a post or against a wall, sixteen standing rotations, carrying your own design. Registers a second block named `<name>_wall` for the hanging one |
 | `ladder` | Climbable, placed against a wall |
 | `torch` | Wall and floor placement, with a particle |
 | `log` | Rotates to the face you place it against |
@@ -670,7 +671,7 @@ Every block with more than one variant gets a property called `blocks`, and its 
 
 A block with a single variant and no other properties uses `normal` instead.
 
-Where the block has properties of its own, they are joined with commas in the order the state lists them, `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Two are left out on purpose: a wall's own variant property, and a leaf block's `check_decay` and `decayable`, so leaves need only `blocks=ruby_leaves`.
+Where the block has properties of its own, they are joined with commas in the order the state lists them, `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Two are left out on purpose: a wall's own variant property, and a leaf block's `check_decay` and `decayable`, so leaves need only `blocks=ruby_leaves`. A banner has no variant property at all, and is keyed by `rotation=0` through `15` standing or `facing=north` on a wall, which [Banners](#banners) covers.
 
 ### Item models
 
@@ -687,13 +688,84 @@ The path is the item's registry name, then the variant name.
 
 Fluids need no model at all, one is generated from the `still` and `flow` textures.
 
+### Doors, trapdoors and fence gates
+
+All three spend their whole metadata on the shape they take, so each is a single variant, and each has a few things worth knowing before you write the files.
+
+**They carry no `blocks` property**, so their blockstates are keyed by the shape alone: `facing=east,half=lower,hinge=left,open=false` for a door, `facing=north,half=bottom,open=false` for a trapdoor, `facing=south,in_wall=false,open=false` for a gate. That is 32 keys, 16 and 16.
+
+**`powered` is left out of doors and gates.** Both really have it, and both would otherwise double their blockstates for an axis that changes nothing you can see. It is dropped for you, exactly as the game drops it from its own doors and gates, so write the keys without it. Trapdoors never had it.
+
+**Point the models at the parents that take textures**, not at the finished vanilla ones:
+
+| Type | Parents |
+| --- | --- |
+| `door` | `block/door_bottom`, `block/door_bottom_rh`, `block/door_top`, `block/door_top_rh` |
+| `trapdoor` | `block/trapdoor_bottom`, `block/trapdoor_top`, `block/trapdoor_open` |
+| `fence_gate` | `block/fence_gate_closed`, `block/fence_gate_open`, `block/wall_gate_closed`, `block/wall_gate_open` |
+
+A door takes two textures, `bottom` and `top`; the other two take one, `texture`. Both door top models reach for `bottom` to face their upper edge, so declare both in all four files even though the top ones seem to need only one. Gate variants want `"uvlock": true`, as the game's own do.
+
+**Their textures use every pixel, and this is the one that catches people.** A door's wide faces are mapped `[0, 0, 16, 16]`, the whole image, and its narrow edges and its top and bottom come out of the same square: columns 0 to 3 for the sides, 13 to 16 for the top and bottom. A trapdoor is the same, its flat faces the whole image and its four rims taken from rows 13 to 16.
+
+So leave no empty margin. Clear a few columns at one edge, thinking the shape is narrower than the file, and you cut a slit clean through the middle of the face and lose the top and bottom entirely. Draw the frame or the stiles into those edge pixels instead, and they read as trim on the block's own edges.
+
+**Their items differ by type.** A door's is a flat sprite, `item/generated` over its own `textures/items/<name>.png`, since a door in the hand is drawn as a picture rather than a shape. A trapdoor's and a gate's parent a block model instead, the bottom half and the closed gate, which is what the game does with its own.
+
+**A gate is always wood**, fixed in the block it is built on, so `material` is ignored on it and an axe is the quick tool. Doors and trapdoors take whatever `material` you give them.
+
+### Banners
+
+A banner is the one type where the shape of the block and the shape of the model part ways, so it is worth setting out in full.
+
+**It registers two blocks.** One definition gives you the standing banner under your own name and a second block named `<name>_wall` for the hanging one. Both need a blockstate; only the standing one gets an item, and that item decides which of the two it places, standing when you click the top of a block and wall when you click a side. You never place the wall block directly and it needs no item of its own.
+
+**The standing one needs a Forge blockstate.** Its property is `rotation`, running `0` to `15`, because a banner turns in sixteenths rather than quarters. A vanilla blockstate cannot express that: its `y` goes through `ModelRotation`, which only accepts 0, 90, 180 and 270 and throws on anything else. Forge's format takes any angle, so the sixteen entries are written as a transform:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": { "model": "mypack:my_banner" },
+  "variants": {
+    "rotation": {
+      "0": { "transform": { "rotation": { "y": 0 } } },
+      "1": { "transform": { "rotation": { "y": -22.5 } } }
+    }
+  }
+}
+```
+
+…and so on to `15`, each one `-22.5` degrees further round. The sign matches the game's own banners, which turn by minus the rotation. Build the model facing south, since that is where a banner placed by a player looking south ends up pointing. The wall block is an ordinary vanilla blockstate with the usual four `facing` entries at 0, 90, 180 and 270, since there is nothing fractional about it.
+
+**The model is nearly two blocks tall.** A banner occupies one block for placement and collision, but it is drawn far outside it, and a model that stops at the top of its own block looks stunted. Vanilla's proportions, in sixteenths of a block, are worth copying exactly:
+
+| Part | From | To |
+| --- | --- | --- |
+| Post | `0` | `28` |
+| Crossbar | `28` | `29.33` |
+| Cloth | `2.67` | `29.33` |
+| Cloth width | `1.33` | `14.67` |
+| Wall cloth | `-13` | `13.67` |
+
+So a standing banner reaches to `29.33`, most of two blocks, and a wall banner hangs thirteen sixteenths *below* the block holding it. Model elements may run from `-16` to `32`, so both fit. The wall form has no post or crossbar, only cloth.
+
+**The cloth is twice as tall as it is wide, and your texture has to be too.** That face is `13.33` by `26.67`. Map a square texture onto it and the design is squeezed to half its height. Block textures cannot themselves be twice as tall as they are wide, since anything non-square is read as an animation, so the way round it is a larger square sheet with the cloth in part of it: a 32×32 file holding the cloth as a 16×32 region, addressed as `"uv": [0, 0, 8, 16]`, with the post and crossbar strips in the space beside it. UV coordinates always run 0 to 16 whatever the file's resolution, so the same numbers work at any size.
+
+**Its item wants a model of its own.** An item that inherits a model this tall will burst out of its slot at the usual block scale, so give `models/item/<name>.json` a `display` block of its own with the scale brought down and the whole thing translated back into the frame.
+
+**There are no colours or patterns on it.** A pack banner has no tile entity, so nothing carries the layer list vanilla banners keep in theirs. The design is the texture, the same way a door's look is its texture, and one definition is one banner. Dyeing it and stacking patterns on it is not something a pack can reach.
+
+**Its material is always wood**, fixed by the block it is built on, so `material` is ignored and an axe is the quick tool on it whatever it is meant to be made of.
+
 ### Traps worth knowing
 
-**A blockstate naming a bare vanilla model inherits vanilla's textures too.** `normal_torch`, `ladder`, `wooden_door_*` and `wheat_stage*` all carry their own textures, so a block pointing at one gets vanilla's look no matter what you put in the blockstate. Parent models such as `cube_all`, `cross` and `block/crop` take their textures from the blockstate and behave.
+**A blockstate naming a bare vanilla model inherits vanilla's textures too.** `normal_torch`, `ladder`, `wooden_door_*` and `wheat_stage*` all carry their own textures, so a block pointing at one gets vanilla's look no matter what you put in the blockstate. Parent models such as `cube_all`, `cross` and `block/crop` take their textures from the blockstate and behave, as do the door, trapdoor and gate parents listed under [Doors, trapdoors and fence gates](#doors-trapdoors-and-fence-gates).
 
 **`forge_marker: 1` does not support multipart.** A vine blockstate has to be plain vanilla multipart, with the textures baked into the model rather than passed in.
 
 **Names come from the language file.** A block or item shows a raw key until `lang/en_us.lang` gives it one, in the usual `tile.mypack:ruby_ore.name=Ruby Ore` form.
+
+**Single-variant types name themselves twice.** A block that can hold several variants is keyed by its registry name alone, as above. A block whose whole metadata goes on its shape adds the variant name after it, so a door defined in `blocks/my_door.json` with one variant called `my_door` is `tile.mypack:my_door.my_door.name=My Door`. That covers `door`, `trapdoor`, `fence_gate`, `banner`, `stairs`, `ladder`, `torch`, `crop`, `cane`, `sapling` and `vine`. Where such a type has an item of its own, as a door and a banner do, it wants the same key again under `item.` rather than `tile.`.
 
 ## Making vanilla treat your block properly
 

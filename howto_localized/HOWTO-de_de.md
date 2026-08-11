@@ -482,6 +482,7 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 | `door` | Zwei Blöcke hoch, öffnet sich per Hand und hört auf Redstone. Nutzt eine einzige Variante, weil die übrigen Metadaten Scharnier, Ausrichtung und Offenstand tragen |
 | `trapdoor` | Eine Klappe oben oder unten an einem Block, per Hand oder per Redstone zu öffnen. Eine Variante, die Metadaten tragen Ausrichtung, Hälfte und Offenstand |
 | `fence_gate` | Ein Tor in einer Zaunreihe, per Hand oder per Redstone zu öffnen, und abgesenkt, wo es auf eine Mauer trifft. Eine Variante, und immer das Material Holz, das im zugrunde liegenden Block festgelegt ist |
+| `banner` | Ein Banner auf einem Pfosten oder an einer Wand, sechzehn stehende Drehungen, mit deinem eigenen Muster. Registriert für das hängende einen zweiten Block namens `<name>_wall` |
 | `ladder` | Kletterbar, an eine Wand gesetzt |
 | `torch` | Wand- und Bodenplatzierung, mit Partikel |
 | `log` | Dreht sich zu der Fläche, gegen die du ihn setzt |
@@ -670,7 +671,7 @@ Jeder Block mit mehr als einer Variante bekommt eine Eigenschaft namens `blocks`
 
 Ein Block mit einer einzigen Variante und ohne weitere Eigenschaften nutzt stattdessen `normal`.
 
-Hat der Block eigene Eigenschaften, werden sie mit Kommas verbunden, in der Reihenfolge, in der der Zustand sie auflistet: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Zwei bleiben mit Absicht weg: die eigene Varianteneigenschaft einer Mauer sowie `check_decay` und `decayable` eines Blätterblocks – Blätter brauchen also nur `blocks=ruby_leaves`.
+Hat der Block eigene Eigenschaften, werden sie mit Kommas verbunden, in der Reihenfolge, in der der Zustand sie auflistet: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Zwei bleiben mit Absicht weg: die eigene Varianteneigenschaft einer Mauer sowie `check_decay` und `decayable` eines Blätterblocks – Blätter brauchen also nur `blocks=ruby_leaves`. Ein Banner hat gar keine Varianteneigenschaft und wird stehend über `rotation=0` bis `15` und an der Wand über `facing=north` angesprochen, siehe [Banner](#banner).
 
 ### Item-Modelle
 
@@ -687,13 +688,84 @@ Der Pfad ist der Registry-Name des Items, dann der Variantenname.
 
 Flüssigkeiten brauchen überhaupt kein Modell, es wird aus den Texturen `still` und `flow` erzeugt.
 
+### Türen, Falltüren und Zauntore
+
+Alle drei geben ihre gesamten Metadaten für die Form aus, die sie annehmen, jede ist also eine einzige Variante, und bei jeder gibt es ein paar Dinge, die man vor dem Schreiben der Dateien wissen sollte.
+
+**Sie tragen keine `blocks`-Eigenschaft**, ihre Blockstates werden also allein über die Form angesprochen: `facing=east,half=lower,hinge=left,open=false` bei einer Tür, `facing=north,half=bottom,open=false` bei einer Falltür, `facing=south,in_wall=false,open=false` bei einem Tor. Das sind 32 Schlüssel, 16 und 16.
+
+**`powered` bleibt bei Türen und Toren weg.** Beide haben es tatsächlich, und beide würden ihre Blockstates sonst für eine Achse verdoppeln, die nichts Sichtbares ändert. Es wird dir abgenommen, genau wie das Spiel es seinen eigenen Türen und Toren abnimmt, schreib die Schlüssel also ohne. Falltüren hatten es nie.
+
+**Zeig mit den Modellen auf die Eltern, die Texturen annehmen**, nicht auf die fertigen von Vanilla:
+
+| Typ | Eltern |
+| --- | --- |
+| `door` | `block/door_bottom`, `block/door_bottom_rh`, `block/door_top`, `block/door_top_rh` |
+| `trapdoor` | `block/trapdoor_bottom`, `block/trapdoor_top`, `block/trapdoor_open` |
+| `fence_gate` | `block/fence_gate_closed`, `block/fence_gate_open`, `block/wall_gate_closed`, `block/wall_gate_open` |
+
+Eine Tür nimmt zwei Texturen, `bottom` und `top`; die anderen beiden nehmen eine, `texture`. Beide oberen Türmodelle greifen für ihre Oberkante nach `bottom`, gib also in allen vier Dateien beide an, auch wenn die oberen nur eine zu brauchen scheinen. Tor-Varianten wollen `"uvlock": true`, wie die spieleigenen auch.
+
+**Ihre Texturen nutzen jedes Pixel, und das ist die Falle, in die man tappt.** Die breiten Flächen einer Tür sind mit `[0, 0, 16, 16]` belegt, dem ganzen Bild, und ihre schmalen Kanten samt Ober- und Unterseite kommen aus demselben Quadrat: Spalten 0 bis 3 für die Seiten, 13 bis 16 für oben und unten. Bei einer Falltür ist es dasselbe, die flachen Seiten das ganze Bild und die vier Ränder aus den Zeilen 13 bis 16.
+
+Lass also keinen leeren Rand. Räumst du am Rand ein paar Spalten frei, weil du die Form für schmaler hältst als die Datei, schneidest du einen Schlitz mitten durch die Fläche und verlierst Ober- und Unterseite ganz. Zeichne stattdessen den Rahmen oder die Holme in diese Randpixel, dann lesen sie sich als Zierleiste auf den Kanten des Blocks.
+
+**Ihre Items unterscheiden sich je nach Typ.** Das einer Tür ist ein flaches Sprite, `item/generated` über ihrem eigenen `textures/items/<name>.png`, denn eine Tür in der Hand wird als Bild gezeichnet und nicht als Form. Die von Falltür und Tor erben stattdessen ein Blockmodell, die untere Hälfte und das geschlossene Tor, so wie das Spiel es bei seinen eigenen macht.
+
+**Ein Tor ist immer aus Holz**, festgelegt in dem Block, auf dem es aufsetzt, `material` wird daran also ignoriert, und die Axt ist das schnelle Werkzeug. Türen und Falltüren nehmen das `material`, das du ihnen gibst.
+
+### Banner
+
+Beim Banner gehen die Form des Blocks und die Form des Modells als Einziges getrennte Wege, deshalb sei es hier vollständig aufgeschrieben.
+
+**Es registriert zwei Blöcke.** Eine Definition liefert dir das stehende Banner unter deinem eigenen Namen und einen zweiten Block namens `<name>_wall` für das hängende. Beide brauchen einen Blockstate; ein Item bekommt nur das stehende, und dieses Item entscheidet, welchen der beiden es setzt: das stehende, wenn du oben auf einen Block klickst, das hängende, wenn du auf eine Seite klickst. Den Wandblock setzt du nie selbst, und ein eigenes Item braucht er nicht.
+
+**Das stehende braucht einen Forge-Blockstate.** Seine Eigenschaft heißt `rotation` und läuft von `0` bis `15`, denn ein Banner dreht sich in Sechzehnteln statt in Vierteln. Ein Vanilla-Blockstate kann das nicht ausdrücken: Sein `y` geht durch `ModelRotation`, das nur 0, 90, 180 und 270 annimmt und bei allem anderen abbricht. Forges Format nimmt jeden Winkel, die sechzehn Einträge werden also als Transform geschrieben:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": { "model": "meinpack:mein_banner" },
+  "variants": {
+    "rotation": {
+      "0": { "transform": { "rotation": { "y": 0 } } },
+      "1": { "transform": { "rotation": { "y": -22.5 } } }
+    }
+  }
+}
+```
+
+…und so weiter bis `15`, jeder Eintrag `-22,5` Grad weiter herum. Das Vorzeichen entspricht den spieleigenen Bannern, die sich um minus die Drehung drehen. Bau das Modell nach Süden zeigend, denn dort landet ein Banner, das ein nach Süden blickender Spieler setzt. Der Wandblock ist ein ganz gewöhnlicher Vanilla-Blockstate mit den üblichen vier `facing`-Einträgen bei 0, 90, 180 und 270, an ihm ist nichts Krummes.
+
+**Das Modell ist fast zwei Blöcke hoch.** Ein Banner belegt zum Setzen und für die Kollision einen Block, gezeichnet wird es aber weit darüber hinaus, und ein Modell, das oben an seinem eigenen Block endet, sieht gestutzt aus. Vanillas Maße, in Sechzehnteln eines Blocks, lohnen sich genau zu übernehmen:
+
+| Teil | Von | Bis |
+| --- | --- | --- |
+| Pfosten | `0` | `28` |
+| Querbalken | `28` | `29,33` |
+| Tuch | `2,67` | `29,33` |
+| Tuchbreite | `1,33` | `14,67` |
+| Wandtuch | `-13` | `13,67` |
+
+Ein stehendes Banner reicht also bis `29,33`, fast zwei Blöcke, und ein Wandbanner hängt dreizehn Sechzehntel *unter* dem Block, der es hält. Modellelemente dürfen von `-16` bis `32` laufen, beides passt also. Die Wandform hat weder Pfosten noch Querbalken, nur Tuch.
+
+**Das Tuch ist doppelt so hoch wie breit, und deine Textur muss das auch sein.** Diese Fläche misst `13,33` auf `26,67`. Legst du eine quadratische Textur darauf, wird das Muster auf die halbe Höhe gequetscht. Blocktexturen selbst dürfen nicht doppelt so hoch wie breit sein, denn alles Nichtquadratische wird als Animation gelesen; der Ausweg ist ein größeres quadratisches Blatt, auf dem das Tuch nur einen Teil einnimmt: eine 32×32-Datei mit dem Tuch als 16×32-Bereich, angesprochen als `"uv": [0, 0, 8, 16]`, mit den Streifen für Pfosten und Querbalken im Platz daneben. UV-Koordinaten laufen immer von 0 bis 16, ganz gleich welche Auflösung die Datei hat, dieselben Zahlen gelten also in jeder Größe.
+
+**Sein Item will ein eigenes Modell.** Ein Item, das ein so hohes Modell erbt, sprengt bei der üblichen Blockskalierung sein Feld, gib `models/item/<name>.json` also einen eigenen `display`-Block mit heruntergesetzter Skalierung und schieb das Ganze zurück in den Rahmen.
+
+**Farben und Muster gibt es daran nicht.** Ein Pack-Banner hat keine Tile Entity, es trägt also nichts die Liste der Lagen, die Vanilla-Banner in ihrer führen. Das Muster ist die Textur, so wie das Aussehen einer Tür ihre Textur ist, und eine Definition ist ein Banner. Es zu färben und Muster darauf zu stapeln liegt außerhalb dessen, was ein Pack erreichen kann.
+
+**Sein Material ist immer Holz**, festgelegt in dem Block, auf dem es aufsetzt, `material` wird also ignoriert, und die Axt ist das schnelle Werkzeug daran, woraus es auch gemacht sein soll.
+
 ### Fallen, die man kennen sollte
 
-**Ein Blockstate, der ein nacktes Vanilla-Modell nennt, erbt auch Vanillas Texturen.** `normal_torch`, `ladder`, `wooden_door_*` und `wheat_stage*` bringen alle ihre eigenen Texturen mit, ein Block, der auf eines davon zeigt, bekommt also Vanillas Aussehen, ganz gleich, was im Blockstate steht. Eltern-Modelle wie `cube_all`, `cross` und `block/crop` nehmen ihre Texturen aus dem Blockstate und verhalten sich wie erwartet.
+**Ein Blockstate, der ein nacktes Vanilla-Modell nennt, erbt auch Vanillas Texturen.** `normal_torch`, `ladder`, `wooden_door_*` und `wheat_stage*` bringen alle ihre eigenen Texturen mit, ein Block, der auf eines davon zeigt, bekommt also Vanillas Aussehen, ganz gleich, was im Blockstate steht. Eltern-Modelle wie `cube_all`, `cross` und `block/crop` nehmen ihre Texturen aus dem Blockstate und verhalten sich wie erwartet, ebenso die Eltern für Tür, Falltür und Tor, die unter [Türen, Falltüren und Zauntore](#türen-falltüren-und-zauntore) stehen.
 
 **`forge_marker: 1` unterstützt kein Multipart.** Ein Blockstate für Ranken muss reines Vanilla-Multipart sein, mit den Texturen im Modell selbst statt von außen übergeben.
 
 **Namen kommen aus der Sprachdatei.** Ein Block oder Item zeigt seinen rohen Schlüssel, bis `lang/en_us.lang` ihm einen gibt, in der üblichen Form `tile.mypack:ruby_ore.name=Ruby Ore`.
+
+**Typen mit nur einer Variante nennen sich doppelt.** Ein Block, der mehrere Varianten fassen kann, wird allein über seinen Registrierungsnamen angesprochen, wie oben. Ein Block, dessen gesamte Metadaten für seine Form draufgehen, hängt den Variantennamen dahinter: Eine Tür aus `blocks/my_door.json` mit einer Variante namens `my_door` heißt also `tile.mypack:my_door.my_door.name=My Door`. Das betrifft `door`, `trapdoor`, `fence_gate`, `banner`, `stairs`, `ladder`, `torch`, `crop`, `cane`, `sapling` und `vine`. Hat so ein Typ ein eigenes Item, wie Tür und Banner, will er denselben Schlüssel noch einmal unter `item.` statt unter `tile.`.
 
 ## Damit Vanilla deinen Block richtig behandelt
 

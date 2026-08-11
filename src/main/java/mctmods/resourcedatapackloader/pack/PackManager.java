@@ -599,6 +599,7 @@ public final class PackManager {
                 "    basic   ore     falling   slab    stairs   fence    door",
                 "    pane    wall    ladder    torch   crop     flower   cane",
                 "    log     leaves  sapling   vine    portal   trapdoor fence_gate",
+                "    banner",
                 "",
                 "and items in these:",
                 "",

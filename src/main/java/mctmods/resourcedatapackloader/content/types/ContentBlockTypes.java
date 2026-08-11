@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.types;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
+import mctmods.resourcedatapackloader.content.block.ContentBlockBanner;
+import mctmods.resourcedatapackloader.content.block.ContentBlockBannerWall;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
 import mctmods.resourcedatapackloader.content.block.ContentBlockDoor;
@@ -137,6 +139,17 @@ public final class ContentBlockTypes {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockDoor(def)); }
 
             @Override public int maxVariants() { return ContentBlockDoor.MAX_VARIANTS; }
+        });
+        register("banner", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) {
+                ContentBlockBanner standing = new ContentBlockBanner(def);
+                ContentBlockBannerWall wall = new ContentBlockBannerWall(def);
+                standing.pair(wall);
+                wall.pair(standing);
+                return Arrays.asList(standing, wall);
+            }
+
+            @Override public int maxVariants() { return ContentBlockBanner.MAX_VARIANTS; }
         });
         register("trapdoor", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockTrapDoor(def)); }
