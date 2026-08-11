@@ -169,6 +169,7 @@ public class ResourceDataPackLoader {
         ContentReplacements.reload();
         ContentStructurePlacement.reload();
         ContentEntityTicks.reload();
+        ContentVillages.reload();
     }
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }

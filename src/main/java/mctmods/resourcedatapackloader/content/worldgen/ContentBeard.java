@@ -33,6 +33,7 @@ import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.structure.MapGenStructure;
+import net.minecraft.world.gen.structure.ComponentScatteredFeaturePieces;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
@@ -113,14 +114,17 @@ public final class ContentBeard {
 
         int lowest = middle;
         int highest = middle;
-        for (int corner = 0; corner < 4; corner++) {
-            int sampled = surfaceAt(world, blockX + ((corner & 1) == 0 ? -halfWidth : halfWidth), blockZ + ((corner & 2) == 0 ? -halfWidth : halfWidth));
-            if (sampled < 0) { return false; }
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int sampled = surfaceAt(world, blockX + dx * halfWidth, blockZ + dz * halfWidth);
+                if (sampled < 0) { return false; }
 
-            lowest = Math.min(lowest, sampled);
-            highest = Math.max(highest, sampled);
+                lowest = Math.min(lowest, sampled);
+                highest = Math.max(highest, sampled);
+                if (highest - lowest > tolerance) { return true; }
+            }
         }
-        return highest - lowest > tolerance;
+        return false;
     }
 
 
@@ -405,9 +409,24 @@ public final class ContentBeard {
     public static void foundAtBirth(StructureStart start) { BeardSite.foundAtBirth(start); }
 
     public static void openAround(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
+        if (piece.getClass().getEnclosingClass() == ComponentScatteredFeaturePieces.class) {
+            settleFeature(start, piece, world, clip);
+            return;
+        }
         if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path) { return; }
 
         BeardOpen.around(start, piece, world, clip);
+    }
+
+    private static void settleFeature(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
+        loadModes();
+        if (MODES.getOrDefault("temples", Mode.NONE) == Mode.NONE) { return; }
+
+        StructureBoundingBox box = piece.getBoundingBox();
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int worked = BeardGround.bankRing(start, piece, world, box, clip, at);
+        int freed = BeardGround.openOver(start, piece, world, box, clip, at)[0];
+        if (worked + freed > 0) { ContentLog.LOGGER.debug("Settled {} at {}, {} into its ground, {} block(s) banked or cut around it and {} opened over it", piece.getClass().getSimpleName(), box.minX, box.minZ, worked, freed); }
     }
 
 
@@ -651,8 +670,8 @@ public final class ContentBeard {
 
             String name = parts[0].trim().toLowerCase(Locale.ROOT);
             String asked = parts[1].trim().toUpperCase(Locale.ROOT);
-            if ("temples".equals(name)) {
-                ContentLog.LOGGER.error("structureAdaptation names temples, but they place themselves only as they are built, so terrain cannot adapt to them yet and the entry is ignored");
+            if ("temples".equals(name) && !"NONE".equals(asked) && !"BEARD_THIN".equals(asked)) {
+                ContentLog.LOGGER.error("structureAdaptation asks for temples={}, but a temple settles itself only as it is built, so the terrain cannot be shaped for it beforehand. Only beard_thin is offered there, which banks the ground around it once it stands", parts[1].trim());
                 continue;
             }
             try { MODES.put(name, Mode.valueOf(asked)); }

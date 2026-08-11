@@ -88,6 +88,16 @@ public final class BeardBlocks {
         }
         return cleared;
     }
+    private static boolean afloat(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int floor) {
+        for (int y = from; y >= floor; y--) {
+            at.setPos(x, y, z);
+            Material material = world.getBlockState(at).getMaterial();
+            if (material.isLiquid()) { return true; }
+            if (material.isSolid()) { return false; }
+        }
+        return false;
+    }
+
     public static int cutBank(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) {
         int cut = clearAbove(world, at, x, z, from, roof, "Cutting a ring");
         at.setPos(x, from - 1, z);
@@ -107,6 +117,8 @@ public final class BeardBlocks {
         return filled;
     }
     public static int fillBank(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int floor, boolean field) {
+        if (afloat(world, at, x, z, from, floor)) { return 0; }
+
         int filled = 0;
         for (int y = from; y >= floor; y--) {
             at.setPos(x, y, z);

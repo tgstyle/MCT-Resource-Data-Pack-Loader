@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.mixin.AccessorMapGenBase;
 import mctmods.resourcedatapackloader.mixin.AccessorMapGenStructureSpawn;
 import mctmods.resourcedatapackloader.util.Lang;
 
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -22,6 +23,7 @@ import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.MapGenStructure;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraftforge.common.WorldWorkerManager;
+import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -272,11 +274,29 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) { world.getChunk((found.getX() >> 4) + dx, (found.getZ() >> 4) + dz); }
         }
+        for (int reach = 0; reach <= 6; reach += 2) {
+            for (int dx = -reach; dx <= reach; dx += Math.max(1, reach)) {
+                for (int dz = -reach; dz <= reach; dz += Math.max(1, reach)) {
+                    BlockPos footing = footing(world, found.getX() + dx, found.getZ() + dz);
+                    if (footing != null) { return footing; }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean open(World world, BlockPos at) {
+        Material material = world.getBlockState(at).getMaterial();
+        return !material.blocksMovement() && !material.isLiquid();
+    }
+
+    @Nullable private static BlockPos footing(World world, int x, int z) {
         int start = world.provider.hasSkyLight() ? world.getActualHeight() - 1 : 118;
         for (int y = start; y > 0; y--) {
-            BlockPos ground = new BlockPos(found.getX(), y, found.getZ());
-            if (!world.getBlockState(ground).getMaterial().blocksMovement()) { continue; }
-            if (world.isAirBlock(ground.up()) && world.isAirBlock(ground.up(2))) { return ground.up(); }
+            BlockPos ground = new BlockPos(x, y, z);
+            Material material = world.getBlockState(ground).getMaterial();
+            if (!material.blocksMovement() && !material.isLiquid()) { continue; }
+            if (open(world, ground.up()) && open(world, ground.up(2))) { return ground.up(); }
         }
         return null;
     }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.StructureOceanMonument;
@@ -25,6 +26,10 @@ public abstract class MixinStructureOceanMonument {
     private void rdpl$spacing(CallbackInfo ci) {
         spacing = ContentStructurePlacement.spacing(ContentStructurePlacement.MONUMENTS, spacing);
         separation = ContentStructurePlacement.separation(ContentStructurePlacement.MONUMENTS, separation);
+        if (spacing <= separation) {
+            ContentLog.LOGGER.warn("structureSpacing asks for monuments every {} chunk(s) while structureSeparation keeps them {} apart, which leaves the game no room to place one. Separation is brought down to {}", spacing, separation, spacing - 1);
+            separation = Math.max(0, spacing - 1);
+        }
         ContentStructurePlacement.spawns(ContentStructurePlacement.MONUMENTS, MONUMENT_ENEMIES);
         SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.MONUMENTS, SPAWN_BIOMES);
     }

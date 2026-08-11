@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 
 import net.minecraft.block.BlockFenceGate;
 import net.minecraft.block.BlockPlanks;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.BlockRenderLayer;
@@ -21,7 +20,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
 public class ContentBlockFenceGate extends BlockFenceGate implements IContentBlock {
     public static final int MAX_VARIANTS = 1;
     private final BlockDef def;

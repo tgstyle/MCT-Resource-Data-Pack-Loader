@@ -5,7 +5,9 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
+import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -41,6 +43,8 @@ public final class ContentVillages {
     private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> GROWN = new HashSet<>();
     @Nullable private static Map<IBlockState, IBlockState> BLOCKS;
+    @Nullable private static WorldTemplateDef blocksFrom;
+    @Nullable private static WorldTemplateDef namedFrom;
     private static Set<String> named;
     private static boolean loaded;
     private static boolean registered;
@@ -104,15 +108,22 @@ public final class ContentVillages {
     }
 
     private static Set<String> names() {
-        if (named == null) { named = Names.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces)); }
-
+        WorldTemplateDef active = ContentWorldTemplates.active();
+        if (named == null || active != namedFrom) {
+            named = Names.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces));
+            namedFrom = active;
+        }
         return named;
     }
 
     private static boolean present(VillageDef def) { return ContentRegistry.available(def.requires, def.registryName); }
 
     @Nullable public static IBlockState swap(IBlockState original) {
-        if (BLOCKS == null) { loadBlocks(); }
+        WorldTemplateDef active = ContentWorldTemplates.active();
+        if (BLOCKS == null || active != blocksFrom) {
+            loadBlocks();
+            blocksFrom = active;
+        }
         if (BLOCKS.isEmpty()) { return null; }
 
         IBlockState wanted = BLOCKS.get(original);
