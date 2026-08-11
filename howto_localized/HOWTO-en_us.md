@@ -347,7 +347,7 @@ An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing e
 
 ### Finding placed structures
 
-An `imprint` entry with `"locateAs": "Crypt"` registers every structure it places under that name, and `/locate Crypt` then points at the nearest one, with the name offered in tab completion. Only structures that have already generated can be found, since pack structures are placed by chance as chunks are made rather than on a grid the game could predict. The names live in the world's save, so they survive restarts and work on servers.
+An `imprint` entry with `"locateAs": "Crypt"` registers every structure it places under that name, and `/locate Crypt` then points at the nearest one, with the name offered in tab completion. Only structures that have already generated can be found, since pack structures are placed by chance as chunks are made rather than on a grid the game could predict. The names live in the world's save, so they survive restarts and work on servers. A name registered this way can also be given its own permission with `gotoPlaceLevels`, so a pack decides who may be carried to its own structures separately from the vanilla ones.
 
 ## Registry renames
 
@@ -2047,7 +2047,7 @@ Everything that stops or changes generation is grouped, and each group has one k
 | `global` | The config wins. Pack sections are ignored |
 | `off` | The group is disabled entirely and no pack can enable it |
 
-The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities` and `chunks`.
+The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks` and `commands`.
 
 Settings resolve **biome → world template → config**. A world template's `settings` block uses the same key names as the config, so a pack sets them the same way you would:
 
@@ -2532,6 +2532,38 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver goto <structure>` | Take you to the nearest one nobody has been to yet, looking without generating the land on the way |
 | `/rdplserver goto <structure> next` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before |
 | `/rdplserver goto <structure> back` | Take you to the one before it, stepping back through where this session has sent you |
+
+**Opening `goto` up.** Every part of `/rdplserver` needs an operator, level 3, and stays that way. The three `goto` forms are the exception: each carries a permission level of its own that a pack or the config may lower, separately from the other two and from the rest of the command.
+
+| Setting | What it governs |
+| --- | --- |
+| `gotoLevel` | `goto <structure>` |
+| `gotoNextLevel` | `goto <structure> next` |
+| `gotoBackLevel` | `goto <structure> back` |
+| `gotoPlaceLevels` | One named place, in all three forms |
+
+The number is the permission level a sender needs. `3` is an operator, which is the default and where the rest of the command stays. `2` also lets a command block run it, so a pack can put a jump on a button, a pressure plate or a shop sign without handing anybody the rest of `/rdplserver`. `0` lets any player type it themselves. They are separate on purpose: a pack can open `next` to a command block for a tour that steps from one village to the next, while `back` stays with operators, or open the plain jump to players and keep the other two shut.
+
+Lowering one of them lets a non-operator reach the command, so every other part of it checks for an operator itself and refuses with a message rather than silently doing nothing. Tab completion follows suit: someone who is not an operator is offered `goto` alone.
+
+`gotoPlaceLevels` goes finer still, naming single places as `name=level` entries and overriding the three above for that place alone:
+
+```json
+{
+  "settings": {
+    "gotoLevel": 3,
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+  }
+}
+```
+
+The name is whatever you would type after `goto`: a vanilla one such as `Village` or `Mansion`, or a name your own pack registered with `locateAs` on an imprint entry. Matching ignores case. So a pack can open the way to its own ruins for a command block, and its waystones to every player, while `Village` and the rest stay with operators — or the reverse, opening the vanilla structures for a guided start and keeping its own secrets shut. A level of `4` is above an operator and shuts a place to everybody, which is how you hide one place while the rest of `goto` is open.
+
+An entry sets one level for all three forms of that place, since a place either is somewhere a player may be sent or it is not. If a place is not listed, the three settings above decide it as usual, and a name nothing has registered is simply never matched.
+
+Tab completion follows the same rules, so after `goto` a sender is offered only the places they may actually be carried to.
+
+These sit in the `commands` group, so `control.commands` in the config decides whether a pack may set them at all, and `off` there keeps everything at operator whatever a pack asks for.
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 

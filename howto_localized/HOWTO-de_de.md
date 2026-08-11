@@ -2047,7 +2047,7 @@ Alles, was Generierung unterbindet oder verändert, ist in Gruppen zusammengefas
 | `global` | Die Config gewinnt. Pack-Abschnitte werden ignoriert |
 | `off` | Die Gruppe ist ganz abgeschaltet, und kein Pack kann sie einschalten |
 
-Die Gruppen sind `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities` und `chunks`.
+Die Gruppen sind `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks` und `commands`.
 
 Einstellungen lösen sich in der Reihenfolge **Biom → Weltvorlage → Config** auf. Der `settings`-Block einer Weltvorlage nutzt dieselben Schlüsselnamen wie die Config, ein Pack setzt sie also genauso, wie du es tun würdest:
 
@@ -2529,6 +2529,39 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver goto <struktur>` | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen |
 | `/rdplserver goto <struktur> next` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht |
 | `/rdplserver goto <struktur> back` | Bringt dich zur vorherigen zurück und geht Schritt für Schritt durch das, wohin diese Sitzung dich geschickt hat |
+
+**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, und das bleibt so. Die drei `goto`-Formen sind die Ausnahme: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf – getrennt von den beiden anderen und vom Rest des Befehls.
+
+| Einstellung | Wofür sie gilt |
+| --- | --- |
+| `gotoLevel` | `goto <struktur>` |
+| `gotoNextLevel` | `goto <struktur> next` |
+| `gotoBackLevel` | `goto <struktur> back` |
+| `gotoPlaceLevels` | Ein einzelner benannter Ort, in allen drei Formen |
+
+Die Zahl ist die Berechtigungsstufe, die der Absender braucht. `3` ist ein Operator, das ist der Standard und dort bleibt der Rest des Befehls. `2` lässt auch einen Befehlsblock den Sprung ausführen, ein Pack kann ihn also auf einen Knopf, eine Druckplatte oder ein Ladenschild legen, ohne irgendwem den Rest von `/rdplserver` in die Hand zu geben. `0` lässt ihn jeden Spieler selbst tippen. Sie sind mit Absicht getrennt: Ein Pack kann `next` für einen Befehlsblock öffnen, der eine Rundfahrt von Dorf zu Dorf steuert, während `back` bei den Operatoren bleibt, oder den einfachen Sprung für Spieler öffnen und die beiden anderen zulassen.
+
+Senkst du eine davon, kommt auch ein Nicht-Operator an den Befehl heran, deshalb prüft jeder andere Teil selbst auf einen Operator und verweigert mit einer Meldung, statt stillschweigend nichts zu tun. Die Tab-Vervollständigung zieht mit: Wer kein Operator ist, bekommt nur `goto` angeboten.
+
+`gotoPlaceLevels` geht noch feiner und benennt einzelne Orte als `name=stufe`-Einträge, die die drei oben für genau diesen Ort überschreiben:
+
+```json
+{
+  "settings": {
+    "gotoLevel": 3,
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+  }
+}
+```
+
+Der Name ist das, was du hinter `goto` tippen würdest: ein Vanilla-Name wie `Village` oder `Mansion`, oder ein Name, den dein eigenes Pack mit `locateAs` an einem Imprint-Eintrag angemeldet hat. Groß- und Kleinschreibung spielt dabei keine Rolle. Ein Pack kann also den Weg zu seinen eigenen Ruinen für einen Befehlsblock öffnen und seine Wegsteine für jeden Spieler, während `Village` und der Rest bei den Operatoren bleiben – oder andersherum die Vanilla-Strukturen für einen geführten Start öffnen und die eigenen Geheimnisse zulassen. Stufe `4` liegt über einem Operator und verschließt einen Ort für alle; so versteckst du einen einzelnen Ort, während `goto` sonst offen ist.
+
+Ein Eintrag setzt eine Stufe für alle drei Formen dieses Ortes, denn ein Ort ist entweder einer, an den ein Spieler geschickt werden darf, oder nicht. Steht ein Ort nicht in der Liste, entscheiden die drei Einstellungen oben wie gewohnt, und ein Name, den nichts angemeldet hat, passt schlicht nie.
+
+Die Tab-Vervollständigung hält sich an dieselben Regeln: Nach `goto` werden nur die Orte angeboten, zu denen der Absender auch wirklich gebracht werden kann.
+
+Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der Config, ob ein Pack sie überhaupt setzen darf, und `off` dort hält alles bei Operator, ganz gleich was ein Pack verlangt.
+
 
 **Beim täglichen Arbeiten:** `/rdpl reload textures` ist in einem großen Modpack viel schneller als F3+T. F3+T funktioniert weiterhin und lädt alles neu. Nimm das schlichte `/rdpl reload`, wenn du eine Datei *hinzufügst* oder *löschst*, weil sich damit ändert, was der Ordner enthält.
 

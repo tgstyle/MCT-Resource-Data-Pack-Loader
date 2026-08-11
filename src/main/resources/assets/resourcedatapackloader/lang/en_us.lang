@@ -15,6 +15,7 @@ rdpl.command.gatesfor=Gates for %s:
 rdpl.command.genblocked=World generation blocked so far, by mod and type:
 rdpl.command.gennone=No world generator has been blocked. The settings may be off, or unavailable
 rdpl.command.gotobusy=A search is already running, wait for it to land
+rdpl.command.notallowed=You are not allowed to run that part of this command
 rdpl.command.gotodone=Brought you to the nearest %s at %d, %d, %d
 rdpl.command.gotolooking=Surveying for the nearest untouched %s, you will be brought there when it is found
 rdpl.command.gotomakingland=The world is still being made, wait until it is finished

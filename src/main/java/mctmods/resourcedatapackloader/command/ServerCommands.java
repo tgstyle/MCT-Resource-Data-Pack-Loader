@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.def.GateDef;
@@ -15,6 +16,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.command.CommandBase;
@@ -43,6 +45,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
+    private static final int OPERATOR = 3;
     private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
@@ -66,10 +69,52 @@ public class ServerCommands extends CommandBase {
 
     @Override @Nonnull public String getUsage(@Nonnull ICommandSender sender) { return Lang.tr(sender, "rdpl.command.serverusage"); }
 
-    @Override public int getRequiredPermissionLevel() { return 3; }
+    @Override public int getRequiredPermissionLevel() { return OPERATOR; }
+
+    @Override public boolean checkPermission(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) { return sender.canUseCommand(lowestOpenLevel(), getName()); }
+
+    private static int level(String key, int fallback) { return clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback)); }
+
+    private static int clamp(int level) { return Math.max(0, Math.min(OPERATOR + 1, level)); }
+
+    private static int placeLevel(String place, int fallback) {
+        for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
+            int split = entry.indexOf('=');
+            if (split < 0) {
+                ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' is not written as name=level, ignoring it", entry);
+                continue;
+            }
+            if (!entry.substring(0, split).trim().equalsIgnoreCase(place)) { continue; }
+
+            try { return clamp(Integer.parseInt(entry.substring(split + 1).trim())); }
+            catch (NumberFormatException ex) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' has no number after the =, ignoring it", entry); }
+        }
+        return fallback;
+    }
+
+    private static int neededFor(String place, String key, int fallback) { return placeLevel(place, level(key, fallback)); }
+
+    private static int lowestOpenLevel() {
+        int lowest = OPERATOR;
+        lowest = Math.min(lowest, level("gotoLevel", Config.commands.gotoLevel));
+        lowest = Math.min(lowest, level("gotoNextLevel", Config.commands.gotoNextLevel));
+        lowest = Math.min(lowest, level("gotoBackLevel", Config.commands.gotoBackLevel));
+        for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
+            int split = entry.indexOf('=');
+            if (split < 0) { continue; }
+
+            try { lowest = Math.min(lowest, clamp(Integer.parseInt(entry.substring(split + 1).trim()))); }
+            catch (NumberFormatException ignored) { }
+        }
+        return lowest;
+    }
+
+    private void allow(ICommandSender sender, int needed) throws CommandException {
+        if (!sender.canUseCommand(needed, getName())) { throw new CommandException(Lang.tr(sender, "rdpl.command.notallowed")); }
+    }
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        if (args.length == 1) { return getListOfStringsMatchingLastWord(args, SUBCOMMANDS); }
+        if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? SUBCOMMANDS : Collections.singletonList("goto")); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
@@ -82,6 +127,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "goto".equals(args[0])) {
             List<String> known = new ArrayList<>(STRUCTURE_NAMES);
             known.addAll(ContentLocate.names(sender.getEntityWorld()));
+            known.removeIf(place -> !sender.canUseCommand(neededFor(place, "gotoLevel", Config.commands.gotoLevel), getName()));
             return getListOfStringsMatchingLastWord(args, known);
         }
         if (args.length == 3 && "goto".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Arrays.asList("next", "back")); }
@@ -90,6 +136,14 @@ public class ServerCommands extends CommandBase {
 
     @Override public void execute(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
         ContentLog.LOGGER.info("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
+        if (args.length >= 1 && "goto".equals(args[0])) {
+            if (args.length == 2) { allow(sender, neededFor(args[1], "gotoLevel", Config.commands.gotoLevel)); }
+            else if (args.length == 3 && "next".equals(args[2])) { allow(sender, neededFor(args[1], "gotoNextLevel", Config.commands.gotoNextLevel)); }
+            else if (args.length == 3 && "back".equals(args[2])) { allow(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
+            else { throw new WrongUsageException(getUsage(sender)); }
+        }
+        else { allow(sender, OPERATOR); }
+
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }

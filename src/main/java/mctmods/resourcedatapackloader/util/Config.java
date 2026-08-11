@@ -27,6 +27,8 @@ public class Config {
 
     @net.minecraftforge.common.config.Config.Comment("Chunks held loaded around a world's spawn point")
     public static Chunks chunks = new Chunks();
+    @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that can be opened up")
+    public static Commands commands = new Commands();
 
     public static class Control {
         @net.minecraftforge.common.config.Config.Comment("Ore blocking and the ore whitelists [default|global|off]")
@@ -57,6 +59,8 @@ public class Config {
         public String chunks = "default";
         @net.minecraftforge.common.config.Config.Comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]")
         public String blastPlaster = "default";
+        @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that a pack is allowed to open up [default|global|off]")
+        public String commands = "default";
     }
 
     public static class Packs {
@@ -466,6 +470,31 @@ public class Config {
         public String flatBedrockFiller = "";
         @net.minecraftforge.common.config.Config.Comment("Write per-chunk retrogen lines, cascading worldgen traces, a snapshot of how the server is keeping up every few seconds, and the debug lists other messages refer to. Very verbose, about two lines per chunk loaded [Default=false]")
         public boolean worldgenDebug = false;
+    }
+
+    public static class Commands {
+        @net.minecraftforge.common.config.Config.Comment({
+                "The permission level a sender needs to run /rdplserver goto <name>, which carries them to the nearest one.",
+                "3 is an operator and keeps it to operators, which is where every part of this command sits by default.",
+                "2 also lets a command block run it, so a pack can put the jump on a button or a pressure plate without",
+                "handing anybody the rest of the command. 0 lets any player type it. The other parts of /rdplserver stay",
+                "at 3 whatever this says [Default=3]"})
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4)
+        public int gotoLevel = 3;
+        @net.minecraftforge.common.config.Config.Comment("The permission level for /rdplserver goto <name> next, which passes over the one it last carried the sender to and finds another. Same scale as gotoLevel [Default=3]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4)
+        public int gotoNextLevel = 3;
+        @net.minecraftforge.common.config.Config.Comment("The permission level for /rdplserver goto <name> back, which returns the sender to the one before. Same scale as gotoLevel [Default=3]")
+        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4)
+        public int gotoBackLevel = 3;
+        @net.minecraftforge.common.config.Config.Comment({
+                "Permission levels for single places, as name=level entries, one per line, overriding the three settings",
+                "above for that place alone and in all three of its forms. The name is what you would type after goto,",
+                "so a vanilla one such as Village or Mansion, or a name a pack registered for its own structures with",
+                "locateAs. Same scale: 3 an operator, 2 also a command block, 0 anybody.",
+                "A pack can then open the way to its own ruins while every vanilla structure stays shut, or the other",
+                "way about. A name nothing has registered is ignored with a note in the log [Default=empty]"})
+        public String[] gotoPlaceLevels = new String[0];
     }
 
     public static class Tweaks {

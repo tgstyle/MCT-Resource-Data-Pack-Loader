@@ -29,6 +29,7 @@ public final class ContentControl {
     public static final String ENTITIES = "entities";
     public static final String CHUNKS = "chunks";
     public static final String BLAST_PLASTER = "blastPlaster";
+    public static final String COMMANDS = "commands";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -50,6 +51,7 @@ public final class ContentControl {
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
+            "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels",
             "structureSpawns", "surfaceDayMonsterRate",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
             "undergroundNightMonsterRate", "villageBlocks", "villagePieces", "villagePiecesAreBlacklist",
@@ -186,6 +188,7 @@ public final class ContentControl {
             case ENTITIES: return Config.control.entities;
             case CHUNKS: return Config.control.chunks;
             case BLAST_PLASTER: return Config.control.blastPlaster;
+            case COMMANDS: return Config.control.commands;
             default: return DEFAULT;
         }
     }
