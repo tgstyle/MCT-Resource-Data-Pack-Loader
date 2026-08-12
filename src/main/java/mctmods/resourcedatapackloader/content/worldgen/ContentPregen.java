@@ -13,6 +13,7 @@ import net.minecraft.block.BlockFalling;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.play.server.SPacketTitle;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
@@ -46,18 +47,22 @@ import java.util.Collections;
 import java.util.IllegalFormatException;
 import java.util.Deque;
 import java.util.List;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static ContentPregen running;
     private static final Deque<Integer> PENDING = new ArrayDeque<>();
-    private static final Map<UUID, Held> HELD = new HashMap<>();
+    private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
     public static final int VANILLA_SPAWN_REACH = 12;
     private static final String HELD_MODE = "rdplPregenHeldMode";
+    private static ScheduledExecutorService flasher;
     private static long watchedDone = -1L;
     private static long watchedAt;
     private static long chainBegun;
@@ -260,6 +265,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private static final class Held {
         private final GameType before;
+        private final NetHandlerPlayServer connection;
+        private final String warning;
         private int dimension;
         private double x;
         private double y;
@@ -269,6 +276,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
         private Held(EntityPlayerMP player, GameType before) {
             this.before = before;
+            this.connection = player.connection;
+            this.warning = defaulted("pregenSpectatingSays", Config.chunks.pregenSpectatingSays, SHIPPED.pregenSpectatingSays, "rdpl.pregen.spectating", player);
             rebase(player);
         }
 
@@ -302,18 +311,41 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         NBTTagCompound data = player.getEntityData();
         GameType before = data.hasKey(HELD_MODE) ? GameType.getByID(data.getInteger(HELD_MODE)) : player.interactionManager.getGameType();
         data.setInteger(HELD_MODE, before.getID());
-        HELD.put(player.getUniqueID(), new Held(player, before));
+        Held held = new Held(player, before);
+        HELD.put(player.getUniqueID(), held);
         player.setGameType(GameType.SPECTATOR);
-        flash(player);
+        flash(held);
+        startFlashing();
     }
 
-    private static void flash(EntityPlayerMP player) {
-        String warning = defaulted("pregenSpectatingSays", Config.chunks.pregenSpectatingSays, SHIPPED.pregenSpectatingSays, "rdpl.pregen.spectating", player);
-        if (warning.isEmpty()) { return; }
+    private static void startFlashing() {
+        if (flasher != null) { return; }
 
-        player.connection.sendPacket(new SPacketTitle(0, 15, 10));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(HOLD_MARK + warning).setStyle(new Style().setColor(TextFormatting.RED))));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
+        flasher = Executors.newSingleThreadScheduledExecutor(run -> {
+            Thread beat = new Thread(run, "RDPL pregen spectator titles");
+            beat.setDaemon(true);
+            return beat;
+        });
+        flasher.scheduleAtFixedRate(ContentPregen::flashHeld, 1500L, 1500L, TimeUnit.MILLISECONDS);
+    }
+
+    private static void stopFlashing() {
+        if (flasher == null) { return; }
+
+        flasher.shutdown();
+        flasher = null;
+    }
+
+    private static void flashHeld() {
+        for (Held held : HELD.values()) { flash(held); }
+    }
+
+    private static void flash(Held held) {
+        if (held.warning.isEmpty()) { return; }
+
+        held.connection.sendPacket(new SPacketTitle(0, 15, 10));
+        held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(HOLD_MARK + held.warning).setStyle(new Style().setColor(TextFormatting.RED))));
+        held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
     private static void releaseEveryone(boolean welcomed) {
@@ -330,6 +362,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             }
         }
         HELD.clear();
+        stopFlashing();
     }
 
     private static void welcome(EntityPlayerMP player) {
@@ -356,6 +389,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Held held = HELD.remove(event.player.getUniqueID());
+        if (HELD.isEmpty()) { stopFlashing(); }
         if (held == null || !(event.player instanceof EntityPlayerMP)) { return; }
 
         release((EntityPlayerMP) event.player, held);
@@ -383,13 +417,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
 
-        boolean blink = server.getTickCounter() % 30 == 0;
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUniqueID());
             if (held == null) { continue; }
             if (player.dimension != held.dimension) { held.rebase(player); }
             else if (held.strayed(player)) { player.connection.setPlayerLocation(held.x, held.y, held.z, held.yaw, held.pitch); }
-            if (blink) { flash(player); }
         }
     }
 
