@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import mctmods.resourcedatapackloader.content.interfaces.LightAreaHolder;
+import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLightArea;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 @Mixin(World.class)
-public abstract class MixinWorldLight implements LightAreaHolder {
+public abstract class MixinWorldLight implements ILightAreaHolder {
     @Shadow protected List<IWorldEventListener> eventListeners;
     @Unique private ContentLightArea rdpl$area;
     @Unique private int rdpl$quietLight = -1;

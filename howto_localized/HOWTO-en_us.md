@@ -1262,6 +1262,7 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `tint` | no | hex color | none | Colors the entity as it is drawn |
 | `tintParts` | no | list of `body`, `armor`, `held` | `["body"]` | Which parts the tint reaches |
 | `ignoresSpawnRules` | no | boolean | `false` | Spawns wherever it is put, ignoring the rules it inherited |
+| `throws` | no | boolean | `false` | Throws what it holds at its target from a distance, and if that is TNT it lights it and backs off. Needs `hostile` |
 | `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
 | `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4 |
 | `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off |
@@ -1286,6 +1287,19 @@ Armor is only ever drawn on an entity whose renderer has an armor layer, which i
 `hostile` also takes away the behavior that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behavior vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behavior built the way vanilla builds it, a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
 
 A variant is a class of its own, so a world that contains one depends on the pack that made it, the same way it depends on a mod. Take the file away and the creatures in that world go with it.
+
+**Throwing instead of charging.** `explodes` sends a creature in to blow itself up. `throws` is the other temperament: it keeps its distance, throws whatever is in its main hand at what it is fighting, and if that happens to be TNT it lights it, throws it, and backs away while it burns.
+
+```json
+{
+  "hostile": true,
+  "throws": true,
+  "explosionFuse": 50,
+  "equipment": { "mainhand": "minecraft:tnt" }
+}
+```
+
+It throws a copy, so it never disarms itself, and anything else in its hand simply flies as an item and lands, which is a sapper flinging rocks or rotten flesh as easily as explosives. `explosionFuse` does double duty here: it is the fuse on the thrown TNT, the pause between throws, and how long it stays backed off, so one number sets the whole rhythm. How far it will throw from is its `followRange`, and it closes as usual once you are nearer than three blocks, so it is dangerous at range and ordinary in your face.
 
 **One egg or spawner giving a mix.** A variant is a class of its own, so on its own it always spawns exactly what it says. `becomes` is how a pack breaks that: a list of variants this one may turn into as it spawns, each with a weight, decided per creature.
 

@@ -1262,6 +1262,7 @@ Eine Datei in `assets/<modid>/entities/` macht aus einer vorhandenen Entity eine
 | `tint` | nein | Hex-Farbe | keine | Färbt die Entity beim Zeichnen ein |
 | `tintParts` | nein | Liste aus `body`, `armor`, `held` | `["body"]` | Welche Teile die Färbung erreicht |
 | `ignoresSpawnRules` | nein | boolean | `false` | Spawnt überall, wo sie hingesetzt wird, und ignoriert die geerbten Regeln |
+| `throws` | nein | boolean | `false` | Wirft aus der Entfernung, was es in der Hand hält, und zündet es an und zieht sich zurück, wenn das TNT ist. Braucht `hostile` |
 | `explodes` | nein | boolean | `false` | Sprengt sich neben ihrem Ziel in die Luft, wie ein Creeper. Braucht `hostile` |
 | `explosionPower` | nein | Zahl | `3.0` | Wie groß die Explosion ist. Ein Creeper ist 3, TNT ist 4 |
 | `explosionFuse` | nein | int, Ticks | `30` | Wie lange sie zischt, bevor es losgeht |
@@ -1286,6 +1287,19 @@ Rüstung wird überhaupt nur auf einer Entity gezeichnet, deren Renderer einen R
 `hostile` nimmt der Kreatur auch das Verhalten weg, das sie hat weglaufen lassen: Ein Tier, das Spielern ausgewichen ist oder bei Verletzung in Panik geriet, tut beides nicht mehr, sobald es feindselig ist – sonst würde es vor dem fliehen, was es eigentlich angreifen soll. Es braucht eine Entity, die auf dem Boden läuft, weil es dasselbe Angriffsverhalten nutzt, das Vanilla seinen eigenen Mobs gibt. Eine fliegende oder schwimmende Basis wird protokolliert und in Ruhe gelassen. `passive` greift weiter, erreicht aber nur Verhalten, das so gebaut ist, wie Vanilla es baut: Einem Mod, dessen Feindseligkeit in seinem eigenen Tick- oder Schadenscode steht, kann ein Pack sie nicht ausreden.
 
 Eine Variante ist eine eigene Klasse, eine Welt, die eine enthält, hängt also von dem Pack ab, das sie gemacht hat, genau wie von einem Mod. Nimm die Datei weg, und die Kreaturen in dieser Welt gehen mit.
+
+**Werfen statt Stürmen.** `explodes` schickt eine Kreatur hinein, um sich selbst zu sprengen. `throws` ist das andere Temperament: Sie hält Abstand, wirft, was sie in der Haupthand hält, auf ihr Ziel, und wenn das gerade TNT ist, zündet sie es an, wirft es und zieht sich zurück, während es brennt.
+
+```json
+{
+  "hostile": true,
+  "throws": true,
+  "explosionFuse": 50,
+  "equipment": { "mainhand": "minecraft:tnt" }
+}
+```
+
+Geworfen wird eine Kopie, sie entwaffnet sich also nie, und alles andere in ihrer Hand fliegt schlicht als Item und landet – ein Pionier, der Steine oder verrottetes Fleisch ebenso gut schleudert wie Sprengstoff. `explosionFuse` tut hier doppelten Dienst: Es ist die Lunte am geworfenen TNT, die Pause zwischen zwei Würfen und die Zeit, die sie auf Abstand bleibt, eine Zahl setzt also den ganzen Rhythmus. Wie weit sie wirft, sagt ihre `followRange`, und näher als drei Blöcke geht sie wie gewohnt zum Angriff über, sie ist also auf Distanz gefährlich und im Nahkampf gewöhnlich.
 
 **Ein Ei oder Spawner, der Verschiedenes liefert.** Eine Variante ist eine eigene Klasse, für sich allein erscheint sie also immer genau als das, was sie sagt. `becomes` bricht das auf: eine Liste von Varianten, zu denen diese beim Erscheinen werden kann, jede mit einem Gewicht, für jede Kreatur einzeln entschieden.
 

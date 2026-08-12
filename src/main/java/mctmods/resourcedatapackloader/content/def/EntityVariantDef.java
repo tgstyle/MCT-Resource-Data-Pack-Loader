@@ -69,6 +69,7 @@ public final class EntityVariantDef {
     public final boolean showName;
     public final boolean ignoresSpawnRules;
     public final boolean explodes;
+    public final boolean throwsItems;
     public final float explosionPower;
     public final int explosionFuse;
     public final boolean explosionFire;
@@ -86,7 +87,7 @@ public final class EntityVariantDef {
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
                             boolean hostile, boolean passive, boolean ignoresSpawnRules, List<String> targets, boolean persistent, boolean silent,
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
-                            boolean explodes, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
+                            boolean explodes, boolean throwsItems, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
                             List<String> biomes, List<String> biomeTypes, List<String> requires) {
         this.registryName = registryName;
         this.base = base;
@@ -149,6 +150,7 @@ public final class EntityVariantDef {
         this.showName = showName;
         this.ignoresSpawnRules = ignoresSpawnRules;
         this.explodes = explodes;
+        this.throwsItems = throwsItems;
         this.explosionPower = explosionPower;
         this.explosionFuse = explosionFuse;
         this.explosionFire = explosionFire;

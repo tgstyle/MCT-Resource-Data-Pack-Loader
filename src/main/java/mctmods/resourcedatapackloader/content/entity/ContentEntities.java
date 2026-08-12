@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIKamikaze;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIThrower;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.mixin.AccessorEntity;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityLiving;
@@ -43,6 +45,7 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.pathfinding.PathNavigateGround;
 import net.minecraft.pathfinding.PathNavigateSwimmer;
 import net.minecraft.pathfinding.PathNodeType;
@@ -207,7 +210,7 @@ public final class ContentEntities {
         }
 
         if (def.amphibious) { amphibious((EntityLiving) living); }
-        if (def.baby >= 1.0F && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
+        if (def.baby > 0.0F && living.getEntityData().getBoolean(YOUNG) && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
 
         boolean angry = ((EntityLiving) living).getAttackTarget() != null;
         if (angry != living.isSprinting()) { living.setSprinting(angry); }
@@ -381,7 +384,7 @@ public final class ContentEntities {
         }
         ResourceLocation table = lootTable(living);
         if (table != null) { ((AccessorEntityLiving) living).rdpl$setDeathLootTable(table); }
-        if (def.baby > 0.0F && living.world.rand.nextFloat() < def.baby) { child(living); }
+        if (def.baby > 0.0F && rolledYoung(living, def)) { child(living); }
         if (living instanceof EntityVillager && !def.profession.isEmpty()) { profession((EntityVillager) living, def); }
         if (def.persistent) { living.enablePersistence(); }
         if (def.noAI) { living.setNoAI(true); }
@@ -417,6 +420,7 @@ public final class ContentEntities {
         }
         if (!def.hostile) {
             if (def.explodes) { ContentLog.LOGGER.error("Entity variant {} asks to explode, but is not hostile, so it never takes a target to close on", def.registryName); }
+            if (def.throwsItems) { ContentLog.LOGGER.error("Entity variant {} asks to throw what it holds, but is not hostile, so it never takes a target to throw at", def.registryName); }
             return;
         }
         if (!(living instanceof EntityCreature)) {
@@ -438,6 +442,7 @@ public final class ContentEntities {
         }
         if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
         if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
+        if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, def.explosionFuse, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue())); }
 
         living.targetTasks.addTask(1, new EntityAIHurtByTarget(creature, true));
         int priority = 2;
@@ -450,7 +455,18 @@ public final class ContentEntities {
         }
     }
 
+    private static final String ROLLED = "rdplBabyRolled";
+    private static final String YOUNG = "rdplBabyYoung";
     private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    private static boolean rolledYoung(EntityLiving living, EntityVariantDef def) {
+        NBTTagCompound held = living.getEntityData();
+        if (!held.hasKey(ROLLED)) {
+            held.setBoolean(ROLLED, true);
+            held.setBoolean(YOUNG, living.world.rand.nextFloat() < def.baby);
+        }
+        return held.getBoolean(YOUNG);
+    }
 
     private static void child(EntityLiving living) {
         if (living instanceof EntityZombie) { ((EntityZombie) living).setChild(true); }

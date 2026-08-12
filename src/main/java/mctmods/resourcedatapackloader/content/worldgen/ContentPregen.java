@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.interfaces.PregenMemory;
+import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.mixin.AccessorChunk;
 import mctmods.resourcedatapackloader.mixin.AccessorMinecraftServerMessage;
 import mctmods.resourcedatapackloader.mixin.AccessorWorldProviderEnd;
@@ -218,7 +218,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             ContentLog.LOGGER.info("The server is stopping while land is still being made in dimension {}, so the run is wound down at {} chunk(s) to be picked up on the next load", worker.dimension, worker.done);
             worker.stopping = true;
             worker.finish(DimensionManager.getWorld(worker.dimension));
-            PregenMemory memory = memory();
+            IPregenMemory memory = memory();
             if (memory != null && !worker.lightOnly) { memory.rdpl$setPregenRun(runRecord(worker.dimension, worker.middleX, worker.middleZ, worker.reach)); }
         }
         releaseEveryone(false);
@@ -233,7 +233,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (world.isRemote || world.provider.getDimension() != 0 || busy()) { return; }
 
         int radius = wantedOnNewWorld();
-        PregenMemory memory = (PregenMemory) world.getWorldInfo();
+        IPregenMemory memory = (IPregenMemory) world.getWorldInfo();
         NBTTagCompound run = memory.rdpl$pregenRun();
         if (!run.isEmpty()) {
             int dimension = run.getInteger("dimension");
@@ -442,9 +442,9 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return run;
     }
 
-    private static PregenMemory memory() {
+    private static IPregenMemory memory() {
         WorldServer overworld = DimensionManager.getWorld(0);
-        return overworld == null ? null : (PregenMemory) overworld.getWorldInfo();
+        return overworld == null ? null : (IPregenMemory) overworld.getWorldInfo();
     }
 
     private static void nextDimension(int radius) {
@@ -493,7 +493,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         }
     }
 
-    private static boolean alreadyMade(PregenMemory memory, int dimension, int reach, WorldServer world, int centerX, int centerZ) {
+    private static boolean alreadyMade(IPregenMemory memory, int dimension, int reach, WorldServer world, int centerX, int centerZ) {
         if (memory == null || memory.rdpl$landMadeTo(dimension) < reach) { return false; }
 
         File region = regionFolder(world);
@@ -572,11 +572,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         ContentPregen worker = new ContentPregen(asked, dimension, centreX, centreZ, radius, lightOnly);
         WorldServer world = DimensionManager.getWorld(dimension);
         if (!lightOnly) {
-            PregenMemory memory = memory();
+            IPregenMemory memory = memory();
             if (memory != null) { memory.rdpl$setPregenRun(runRecord(dimension, centreX, centreZ, radius)); }
         }
         if (world != null && picksUpAgain() && !lightOnly) {
-            PregenMemory memory = memory();
+            IPregenMemory memory = memory();
             int reached = memory == null ? 0 : memory.rdpl$landMadeAt(dimension);
             if (reached > 0) {
                 worker.done = worker.order.skip(reached);
@@ -774,7 +774,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         ContentLog.LOGGER.info(report());
         if (!picksUpAgain() || lightOnly) { return; }
 
-        PregenMemory memory = memory();
+        IPregenMemory memory = memory();
         if (memory != null) { memory.rdpl$setLandMadeAt(dimension, (int) done); }
     }
 
@@ -835,7 +835,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (dimension != 0) { DimensionManager.keepDimensionLoaded(dimension, false); }
         boolean whole = world != null && !stopping && !order.hasNext();
         if (world != null) {
-            PregenMemory memory = memory();
+            IPregenMemory memory = memory();
             if (memory != null) {
                 if (whole && !lightOnly && reach > memory.rdpl$landMadeTo(dimension)) { memory.rdpl$setLandMadeTo(dimension, reach); }
                 if (!lightOnly) {

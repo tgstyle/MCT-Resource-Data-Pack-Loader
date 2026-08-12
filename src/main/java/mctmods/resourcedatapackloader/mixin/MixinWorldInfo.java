@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import mctmods.resourcedatapackloader.content.interfaces.PregenMemory;
+import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 @Mixin(WorldInfo.class)
-public abstract class MixinWorldInfo implements PregenMemory {
+public abstract class MixinWorldInfo implements IPregenMemory {
     @Unique private NBTTagCompound rdpl$landMade = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$pregenRun = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$packOptions = new NBTTagCompound();

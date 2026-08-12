@@ -19,7 +19,9 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "MixinBlockState", "MixinBlockStateContainer", "MixinBlockStatePalette", "MixinChunkPrimer",
             "MixinThreadedFileIOBase", "MixinRegionFile", "MixinRegionFileCache", "MixinRegionFileWrite",
             "MixinChunkProviderLookup"));
+    private static final Set<String> PATHFINDING = new HashSet<>(Arrays.asList("MixinWalkNodeProcessorRaw", "MixinBlockPathNode"));
     private Boolean lightingReplaced;
+    private Boolean pathfindingReplaced;
     private Boolean optimizationsOff;
     private Boolean universalTweaks;
 
@@ -37,6 +39,15 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
                 return standDown(simple, universalTweaksPresent() && tweakOn("Lenient Paths"));
             case "MixinBlockLeaves":
                 return standDown(simple, universalTweaksPresent() && tweakOn("Fast Leaf Decay"));
+        }
+        if (PATHFINDING.contains(simple)) {
+            if (pathfindingReplaced == null) {
+                pathfindingReplaced = Launch.classLoader.getResource("me/jellysquid/mods/lithium/common/ai/pathing/PathNodeCache.class") != null
+                        || (Launch.classLoader.getResource("me/elephant1214/paperfixes/mixin/common/lithium/path_node_cache/WalkNodeProcessorMixin.class") != null
+                        && settingOn());
+                if (pathfindingReplaced) { LogManager.getLogger("RDPL").info("Another mod already works out what the blocks under a path mean, so that half of the pathfinding fast path is standing down for it. What this mod remembers between lookups stays on"); }
+            }
+            if (pathfindingReplaced) { return false; }
         }
         if (OPTIMIZATIONS.contains(simple)) {
             if (optimizationsOff == null) {
@@ -63,6 +74,21 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private boolean universalTweaksPresent() {
         if (universalTweaks == null) { universalTweaks = Launch.classLoader.getResource("mod/acgaming/universaltweaks/UniversalTweaks.class") != null; }
         return universalTweaks;
+    }
+
+    private static boolean settingOn() {
+        try {
+            File held = new File(Launch.minecraftHome, "config/" + "paperfixes.cfg");
+            if (!held.isFile()) { return true; }
+
+            String wanted = "B:" + "pathNodeCache" + "=";
+            for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith(wanted)) { return trimmed.endsWith("true"); }
+            }
+        }
+        catch (Exception ignored) {}
+        return true;
     }
 
     private static boolean tweakOn(String name) {

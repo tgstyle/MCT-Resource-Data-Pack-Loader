@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "mctmods.resourcedatapackloader.mixin.reccomplex",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.resourcedatapackloader.refmap.json",
+  "target": "@env(DEFAULT)",
+  "mixins": [
+    "MixinGenericVillagePiece",
+    "MixinHeightMapFreezer",
+    "MixinStructureSpawnContext",
+    "MixinTransformerRuins"
+  ]
+}

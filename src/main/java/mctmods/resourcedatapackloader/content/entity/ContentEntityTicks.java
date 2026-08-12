@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.worldgen.beard.PredictedChunk;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityAITasks;
 import mctmods.resourcedatapackloader.mixin.AccessorEntityItem;
 import mctmods.resourcedatapackloader.util.Config;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class ContentEntityTicks {
+    private static int TICKS = 1;
     private static final int VANILLA_THINK = 3;
     private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList("items", "experience", "projectiles"));
     private static final Map<World, Map<Long, Boolean>> FAR = new HashMap<>();
@@ -57,10 +59,15 @@ public final class ContentEntityTicks {
     @SubscribeEvent public static void onWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
         FAR.remove(event.getWorld());
         CHECKED.remove(event.getWorld());
+        PredictedChunk.forget();
     }
+
+    public static int ticks() { return TICKS; }
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
+
+        TICKS++;
 
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || server.getTickCounter() % SNAPSHOT != 0) { return; }

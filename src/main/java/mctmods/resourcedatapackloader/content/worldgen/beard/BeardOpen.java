@@ -192,7 +192,7 @@ public final class BeardOpen {
                             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
 
                             Block held = world.getBlockState(at).getBlock();
-                            if (BeardBlocks.opening(world.getBlockState(at).getMaterial()) || held == Blocks.GRASS_PATH || held == Blocks.GRAVEL) { doorways += BeardBlocks.clearAt(world, at); }
+                            if (BeardRoads.clearable(world.getBlockState(at)) || held == Blocks.GRASS_PATH) { doorways += BeardBlocks.clearAt(world, at); }
                         }
                     }
                     break;

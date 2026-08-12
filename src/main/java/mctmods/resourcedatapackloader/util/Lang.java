@@ -105,6 +105,7 @@ public final class Lang {
     private static String line(Map<String, String> table, String key, Object... args) {
         String held = table == null ? null : table.get(key);
         if (held == null) { return key; }
+        if (args.length == 0) { return held; }
 
         try { return String.format(held, args); }
         catch (Exception ex) { return held; }

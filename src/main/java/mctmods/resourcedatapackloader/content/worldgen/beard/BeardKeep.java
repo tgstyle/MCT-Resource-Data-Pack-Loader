@@ -9,16 +9,22 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
-import java.util.HashMap;
+import net.minecraft.world.gen.structure.StructureMineshaftPieces;
+import net.minecraft.world.gen.structure.StructureStrongholdPieces;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public final class BeardKeep {
     private static final int REACH = 3;
     private static final Set<Long> HELD = new HashSet<>();
     private static StructureComponent watching = null;
-    private static Map<Long, IBlockState> before = null;
+    private static IBlockState[] before = null;
+    private static int fromX;
+    private static int fromZ;
+    private static int fromY;
+    private static int acrossZ;
+    private static int upright;
 
     private BeardKeep() {}
 
@@ -35,31 +41,68 @@ public final class BeardKeep {
         if (!(world instanceof WorldServer)) { return; }
 
         StructureBoundingBox box = piece.getBoundingBox();
-        int leastX = Math.max(box.minX - REACH, clip.minX);
-        int mostX = Math.min(box.maxX + REACH, clip.maxX);
-        int leastZ = Math.max(box.minZ - REACH, clip.minZ);
-        int mostZ = Math.min(box.maxZ + REACH, clip.maxZ);
+        boolean vanilla = settles(piece);
+        int reach = vanilla ? REACH : 16;
+        int leastX = Math.max(box.minX - reach, clip.minX);
+        int mostX = Math.min(box.maxX + reach, clip.maxX);
+        int leastZ = Math.max(box.minZ - reach, clip.minZ);
+        int mostZ = Math.min(box.maxZ + reach, clip.maxZ);
         if (leastX > mostX || leastZ > mostZ) { return; }
 
-        int floor = Math.max(0, box.minY - REACH);
-        int roof = Math.min(255, box.maxY + REACH);
-        Map<Long, IBlockState> seen = new HashMap<>();
+        int floor;
+        int roof;
+        if (vanilla) {
+            floor = Math.max(0, box.minY - REACH);
+            roof = Math.min(255, box.maxY + REACH);
+        }
+        else {
+            int ground = ground(world, leastX, mostX, leastZ, mostZ);
+            floor = Math.max(0, Math.min(box.minY, ground) - 16);
+            roof = Math.min(world.getActualHeight() - 1, Math.max(box.maxY, ground) + 48);
+        }
+
+        int wide = mostX - leastX + 1;
+        int deep = mostZ - leastZ + 1;
+        int tall = roof - floor + 1;
+        IBlockState[] seen = new IBlockState[wide * deep * tall];
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int index = 0;
         for (int x = leastX; x <= mostX; x++) {
             for (int z = leastZ; z <= mostZ; z++) {
                 for (int y = floor; y <= roof; y++) {
                     at.setPos(x, y, z);
-                    seen.put(packed(x, y, z), world.getBlockState(at));
+                    seen[index++] = world.getBlockState(at);
                 }
             }
         }
         watching = piece;
         before = seen;
+        fromX = leastX;
+        fromZ = leastZ;
+        fromY = floor;
+        acrossZ = deep;
+        upright = tall;
+    }
+
+    private static boolean settles(StructureComponent piece) {
+        Class<?> owner = piece.getClass().getEnclosingClass();
+        return owner == StructureVillagePieces.class || owner == StructureMineshaftPieces.class || owner == StructureStrongholdPieces.class;
+    }
+
+    private static int ground(World world, int leastX, int mostX, int leastZ, int mostZ) {
+        int highest = 0;
+        for (int x = leastX; x <= mostX; x += 4) {
+            for (int z = leastZ; z <= mostZ; z += 4) {
+                int here = world.getChunk(x >> 4, z >> 4).getHeightValue(x & 15, z & 15);
+                if (here > highest) { highest = here; }
+            }
+        }
+        return highest;
     }
 
     public static void learn(World world) {
         StructureComponent piece = watching;
-        Map<Long, IBlockState> seen = before;
+        IBlockState[] seen = before;
         watching = null;
         before = null;
         if (piece == null || seen == null) { return; }
@@ -67,14 +110,19 @@ public final class BeardKeep {
         Set<Long> mine = new HashSet<>();
         int found = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (Map.Entry<Long, IBlockState> entry : seen.entrySet()) {
-            long key = entry.getKey();
-            at.setPos((int) (key >> 38), (int) ((key >> 26) & 0xFFF), (int) (key << 38 >> 38));
-            IBlockState now = world.getBlockState(at);
-            if (now == entry.getValue() || now.getBlock() == Blocks.AIR) { continue; }
+        int index = 0;
+        for (int x = fromX; index < seen.length; x++) {
+            for (int z = fromZ; z < fromZ + acrossZ; z++) {
+                for (int y = fromY; y < fromY + upright; y++) {
+                    IBlockState was = seen[index++];
+                    at.setPos(x, y, z);
+                    IBlockState now = world.getBlockState(at);
+                    if (now == was || now.getBlock() == Blocks.AIR) { continue; }
 
-            mine.add(key);
-            found++;
+                    mine.add(packed(x, y, z));
+                    found++;
+                }
+            }
         }
         if (mine.isEmpty()) { return; }
 

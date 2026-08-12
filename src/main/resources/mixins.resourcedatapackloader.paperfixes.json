@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "mctmods.resourcedatapackloader.mixin.paperfixes",
+  "refmap": "mixins.resourcedatapackloader.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "MixinPathFinderCache"
+  ],
+  "client": [],
+  "server": []
+}

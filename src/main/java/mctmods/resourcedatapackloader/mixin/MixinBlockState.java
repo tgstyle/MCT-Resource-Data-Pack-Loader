@@ -18,11 +18,13 @@ public abstract class MixinBlockState {
     @Redirect(method = "getMaterial", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getMaterial(Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/material/Material;"))
     private Material rdpl$materialOnce(Block block, IBlockState state) {
         Material had = rdpl$material;
-        if (had != null) { return had; }
+        return had == null ? rdpl$workOutMaterial(block, state) : had;
+    }
+
+    @Unique private Material rdpl$workOutMaterial(Block block, IBlockState state) {
         if (ContentChunkWatch.watching()) { ContentChunkWatch.materialLookup(); }
 
         rdpl$material = block.getMaterial(state);
-
         return rdpl$material;
     }
 }

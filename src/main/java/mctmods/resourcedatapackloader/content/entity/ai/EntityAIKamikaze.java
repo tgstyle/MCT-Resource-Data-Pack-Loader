@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content.entity;
+package mctmods.resourcedatapackloader.content.entity.ai;
 
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;

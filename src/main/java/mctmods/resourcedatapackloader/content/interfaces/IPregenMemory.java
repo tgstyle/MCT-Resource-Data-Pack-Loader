@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.interfaces;
 
 import net.minecraft.nbt.NBTTagCompound;
 
-public interface PregenMemory {
+public interface IPregenMemory {
     NBTTagCompound rdpl$pregenRun();
 
     void rdpl$setPregenRun(NBTTagCompound run);

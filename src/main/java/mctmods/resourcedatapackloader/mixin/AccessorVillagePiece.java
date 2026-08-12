@@ -10,5 +10,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface AccessorVillagePiece {
     @Accessor("structureType") void rdpl$setStructureType(int type);
 
+    @Accessor("averageGroundLvl") int rdpl$averageGround();
+
     @Invoker("getBiomeSpecificBlockState") IBlockState rdpl$biomeBlock(IBlockState state);
 }

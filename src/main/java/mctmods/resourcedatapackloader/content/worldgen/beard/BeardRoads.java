@@ -216,9 +216,9 @@ public final class BeardRoads {
                     Block up = above.getBlock();
                     if (up == Blocks.AIR) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
-                    if (!BeardBlocks.terrainBlock(up) && above.getMaterial().isSolid() && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paving the road at {}, {} takes {} out of the air above it at {}, {}, {}", box.minX, box.minZ, up.getRegistryName(), x, y, z); }
                     if (above.getMaterial().isLiquid()) { break; }
                     if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
+                        BeardBlocks.note(world, at, "Paving the road");
                         world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
                         cut++;
                         continue;

@@ -828,6 +828,7 @@ public final class ContentParser {
                 tintParts,
                 JsonUtils.getBoolean(json, "showName", false),
                 JsonUtils.getBoolean(json, "explodes", false),
+                JsonUtils.getBoolean(json, "throws", false),
                 Math.max(0.0F, JsonUtils.getFloat(json, "explosionPower", 3.0F)),
                 Math.max(1, JsonUtils.getInt(json, "explosionFuse", 30)),
                 JsonUtils.getBoolean(json, "explosionFire", false),

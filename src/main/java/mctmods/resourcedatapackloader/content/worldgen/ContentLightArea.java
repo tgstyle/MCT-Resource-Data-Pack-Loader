@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.interfaces.LightAreaHolder;
+import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -23,7 +23,7 @@ public final class ContentLightArea {
     public ContentLightArea() {}
 
     private static ContentLightArea of(World world) {
-        LightAreaHolder holder = (LightAreaHolder) world;
+        ILightAreaHolder holder = (ILightAreaHolder) world;
         ContentLightArea area = holder.rdpl$lightArea();
         if (area == null) {
             area = new ContentLightArea();
@@ -53,7 +53,7 @@ public final class ContentLightArea {
     }
 
     public static int answer(World world, BlockPos pos, int radius) {
-        ContentLightArea area = ((LightAreaHolder) world).rdpl$lightArea();
+        ContentLightArea area = ((ILightAreaHolder) world).rdpl$lightArea();
         if (area == null || area.inside != world) { return UNKNOWN; }
 
         int dx = (pos.getX() >> 4) - area.chunkX;
@@ -69,7 +69,7 @@ public final class ContentLightArea {
     }
 
     public static Chunk at(World world, BlockPos pos) {
-        ContentLightArea area = ((LightAreaHolder) world).rdpl$lightArea();
+        ContentLightArea area = ((ILightAreaHolder) world).rdpl$lightArea();
         if (area == null || area.inside != world || !area.ringLoaded) { return null; }
 
         int dx = (pos.getX() >> 4) - area.chunkX;

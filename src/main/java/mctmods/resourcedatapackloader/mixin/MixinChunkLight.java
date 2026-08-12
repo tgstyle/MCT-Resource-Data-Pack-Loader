@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import mctmods.resourcedatapackloader.content.interfaces.LightAreaHolder;
+import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLightArea;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
@@ -56,7 +56,7 @@ public abstract class MixinChunkLight {
 
     @Redirect(method = {"generateSkylightMap", "relightBlock"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;notifyLightSet(Lnet/minecraft/util/math/BlockPos;)V"))
     private void rdpl$tellNobodyEither(World world, BlockPos pos) {
-        if (((LightAreaHolder) world).rdpl$quietLight()) { return; }
+        if (((ILightAreaHolder) world).rdpl$quietLight()) { return; }
 
         world.notifyLightSet(pos);
     }

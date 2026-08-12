@@ -1,7 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.mixin.AccessorChunkGeneratorOverworld;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
@@ -9,14 +13,15 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkGeneratorSettings;
 import net.minecraft.world.gen.IChunkGenerator;
-
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
-
 public final class BeardSurface {
     private static final Map<World, ChunkGeneratorOverworld> SAMPLERS = new WeakHashMap<>();
+    private static final Set<World> UNSAMPLED = Collections.newSetFromMap(new WeakHashMap<>());
     private static final Map<World, Map<Long, Integer>> TOPS = new WeakHashMap<>();
     private static final ThreadLocal<Scratch> SCRATCH = ThreadLocal.withInitial(Scratch::new);
     private static World lastWorld = null;
@@ -40,6 +45,19 @@ public final class BeardSurface {
         lastTops = TOPS.computeIfAbsent(world, held -> new HashMap<>());
         lastWorld = world;
         return lastTops;
+    }
+
+    public static IBlockState predicted(World world, BlockPos pos) {
+        int surface = surfaceAt(world, pos.getX(), pos.getZ());
+        int y = pos.getY();
+        if (surface < 0) { return Blocks.AIR.getDefaultState(); }
+        if (y > surface) { return y <= world.getSeaLevel() ? Blocks.WATER.getDefaultState() : Blocks.AIR.getDefaultState(); }
+
+        Biome biome = world.getBiome(pos);
+        if (y == surface) { return surface < world.getSeaLevel() ? biome.fillerBlock : biome.topBlock; }
+        if (y > surface - 5) { return biome.fillerBlock; }
+
+        return Blocks.STONE.getDefaultState();
     }
 
     public static int surfaceAt(World world, int blockX, int blockZ) {
@@ -68,9 +86,14 @@ public final class BeardSurface {
     public static ChunkGeneratorOverworld samplerFor(World world) {
         ChunkGeneratorOverworld sampled = SAMPLERS.get(world);
         if (sampled != null) { return sampled; }
+        if (UNSAMPLED.contains(world)) { return null; }
 
         IChunkGenerator made = world.provider.createChunkGenerator();
-        if (!(made instanceof ChunkGeneratorOverworld)) { return null; }
+        if (!(made instanceof ChunkGeneratorOverworld)) {
+            UNSAMPLED.add(world);
+            ContentLog.LOGGER.info("The land in dimension {} is made by {}, which is not the shape this mod can read ahead, so it is asked once and not again", world.provider.getDimension(), made.getClass().getName());
+            return null;
+        }
 
         sampled = (ChunkGeneratorOverworld) made;
         SAMPLERS.put(world, sampled);
