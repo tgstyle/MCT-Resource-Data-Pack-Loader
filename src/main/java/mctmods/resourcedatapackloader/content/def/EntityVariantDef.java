@@ -34,6 +34,7 @@ public final class EntityVariantDef {
     public final boolean swims;
     public final boolean amphibious;
     public final boolean despawns;
+    public final int despawnTicks;
     public final boolean noAI;
     public final boolean leftHanded;
     public final boolean fireproof;
@@ -70,6 +71,11 @@ public final class EntityVariantDef {
     public final boolean ignoresSpawnRules;
     public final boolean explodes;
     public final boolean throwsItems;
+    public final int throwReload;
+    public final int throwRetreat;
+    public final int throwAmmo;
+    public final float throwPower;
+    public final float throwArc;
     public final float explosionPower;
     public final int explosionFuse;
     public final boolean explosionFire;
@@ -81,13 +87,13 @@ public final class EntityVariantDef {
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, List<PickDef> becomes,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
-                            int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns,
+                            int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns, int despawnTicks,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
                             int trackingRange, int trackingFrequency, boolean trackVelocity, Map<String, Double> attributes,
                             boolean hostile, boolean passive, boolean ignoresSpawnRules, List<String> targets, boolean persistent, boolean silent,
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
-                            boolean explodes, boolean throwsItems, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
+                            boolean explodes, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower, float throwArc, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
                             List<String> biomes, List<String> biomeTypes, List<String> requires) {
         this.registryName = registryName;
         this.base = base;
@@ -115,6 +121,7 @@ public final class EntityVariantDef {
         this.swims = swims;
         this.amphibious = amphibious;
         this.despawns = despawns;
+        this.despawnTicks = despawnTicks;
         this.noAI = noAI;
         this.leftHanded = leftHanded;
         this.fireproof = fireproof;
@@ -151,6 +158,11 @@ public final class EntityVariantDef {
         this.ignoresSpawnRules = ignoresSpawnRules;
         this.explodes = explodes;
         this.throwsItems = throwsItems;
+        this.throwReload = throwReload;
+        this.throwRetreat = throwRetreat;
+        this.throwAmmo = throwAmmo;
+        this.throwPower = throwPower;
+        this.throwArc = throwArc;
         this.explosionPower = explosionPower;
         this.explosionFuse = explosionFuse;
         this.explosionFire = explosionFire;

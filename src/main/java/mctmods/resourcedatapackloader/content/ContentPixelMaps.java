@@ -272,27 +272,27 @@ public final class ContentPixelMaps {
         if (resolved.base != null) { return repaint(namespace, path, resolved, resolved.base); }
 
         List<String> rows = resolved.rows;
-        Map<Character, Integer> colours = new LinkedHashMap<>();
+        Map<Character, Integer> colors = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : palette.entrySet()) {
             if (entry.getKey().length() != 1) {
                 ContentLog.LOGGER.error("Pixel map {}:{} has the palette key '{}', which is not a single character, ignoring it", namespace, path, entry.getKey());
                 continue;
             }
 
-            Integer colour = colour(entry.getValue());
-            if (colour == null) {
-                ContentLog.LOGGER.error("Pixel map {}:{} gives '{}' the colour '{}', which is not #RRGGBB or #AARRGGBB, ignoring it", namespace, path, entry.getKey(), entry.getValue());
+            Integer color = color(entry.getValue());
+            if (color == null) {
+                ContentLog.LOGGER.error("Pixel map {}:{} gives '{}' the color '{}', which is not #RRGGBB or #AARRGGBB, ignoring it", namespace, path, entry.getKey(), entry.getValue());
                 continue;
             }
-            colours.put(entry.getKey().charAt(0), colour);
+            colors.put(entry.getKey().charAt(0), color);
         }
 
         BufferedImage image = new BufferedImage(size[0], size[1], BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < size[1]; y++) {
             String row = rows.get(y);
             for (int x = 0; x < size[0]; x++) {
-                Integer colour = colours.get(row.charAt(x));
-                image.setRGB(x, y, colour == null ? 0 : colour);
+                Integer color = colors.get(row.charAt(x));
+                image.setRGB(x, y, color == null ? 0 : color);
             }
         }
 
@@ -441,10 +441,10 @@ public final class ContentPixelMaps {
     @Nullable private static byte[] repaint(String namespace, String path, Resolved resolved, int[] base) {
         Map<Integer, Integer> swaps = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : resolved.palette.entrySet()) {
-            Integer was = colour(entry.getKey());
-            Integer becomes = colour(entry.getValue());
+            Integer was = color(entry.getKey());
+            Integer becomes = color(entry.getValue());
             if (was == null || becomes == null) {
-                ContentLog.LOGGER.error("Pixel map {}:{} builds on an image, so its palette must go from one colour to another, and '{}' to '{}' does not, ignoring it", namespace, path, entry.getKey(), entry.getValue());
+                ContentLog.LOGGER.error("Pixel map {}:{} builds on an image, so its palette must go from one color to another, and '{}' to '{}' does not, ignoring it", namespace, path, entry.getKey(), entry.getValue());
                 continue;
             }
             swaps.put(was, becomes);
@@ -475,7 +475,7 @@ public final class ContentPixelMaps {
         return hash(text.toString());
     }
 
-    @Nullable private static Integer colour(String written) {
+    @Nullable private static Integer color(String written) {
         String text = written.trim();
         if (text.startsWith("#")) { text = text.substring(1); }
         if (text.length() != 6 && text.length() != 8) { return null; }

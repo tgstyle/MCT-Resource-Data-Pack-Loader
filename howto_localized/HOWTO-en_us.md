@@ -392,7 +392,7 @@ The table is an ordinary loot table, looked up by name like any other, which mea
 
 **Grave mods.** The rolled items are put down as ordinary death drops before any grave mod looks at them, so a grave mod that sweeps up a player's drops sweeps these up too: they go in the grave with everything else rather than lying loose beside it, and `replace` gives the grave the table's contents instead of the inventory. This holds for Gravestone, GraveStone Mod, Corail Tombstone and anything else that works from the drops the death produced. Nothing needs to be installed or configured for it, and there is nothing to switch on.
 
-`dropLoose` is for when that is the wrong answer. The items never join the death drops at all, they are put into the world on their own, so nothing that reads that list ever sees them: the inventory goes into the grave as it always did and the table's items lie on the ground beside the stone, for whoever did the killing to pick up. That is the setting for spoils, a head, a heart, whatever the body is supposed to leave behind, which belong to the killer rather than locked in the victim's grave waiting for them to walk back. With no grave mod installed it changes almost nothing, the items land in the same place either way; what it really decides is who gets them when one is. It does mean the items are in the world before anything downstream could have stopped the drops, so an entry that must not survive a cancelled death should stay off it.
+`dropLoose` is for when that is the wrong answer. The items never join the death drops at all, they are put into the world on their own, so nothing that reads that list ever sees them: the inventory goes into the grave as it always did and the table's items lie on the ground beside the stone, for whoever did the killing to pick up. That is the setting for spoils, a head, a heart, whatever the body is supposed to leave behind, which belong to the killer rather than locked in the victim's grave waiting for them to walk back. With no grave mod installed it changes almost nothing, the items land in the same place either way; what it really decides is who gets them when one is. It does mean the items are in the world before anything downstream could have stopped the drops, so an entry that must not survive a canceled death should stay off it.
 
 Set `playerLoot` in the `data` config category to `false` to turn the folder off entirely.
 
@@ -765,7 +765,7 @@ So a standing banner reaches to `29.33`, most of two blocks, and a wall banner h
 
 **Its item wants a model of its own.** An item that inherits a model this tall will burst out of its slot at the usual block scale, so give `models/item/<name>.json` a `display` block of its own with the scale brought down and the whole thing translated back into the frame.
 
-**There are no colours or patterns on it.** A pack banner has no tile entity, so nothing carries the layer list vanilla banners keep in theirs. The design is the texture, the same way a door's look is its texture, and one definition is one banner. Dyeing it and stacking patterns on it is not something a pack can reach.
+**There are no colors or patterns on it.** A pack banner has no tile entity, so nothing carries the layer list vanilla banners keep in theirs. The design is the texture, the same way a door's look is its texture, and one definition is one banner. Dyeing it and stacking patterns on it is not something a pack can reach.
 
 **It takes the `material` you give it.** The block it is built on fixes itself to wood, so this mod sets the material back to yours as it registers, and a stone banner is mined with a pickaxe like the stone it says it is.
 
@@ -808,15 +808,15 @@ A texture can be a JSON file instead of a PNG. Put it where the PNG would have g
 | --- | --- | --- | --- | --- |
 | `size` | yes, or inherited | `widthxheight` | | How many pixels across and down |
 | `rows` | yes, or inherited | list of text | | One string per row of pixels, one character per pixel, from the top down |
-| `palette` | yes, or inherited | object | | A character to a colour, `#RRGGBB` or `#AARRGGBB` |
+| `palette` | yes, or inherited | object | | A character to a color, `#RRGGBB` or `#AARRGGBB` |
 | `extends` | no | another pixel map | | The map this one starts from |
 | `notes` | no | object | | A character to a line saying what it is for, inherited and never drawn |
 
 **There is no name to declare.** The file's own path is its name, exactly as a PNG's is, so a map at `assets/mypack/textures/blocks/panel.png.json` is `mypack:blocks/panel` in a model and a map at `assets/mypack/textures/items/gem.png.json` is `mypack:items/gem` in an item model. Nothing points at a pixel map specially; a block or an item names its texture the way it always did and never learns which of the two it got. That also means the block and item folders stay apart, as they do for PNGs: `textures/blocks/gem.png.json` and `textures/items/gem.png.json` are two different textures and are cached as two different files.
 
-**Any size you like**, up to 4096 a side, and the two sides need not match. `16x16` is an ordinary block face, `16x32` is the sort of tall strip a door half or an animation wants. The size is checked rather than guessed: give one row per line of pixels and one character per pixel across, or the map is refused and the log names the row and what it found. A character with no colour in the palette is left clear, so `.` or a space is a hole.
+**Any size you like**, up to 4096 a side, and the two sides need not match. `16x16` is an ordinary block face, `16x32` is the sort of tall strip a door half or an animation wants. The size is checked rather than guessed: give one row per line of pixels and one character per pixel across, or the map is refused and the log names the row and what it found. A character with no color in the palette is left clear, so `.` or a space is a hole.
 
-**Templates are the point of it.** `extends` names another pixel map, as `namespace:path` or a bare path in the same pack, and the file that extends it inherits its `size`, its `rows` and its `palette`. Anything it names itself wins, and it need not name everything, so a whole variant can be a handful of colours:
+**Templates are the point of it.** `extends` names another pixel map, as `namespace:path` or a bare path in the same pack, and the file that extends it inherits its `size`, its `rows` and its `palette`. Anything it names itself wins, and it need not name everything, so a whole variant can be a handful of colors:
 
 ```json
 {
@@ -825,9 +825,9 @@ A texture can be a JSON file instead of a PNG. Put it where the PNG would have g
 }
 ```
 
-That is a complete second texture: the same shape in purpur, and if the shape is ever redrawn in the template every variant follows. A variant may instead give its own `rows` and keep the template's palette, which is the other way round, the same colours in a different pattern. Inheritance runs up to eight deep, a loop is caught and reported, and a map naming a template nothing provides is reported rather than drawn blank.
+That is a complete second texture: the same shape in purpur, and if the shape is ever redrawn in the template every variant follows. A variant may instead give its own `rows` and keep the template's palette, which is the other way round, the same colors in a different pattern. Inheritance runs up to eight deep, a loop is caught and reported, and a map naming a template nothing provides is reported rather than drawn blank.
 
-**A template can be a real image instead of a map.** Point `extends` at a PNG that any pack or the game itself provides and the palette changes meaning: keys become the colours already in that image, values the colours to put in their place. Nothing is traced and no `rows` are written, so a pack can recolour a vanilla or mod texture where it stands:
+**A template can be a real image instead of a map.** Point `extends` at a PNG that any pack or the game itself provides and the palette changes meaning: keys become the colors already in that image, values the colors to put in their place. Nothing is traced and no `rows` are written, so a pack can recolor a vanilla or mod texture where it stands:
 
 ```json
 {
@@ -841,7 +841,7 @@ That is a complete second texture: the same shape in purpur, and if the shape is
 }
 ```
 
-That is a ruby ore in vanilla's own stone: the four speck tones are swapped and every other pixel is left as it was. A colour the image does not contain simply never matches, and the size comes from the image unless you name one, which must then agree.
+That is a ruby ore in vanilla's own stone: the four speck tones are swapped and every other pixel is left as it was. A color the image does not contain simply never matches, and the size comes from the image unless you name one, which must then agree.
 
 `extends` prefers a pixel map: it looks for the map at that path first and only falls back to the image when no pack provides one. A name that is neither is reported rather than drawn blank. Building on an image is client-side work, since it is the game's own resources being read, so a dedicated server never does it.
 
@@ -859,7 +859,7 @@ oretest:textures/blocks/ruby_ore.png is 16x16
   a  #747474  86 pixel(s)  set by gem_ore.png.json   stone, the commonest tone
 ```
 
-Every character is listed with its colour, how many pixels it covers, which file in the chain set it and what that file says it is for. The path may be given the short way, `mypack:blocks/panel`, or in full. A character showing 0 pixels is one the palette names and the rows never use, which is usually a typo in a row.
+Every character is listed with its color, how many pixels it covers, which file in the chain set it and what that file says it is for. The path may be given the short way, `mypack:blocks/panel`, or in full. A character showing 0 pixels is one the palette names and the rows never use, which is usually a typo in a row.
 
 **Drawn images are kept on disk** in `rdploader/pixelmap-cache`, under a folder per namespace and named after the texture with a hash of its source on the end. The hash covers the whole chain, the map itself and every template above it, so editing a template changes the stamp of every variant that inherits from it and they are all redrawn. When a map is redrawn its older files are swept away.
 
@@ -1235,6 +1235,7 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `creatureAttribute` | no | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
 | `effects` | no | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
 | `despawns` | no | boolean | `true` | Off, it stays even when it would normally be cleared away |
+| `despawnAfter` | no | int, seconds | none | It goes quietly once it has been in the world this long, however far away anyone is |
 | `noAI` | no | boolean | `false` | Stands where it is put and does nothing |
 | `leftHanded` | no | boolean | `false` | Holds its weapon in the other hand |
 | `fireproof` | no | boolean | `false` | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight |
@@ -1243,7 +1244,7 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `invisible` | no | boolean | `false` | Not drawn, though its gear still is |
 | `dropChance` | no | 0 to 1 | `0` | How likely each piece of equipment is to drop |
 | `scale` | no | float | `1.0` | How big it is drawn, and how big its hitbox is |
-| `angryScale` | no | float | `scale` | The size it swells to while it has something to attack |
+| `angryScale` | no | float | `scale` | The size it swells to while it has something to attack, and for three seconds after it loses one |
 | `leashable` | no | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
 | `steerable` | no | boolean | `false` | Can be steered while ridden |
 | `width` | no | float | the base's | Its hitbox across, before `scale` is applied |
@@ -1263,6 +1264,11 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `tintParts` | no | list of `body`, `armor`, `held` | `["body"]` | Which parts the tint reaches |
 | `ignoresSpawnRules` | no | boolean | `false` | Spawns wherever it is put, ignoring the rules it inherited |
 | `throws` | no | boolean | `false` | Throws what it holds at its target from a distance, and if that is TNT it lights it and backs off. Needs `hostile` |
+| `throwAmmo` | no | int | none | How many it has to throw. Left out, it never runs short |
+| `throwReload` | no | int, seconds | `explosionFuse` | How long its hand stays empty before it draws another |
+| `throwRetreat` | no | int, seconds | `explosionFuse` | How long it keeps away after a throw before turning back |
+| `throwPower` | no | float | `1.0` | How hard it throws. Doubling it roughly doubles the reach |
+| `throwArc` | no | float | `0.35` | How high it lobs. Higher hangs longer, near zero is a flat hurl, below zero throws downward |
 | `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
 | `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4 |
 | `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off |
@@ -1275,6 +1281,12 @@ A file in `assets/<modid>/entities/` makes a new entity out of one that already 
 | `trackVelocity` | no | boolean | `true` | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no | int | `3` | How often, in ticks |
 | `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+
+**A creature with a shelf life.** `despawnAfter` counts in seconds from the moment a creature first enters the world and takes it away quietly when the time is up: no death, no drops, no sound, exactly as if it had wandered off and been cleared. The clock is written into the creature itself, so it keeps running across a save and reload rather than starting over each time a chunk comes back.
+
+It is its own thing, not a nudge to the rules `despawns` and `persistent` govern. Those two decide whether the game may clear a creature away for being far from anybody; this one is a promise that it goes at a set time regardless. A creature can be `persistent` and still have a shelf life, which is what you want for something summoned for a fight or an event that should not outlive it.
+
+The clock runs on world time, so it pauses when nobody is playing and it does not count the minutes a chunk spent unloaded.
 
 `scale` changes both the model and the hitbox on both sides, so what you see is what you can hit. A creature that changes its own size, an animal growing up or a zombie that is a child, is scaled around whatever size it has chosen, so the two do not fight. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across, it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
 
@@ -1299,7 +1311,13 @@ A variant is a class of its own, so a world that contains one depends on the pac
 }
 ```
 
-It throws a copy, so it never disarms itself, and anything else in its hand simply flies as an item and lands, which is a sapper flinging rocks or rotten flesh as easily as explosives. `explosionFuse` does double duty here: it is the fuse on the thrown TNT, the pause between throws, and how long it stays backed off, so one number sets the whole rhythm. How far it will throw from is its `followRange`, and it closes as usual once you are nearer than three blocks, so it is dangerous at range and ordinary in your face.
+Throwing empties its hand, because it threw the thing. It then keeps away for `throwRetreat`, draws another after `throwReload`, and turns back to its target: a loop of lob, fall back, reload, close in. Give it a `throwAmmo` and that loop ends when the count runs out, its hand staying empty for good and its ordinary attack taking over. Leave `throwAmmo` out and it never runs short.
+
+The count is written into the creature, so it does not refill because a chunk was unloaded and loaded again. Anything that is not TNT flies as an item and lands, which makes a sapper flinging rocks or rotten flesh as easy as one flinging explosives.
+
+`explosionFuse` remains the fuse on the thrown TNT, and stands in for either timer you leave out, so a variant written before these keys behaves exactly as it did.
+
+How the throw itself flies is `throwPower` and `throwArc`. The first is a multiplier on the shove, and since the shove already grows with distance, raising it lengthens the reach without changing how long the throw hangs in the air. The second is the lift, and it changes the shape: high and it lobs over a wall and takes its time, near zero and it is hurled flat and lands almost at once, below zero and it is thrown down at something beneath. Both leave the fuse alone, so a lobbed charge and a flat one go off the same number of seconds after leaving the hand, which is what decides whether one bursts overhead or lands first and waits. How far it will throw from is its `followRange`, and it closes as usual once you are nearer than three blocks, so it is dangerous at range and ordinary in your face.
 
 **One egg or spawner giving a mix.** A variant is a class of its own, so on its own it always spawns exactly what it says. `becomes` is how a pack breaks that: a list of variants this one may turn into as it spawns, each with a weight, decided per creature.
 
@@ -2263,7 +2281,7 @@ Everything below is experimental with the rest of the village work, and only doe
 
 A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
 
-`villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolours it.
+`villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
 
 ### Blast Plaster
 

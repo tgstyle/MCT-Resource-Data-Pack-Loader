@@ -202,17 +202,21 @@ public final class ContentEntities {
         if (!(living instanceof EntityLiving)) { return; }
 
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious)) { return; }
+        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0)) { return; }
 
         if (living.world.isRemote) {
             if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
             return;
         }
 
+        if (def.despawnTicks > 0 && timeIsUp(living, def)) {
+            living.setDead();
+            return;
+        }
         if (def.amphibious) { amphibious((EntityLiving) living); }
         if (def.baby > 0.0F && living.getEntityData().getBoolean(YOUNG) && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
 
-        boolean angry = ((EntityLiving) living).getAttackTarget() != null;
+        boolean angry = stillRoused((EntityLiving) living);
         if (angry != living.isSprinting()) { living.setSprinting(angry); }
 
         resize(living, angry ? def.angryScale : def.scale);
@@ -442,7 +446,7 @@ public final class ContentEntities {
         }
         if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
         if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
-        if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, def.explosionFuse, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue())); }
+        if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, carrying(def), def.explosionFuse, def.throwReload > 0 ? def.throwReload : def.explosionFuse, def.throwRetreat > 0 ? def.throwRetreat : def.explosionFuse, def.throwAmmo, def.throwPower, def.throwArc, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue())); }
 
         living.targetTasks.addTask(1, new EntityAIHurtByTarget(creature, true));
         int priority = 2;
@@ -455,9 +459,31 @@ public final class ContentEntities {
         }
     }
 
+    private static final int ROUSED = 60;
+    private static final String BORN = "rdplBorn";
+    private static final String CALM = "rdplCalmAt";
     private static final String ROLLED = "rdplBabyRolled";
     private static final String YOUNG = "rdplBabyYoung";
     private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    private static boolean stillRoused(EntityLiving living) {
+        long now = living.world.getTotalWorldTime();
+        if (living.getAttackTarget() != null) {
+            living.getEntityData().setLong(CALM, now + ROUSED);
+            return true;
+        }
+        return living.getEntityData().getLong(CALM) > now;
+    }
+
+    private static boolean timeIsUp(EntityLivingBase living, EntityVariantDef def) {
+        NBTTagCompound held = living.getEntityData();
+        long now = living.world.getTotalWorldTime();
+        if (!held.hasKey(BORN)) {
+            held.setLong(BORN, now);
+            return false;
+        }
+        return now - held.getLong(BORN) >= def.despawnTicks;
+    }
 
     private static boolean rolledYoung(EntityLiving living, EntityVariantDef def) {
         NBTTagCompound held = living.getEntityData();
@@ -562,6 +588,15 @@ public final class ContentEntities {
             }
             living.setPathPriority(type, entry.getValue());
         }
+    }
+
+    private static ItemStack carrying(EntityVariantDef def) {
+        String named = def.equipment.get("mainhand");
+        if (named == null) { return ItemStack.EMPTY; }
+
+        ResourceLocation name = new ResourceLocation(named);
+        Item item = ForgeRegistries.ITEMS.containsKey(name) ? ForgeRegistries.ITEMS.getValue(name) : null;
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 
     private static void gear(EntityLiving living, EntityVariantDef def) {

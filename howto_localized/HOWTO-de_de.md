@@ -1235,6 +1235,7 @@ Eine Datei in `assets/<modid>/entities/` macht aus einer vorhandenen Entity eine
 | `creatureAttribute` | nein | `undefined`, `undead`, `arthropod` oder `illager` | das der Basis | Als was sie zählt, damit Bann und Heiltränke sie entsprechend behandeln |
 | `effects` | nein | Liste von Objekten | keine | Effekte, die sie immer hat: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
 | `despawns` | nein | boolean | `true` | Aus bleibt sie, auch wenn sie sonst entfernt würde |
+| `despawnAfter` | nein | int, Sekunden | keine | Sie verschwindet still, sobald sie so lange in der Welt war, ganz gleich wie weit jemand entfernt ist |
 | `noAI` | nein | boolean | `false` | Steht da, wo sie hingesetzt wurde, und tut nichts |
 | `leftHanded` | nein | boolean | `false` | Hält ihre Waffe in der anderen Hand |
 | `fireproof` | nein | boolean | `false` | Fängt überhaupt nie Feuer, nimmt also keinen Schaden durch Feuer oder Lava und brennt nicht im Tageslicht |
@@ -1243,7 +1244,7 @@ Eine Datei in `assets/<modid>/entities/` macht aus einer vorhandenen Entity eine
 | `invisible` | nein | boolean | `false` | Wird nicht gezeichnet, ihre Ausrüstung aber schon |
 | `dropChance` | nein | 0 bis 1 | `0` | Wie wahrscheinlich jedes Ausrüstungsstück droppt |
 | `scale` | nein | float | `1.0` | Wie groß sie gezeichnet wird und wie groß ihre Hitbox ist |
-| `angryScale` | nein | float | `scale` | Die Größe, auf die sie anschwillt, solange sie ein Ziel hat |
+| `angryScale` | nein | float | `scale` | Die Größe, auf die sie anschwillt, solange sie ein Ziel hat, und noch drei Sekunden danach |
 | `leashable` | nein | boolean | `false` | Lässt sich an der Leine führen, auch wenn die kopierte Entity das nie konnte |
 | `steerable` | nein | boolean | `false` | Lässt sich beim Reiten lenken |
 | `width` | nein | float | die der Basis | Breite ihrer Hitbox, bevor `scale` angewendet wird |
@@ -1263,6 +1264,11 @@ Eine Datei in `assets/<modid>/entities/` macht aus einer vorhandenen Entity eine
 | `tintParts` | nein | Liste aus `body`, `armor`, `held` | `["body"]` | Welche Teile die Färbung erreicht |
 | `ignoresSpawnRules` | nein | boolean | `false` | Spawnt überall, wo sie hingesetzt wird, und ignoriert die geerbten Regeln |
 | `throws` | nein | boolean | `false` | Wirft aus der Entfernung, was es in der Hand hält, und zündet es an und zieht sich zurück, wenn das TNT ist. Braucht `hostile` |
+| `throwAmmo` | nein | int | keine | Wie viele es zu werfen hat. Weggelassen geht ihm nie etwas aus |
+| `throwReload` | nein | int, Sekunden | `explosionFuse` | Wie lange die Hand leer bleibt, bis es das nächste zieht |
+| `throwRetreat` | nein | int, Sekunden | `explosionFuse` | Wie lange es nach einem Wurf auf Abstand bleibt, ehe es sich wieder umdreht |
+| `throwPower` | nein | float | `1.0` | Wie kräftig es wirft. Verdoppeln verdoppelt ungefähr die Weite |
+| `throwArc` | nein | float | `0.35` | Wie hoch es lobt. Höher hängt länger, nahe null ist ein flacher Wurf, unter null wirft es nach unten |
 | `explodes` | nein | boolean | `false` | Sprengt sich neben ihrem Ziel in die Luft, wie ein Creeper. Braucht `hostile` |
 | `explosionPower` | nein | Zahl | `3.0` | Wie groß die Explosion ist. Ein Creeper ist 3, TNT ist 4 |
 | `explosionFuse` | nein | int, Ticks | `30` | Wie lange sie zischt, bevor es losgeht |
@@ -1275,6 +1281,12 @@ Eine Datei in `assets/<modid>/entities/` macht aus einer vorhandenen Entity eine
 | `trackVelocity` | nein | boolean | `true` | Schickt neben der Position auch die Geschwindigkeit. Aus spart Traffic bei Dingen, die sich kaum bewegen |
 | `trackingFrequency` | nein | int | `3` | Wie oft, in Ticks |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Variante bleibt weg, wenn nicht alle da sind |
+
+**Eine Kreatur mit Haltbarkeitsdatum.** `despawnAfter` zählt in Sekunden ab dem Moment, in dem eine Kreatur zum ersten Mal in die Welt kommt, und nimmt sie still fort, wenn die Zeit um ist: kein Tod, kein Drop, kein Geräusch, genau als wäre sie weggewandert und weggeräumt worden. Die Uhr wird in die Kreatur selbst geschrieben, sie läuft also über Speichern und Laden hinweg weiter, statt jedes Mal neu zu beginnen, wenn ein Chunk zurückkommt.
+
+Sie ist eine Sache für sich und kein Anstupsen der Regeln, über die `despawns` und `persistent` bestimmen. Die beiden entscheiden, ob das Spiel eine Kreatur wegräumen darf, weil sie weit von allen entfernt ist; diese hier ist ein Versprechen, dass sie zu einer festen Zeit geht, ganz gleich was sonst gilt. Eine Kreatur darf `persistent` sein und trotzdem ein Haltbarkeitsdatum haben – genau das willst du für etwas, das für einen Kampf oder ein Ereignis gerufen wurde und es nicht überdauern soll.
+
+Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und zählt die Minuten nicht mit, die ein Chunk entladen verbracht hat.
 
 `scale` ändert Modell und Hitbox auf beiden Seiten, du triffst also das, was du siehst. Eine Kreatur, die ihre Größe selbst ändert – ein Tier, das heranwächst, oder ein Zombie, der ein Kind ist –, wird um die Größe herum skaliert, die sie sich gewählt hat, damit sich beides nicht in die Quere kommt. `angryScale` lässt sie anschwellen, solange sie ein Ziel hat, und bringt sie auf `scale` zurück, sobald sie es verliert. Da dem Client nie mitgeteilt wird, was eine Kreatur jagt, trägt das Sprint-Flag diese Nachricht hinüber; es wird bei einer Variante gesetzt, die `angryScale` nutzt, und sonst bei keiner – ein Mod, der bei deinen Varianten das Sprinten ausliest, sieht es also wechseln. In eine niedrige Decke hineinzuwachsen ist möglich, genauso wie bei einem wachsenden Schleim, halte den Unterschied also im Rahmen.
 
@@ -1299,7 +1311,13 @@ Eine Variante ist eine eigene Klasse, eine Welt, die eine enthält, hängt also 
 }
 ```
 
-Geworfen wird eine Kopie, sie entwaffnet sich also nie, und alles andere in ihrer Hand fliegt schlicht als Item und landet – ein Pionier, der Steine oder verrottetes Fleisch ebenso gut schleudert wie Sprengstoff. `explosionFuse` tut hier doppelten Dienst: Es ist die Lunte am geworfenen TNT, die Pause zwischen zwei Würfen und die Zeit, die sie auf Abstand bleibt, eine Zahl setzt also den ganzen Rhythmus. Wie weit sie wirft, sagt ihre `followRange`, und näher als drei Blöcke geht sie wie gewohnt zum Angriff über, sie ist also auf Distanz gefährlich und im Nahkampf gewöhnlich.
+Der Wurf leert die Hand, denn sie hat das Ding ja geworfen. Danach bleibt sie `throwRetreat` lang auf Abstand, zieht nach `throwReload` das nächste und dreht sich wieder zu ihrem Ziel: ein Kreislauf aus Werfen, Zurückweichen, Nachladen, Herangehen. Gibst du ihr ein `throwAmmo`, endet dieser Kreislauf, wenn die Zahl aufgebraucht ist – die Hand bleibt dann leer und ihr gewöhnlicher Angriff übernimmt. Lässt du `throwAmmo` weg, geht ihr nie etwas aus.
+
+Die Zahl wird in die Kreatur geschrieben, sie füllt sich also nicht wieder auf, weil ein Chunk entladen und neu geladen wurde. Alles, was kein TNT ist, fliegt als Item und landet – ein Pionier, der Steine oder verrottetes Fleisch schleudert, ist so leicht gemacht wie einer mit Sprengstoff.
+
+`explosionFuse` bleibt die Lunte am geworfenen TNT und springt für jeden der beiden Zeitwerte ein, den du weglässt, eine vor diesen Schlüsseln geschriebene Variante verhält sich also genau wie zuvor.
+
+Wie der Wurf selbst fliegt, bestimmen `throwPower` und `throwArc`. Das erste ist ein Faktor auf den Schwung, und da der Schwung ohnehin mit der Entfernung wächst, verlängert ein höherer Wert die Weite, ohne zu ändern, wie lange der Wurf in der Luft hängt. Das zweite ist die Höhe und ändert die Form: hoch, und er lobt über eine Mauer und lässt sich Zeit; nahe null, und er wird flach geschleudert und landet fast sofort; unter null, und er wird auf etwas darunter hinabgeworfen. Beide lassen die Lunte in Ruhe, eine gelobte und eine flache Ladung gehen also gleich viele Sekunden nach dem Verlassen der Hand hoch – und das entscheidet, ob eine über den Köpfen zerplatzt oder erst landet und wartet. Wie weit sie wirft, sagt ihre `followRange`, und näher als drei Blöcke geht sie wie gewohnt zum Angriff über, sie ist also auf Distanz gefährlich und im Nahkampf gewöhnlich.
 
 **Ein Ei oder Spawner, der Verschiedenes liefert.** Eine Variante ist eine eigene Klasse, für sich allein erscheint sie also immer genau als das, was sie sagt. `becomes` bricht das auf: eine Liste von Varianten, zu denen diese beim Erscheinen werden kann, jede mit einem Gewicht, für jede Kreatur einzeln entschieden.
 
