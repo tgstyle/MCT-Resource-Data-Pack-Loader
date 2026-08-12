@@ -810,6 +810,7 @@ A texture can be a JSON file instead of a PNG. Put it where the PNG would have g
 | `rows` | yes, or inherited | list of text | | One string per row of pixels, one character per pixel, from the top down |
 | `palette` | yes, or inherited | object | | A character to a color, `#RRGGBB` or `#AARRGGBB` |
 | `extends` | no | another pixel map | | The map this one starts from |
+| `tint` | no | object with `from` and `to` | | Recolors everything inherited along a ramp between two colors |
 | `notes` | no | object | | A character to a line saying what it is for, inherited and never drawn |
 
 **There is no name to declare.** The file's own path is its name, exactly as a PNG's is, so a map at `assets/mypack/textures/blocks/panel.png.json` is `mypack:blocks/panel` in a model and a map at `assets/mypack/textures/items/gem.png.json` is `mypack:items/gem` in an item model. Nothing points at a pixel map specially; a block or an item names its texture the way it always did and never learns which of the two it got. That also means the block and item folders stay apart, as they do for PNGs: `textures/blocks/gem.png.json` and `textures/items/gem.png.json` are two different textures and are cached as two different files.
@@ -826,6 +827,19 @@ A texture can be a JSON file instead of a PNG. Put it where the PNG would have g
 ```
 
 That is a complete second texture: the same shape in purpur, and if the shape is ever redrawn in the template every variant follows. A variant may instead give its own `rows` and keep the template's palette, which is the other way round, the same colors in a different pattern. Inheritance runs up to eight deep, a loop is caught and reported, and a map naming a template nothing provides is reported rather than drawn blank.
+
+**Which of two textures is the template** is settled by which one holds more distinctions, not by which was drawn first. A variant gives each character one color, so every pixel the template calls the same character comes out the same color in the variant. An ore drawn on stone therefore cannot inherit the stone's `rows`: the stone calls the speck positions plain stone, and nothing a variant can write splits one character into two. Turn it round and it works. Let the ore be the template, so the stone tones and the ore tones each hold characters of their own, and a second ore is four colors:
+
+```json
+{
+  "extends": "mypack:textures/blocks/ore_template",
+  "palette": { "4": "#768291", "5": "#5E6977", "6": "#66717F", "7": "#848F9D" }
+}
+```
+
+A variant that really does want a different pattern gives its own `rows`, as above, and then inherits only the palette. That is worth doing when the colors are the point and the shape is incidental; when the shape is the point, put the shape in the template and let the variants name colors.
+
+**A template need not be a texture at all.** A map is only served to the game when its path ends in `.png`, so a template at `textures/blocks/ore_template.json` is invisible to the game and exists purely to be extended, while one at `textures/blocks/ore_template.png.json` would also answer requests for `ore_template.png`. Name a shared shape without the `.png` and nothing can ask for it by accident.
 
 **A template can be a real image instead of a map.** Point `extends` at a PNG that any pack or the game itself provides and the palette changes meaning: keys become the colors already in that image, values the colors to put in their place. Nothing is traced and no `rows` are written, so a pack can recolor a vanilla or mod texture where it stands:
 
@@ -844,6 +858,21 @@ That is a complete second texture: the same shape in purpur, and if the shape is
 That is a ruby ore in vanilla's own stone: the four speck tones are swapped and every other pixel is left as it was. A color the image does not contain simply never matches, and the size comes from the image unless you name one, which must then agree.
 
 `extends` prefers a pixel map: it looks for the map at that path first and only falls back to the image when no pack provides one. A name that is neither is reported rather than drawn blank. Building on an image is client-side work, since it is the game's own resources being read, so a dedicated server never does it.
+
+**A template can be tinted instead of repainted.** `tint` names two colors and recolors everything the map inherits along the ramp between them. Each inherited color's brightness is its place on that ramp, so black lands on `from`, white lands on `to`, and every tone between is mixed in proportion. Transparency is left alone. That makes a grayscale template plus two colors a complete variant:
+
+```json
+{
+  "extends": "mypack:textures/items/materials/ingot.png",
+  "tint": { "from": "#626669", "to": "#DBDFE2" }
+}
+```
+
+`from` may be left out, in which case it is black and the tint becomes an ordinary multiply, the same shape as a `tintindex` at render time. The difference is that this one is drawn into the PNG once and cached, so it costs nothing per frame and reaches a texture nothing tints, but it also cannot follow a biome the way `grass` or `foliage` can.
+
+The template stays an ordinary map: open it, look at it, and it draws as the gray it is. Both colors take `#RRGGBB`, `#AARRGGBB` or a leading `0x`, and a value that is neither leaves the map undrawn rather than drawing it in the wrong color. A tint is inherited like everything else and the first one down the chain wins, so a variant's own tint beats the one it extends. It works on an image template too, where it runs after the palette's color swaps.
+
+**A tint is a ramp between two colors**, so it only suits a texture whose tones sit on one. A shape with two unrelated regions, an ore's stone against its specks, is not that, and wants its palette written out instead.
 
 **Knowing what a template's characters mean** is the awkward part of extending one, which is what the `notes` block above is for: a character to a short line, inherited the same way the palette is and never drawn. Label a template's characters and whoever extends it knows which to override.
 

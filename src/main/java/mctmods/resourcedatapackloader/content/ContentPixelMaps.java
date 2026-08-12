@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.util.TintFactory;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -42,6 +43,7 @@ public final class ContentPixelMaps {
     private static final String ROWS = "rows";
     private static final String SIZE = "size";
     private static final String NOTES = "notes";
+    private static final String TINT = "tint";
     private static final int MAX_SIDE = 4096;
     private static final int HASH_LENGTH = 16;
     private static final char PLAIN = 'n';
@@ -97,6 +99,7 @@ public final class ContentPixelMaps {
         List<String> chain = new ArrayList<>();
         List<String> rows = null;
         String rowsFrom = null;
+        TintFactory tint = null;
         int[] size = null;
         int[] base = null;
         String baseFrom = null;
@@ -143,6 +146,14 @@ public final class ContentPixelMaps {
                 JsonArray listed = JsonUtils.getJsonArray(json, ROWS);
                 rows = new ArrayList<>(listed.size());
                 for (JsonElement row : listed) { rows.add(row.getAsString()); }
+            }
+            if (tint == null && json.has(TINT)) {
+                JsonObject asked = JsonUtils.getJsonObject(json, TINT);
+                tint = TintFactory.of(asked);
+                if (tint == null) {
+                    ContentLog.LOGGER.error("Pixel map {}:{} tints from '{}' to '{}', and both must be #RRGGBB or #AARRGGBB, so nothing is drawn", where, at, JsonUtils.getString(asked, TintFactory.FROM, ""), JsonUtils.getString(asked, TintFactory.TO, ""));
+                    return null;
+                }
             }
             if (size == null && json.has(SIZE)) {
                 size = size(JsonUtils.getString(json, SIZE, ""));
@@ -195,7 +206,7 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} builds on {}, which is not {} by {}, so nothing is drawn", namespace, path, baseFrom, size[0], size[1]);
                 return null;
             }
-            return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, base, baseFrom, sources.toString());
+            return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, base, baseFrom, sources.toString());
         }
         if (rows.size() != size[1]) {
             ContentLog.LOGGER.error("Pixel map {}:{} is {} tall but has {} row(s). Give it one row per line of pixels, from the top down", namespace, path, size[1], rows.size());
@@ -208,7 +219,7 @@ public final class ContentPixelMaps {
             }
         }
 
-        return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, null, null, sources.toString());
+        return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, null, null, sources.toString());
     }
 
     public static final class Resolved {
@@ -219,11 +230,12 @@ public final class ContentPixelMaps {
         public final Map<String, String> from;
         public final List<String> chain;
         public final String rowsFrom;
+        @Nullable public final TintFactory tint;
         @Nullable public final int[] base;
         @Nullable public final String baseFrom;
         final String sources;
 
-        Resolved(int[] size, List<String> rows, Map<String, String> palette, Map<String, String> notes, Map<String, String> from, List<String> chain, String rowsFrom, @Nullable int[] base, @Nullable String baseFrom, String sources) {
+        Resolved(int[] size, List<String> rows, Map<String, String> palette, Map<String, String> notes, Map<String, String> from, List<String> chain, String rowsFrom, @Nullable TintFactory tint, @Nullable int[] base, @Nullable String baseFrom, String sources) {
             this.size = size;
             this.rows = rows;
             this.palette = palette;
@@ -231,6 +243,7 @@ public final class ContentPixelMaps {
             this.from = from;
             this.chain = chain;
             this.rowsFrom = rowsFrom;
+            this.tint = tint;
             this.base = base;
             this.baseFrom = baseFrom;
             this.sources = sources;
@@ -284,7 +297,7 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} gives '{}' the color '{}', which is not #RRGGBB or #AARRGGBB, ignoring it", namespace, path, entry.getKey(), entry.getValue());
                 continue;
             }
-            colors.put(entry.getKey().charAt(0), color);
+            colors.put(entry.getKey().charAt(0), resolved.tint == null ? color : resolved.tint.shade(color));
         }
 
         BufferedImage image = new BufferedImage(size[0], size[1], BufferedImage.TYPE_INT_ARGB);
@@ -456,7 +469,8 @@ public final class ContentPixelMaps {
             for (int x = 0; x < size[0]; x++) {
                 int was = base[y * size[0] + x];
                 Integer becomes = swaps.get(was);
-                image.setRGB(x, y, becomes == null ? was : becomes);
+                int drawn = becomes == null ? was : becomes;
+                image.setRGB(x, y, resolved.tint == null ? drawn : resolved.tint.shade(drawn));
             }
         }
         return written(namespace, path, image);
@@ -475,15 +489,5 @@ public final class ContentPixelMaps {
         return hash(text.toString());
     }
 
-    @Nullable private static Integer color(String written) {
-        String text = written.trim();
-        if (text.startsWith("#")) { text = text.substring(1); }
-        if (text.length() != 6 && text.length() != 8) { return null; }
-
-        try {
-            long value = Long.parseLong(text, 16);
-            return text.length() == 6 ? (int) (value | 0xFF000000L) : (int) value;
-        }
-        catch (NumberFormatException ex) { return null; }
-    }
+    @Nullable private static Integer color(String written) { return TintFactory.color(written); }
 }

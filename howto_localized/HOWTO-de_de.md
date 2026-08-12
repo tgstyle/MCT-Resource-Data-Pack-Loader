@@ -810,6 +810,7 @@ Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die P
 | `rows` | ja, oder geerbt | Liste von Text | | Eine Zeichenkette je Pixelzeile, ein Zeichen je Pixel, von oben nach unten |
 | `palette` | ja, oder geerbt | Objekt | | Ein Zeichen zu einer Farbe, `#RRGGBB` oder `#AARRGGBB` |
 | `extends` | nein | eine andere Pixelkarte | | Die Karte, von der diese ausgeht |
+| `tint` | nein | Objekt mit `from` und `to` | | Färbt alles Geerbte entlang einer Rampe zwischen zwei Farben um |
 | `notes` | nein | Objekt | | Ein Zeichen zu einer Zeile, die sagt, wofür es da ist; wird vererbt und nie gezeichnet |
 
 **Es gibt keinen Namen anzugeben.** Der Pfad der Datei ist ihr Name, genau wie bei einer PNG: Eine Karte unter `assets/meinpack/textures/blocks/panel.png.json` heißt im Modell `meinpack:blocks/panel`, eine unter `assets/meinpack/textures/items/gem.png.json` heißt im Item-Modell `meinpack:items/gem`. Nichts zeigt eigens auf eine Pixelkarte; ein Block oder ein Item nennt seine Textur wie eh und je und erfährt nie, welche von beiden es bekommen hat. Damit bleiben Block- und Item-Ordner auch getrennt wie bei PNGs: `textures/blocks/gem.png.json` und `textures/items/gem.png.json` sind zwei verschiedene Texturen und werden als zwei verschiedene Dateien zwischengespeichert.
@@ -826,6 +827,19 @@ Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die P
 ```
 
 Das ist eine vollständige zweite Textur: dieselbe Form in Purpur, und wird die Form in der Vorlage je neu gezeichnet, ziehen alle Varianten mit. Eine Variante darf stattdessen eigene `rows` mitbringen und die Palette der Vorlage behalten – andersherum also: dieselben Farben in einem anderen Muster. Die Vererbung geht bis zu acht Stufen tief, eine Schleife wird erkannt und gemeldet, und eine Karte, die eine Vorlage nennt, die es nicht gibt, wird gemeldet statt leer gezeichnet.
+
+**Welche von zwei Texturen die Vorlage ist**, entscheidet sich daran, welche mehr Unterschiede festhält, nicht daran, welche zuerst gezeichnet wurde. Eine Variante gibt jedem Zeichen eine Farbe, also wird jedes Pixel, das die Vorlage gleich benennt, in der Variante auch gleich. Ein Erz auf Stein kann die `rows` des Steins deshalb nicht erben: Der Stein nennt die Sprenkelstellen schlicht Stein, und nichts, was eine Variante schreiben kann, spaltet ein Zeichen in zwei. Andersherum geht es auf. Nimm das Erz als Vorlage, dann haben Steintöne und Erztöne je eigene Zeichen, und ein zweites Erz sind vier Farben:
+
+```json
+{
+  "extends": "meinpack:textures/blocks/ore_template",
+  "palette": { "4": "#768291", "5": "#5E6977", "6": "#66717F", "7": "#848F9D" }
+}
+```
+
+Eine Variante, die wirklich ein anderes Muster will, bringt wie oben eigene `rows` mit und erbt dann nur noch die Palette. Das lohnt, wenn es auf die Farben ankommt und die Form nebensächlich ist; kommt es auf die Form an, gehört die Form in die Vorlage und die Varianten nennen Farben.
+
+**Eine Vorlage muss gar keine Textur sein.** Eine Karte wird dem Spiel nur gereicht, wenn ihr Pfad auf `.png` endet. Eine Vorlage unter `textures/blocks/ore_template.json` ist für das Spiel also unsichtbar und nur zum Erben da, während eine unter `textures/blocks/ore_template.png.json` auch Anfragen nach `ore_template.png` beantworten würde. Benenne eine geteilte Form ohne das `.png`, dann kann sie niemand versehentlich anfordern.
 
 **Eine Vorlage darf auch ein echtes Bild sein.** Zeigt `extends` auf eine PNG, die irgendein Pack oder das Spiel selbst liefert, ändert die Palette ihre Bedeutung: Die Schlüssel sind dann die Farben, die im Bild schon stecken, die Werte die Farben, die an ihre Stelle treten. Nichts wird abgepaust und keine `rows` werden geschrieben, ein Pack kann eine Vanilla- oder Mod-Textur also an Ort und Stelle umfärben:
 
@@ -844,6 +858,21 @@ Das ist eine vollständige zweite Textur: dieselbe Form in Purpur, und wird die 
 Das ist ein Rubinerz in Vanillas eigenem Stein: Die vier Sprenkeltöne werden getauscht, jedes andere Pixel bleibt, wie es war. Eine Farbe, die das Bild nicht enthält, passt schlicht nie, und die Größe kommt aus dem Bild, sofern du keine nennst – dann muss sie übereinstimmen.
 
 `extends` bevorzugt eine Pixelkarte: Es sucht zuerst die Karte unter diesem Pfad und weicht erst auf das Bild aus, wenn kein Pack eine liefert. Ein Name, der weder das eine noch das andere ist, wird gemeldet statt leer gezeichnet. Auf einem Bild aufzubauen ist Client-Arbeit, denn dabei werden die Ressourcen des Spiels gelesen, ein dedizierter Server tut es also nie.
+
+**Eine Vorlage lässt sich auch einfärben, statt sie umzumalen.** `tint` nennt zwei Farben und färbt alles, was die Karte erbt, entlang der Rampe zwischen ihnen um. Die Helligkeit jeder geerbten Farbe ist ihr Platz auf dieser Rampe: Schwarz landet auf `from`, Weiß auf `to`, und jeder Ton dazwischen wird anteilig gemischt. Die Transparenz bleibt unangetastet. Damit sind eine graue Vorlage und zwei Farben eine vollständige Variante:
+
+```json
+{
+  "extends": "meinpack:textures/items/materials/ingot.png",
+  "tint": { "from": "#626669", "to": "#DBDFE2" }
+}
+```
+
+`from` darf fehlen, dann ist es Schwarz und der Tint wird zur gewöhnlichen Multiplikation, also zu dem, was ein `tintindex` beim Zeichnen tut. Der Unterschied: Dieser hier wird einmal in die PNG gezeichnet und zwischengespeichert, kostet also pro Bild nichts und erreicht auch eine Textur, die sonst niemand einfärbt. Dafür kann er einem Biom nicht folgen, wie `grass` oder `foliage` es können.
+
+Die Vorlage bleibt eine gewöhnliche Karte: Öffne sie, sieh sie dir an, sie zeichnet sich als das Grau, das sie ist. Beide Farben nehmen `#RRGGBB`, `#AARRGGBB` oder ein vorangestelltes `0x`, und ein Wert, der nichts davon ist, lässt die Karte lieber ungezeichnet, als sie falsch zu färben. Ein Tint wird vererbt wie alles andere, und der erste die Kette hinunter gewinnt, der eigene Tint einer Variante schlägt also den der Vorlage. Auf einer Bildvorlage wirkt er ebenfalls, dort nach den Farbtauschen der Palette.
+
+**Ein Tint ist eine Rampe zwischen zwei Farben** und taugt darum nur für eine Textur, deren Töne auf einer solchen liegen. Eine Form mit zwei zusammenhanglosen Bereichen, der Stein eines Erzes gegen seine Sprenkel, ist das nicht und will stattdessen ihre Palette ausgeschrieben.
 
 **Zu wissen, was die Zeichen einer Vorlage bedeuten**, ist beim Erben das Unangenehme, und genau dafür ist der `notes`-Block oben da: ein Zeichen zu einer kurzen Zeile, vererbt wie die Palette und nie gezeichnet. Beschrifte die Zeichen einer Vorlage, und wer sie erbt, weiß, welche er überschreiben muss.
 

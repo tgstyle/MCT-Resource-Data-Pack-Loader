@@ -133,7 +133,6 @@
     "AccessorWeightedModel",
     "MixinBlockModelSeed",
     "MixinGuiCreateWorld",
-    "MixinGuiNewChat",
     "MixinGuiScreenChat",
     "MixinLayerArmorBase",
     "MixinLayerHeldItem",

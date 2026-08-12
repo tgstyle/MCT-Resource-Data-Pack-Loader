@@ -20,7 +20,7 @@ import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.item.ContentItemPotion;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
-import mctmods.resourcedatapackloader.content.util.ContentTints;
+import mctmods.resourcedatapackloader.content.util.ContentBiomeTints;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
@@ -134,9 +134,9 @@ public final class ContentModels {
             Item item = Item.getItemFromBlock(entry.getValue());
             if (item == Items.AIR) { continue; }
 
-            int fixed = ContentTints.fixed(def.tint, entry.getKey());
-            String mode = ContentTints.mode(def.tint);
-            event.getItemColors().registerItemColorHandler((stack, layer) -> fixed == ContentTypes.NO_COLOR ? ContentTints.biome(mode, null, null) : fixed, item);
+            int fixed = ContentBiomeTints.fixed(def.tint, entry.getKey());
+            String mode = ContentBiomeTints.mode(def.tint);
+            event.getItemColors().registerItemColorHandler((stack, layer) -> fixed == ContentTypes.NO_COLOR ? ContentBiomeTints.biome(mode, null, null) : fixed, item);
         }
     }
 
@@ -175,10 +175,10 @@ public final class ContentModels {
             BlockDef def = ContentRegistry.blockDef(entry.getKey());
             if (def == null || def.tint.isEmpty()) { continue; }
 
-            int fixed = ContentTints.fixed(def.tint, entry.getKey());
-            String mode = ContentTints.mode(def.tint);
+            int fixed = ContentBiomeTints.fixed(def.tint, entry.getKey());
+            String mode = ContentBiomeTints.mode(def.tint);
             event.getBlockColors().registerBlockColorHandler(
-                    (state, world, pos, layer) -> fixed == ContentTypes.NO_COLOR ? ContentTints.biome(mode, world, pos) : fixed,
+                    (state, world, pos, layer) -> fixed == ContentTypes.NO_COLOR ? ContentBiomeTints.biome(mode, world, pos) : fixed,
                     entry.getValue());
         }
     }

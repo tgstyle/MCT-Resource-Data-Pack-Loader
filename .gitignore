@@ -28,3 +28,4 @@ run
 gradle/wrapper/gradle-wrapper.properties
 */Thumbs.db
 */directory.txt
+*/__pycache__

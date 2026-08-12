@@ -12,13 +12,13 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT)
-public final class ContentTints {
+public final class ContentBiomeTints {
     private static final int WHITE = 0xFFFFFF;
     private static final String FOLIAGE = "foliage";
     private static final String GRASS = "grass";
     private static final String WATER = "water";
 
-    private ContentTints() {}
+    private ContentBiomeTints() {}
 
     public static boolean biomeDriven(String tint) {
         String value = mode(tint);
