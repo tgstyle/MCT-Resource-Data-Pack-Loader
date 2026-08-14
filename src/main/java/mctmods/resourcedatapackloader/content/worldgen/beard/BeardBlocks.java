@@ -10,6 +10,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.biome.Biome;
 
 public final class BeardBlocks {
@@ -47,7 +48,14 @@ public final class BeardBlocks {
         if (!ContentLog.LOGGER.debugEnabled()) { return; }
 
         IBlockState held = world.getBlockState(at);
-        if (terrainBlock(held.getBlock()) || !held.getMaterial().isSolid()) { return; }
+        if (!held.getMaterial().isSolid()) { return; }
+        if (terrainBlock(held.getBlock())) {
+            StructureBoundingBox standing = BeardKeep.watchingBox();
+            if (standing == null || !standing.isVecInside(at)) { return; }
+
+            ContentLog.LOGGER.debug("{} takes ground {} at {}, {}, {} from inside the box of {}", pass, held.getBlock().getRegistryName(), at.getX(), at.getY(), at.getZ(), BeardKeep.watchingName());
+            return;
+        }
 
         ContentLog.LOGGER.debug("{} takes {} at {}, {}, {}", pass, held.getBlock().getRegistryName(), at.getX(), at.getY(), at.getZ());
     }
@@ -88,16 +96,6 @@ public final class BeardBlocks {
         }
         return cleared;
     }
-    private static boolean afloat(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int floor) {
-        for (int y = from; y >= floor; y--) {
-            at.setPos(x, y, z);
-            Material material = world.getBlockState(at).getMaterial();
-            if (material.isLiquid()) { return true; }
-            if (material.isSolid()) { return false; }
-        }
-        return false;
-    }
-
     public static int cutBank(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) {
         int cut = clearAbove(world, at, x, z, from, roof, "Cutting a ring");
         at.setPos(x, from - 1, z);
@@ -116,15 +114,34 @@ public final class BeardBlocks {
         }
         return filled;
     }
+    public static int fillPier(World world, BlockPos.MutableBlockPos at, int x, int z, int from, IBlockState body) {
+        int filled = 0;
+        for (int y = from; y >= 1; y--) {
+            at.setPos(x, y, z);
+            if (world.getBlockState(at).getMaterial().isSolid()) { break; }
+
+            world.setBlockState(at, body, 2);
+            filled++;
+        }
+        return filled;
+    }
+
     public static int fillBank(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int floor, boolean field) {
-        if (afloat(world, at, x, z, from, floor)) { return 0; }
+        int footing = Integer.MIN_VALUE;
+        for (int y = from; y >= Math.max(1, floor - 8); y--) {
+            at.setPos(x, y, z);
+            Material material = world.getBlockState(at).getMaterial();
+            if (material.isLiquid()) { return 0; }
+            if (material.isSolid()) {
+                footing = y;
+                break;
+            }
+        }
+        if (footing == Integer.MIN_VALUE) { return 0; }
 
         int filled = 0;
-        for (int y = from; y >= floor; y--) {
+        for (int y = from; y > footing; y--) {
             at.setPos(x, y, z);
-            IBlockState held = world.getBlockState(at);
-            if (held.getMaterial().isLiquid() || held.getMaterial().isSolid()) { break; }
-
             IBlockState laid = fillGround(world, x, z);
             if (field && laid.getBlock() == Blocks.SAND && !sandBiome(world, x, z)) { laid = Blocks.DIRT.getDefaultState(); }
             if (laid.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { laid = Blocks.GRASS.getDefaultState(); }

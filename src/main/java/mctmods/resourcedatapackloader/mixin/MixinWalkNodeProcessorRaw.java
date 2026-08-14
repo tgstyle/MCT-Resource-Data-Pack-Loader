@@ -26,7 +26,7 @@ public abstract class MixinWalkNodeProcessorRaw {
     }
 
     @Redirect(method = {"getPathNodeTypeRaw", "checkNeighborBlocks"},
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getAiPathNodeType(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/EntityLiving;)Lnet/minecraft/pathfinding/PathNodeType;"))
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getAiPathNodeType(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/EntityLiving;)Lnet/minecraft/pathfinding/PathNodeType;", remap = false))
     @Nullable private PathNodeType rdpl$askBlock(Block block, IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EntityLiving entity) {
         return block.getAiPathNodeType(state, world, rdpl$asks(block) ? new BlockPos(pos) : pos, entity);
     }

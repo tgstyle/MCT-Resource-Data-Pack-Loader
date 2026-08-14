@@ -896,6 +896,8 @@ The folder is also gone over every time the packs are scanned, and any image who
 
 A PNG always wins. If both `panel.png` and `panel.png.json` exist, the PNG is served and the map is never drawn, so a generated texture can be replaced by a painted one later without changing anything that points at it.
 
+**Nobody has to write these files by hand.** The repository ships scripts for the whole round trip in [`pixelmap/`](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/tree/1.12.2-1.0-Release/pixelmap): `png_to_pixelmap.py` turns one PNG into a map, `convert_pack.py` does it for every texture a pack holds, and `verify_pack.py` draws a converted pack's maps and compares them to the PNGs they came from, so a conversion can be trusted before the originals are put aside.
+
 ### Traps worth knowing
 
 **A blockstate naming a bare vanilla model inherits vanilla's textures too.** `normal_torch`, `ladder`, `wooden_door_*` and `wheat_stage*` all carry their own textures, so a block pointing at one gets vanilla's look no matter what you put in the blockstate. Parent models such as `cube_all`, `cross` and `block/crop` take their textures from the blockstate and behave, as do the door, trapdoor and gate parents listed under [Doors, trapdoors and fence gates](#doors-trapdoors-and-fence-gates).

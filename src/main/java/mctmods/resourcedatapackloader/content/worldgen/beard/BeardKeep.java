@@ -13,11 +13,14 @@ import net.minecraft.world.gen.structure.StructureMineshaftPieces;
 import net.minecraft.world.gen.structure.StructureStrongholdPieces;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class BeardKeep {
     private static final int REACH = 3;
-    private static final Set<Long> HELD = new HashSet<>();
+    private static final int CROWDED = 400000;
+    private static final Set<Long> HELD = new LinkedHashSet<>();
     private static StructureComponent watching = null;
     private static IBlockState[] before = null;
     private static int fromX;
@@ -31,8 +34,23 @@ public final class BeardKeep {
     private static void hold(Set<Long> spots) {
         if (spots.isEmpty()) { return; }
 
-        if (HELD.size() > 200000) { HELD.clear(); }
+        if (HELD.size() + spots.size() > CROWDED) {
+            int shed = 0;
+            Iterator<Long> oldest = HELD.iterator();
+            while (oldest.hasNext() && HELD.size() + spots.size() - shed > CROWDED) {
+                oldest.next();
+                oldest.remove();
+                shed++;
+            }
+            ContentLog.LOGGER.debug("The set of blocks held against clearing reached its limit, so the {} oldest were let go rather than all of them", shed);
+        }
         HELD.addAll(spots);
+    }
+
+    public static void holdSpot(int x, int y, int z) {
+        Set<Long> spot = new HashSet<>();
+        spot.add(packed(x, y, z));
+        hold(spot);
     }
 
     public static void watch(World world, StructureComponent piece, StructureBoundingBox clip) {
@@ -151,5 +169,9 @@ public final class BeardKeep {
     private static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFF); }
 
     public static boolean holds(int x, int y, int z) { return HELD.contains(packed(x, y, z)); }
+
+    public static StructureBoundingBox watchingBox() { return watching == null ? null : watching.getBoundingBox(); }
+
+    public static String watchingName() { return watching == null ? null : watching.getClass().getSimpleName(); }
 
 }

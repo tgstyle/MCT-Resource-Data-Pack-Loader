@@ -6,6 +6,8 @@
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "target": "@env(DEFAULT)",
   "mixins": [
+    "MixinBlurredValueField",
+    "MixinGenericVillageCreationHandler",
     "MixinGenericVillagePiece",
     "MixinHeightMapFreezer",
     "MixinStructureSpawnContext",

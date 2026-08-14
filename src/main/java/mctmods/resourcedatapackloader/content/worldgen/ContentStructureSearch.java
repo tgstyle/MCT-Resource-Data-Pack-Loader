@@ -350,7 +350,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return null;
     }
 
-    private static MapGenStructure theRealOne(MapGenStructure wrapper) {
+    public static MapGenStructure theRealOne(MapGenStructure wrapper) {
         MapGenStructure real = wrapper;
         for (int depth = 0; depth < 8; depth++) {
             MapGenStructure inside = delegateOf(real);

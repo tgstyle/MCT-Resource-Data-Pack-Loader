@@ -2,27 +2,36 @@ package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.template.TemplateManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 import java.util.Random;
+import javax.annotation.Nullable;
 
 @Mixin(StructureVillagePieces.Path.class)
-public abstract class MixinVillagePath extends StructureVillagePieces.Village {
+public abstract class MixinVillagePath extends StructureVillagePieces.Village implements RoadLayout {
+    @Unique private BeardRoads.Grade rdpl$stored;
+
     @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I"))
     private static int rdpl$longerRuns(Random random, int minimum, int maximum) {
         int rolled = MathHelper.getInt(random, ContentBeard.wanted() ? 5 : minimum, ContentBeard.wanted() ? 7 : maximum);
@@ -80,15 +89,34 @@ public abstract class MixinVillagePath extends StructureVillagePieces.Village {
         return !radial;
     }
 
-    @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Inject(method = "addComponentParts", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "addComponentParts", at = @At("HEAD"), cancellable = true)
     private void rdpl$grade(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
         if (!ContentBeard.wanted()) { return; }
 
-        BeardRoads.pave(this, worldIn, structureBoundingBoxIn,
-                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState())),
-                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState())),
-                BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, getBiomeSpecificBlockState(Blocks.PLANKS.getDefaultState())),
-                BeardRoads.pathChosen());
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The game asked the road at {}, {} to build itself for the patch of land from {}, {} to {}, {}", this.getBoundingBox().minX, this.getBoundingBox().minZ, structureBoundingBoxIn.minX, structureBoundingBoxIn.minZ, structureBoundingBoxIn.maxX, structureBoundingBoxIn.maxZ); }
+        rdpl$pave(worldIn, structureBoundingBoxIn);
         cir.setReturnValue(true);
     }
+
+    @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
+        IBlockState deck = getBiomeSpecificBlockState(Blocks.PLANKS.getDefaultState());
+        if (deck.getMaterial() != Material.WOOD) { deck = Blocks.PLANKS.getDefaultState(); }
+        BeardRoads.pave(this, world, clip,
+                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState())),
+                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState())),
+                BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, deck),
+                BeardRoads.pathChosen());
+    }
+
+    @Override public void rdpl$layout(BeardRoads.Grade grade) { this.rdpl$stored = grade; }
+
+    @Override @Nullable public BeardRoads.Grade rdpl$layout() { return this.rdpl$stored; }
+
+    @Override public void rdpl$repave(World world, StructureBoundingBox clip) { rdpl$pave(world, clip); }
+
+    @Inject(method = "writeStructureToNBT", at = @At("TAIL"))
+    private void rdpl$keepLayout(NBTTagCompound tagCompound, CallbackInfo ci) { if (rdpl$stored != null) { rdpl$stored.write(tagCompound); } }
+
+    @Inject(method = "readStructureFromNBT", at = @At("TAIL"))
+    private void rdpl$loadLayout(NBTTagCompound tagCompound, TemplateManager p_143011_2_, CallbackInfo ci) { rdpl$stored = BeardRoads.Grade.read(tagCompound); }
 }

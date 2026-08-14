@@ -14,9 +14,12 @@ import net.minecraft.block.BlockStone;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
@@ -31,17 +34,97 @@ public final class BeardRoads {
         final int[] profile;
         final int[] ground;
         final boolean[] bridged;
+        final boolean[] held;
+        final int[] deck;
+        final boolean[] covered;
         final int start;
         final int capped;
-        Grade(int[] profile, int[] ground, boolean[] bridged, int start, int capped) {
+        Grade(int[] profile, int[] ground, boolean[] bridged, boolean[] held, int start, int capped) {
             this.profile = profile;
             this.ground = ground;
             this.bridged = bridged;
+            this.held = held;
+            this.start = start;
+            this.capped = capped;
+            this.deck = new int[profile.length];
+            this.covered = new boolean[profile.length];
+            for (int i = 0; i < profile.length; i++) { this.deck[i] = profile[i] == Integer.MIN_VALUE ? carried(profile, i) : Integer.MIN_VALUE; }
+        }
+
+        private Grade(int[] profile, int[] ground, boolean[] bridged, boolean[] held, int[] deck, boolean[] covered, int start, int capped) {
+            this.profile = profile;
+            this.ground = ground;
+            this.bridged = bridged;
+            this.held = held;
+            this.deck = deck;
+            this.covered = covered;
             this.start = start;
             this.capped = capped;
         }
 
         public int at(int row) { return profile[Math.max(0, Math.min(profile.length - 1, row - start))]; }
+
+        public int rows() { return profile.length; }
+
+        public int deckAt(int row) { return deck[Math.max(0, Math.min(deck.length - 1, row - start))]; }
+
+        public void write(NBTTagCompound tag) {
+            tag.setInteger("RdplStart", start);
+            tag.setInteger("RdplCapped", capped);
+            tag.setIntArray("RdplProfile", profile);
+            tag.setIntArray("RdplGround", ground);
+            tag.setIntArray("RdplDeck", deck);
+            tag.setByteArray("RdplBridged", packed(bridged));
+            tag.setByteArray("RdplHeld", packed(held));
+            tag.setByteArray("RdplLaid", packed(covered));
+        }
+
+        @Nullable public static Grade read(NBTTagCompound tag) {
+            if (!tag.hasKey("RdplProfile", 11)) { return null; }
+
+            int[] profile = tag.getIntArray("RdplProfile");
+            int[] ground = tag.getIntArray("RdplGround");
+            int[] deck = tag.getIntArray("RdplDeck");
+            if (profile.length == 0 || ground.length != profile.length || deck.length != profile.length) { return null; }
+
+            boolean[] bridged = unpacked(tag.getByteArray("RdplBridged"), profile.length);
+            boolean[] held = unpacked(tag.getByteArray("RdplHeld"), profile.length);
+            boolean[] covered = unpacked(tag.getByteArray("RdplLaid"), profile.length);
+            return new Grade(profile, ground, bridged, held, deck, covered, tag.getInteger("RdplStart"), tag.getInteger("RdplCapped"));
+        }
+
+        private static int carried(int[] profile, int i) {
+            int before = Integer.MIN_VALUE;
+            for (int back = i - 1; back >= 0; back--) {
+                if (profile[back] == Integer.MIN_VALUE) { continue; }
+
+                before = profile[back];
+                break;
+            }
+            int after = Integer.MIN_VALUE;
+            for (int on = i + 1; on < profile.length; on++) {
+                if (profile[on] == Integer.MIN_VALUE) { continue; }
+
+                after = profile[on];
+                break;
+            }
+            if (before == Integer.MIN_VALUE) { return after; }
+            if (after == Integer.MIN_VALUE) { return before; }
+
+            return Math.max(before, after);
+        }
+
+        private static byte[] packed(boolean[] flags) {
+            byte[] out = new byte[flags.length];
+            for (int i = 0; i < flags.length; i++) { out[i] = (byte) (flags[i] ? 1 : 0); }
+            return out;
+        }
+
+        private static boolean[] unpacked(byte[] bytes, int rows) {
+            boolean[] out = new boolean[rows];
+            for (int i = 0; i < rows && i < bytes.length; i++) { out[i] = bytes[i] != 0; }
+            return out;
+        }
     }
 
     @Nullable public static Grade roadProfile(World world, @Nullable StructureComponent piece, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost, boolean junctions) {
@@ -53,9 +136,11 @@ public final class BeardRoads {
         boolean[] bridged = BeardGrade.smooth(profile);
         boolean[] pinned = new boolean[profile.length];
         boolean[] plaza = new boolean[profile.length];
+        boolean[] footed = new boolean[profile.length];
         int capped;
         if (junctions) {
-            roadApron(world, piece, alongX, rowLeast, rowMost, acrossLeast, acrossMost, profile, pinned);
+            roadApron(world, piece, alongX, rowLeast, rowMost, acrossLeast, acrossMost, profile, pinned, footed);
+            frontHold(piece, alongX, rowLeast, acrossLeast, acrossMost, profile, pinned);
             clampToWell(world, alongX, rowLeast, acrossLeast, acrossMost, profile, plaza);
             for (int i = 0; i < pinned.length; i++) { if (plaza[i]) { pinned[i] = true; } }
             BeardGrade.settle(profile, pinned);
@@ -70,9 +155,52 @@ public final class BeardRoads {
                 for (int i = 0; i < hold.length; i++) { hold[i] = fixed[i] || (pinned[i] && profile[i] <= ground[i] + BeardGrade.CAP); }
                 BeardGrade.settle(profile, hold);
             }
+            boolean[] hold = new boolean[profile.length];
+            for (int i = 0; i < hold.length; i++) { hold[i] = fixed[i] || (pinned[i] && (ground[i] == Integer.MIN_VALUE || (profile[i] <= ground[i] + BeardGrade.CAP && profile[i] >= ground[i] - BeardGrade.CAP))); }
+            for (int i = 0; i < hold.length; i++) {
+                if (hold[i] || bridged[i] || ground[i] == Integer.MIN_VALUE || profile[i] == Integer.MIN_VALUE) { continue; }
+                if (profile[i] < ground[i] - BeardGrade.CAP) { profile[i] = ground[i] - BeardGrade.CAP; }
+            }
+            rein(profile, hold, bridged);
+            ramp(profile, bridged, plaza);
+            for (int i = 0; i < footed.length; i++) { if (plaza[i]) { footed[i] = true; } }
+            int width = acrossMost - acrossLeast + 1;
+            int lowRun = 0;
+            while (lowRun < profile.length && profile[lowRun] == Integer.MIN_VALUE) { lowRun++; }
+            if (lowRun >= width) {
+                for (int i = 0; i < width; i++) { footed[i] = true; }
+            }
+            int highRun = 0;
+            while (highRun < profile.length && profile[profile.length - 1 - highRun] == Integer.MIN_VALUE) { highRun++; }
+            if (highRun >= width) {
+                for (int i = 0; i < width; i++) { footed[profile.length - 1 - i] = true; }
+            }
+            BeardGrade.sag(profile, bridged, world.getSeaLevel());
         }
         else { capped = BeardGrade.capEmbankment(profile, ground, bridged, plaza); }
-        return new Grade(profile, ground, bridged, rowLeast, capped);
+        return new Grade(profile, ground, bridged, footed, rowLeast, capped);
+    }
+
+    private static void rein(int[] profile, boolean[] held, boolean[] bridged) {
+        for (int i = 1; i < profile.length; i++) {
+            if (held[i] || bridged[i] || bridged[i - 1] || profile[i] == Integer.MIN_VALUE || profile[i - 1] == Integer.MIN_VALUE) { continue; }
+            if (profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; }
+        }
+        for (int i = profile.length - 2; i >= 0; i--) {
+            if (held[i] || bridged[i] || bridged[i + 1] || profile[i] == Integer.MIN_VALUE || profile[i + 1] == Integer.MIN_VALUE) { continue; }
+            if (profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; }
+        }
+    }
+
+    private static void ramp(int[] profile, boolean[] bridged, boolean[] fixed) {
+        for (int i = 1; i < profile.length; i++) {
+            if (fixed[i] || bridged[i] || bridged[i - 1] || profile[i] == Integer.MIN_VALUE || profile[i - 1] == Integer.MIN_VALUE) { continue; }
+            if (profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; }
+        }
+        for (int i = profile.length - 2; i >= 0; i--) {
+            if (fixed[i] || bridged[i] || bridged[i + 1] || profile[i] == Integer.MIN_VALUE || profile[i + 1] == Integer.MIN_VALUE) { continue; }
+            if (profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; }
+        }
     }
 
     public static int roadReach(StructureBoundingBox box, EnumFacing facing) {
@@ -120,26 +248,20 @@ public final class BeardRoads {
         if (most < least) { return; }
 
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paving the road at {}, {}, {} across, with surface {} (chosen={}), support {}, bridge {}", box.minX, box.minZ, (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1, path, chosenSurface, gravel, planks); }
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} runs along {} from {} to {}, is asked for the patch of land from {}, {} to {}, {}, and so will lay rows {} to {}", box.minX, box.minZ, alongX ? "x" : "z", alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, clip.minX, clip.minZ, clip.maxX, clip.maxZ, least, most); }
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
-        int start = least;
-        boolean computed = false;
-        int[] ground;
-        int[] profile;
-        boolean[] bridged;
-        int capped;
-        Grade graded = roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, acrossLeast, acrossMost, true);
-        if (graded != null) {
-            start = alongX ? box.minX : box.minZ;
-            computed = true;
-            profile = graded.profile;
-            ground = graded.ground;
-            bridged = graded.bridged;
-            capped = graded.capped;
+        Grade graded = piece instanceof RoadLayout ? ((RoadLayout) piece).rdpl$layout() : null;
+        if (graded != null && (graded.start != (alongX ? box.minX : box.minZ) || graded.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1)) {
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
+            graded = null;
         }
-        else {
+        boolean stored = graded != null;
+        if (graded == null) { graded = roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, acrossLeast, acrossMost, true); }
+        boolean computed = graded != null;
+        if (graded == null) {
             int rows = most - least + 1;
-            profile = new int[rows];
+            int[] profile = new int[rows];
             for (int i = 0; i < rows; i++) {
                 int found = Integer.MIN_VALUE;
                 for (int across = acrossLeast; across <= acrossMost; across++) {
@@ -158,10 +280,16 @@ public final class BeardRoads {
             if (before != Integer.MIN_VALUE && profile[0] != Integer.MIN_VALUE) { profile[0] = Math.max(before - 1, Math.min(before + 1, profile[0])); }
             int after = roadAnchor(world, alongX, most + 1, acrossLeast, acrossMost, path, gravel);
             if (after != Integer.MIN_VALUE && profile[rows - 1] != Integer.MIN_VALUE) { profile[rows - 1] = Math.max(after - 1, Math.min(after + 1, profile[rows - 1])); }
-            ground = profile.clone();
-            bridged = BeardGrade.smooth(profile);
-            capped = BeardGrade.capEmbankment(profile, ground, bridged, new boolean[profile.length]);
+            int[] ground = profile.clone();
+            boolean[] bridged = BeardGrade.smooth(profile);
+            int capped = BeardGrade.capEmbankment(profile, ground, bridged, new boolean[profile.length]);
+            graded = new Grade(profile, ground, bridged, new boolean[profile.length], least, capped);
         }
+        int start = graded.start;
+        int[] profile = graded.profile;
+        int[] ground = graded.ground;
+        boolean[] bridged = graded.bridged;
+        int capped = graded.capped;
         if (capped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Capped {} row(s) of the road at {}, {} to {} block(s) above their own ground", capped, box.minX, box.minZ, BeardGrade.CAP); }
         if (ContentLog.LOGGER.debugEnabled()) {
             StringBuilder trace = new StringBuilder();
@@ -187,28 +315,80 @@ public final class BeardRoads {
                 int x = alongX ? start + i : across;
                 int z = alongX ? across : start + i;
                 BlockPos spot = new BlockPos(x, 64, z);
-                if (!clip.isVecInside(spot)) { continue; }
+                if (!clip.isVecInside(spot)) {
+                    if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because it lies outside the patch of land it was asked for, {}, {} to {}, {}", box.minX, box.minZ, x, z, clip.minX, clip.minZ, clip.maxX, clip.maxZ); }
+                    continue;
+                }
 
                 BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
                 if (top.getY() < world.getSeaLevel()) { top = new BlockPos(x, world.getSeaLevel() - 1, z); }
                 if (profile[i] == Integer.MIN_VALUE) {
-                    if (world.getBlockState(top).getMaterial().isLiquid()) { paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, top.getY() + 1, planks, at); }
-                    continue;
+                    boolean wet = false;
+                    int deckAt = Integer.MIN_VALUE;
+                    if (graded.deck[i] != Integer.MIN_VALUE) {
+                        for (int y = graded.deck[i]; y >= graded.deck[i] - 8 && y >= 1; y--) {
+                            IBlockState stood = world.getBlockState(at.setPos(x, y, z));
+                            if (stood.getBlock() == Blocks.AIR) { continue; }
+                            if (stood.getMaterial().isLiquid()) {
+                                wet = true;
+                                deckAt = y + 1;
+                            }
+                            break;
+                        }
+                    }
+                    else if (world.getBlockState(top).getMaterial().isLiquid()) {
+                        wet = true;
+                        deckAt = top.getY() + 1;
+                    }
+                    if (wet) {
+                        if (graded.held[i]) {
+                            filled += BeardBlocks.fillPier(world, at, x, z, deckAt - 1, gravel);
+                            at.setPos(x, deckAt, z);
+                            if (!BeardKeep.holds(x, deckAt, z)) {
+                                world.setBlockState(at, pathForGround(world, x, z, path, gravel, false), 2);
+                                paved++;
+                            }
+                        }
+                        else { paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, deckAt, planks, at); }
+                        continue;
+                    }
+                    if (graded.deck[i] == Integer.MIN_VALUE) {
+                        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because no grade was worked out for that row and the ground under it is {}, not water to bridge", box.minX, box.minZ, x, z, world.getBlockState(top).getBlock().getRegistryName()); }
+                        continue;
+                    }
                 }
-                if (bridged[i]) {
-                    paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, at);
-                    continue;
-                }
-                if (world.getBlockState(top).getMaterial().isLiquid()) {
-                    paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, top.getY() + 1, planks, at);
-                    continue;
+                boolean pier = false;
+                if (profile[i] != Integer.MIN_VALUE) {
+                    boolean wet = world.getBlockState(top).getMaterial().isLiquid();
+                    for (int y = profile[i] - 1; !wet && y >= profile[i] - 8; y--) {
+                        IBlockState stood = world.getBlockState(at.setPos(x, y, z));
+                        if (stood.getMaterial().isLiquid()) { wet = true; }
+                        else if (stood.getMaterial().isSolid()) { break; }
+                    }
+                    if (wet && graded.held[i]) {
+                        pier = true;
+                        filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel);
+                    }
+                    else {
+                        if (bridged[i]) {
+                            paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, at);
+                            continue;
+                        }
+                        if (wet) {
+                            paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, at);
+                            continue;
+                        }
+                    }
                 }
 
-                int target = profile[i];
+                int target = profile[i] == Integer.MIN_VALUE ? graded.deck[i] : profile[i];
                 at.setPos(x, target, z);
                 IBlockState held = world.getBlockState(at);
                 Block base = held.getBlock();
-                if (held.getMaterial().isSolid() && held.getMaterial() != Material.WOOD && held.getMaterial() != Material.LEAVES && !BeardBlocks.terrainBlock(base) && base != Blocks.GRASS_PATH && base != Blocks.PLANKS && base != Blocks.SANDSTONE && base != Blocks.RED_SANDSTONE && base != Blocks.HARDENED_CLAY && base != Blocks.STAINED_HARDENED_CLAY && base != Blocks.MYCELIUM) { continue; }
+                if (held.getMaterial().isSolid() && held.getMaterial() != Material.WOOD && held.getMaterial() != Material.LEAVES && !BeardBlocks.terrainBlock(base) && base != path.getBlock() && base != gravel.getBlock() && base != planks.getBlock() && base != Blocks.GRASS_PATH && base != Blocks.PLANKS && base != Blocks.SANDSTONE && base != Blocks.RED_SANDSTONE && base != Blocks.HARDENED_CLAY && base != Blocks.STAINED_HARDENED_CLAY && base != Blocks.MYCELIUM) {
+                    if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {}, {} unpaved because {} was already standing there and is not a surface a road may be laid over", box.minX, box.minZ, x, target, z, base.getRegistryName()); }
+                    continue;
+                }
 
                 for (int y = target + 1; y <= target + 4; y++) {
                     at.setPos(x, y, z);
@@ -225,18 +405,105 @@ public final class BeardRoads {
                     }
                     break;
                 }
-                filled += BeardBlocks.fillUnder(world, at, x, z, target - 1, target - 8);
+                if (profile[i] != Integer.MIN_VALUE) { filled += BeardBlocks.fillUnder(world, at, x, z, target - 1, target - 8); }
                 at.setPos(x, target, z);
+                if (profile[i] == Integer.MIN_VALUE) {
+                    paved += deckRail(world, alongX, start + i, across, acrossLeast, acrossMost, target, planks, at);
+                    if (!BeardKeep.holds(at.getX(), at.getY(), at.getZ())) {
+                        world.setBlockState(at, deckState(across, acrossLeast, acrossMost, planks), 2);
+                        paved++;
+                    }
+                    continue;
+                }
                 boolean earthy = base == Blocks.GRASS || base == Blocks.DIRT || base == Blocks.MYCELIUM || base == Blocks.GRASS_PATH || base == Blocks.AIR || !world.getBlockState(at).getMaterial().isSolid();
-                IBlockState natural = chosenSurface ? path : pathForGround(world, x, z, path, gravel, earthy);
+                IBlockState natural = chosenSurface ? path : pathForGround(world, x, z, path, gravel, earthy && !pier);
                 IBlockState dressed = dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, (acrossLeast + acrossMost) / 2, natural);
-                if (BeardKeep.holds(x, target, z)) { continue; }
-
                 world.setBlockState(at, dressed != null ? dressed : natural, 2);
                 paved++;
             }
+            for (int side = 0; side < 2; side++) {
+                int across = side == 0 ? acrossLeast - 1 : acrossMost + 1;
+                int x = alongX ? start + i : across;
+                int z = alongX ? across : start + i;
+                if (profile[i] == Integer.MIN_VALUE || bridged[i]) { continue; }
+                at.setPos(x, profile[i], z);
+                if (!clip.isVecInside(at)) { continue; }
+
+                StructureStart holder = ContentBeard.current();
+                if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { continue; }
+                if (BeardKeep.holds(x, profile[i], z)) { continue; }
+
+                IBlockState verge = world.getBlockState(at);
+                if (verge.getMaterial().isLiquid()) { continue; }
+                if (verge.getMaterial().isSolid()) {
+                    at.setPos(x, profile[i] - 1, z);
+                    if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
+
+                    filled += BeardBlocks.fillBank(world, at, x, z, profile[i] - 1, profile[i] - 6, false);
+                    continue;
+                }
+                filled += BeardBlocks.fillBank(world, at, x, z, profile[i], profile[i] - 5, false);
+            }
+        }
+        if (stored && (alongX ? clip.minZ : clip.minX) <= acrossLeast - 1 && (alongX ? clip.maxZ : clip.maxX) >= acrossMost + 1) {
+            for (int row = least; row <= most; row++) { graded.covered[row - start] = true; }
         }
         if ((cut + filled + paved > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips", box.minX, box.minZ, paved, cut, filled); }
+    }
+
+    public static void repairRoads(World world, StructureStart start) {
+        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return; }
+
+        ChunkProviderServer provider = (ChunkProviderServer) world.getChunkProvider();
+        for (StructureComponent piece : start.getComponents()) {
+            if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
+
+            Grade grade = ((RoadLayout) piece).rdpl$layout();
+            if (grade == null) { continue; }
+
+            StructureBoundingBox box = piece.getBoundingBox();
+            boolean alongX = BeardPlots.roadAlongX(piece);
+            if (grade.start != (alongX ? box.minX : box.minZ) || grade.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1) { continue; }
+
+            int acrossLeast = (alongX ? box.minZ : box.minX) - 1;
+            int acrossMost = (alongX ? box.maxZ : box.maxX) + 1;
+            for (int i = 0; i < grade.covered.length; i++) {
+                if (grade.covered[i]) { continue; }
+
+                int from = i;
+                while (i + 1 < grade.covered.length && !grade.covered[i + 1]) { i++; }
+                for (int row = grade.start + from; row <= grade.start + i; ) {
+                    int band = Math.min(grade.start + i, row | 15);
+                    int minX = alongX ? row : acrossLeast;
+                    int maxX = alongX ? band : acrossMost;
+                    int minZ = alongX ? acrossLeast : row;
+                    int maxZ = alongX ? acrossMost : band;
+                    if (populatedOver(provider, minX, maxX, minZ, maxZ)) {
+                        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} was never asked to build rows {} to {}, so they are laid now from its stored profile", box.minX, box.minZ, row, band); }
+                        StructureBoundingBox patch = new StructureBoundingBox(minX, minZ, maxX, maxZ);
+                        ContentBeard.building(start);
+                        try {
+                            ContentBeard.fellFor(start, piece, world, patch);
+                            BeardKeep.watch(world, piece, patch);
+                            ((RoadLayout) piece).rdpl$repave(world, patch);
+                            BeardKeep.learn(world);
+                        }
+                        finally { ContentBeard.building(null); }
+                    }
+                    row = band + 1;
+                }
+            }
+        }
+    }
+
+    private static boolean populatedOver(ChunkProviderServer provider, int minX, int maxX, int minZ, int maxZ) {
+        for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
+            for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
+                Chunk held = provider.getLoadedChunk(chunkX, chunkZ);
+                if (held == null || !held.isTerrainPopulated()) { return false; }
+            }
+        }
+        return true;
     }
 
     public static int bridge(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, StructureBoundingBox near, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
@@ -275,35 +542,41 @@ public final class BeardRoads {
         at.setPos(alongX ? row : across, deckY, alongX ? across : row);
         if (world.getBlockState(at).getMaterial().isSolid()) { return 0; }
 
-        int span = acrossMost - acrossLeast + 1;
-        int laid = 0;
-        IBlockState deck = planks;
-        if (span > 3) {
-            int center = (acrossLeast + acrossMost) / 2;
-            int offset = Math.abs(across - center);
-            if (offset > 1 + pathExtraWidth() + pathLineColumns()) {
-                IBlockState walk = pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, planks);
-                deck = pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk);
-            }
-            if (offset == (span - 1) / 2) {
-                IBlockState barrier = pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
-                if (barrier != planks) {
-                    int height = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeBarrierHeight", Config.worldgen.villagePathBridgeBarrierHeight));
-                    for (int y = deckY + 1; y <= deckY + height; y++) {
-                        at.setPos(alongX ? row : across, y, alongX ? across : row);
-                        if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-
-                        world.setBlockState(at, barrier, 2);
-                        laid++;
-                    }
-                    at.setPos(alongX ? row : across, deckY, alongX ? across : row);
-                }
-            }
-        }
+        int laid = deckRail(world, alongX, row, across, acrossLeast, acrossMost, deckY, planks, at);
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return laid; }
 
-        world.setBlockState(at, deck, 2);
+        world.setBlockState(at, deckState(across, acrossLeast, acrossMost, planks), 2);
         return laid + 1;
+    }
+
+    private static IBlockState deckState(int across, int acrossLeast, int acrossMost, IBlockState planks) {
+        if (acrossMost - acrossLeast + 1 <= 3) { return planks; }
+
+        int offset = Math.abs(across - (acrossLeast + acrossMost) / 2);
+        if (offset <= 1 + pathExtraWidth() + pathLineColumns()) { return planks; }
+
+        IBlockState walk = pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, planks);
+        return pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk);
+    }
+
+    private static int deckRail(World world, boolean alongX, int row, int across, int acrossLeast, int acrossMost, int deckY, IBlockState planks, BlockPos.MutableBlockPos at) {
+        int span = acrossMost - acrossLeast + 1;
+        if (span <= 3 || Math.abs(across - (acrossLeast + acrossMost) / 2) != (span - 1) / 2) { return 0; }
+
+        IBlockState barrier = pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
+        if (barrier == planks) { return 0; }
+
+        int height = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeBarrierHeight", Config.worldgen.villagePathBridgeBarrierHeight));
+        int laid = 0;
+        for (int y = deckY + 1; y <= deckY + height; y++) {
+            at.setPos(alongX ? row : across, y, alongX ? across : row);
+            if (world.getBlockState(at).getMaterial().isSolid()) { break; }
+
+            world.setBlockState(at, barrier, 2);
+            laid++;
+        }
+        at.setPos(alongX ? row : across, deckY, alongX ? across : row);
+        return laid;
     }
 
     @Nullable public static IBlockState dressSurface(World world, StructureComponent piece, boolean alongX, int row, int across, int acrossCenter, IBlockState path) {
@@ -416,14 +689,9 @@ public final class BeardRoads {
         return def.legend.getOrDefault(cell, path);
     }
 
-    public static int chainGradeAt(World world, StructureComponent road, boolean alongX, int row) {
+    @Nullable public static Grade chainGrade(World world, StructureComponent road, boolean alongX) {
         StructureBoundingBox box = road.getBoundingBox();
-        int least = alongX ? box.minX : box.minZ;
-        int most = alongX ? box.maxX : box.maxZ;
-        Grade grade = roadProfile(world, road, alongX, least, most, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, false);
-        if (grade == null) { return Integer.MIN_VALUE; }
-
-        return grade.at(row);
+        return roadProfile(world, road, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, false);
     }
 
     public static int roadGradeBeside(World world, StructureBoundingBox box) {
@@ -439,7 +707,8 @@ public final class BeardRoads {
 
             boolean alongX = BeardPlots.roadAlongX(other);
             int start = alongX ? road.minX : road.minZ;
-            Grade grade = roadProfile(world, other, alongX, start, alongX ? road.maxX : road.maxZ, alongX ? road.minZ : road.minX, alongX ? road.maxZ : road.maxX, true);
+            Grade grade = other instanceof RoadLayout ? ((RoadLayout) other).rdpl$layout() : null;
+            if (grade == null) { grade = roadProfile(world, other, alongX, start, alongX ? road.maxX : road.maxZ, alongX ? road.minZ : road.minX, alongX ? road.maxZ : road.maxX, true); }
             if (grade == null) { return Integer.MIN_VALUE; }
 
             int center = alongX ? (box.minX + box.maxX) / 2 : (box.minZ + box.maxZ) / 2;
@@ -451,7 +720,7 @@ public final class BeardRoads {
         return Integer.MIN_VALUE;
     }
 
-    public static void roadApron(World world, @Nullable StructureComponent piece, boolean alongX, int start, int rowMost, int acrossLeast, int acrossMost, int[] profile, boolean[] held) {
+    public static void roadApron(World world, @Nullable StructureComponent piece, boolean alongX, int start, int rowMost, int acrossLeast, int acrossMost, int[] profile, boolean[] held, boolean[] footed) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return; }
 
@@ -468,22 +737,61 @@ public final class BeardRoads {
 
             int center = alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2;
             int anchorRow = Math.max(start, Math.min(start + profile.length - 1, center));
-            int grade = profile[anchorRow - start];
-            if (grade == Integer.MIN_VALUE) { continue; }
-
+            int ownGrade = profile[anchorRow - start];
             int crossRow = otherAlongX ? (own.minX + own.maxX) / 2 : (own.minZ + own.maxZ) / 2;
-            int crossed = chainGradeAt(world, other, otherAlongX, crossRow);
-            if (crossed != Integer.MIN_VALUE && crossed < grade) { grade = crossed; }
+            Grade crossing = chainGrade(world, other, otherAlongX);
+            int crossed = crossing == null ? Integer.MIN_VALUE : crossing.at(crossRow);
+            int grade;
+            if (ownGrade != Integer.MIN_VALUE && crossed != Integer.MIN_VALUE) { grade = Math.min(ownGrade, crossed); }
+            else if (ownGrade != Integer.MIN_VALUE) { grade = ownGrade; }
+            else if (crossed != Integer.MIN_VALUE) { grade = crossed; }
+            else { grade = Math.max(Grade.carried(profile, anchorRow - start), crossing == null ? Integer.MIN_VALUE : crossing.deckAt(crossRow)); }
+            if (grade == Integer.MIN_VALUE) { continue; }
 
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A junction apron holds the rows around {} to y {} for the road at {}, {}", center, grade, own.minX, own.minZ); }
             int reach = 1 + pathExtraWidth() + 3;
             for (int row = center - reach; row <= center + reach; row++) {
                 if (row < start || row > start + profile.length - 1) { continue; }
-                if (profile[row - start] != Integer.MIN_VALUE) {
-                    profile[row - start] = grade;
-                    held[row - start] = true;
-                }
+                profile[row - start] = grade;
+                held[row - start] = true;
             }
+            int squareLeast = alongX ? road.minX : road.minZ;
+            int squareMost = alongX ? road.maxX : road.maxZ;
+            for (int row = squareLeast; row <= squareMost; row++) {
+                if (row < start || row > start + profile.length - 1) { continue; }
+                footed[row - start] = true;
+            }
+        }
+    }
+
+    public static void frontHold(@Nullable StructureComponent piece, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile, boolean[] held) {
+        List<StructureComponent> pieces = ContentBeard.components();
+        if (pieces == null) { return; }
+
+        int rowMost = start + profile.length - 1;
+        for (StructureComponent other : pieces) {
+            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
+
+            StructureBoundingBox front = other.getBoundingBox();
+            if ((alongX ? front.maxZ : front.maxX) < acrossLeast - 3 || (alongX ? front.minZ : front.minX) > acrossMost + 3) { continue; }
+
+            int otherLeast = alongX ? front.minX : front.minZ;
+            int otherMost = alongX ? front.maxX : front.maxZ;
+            if (otherMost < start || otherLeast > rowMost) { continue; }
+
+            int center = Math.max(start, Math.min(rowMost, (otherLeast + otherMost) / 2));
+            int grade = profile[center - start];
+            if (grade == Integer.MIN_VALUE) { continue; }
+
+            int pinnedRows = 0;
+            for (int row = Math.max(start, otherLeast); row <= Math.min(rowMost, otherMost); row++) {
+                if (held[row - start] || profile[row - start] == Integer.MIN_VALUE) { continue; }
+
+                profile[row - start] = grade;
+                held[row - start] = true;
+                pinnedRows++;
+            }
+            if (pinnedRows > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The frontage of {} at {}, {} holds {} row(s) of the road beside it to y {}, the grade it stands at", other.getClass().getSimpleName(), front.minX, front.minZ, pinnedRows, grade); }
         }
     }
 

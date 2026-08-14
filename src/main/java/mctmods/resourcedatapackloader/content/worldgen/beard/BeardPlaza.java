@@ -122,8 +122,6 @@ public final class BeardPlaza {
                 IBlockState held = band > reach - walk ? sidewalk : lines > 0 && band == reach - walk ? line : natural;
                 if (held != natural && BeardPlots.roadCore(start, piece, x, z)) { held = natural; }
                 if (!chosen) { held = natural; }
-                if (BeardKeep.holds(x, ground, z)) { continue; }
-
                 world.setBlockState(at, held, 2);
                 paved++;
             }

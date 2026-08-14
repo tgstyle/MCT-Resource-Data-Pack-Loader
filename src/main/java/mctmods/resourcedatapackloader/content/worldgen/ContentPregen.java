@@ -14,11 +14,13 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.play.server.SPacketChat;
 import net.minecraft.network.play.server.SPacketTitle;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.Style;
+import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.GameType;
@@ -57,19 +59,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public final class ContentPregen implements WorldWorkerManager.IWorker {
-    private static ContentPregen running;
+    private static volatile ContentPregen running;
     private static final Deque<Integer> PENDING = new ArrayDeque<>();
     private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
     public static final int VANILLA_SPAWN_REACH = 12;
     private static final String HELD_MODE = "rdplPregenHeldMode";
     private static ScheduledExecutorService flasher;
+    private static volatile String progress = "";
     private static long watchedDone = -1L;
     private static long watchedAt;
     private static long chainBegun;
     private static int wantedRadius;
     private static boolean chaining;
-    public static final String HOLD_MARK = "§k§r";
-    public static final String WELCOME_MARK = "§o§r";
     private static final Config.Chunks SHIPPED = new Config.Chunks();
     private static final double NO_BORDER = 6.0E7D;
     private final ICommandSender asked;
@@ -89,7 +90,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private final int backlog;
     private final int slice;
     private final long started;
-    private long done;
+    private volatile long done;
     private long made;
     private long undressed;
     private long dressedLate;
@@ -97,12 +98,12 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private long dark;
     private long darkAtEdge;
     private long missing;
-    private int toldAt;
     private long brightened;
     private int round = -1;
     private long roundSpent;
     private long spoke;
-    private long begun;
+    private int loggedAt;
+    private volatile long begun;
     private boolean over;
     private boolean stopping;
 
@@ -113,11 +114,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         this.reach = radius;
         this.middleX = centreX;
         this.middleZ = centreZ;
-        this.lowX = centreX - radius;
-        this.lowZ = centreZ - radius;
-        this.highX = centreX + radius;
-        this.highZ = centreZ + radius;
-        this.order = new ContentChunkOrder(centreX, centreZ, radius);
+        this.lowX = centreX - radius - 1;
+        this.lowZ = centreZ - radius - 1;
+        this.highX = centreX + radius + 1;
+        this.highZ = centreZ + radius + 1;
+        this.order = new ContentChunkOrder(centreX, centreZ, radius + 1);
         this.keep = Math.max(64, ContentControl.number(ContentControl.CHUNKS, "pregenKeepLoaded", Config.chunks.pregenKeepLoaded));
         this.backlog = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenPauseAbove", Config.chunks.pregenPauseAbove));
         this.slice = Math.max(1, ContentControl.number(ContentControl.CHUNKS, "pregenMillisPerRound", Config.chunks.pregenMillisPerRound));
@@ -326,7 +327,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             beat.setDaemon(true);
             return beat;
         });
-        flasher.scheduleAtFixedRate(ContentPregen::flashHeld, 1500L, 1500L, TimeUnit.MILLISECONDS);
+        flasher.scheduleAtFixedRate(ContentPregen::flashHeld, 250L, 250L, TimeUnit.MILLISECONDS);
     }
 
     private static void stopFlashing() {
@@ -336,15 +337,33 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         flasher = null;
     }
 
+    private static long beats;
+
     private static void flashHeld() {
-        for (Held held : HELD.values()) { flash(held); }
+        ContentPregen live = running;
+        String said = live == null ? progress : live.sofar();
+        if (!said.isEmpty()) { progress = said; }
+        boolean titles = beats++ % 6L == 0L;
+        for (Held held : HELD.values()) {
+            if (titles) { flash(held); }
+            if (!said.isEmpty()) { held.connection.sendPacket(bar(said)); }
+        }
+    }
+
+    private static SPacketChat bar(String said) { return new SPacketChat(new TextComponentString(said).setStyle(new Style().setColor(TextFormatting.YELLOW)), ChatType.GAME_INFO); }
+
+    private static void tellBar(MinecraftServer server, String said) {
+        if (server == null || said.isEmpty()) { return; }
+
+        SPacketChat packet = bar(said);
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { player.connection.sendPacket(packet); }
     }
 
     private static void flash(Held held) {
         if (held.warning.isEmpty()) { return; }
 
         held.connection.sendPacket(new SPacketTitle(0, 15, 10));
-        held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(HOLD_MARK + held.warning).setStyle(new Style().setColor(TextFormatting.RED))));
+        held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(held.warning).setStyle(new Style().setColor(TextFormatting.RED))));
         held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
@@ -370,7 +389,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (greeting == null || greeting.isEmpty()) { return; }
 
         player.connection.sendPacket(new SPacketTitle(10, 70, 20));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(WELCOME_MARK + greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
+        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
@@ -448,6 +467,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
         server.getPlayerList().sendMessage(new TextComponentString(said).setStyle(new Style().setColor(colour)));
     }
+
+
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         startWhenEntered(event.player.dimension);
@@ -642,7 +663,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     @Override public boolean hasWork() { return !over; }
 
-    @Override public boolean doWork() {
+    @SuppressWarnings("NonAtomicOperationOnVolatileField") @Override public boolean doWork() {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (begun == 0L) {
             begun = System.currentTimeMillis();
@@ -689,12 +710,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         roundSpent += System.nanoTime() - began;
         speak();
         if ((done & 63L) == 0L) { tellScreen(server); }
+        progress = sofar();
         int tenth = (int) (done * 10L / Math.max(1L, order.total()));
-        if (tenth > toldAt) {
-            toldAt = tenth;
-            tell(sofar(), TextFormatting.YELLOW);
+        if (tenth > loggedAt) {
+            loggedAt = tenth;
+            String said = sofar();
+            if (!said.isEmpty()) { ContentLog.LOGGER.info(said); }
         }
         if (!order.hasNext()) {
+            tellBar(server, progress);
             finish(world);
             return false;
         }
@@ -825,7 +849,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         String wording = lightOnly ? defaulted("pregenRelightSays", Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted("pregenRunningSays", Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
         if (wording.isEmpty()) { return ""; }
 
-        try { return String.format(wording, done * 100L / Math.max(1L, order.total()), dimensionName()) + eta(); }
+        long stepped = Math.min(100L, done * 100L / Math.max(1L, order.total()));
+        try { return String.format(wording, order.hasNext() ? stepped : 100L, dimensionName()) + eta(); }
         catch (IllegalFormatException wrong) {
             ContentLog.LOGGER.error("A pack words the message about land being made as '{}', which is not something a number can be put into, so it is said as it stands", wording, wrong);
             return wording + eta();
@@ -864,6 +889,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
         over = true;
         running = null;
+        progress = "";
         if (dimension != 0) { DimensionManager.keepDimensionLoaded(dimension, false); }
         boolean whole = world != null && !stopping && !order.hasNext();
         if (world != null) {

@@ -896,6 +896,8 @@ Der Ordner wird außerdem bei jedem Durchsuchen der Packs durchgegangen, und jed
 
 Eine PNG gewinnt immer. Gibt es sowohl `panel.png` als auch `panel.png.json`, wird die PNG ausgeliefert und die Karte nie gezeichnet; eine erzeugte Textur lässt sich später also durch eine gemalte ersetzen, ohne irgendetwas anzufassen, das darauf zeigt.
 
+**Niemand muss diese Dateien von Hand schreiben.** Das Repository liefert in [`pixelmap/`](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/tree/1.12.2-1.0-Release/pixelmap) Skripte für den ganzen Weg hin und zurück: `png_to_pixelmap.py` macht aus einer PNG eine Karte, `convert_pack.py` erledigt das für jede Textur eines Packs, und `verify_pack.py` zeichnet die Karten eines umgewandelten Packs und vergleicht sie mit den PNGs, aus denen sie stammen, damit man einer Umwandlung trauen kann, bevor man die Originale beiseitelegt.
+
 ### Fallen, die man kennen sollte
 
 **Ein Blockstate, der ein nacktes Vanilla-Modell nennt, erbt auch Vanillas Texturen.** `normal_torch`, `ladder`, `wooden_door_*` und `wheat_stage*` bringen alle ihre eigenen Texturen mit, ein Block, der auf eines davon zeigt, bekommt also Vanillas Aussehen, ganz gleich, was im Blockstate steht. Eltern-Modelle wie `cube_all`, `cross` und `block/crop` nehmen ihre Texturen aus dem Blockstate und verhalten sich wie erwartet, ebenso die Eltern für Tür, Falltür und Tor, die unter [Türen, Falltüren und Zauntore](#türen-falltüren-und-zauntore) stehen.

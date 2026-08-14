@@ -220,7 +220,7 @@ public final class BeardSite {
         }
         return highest - lowest;
     }
-    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces) {
+    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink) {
         int spread = footingSpread(box);
         if (spread == Integer.MAX_VALUE) { return spread; }
 
@@ -241,10 +241,10 @@ public final class BeardSite {
                 for (int z = box.minZ; z <= box.maxZ + 3; z += 4) {
                     int ground = BeardSurface.surfaceAt(world, Math.min(x, box.maxX), Math.min(z, box.maxZ));
                     if (ground < 0) { return Integer.MAX_VALUE; }
-                    int gap = Math.abs(stand - ground);
-                    if (gap > 2 || spread > 2) { return Integer.MAX_VALUE; }
+                    int gap = stand - ground;
+                    if (gap > 2 + sink || -gap > 2 || spread > 2) { return Integer.MAX_VALUE; }
 
-                    total += gap;
+                    total += Math.abs(gap);
                 }
             }
             return total;
@@ -296,6 +296,81 @@ public final class BeardSite {
         }
         finally { ContentBeard.laying(laid); }
         if (tested > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Re-tested {} road(s) at {}, {} now the layout is done, pulling back {}", tested, well.minX, well.minZ, pulled); }
+    }
+
+    private static void layoutRoads(World world, StructureStart start) {
+        List<StructureComponent> pieces = start.getComponents();
+        List<StructureComponent> held = ContentBeard.laid();
+        ContentBeard.laying(pieces);
+        int stored = 0;
+        try {
+            for (StructureComponent piece : pieces) { frontRoad(pieces, piece); }
+            for (StructureComponent piece : pieces) { ContentBeard.attach(start, piece); }
+            for (StructureComponent piece : pieces) {
+                if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
+
+                StructureBoundingBox box = piece.getBoundingBox();
+                boolean alongX = BeardPlots.roadAlongX(piece);
+                BeardRoads.Grade grade = BeardRoads.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
+                if (grade == null) { continue; }
+
+                ((RoadLayout) piece).rdpl$layout(grade);
+                stored++;
+            }
+        }
+        finally { ContentBeard.laying(held); }
+        if (stored > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Attached the junctions and stored the graded profile of {} road(s) of the village at {}, {} at layout time", stored, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+    }
+
+    private static void frontRoad(List<StructureComponent> pieces, StructureComponent piece) {
+        if (!(piece instanceof StructureVillagePieces.Path)) { return; }
+
+        StructureBoundingBox box = piece.getBoundingBox();
+        boolean alongX = BeardPlots.roadAlongX(piece);
+        int acrossLeast = alongX ? box.minZ : box.minX;
+        int acrossMost = alongX ? box.maxZ : box.maxX;
+        for (StructureComponent other : pieces) {
+            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
+
+            StructureBoundingBox front = other.getBoundingBox();
+            if ((alongX ? front.maxZ : front.maxX) < acrossLeast - 3 || (alongX ? front.minZ : front.minX) > acrossMost + 3) { continue; }
+
+            int least = alongX ? box.minX : box.minZ;
+            int most = alongX ? box.maxX : box.maxZ;
+            int otherLeast = alongX ? front.minX : front.minZ;
+            int otherMost = alongX ? front.maxX : front.maxZ;
+            if (otherMost < least || otherLeast > most) { continue; }
+
+            int high = otherMost > most ? Math.max(most, clearTo(pieces, piece, other, alongX, most + 1, otherMost, true, acrossLeast, acrossMost)) : most;
+            int low = otherLeast < least ? Math.min(least, clearTo(pieces, piece, other, alongX, otherLeast, least - 1, false, acrossLeast, acrossMost)) : least;
+            if (high == most && low == least) { continue; }
+
+            if (alongX) {
+                box.minX = low;
+                box.maxX = high;
+            }
+            else {
+                box.minZ = low;
+                box.maxZ = high;
+            }
+            ContentLog.LOGGER.debug("The road at {}, {} is stretched from rows {}..{} to {}..{} to cover the frontage of {} at {}, {}", box.minX, box.minZ, least, most, low, high, other.getClass().getSimpleName(), front.minX, front.minZ);
+        }
+    }
+
+    private static int clearTo(List<StructureComponent> pieces, StructureComponent road, StructureComponent fronting, boolean alongX, int lowEnd, int highEnd, boolean growUp, int acrossLeast, int acrossMost) {
+        for (StructureComponent other : pieces) {
+            if (other == road || other == fronting) { continue; }
+
+            StructureBoundingBox held = other.getBoundingBox();
+            if ((alongX ? held.maxZ : held.maxX) < acrossLeast || (alongX ? held.minZ : held.minX) > acrossMost) { continue; }
+
+            int otherLeast = alongX ? held.minX : held.minZ;
+            int otherMost = alongX ? held.maxX : held.maxZ;
+            if (otherMost < lowEnd || otherLeast > highEnd) { continue; }
+            if (growUp) { highEnd = Math.min(highEnd, otherLeast - 1); }
+            else { lowEnd = Math.max(lowEnd, otherMost + 1); }
+        }
+        return growUp ? highEnd : lowEnd;
     }
 
     private static int attachedRows(List<StructureComponent> pieces, StructureComponent road, StructureBoundingBox box, boolean alongX, boolean growsUp) {
@@ -364,6 +439,7 @@ public final class BeardSite {
         }
         start.getBoundingBox().offset(0, shift, 0);
         settleRoads(start);
+        layoutRoads(world, start);
         ContentLog.LOGGER.debug("A village born at {}, {} is founded at y {}, shifted {} from its nominal ground at y {}, laid with {} piece(s), {} of them roads", (well.minX + well.maxX) / 2, (well.minZ + well.maxZ) / 2, level, shift, nominal, start.getComponents().size(), roads);
     }
 }

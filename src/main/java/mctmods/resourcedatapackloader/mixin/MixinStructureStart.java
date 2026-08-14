@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -29,6 +30,7 @@ public abstract class MixinStructureStart {
                 BeardKeep.watch(world, piece, clip);
             }
             built = piece.addComponentParts(world, rand, clip);
+            if (!built && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {} told the game it is done while chunk {}, {} was being built, so the game now drops it and no later chunk will build or dress it again", piece.getClass().getSimpleName(), piece.getBoundingBox().minX, piece.getBoundingBox().minZ, clip.minX >> 4, clip.minZ >> 4); }
             if (ContentBeard.wanted()) { BeardKeep.learn(world); }
             if (built && ContentBeard.wanted()) { ContentBeard.openAround(self, piece, world, clip); }
         }

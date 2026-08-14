@@ -55,7 +55,7 @@ minecraft {
             '-Dforge.logging.console.level=debug',
             '-Dmixin.debug=true',
             '-XX:+UseG1GC',
-            '-Xmx3G',
+            '-Xmx4G',
             '-XX:+FlightRecorder',
             '-XX:StartFlightRecording=duration=300s,filename=logs/pregen.jfr,settings=profile'
     )

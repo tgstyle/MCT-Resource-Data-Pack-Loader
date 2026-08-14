@@ -79,7 +79,7 @@ public final class BeardOpen {
                     fenced = held instanceof BlockFence;
                     break;
                 }
-                for (int y = box.minY + 1; y <= box.maxY; y++) {
+                for (int y = box.minY + ContentBeard.footingSink(piece) + 1; y <= box.maxY; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
 
@@ -112,7 +112,7 @@ public final class BeardOpen {
                 tops[spot] = Integer.MIN_VALUE;
                 if (footing == Integer.MIN_VALUE) { continue; }
 
-                int from = box.minY - 1;
+                int from = box.minY - 1 + ContentBeard.groundCourse(piece);
                 froms[spot] = from;
                 for (int y = from; y >= box.minY - 24; y--) {
                     at.setPos(x, y, z);

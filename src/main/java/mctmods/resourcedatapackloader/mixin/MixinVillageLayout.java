@@ -54,7 +54,8 @@ public abstract class MixinVillageLayout {
 
         StructureBoundingBox box = placed.getBoundingBox();
         structureComponents.remove(placed);
-        int misfit = ContentBeard.footingMisfit(box, structureComponents);
+        int sink = ContentBeard.footingSink(placed);
+        int misfit = ContentBeard.footingMisfit(box, structureComponents, sink);
         if (misfit == 0) {
             structureComponents.add(placed);
             return;
@@ -73,7 +74,7 @@ public abstract class MixinVillageLayout {
             if (!(tried.minX > well.maxX + reach || tried.maxX < well.minX - reach || tried.minZ > well.maxZ + reach || tried.maxZ < well.minZ - reach)) { continue; }
             if (StructureComponent.findIntersecting(structureComponents, tried) != null) { continue; }
 
-            int triedMisfit = ContentBeard.footingMisfit(tried, structureComponents);
+            int triedMisfit = ContentBeard.footingMisfit(tried, structureComponents, sink);
             if (triedMisfit < bestMisfit) {
                 bestMisfit = triedMisfit;
                 bestSlide = slide;
@@ -81,7 +82,7 @@ public abstract class MixinVillageLayout {
             }
         }
         if (bestMisfit == Integer.MAX_VALUE) {
-            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than 2 block(s) and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
+            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than {} block(s) and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, 2 + sink);
             cir.setReturnValue(null);
             return;
         }

@@ -4,12 +4,15 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGround;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardOpen;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlaza;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
+import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
+import mctmods.resourcedatapackloader.content.worldgen.beard.RecurrentPlots;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.mixin.*;
 import mctmods.resourcedatapackloader.util.Config;
@@ -40,6 +43,7 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -76,11 +80,13 @@ public final class ContentBeard {
     private static WorldTemplateDef wantedFrom;
     private static boolean wantedHeld;
     private static boolean wantedKnown;
+    private static Boolean recurrent;
     public static final int SITE_REACH = 2;
     public static final int SITE_TOLERANCE = 10;
     private static final int ATTACH_GAP = 8;
     public static final int FACING_GAP = 2;
     public static final int SITE_SEPARATION = 8;
+    public static final int FOOTING_COURSE = 1;
     public static final long NO_SITE = Long.MIN_VALUE;
     private static final ChunkPrimer UNUSED = new ChunkPrimer();
     public static ChunkGeneratorOverworld sampler;
@@ -156,13 +162,22 @@ public final class ContentBeard {
         IChunkGenerator maker = ((ChunkProviderServer) event.getWorld().getChunkProvider()).chunkGenerator;
         if (!(maker instanceof ChunkGeneratorOverworld)) { return; }
 
-        MapGenVillage villages = ((AccessorChunkGeneratorBeardFields) maker).rdpl$villages();
+        MapGenVillage shell = ((AccessorChunkGeneratorBeardFields) maker).rdpl$villages();
+        if (shell == null) { return; }
+
+        MapGenStructure found = ContentStructureSearch.theRealOne(shell);
+        if (!(found instanceof MapGenVillage)) { return; }
+
+        MapGenVillage villages = (MapGenVillage) found;
         int blockX = (event.getChunkX() << 4) + 8;
         int blockZ = (event.getChunkZ() << 4) + 8;
         StructureBoundingBox clip = new StructureBoundingBox(blockX, 0, blockZ, blockX + 15, 255, blockZ + 15);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (StructureStart start : ((AccessorMapGenStructure) villages).rdpl$getStructureMap().values()) {
             if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(clip)) { continue; }
+            BeardRoads.repairRoads(event.getWorld(), start);
+            int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
+            if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
             for (StructureComponent piece : start.getComponents()) {
                 if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
 
@@ -290,7 +305,8 @@ public final class ContentBeard {
         }
         int reach = (BeardRoads.pathFullWidth() - 3) / 2;
         int off = BeardRoads.pathSidewalkWidth() > 0 ? reach : reach + 1;
-        BeardRoads.Grade grade = BeardRoads.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
+        BeardRoads.Grade grade = piece instanceof RoadLayout ? ((RoadLayout) piece).rdpl$layout() : null;
+        if (grade == null) { grade = BeardRoads.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true); }
         int raised = 0;
         for (int spot : along) {
             int roadTop = grade == null ? Integer.MIN_VALUE : grade.at(spot);
@@ -362,6 +378,10 @@ public final class ContentBeard {
         }
         if (bed == Integer.MIN_VALUE) { return false; }
 
+        for (int y = bed - 1; y >= bed - 3; y--) {
+            at.setPos(x, y, z);
+            if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
+        }
         int stood = bed;
         if (roadTop > bed) { bed = roadTop; }
         for (int y = bed + 1; y <= bed + 4; y++) {
@@ -373,18 +393,25 @@ public final class ContentBeard {
         if (beforeADoor(world, clip, at, x, bed, z)) { return false; }
 
         if (bed > stood) { BeardBlocks.fillBank(world, at, x, z, bed, stood + 1, false); }
+        at.setPos(x, bed, z);
+        if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
+
+        for (int y = stood; y <= bed; y++) { BeardKeep.holdSpot(x, y, z); }
         for (int y = bed + 1; y <= bed + 3; y++) {
             at.setPos(x, y, z);
             world.setBlockState(at, Blocks.OAK_FENCE.getDefaultState(), 2);
+            BeardKeep.holdSpot(x, y, z);
         }
         at.setPos(x, bed + 4, z);
         world.setBlockState(at, Blocks.WOOL.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.BLACK), 2);
+        BeardKeep.holdSpot(x, bed + 4, z);
         for (EnumFacing facing : EnumFacing.HORIZONTALS) {
             at.setPos(x + facing.getXOffset(), bed + 4, z + facing.getZOffset());
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
             if (world.getBlockState(at).getMaterial() != Material.AIR) { continue; }
 
             world.setBlockState(at, Blocks.TORCH.getDefaultState().withProperty(BlockTorch.FACING, facing), 2);
+            BeardKeep.holdSpot(x + facing.getXOffset(), bed + 4, z + facing.getZOffset());
         }
         return true;
     }
@@ -404,7 +431,24 @@ public final class ContentBeard {
 
     public static int lowestIn(World worldIn, int minX, int minZ, int maxX, int maxZ, StructureBoundingBox clip) { return BeardSite.lowestIn(worldIn, minX, minZ, maxX, maxZ, clip); }
 
-    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces) { return BeardSite.footingMisfit(box, pieces); }
+    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink) { return BeardSite.footingMisfit(box, pieces, sink); }
+
+    public static int footingSink(StructureComponent piece) {
+        if (piece instanceof RecurrentVillagePiece) { return ((RecurrentVillagePiece) piece).footingSink(); }
+        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
+        return recurrent ? RecurrentPlots.sink(piece) : 0;
+    }
+
+    public static int groundCourse(StructureComponent piece) {
+        if (piece instanceof RecurrentVillagePiece) { return ((RecurrentVillagePiece) piece).groundCourses(); }
+        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
+        return recurrent ? RecurrentPlots.groundCourse(piece) : 0;
+    }
+
+    public static int plotSeat(StructureComponent piece) {
+        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
+        return recurrent ? RecurrentPlots.seat(piece) : -1;
+    }
 
     public static void foundAtBirth(StructureStart start) { BeardSite.foundAtBirth(start); }
 
@@ -498,6 +542,36 @@ public final class ContentBeard {
             else if (behind > 1 && behind <= ATTACH_GAP && free(start, piece, box, alongX, met)) {
                 if (alongX) { box.minX = met.maxX + 1; }
                 else { box.minZ = met.maxZ + 1; }
+            }
+        }
+        for (StructureComponent other : start.getComponents()) {
+            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+
+            StructureBoundingBox met = ((AccessorStructureComponentBox) other).rdpl$box();
+            if (met == null) { continue; }
+
+            boolean otherAlongX = BeardPlots.roadAlongX(other);
+            if (otherAlongX == alongX) { continue; }
+
+            int acrossLeast = alongX ? box.minZ : box.minX;
+            int acrossMost = alongX ? box.maxZ : box.maxX;
+            int metAlongLeast = otherAlongX ? met.minX : met.minZ;
+            int metAlongMost = otherAlongX ? met.maxX : met.maxZ;
+            if (metAlongMost < acrossLeast - 1 || metAlongLeast > acrossMost + 1) { continue; }
+
+            int metAcrossLeast = otherAlongX ? met.minZ : met.minX;
+            int metAcrossMost = otherAlongX ? met.maxZ : met.maxX;
+            int least = alongX ? box.minX : box.minZ;
+            int most = alongX ? box.maxX : box.maxZ;
+            if (least > metAcrossLeast && least <= metAcrossMost) {
+                if (alongX) { box.minX = metAcrossLeast; }
+                else { box.minZ = metAcrossLeast; }
+                ContentLog.LOGGER.debug("The road at {}, {} squares its corner back from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, least, metAcrossLeast, met.minX, met.minZ);
+            }
+            if (most < metAcrossMost && most >= metAcrossLeast) {
+                if (alongX) { box.maxX = metAcrossMost; }
+                else { box.maxZ = metAcrossMost; }
+                ContentLog.LOGGER.debug("The road at {}, {} squares its corner out from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, most, metAcrossMost, met.minX, met.minZ);
             }
         }
     }

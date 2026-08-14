@@ -8,7 +8,7 @@ import java.util.Arrays;
 import javax.annotation.Nullable;
 
 public final class BeardGrade {
-    public static final int CAP = 4;
+    public static final int CAP = 2;
 
     private BeardGrade() {}
 
@@ -96,6 +96,28 @@ public final class BeardGrade {
             capped++;
         }
         return capped;
+    }
+    public static void sag(int[] profile, boolean[] bridged, int seaLevel) {
+        int rows = profile.length;
+        for (int i = 0; i < rows; i++) {
+            if (profile[i] != Integer.MIN_VALUE) { continue; }
+
+            int gapEnd = i;
+            while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
+            int before = i > 0 ? profile[i - 1] : Integer.MIN_VALUE;
+            int after = gapEnd < rows ? profile[gapEnd] : Integer.MIN_VALUE;
+            boolean touches = before == Integer.MIN_VALUE || after == Integer.MIN_VALUE || (before - seaLevel) + (after - seaLevel) <= gapEnd - i + 1;
+            for (int held = i; held < gapEnd; held++) {
+                if (touches) {
+                    int down = before == Integer.MIN_VALUE ? seaLevel : Math.max(seaLevel, before - (held - i + 1));
+                    int up = after == Integer.MIN_VALUE ? seaLevel : Math.max(seaLevel, after - (gapEnd - held));
+                    profile[held] = Math.max(down, up);
+                }
+                else { profile[held] = before + (after - before) * (held - i + 1) / (gapEnd - i + 1); }
+                bridged[held] = true;
+            }
+            i = gapEnd;
+        }
     }
     public static void settle(int[] profile, boolean[] held) {
         int rows = profile.length;

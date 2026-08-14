@@ -37,6 +37,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
+import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
@@ -88,6 +89,7 @@ public class ResourceDataPackLoader {
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
+        RecurrentVillages.register();
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
         ContentVillagers.applyTrades();

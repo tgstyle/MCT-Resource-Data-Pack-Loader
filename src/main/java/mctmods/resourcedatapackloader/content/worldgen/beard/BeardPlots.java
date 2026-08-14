@@ -8,6 +8,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
+import javax.annotation.Nullable;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.Locale;
 import java.util.function.Predicate;
@@ -42,7 +43,7 @@ public final class BeardPlots {
         }
         return false;
     }
-    public static boolean underAnother(StructureStart start, StructureComponent piece, int x, int z) {
+    public static boolean underAnother(StructureStart start, @Nullable StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece) { continue; }
 
@@ -51,6 +52,18 @@ public final class BeardPlots {
         }
         return false;
     }
+    public static boolean besideRoad(StructureStart start, StructureComponent piece, int x, int z) { return nearRoad(start, piece, x, z, 1); }
+
+    public static boolean nearRoad(StructureStart start, StructureComponent piece, int x, int z, int reach) {
+        for (StructureComponent other : start.getComponents()) {
+            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+
+            StructureBoundingBox box = other.getBoundingBox();
+            if (x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach) { return true; }
+        }
+        return false;
+    }
+
     public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
