@@ -21,6 +21,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 
 **Overriding**
 - [What you can override](#what-you-can-override)
+- [Property overrides](#property-overrides)
 - [Registry renames](#registry-renames)
 - [Player loot](#player-loot)
 
@@ -259,6 +260,7 @@ What to do, in order:
 - **Recipe removals**, delete a crafting recipe by name, namespace or output
 - **Loot injections**, add a pool to a loot table instead of replacing the whole thing
 - **Player loot**, roll a loot table when a player dies, on top of what they were carrying or instead of it
+- **Properties of existing blocks, items and potions**, hardness, light, stack sizes, food on anything, a potion's effects, see [Property overrides](#property-overrides)
 - **Ore dictionary names, furnace recipes, fuel burn times, creative tabs and sound events**
 
 RDPL is good for replacing one or two recipes, and recipes for your own content should be added in the pack alongside it. For full recipe control across a modpack, CraftTweaker and GroovyScript are the better options, and a file here still replaces the original completely, so to change one ingredient or drop one loot entry, use those.
@@ -348,6 +350,87 @@ An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing e
 ### Finding placed structures
 
 An `imprint` entry with `"locateAs": "Crypt"` registers every structure it places under that name, and `/locate Crypt` then points at the nearest one, with the name offered in tab completion. Only structures that have already generated can be found, since pack structures are placed by chance as chunks are made rather than on a grid the game could predict. The names live in the world's save, so they survive restarts and work on servers. A name registered this way can also be given its own permission with `gotoPlaceLevels`, so a pack decides who may be carried to its own structures separately from the vanilla ones.
+
+## Property overrides
+
+`overrides/<namespace>/<name>.json`
+
+Everything else in this chapter replaces a file or adds one. An override does neither: it changes the properties of a block, item or potion type that already exists, vanilla or modded, without touching any of its files. The path names the target, so `overrides/minecraft/stone.json` changes `minecraft:stone`, and `overrides/tconstruct/<name>.json` changes that mod's block the same way.
+
+```json
+{
+  "hardness": 0.1,
+  "light": 10,
+  "soundType": "glass"
+}
+```
+
+That file, at `overrides/minecraft/stone.json`, makes stone mine almost instantly, glow, and sound like glass. Every key is optional; a file changes only what it names. These apply when the target is a block:
+
+| Key | Value | What it does |
+| --- | --- | --- |
+| `hardness` | float | Mining time, the same figure a block definition takes |
+| `resistance` | float | Blast resistance |
+| `slipperiness` | float | `0.6` is ordinary ground, `0.98` is ice |
+| `light` | `0` to `15` | Light given off |
+| `lightOpacity` | `0` to `255` | How much light the block stops |
+| `soundType` | one of the sound types | Step, place and break sounds |
+| `harvestTool` | tool class | What mines it; `harvestToolLevel`, default `0`, sets the tier |
+| `flammability` | int | How readily it burns away; `fireSpread`, default `5`, how readily fire reaches it |
+
+And these when the target is an item:
+
+| Key | Value | What it does |
+| --- | --- | --- |
+| `maxStackSize` | `1` to `64` | Stack size |
+| `maxDamage` | int | Durability |
+| `containerItem` | item name | Left behind in the crafting grid, the way a bucket is |
+| `food` | object | Makes the item edible, see below |
+
+A name that is both a block and an item, and every placeable block's item is, takes both groups from one file:
+
+```json
+{
+  "hardness": 0.2,
+  "food": {
+    "heal": 4,
+    "saturation": 0.3,
+    "alwaysEdible": true,
+    "effects": [
+      { "potion": "minecraft:speed", "duration": 200, "amplifier": 1 }
+    ]
+  }
+}
+```
+
+At `overrides/minecraft/planks.json` that makes planks break about as fast as dirt and lets them be eaten. `food` takes `heal` (`1`), `saturation` (`0.6`), `alwaysEdible` (`false`; `true` allows eating on a full hunger bar) and `effects`, whose entries are written exactly like a potion type's. An item that is already food takes new `heal`, `saturation` and `alwaysEdible`; `effects` on one of those is not supported, and the log says so. When the edible item places a block, aim at the sky to eat, since aiming at a block places it: that is vanilla's use order, not a bug.
+
+`effects` at the top level of the file rewrites a potion type's effect list outright:
+
+```json
+{
+  "effects": [
+    { "potion": "minecraft:levitation", "duration": 200, "amplifier": 0 }
+  ]
+}
+```
+
+At `overrides/minecraft/swiftness.json` the Potion of Swiftness now grants Levitation. Each entry takes `potion` (required), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) and `showParticles` (`true`), the same as in `potion_types/`, and the list may not be empty.
+
+A target another mod owns should carry that mod in `requires`, so the file is skipped quietly when the mod is not installed instead of being reported as a missing target:
+
+```json
+{
+  "requires": ["tconstruct"],
+  "hardness": 1.0
+}
+```
+
+Overrides are live. The original values are remembered before the first change, so disabling the pack and running `/rdpl reload` snaps everything back to what it was, no restart needed; the same happens on every world entry. One file per target: when two packs override the same thing, the later pack's file replaces the earlier one whole, and the log says so.
+
+Two limits worth knowing. A block or item whose own code computes a property ignores the field behind it, so the override applies but changes nothing; vanilla only does this for stairs' blast resistance, but mods are free to do it anywhere. And made-edible items only work on items with no right-click behavior of their own: an item that already does something when used keeps doing that.
+
+Overrides need the pack on the client as well as the server, since mining speed, light and eating all happen on the player's screen, so they are not for server-side packs. `overrides` in the `content` config category turns the folder off entirely.
 
 ## Registry renames
 
@@ -2652,6 +2735,7 @@ Under `assets/<namespace>/`:
 | `gamerules` | Game rules for new worlds |
 | `entities` | Entity variants built on entities that already exist |
 | `hardness` | Mining time and blast multipliers for groups of blocks |
+| `overrides` | Properties of existing blocks, items and potion types, changed in place |
 | `villages` | Plots villages can build |
 | `blastplaster` | What Blast Plaster does after an explosion, per dimension |
 | `structures` | `.nbt` templates, for saplings, `imprint` and mod overrides |

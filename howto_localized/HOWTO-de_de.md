@@ -21,6 +21,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 
 **Überschreiben**
 - [Was du überschreiben kannst](#was-du-überschreiben-kannst)
+- [Eigenschaften überschreiben](#eigenschaften-überschreiben)
 - [Registry-Umbenennungen](#registry-umbenennungen)
 - [Spielerbeute](#spielerbeute)
 
@@ -259,6 +260,7 @@ Was zu tun ist, der Reihe nach:
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
 - **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
+- **Eigenschaften vorhandener Blöcke, Items und Tränke**: Härte, Licht, Stapelgrößen, Essbarkeit für alles, die Effekte eines Tranks, siehe [Eigenschaften überschreiben](#eigenschaften-überschreiben)
 - **Ore-Dictionary-Namen, Ofenrezepte, Brenndauern, Kreativtabs und Sound-Events**
 
 RDPL eignet sich gut dafür, ein oder zwei Rezepte zu ersetzen, und Rezepte für eigenen Inhalt gehören mit in dasselbe Pack. Für volle Rezeptkontrolle über ein ganzes Modpack sind CraftTweaker und GroovyScript die besseren Werkzeuge, und eine Datei hier ersetzt das Original weiterhin vollständig – um also eine einzelne Zutat zu ändern oder einen einzelnen Beuteeintrag zu streichen, nimm die beiden.
@@ -348,6 +350,87 @@ Ein `imprint`-Eintrag nagelt genauso fest, mit `"at": [x, z]` in seiner Form, un
 ### Platzierte Strukturen finden
 
 Ein `imprint`-Eintrag mit `"locateAs": "Crypt"` registriert jede Struktur, die er platziert, unter diesem Namen, und `/locate Crypt` zeigt dann auf die nächste davon, mit dem Namen in der Tab-Vervollständigung. Finden lassen sich nur Strukturen, die schon generiert wurden, denn Pack-Strukturen werden beim Erzeugen der Chunks nach Zufall platziert und nicht auf einem Raster, das das Spiel vorhersagen könnte. Die Namen liegen im Spielstand der Welt, überstehen also Neustarts und funktionieren auf Servern.
+
+## Eigenschaften überschreiben
+
+`overrides/<namespace>/<name>.json`
+
+Alles andere in diesem Kapitel ersetzt eine Datei oder fügt eine hinzu. Ein Override tut keins von beidem: Es ändert die Eigenschaften eines Blocks, Items oder Tranktyps, den es schon gibt, Vanilla oder Mod, ohne eine seiner Dateien anzufassen. Der Pfad benennt das Ziel: `overrides/minecraft/stone.json` ändert `minecraft:stone`, und `overrides/tconstruct/<name>.json` ändert den Block dieses Mods auf dieselbe Weise.
+
+```json
+{
+  "hardness": 0.1,
+  "light": 10,
+  "soundType": "glass"
+}
+```
+
+Diese Datei, unter `overrides/minecraft/stone.json`, lässt Stein fast sofort abbauen, leuchten und wie Glas klingen. Jeder Schlüssel ist optional; eine Datei ändert nur, was sie benennt. Diese gelten, wenn das Ziel ein Block ist:
+
+| Schlüssel | Wert | Was er tut |
+| --- | --- | --- |
+| `hardness` | Zahl | Abbauzeit, dieselbe Zahl wie in einer Blockdefinition |
+| `resistance` | Zahl | Explosionswiderstand |
+| `slipperiness` | Zahl | `0.6` ist normaler Boden, `0.98` ist Eis |
+| `light` | `0` bis `15` | Abgegebenes Licht |
+| `lightOpacity` | `0` bis `255` | Wie viel Licht der Block schluckt |
+| `soundType` | einer der Klangtypen | Schritt-, Setz- und Abbaugeräusche |
+| `harvestTool` | Werkzeugklasse | Womit er abgebaut wird; `harvestToolLevel`, Standard `0`, setzt die Stufe |
+| `flammability` | Ganzzahl | Wie bereitwillig er verbrennt; `fireSpread`, Standard `5`, wie bereitwillig Feuer ihn erreicht |
+
+Und diese, wenn das Ziel ein Item ist:
+
+| Schlüssel | Wert | Was er tut |
+| --- | --- | --- |
+| `maxStackSize` | `1` bis `64` | Stapelgröße |
+| `maxDamage` | Ganzzahl | Haltbarkeit |
+| `containerItem` | Item-Name | Bleibt im Handwerksfeld zurück, wie ein Eimer |
+| `food` | Objekt | Macht das Item essbar, siehe unten |
+
+Ein Name, der zugleich Block und Item ist, und das ist das Item jedes setzbaren Blocks, nimmt beide Gruppen aus einer Datei:
+
+```json
+{
+  "hardness": 0.2,
+  "food": {
+    "heal": 4,
+    "saturation": 0.3,
+    "alwaysEdible": true,
+    "effects": [
+      { "potion": "minecraft:speed", "duration": 200, "amplifier": 1 }
+    ]
+  }
+}
+```
+
+Unter `overrides/minecraft/planks.json` brechen Bretter damit ungefähr so schnell wie Erde und lassen sich essen. `food` nimmt `heal` (`1`), `saturation` (`0.6`), `alwaysEdible` (`false`; `true` erlaubt Essen bei voller Hungerleiste) und `effects`, dessen Einträge genauso geschrieben werden wie bei einem Tranktyp. Ein Item, das schon Essen ist, nimmt neue `heal`, `saturation` und `alwaysEdible`; `effects` darauf wird nicht unterstützt, und das Log sagt es. Setzt das essbare Item einen Block, ziel zum Essen in den Himmel, denn Zielen auf einen Block setzt ihn: Das ist Vanillas Benutzungsreihenfolge, kein Fehler.
+
+`effects` auf der obersten Ebene der Datei schreibt die Effektliste eines Tranktyps komplett neu:
+
+```json
+{
+  "effects": [
+    { "potion": "minecraft:levitation", "duration": 200, "amplifier": 0 }
+  ]
+}
+```
+
+Mit `overrides/minecraft/swiftness.json` gibt der Trank der Schnelligkeit jetzt Schwebekraft. Jeder Eintrag nimmt `potion` (Pflicht), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) und `showParticles` (`true`), genau wie in `potion_types/`, und die Liste darf nicht leer sein.
+
+Ein Ziel, das einem anderen Mod gehört, sollte diesen Mod in `requires` tragen, dann wird die Datei ohne ihn still übersprungen, statt als fehlendes Ziel gemeldet zu werden:
+
+```json
+{
+  "requires": ["tconstruct"],
+  "hardness": 1.0
+}
+```
+
+Overrides sind live. Die ursprünglichen Werte werden vor der ersten Änderung festgehalten, also springt nach dem Deaktivieren des Packs und `/rdpl reload` alles auf den alten Stand zurück, ganz ohne Neustart; dasselbe passiert bei jedem Betreten einer Welt. Eine Datei pro Ziel: Überschreiben zwei Packs dasselbe, ersetzt die Datei des späteren Packs die frühere komplett, und das Log sagt es.
+
+Zwei Grenzen, die man kennen sollte. Ein Block oder Item, dessen eigener Code eine Eigenschaft berechnet, ignoriert das Feld dahinter: Das Override greift, ändert aber nichts; Vanilla macht das nur beim Explosionswiderstand von Treppen, Mods dürfen es überall. Und essbar gemachte Items funktionieren nur bei Items ohne eigenes Rechtsklick-Verhalten: Ein Item, das beim Benutzen schon etwas tut, tut das weiterhin.
+
+Overrides brauchen das Pack auf Client und Server, denn Abbaugeschwindigkeit, Licht und Essen passieren auf dem Bildschirm des Spielers; für rein serverseitige Packs taugen sie nicht. `overrides` in der Config-Kategorie `content` schaltet den Ordner komplett ab.
 
 ## Registry-Umbenennungen
 
@@ -2648,6 +2731,7 @@ Unter `assets/<namespace>/`:
 | `gamerules` | Spielregeln für neue Welten |
 | `entities` | Entity-Varianten, aufgebaut auf vorhandenen Entities |
 | `hardness` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen |
+| `overrides` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert |
 | `villages` | Grundstücke, die Dörfer bauen können |
 | `blastplaster` | Was Blast Plaster nach einer Explosion tut, pro Dimension |
 | `structures` | `.nbt`-Vorlagen, für Setzlinge, `imprint` und Mod-Overrides |
