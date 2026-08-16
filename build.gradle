@@ -130,7 +130,7 @@ dependencies {
     implementation rfg.deobf("curse.maven:${common.movl_version}")
     implementation rfg.deobf("curse.maven:${common.ivtk_version}")
     implementation rfg.deobf("curse.maven:${common.rcmp_version}")
-    compileOnly rfg.deobf("curse.maven:${common.mcal_version}")
+    implementation rfg.deobf("curse.maven:${common.mcal_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.cstd_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thfo_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.cfga_version}")

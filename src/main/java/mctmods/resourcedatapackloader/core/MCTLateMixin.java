@@ -29,6 +29,7 @@ public class MCTLateMixin implements ILateMixinLoader {
                 "mixins.resourcedatapackloader.rtg.json",
                 "mixins.resourcedatapackloader.twilightforest.json",
                 "mixins.resourcedatapackloader.reccomplex.json",
+                "mixins.resourcedatapackloader.mca.json",
                 "mixins.resourcedatapackloader.waystones.json",
                 "mixins.resourcedatapackloader.paperfixes.json",
                 "mixins.resourcedatapackloader.vanillaportals.json");
@@ -50,6 +51,7 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (mixinConfig.endsWith(".rtg.json")) { return Loader.isModLoaded("rtg"); }
         if (mixinConfig.endsWith(".twilightforest.json")) { return Loader.isModLoaded("twilightforest"); }
         if (mixinConfig.endsWith(".reccomplex.json")) { return Loader.isModLoaded("reccomplex"); }
+        if (mixinConfig.endsWith(".mca.json")) { return Loader.isModLoaded("mca"); }
         if (mixinConfig.endsWith(".waystones.json")) { return Loader.isModLoaded("waystones"); }
         if (mixinConfig.endsWith(".paperfixes.json")) { return Loader.isModLoaded("paperfixes"); }
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
