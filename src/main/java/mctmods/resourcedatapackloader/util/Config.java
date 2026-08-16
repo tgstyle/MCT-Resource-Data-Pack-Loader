@@ -86,6 +86,8 @@ public class Config {
         public boolean load = true;
         @net.minecraftforge.common.config.Config.Comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]")
         public boolean hardness = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]")
+        public boolean overrides = true;
         @net.minecraftforge.common.config.Config.Comment("Register the sound events named by sounds/*.json, so packs can ship their own audio [Default=true]")
         public boolean sounds = true;
         @net.minecraftforge.common.config.Config.Comment("Apply fuels/*.json files, which give items a furnace burn time [Default=true]")

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.def.GateDef;
@@ -255,6 +256,7 @@ public class ServerCommands extends CommandBase {
         long start = System.currentTimeMillis();
         PackManager.get().scan(root);
         PackManager.get().report();
+        ContentOverrides.reload();
         server.reload();
         int packs = PackManager.get().getPacks().size();
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.serverreloaded", packs, elapsed(start)));

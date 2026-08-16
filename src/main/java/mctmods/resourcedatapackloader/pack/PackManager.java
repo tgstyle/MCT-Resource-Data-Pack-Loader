@@ -75,6 +75,7 @@ public final class PackManager {
     public static final String VILLAGES = "villages";
     public static final String ENTITIES = "entities";
     public static final String HARDNESS = "hardness";
+    public static final String OVERRIDES = "overrides";
     public static final String JSON = "json";
     public static final String MCFUNCTION = "mcfunction";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");

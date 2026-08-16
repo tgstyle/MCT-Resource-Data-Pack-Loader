@@ -322,6 +322,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void startFlashing() {
         if (flasher != null) { return; }
 
+        beats = 0L;
+        lastSaid = "";
         flasher = Executors.newSingleThreadScheduledExecutor(run -> {
             Thread beat = new Thread(run, "RDPL pregen spectator titles");
             beat.setDaemon(true);
@@ -338,15 +340,20 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     private static long beats;
+    private static String lastSaid = "";
 
     private static void flashHeld() {
         ContentPregen live = running;
         String said = live == null ? progress : live.sofar();
         if (!said.isEmpty()) { progress = said; }
-        boolean titles = beats++ % 6L == 0L;
+        boolean titles = beats % 6L == 0L;
+        boolean keepAlive = beats % 8L == 0L;
+        beats++;
+        boolean changed = !said.isEmpty() && !said.equals(lastSaid);
+        if (changed) { lastSaid = said; }
         for (Held held : HELD.values()) {
             if (titles) { flash(held); }
-            if (!said.isEmpty()) { held.connection.sendPacket(bar(said)); }
+            if (changed || (keepAlive && !said.isEmpty())) { held.connection.sendPacket(bar(said)); }
         }
     }
 
@@ -362,7 +369,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void flash(Held held) {
         if (held.warning.isEmpty()) { return; }
 
-        held.connection.sendPacket(new SPacketTitle(0, 15, 10));
+        held.connection.sendPacket(new SPacketTitle(0, 70, 0));
         held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(held.warning).setStyle(new Style().setColor(TextFormatting.RED))));
         held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }

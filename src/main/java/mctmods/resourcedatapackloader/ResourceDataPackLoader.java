@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
+import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -135,6 +136,7 @@ public class ResourceDataPackLoader {
             ContentHardness.resolve();
             MinecraftForge.EVENT_BUS.register(ContentHardness.class);
         }
+        ContentOverrides.reload();
         ContentReplacements.reload();
         if (ContentRetrogen.wanted()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
         MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
@@ -168,6 +170,7 @@ public class ResourceDataPackLoader {
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         FurnaceBlocking.apply();
+        ContentOverrides.reload();
         ContentReplacements.reload();
         ContentStructurePlacement.reload();
         ContentEntityTicks.reload();

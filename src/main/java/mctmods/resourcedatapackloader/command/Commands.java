@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
@@ -103,6 +104,7 @@ public class Commands extends CommandBase {
         long start = System.currentTimeMillis();
         PackManager.get().scan(root);
         PackManager.get().report();
+        ContentOverrides.reload();
         FMLClientHandler.instance().refreshResources(ReloadRequirements.all());
         MinecraftServer integrated = Minecraft.getMinecraft().getIntegratedServer();
         if (integrated != null) { integrated.reload(); }
