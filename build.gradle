@@ -104,6 +104,8 @@ dependencies {
     compileOnly rfg.deobf("${common.mjei_version}")
     runtimeOnly rfg.deobf("${common.mjei_version}")
 
+    //implementation rfg.deobf("curse.maven:${common.drtr_version}")
+
     implementation rfg.deobf("curse.maven:${common.bopl_version}")
     implementation rfg.deobf("${common.ctwk_version}")
     implementation("${common.gscr_version}") { transitive = false }
@@ -126,7 +128,7 @@ dependencies {
     compileOnly rfg.deobf("curse.maven:${common.rtgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.twfo_version}")
 
-    compileOnly rfg.deobf("curse.maven:${common.tekt_version}")
+    implementation rfg.deobf("curse.maven:${common.tekt_version}")
     implementation rfg.deobf("curse.maven:${common.movl_version}")
     implementation rfg.deobf("curse.maven:${common.ivtk_version}")
     implementation rfg.deobf("curse.maven:${common.rcmp_version}")
