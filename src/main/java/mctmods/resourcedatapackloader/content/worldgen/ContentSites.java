@@ -1,17 +1,19 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.ContentLog;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
-
-import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 public class ContentSites extends WorldSavedData {
     private static final String NAME = "RDPLSites";
     private final Map<Long, Long> chosen = new HashMap<>();
     private int spacing;
+    private boolean warned;
 
     public ContentSites() { super(NAME); }
 
@@ -23,13 +25,28 @@ public class ContentSites extends WorldSavedData {
             held = new ContentSites();
             world.getPerWorldStorage().setData(NAME, held);
         }
-        if (held.spacing != spacing) {
-            held.chosen.clear();
-            held.spacing = spacing;
+        int wanted = Math.max(9, spacing);
+        if (held.spacing == 0) {
+            held.spacing = wanted;
             held.markDirty();
+            return held;
+        }
+        int stated = ContentStructurePlacement.spacing(ContentStructurePlacement.VILLAGES, -1);
+        if (stated > 0 && Math.max(9, stated) != held.spacing) {
+            ContentLog.LOGGER.info("The pack now asks for villages every {} chunk(s) where this world founded on every {}, so the founding record starts over on the new grid", Math.max(9, stated), held.spacing);
+            held.chosen.clear();
+            held.spacing = Math.max(9, stated);
+            held.markDirty();
+            return held;
+        }
+        if (wanted != held.spacing && !held.warned) {
+            held.warned = true;
+            ContentLog.LOGGER.debug("Village founding was asked with spacing {} while this world founded on every {} chunk(s). Another mod changed a village generator's distance in flight, so the world's own grid is used and the ask is ignored", wanted, held.spacing);
         }
         return held;
     }
+
+    public int spacing() { return spacing; }
 
     public Long get(long cell) { return chosen.get(cell); }
 

@@ -23,6 +23,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -70,7 +71,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.5,);")
+@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
 
@@ -182,6 +183,7 @@ public class ResourceDataPackLoader {
     @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ContentPregen.serverStopping(); }
 
     @Mod.EventHandler public void onServerStopped(FMLServerStoppedEvent event) {
+        ContentStructureSearch.forget();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }
         PackManager.get().close();
     }

@@ -27,7 +27,8 @@ public abstract class MixinVillageGround extends StructureComponent {
 
         StructureBoundingBox box = getBoundingBox();
         int average = ContentBeard.noiseAverage(worldIn, box);
-        if (average != Integer.MIN_VALUE && average < worldIn.getSeaLevel()) { average = worldIn.getSeaLevel(); }
+        boolean wet = average != Integer.MIN_VALUE && average < worldIn.getSeaLevel();
+        if (wet) { average = worldIn.getSeaLevel(); }
         if (average != Integer.MIN_VALUE) {
             if (average != found) { cir.setReturnValue(average); }
             ContentLog.LOGGER.debug("{} at {}, {} measures its ground at y {} from the noise surface{}", getClass().getSimpleName(), box.minX, box.minZ, average, average == found ? ", agreeing with the world" : " instead of y " + found);
@@ -37,6 +38,10 @@ public abstract class MixinVillageGround extends StructureComponent {
             int grade = BeardRoads.roadGradeBeside(worldIn, box);
             if (grade != Integer.MIN_VALUE) {
                 int seat = BeardPlots.waystone(this) ? grade : grade - 1;
+                if (wet && seat < worldIn.getSeaLevel()) {
+                    seat = worldIn.getSeaLevel();
+                    ContentLog.LOGGER.debug("{} at {}, {} stands on water, so it is held up to the surface at y {} instead of sinking a course below the road", getClass().getSimpleName(), box.minX, box.minZ, seat);
+                }
                 if (seat != found) {
                     cir.setReturnValue(seat);
                     ContentLog.LOGGER.debug("{} at {}, {} stands at the grade of the road beside it, y {}, instead of y {}", getClass().getSimpleName(), box.minX, box.minZ, seat, found);

@@ -42,6 +42,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.WoodlandMansionPieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -178,6 +179,8 @@ public final class ContentBeard {
             BeardRoads.repairRoads(event.getWorld(), start);
             int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
             if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+            int swept = BeardGround.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
+            if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
             for (StructureComponent piece : start.getComponents()) {
                 if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
 
@@ -225,7 +228,7 @@ public final class ContentBeard {
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
 
                     IBlockState held = world.getBlockState(at);
-                    if (mctmods.blastplaster.Config.isLog(held)) { seeds.add(at.toImmutable()); }
+                    if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { seeds.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.LEAVES) { canopy.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.VINE) { felled += BeardBlocks.clearAt(world, at); }
                 }
@@ -454,7 +457,11 @@ public final class ContentBeard {
 
     public static void openAround(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         if (piece.getClass().getEnclosingClass() == ComponentScatteredFeaturePieces.class) {
-            settleFeature(start, piece, world, clip);
+            settleFeature(start, piece, world, clip, "temples");
+            return;
+        }
+        if (piece.getClass().getEnclosingClass() == WoodlandMansionPieces.class) {
+            settleFeature(start, piece, world, clip, "mansions");
             return;
         }
         if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path) { return; }
@@ -462,9 +469,9 @@ public final class ContentBeard {
         BeardOpen.around(start, piece, world, clip);
     }
 
-    private static void settleFeature(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
+    private static void settleFeature(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, String name) {
         loadModes();
-        if (MODES.getOrDefault("temples", Mode.NONE) == Mode.NONE) { return; }
+        if (MODES.getOrDefault(name, Mode.NONE) == Mode.NONE) { return; }
 
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -735,6 +742,7 @@ public final class ContentBeard {
 
         modesLoaded = true;
         MODES.put("villages", Mode.BEARD_THIN);
+        MODES.put("mansions", Mode.BEARD_THIN);
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAdaptation", Config.worldgen.structureAdaptation)) {
             String[] parts = entry.split("=", 2);
             if (parts.length != 2) {
@@ -744,8 +752,8 @@ public final class ContentBeard {
 
             String name = parts[0].trim().toLowerCase(Locale.ROOT);
             String asked = parts[1].trim().toUpperCase(Locale.ROOT);
-            if ("temples".equals(name) && !"NONE".equals(asked) && !"BEARD_THIN".equals(asked)) {
-                ContentLog.LOGGER.error("structureAdaptation asks for temples={}, but a temple settles itself only as it is built, so the terrain cannot be shaped for it beforehand. Only beard_thin is offered there, which banks the ground around it once it stands", parts[1].trim());
+            if (("temples".equals(name) || "mansions".equals(name)) && !"NONE".equals(asked) && !"BEARD_THIN".equals(asked)) {
+                ContentLog.LOGGER.error("structureAdaptation asks for {}={}, but that structure settles itself only as it is built, so the terrain cannot be shaped for it beforehand. Only beard_thin is offered there, which banks the ground around it once it stands", name, parts[1].trim());
                 continue;
             }
             try { MODES.put(name, Mode.valueOf(asked)); }

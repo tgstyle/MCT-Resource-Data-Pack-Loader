@@ -124,8 +124,9 @@ public final class BeardSite {
         }
 
         ContentSites known = ContentSites.of(world, spacing);
-        int cellX = Math.floorDiv(from.getX() >> 4, spacing);
-        int cellZ = Math.floorDiv(from.getZ() >> 4, spacing);
+        int grid = known.spacing();
+        int cellX = Math.floorDiv(from.getX() >> 4, grid);
+        int cellZ = Math.floorDiv(from.getZ() >> 4, grid);
         long ending = System.nanoTime() + budgetNanos;
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
@@ -136,7 +137,7 @@ public final class BeardSite {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) { continue; }
                     if (known.get(packedChunk(cellX + dx, cellZ + dz)) == null && System.nanoTime() >= ending) { return best; }
 
-                    long chosen = siteFor(world, known, cellX + dx, cellZ + dz, spacing);
+                    long chosen = siteFor(world, known, cellX + dx, cellZ + dz, grid);
                     if (chosen == ContentBeard.NO_SITE) { continue; }
 
                     int chunkX = (int) (chosen >> 32);
@@ -161,7 +162,8 @@ public final class BeardSite {
         if (BeardSurface.samplerFor(world) == null) { return null; }
 
         ContentSites known = ContentSites.of(world, spacing);
-        long chosen = siteFor(world, known, Math.floorDiv(chunkX, spacing), Math.floorDiv(chunkZ, spacing), spacing);
+        int grid = known.spacing();
+        long chosen = siteFor(world, known, Math.floorDiv(chunkX, grid), Math.floorDiv(chunkZ, grid), grid);
         return chosen != ContentBeard.NO_SITE && chosen == packedChunk(chunkX, chunkZ);
     }
     public static boolean mansionCandidateNear(World world, int chunkX, int chunkZ) {
@@ -405,7 +407,14 @@ public final class BeardSite {
                 if (found >= 0 && found < lowest) { lowest = found; }
             }
         }
-        return lowest == Integer.MAX_VALUE ? wellNominal(well) : lowest;
+        if (lowest == Integer.MAX_VALUE) { return wellNominal(well); }
+
+        int floor = world.provider.getAverageGroundLevel() - 1;
+        if (lowest < floor) {
+            ContentLog.LOGGER.debug("The well would found under water at y {}, so it is held up to the water line at y {}", lowest, floor);
+            return floor;
+        }
+        return lowest;
     }
 
     public static void foundAtBirth(StructureStart start) {
@@ -428,7 +437,14 @@ public final class BeardSite {
                     if (found > highest) { highest = found; }
                 }
             }
-            ContentLog.LOGGER.debug("The well footprint at {}, {} samples y {}..{} across {} column(s), founding on the lowest y {}", well.minX, well.minZ, level, highest, count, level);
+            int rawLowest = Integer.MAX_VALUE;
+            for (int z = well.minZ; z <= well.maxZ; z++) {
+                for (int x = well.minX; x <= well.maxX; x++) {
+                    int found = BeardSurface.surfaceAt(world, x, z);
+                    if (found >= 0 && found < rawLowest) { rawLowest = found; }
+                }
+            }
+            ContentLog.LOGGER.debug("The well footprint at {}, {} samples y {}..{} across {} column(s), founding on y {}", well.minX, well.minZ, rawLowest, highest, count, level);
         }
 
         int shift = level - nominal;

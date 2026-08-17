@@ -176,6 +176,16 @@ public final class BeardRoads {
                 for (int i = 0; i < width; i++) { footed[profile.length - 1 - i] = true; }
             }
             BeardGrade.sag(profile, bridged, world.getSeaLevel());
+            int held = BeardGrade.holdCauseway(profile, bridged, world.getSeaLevel());
+            if (held > 0) { ContentLog.LOGGER.debug("Held {} short land row(s) of the road at {}, {} up to the deck crossing them, so the causeway stays level over its shoals", held, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            int piers = 0;
+            for (int i = 0; i < profile.length; i++) {
+                if (!bridged[i] && ground[i] == Integer.MIN_VALUE && profile[i] != Integer.MIN_VALUE && profile[i] < world.getSeaLevel()) {
+                    profile[i] = world.getSeaLevel();
+                    piers++;
+                }
+            }
+            if (piers > 0) { ContentLog.LOGGER.debug("Held {} pier row(s) of the road at {}, {} up to the water line, so they meet the decks either side", piers, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
         }
         else { capped = BeardGrade.capEmbankment(profile, ground, bridged, plaza); }
         return new Grade(profile, ground, bridged, footed, rowLeast, capped);
@@ -375,7 +385,12 @@ public final class BeardRoads {
                             continue;
                         }
                         if (wet) {
-                            paved += deckBridge(world, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, at);
+                            filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel);
+                            at.setPos(x, profile[i], z);
+                            if (!BeardKeep.holds(x, profile[i], z)) {
+                                world.setBlockState(at, pathForGround(world, x, z, path, gravel, true), 2);
+                                paved++;
+                            }
                             continue;
                         }
                     }
@@ -846,7 +861,7 @@ public final class BeardRoads {
         if (ground == Blocks.HARDENED_CLAY) { return asked(Blocks.HARDENED_CLAY.getDefaultState()); }
         if (ground == Blocks.GRAVEL) { return asked(Blocks.GRAVEL.getDefaultState()); }
 
-        return earthy ? path : gravel;
+        return earthy || gravel.getBlock() == Blocks.CLAY ? path : gravel;
     }
 
     private static IBlockState asked(IBlockState picked) {

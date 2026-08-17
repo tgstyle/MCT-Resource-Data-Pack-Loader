@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import mctmods.blastplaster.util.TreeCollector;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -134,7 +135,7 @@ public final class BeardGround {
 
                     near.setPos(leaf.getX() + dx, leaf.getY() + dy, leaf.getZ() + dz);
                     if (!within.test(near)) { continue; }
-                    if (mctmods.blastplaster.Config.isLog(world.getBlockState(near))) { return near.toImmutable(); }
+                    if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(world.getBlockState(near))) { return near.toImmutable(); }
                 }
             }
         }
@@ -172,6 +173,7 @@ public final class BeardGround {
 
                         opened += BeardBlocks.clearAt(world, at);
                     }
+                    else if (roadway && material == Material.VINE) { opened += BeardBlocks.clearAt(world, at); }
                     else if (BeardBlocks.overhang(held)) { overhangs.add(at.toImmutable()); }
                     else if (material != Material.AIR) { notGround++; }
                 }
@@ -188,6 +190,13 @@ public final class BeardGround {
                         at.setPos(x, y, z);
                         if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                         if (!(world.getBlockState(at).getBlock() instanceof BlockStairs)) { continue; }
+                        IBlockState step = world.getBlockState(at);
+                        if (step.getMaterial() == Material.ROCK && world.getBlockState(at.down()).getMaterial().isLiquid()) {
+                            BeardBlocks.note(world, at, "Dressing a doorstep over water in wood");
+                            world.setBlockState(at, Blocks.PLANKS.getDefaultState(), 2);
+                            opened++;
+                            continue;
+                        }
                         if (!BeardBlocks.terrainBlock(world.getBlockState(at.down()).getBlock())) { continue; }
 
                         int embedded = 0;
@@ -232,6 +241,31 @@ public final class BeardGround {
         return new int[] {opened, spared, notGround, hangingOver};
     }
 
+    public static int sweepOrphanedLeaves(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+        StructureBoundingBox village = start.getBoundingBox();
+        int swept = 0;
+        for (int x = Math.max(village.minX - 8, clip.minX); x <= Math.min(village.maxX + 8, clip.maxX); x++) {
+            for (int z = Math.max(village.minZ - 8, clip.minZ); z <= Math.min(village.maxZ + 8, clip.maxZ); z++) {
+                for (int y = Math.max(1, village.minY - 4); y <= village.minY + 44; y++) {
+                    at.setPos(x, y, z);
+                    IBlockState held = world.getBlockState(at);
+                    if (held.getMaterial() != Material.LEAVES) { continue; }
+                    if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
+                    if (sustainer(world, at.toImmutable(), unused -> true) != null) { continue; }
+
+                    swept += BeardBlocks.clearAt(world, at);
+                    for (int under = y - 1; under >= 1; under--) {
+                        at.setPos(x, under, z);
+                        if (world.getBlockState(at).getMaterial() != Material.VINE) { break; }
+
+                        swept += BeardBlocks.clearAt(world, at);
+                    }
+                }
+            }
+        }
+        return swept;
+    }
+
     public static int levelSeams(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         StructureBoundingBox village = start.getBoundingBox();
         int filled = 0;
@@ -256,10 +290,11 @@ public final class BeardGround {
                     if (!clip.isVecInside(at) || BeardKeep.holds(x, y, z)) { break; }
 
                     IBlockState held = world.getBlockState(at);
-                    if (held.getMaterial().isSolid() || held.getMaterial().isLiquid()) { break; }
+                    if (held.getMaterial().isSolid()) { break; }
 
                     IBlockState laid = BeardBlocks.fillGround(world, x, z);
                     if (laid.getBlock() == Blocks.DIRT && y == upTo) { laid = Blocks.GRASS.getDefaultState(); }
+                    if (world.getBlockState(at.down()).getMaterial().isLiquid()) { laid = Blocks.PLANKS.getDefaultState(); }
                     world.setBlockState(at, laid, 2);
                     filled++;
                 }
@@ -273,7 +308,10 @@ public final class BeardGround {
         for (int y = Math.max(1, village.minY - 8); y <= village.minY + 40; y++) {
             at.setPos(x, y, z);
             IBlockState held = world.getBlockState(at);
-            if (held.getMaterial().isLiquid()) { return Integer.MIN_VALUE; }
+            if (held.getMaterial().isLiquid()) {
+                if (!terrainOnly) { return Integer.MIN_VALUE; }
+                continue;
+            }
             if (!held.getMaterial().isSolid()) { continue; }
             if (terrainOnly && !BeardBlocks.terrainBlock(held.getBlock())) { continue; }
 

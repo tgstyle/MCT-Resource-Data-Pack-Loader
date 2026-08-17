@@ -112,7 +112,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         if (((AccessorMapGenBase) generator).rdpl$getWorld() == null) { ((AccessorMapGenBase) generator).rdpl$setWorld(world); }
 
         boolean cells = generator instanceof MapGenVillage && ContentBeard.wanted() && ContentBeard.adapts(world);
-        int spacing = cells ? ContentBeard.villageSpacing(world) : 0;
+        int spacing = cells ? ContentSites.of(world, ContentBeard.villageSpacing(world)).spacing() : 0;
         ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored, skipHere);
         running = worker;
         WorldWorkerManager.addWorker(worker);
@@ -271,6 +271,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         player.setPositionAndUpdate(ground.getX() + 0.5D, stand(player.world, ground), ground.getZ() + 0.5D);
         tell(player, TextFormatting.GREEN, Lang.tr(player, "rdpl.command.gotodone", name, ground.getX(), ground.getY(), ground.getZ()));
     }
+
+    public static void forget() { VISITED.clear(); }
 
     public static void remember(EntityPlayerMP player, String name, BlockPos site) {
         Deque<BlockPos> held = VISITED.computeIfAbsent(player.getUniqueID() + ":" + name, unused -> new ArrayDeque<>());

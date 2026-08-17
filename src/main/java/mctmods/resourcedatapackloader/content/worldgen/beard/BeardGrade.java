@@ -119,6 +119,27 @@ public final class BeardGrade {
             i = gapEnd;
         }
     }
+    public static int holdCauseway(int[] profile, boolean[] bridged, int seaLevel) {
+        int lifted = 0;
+        int rows = profile.length;
+        for (int i = 0; i < rows; i++) {
+            if (bridged[i] || profile[i] == Integer.MIN_VALUE) { continue; }
+
+            int end = i;
+            while (end + 1 < rows && !bridged[end + 1] && profile[end + 1] != Integer.MIN_VALUE) { end++; }
+            if (i > 0 && end + 1 < rows && bridged[i - 1] && bridged[end + 1]) {
+                int deck = Math.min(Math.max(profile[i - 1], seaLevel), Math.max(profile[end + 1], seaLevel));
+                for (int at = i; at <= end; at++) {
+                    if (profile[at] < deck) {
+                        profile[at] = deck;
+                        lifted++;
+                    }
+                }
+            }
+            i = end;
+        }
+        return lifted;
+    }
     public static void settle(int[] profile, boolean[] held) {
         int rows = profile.length;
         for (int i = 1; i < rows - 1; i++) {
