@@ -10,10 +10,19 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import javax.annotation.Nullable;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
 
 public final class BeardPlots {
+    private static StructureStart plotsStart;
+    private static StructureComponent plotsPiece;
+    private static int plotsCount;
+    private static StructureBoundingBox[] plotsBoxes = new StructureBoundingBox[0];
+    private static boolean[] plotsWells = new boolean[0];
+    private static StructureBoundingBox plotsUnion;
+
     private BeardPlots() {}
 
     public static boolean roadAlongX(StructureComponent piece) {
@@ -34,14 +43,40 @@ public final class BeardPlots {
 
     public static boolean waystone(StructureComponent piece) { return piece.getClass().getName().toLowerCase(Locale.ROOT).contains("waystone"); }
     public static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {
-        for (StructureComponent other : start.getComponents()) {
+        if (start != plotsStart || piece != plotsPiece || start.getComponents().size() != plotsCount) { snapshotPlots(start, piece); }
+        if (plotsUnion == null || !plotsUnion.isVecInside(at)) { return false; }
+
+        for (int i = 0; i < plotsBoxes.length; i++) {
+            StructureBoundingBox box = plotsBoxes[i];
+            if (box.isVecInside(at)) { return true; }
+            if (plotsWells[i] && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
+        }
+        return false;
+    }
+
+    private static void snapshotPlots(StructureStart start, StructureComponent piece) {
+        List<StructureComponent> components = start.getComponents();
+        List<StructureBoundingBox> boxes = new ArrayList<>(components.size());
+        List<StructureComponent> owners = new ArrayList<>(components.size());
+        StructureBoundingBox union = null;
+        for (StructureComponent other : components) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
 
             StructureBoundingBox box = other.getBoundingBox();
-            if (box.isVecInside(at)) { return true; }
-            if (other instanceof StructureVillagePieces.Well && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
+            boxes.add(box);
+            owners.add(other);
+            StructureBoundingBox padded = new StructureBoundingBox(box);
+            if (other instanceof StructureVillagePieces.Well) { padded.maxY++; }
+            if (union == null) { union = padded; }
+            else { union.expandTo(padded); }
         }
-        return false;
+        plotsBoxes = boxes.toArray(new StructureBoundingBox[0]);
+        plotsWells = new boolean[plotsBoxes.length];
+        for (int i = 0; i < plotsWells.length; i++) { plotsWells[i] = owners.get(i) instanceof StructureVillagePieces.Well; }
+        plotsUnion = union;
+        plotsStart = start;
+        plotsPiece = piece;
+        plotsCount = components.size();
     }
     public static boolean underAnother(StructureStart start, @Nullable StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {

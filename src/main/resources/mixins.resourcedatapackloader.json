@@ -121,6 +121,7 @@
     "MixinWalkNodeProcessorRaw",
     "MixinWoodlandMansion",
     "MixinWorld",
+    "MixinWorldEntityHold",
     "MixinWorldGenDungeons",
     "MixinWorldInfo",
     "MixinWorldLight",

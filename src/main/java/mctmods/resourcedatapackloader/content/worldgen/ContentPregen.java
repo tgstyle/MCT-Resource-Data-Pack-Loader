@@ -59,7 +59,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public final class ContentPregen implements WorldWorkerManager.IWorker {
+    private static final long STILL_AFTER_MS = 3000L;
     private static volatile ContentPregen running;
+    private static volatile long stillUntil;
     private static final Deque<Integer> PENDING = new ArrayDeque<>();
     private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
     public static final int VANILLA_SPAWN_REACH = 12;
@@ -888,6 +890,14 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                 done, order.total(), dimension, made, done / seconds, resident.size(), paused, brightened, dark, darkAtEdge, slice);
     }
 
+    public static boolean holdsStill(net.minecraft.world.World world) {
+        if (world.isRemote) { return false; }
+
+        ContentPregen worker = running;
+        if (worker != null) { return world.provider.getDimension() == worker.dimension; }
+        return System.currentTimeMillis() < stillUntil;
+    }
+
     private void finish(WorldServer world) {
         if (running != this) {
             over = true;
@@ -897,6 +907,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         over = true;
         running = null;
         progress = "";
+        stillUntil = System.currentTimeMillis() + STILL_AFTER_MS;
         if (dimension != 0) { DimensionManager.keepDimensionLoaded(dimension, false); }
         boolean whole = world != null && !stopping && !order.hasNext();
         if (world != null) {
