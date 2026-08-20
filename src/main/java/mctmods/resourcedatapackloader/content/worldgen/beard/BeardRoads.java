@@ -2,10 +2,10 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
-import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
-import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
+import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -81,12 +81,10 @@ public final class BeardRoads {
 
         @Nullable public static Grade read(NBTTagCompound tag) {
             if (!tag.hasKey("RdplProfile", 11)) { return null; }
-
             int[] profile = tag.getIntArray("RdplProfile");
             int[] ground = tag.getIntArray("RdplGround");
             int[] deck = tag.getIntArray("RdplDeck");
             if (profile.length == 0 || ground.length != profile.length || deck.length != profile.length) { return null; }
-
             boolean[] bridged = unpacked(tag.getByteArray("RdplBridged"), profile.length);
             boolean[] held = unpacked(tag.getByteArray("RdplHeld"), profile.length);
             boolean[] covered = unpacked(tag.getByteArray("RdplLaid"), profile.length);
@@ -97,20 +95,17 @@ public final class BeardRoads {
             int before = Integer.MIN_VALUE;
             for (int back = i - 1; back >= 0; back--) {
                 if (profile[back] == Integer.MIN_VALUE) { continue; }
-
                 before = profile[back];
                 break;
             }
             int after = Integer.MIN_VALUE;
             for (int on = i + 1; on < profile.length; on++) {
                 if (profile[on] == Integer.MIN_VALUE) { continue; }
-
                 after = profile[on];
                 break;
             }
             if (before == Integer.MIN_VALUE) { return after; }
             if (after == Integer.MIN_VALUE) { return before; }
-
             return Math.max(before, after);
         }
 
@@ -130,7 +125,6 @@ public final class BeardRoads {
     @Nullable public static Grade roadProfile(World world, @Nullable StructureComponent piece, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost, boolean junctions) {
         int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, acrossLeast, acrossMost);
         if (profile == null) { return null; }
-
         int[] ground = profile.clone();
         BeardGrade.flatRuns(world, alongX, rowLeast, acrossLeast, acrossMost, profile);
         boolean[] bridged = BeardGrade.smooth(profile);
@@ -150,7 +144,6 @@ public final class BeardRoads {
                 int clamped = BeardGrade.capEmbankment(profile, ground, bridged, fixed);
                 capped += clamped;
                 if (clamped == 0) { break; }
-
                 boolean[] hold = new boolean[profile.length];
                 for (int i = 0; i < hold.length; i++) { hold[i] = fixed[i] || (pinned[i] && profile[i] <= ground[i] + BeardGrade.CAP); }
                 BeardGrade.settle(profile, hold);
@@ -219,7 +212,6 @@ public final class BeardRoads {
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The reach test for a road at {}, {} cannot run: world {}, facing {}, ContentBeard.sampler {}", box.minX, box.minZ, world == null ? "none" : "held", facing, world == null || ContentBeard.samplerFor(world) == null ? "none" : "held"); }
             return Integer.MAX_VALUE;
         }
-
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
         int step = (alongX ? facing.getXOffset() : facing.getZOffset()) >= 0 ? 1 : -1;
@@ -256,7 +248,6 @@ public final class BeardRoads {
         int least = Math.max(alongX ? box.minX : box.minZ, alongX ? clip.minX : clip.minZ);
         int most = Math.min(alongX ? box.maxX : box.maxZ, alongX ? clip.maxX : clip.maxZ);
         if (most < least) { return; }
-
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paving the road at {}, {}, {} across, with surface {} (chosen={}), support {}, bridge {}", box.minX, box.minZ, (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1, path, chosenSurface, gravel, planks); }
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} runs along {} from {} to {}, is asked for the patch of land from {}, {} to {}, {}, and so will lay rows {} to {}", box.minX, box.minZ, alongX ? "x" : "z", alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, clip.minX, clip.minZ, clip.maxX, clip.maxZ, least, most); }
         int acrossLeast = alongX ? box.minZ : box.minX;
@@ -279,7 +270,6 @@ public final class BeardRoads {
                     int z = alongX ? across : least + i;
                     BlockPos spot = new BlockPos(x, 64, z);
                     if (!clip.isVecInside(spot)) { continue; }
-
                     BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
                     if (top.getY() < world.getSeaLevel() - 1 || world.getBlockState(top).getMaterial().isLiquid()) { continue; }
                     if (top.getY() > found) { found = top.getY(); }
@@ -329,7 +319,6 @@ public final class BeardRoads {
                     if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because it lies outside the patch of land it was asked for, {}, {} to {}, {}", box.minX, box.minZ, x, z, clip.minX, clip.minZ, clip.maxX, clip.maxZ); }
                     continue;
                 }
-
                 BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
                 if (top.getY() < world.getSeaLevel()) { top = new BlockPos(x, world.getSeaLevel() - 1, z); }
                 if (profile[i] == Integer.MIN_VALUE) {
@@ -395,7 +384,6 @@ public final class BeardRoads {
                         }
                     }
                 }
-
                 int target = profile[i] == Integer.MIN_VALUE ? graded.deck[i] : profile[i];
                 at.setPos(x, target, z);
                 IBlockState held = world.getBlockState(at);
@@ -404,7 +392,6 @@ public final class BeardRoads {
                     if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {}, {} unpaved because {} was already standing there and is not a surface a road may be laid over", box.minX, box.minZ, x, target, z, base.getRegistryName()); }
                     continue;
                 }
-
                 for (int y = target + 1; y <= target + 4; y++) {
                     at.setPos(x, y, z);
                     IBlockState above = world.getBlockState(at);
@@ -443,17 +430,14 @@ public final class BeardRoads {
                 if (profile[i] == Integer.MIN_VALUE || bridged[i]) { continue; }
                 at.setPos(x, profile[i], z);
                 if (!clip.isVecInside(at)) { continue; }
-
                 StructureStart holder = ContentBeard.current();
                 if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { continue; }
                 if (BeardKeep.holds(x, profile[i], z)) { continue; }
-
                 IBlockState verge = world.getBlockState(at);
                 if (verge.getMaterial().isLiquid()) { continue; }
                 if (verge.getMaterial().isSolid()) {
                     at.setPos(x, profile[i] - 1, z);
                     if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
-
                     filled += BeardBlocks.fillBank(world, at, x, z, profile[i] - 1, profile[i] - 6, false);
                     continue;
                 }
@@ -468,23 +452,18 @@ public final class BeardRoads {
 
     public static void repairRoads(World world, StructureStart start) {
         if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return; }
-
         ChunkProviderServer provider = (ChunkProviderServer) world.getChunkProvider();
         for (StructureComponent piece : start.getComponents()) {
             if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
-
             Grade grade = ((RoadLayout) piece).rdpl$layout();
             if (grade == null) { continue; }
-
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
             if (grade.start != (alongX ? box.minX : box.minZ) || grade.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1) { continue; }
-
             int acrossLeast = (alongX ? box.minZ : box.minX) - 1;
             int acrossMost = (alongX ? box.maxZ : box.maxX) + 1;
             for (int i = 0; i < grade.covered.length; i++) {
                 if (grade.covered[i]) { continue; }
-
                 int from = i;
                 while (i + 1 < grade.covered.length && !grade.covered[i + 1]) { i++; }
                 for (int row = grade.start + from; row <= grade.start + i; ) {
@@ -523,10 +502,8 @@ public final class BeardRoads {
 
     public static int bridge(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, StructureBoundingBox near, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         if (near == null || Math.abs(box.minY - near.minY) > 2) { return 0; }
-
         int[] strip = ContentBeard.facingStrip(box, near, 6);
         if (strip == null) { return 0; }
-
         int fromX = strip[0];
         int toX = strip[1];
         int fromZ = strip[2];
@@ -535,7 +512,6 @@ public final class BeardRoads {
         for (int x = fromX; x <= toX; x++) {
             for (int z = fromZ; z <= toZ; z++) {
                 if (BeardPlots.underRoad(start, piece, x, z)) { continue; }
-
                 int toBox = Math.max(0, Math.max(box.minX - x, x - box.maxX)) + Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
                 int toNear = Math.max(0, Math.max(near.minX - x, x - near.maxX)) + Math.max(0, Math.max(near.minZ - z, z - near.maxZ));
                 int base = toBox <= toNear ? box.minY : near.minY;
@@ -556,20 +532,16 @@ public final class BeardRoads {
         for (int lift = 0; lift < 8 && world.getBlockState(at.setPos(alongX ? row : across, deckY, alongX ? across : row)).getMaterial().isLiquid(); lift++) { deckY++; }
         at.setPos(alongX ? row : across, deckY, alongX ? across : row);
         if (world.getBlockState(at).getMaterial().isSolid()) { return 0; }
-
         int laid = deckRail(world, alongX, row, across, acrossLeast, acrossMost, deckY, planks, at);
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return laid; }
-
         world.setBlockState(at, deckState(across, acrossLeast, acrossMost, planks), 2);
         return laid + 1;
     }
 
     private static IBlockState deckState(int across, int acrossLeast, int acrossMost, IBlockState planks) {
         if (acrossMost - acrossLeast + 1 <= 3) { return planks; }
-
         int offset = Math.abs(across - (acrossLeast + acrossMost) / 2);
         if (offset <= 1 + pathExtraWidth() + pathLineColumns()) { return planks; }
-
         IBlockState walk = pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, planks);
         return pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk);
     }
@@ -577,16 +549,13 @@ public final class BeardRoads {
     private static int deckRail(World world, boolean alongX, int row, int across, int acrossLeast, int acrossMost, int deckY, IBlockState planks, BlockPos.MutableBlockPos at) {
         int span = acrossMost - acrossLeast + 1;
         if (span <= 3 || Math.abs(across - (acrossLeast + acrossMost) / 2) != (span - 1) / 2) { return 0; }
-
         IBlockState barrier = pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
         if (barrier == planks) { return 0; }
-
         int height = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeBarrierHeight", Config.worldgen.villagePathBridgeBarrierHeight));
         int laid = 0;
         for (int y = deckY + 1; y <= deckY + height; y++) {
             at.setPos(alongX ? row : across, y, alongX ? across : row);
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-
             world.setBlockState(at, barrier, 2);
             laid++;
         }
@@ -598,7 +567,6 @@ public final class BeardRoads {
         int span = 3 + 2 * (pathExtraWidth() + pathLineColumns() + pathSidewalkWidth());
         StructureBoundingBox box = piece.getBoundingBox();
         if ((alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1 != span || span == 3) { return null; }
-
         int offset = Math.abs(across - acrossCenter);
         int core = 1 + pathExtraWidth();
         char role = offset <= core ? (offset == 0 ? 'c' : 'r') : offset <= core + pathLineColumns() ? 'l' : 's';
@@ -608,10 +576,8 @@ public final class BeardRoads {
         if (role == 'c') {
             IBlockState center = pathBlock("villagePathCenterBlock", Config.worldgen.villagePathCenterBlock, path);
             if (center == path) { return path; }
-
             int dash = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathCenterDash", Config.worldgen.villagePathCenterDash));
             if (dash > 0 && Math.floorMod(row, dash + 1) == dash) { return path; }
-
             return ContentBeard.axised(center, alongX);
         }
         if (role == 'l') { return ContentBeard.axised(pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path), alongX); }
@@ -622,19 +588,15 @@ public final class BeardRoads {
     public static boolean insideMouth(StructureComponent piece, boolean alongX, int row, int across, int acrossCenter) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return false; }
-
         boolean outward = across > acrossCenter;
         for (StructureComponent other : pieces) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox road = other.getBoundingBox();
             boolean otherAlongX = BeardPlots.roadAlongX(road);
             if (otherAlongX == alongX) { continue; }
-
             int otherCore = 1 + pathExtraWidth();
             int otherCenter = alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2;
             if (row < otherCenter - otherCore || row > otherCenter + otherCore) { continue; }
-
             int edge = alongX ? (outward ? road.minZ : road.maxZ) : (outward ? road.minX : road.maxX);
             int gap = outward ? edge - across : across - edge;
             if (gap >= -1 && gap <= 2 + pathLineColumns() + pathSidewalkWidth()) { return true; }
@@ -645,24 +607,19 @@ public final class BeardRoads {
     @Nullable public static IBlockState stampAt(World world, StructureComponent piece, boolean alongX, int row, int across, int acrossCenter, int core, IBlockState path) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null || Math.abs(across - acrossCenter) > core) { return null; }
-
         for (StructureComponent other : pieces) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox road = other.getBoundingBox();
             boolean otherAlongX = BeardPlots.roadAlongX(road);
             if (otherAlongX == alongX) { continue; }
-
             int otherCenter = alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2;
             PathIntersectDef def = ContentPathIntersects.forJunction(world, alongX ? otherCenter : acrossCenter, alongX ? acrossCenter : otherCenter);
             if (def == null) { continue; }
-
             int otherCore = 1 + pathExtraWidth();
             int before = otherCenter - otherCore - 1;
             int after = otherCenter + otherCore + 1;
             IBlockState fromMouth = mouthCell(def, row, across, acrossCenter, core, before, after, path);
             if (fromMouth != null) { return fromMouth; }
-
             IBlockState fromCorner = cornerCell(def, row, across, acrossCenter, core, otherCenter, otherCore, path);
             if (fromCorner != null) { return fromCorner; }
         }
@@ -671,28 +628,22 @@ public final class BeardRoads {
 
     @Nullable public static IBlockState mouthCell(PathIntersectDef def, int row, int across, int acrossCenter, int core, int before, int after, IBlockState path) {
         if (def.mouth.length == 0) { return null; }
-
         int line = -1;
         if (row <= before && row > before - def.mouth.length) { line = before - row; }
         if (row >= after && row < after + def.mouth.length) { line = row - after; }
         if (line < 0) { return null; }
-
         String cells = def.mouth[line];
         if (cells.isEmpty()) { return null; }
-
         return cellState(def, cells.charAt(Math.floorMod(across - (acrossCenter - core), cells.length())), path);
     }
 
     @Nullable public static IBlockState cornerCell(PathIntersectDef def, int row, int across, int acrossCenter, int core, int otherCenter, int otherCore, IBlockState path) {
         if (def.corner.length == 0 || row < otherCenter - otherCore || row > otherCenter + otherCore) { return null; }
-
         int fromRowEdge = Math.min(row - (otherCenter - otherCore), (otherCenter + otherCore) - row);
         int fromColEdge = core - Math.abs(across - acrossCenter);
         if (fromRowEdge >= def.corner.length) { return null; }
-
         String cells = def.corner[fromRowEdge];
         if (fromColEdge >= cells.length()) { return null; }
-
         return cellState(def, cells.charAt(fromColEdge), path);
     }
 
@@ -712,24 +663,19 @@ public final class BeardRoads {
     public static int roadGradeBeside(World world, StructureBoundingBox box) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return Integer.MIN_VALUE; }
-
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox road = other.getBoundingBox();
             int gap = Math.max(Math.max(road.minX - box.maxX, box.minX - road.maxX), Math.max(road.minZ - box.maxZ, box.minZ - road.maxZ));
             if (gap > 2) { continue; }
-
             boolean alongX = BeardPlots.roadAlongX(other);
             int start = alongX ? road.minX : road.minZ;
             Grade grade = other instanceof RoadLayout ? ((RoadLayout) other).rdpl$layout() : null;
             if (grade == null) { grade = roadProfile(world, other, alongX, start, alongX ? road.maxX : road.maxZ, alongX ? road.minZ : road.minX, alongX ? road.maxZ : road.maxX, true); }
             if (grade == null) { return Integer.MIN_VALUE; }
-
             int center = alongX ? (box.minX + box.maxX) / 2 : (box.minZ + box.maxZ) / 2;
             int row = Math.max(start, Math.min(start + grade.profile.length - 1, center));
             if (grade.profile[row - start] == Integer.MIN_VALUE) { continue; }
-
             return grade.profile[row - start] + 1;
         }
         return Integer.MIN_VALUE;
@@ -738,18 +684,14 @@ public final class BeardRoads {
     public static void roadApron(World world, @Nullable StructureComponent piece, boolean alongX, int start, int rowMost, int acrossLeast, int acrossMost, int[] profile, boolean[] held, boolean[] footed) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return; }
-
         StructureBoundingBox own = piece != null ? piece.getBoundingBox()
                 : new StructureBoundingBox(alongX ? start : acrossLeast, 0, alongX ? acrossLeast : start, alongX ? rowMost : acrossMost, 0, alongX ? acrossMost : rowMost);
         for (StructureComponent other : pieces) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox road = other.getBoundingBox();
             boolean otherAlongX = BeardPlots.roadAlongX(other);
             if (otherAlongX == alongX) { continue; }
-
             if (road.minX - 1 > own.maxX || own.minX - 1 > road.maxX || road.minZ - 1 > own.maxZ || own.minZ - 1 > road.maxZ) { continue; }
-
             int center = alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2;
             int anchorRow = Math.max(start, Math.min(start + profile.length - 1, center));
             int ownGrade = profile[anchorRow - start];
@@ -762,7 +704,6 @@ public final class BeardRoads {
             else if (crossed != Integer.MIN_VALUE) { grade = crossed; }
             else { grade = Math.max(Grade.carried(profile, anchorRow - start), crossing == null ? Integer.MIN_VALUE : crossing.deckAt(crossRow)); }
             if (grade == Integer.MIN_VALUE) { continue; }
-
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A junction apron holds the rows around {} to y {} for the road at {}, {}", center, grade, own.minX, own.minZ); }
             int reach = 1 + pathExtraWidth() + 3;
             for (int row = center - reach; row <= center + reach; row++) {
@@ -782,26 +723,20 @@ public final class BeardRoads {
     public static void frontHold(@Nullable StructureComponent piece, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile, boolean[] held) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return; }
-
         int rowMost = start + profile.length - 1;
         for (StructureComponent other : pieces) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-
             StructureBoundingBox front = other.getBoundingBox();
             if ((alongX ? front.maxZ : front.maxX) < acrossLeast - 3 || (alongX ? front.minZ : front.minX) > acrossMost + 3) { continue; }
-
             int otherLeast = alongX ? front.minX : front.minZ;
             int otherMost = alongX ? front.maxX : front.maxZ;
             if (otherMost < start || otherLeast > rowMost) { continue; }
-
             int center = Math.max(start, Math.min(rowMost, (otherLeast + otherMost) / 2));
             int grade = profile[center - start];
             if (grade == Integer.MIN_VALUE) { continue; }
-
             int pinnedRows = 0;
             for (int row = Math.max(start, otherLeast); row <= Math.min(rowMost, otherMost); row++) {
                 if (held[row - start] || profile[row - start] == Integer.MIN_VALUE) { continue; }
-
                 profile[row - start] = grade;
                 held[row - start] = true;
                 pinnedRows++;
@@ -813,21 +748,17 @@ public final class BeardRoads {
     public static void clampToWell(World world, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile, boolean[] held) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null || pieces.isEmpty()) { return; }
-
         StructureBoundingBox well = pieces.get(0).getBoundingBox();
         int reach = ContentBeard.plazaReach();
         if (acrossMost < (alongX ? well.minZ : well.minX) - reach || acrossLeast > (alongX ? well.maxZ : well.maxX) + reach) { return; }
-
         int ground = BeardSite.wellGround(world, well);
         int rowLeast = (alongX ? well.minX : well.minZ) - reach;
         int rowMost = (alongX ? well.maxX : well.maxZ) + reach;
         int clamped = 0;
         for (int row = Math.max(start, rowLeast); row <= Math.min(start + profile.length - 1, rowMost); row++) {
             if (profile[row - start] == Integer.MIN_VALUE) { continue; }
-
             held[row - start] = true;
             if (profile[row - start] == ground) { continue; }
-
             profile[row - start] = ground;
             clamped++;
         }
@@ -840,7 +771,6 @@ public final class BeardRoads {
             int z = alongX ? across : row;
             BlockPos spot = new BlockPos(x, 64, z);
             if (!world.isBlockLoaded(spot)) { continue; }
-
             IBlockState held = world.getBlockState(world.getTopSolidOrLiquidBlock(spot).down());
             if (held == path || held == gravel) { return world.getTopSolidOrLiquidBlock(spot).down().getY(); }
         }
@@ -851,7 +781,6 @@ public final class BeardRoads {
         Block block = held.getBlock();
         if (block == Blocks.AIR) { return false; }
         if (block == Blocks.STONE && !held.getValue(BlockStone.VARIANT).isNatural()) { return false; }
-
         return BeardBlocks.terrainBlock(block) || held.getMaterial() == Material.VINE || held.getMaterial() == Material.PLANTS;
     }
 
@@ -860,7 +789,6 @@ public final class BeardRoads {
         if (ground == Blocks.SAND) { return asked(Blocks.SANDSTONE.getDefaultState()); }
         if (ground == Blocks.HARDENED_CLAY) { return asked(Blocks.HARDENED_CLAY.getDefaultState()); }
         if (ground == Blocks.GRAVEL) { return asked(Blocks.GRAVEL.getDefaultState()); }
-
         return earthy || gravel.getBlock() == Blocks.CLAY ? path : gravel;
     }
 
@@ -877,7 +805,6 @@ public final class BeardRoads {
 
     public static int pathSidewalkWidth() {
         if (ContentControl.text(ContentControl.VILLAGES, "villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock).isEmpty()) { return 0; }
-
         return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathSidewalkWidth", Config.worldgen.villagePathSidewalkWidth));
     }
 
@@ -888,7 +815,6 @@ public final class BeardRoads {
     public static IBlockState pathBlock(String key, String fromConfig, IBlockState vanilla) {
         String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig);
         if (named.isEmpty()) { return vanilla; }
-
         IBlockState state = ContentStates.parse(named, key);
         if (state == null) {
             ContentLog.LOGGER.error("{} '{}' is not a registered block, using the vanilla road block", key, named);

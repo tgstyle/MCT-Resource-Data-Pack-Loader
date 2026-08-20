@@ -38,7 +38,6 @@ public final class ContentImprint implements IContentShape {
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         String named = PickDef.pick(shape.structures, random, shape.structure);
         if (named == null || named.isEmpty() || !(world instanceof WorldServer)) { return false; }
-
         ResourceLocation template = new ResourceLocation(named);
         WorldServer server = (WorldServer) world;
         MinecraftServer host = server.getMinecraftServer();
@@ -47,34 +46,28 @@ public final class ContentImprint implements IContentShape {
             ContentLog.LOGGER.error("Worldgen {} places structure '{}', which could not be loaded, so nothing generates", key, named);
             return false;
         }
-
         Rotation rotation = turn(random);
         PlacementSettings settings = new PlacementSettings();
         settings.setRotation(rotation);
         settings.setMirror(mirror(random));
         settings.setIntegrity(shape.integrity / 100.0F);
         settings.setRandom(random);
-
         BlockPos span = loaded.transformedSize(rotation);
         int backX = rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0;
         int backZ = rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0;
-
         int cornerX = within(origin.getX(), origin.getX() - span.getX() / 2, span.getX());
         int cornerZ = within(origin.getZ(), origin.getZ() - span.getZ() / 2, span.getZ());
         BlockPos fitted = new BlockPos(cornerX + backX, origin.getY(), cornerZ + backZ);
         if (span.getX() > 16 || span.getZ() > 16) {
             if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return false; }
         }
-
         if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(), settings, WORLDGEN_FLAGS); }
         else { loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS); }
         if (shape.locateAs != null && !shape.locateAs.isEmpty()) { ContentLocate.record(world, shape.locateAs, fitted); }
         return true;
     }
 
-    private ITemplateProcessor onlyOverReplaceable() {
-        return (holder, at, info) -> placer.occupied(holder, at.getX(), at.getY(), at.getZ()) ? null : info;
-    }
+    private ITemplateProcessor onlyOverReplaceable() { return (holder, at, info) -> placer.occupied(holder, at.getX(), at.getY(), at.getZ()) ? null : info; }
 
     private Rotation turn(Random random) {
         String named = PickDef.pick(shape.turns, random, "");
@@ -82,7 +75,6 @@ public final class ContentImprint implements IContentShape {
         if (ShapeDef.QUARTER.equals(named)) { return Rotation.CLOCKWISE_90; }
         if (ShapeDef.HALF.equals(named)) { return Rotation.CLOCKWISE_180; }
         if (ShapeDef.THREEQUARTER.equals(named)) { return Rotation.COUNTERCLOCKWISE_90; }
-
         return TURNS[random.nextInt(TURNS.length)];
     }
 
@@ -90,13 +82,11 @@ public final class ContentImprint implements IContentShape {
         String named = PickDef.pick(shape.mirrors, random, "");
         if (ShapeDef.LEFTRIGHT.equals(named)) { return Mirror.LEFT_RIGHT; }
         if (ShapeDef.FRONTBACK.equals(named)) { return Mirror.FRONT_BACK; }
-
         return Mirror.NONE;
     }
 
     private static int within(int origin, int start, int span) {
         if (span >= 16) { return start; }
-
         int corner = ((origin - OFFSET) >> 4) * 16 + OFFSET;
         return Math.max(corner, Math.min(start, corner + 16 - span));
     }

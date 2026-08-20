@@ -9,8 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(Teleporter.class)
-public abstract class MixinTeleporter {
+@Mixin(Teleporter.class) public abstract class MixinTeleporter {
     @Redirect(method = "placeInExistingPortal", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetHandlerPlayServer;setPlayerLocation(DDDFF)V"))
     private void rdpl$placePlayer(NetHandlerPlayServer connection, double x, double y, double z, float yaw, float pitch) {
         double[] stored = VanillaPortalLink.stored(connection.player);

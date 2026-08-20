@@ -1,8 +1,8 @@
 package mctmods.resourcedatapackloader.content.village;
 
-import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
@@ -55,21 +55,19 @@ public final class ContentVillages {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.villages) { return false; }
-
         PackManager.get().forEach(PackManager.VILLAGES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
                 VillageDef def = ContentParser.village(key, contents);
                 if (def == null) { return; }
                 if (!present(def)) {
-                    ContentLog.LOGGER.info("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);
+                    ContentLog.LOGGER.debug("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);
                     return;
                 }
                 DEFS.put(key.toString(), def);
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in village file {}, ignoring it", key, ex); }
         });
-
         if (!DEFS.isEmpty()) { Summary.info("villages", "Loaded " + DEFS.size() + " village plot(s) from packs"); }
         return !DEFS.isEmpty();
     }
@@ -77,24 +75,20 @@ public final class ContentVillages {
     public static void register() {
         if (registered || DEFS.isEmpty()) { return; }
         registered = true;
-
         MapGenStructureIO.registerStructureComponent(ContentVillagePiece.class, COMPONENT);
         VillagerRegistry.instance().registerVillageCreationHandler(new Handler());
     }
 
     public static boolean filtering() {
         if (ContentControl.off(ContentControl.STRUCTURES)) { return false; }
-
         return !names().isEmpty();
     }
 
     public static boolean blocked(Class<?> piece) {
         if (piece == null) { return false; }
-
         boolean listed = names().contains(piece.getSimpleName().toLowerCase(Locale.ROOT));
         if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return listed; }
         if (listed) { return false; }
-
         return piece.getEnclosingClass() == StructureVillagePieces.class;
     }
 
@@ -125,10 +119,8 @@ public final class ContentVillages {
             blocksFrom = active;
         }
         if (BLOCKS.isEmpty()) { return null; }
-
         IBlockState wanted = BLOCKS.get(original);
         if (wanted != null) { return wanted; }
-
         return BLOCKS.get(original.getBlock().getDefaultState());
     }
 
@@ -143,7 +135,6 @@ public final class ContentVillages {
             IBlockState from = ContentStates.parse(entry.substring(0, split).trim(), "villageBlocks");
             IBlockState to = ContentStates.parse(entry.substring(split + 1).trim(), "villageBlocks");
             if (from == null || to == null) { continue; }
-
             BLOCKS.put(from, to);
         }
         if (!BLOCKS.isEmpty()) { ContentLog.LOGGER.info("Villages build with {} replaced block(s), whatever any other mod asks for", BLOCKS.size()); }
@@ -151,10 +142,8 @@ public final class ContentVillages {
 
     public static boolean blockedTemplate(ResourceLocation template) {
         if (template == null || !filtering()) { return false; }
-
         boolean listed = names().contains(template.toString().toLowerCase(Locale.ROOT)) || names().contains(template.getPath().toLowerCase(Locale.ROOT));
         if (!ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return false; }
-
         return listed;
     }
 
@@ -166,7 +155,6 @@ public final class ContentVillages {
         }
         if (!listed) { listed = names().contains(def.registryName.toString().toLowerCase(Locale.ROOT)) || names().contains(def.registryName.getPath().toLowerCase(Locale.ROOT)); }
         if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return listed; }
-
         return !listed;
     }
 
@@ -175,15 +163,12 @@ public final class ContentVillages {
         int total = 0;
         for (VillageDef def : DEFS.values()) {
             if (filtering && blocked(def)) { continue; }
-
             total += Math.max(1, def.weight);
         }
         if (total <= 0) { return null; }
-
         int roll = random.nextInt(total);
         for (VillageDef def : DEFS.values()) {
             if (filtering && blocked(def)) { continue; }
-
             roll -= Math.max(1, def.weight);
             if (roll < 0) { return def; }
         }
@@ -210,16 +195,12 @@ public final class ContentVillages {
         private static BlockPos plotSize(VillageDef def) {
             BlockPos declared = new BlockPos(def.width, def.height, def.depth);
             if (!def.isTemplate()) { return declared; }
-
             World world = ContentBeard.samplerWorld;
             if (!(world instanceof WorldServer)) { return declared; }
-
             Template template = ((WorldServer) world).getStructureTemplateManager().get(world.getMinecraftServer(), new ResourceLocation(def.structure));
             if (template == null) { return declared; }
-
             BlockPos size = template.getSize();
             if (size.getX() <= def.width && size.getY() <= def.height && size.getZ() <= def.depth) { return declared; }
-
             if (GROWN.add(def.registryName.toString())) {
                 ContentLog.LOGGER.warn("Village plot {} declares {}x{}x{} but its template {} measures {}x{}x{}, so the plot is grown to fit rather than cutting the template short", def.registryName, def.width, def.height, def.depth, def.structure, size.getX(), size.getY(), size.getZ());
             }
@@ -229,15 +210,12 @@ public final class ContentVillages {
         @Override public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
             VillageDef def = pick(random);
             if (def == null) { return null; }
-
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Village plot {} is laid from template {}", def.registryName, def.isTemplate() ? def.structure : "none, it is a farm"); }
-
             BlockPos size = plotSize(def);
             StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x, y, z, 0, 0, 0, size.getX(), size.getY(), size.getZ(), facing);
             for (StructureComponent piece : placed) {
                 if (piece.getBoundingBox().intersectsWith(box)) { return null; }
             }
-
             return new ContentVillagePiece(start, type, box, facing, def);
         }
     }

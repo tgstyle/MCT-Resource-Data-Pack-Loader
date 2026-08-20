@@ -1,0 +1,78 @@
+package mctmods.resourcedatapackloader.content.rubic;
+
+import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer;
+import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
+
+import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraftforge.fml.common.StartupQuery;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public final class RubicWorldControl {
+    private RubicWorldControl() {}
+
+    public static boolean wanted() {
+        if (!ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false)) { return false; }
+        if (!RDPLMixinPlugin.cubicChunksPresent()) { return true; }
+        standDown();
+        return false;
+    }
+
+    private static void standDown() {
+        String message = "A pack asks for a rubic world, but CubicChunks is installed and this mod's cubic worlds have stood down for it."
+                + " Running the two together is not supported: take CubicChunks out to use this mod's own cubic worlds, or take the rubicWorld setting"
+                + " out of the pack to carry on with CubicChunks making them. Please do not report anything about this mod while CubicChunks is installed.";
+        ContentLog.LOGGER.error(message);
+        StartupQuery.notify(message);
+        StartupQuery.abort();
+    }
+
+    private static final int DEFAULT_MIN_HEIGHT = -64;
+    private static final int DEFAULT_MAX_HEIGHT = 320;
+
+    public static int minHeight() { return heights()[0]; }
+
+    public static int maxHeight() { return heights()[1]; }
+
+    private static int[] heights() {
+        int min = ContentControl.number(ContentControl.TERRAIN, "worldMinHeight", DEFAULT_MIN_HEIGHT);
+        int max = ContentControl.number(ContentControl.TERRAIN, "worldMaxHeight", DEFAULT_MAX_HEIGHT);
+        int limit = Config.worldgen.rubicHeightLimit;
+        if (min > -limit && max < limit && min < max && (min & 15) == 0 && (max & 15) == 0) { return new int[] {min, max}; }
+        if (min >= max) { refuse("worldMinHeight " + min + " is not below worldMaxHeight " + max); }
+        else if ((min & 15) != 0 || (max & 15) != 0) { refuse("worldMinHeight " + min + " and worldMaxHeight " + max + " must both be whole cubes, so multiples of 16"); }
+        else { refuse("worldMinHeight " + min + " and worldMaxHeight " + max + " reach past the " + limit + " block(s) either way that rubicHeightLimit allows"); }
+        return new int[] {DEFAULT_MIN_HEIGHT, DEFAULT_MAX_HEIGHT};
+    }
+
+    private static void refuse(String why) {
+        if (WARNED.compareAndSet(false, true)) {
+            ContentLog.LOGGER.error("A pack asks for a rubic world whose {}, so the world is made from {} to {} instead", why, DEFAULT_MIN_HEIGHT, DEFAULT_MAX_HEIGHT);
+        }
+    }
+
+    private static final AtomicBoolean WARNED = new AtomicBoolean();
+
+    public static boolean rubicWorld(ChunkProviderServer provider) {
+        return provider instanceof CubeProviderServer && ((IRubicWorld) provider.world).rdpl$isRubicWorld();
+    }
+
+    public static void makeColumnCubes(ChunkProviderServer provider, int chunkX, int chunkZ) {
+        IRubicWorld world = (IRubicWorld) provider.world;
+        ICubeProviderServer cubes = (ICubeProviderServer) provider;
+        int lowest = world.rdpl$getMinHeight() >> 4;
+        int highest = (world.rdpl$getMaxHeight() >> 4) - 1;
+        for (int cubeY = lowest; cubeY <= highest; cubeY++) { cubes.getCube(chunkX, cubeY, chunkZ, ICubeProviderServer.Requirement.LIGHT); }
+    }
+
+    public static int pendingSaves(ChunkProviderServer provider) { return ((CubeProviderServer) provider).getCubeIO().getPendingCubeCount(); }
+
+    public static int loadedCubes(ChunkProviderServer provider) { return ((CubeProviderServer) provider).getLoadedCubeCount(); }
+
+    public static void rdpl$unloadOldCubes(ChunkProviderServer provider) { ((IRubicWorldServer) provider.world).rdpl$unloadOldCubes(); }
+}

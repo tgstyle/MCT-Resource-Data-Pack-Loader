@@ -31,7 +31,6 @@ public final class ContentDimensions {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.load || !Config.content.dimensions) { return; }
-
         PackManager.get().forEach(PackManager.DIMENSIONS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
@@ -40,24 +39,20 @@ public final class ContentDimensions {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in dimension definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         List<String> registered = new ArrayList<>();
         for (Map.Entry<ResourceLocation, DimensionDef> entry : DEFS.entrySet()) {
             DimensionDef def = entry.getValue();
             if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }
-
             if (DimensionManager.isDimensionRegistered(def.id)) {
                 ContentLog.LOGGER.error("Dimension {} wants id {}, which is already registered by something else. Change the id or remove the conflicting mod", entry.getKey(), def.id);
                 continue;
             }
-
             DimensionType type = DimensionType.register(def.getName(), def.suffix, def.id, ContentWorldProvider.class, def.keepLoaded);
             TYPES.put(def.id, type);
             DimensionManager.registerDimension(def.id, type);
             BY_ID.put(def.id, def);
             registered.add(entry.getKey() + " as " + def.id);
         }
-
         if (!registered.isEmpty()) { Summary.info("dimensions", "Registered " + registered.size() + " dimension(s): " + registered); }
     }
 

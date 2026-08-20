@@ -21,8 +21,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
-@SideOnly(Side.CLIENT)
-public final class RDPLResourcePack extends AbstractResourcePack {
+@SideOnly(Side.CLIENT) public final class RDPLResourcePack extends AbstractResourcePack {
     private static final String META = PackManager.PACK_META;
     private static final String ICON = PackManager.PACK_ICON;
     private static final String PREFIX = RDPLPack.ASSETS + "/";

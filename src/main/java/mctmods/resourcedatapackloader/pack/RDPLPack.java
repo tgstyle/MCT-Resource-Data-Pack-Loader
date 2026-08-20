@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import java.io.IOException;
@@ -51,9 +52,7 @@ public final class RDPLPack {
     private void buildIndex() {
         Path assets = root.resolve(ASSETS);
         if (!Files.isDirectory(assets)) { return; }
-        try (Stream<Path> stream = Files.list(assets)) {
-            stream.filter(Files::isDirectory).forEach(this::indexNamespace);
-        }
+        try (Stream<Path> stream = Files.list(assets)) { stream.filter(Files::isDirectory).forEach(this::indexNamespace); }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
         }
@@ -99,15 +98,12 @@ public final class RDPLPack {
 
     public InputStream open(String namespace, String path) throws IOException { return Files.newInputStream(locate(namespace, path)); }
 
-    public String read(String namespace, String path) throws IOException {
-        return new String(Files.readAllBytes(locate(namespace, path)), StandardCharsets.UTF_8);
-    }
+    public String read(String namespace, String path) throws IOException { return new String(Files.readAllBytes(locate(namespace, path)), StandardCharsets.UTF_8); }
 
     public java.util.List<String> packFiles(String folder, String ext) {
         java.util.List<String> out = new java.util.ArrayList<>();
         Path home = root.resolve(folder);
         if (!Files.isDirectory(home)) { return out; }
-
         try (java.nio.file.DirectoryStream<Path> entries = Files.newDirectoryStream(home)) {
             for (Path entry : entries) {
                 String name = entry.getFileName().toString();
@@ -131,7 +127,7 @@ public final class RDPLPack {
         return Files.newInputStream(file);
     }
 
-    public void forEach(String type, String ext, PackConsumer consumer) {
+    public void forEach(String type, String ext, IPackConsumer consumer) {
         String prefix = type + "/";
         String suffix = "." + ext;
         for (Map.Entry<String, Set<String>> entry : index.entrySet()) {

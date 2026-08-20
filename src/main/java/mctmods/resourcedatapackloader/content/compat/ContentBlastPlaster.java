@@ -27,7 +27,6 @@ public final class ContentBlastPlaster {
 
     public static void install() {
         if (ContentControl.off(ContentControl.BLAST_PLASTER)) { return; }
-
         mctmods.blastplaster.Config.provider(ContentBlastPlaster::viewFor);
         ContentLog.LOGGER.info("Driving Blast Plaster through pack settings, EJECT_DROPS unless a pack says otherwise");
     }
@@ -108,7 +107,6 @@ public final class ContentBlastPlaster {
 
         @Override public boolean enableExplosionFlash() {
             if (Config.content.vanillaClients) { return false; }
-
             Boolean held = flag("enableExplosionFlash");
             return held != null ? held : mctmods.blastplaster.Config.View.super.enableExplosionFlash();
         }
@@ -186,7 +184,6 @@ public final class ContentBlastPlaster {
         @Override public List<String> getCustomEntitiesToHeal() {
             JsonElement held = settings.get("customEntitiesToHeal");
             if (held == null || !held.isJsonArray()) { return mctmods.blastplaster.Config.View.super.getCustomEntitiesToHeal(); }
-
             List<String> given = new ArrayList<>();
             for (JsonElement entry : held.getAsJsonArray()) {
                 if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) { given.add(entry.getAsString()); }

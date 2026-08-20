@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+
 public final class SpawnEntryDef {
     public final String creatureType;
     public final String entity;

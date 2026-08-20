@@ -27,7 +27,6 @@ public final class BeardBlocks {
 
     public static boolean overhang(IBlockState held) {
         if (held.getMaterial() != Material.LEAVES) { return false; }
-
         return !held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) || held.getValue(BlockLeaves.DECAYABLE);
     }
     private static boolean sandBiome(World world, int x, int z) {
@@ -41,30 +40,24 @@ public final class BeardBlocks {
         if (top == Blocks.HARDENED_CLAY || top == Blocks.STAINED_HARDENED_CLAY || filler == Blocks.HARDENED_CLAY || filler == Blocks.STAINED_HARDENED_CLAY) { return Blocks.HARDENED_CLAY.getDefaultState(); }
         if (top == Blocks.SAND || filler == Blocks.SAND) { return Blocks.SAND.getDefaultState(); }
         if (top == Blocks.GRAVEL) { return Blocks.GRAVEL.getDefaultState(); }
-
         return Blocks.DIRT.getDefaultState();
     }
     public static void note(World world, BlockPos.MutableBlockPos at, String pass) {
         if (!ContentLog.LOGGER.debugEnabled()) { return; }
-
         IBlockState held = world.getBlockState(at);
         if (!held.getMaterial().isSolid()) { return; }
         if (terrainBlock(held.getBlock())) {
             StructureBoundingBox standing = BeardKeep.watchingBox();
             if (standing == null || !standing.isVecInside(at)) { return; }
-
             ContentLog.LOGGER.debug("{} takes ground {} at {}, {}, {} from inside the box of {}", pass, held.getBlock().getRegistryName(), at.getX(), at.getY(), at.getZ(), BeardKeep.watchingName());
             return;
         }
-
         ContentLog.LOGGER.debug("{} takes {} at {}, {}, {}", pass, held.getBlock().getRegistryName(), at.getX(), at.getY(), at.getZ());
     }
 
     public static int clearAt(World world, BlockPos.MutableBlockPos at) {
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return 0; }
-
         note(world, at, "Felling or clearing");
-
         boolean grassy = world.getBlockState(at).getBlock() == Blocks.GRASS;
         world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
         int cleared = 1;
@@ -89,7 +82,6 @@ public final class BeardBlocks {
             if (above.getBlock() == Blocks.AIR) { continue; }
             if (BeardKeep.holds(x, y, z)) { continue; }
             if (!terrainBlock(above.getBlock()) && above.getMaterial().isSolid()) { break; }
-
             note(world, at, pass);
             world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
             cleared++;
@@ -108,7 +100,6 @@ public final class BeardBlocks {
         for (int y = from; y >= floor; y--) {
             at.setPos(x, y, z);
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-
             world.setBlockState(at, fillGround(world, x, z), 2);
             filled++;
         }
@@ -119,7 +110,6 @@ public final class BeardBlocks {
         for (int y = from; y >= 1; y--) {
             at.setPos(x, y, z);
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-
             world.setBlockState(at, body, 2);
             filled++;
         }
@@ -138,7 +128,6 @@ public final class BeardBlocks {
             }
         }
         if (footing == Integer.MIN_VALUE) { return 0; }
-
         int filled = 0;
         for (int y = from; y > footing; y--) {
             at.setPos(x, y, z);

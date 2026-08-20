@@ -2,50 +2,51 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
-import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
-import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentSetup;
+import mctmods.resourcedatapackloader.content.block.ContentSpawners;
+import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
+import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
 import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
-import mctmods.resourcedatapackloader.loot.LootInjections;
-import mctmods.resourcedatapackloader.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.village.ContentVillages;
+import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
-import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
-import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
-import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
-import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
-import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
-import mctmods.resourcedatapackloader.content.village.ContentVillages;
-import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
-import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
-import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
-import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.loot.LootInjections;
+import mctmods.resourcedatapackloader.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.recipe.FurnaceBlocking;
@@ -61,6 +62,7 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
@@ -84,7 +86,10 @@ public class ResourceDataPackLoader {
         }
     }
 
+    @Mod.EventHandler public void preInit(FMLPreInitializationEvent event) { Rubic.preInit(); }
+
     @Mod.EventHandler public void init(FMLInitializationEvent event) {
+        Rubic.init();
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
@@ -165,7 +170,6 @@ public class ResourceDataPackLoader {
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {
         Path root = PackManager.get().getRoot();
         if (root == null) { return; }
-
         PackManager.get().scan(root);
         PackManager.get().report();
         RegistryRemaps.reload();

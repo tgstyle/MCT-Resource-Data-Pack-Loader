@@ -1,20 +1,20 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
-import mctmods.resourcedatapackloader.content.block.ContentBlockSapling;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFluid;
+import mctmods.resourcedatapackloader.content.block.ContentBlockSapling;
 import mctmods.resourcedatapackloader.content.block.ContentFluid;
 import mctmods.resourcedatapackloader.content.def.*;
-import mctmods.resourcedatapackloader.content.worldgen.ContentCofhWorld;
-import mctmods.resourcedatapackloader.core.CofhWorldContainer;
-import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.types.*;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.content.util.ContentOreDict;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCofhWorld;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
+import mctmods.resourcedatapackloader.core.CofhWorldContainer;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -64,7 +64,6 @@ public final class ContentRegistry {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.load) { return; }
-
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             ResourceLocation key = held.getKey();
             if (ContentOwners.reserved(key)) { continue; }
@@ -74,7 +73,6 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", key, ex.getMessage()); }
         }
-
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
             ResourceLocation key = held.getKey();
             if (ContentOwners.reserved(key)) { continue; }
@@ -84,7 +82,6 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", key, ex.getMessage()); }
         }
-
         PackManager.get().forEach(PackManager.FLUIDS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }
@@ -94,7 +91,6 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in fluid definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         PackManager.get().forEach(PackManager.WORLDGEN, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }
@@ -104,7 +100,6 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in worldgen definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
                 if (WORLDGEN_DEFS.containsKey(entry.getKey())) { continue; }
@@ -115,7 +110,6 @@ public final class ContentRegistry {
                 catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in CoFH World entry {}, ignoring it: {}", entry.getKey(), ex.getMessage()); }
             }
         }
-
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !WORLDGEN_DEFS.isEmpty()) {
             Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid and " + WORLDGEN_DEFS.size() + " worldgen definition(s)");
         }
@@ -125,7 +119,6 @@ public final class ContentRegistry {
         for (String modid : requires) {
             if (modid.startsWith("config:")) { PackOptions.gating(modid.substring("config:".length())); }
         }
-
         for (String modid : requires) {
             if (modid.startsWith("file:")) {
                 String asked = modid.substring("file:".length()).replace('\\', '/');
@@ -135,7 +128,6 @@ public final class ContentRegistry {
                 }
                 java.io.File home = net.minecraft.launchwrapper.Launch.minecraftHome != null ? net.minecraft.launchwrapper.Launch.minecraftHome : new java.io.File(".");
                 if (new java.io.File(home, asked).exists()) { continue; }
-
                 ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
                 return false;
             }
@@ -144,13 +136,11 @@ public final class ContentRegistry {
                 int split = asked.indexOf(':');
                 Boolean held = split < 0 ? PackOptions.anywhere(asked) : PackOptions.option(asked.substring(0, split), asked.substring(split + 1));
                 if (Boolean.TRUE.equals(held)) { continue; }
-
                 if (held == null && WARNED.add(modid)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, which no pack option file defines. Check the name against the files in rdploader/config", modid); }
                 ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
                 return false;
             }
             if (Loader.isModLoaded(modid) || PackManager.get().provides(modid)) { continue; }
-
             if (WARNED.add(modid)) {
                 ContentLog.LOGGER.info("Skipping anything that requires {}, which is neither an installed mod nor a loaded pack. Turn on debug logging to see each one", modid);
             }
@@ -172,7 +162,6 @@ public final class ContentRegistry {
         load();
         for (FluidDef def : FLUID_DEFS.values()) {
             if (!available(def.requires, def.registryName)) { continue; }
-
             boolean registered;
             Fluid fluid;
             ModContainer previous = Loader.instance().activeModContainer();
@@ -183,20 +172,17 @@ public final class ContentRegistry {
                 if (registered && def.bucket) { FluidRegistry.addBucketForFluid(fluid); }
             }
             finally { Loader.instance().setActiveModContainer(previous); }
-
             if (registered) {
                 def.resolve(fluid);
                 continue;
             }
-
             Fluid existing = FluidRegistry.getFluid(def.name);
             ContentLog.LOGGER.warn("A fluid named {} is already registered, {} will use the existing one", def.name, def.registryName);
             def.resolve(existing);
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void registerBlocks(RegistryEvent.Register<Block> event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerBlocks(RegistryEvent.Register<Block> event) {
         load();
         for (Map.Entry<ResourceLocation, BlockDef> entry : BLOCK_DEFS.entrySet()) {
             ResourceLocation key = entry.getKey();
@@ -222,7 +208,6 @@ public final class ContentRegistry {
             }
             finally { Loader.instance().setActiveModContainer(previous); }
         }
-
         for (Map.Entry<ResourceLocation, FluidDef> entry : FLUID_DEFS.entrySet()) {
             ResourceLocation key = entry.getKey();
             FluidDef def = entry.getValue();
@@ -236,7 +221,6 @@ public final class ContentRegistry {
                 ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack fluid block", key);
                 continue;
             }
-
             ModContainer previous = Loader.instance().activeModContainer();
             try {
                 Loader.instance().setActiveModContainer(ContentOwners.of(key.getNamespace()));
@@ -249,13 +233,10 @@ public final class ContentRegistry {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void registerEntities(RegistryEvent.Register<EntityEntry> event) { ContentEntities.register(event.getRegistry()); }
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerEntities(RegistryEvent.Register<EntityEntry> event) { ContentEntities.register(event.getRegistry()); }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void registerItems(RegistryEvent.Register<Item> event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerItems(RegistryEvent.Register<Item> event) {
         ContentMaterials.register();
-
         for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
             ResourceLocation key = entry.getKey();
             if (ForgeRegistries.ITEMS.containsKey(key)) { continue; }
@@ -271,7 +252,6 @@ public final class ContentRegistry {
             }
             finally { Loader.instance().setActiveModContainer(previous); }
         }
-
         for (Map.Entry<ResourceLocation, ItemDef> entry : ITEM_DEFS.entrySet()) {
             ResourceLocation key = entry.getKey();
             if (ForgeRegistries.ITEMS.containsKey(key)) {
@@ -290,7 +270,6 @@ public final class ContentRegistry {
             }
             finally { Loader.instance().setActiveModContainer(previous); }
         }
-
         resolve();
         resolveCrops();
         ContentSpawning.resolve();
@@ -304,7 +283,6 @@ public final class ContentRegistry {
         for (Map.Entry<ResourceLocation, WorldgenDef> entry : WORLDGEN_DEFS.entrySet()) {
             WorldgenDef def = entry.getValue();
             if (!available(def.requires, entry.getKey())) { continue; }
-
             if (def.blocks.isEmpty() && !ForgeRegistries.BLOCKS.containsKey(def.block)) {
                 ContentLog.LOGGER.error("Worldgen {} names block {}, which is not registered, skipping it", entry.getKey(), def.block);
                 continue;
@@ -325,7 +303,6 @@ public final class ContentRegistry {
                 ContentLog.LOGGER.error("Worldgen {} has no registered block to replace, skipping it", entry.getKey());
                 continue;
             }
-
             Set<Block> nearby = new LinkedHashSet<>();
             Set<IBlockState> nearbyExact = new LinkedHashSet<>();
             for (BlockMatchDef name : def.adjacent) {
@@ -342,7 +319,6 @@ public final class ContentRegistry {
                 ContentLog.LOGGER.error("Worldgen {} has no registered adjacent block, skipping it so it does not generate everywhere", entry.getKey());
                 continue;
             }
-
             Set<Block> surface = new LinkedHashSet<>();
             if (ShapeDef.DECORATION.equals(def.shape.type) || ShapeDef.TREE.equals(def.shape.type)) {
                 Set<String> unknown = new LinkedHashSet<>();
@@ -361,13 +337,11 @@ public final class ContentRegistry {
                     continue;
                 }
             }
-
             List<IBlockState> states = new ArrayList<>();
             List<Integer> weights = new ArrayList<>();
             if (def.blocks.isEmpty()) {
                 Block block = ForgeRegistries.BLOCKS.getValue(def.block);
                 if (block == null) { continue; }
-
                 states.add(ContentStates.of(block, def.meta));
                 weights.add(1);
             }
@@ -390,11 +364,9 @@ public final class ContentRegistry {
                 }
             }
             if (states.isEmpty()) { continue; }
-
             def.resolve(states, weights, targets, exact, nearby, nearbyExact, surface, extra(entry.getKey(), def.shape.outline), extra(entry.getKey(), def.shape.fill));
             active.add(def);
         }
-
         active.sort(Comparator.comparing(def -> def.registryName.toString()));
         if (!active.isEmpty()) { Summary.info("worldgen", "Generating " + active.size() + " vein type(s) from packs"); }
         return active;
@@ -402,7 +374,6 @@ public final class ContentRegistry {
 
     @Nullable private static IBlockState extra(ResourceLocation key, String name) {
         if (name.isEmpty()) { return null; }
-
         IBlockState state = ContentStates.parse(name, key);
         if (state == null) { ContentLog.LOGGER.error("Worldgen {} names block {} in its shape, which is not registered, leaving it out", key, name); }
         return state;
@@ -423,7 +394,6 @@ public final class ContentRegistry {
                 continue;
             }
             if (!(entry.getValue() instanceof ContentBlockCrop)) { continue; }
-
             ContentBlockCrop crop = (ContentBlockCrop) entry.getValue();
             BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
             if (def == null) { continue; }
@@ -448,7 +418,6 @@ public final class ContentRegistry {
                 }
             }
         }
-
         for (ItemDef def : ITEM_DEFS.values()) {
             for (ItemVariant variant : def.visible) {
                 if (variant.potion == null) { continue; }
@@ -456,7 +425,6 @@ public final class ContentRegistry {
             }
             if (!def.container.isEmpty()) { def.resolveContainer(ContentStacks.parse(def.registryName, def.container, 1)); }
         }
-
         for (Map.Entry<ResourceLocation, ContentBlockFluid> entry : FLUID_BLOCKS.entrySet()) {
             FluidDef def = FLUID_DEFS.get(entry.getKey());
             List<PotionEffect> effects = new ArrayList<>();
@@ -474,13 +442,11 @@ public final class ContentRegistry {
             ContentLog.LOGGER.error("Potion '{}' for {} '{}' needs id, duration and amplifier", value, key, name);
             return null;
         }
-
         Potion potion = Potion.getPotionFromResourceLocation(parts[0].trim());
         if (potion == null) {
             ContentLog.LOGGER.error("Unknown potion '{}' for {} '{}'", parts[0].trim(), key, name);
             return null;
         }
-
         try {
             int duration = Integer.parseInt(parts[1].trim());
             int amplifier = Integer.parseInt(parts[2].trim());
@@ -506,7 +472,6 @@ public final class ContentRegistry {
                 }
             }
         }
-
         for (Map.Entry<ResourceLocation, Item> entry : ITEMS_BY_NAME.entrySet()) {
             ItemDef def = ITEM_DEFS.get(entry.getKey());
             for (ItemVariant variant : def.visible) {
@@ -516,7 +481,6 @@ public final class ContentRegistry {
                 }
             }
         }
-
         if (count > 0) { Summary.info("content_oredict", "Registered " + count + " ore dictionary entry/entries from packs"); }
     }
 

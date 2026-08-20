@@ -121,16 +121,13 @@ public final class ContentChunkWatch {
 
     public static void spread(long began, boolean sky) {
         if (!watching()) { return; }
-
         spread++;
         if (sky) { spreadSky++; }
         if (began == 0L) { return; }
-
         long took = System.nanoTime() - began;
         sampled++;
         spreadNanos += took;
         if (!sky) { return; }
-
         sampledSky++;
         skyNanos += took;
     }
@@ -146,14 +143,12 @@ public final class ContentChunkWatch {
 
     private static String worst() {
         if (BY_MOD.isEmpty()) { return ""; }
-
         StringBuilder out = new StringBuilder(", of which");
         List<Map.Entry<String, Long>> order = new ArrayList<>(BY_MOD.entrySet());
         order.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
         int shown = 0;
         for (Map.Entry<String, Long> entry : order) {
             if (shown++ >= 5) { break; }
-
             out.append(String.format(" %s %.1f ms", entry.getKey(), entry.getValue() / 1.0E6D));
         }
         return out.toString();
@@ -190,7 +185,6 @@ public final class ContentChunkWatch {
             was[3] = Runtime.getRuntime().totalMemory();
             return;
         }
-
         long room = Runtime.getRuntime().totalMemory();
         ContentLog.LOGGER.debug(String.format(
                 "Tidying: %s ran %d time(s) taking %d ms, holding %d MB before and %d MB after, with room for %d MB%s. %d chunk(s) made since the last look",
@@ -204,10 +198,8 @@ public final class ContentChunkWatch {
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
-
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
-
         takeStock();
         int waiting = 0;
         int held = 0;
@@ -219,7 +211,6 @@ public final class ContentChunkWatch {
         if (waiting > mostWaiting) { mostWaiting = waiting; }
         if (held > mostHeld) { mostHeld = held; }
         if (server.getTickCounter() % SNAPSHOT != 0 || !seen) { return; }
-
         double mean = MathHelper.average(server.tickTimeArray) * 1.0E-6D;
         long touched = made + read;
         double useful = touched == 0L ? 100.0D : 100.0D * made / touched;

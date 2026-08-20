@@ -24,7 +24,6 @@ public final class ContentWorldgen implements IWorldGenerator {
 
     @Override public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator generator, IChunkProvider provider) {
         ContentRetrogen.markGenerated(world, chunkX, chunkZ);
-
         List<WorldgenDef> active = forDimension(world.provider.getDimension());
         if (active.isEmpty()) { return; }
         generate(random, chunkX, chunkZ, world, active);
@@ -34,15 +33,12 @@ public final class ContentWorldgen implements IWorldGenerator {
         int dimension = world.provider.getDimension();
         int baseX = chunkX * 16;
         int baseZ = chunkZ * 16;
-
         for (WorldgenDef def : subset) {
             IContentShape figure = def.getShape();
             if (figure == null || !dimensionAllowed(def, dimension)) { continue; }
             if (!farEnoughFromSpawn(def, world, baseX, baseZ)) { continue; }
-
             boolean filtered = def.hasBiomeFilter();
             Random region = def.spread.isSprawl() ? ContentSpread.regionRandom(world, chunkX, chunkZ) : random;
-
             ContentOreControl.beginPack(def.registryName.getNamespace());
             try {
                 if (figure instanceof ContentImprint && ((ContentImprint) figure).pinnedAt() != null) {
@@ -61,7 +57,6 @@ public final class ContentWorldgen implements IWorldGenerator {
                     ((ContentFieldShape) figure).generateChunk(world, chunkX, chunkZ, source -> allows(def, world, source, filtered));
                     continue;
                 }
-
                 int tries = def.attempts.pick(random);
                 for (int attempt = 0; attempt < tries; attempt++) {
                     BlockPos pos = ContentSpread.position(def, world, random, region, baseX, baseZ);
@@ -69,7 +64,6 @@ public final class ContentWorldgen implements IWorldGenerator {
                     Biome biome = world.getBiome(pos);
                     if (filtered && biomeBlocked(def, biome)) { continue; }
                     if (!def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall())) { continue; }
-
                     figure.generate(world, random, pos);
                 }
             }
@@ -80,14 +74,12 @@ public final class ContentWorldgen implements IWorldGenerator {
     private static boolean allows(WorldgenDef def, World world, BlockPos source, boolean filtered) {
         Biome biome = world.getBiome(source);
         if (filtered && biomeBlocked(def, biome)) { return false; }
-
         return def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall());
     }
 
     private List<WorldgenDef> forDimension(int dimension) {
         List<WorldgenDef> cached = byDimension.get(dimension);
         if (cached != null) { return cached; }
-
         List<WorldgenDef> active = new ArrayList<>();
         for (WorldgenDef def : defs) {
             if (dimensionAllowed(def, dimension)) { active.add(def); }
@@ -98,7 +90,6 @@ public final class ContentWorldgen implements IWorldGenerator {
 
     private static boolean farEnoughFromSpawn(WorldgenDef def, World world, int baseX, int baseZ) {
         if (def.minDistanceFromSpawn <= 0) { return true; }
-
         BlockPos spawn = world.getSpawnPoint();
         double dx = (baseX + 8) - spawn.getX();
         double dz = (baseZ + 8) - spawn.getZ();
@@ -114,7 +105,6 @@ public final class ContentWorldgen implements IWorldGenerator {
 
     private static boolean matchesBiome(WorldgenDef def, Biome biome) {
         if (biome.getRegistryName() != null && def.getBiomeNames().contains(biome.getRegistryName().toString())) { return true; }
-
         for (BiomeDictionary.Type type : def.getTypes()) {
             if (BiomeDictionary.hasType(biome, type)) { return true; }
         }

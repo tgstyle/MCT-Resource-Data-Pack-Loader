@@ -9,7 +9,6 @@ import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.SoundEvents;
-
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ public class GuiPackOptions extends GuiScreen {
         for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) {
             Map<String, Boolean> was = loaded.get(entry.getKey());
             if (was == null) { continue; }
-
             for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
                 if (!PackOptions.gates(entry.getKey(), option.getKey())) { continue; }
                 if (!option.getValue().equals(was.get(option.getKey()))) { return true; }
@@ -96,7 +94,6 @@ public class GuiPackOptions extends GuiScreen {
                 rows.add(new Row(file.getKey(), null, first));
                 first = false;
                 if (folded.contains(file.getKey())) { continue; }
-
                 for (String name : file.getValue().keySet()) { rows.add(new Row(file.getKey(), name, false)); }
             }
         }
@@ -128,7 +125,6 @@ public class GuiPackOptions extends GuiScreen {
                 Minecraft held = GuiPackOptions.this.mc;
                 if (name == null) {
                     if (!first) { drawRect(x + 2, y + 1, x + listWidth - 2, y + 2, 0x30FFFFFF); }
-
                     String label = (folded.contains(file) ? "+ " : "- ") + file;
                     int across = x + listWidth / 2 - held.fontRenderer.getStringWidth(label) / 2;
                     held.fontRenderer.drawString(label, across, y + slotHeight / 2 - 4, 0xFFD080);
@@ -151,13 +147,11 @@ public class GuiPackOptions extends GuiScreen {
             @Override public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY) {
                 if (toggle == null) {
                     if (!folded.remove(file)) { folded.add(file); }
-
                     GuiPackOptions.this.mc.getSoundHandler().playSound(PositionedSoundRecord.getMasterRecord(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                     OptionList.this.rebuild();
                     return true;
                 }
                 if (!toggle.mousePressed(GuiPackOptions.this.mc, mouseX, mouseY)) { return false; }
-
                 Map<String, Boolean> options = staged.get(file);
                 options.put(name, !options.get(name));
                 toggle.playPressSound(GuiPackOptions.this.mc.getSoundHandler());

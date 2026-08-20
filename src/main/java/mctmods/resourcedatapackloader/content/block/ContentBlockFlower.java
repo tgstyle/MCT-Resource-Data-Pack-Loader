@@ -23,14 +23,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockFlower extends BlockBush implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockFlower extends BlockBush implements IContentBlock {
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
     public static final int MAX_VARIANTS = 16;
@@ -55,7 +53,6 @@ public class ContentBlockFlower extends BlockBush implements IContentBlock {
         this.def = def;
         this.growth = growth;
         this.variant = PROPERTY.get();
-
         ContentSetup.apply(this, def);
         setHardness(def.at(0).hardness);
         if (def.soundType != null) { setSoundType(def.soundType); }
@@ -98,13 +95,11 @@ public class ContentBlockFlower extends BlockBush implements IContentBlock {
 
     @Override protected boolean canSustainBush(@Nonnull IBlockState state) {
         if (soil.isEmpty()) { return super.canSustainBush(state); }
-
         return soil.contains(state.getBlock());
     }
 
     @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }
-
         return canSustainBush(world.getBlockState(pos.down()));
     }
 }

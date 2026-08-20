@@ -20,14 +20,12 @@ public final class ContentNodule implements IContentShape {
         int radius = Math.min(ShapeDef.MOST_REACH, Math.max(1, shape.radius.pick(random)));
         int span = radius * radius;
         int core = shape.slim ? (radius - 1) * (radius - 1) : -1;
-
         boolean placed = false;
         for (int offX = -radius; offX <= radius; offX++) {
             for (int offY = -radius; offY <= radius; offY++) {
                 for (int offZ = -radius; offZ <= radius; offZ++) {
                     int reach = offX * offX + offY * offY + offZ * offZ;
                     if (reach > span + random.nextInt(radius) || reach < core) { continue; }
-
                     placed |= placer.place(world, random, origin.getX() + offX, origin.getY() + offY, origin.getZ() + offZ);
                 }
             }

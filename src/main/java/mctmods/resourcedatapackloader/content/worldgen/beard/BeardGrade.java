@@ -14,7 +14,6 @@ public final class BeardGrade {
 
     @Nullable public static int[] noiseProfile(World world, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost) {
         if (BeardSurface.samplerFor(world) == null) { return null; }
-
         int[] profile = new int[rowMost - rowLeast + 1];
         int[] across = new int[acrossMost - acrossLeast + 1];
         for (int i = 0; i < profile.length; i++) {
@@ -36,10 +35,8 @@ public final class BeardGrade {
     public static void flatRuns(World world, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile) {
         int run = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathFlatRun", Config.worldgen.villagePathFlatRun));
         if (run <= 1) { return; }
-
         for (int i = 0; i < profile.length; i++) {
             if (profile[i] == Integer.MIN_VALUE) { continue; }
-
             int grid = (start + i) - Math.floorMod(start + i, run);
             int center = (acrossLeast + acrossMost) / 2;
             int[] taken = new int[3];
@@ -68,7 +65,6 @@ public final class BeardGrade {
         boolean[] bridged = new boolean[rows];
         for (int i = 0; i < rows; i++) {
             if (profile[i] != Integer.MIN_VALUE) { continue; }
-
             int gapEnd = i;
             while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
             if (i > 0 && gapEnd < rows && gapEnd - i <= 12) {
@@ -90,7 +86,6 @@ public final class BeardGrade {
         for (int i = 0; i < profile.length; i++) {
             if (profile[i] == Integer.MIN_VALUE || ground[i] == Integer.MIN_VALUE || bridged[i] || held[i]) { continue; }
             if (profile[i] <= ground[i] + CAP) { continue; }
-
             profile[i] = ground[i] + CAP;
             held[i] = true;
             capped++;
@@ -101,7 +96,6 @@ public final class BeardGrade {
         int rows = profile.length;
         for (int i = 0; i < rows; i++) {
             if (profile[i] != Integer.MIN_VALUE) { continue; }
-
             int gapEnd = i;
             while (gapEnd < rows && profile[gapEnd] == Integer.MIN_VALUE) { gapEnd++; }
             int before = i > 0 ? profile[i - 1] : Integer.MIN_VALUE;
@@ -124,7 +118,6 @@ public final class BeardGrade {
         int rows = profile.length;
         for (int i = 0; i < rows; i++) {
             if (bridged[i] || profile[i] == Integer.MIN_VALUE) { continue; }
-
             int end = i;
             while (end + 1 < rows && !bridged[end + 1] && profile[end + 1] != Integer.MIN_VALUE) { end++; }
             if (i > 0 && end + 1 < rows && bridged[i - 1] && bridged[end + 1]) {
@@ -222,7 +215,6 @@ public final class BeardGrade {
         for (int i = 0; i < profile.length; i++) {
             if (profile[i] == Integer.MIN_VALUE || bridged[i]) { continue; }
             if (held != Integer.MIN_VALUE && Math.abs(profile[i] - held) > 1) { return false; }
-
             held = profile[i];
         }
         return true;

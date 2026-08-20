@@ -3,8 +3,8 @@ package mctmods.resourcedatapackloader.command;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
-import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.def.GateDef;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -16,8 +16,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
-import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.command.CommandBase;
@@ -86,7 +86,6 @@ public class ServerCommands extends CommandBase {
                 continue;
             }
             if (!entry.substring(0, split).trim().equalsIgnoreCase(place)) { continue; }
-
             try { return clamp(Integer.parseInt(entry.substring(split + 1).trim())); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' has no number after the =, ignoring it", entry); }
         }
@@ -103,7 +102,6 @@ public class ServerCommands extends CommandBase {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
             int split = entry.indexOf('=');
             if (split < 0) { continue; }
-
             try { lowest = Math.min(lowest, clamp(Integer.parseInt(entry.substring(split + 1).trim()))); }
             catch (NumberFormatException ignored) { }
         }
@@ -136,7 +134,7 @@ public class ServerCommands extends CommandBase {
     }
 
     @Override public void execute(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
-        ContentLog.LOGGER.info("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
+        ContentLog.LOGGER.debug("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
         if (args.length >= 1 && "goto".equals(args[0])) {
             if (args.length == 2) { allow(sender, neededFor(args[1], "gotoLevel", Config.commands.gotoLevel)); }
             else if (args.length == 3 && "next".equals(args[2])) { allow(sender, neededFor(args[1], "gotoNextLevel", Config.commands.gotoNextLevel)); }
@@ -144,7 +142,6 @@ public class ServerCommands extends CommandBase {
             else { throw new WrongUsageException(getUsage(sender)); }
         }
         else { allow(sender, OPERATOR); }
-
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
@@ -168,38 +165,31 @@ public class ServerCommands extends CommandBase {
 
     private void goTo(ICommandSender sender, String asked, boolean next) throws CommandException {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
-
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         World world = player.world;
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
         if (ContentLocate.names(world).contains(name)) {
             BlockPos found = ContentLocate.nearest(world, name, player.getPosition(), next ? 128.0D : 0.0D);
             if (found == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonothing", name)); }
-
             BlockPos landing = ContentStructureSearch.landing(world, found);
             if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, found.getX(), found.getZ())); }
-
             ContentStructureSearch.remember(player, name, found);
             player.setPositionAndUpdate(landing.getX() + 0.5D, ContentStructureSearch.stand(world, landing), landing.getZ() + 0.5D);
             send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
             return;
         }
         if (ContentStructureSearch.looking()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotobusy")); }
-
         ContentStructureSearch.start(player, name, keyFor(name), !next, next);
     }
 
     private void goBack(ICommandSender sender, String asked) throws CommandException {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
-
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
         BlockPos previous = ContentStructureSearch.stepBack(player, name);
         if (previous == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoback", name)); }
-
         BlockPos landing = ContentStructureSearch.landing(player.world, previous);
         if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, previous.getX(), previous.getZ())); }
-
         player.setPositionAndUpdate(landing.getX() + 0.5D, ContentStructureSearch.stand(player.world, landing), landing.getZ() + 0.5D);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
     }
@@ -224,7 +214,6 @@ public class ServerCommands extends CommandBase {
             return;
         }
         if (!"prune".equals(action)) { throw new WrongUsageException(getUsage(sender)); }
-
         int gone = PackOptions.prune();
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
     }
@@ -241,7 +230,6 @@ public class ServerCommands extends CommandBase {
         boolean lightOnly = args.length == 3 && "relight".equals(args[2]);
         if (args.length != 2 && !lightOnly) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.pregenusage")); }
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.busy")); }
-
         int radius = parseInt(args[1], 0, 8192);
         BlockPos at = sender.getPosition();
         int dimension = sender.getEntityWorld().provider.getDimension();
@@ -287,11 +275,8 @@ public class ServerCommands extends CommandBase {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.orenone"));
             return;
         }
-
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.oreblocked"));
-        for (Map.Entry<String, Integer> entry : blocked.entrySet()) {
-            send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue());
-        }
+        for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue()); }
     }
 
     private void generators(ICommandSender sender) {
@@ -300,11 +285,8 @@ public class ServerCommands extends CommandBase {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.gennone"));
             return;
         }
-
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.genblocked"));
-        for (Map.Entry<String, Integer> entry : blocked.entrySet()) {
-            send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue());
-        }
+        for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue()); }
     }
 
     private void unused(ICommandSender sender) {
@@ -329,9 +311,7 @@ public class ServerCommands extends CommandBase {
         }
         RDPLPack winner = holders.get(holders.size() - 1);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.served", namespace + ":" + path, winner.getName()));
-        for (int i = holders.size() - 2; i >= 0; i--) {
-            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName()));
-        }
+        for (int i = holders.size() - 2; i >= 0; i--) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName())); }
     }
 
     private void gate(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
@@ -339,24 +319,20 @@ public class ServerCommands extends CommandBase {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nogates"));
             return;
         }
-
         String action = args.length < 2 ? "list" : args[1];
         if ("list".equals(action)) {
             gateList(sender);
             return;
         }
-
         if (args.length < 3) { throw new WrongUsageException(getUsage(sender)); }
         EntityPlayerMP player = getPlayer(server, sender, args[2]);
         if ("check".equals(action)) {
             gateCheck(sender, player);
             return;
         }
-
         if (args.length < 4) { throw new WrongUsageException(getUsage(sender)); }
         GateDef def = ContentGates.find(args[3]);
         if (def == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.nogate", args[3])); }
-
         if ("grant".equals(action)) {
             ContentGates.unlock(player, def, false);
             send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateopened", def.getKey(), player.getName(), def.getScope()));
@@ -375,7 +351,6 @@ public class ServerCommands extends CommandBase {
     private void biomeList(ICommandSender sender, boolean all) {
         int vanilla = 0;
         int shown = 0;
-
         for (Biome biome : ForgeRegistries.BIOMES) {
             ResourceLocation name = biome.getRegistryName();
             if (name == null) { continue; }
@@ -386,7 +361,6 @@ public class ServerCommands extends CommandBase {
             send(sender, TextFormatting.GRAY, "  " + Biome.getIdForBiome(biome) + "  " + name + "  '" + biome.getBiomeName() + "'");
             shown++;
         }
-
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Lang.tr(sender, "rdpl.command.biomesmore", vanilla)));
     }
 
@@ -399,16 +373,13 @@ public class ServerCommands extends CommandBase {
     private void biomeFind(ICommandSender sender, String name) throws CommandException {
         Biome target = findBiome(name);
         if (target == null) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.nobiome", name)); }
-
         World world = sender.getEntityWorld();
         BlockPos from = sender.getPosition();
         BlockPos found = world.getBiomeProvider().findBiomePosition(from.getX(), from.getZ(), FIND_RANGE, Collections.singletonList(target), new Random());
-
         if (found == null) {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", target.getBiomeName(), FIND_RANGE));
             return;
         }
-
         int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
     }
@@ -416,7 +387,6 @@ public class ServerCommands extends CommandBase {
     @Nullable private static Biome findBiome(String name) {
         ResourceLocation location = new ResourceLocation(name);
         if (ForgeRegistries.BIOMES.containsKey(location)) { return ForgeRegistries.BIOMES.getValue(location); }
-
         for (Biome biome : ForgeRegistries.BIOMES) {
             if (biome.getBiomeName().equalsIgnoreCase(name)) { return biome; }
         }
@@ -438,7 +408,6 @@ public class ServerCommands extends CommandBase {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nodims"));
             return;
         }
-
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.dims", defs.size()));
         for (Map.Entry<ResourceLocation, DimensionDef> entry : defs.entrySet()) {
             DimensionDef def = entry.getValue();
@@ -478,13 +447,12 @@ public class ServerCommands extends CommandBase {
     private void intro(ICommandSender sender) throws CommandException {
         if (!ContentIntroPlay.enabled()) { throw new CommandException(Lang.tr(sender, "rdpl.command.intronone")); }
         if (!(sender instanceof EntityPlayerMP)) { throw new CommandException(Lang.tr(sender, "rdpl.command.introplayer")); }
-
         ContentIntroPlay.replay((EntityPlayerMP) sender);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.introagain"));
     }
 
     private static void send(ICommandSender sender, TextFormatting color, String message) {
         sender.sendMessage(new TextComponentString(color + message));
-        ContentLog.LOGGER.info("  {}", message);
+        ContentLog.LOGGER.debug("  {}", message);
     }
 }

@@ -21,7 +21,7 @@ public final class Blocked {
 
     public void report(String what) {
         for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-            ContentLog.LOGGER.info("  blocked {} {} from {}", entry.getValue(), what, entry.getKey());
+            ContentLog.LOGGER.debug("  blocked {} {} from {}", entry.getValue(), what, entry.getKey());
         }
     }
 }

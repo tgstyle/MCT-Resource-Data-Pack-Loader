@@ -29,7 +29,6 @@ public class ContentBlockDoor extends BlockDoor implements IContentBlock {
         super(def.material);
         this.def = def;
         BlockVariant variant = def.at(0);
-
         setRegistryName(def.registryName);
         ContentSetup.properties(this, def);
         setTranslationKey(def.registryName + "." + variant.name);

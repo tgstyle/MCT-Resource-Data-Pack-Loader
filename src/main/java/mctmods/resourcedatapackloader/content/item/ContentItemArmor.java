@@ -12,8 +12,7 @@ import net.minecraft.item.ItemStack;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentItemArmor extends ItemArmor implements IContentItem {
+@SuppressWarnings("deprecation") public class ContentItemArmor extends ItemArmor implements IContentItem {
     private final ItemDef def;
 
     public ContentItemArmor(ItemDef def, ArmorMaterial material, EntityEquipmentSlot slot) {

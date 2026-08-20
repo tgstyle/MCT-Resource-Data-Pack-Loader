@@ -2,8 +2,8 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.beard.PredictedChunk;
-import mctmods.resourcedatapackloader.mixin.AccessorEntityAITasks;
-import mctmods.resourcedatapackloader.mixin.AccessorEntityItem;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityAITasks;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityItem;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Names;
@@ -66,12 +66,9 @@ public final class ContentEntityTicks {
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
-
         TICKS++;
-
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || server.getTickCounter() % SNAPSHOT != 0) { return; }
-
         double mean = MathHelper.average(server.tickTimeArray) * 1.0E-6D;
         double rate = Math.min(20.0D, 1000.0D / Math.max(50.0D, mean));
         int entities = 0;
@@ -80,7 +77,6 @@ public final class ContentEntityTicks {
             entities += world.loadedEntityList.size();
             chunks += world.getChunkProvider().getLoadedChunkCount();
         }
-
         ContentLog.LOGGER.debug(String.format("Every second the server manages %.1f rounds of %.1f ms, holding %d chunk(s) and %d entity/entities. Of %d asked about since the last look, %d were given a slower pace",
                 rate, mean, chunks, entities, considered, slowed));
         considered = 0L;
@@ -91,35 +87,28 @@ public final class ContentEntityTicks {
         if (entity == null || entity.world == null || entity.world.isRemote) { return false; }
         if (ContentControl.off(ContentControl.ENTITIES)) { return false; }
         if (!ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities)) { return false; }
-
         World world = entity.world;
         int chunkX = entity.chunkCoordX;
         int chunkZ = entity.chunkCoordZ;
         int rate = ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate);
-
         if (entity instanceof EntityLiving) {
             boolean thinkSlower = !spared(entity) && rate > 1 && far(world, chunkX, chunkZ);
             think((EntityLiving) entity, thinkSlower ? VANILLA_THINK * rate : VANILLA_THINK);
             considered++;
             if (thinkSlower) { slowed++; }
-
             return false;
         }
         if (spared(entity) || !kindSlowed(entity)) { return false; }
-
         considered++;
-
         if (rate <= 1 || !far(world, chunkX, chunkZ)) { return false; }
-
         boolean skip = Math.floorMod((long) chunkX * 31L + (long) chunkZ + world.getTotalWorldTime(), rate) != 0L;
         if (skip) { slowed++; }
-
         return skip;
     }
 
     private static void think(EntityLiving mob, int rate) {
-        ((AccessorEntityAITasks) mob.tasks).rdpl$setTickRate(rate);
-        ((AccessorEntityAITasks) mob.targetTasks).rdpl$setTickRate(rate);
+        ((IEntityAITasks) mob.tasks).rdpl$setTickRate(rate);
+        ((IEntityAITasks) mob.targetTasks).rdpl$setTickRate(rate);
     }
 
     private static boolean far(World world, int chunkX, int chunkZ) {
@@ -132,11 +121,9 @@ public final class ContentEntityTicks {
             FAR.put(world, known);
             CHECKED.put(world, now);
         }
-
         Long key = ChunkPos.asLong(chunkX, chunkZ);
         Boolean answer = known.get(key);
         if (answer != null) { return answer; }
-
         answer = measure(world, chunkX, chunkZ);
         known.put(key, answer);
         return answer;
@@ -145,7 +132,6 @@ public final class ContentEntityTicks {
     private static boolean measure(World world, int chunkX, int chunkZ) {
         if (world.getPersistentChunks().containsKey(new ChunkPos(chunkX, chunkZ))) { return false; }
         if (world.playerEntities.isEmpty()) { return true; }
-
         double blocks = ContentControl.number(ContentControl.ENTITIES, "slowDistance", Config.entities.slowDistance);
         double reach = blocks * blocks;
         double middleX = (chunkX << 4) + 8;
@@ -160,7 +146,7 @@ public final class ContentEntityTicks {
 
     public static void age(Entity entity) {
         if (entity instanceof EntityItem) {
-            AccessorEntityItem item = (AccessorEntityItem) entity;
+            IEntityItem item = (IEntityItem) entity;
             if (item.rdpl$getAge() != Short.MIN_VALUE) { item.rdpl$setAge(item.rdpl$getAge() + 1); }
             return;
         }
@@ -172,14 +158,12 @@ public final class ContentEntityTicks {
             kinds = Names.lower(ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds));
             for (String kind : kinds) {
                 if (KINDS.contains(kind)) { continue; }
-
                 ContentLog.LOGGER.error("slowedKinds names '{}', which is not one of {}, so nothing is slowed for it. Anything that thinks for itself is already given a slower pace without being named, and machines are never slowed", kind, KINDS);
             }
         }
         if (entity instanceof EntityItem) { return kinds.contains("items"); }
         if (entity instanceof EntityXPOrb) { return kinds.contains("experience"); }
         if (entity instanceof IProjectile) { return kinds.contains("projectiles"); }
-
         return false;
     }
 
@@ -190,10 +174,8 @@ public final class ContentEntityTicks {
             if (living.isNoDespawnRequired() || living.getLeashed() || living.getAttackTarget() != null) { return true; }
         }
         if (entity instanceof EntityLivingBase && !((EntityLivingBase) entity).getActivePotionEffects().isEmpty()) { return true; }
-
         if (spared == null) { spared = Names.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)); }
         if (spared.isEmpty()) { return false; }
-
         ResourceLocation name = EntityList.getKey(entity);
         return name != null && spared.contains(name.toString().toLowerCase(Locale.ROOT));
     }

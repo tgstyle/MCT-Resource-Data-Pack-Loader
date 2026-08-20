@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
-import mctmods.resourcedatapackloader.mixin.AccessorGuiScreenResourcePacks;
+import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiScreenResourcePacks;
 import mctmods.resourcedatapackloader.pack.PackInjector;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
@@ -14,8 +14,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 
-@SideOnly(Side.CLIENT)
-public final class PackListEntries {
+@SideOnly(Side.CLIENT) public final class PackListEntries {
     private PackListEntries() {}
 
     private static int aboveDefault(List<ResourcePackListEntry> entries) {
@@ -33,7 +32,7 @@ public final class PackListEntries {
             if (manager.isEmpty()) { return; }
 
             GuiScreenResourcePacks screen = (GuiScreenResourcePacks) event.getGui();
-            List<ResourcePackListEntry> entries = ((AccessorGuiScreenResourcePacks) screen).rdpl$getSelectedResourcePacks();
+            List<ResourcePackListEntry> entries = ((IGuiScreenResourcePacks) screen).rdpl$getSelectedResourcePacks();
             if (entries == null) { return; }
 
             entries.removeIf(resourcePackListEntry -> resourcePackListEntry instanceof PackListEntry);

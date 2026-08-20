@@ -24,7 +24,6 @@ public final class ContentTabs {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-
         PackManager.get().forEach(PackManager.TABS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try { read(key, contents); }
@@ -38,14 +37,12 @@ public final class ContentTabs {
             ContentLog.LOGGER.error("Creative tab {} is empty, ignoring it", key);
             return;
         }
-
         String label = JsonUtils.getString(json, "label", key.getPath());
         String icon = JsonUtils.getString(json, "icon", "");
         if (icon.isEmpty()) {
             ContentLog.LOGGER.error("Creative tab {} has no icon, it will fall back to the first block that uses it", key);
             return;
         }
-
         ICONS.put(label, icon);
         SOURCES.put(label, key);
     }

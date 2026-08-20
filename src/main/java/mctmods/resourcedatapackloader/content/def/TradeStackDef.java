@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+
 public final class TradeStackDef {
     public final String item;
     public final int min;

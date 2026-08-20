@@ -3,8 +3,8 @@ package mctmods.resourcedatapackloader.content.def;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBasin;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBelt;
-import mctmods.resourcedatapackloader.content.worldgen.ContentFieldShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDecoration;
+import mctmods.resourcedatapackloader.content.worldgen.ContentFieldShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeode;
 import mctmods.resourcedatapackloader.content.worldgen.ContentImprint;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLargeVein;
@@ -12,10 +12,10 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentNodule;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlacer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpire;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTree;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVent;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVines;
-import mctmods.resourcedatapackloader.content.worldgen.ContentTree;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -101,7 +101,6 @@ public final class WorldgenDef {
         this.state = states.isEmpty() ? null : states.get(0);
         this.figure = states.isEmpty() ? null : build(new ContentPlacer(states, weights, targets, exact, nearby, nearbyExact), surface, outline, fill);
         this.biomeNames = biomes.isEmpty() ? Collections.emptySet() : new HashSet<>(biomes);
-
         if (biomeTypes.isEmpty()) { return; }
         List<BiomeDictionary.Type> resolved = new ArrayList<>(biomeTypes.size());
         for (String name : biomeTypes) { resolved.add(BiomeDictionary.Type.getType(name)); }
@@ -124,7 +123,6 @@ public final class WorldgenDef {
         if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(placer, shape, registryName, replacesGiven); }
         if (ShapeDef.BELT.equals(shape.type)) { return new ContentBelt(placer, shape, minHeight, maxHeight, registryName); }
         if (ShapeDef.FIELD.equals(shape.type) && shape.field != null) { return new ContentFieldShape(placer, shape, minHeight, maxHeight, registryName); }
-
         return new ContentVein(placer, size, sparse);
     }
 

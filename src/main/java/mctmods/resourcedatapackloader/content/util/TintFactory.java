@@ -20,7 +20,6 @@ public final class TintFactory {
         Integer starts = json.has(FROM) ? color(JsonUtils.getString(json, FROM, "")) : Integer.valueOf(OPAQUE);
         Integer ends = color(JsonUtils.getString(json, TO, ""));
         if (starts == null || ends == null) { return null; }
-
         return new TintFactory(starts, ends);
     }
 
@@ -31,7 +30,6 @@ public final class TintFactory {
         if (text.startsWith("#")) { text = text.substring(1); }
         if (text.startsWith("0x") || text.startsWith("0X")) { text = text.substring(2); }
         if (text.length() != 6 && text.length() != 8) { return null; }
-
         try {
             long value = Long.parseLong(text, 16);
             return text.length() == 6 ? (int) (value | 0xFF000000L) : (int) value;

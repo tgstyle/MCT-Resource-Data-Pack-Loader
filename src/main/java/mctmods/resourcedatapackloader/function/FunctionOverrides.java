@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class FunctionOverrides {
-
     private FunctionOverrides() {}
 
     public static void apply(FunctionManager manager, Map<ResourceLocation, FunctionObject> functions) {
@@ -24,7 +23,7 @@ public final class FunctionOverrides {
         int[] added = new int[1];
         packs.forEach(PackManager.FUNCTIONS, PackManager.MCFUNCTION, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
-            ContentLog.LOGGER.info("Function {} read from the pack as {} character(s), first line: {}", key, contents.length(), contents.split("\n", 2)[0]);
+            ContentLog.LOGGER.debug("Function {} read from the pack as {} character(s), first line: {}", key, contents.length(), contents.split("\n", 2)[0]);
             if (functions.containsKey(key)) { return; }
             FunctionObject function = build(manager, key, contents);
             if (function == null) { return; }
@@ -42,7 +41,5 @@ public final class FunctionOverrides {
         }
     }
 
-    private static List<String> lines(String contents) {
-        return new ArrayList<>(Arrays.asList(contents.split("\r\n|\r|\n", -1)));
-    }
+    private static List<String> lines(String contents) { return new ArrayList<>(Arrays.asList(contents.split("\r\n|\r|\n", -1))); }
 }

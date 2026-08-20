@@ -17,8 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
-@SideOnly(Side.CLIENT)
-public final class ContentStateMapper implements IStateMapper {
+@SideOnly(Side.CLIENT) public final class ContentStateMapper implements IStateMapper {
     private final BlockDef def;
     private final PropertyVariant property;
     private final ResourceLocation registryName;
@@ -34,7 +33,6 @@ public final class ContentStateMapper implements IStateMapper {
     @Override @Nonnull public Map<IBlockState, ModelResourceLocation> putStateModelLocations(@Nonnull Block block) {
         Map<IBlockState, ModelResourceLocation> locations = new LinkedHashMap<>();
         String fallback = fallback();
-
         for (IBlockState state : block.getBlockState().getValidStates()) {
             locations.put(state, new ModelResourceLocation(registryName, variantString(state, fallback)));
         }
@@ -45,26 +43,22 @@ public final class ContentStateMapper implements IStateMapper {
 
     private String variantString(IBlockState state, String fallback) {
         StringBuilder builder = new StringBuilder();
-
         for (Map.Entry<IProperty<?>, Comparable<?>> entry : state.getProperties().entrySet()) {
             IProperty<?> key = entry.getKey();
             if (ignored.contains(key.getName())) { continue; }
             if (builder.length() != 0) { builder.append(','); }
             builder.append(key.getName()).append('=').append(value(key, entry.getValue(), fallback));
         }
-
         return builder.length() == 0 ? "normal" : builder.toString();
     }
 
     private String value(IProperty<?> key, Comparable<?> value, String fallback) {
         if (key != property) { return name(key, value); }
-
         String variant = (String) value;
         return def.byMeta[ContentSetup.metaOf(def, variant)].hidden ? fallback : variant;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Comparable<T>> String name(IProperty<T> key, Comparable<?> value) { return key.getName((T) value); }
+    @SuppressWarnings("unchecked") private static <T extends Comparable<T>> String name(IProperty<T> key, Comparable<?> value) { return key.getName((T) value); }
 
     private String fallback() {
         for (BlockVariant variant : def.visible) { return variant.name; }

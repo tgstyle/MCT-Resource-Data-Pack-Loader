@@ -19,7 +19,6 @@ public final class PredictedChunk extends Chunk {
     public static PredictedChunk of(World world) {
         PredictedChunk known = held;
         if (known != null && known.reading == world) { return known; }
-
         held = new PredictedChunk(world);
         return held;
     }

@@ -66,17 +66,13 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
 
     @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox clip) {
         if (structure.isEmpty()) { return true; }
-
         int[] size = RecurrentPlots.sizeOf(structure);
         if (size == null) { return true; }
-
         if (averageGroundLvl < 0) {
             averageGroundLvl = getAverageGroundLevel(world, clip);
             if (averageGroundLvl < 0) { return true; }
-
             boundingBox.offset(0, averageGroundLvl - boundingBox.minY + seat, 0);
         }
-
         int wide = size[0];
         int tall = size[1];
         int deep = size[2];
@@ -101,7 +97,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
                         }
                         IBlockState state = RecurrentPlots.stateAt(structure, sx, ly, sz);
                         if (state == null || state.isFullCube() != (pass == 0)) { continue; }
-
                         setBlockState(world, getBiomeSpecificBlockState(state.withRotation(turned).withMirror(Mirror.LEFT_RIGHT)), lx, ly, lz, clip);
                     }
                 }
@@ -115,10 +110,8 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
             int lz = localZ(sx, sz, wide, deep);
             BlockPos at = new BlockPos(getXWithOffset(lx, lz), getYWithOffset(sy), getZWithOffset(lx, lz));
             if (!clip.isVecInside(at)) { continue; }
-
             TileEntity tile = world.getTileEntity(at);
             if (tile == null) { continue; }
-
             NBTTagCompound moved = tag.copy();
             moved.setInteger("x", at.getX());
             moved.setInteger("y", at.getY());
@@ -131,7 +124,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
 
     private IBlockState ground(World world, int lx, int ly, int lz, int sx, int sz, int tall) {
         if (getYWithOffset(ly) < world.getSeaLevel() - 3) { return Blocks.STONE.getDefaultState(); }
-
         Biome biome = world.getBiome(new BlockPos(getXWithOffset(lx, lz), 0, getZWithOffset(lx, lz)));
         boolean buried = ly + 1 < tall && RecurrentPlots.classify(structure, sx, ly + 1, sz) == RecurrentPlots.GROUND;
         IBlockState laid = buried ? biome.fillerBlock : biome.topBlock;
@@ -142,7 +134,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         if (turned == Rotation.CLOCKWISE_90) { return lz; }
         if (turned == Rotation.COUNTERCLOCKWISE_90) { return wide - 1 - lz; }
         if (turned == Rotation.CLOCKWISE_180) { return wide - 1 - lx; }
-
         return lx;
     }
 
@@ -150,7 +141,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         if (turned == Rotation.CLOCKWISE_90) { return deep - 1 - lx; }
         if (turned == Rotation.COUNTERCLOCKWISE_90) { return lx; }
         if (turned == Rotation.CLOCKWISE_180) { return deep - 1 - lz; }
-
         return lz;
     }
 
@@ -158,7 +148,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         if (turned == Rotation.CLOCKWISE_90) { return deep - 1 - sz; }
         if (turned == Rotation.COUNTERCLOCKWISE_90) { return sz; }
         if (turned == Rotation.CLOCKWISE_180) { return wide - 1 - sx; }
-
         return sx;
     }
 
@@ -166,7 +155,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
         if (turned == Rotation.CLOCKWISE_90) { return sx; }
         if (turned == Rotation.COUNTERCLOCKWISE_90) { return wide - 1 - sx; }
         if (turned == Rotation.CLOCKWISE_180) { return deep - 1 - sz; }
-
         return sz;
     }
 }

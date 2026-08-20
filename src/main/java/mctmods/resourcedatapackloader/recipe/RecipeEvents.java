@@ -8,9 +8,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID)
-public final class RecipeEvents {
-
+@Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public final class RecipeEvents {
     private RecipeEvents() {}
 
     @SubscribeEvent public static void onRegisterRecipes(RegistryEvent.Register<IRecipe> event) { RecipeOverrides.registerAdditions(event.getRegistry()); }

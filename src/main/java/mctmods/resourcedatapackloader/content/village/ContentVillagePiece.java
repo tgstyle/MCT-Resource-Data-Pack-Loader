@@ -54,19 +54,14 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
     @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox box) {
         VillageDef def = ContentVillages.byName(plot);
         if (def == null) { return true; }
-
         if (averageGroundLvl < 0) {
             averageGroundLvl = getAverageGroundLevel(world, box);
             if (averageGroundLvl < 0) { return true; }
-
             boundingBox.offset(0, averageGroundLvl - boundingBox.minY, 0);
         }
-
         if (def.isTemplate()) { template(world, def, box); }
         else { farm(world, random, def, box); }
-
         if (def.villagers > 0) { residents(world, def, box); }
-
         return true;
     }
 
@@ -75,14 +70,12 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             spawnVillagers(world, box, def.villagerX, def.villagerY, def.villagerZ, def.villagers);
             return;
         }
-
         ResourceLocation name = new ResourceLocation(def.villagerEntity);
         for (int index = 0; index < def.villagers; index++) {
             int x = getXWithOffset(def.villagerX + index, def.villagerZ);
             int y = getYWithOffset(def.villagerY);
             int z = getZWithOffset(def.villagerX + index, def.villagerZ);
             if (!box.isVecInside(new BlockPos(x, y, z))) { continue; }
-
             Entity made = EntityList.createEntityByIDFromName(name, world);
             if (made == null) {
                 ContentLog.LOGGER.error("Village plot {} wants {} to live in it, which nothing registers", def.registryName, name);
@@ -99,13 +92,11 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         IBlockState soil = state(def.soil, Blocks.FARMLAND.getDefaultState());
         int lastX = def.width - 1;
         int lastZ = def.depth - 1;
-
         fillWithBlocks(world, box, 0, 1, 0, lastX, def.height, lastZ, Blocks.AIR.getDefaultState(), Blocks.AIR.getDefaultState(), false);
         fillWithBlocks(world, box, 0, 0, 0, 0, 0, lastZ, edge, edge, false);
         fillWithBlocks(world, box, lastX, 0, 0, lastX, 0, lastZ, edge, edge, false);
         fillWithBlocks(world, box, 1, 0, 0, lastX - 1, 0, 0, edge, edge, false);
         fillWithBlocks(world, box, 1, 0, lastZ, lastX - 1, 0, lastZ, edge, edge, false);
-
         int row = Math.max(1, def.rowWidth);
         int step = def.water ? row + 1 : row;
         for (int x = 1; x < lastX; x++) {
@@ -114,11 +105,9 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
                 fillWithBlocks(world, box, x, 0, 1, x, 0, lastZ - 1, Blocks.WATER.getDefaultState(), Blocks.WATER.getDefaultState(), false);
                 continue;
             }
-
             fillWithBlocks(world, box, x, 0, 1, x, 0, lastZ - 1, soil, soil, false);
             for (int z = 1; z < lastZ; z++) { setBlockState(world, crop(random, def), x, 1, z, box); }
         }
-
         for (int z = 0; z <= lastZ; z++) {
             for (int x = 0; x <= lastX; x++) {
                 clearCurrentPositionBlocksUpwards(world, x, def.height, z, box);
@@ -129,7 +118,6 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
 
     private void template(World world, VillageDef def, StructureBoundingBox box) {
         if (!(world instanceof WorldServer)) { return; }
-
         ResourceLocation name = new ResourceLocation(def.structure);
         TemplateManager templates = ((WorldServer) world).getStructureTemplateManager();
         Template template = templates.get(world.getMinecraftServer(), name);
@@ -137,11 +125,9 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             ContentLog.LOGGER.error("Village plot {} asks for template {}, which no pack provides, leaving the ground as it is", def.registryName, name);
             return;
         }
-
         Rotation rotation = rotation();
         PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
         template.addBlocksToWorld(world, corner(rotation), settings);
-
         boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
         int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;
         int depth = (turned ? boundingBox.maxX - boundingBox.minX : boundingBox.maxZ - boundingBox.minZ) + 1;
@@ -154,7 +140,6 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         if (rotation == Rotation.CLOCKWISE_90) { return new BlockPos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ); }
         if (rotation == Rotation.CLOCKWISE_180) { return new BlockPos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ); }
         if (rotation == Rotation.COUNTERCLOCKWISE_90) { return new BlockPos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ); }
-
         return new BlockPos(boundingBox.minX, boundingBox.minY, boundingBox.minZ);
     }
 
@@ -163,23 +148,19 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         if (facing == EnumFacing.WEST) { return Rotation.CLOCKWISE_90; }
         if (facing == EnumFacing.NORTH) { return Rotation.CLOCKWISE_180; }
         if (facing == EnumFacing.EAST) { return Rotation.COUNTERCLOCKWISE_90; }
-
         return Rotation.NONE;
     }
 
     private IBlockState crop(Random random, VillageDef def) {
         if (def.crops.isEmpty()) { return Blocks.WHEAT.getDefaultState(); }
-
         IBlockState chosen = state(def.crops.get(random.nextInt(def.crops.size())), Blocks.WHEAT.getDefaultState());
         Block block = chosen.getBlock();
         if (!(block instanceof BlockCrops)) { return chosen; }
-
         return ((BlockCrops) block).withAge(MathHelper.getInt(random, 0, ((BlockCrops) block).getMaxAge()));
     }
 
     private static IBlockState state(@Nullable String name, IBlockState fallback) {
         if (name == null || name.isEmpty()) { return fallback; }
-
         int split = name.lastIndexOf(':');
         String plain = name;
         int meta = -1;
@@ -187,7 +168,6 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             plain = name.substring(0, split);
             meta = Integer.parseInt(name.substring(split + 1));
         }
-
         ResourceLocation location = new ResourceLocation(plain);
         Block block = ForgeRegistries.BLOCKS.containsKey(location) ? ForgeRegistries.BLOCKS.getValue(location) : null;
         if (block == null) {
@@ -199,7 +179,6 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
 
     private static boolean isNumber(String value) {
         if (value.isEmpty()) { return false; }
-
         for (int i = 0; i < value.length(); i++) {
             if (!Character.isDigit(value.charAt(i))) { return false; }
         }

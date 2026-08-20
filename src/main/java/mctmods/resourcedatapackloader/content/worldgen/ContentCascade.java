@@ -33,7 +33,6 @@ public final class ContentCascade {
 
     public static void report(ChunkPos parent, ChunkPos provided) {
         if (!ContentLog.LOGGER.debugEnabled()) { return; }
-
         StackTraceElement culprit = culprit();
         if (culprit != null) { ContentLog.LOGGER.warn("Chunk {} provided while populating {} by {}.{}:{}", provided, parent, culprit.getClassName(), culprit.getMethodName(), culprit.getLineNumber()); }
         else { ContentLog.LOGGER.warn("Chunk {} provided while populating {}, no mod frame on the stack", provided, parent); }

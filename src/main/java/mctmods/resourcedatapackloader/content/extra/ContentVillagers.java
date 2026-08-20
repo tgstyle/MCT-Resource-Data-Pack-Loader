@@ -45,21 +45,18 @@ public final class ContentVillagers {
         if (loaded) { return wanted(); }
         loaded = true;
         if (!Config.content.villagers) { return false; }
-
         PackManager.get().forEach(PackManager.VILLAGERS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }
             try { readVillager(key, contents); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in villager file {}, ignoring it", key, ex); }
         });
-
         PackManager.get().forEach(PackManager.TRADES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }
             try { readTrades(key, contents); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in trade file {}, ignoring it", key, ex); }
         });
-
         if (!VILLAGERS.isEmpty()) { Summary.info("villagers", "Loaded " + VILLAGERS.size() + " villager profession(s) from packs"); }
         if (!TRADES.isEmpty()) { Summary.info("trades", "Loaded " + TRADES.size() + " villager trade(s) from packs"); }
         return wanted();
@@ -73,13 +70,11 @@ public final class ContentVillagers {
             ContentLog.LOGGER.error("Villager file {} is empty, ignoring it", key);
             return;
         }
-
         List<String> careers = strings(json, "careers");
         if (careers.isEmpty()) {
             ContentLog.LOGGER.error("Villager profession {} lists no careers, ignoring it. A profession with no career cannot be assigned to a villager", key);
             return;
         }
-
         VILLAGERS.put(key, new VillagerDef(key,
                 JsonUtils.getString(json, "texture", "minecraft:textures/entity/villager/villager.png"),
                 JsonUtils.getString(json, "zombieTexture", "minecraft:textures/entity/zombie_villager/zombie_villager.png"),
@@ -93,27 +88,23 @@ public final class ContentVillagers {
             ContentLog.LOGGER.error("Trade file {} is empty, ignoring it", key);
             return;
         }
-
         for (JsonElement element : JsonUtils.getJsonArray(json, "trades")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
             }
-
             JsonObject entry = element.getAsJsonObject();
             int level = JsonUtils.getInt(entry, "level", 1);
             if (level < 1) {
                 ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
                 continue;
             }
-
             TradeStackDef sell = stack(entry, "sell");
             TradeStackDef buy = stack(entry, "buy");
             if (sell.isEmpty() || buy.isEmpty()) {
                 ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
                 continue;
             }
-
             TRADES.add(new TradeDef(key,
                     JsonUtils.getString(entry, "profession", ""),
                     JsonUtils.getString(entry, "career", ""),
@@ -125,7 +116,6 @@ public final class ContentVillagers {
 
     private static TradeStackDef stack(JsonObject json, String name) {
         if (!json.has(name)) { return new TradeStackDef("", 1, 1); }
-
         JsonObject entry = JsonUtils.getJsonObject(json, name);
         int min = Math.max(1, JsonUtils.getInt(entry, "min", 1));
         return new TradeStackDef(JsonUtils.getString(entry, "item", ""), min, Math.max(min, JsonUtils.getInt(entry, "max", min)));
@@ -133,7 +123,6 @@ public final class ContentVillagers {
 
     private static List<String> strings(JsonObject json, String name) {
         if (!json.has(name)) { return Collections.emptyList(); }
-
         List<String> values = new ArrayList<>();
         for (JsonElement element : JsonUtils.getJsonArray(json, name)) { values.add(element.getAsString()); }
         return Collections.unmodifiableList(values);
@@ -144,10 +133,9 @@ public final class ContentVillagers {
         for (VillagerDef def : VILLAGERS.values()) {
             if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
             if (ForgeRegistries.VILLAGER_PROFESSIONS.containsKey(def.registryName)) {
-                ContentLog.LOGGER.info("Villager profession {} is already registered, leaving it alone", def.registryName);
+                ContentLog.LOGGER.debug("Villager profession {} is already registered, leaving it alone", def.registryName);
                 continue;
             }
-
             ModContainer previous = Loader.instance().activeModContainer();
             try {
                 Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
@@ -165,14 +153,11 @@ public final class ContentVillagers {
         int count = 0;
         for (TradeDef def : TRADES) {
             if (!ContentRegistry.available(def.requires, def.key)) { continue; }
-
             VillagerRegistry.VillagerCareer career = career(def);
             if (career == null) { continue; }
-
             ItemStack buy = ContentStacks.parse(def.key, def.buy.item, def.buy.min);
             ItemStack sell = ContentStacks.parse(def.key, def.sell.item, def.sell.min);
             if (buy.isEmpty() || sell.isEmpty()) { continue; }
-
             ItemStack buySecondary = def.buySecondary.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(def.key, def.buySecondary.item, def.buySecondary.min);
             career.addTrade(def.level, new ContentTrade(def, buy, buySecondary, sell));
             count++;
@@ -186,20 +171,16 @@ public final class ContentVillagers {
             ContentLog.LOGGER.error("Trade in {} names profession '{}', which is not registered, skipping it", def.key, def.profession);
             return null;
         }
-
         VillagerRegistry.VillagerProfession profession = ForgeRegistries.VILLAGER_PROFESSIONS.getValue(location);
         if (profession == null) { return null; }
-
         List<String> names = new ArrayList<>();
         VillagerRegistry.VillagerCareer first = profession.getCareer(0);
         for (int id = 0; id < MAX_CAREERS; id++) {
             VillagerRegistry.VillagerCareer career = profession.getCareer(id);
             if (id > 0 && career == first) { break; }
-
             names.add(career.getName());
             if (career.getName().equals(def.career)) { return career; }
         }
-
         ContentLog.LOGGER.error("Trade in {} names career '{}' of profession '{}', which has no such career. It offers {}", def.key, def.career, def.profession, names);
         return null;
     }

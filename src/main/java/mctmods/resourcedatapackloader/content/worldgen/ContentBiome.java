@@ -33,19 +33,13 @@ public class ContentBiome extends Biome {
     protected ContentBiome(BiomeDef def, BiomeProperties properties) {
         super(properties);
         this.def = def;
-
         setRegistryName(def.registryName);
-
         IBlockState top = block(def.topBlock);
         if (top != null) { this.topBlock = top; }
-
         IBlockState filler = block(def.fillerBlock);
         if (filler != null) { this.fillerBlock = filler; }
-
         this.stoneState = def.stoneBlock.isEmpty() ? null : block(def.stoneBlock);
-
         if (!def.keepDefaultSpawns) { clearSpawns(); }
-
         decorate(this.decorator, def.decoration);
     }
 
@@ -78,7 +72,6 @@ public class ContentBiome extends Biome {
     private void addSpawn(SpawnEntryDef entry) {
         Class<? extends EntityLiving> type = living(entry.entity);
         if (type == null) { return; }
-
         List<SpawnListEntry> list = listFor(entry.creatureType);
         if (list == null) {
             ContentLog.LOGGER.error("Spawn entry in biome {} has creature type '{}', which is not one of monster, creature, ambient or water", def.registryName, entry.creatureType);
@@ -90,7 +83,6 @@ public class ContentBiome extends Biome {
     @Nullable private List<SpawnListEntry> listFor(String creatureType) {
         EnumCreatureType type = creatureType(creatureType);
         if (type == null) { return null; }
-
         switch (type) {
             case MONSTER: return spawnableMonsterList;
             case CREATURE: return spawnableCreatureList;
@@ -103,7 +95,6 @@ public class ContentBiome extends Biome {
     @Nullable private static EnumCreatureType creatureType(String name) {
         String wanted = name.trim().replace("_", "").toLowerCase(Locale.ROOT);
         if ("water".equals(wanted)) { return EnumCreatureType.WATER_CREATURE; }
-
         for (EnumCreatureType type : EnumCreatureType.values()) {
             if (type.name().replace("_", "").toLowerCase(Locale.ROOT).equals(wanted)) { return type; }
         }
@@ -116,10 +107,8 @@ public class ContentBiome extends Biome {
             ContentLog.LOGGER.error("Biome {} names spawn entity '{}', which is not registered, skipping that entry", def.registryName, name);
             return null;
         }
-
         EntityEntry entry = ForgeRegistries.ENTITIES.getValue(location);
         if (entry == null) { return null; }
-
         Class<?> type = entry.getEntityClass();
         if (!EntityLiving.class.isAssignableFrom(type)) {
             ContentLog.LOGGER.error("Biome {} names spawn entity '{}', which is not a living entity, skipping that entry", def.registryName, name);
@@ -135,7 +124,6 @@ public class ContentBiome extends Biome {
     public boolean suppresses(DecorateBiomeEvent.Decorate.EventType type) {
         String key = SUPPRESSED.get(type);
         if (key == null) { return false; }
-
         Integer value = def.decoration.get(key);
         return value != null && value <= 0;
     }
@@ -175,13 +163,10 @@ public class ContentBiome extends Biome {
 
     public float monsterRate(boolean sky, boolean day) {
         if (sky) { return day ? def.surfaceDayMonsterRate : def.surfaceNightMonsterRate; }
-
         return day ? def.undergroundDayMonsterRate : def.undergroundNightMonsterRate;
     }
 
-    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeGrassColor(int original) {
-        return def.grassColor == ContentTypes.NO_COLOR ? original : def.grassColor;
-    }
+    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeGrassColor(int original) { return def.grassColor == ContentTypes.NO_COLOR ? original : def.grassColor; }
 
     private static Map<DecorateBiomeEvent.Decorate.EventType, String> suppressed() {
         Map<DecorateBiomeEvent.Decorate.EventType, String> map = new EnumMap<>(DecorateBiomeEvent.Decorate.EventType.class);

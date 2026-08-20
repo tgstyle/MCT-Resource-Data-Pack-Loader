@@ -31,7 +31,6 @@ public final class PackOptionsButton {
 
     private static void flash(GuiScreen gui, int y) {
         if (Minecraft.getSystemTime() / FLASH_MILLIS % 2L != 0L) { return; }
-
         FontRenderer font = Minecraft.getMinecraft().fontRenderer;
         String message = I18n.format("rdpl.gui.packOptions.restartRequired");
         font.drawStringWithShadow(message, (float) gui.width / 2 - font.getStringWidth(message) / 2.0F, y, 0xFF5555);
@@ -69,19 +68,16 @@ public final class PackOptionsButton {
         @SubscribeEvent public void onAction(GuiScreenEvent.ActionPerformedEvent.Post event) {
             if (event.getButton().id != ID && event.getButton().id != SELECTION_ID) { return; }
             if (!(event.getGui() instanceof GuiCreateWorld) && !(event.getGui() instanceof GuiWorldSelection)) { return; }
-
             event.getGui().mc.displayGuiScreen(new GuiPackOptions(event.getGui()));
         }
 
         @SubscribeEvent public void beforeDraw(GuiScreenEvent.DrawScreenEvent.Pre event) {
             if (event.getGui() instanceof GuiCreateWorld) {
                 if (create == null || PackOptions.applied()) { return; }
-
                 create.enabled = false;
                 return;
             }
             if (!(event.getGui() instanceof GuiWorldSelection) || corner == null) { return; }
-
             boolean pending = !PackOptions.applied();
             corner.visible = (play != null && play.enabled) || pending;
             corner.enabled = corner.visible;
@@ -95,7 +91,6 @@ public final class PackOptionsButton {
                 return;
             }
             if (!(event.getGui() instanceof GuiWorldSelection)) { return; }
-
             flash(event.getGui(), event.getGui().height - 62);
         }
     }

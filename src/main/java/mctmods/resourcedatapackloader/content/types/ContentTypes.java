@@ -55,7 +55,6 @@ public final class ContentTypes {
         MATERIALS.put("piston", Material.PISTON);
         MATERIALS.put("barrier", Material.BARRIER);
         MATERIALS.put("structure_void", Material.STRUCTURE_VOID);
-
         MAP_COLORS.put("air", MapColor.AIR);
         MAP_COLORS.put("grass", MapColor.GRASS);
         MAP_COLORS.put("sand", MapColor.SAND);
@@ -92,7 +91,6 @@ public final class ContentTypes {
         MAP_COLORS.put("emerald", MapColor.EMERALD);
         MAP_COLORS.put("obsidian", MapColor.OBSIDIAN);
         MAP_COLORS.put("netherrack", MapColor.NETHERRACK);
-
         SOUND_TYPES.put("wood", SoundType.WOOD);
         SOUND_TYPES.put("ground", SoundType.GROUND);
         SOUND_TYPES.put("plant", SoundType.PLANT);
@@ -138,10 +136,8 @@ public final class ContentTypes {
 
     public static int color(String value, String context) {
         if (value == null || value.isEmpty()) { return 0xFFFFFFFF; }
-
         String cleaned = value.startsWith("#") ? value.substring(1) : value;
         if (cleaned.startsWith("0x") || cleaned.startsWith("0X")) { cleaned = cleaned.substring(2); }
-
         try { return (int) Long.parseLong(cleaned, 16); }
         catch (NumberFormatException ex) {
             ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);

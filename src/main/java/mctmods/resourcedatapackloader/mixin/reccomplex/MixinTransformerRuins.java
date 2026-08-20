@@ -14,14 +14,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Random;
 
-@Mixin(value = TransformerRuins.class, remap = false)
-public abstract class MixinTransformerRuins {
+@Mixin(value = TransformerRuins.class, remap = false) public abstract class MixinTransformerRuins {
     @Unique private static boolean rdpl$told;
 
-    @Inject(method = "decayBlock", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$leaveLandAlone(World world, Random random, IBlockState state, BlockPos pos, StructureBoundingBox boundingBox, CallbackInfo ci) {
+    @Inject(method = "decayBlock", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$leaveLandAlone(World world, Random random, IBlockState state, BlockPos pos, StructureBoundingBox boundingBox, CallbackInfo ci) {
         if (world.getChunkProvider().getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4) != null) { return; }
-
         if (!rdpl$told) {
             rdpl$told = true;
             ContentLog.LOGGER.info("A ruin was being weathered into land that has not been made yet. Making it there and then would have made everything around it in turn, so that part is left unweathered");

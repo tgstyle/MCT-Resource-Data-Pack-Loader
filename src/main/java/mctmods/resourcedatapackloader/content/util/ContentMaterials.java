@@ -35,13 +35,11 @@ public final class ContentMaterials {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.load) { return; }
-
         PackManager.get().forEach(PackManager.MATERIALS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try { read(key, contents); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in material file {}, ignoring it", key, ex); }
         });
-
         if (!DEFS.isEmpty()) { Summary.info("materials", "Loaded " + DEFS.size() + " material definition(s)"); }
     }
 
@@ -51,7 +49,6 @@ public final class ContentMaterials {
             ContentLog.LOGGER.error("Material file {} is empty, ignoring it", key);
             return;
         }
-
         int[] reduction = {2, 5, 6, 2};
         if (json.has("reduction")) {
             JsonArray array = JsonUtils.getJsonArray(json, "reduction");
@@ -60,7 +57,6 @@ public final class ContentMaterials {
                 for (int i = 0; i < 4; i++) { reduction[i] = array.get(i).getAsInt(); }
             }
         }
-
         String name = key.getNamespace() + "_" + key.getPath().replace('/', '_');
         DEFS.put(key.toString(), new MaterialDef(key, name,
                 JsonUtils.getInt(json, "harvestLevel", 1),
@@ -97,10 +93,8 @@ public final class ContentMaterials {
 
     @Nullable public static MaterialDef find(String name, Object context) {
         if (name == null || name.isEmpty()) { return null; }
-
         MaterialDef def = DEFS.get(name);
         if (def != null) { return def; }
-
         ContentLog.LOGGER.error("Unknown material '{}' in {}, the item is skipped. Known materials are {}", name, context, DEFS.keySet());
         return null;
     }

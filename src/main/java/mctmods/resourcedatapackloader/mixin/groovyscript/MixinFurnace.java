@@ -8,8 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = Furnace.class, remap = false)
-public abstract class MixinFurnace {
+@Mixin(value = Furnace.class, remap = false) public abstract class MixinFurnace {
     @Inject(method = "add(Lcom/cleanroommc/groovyscript/compat/vanilla/Furnace$Recipe;)V", at = @At("HEAD"), remap = false)
     private void rdpl$trust(CallbackInfo ci) { FurnaceBlocking.beginTrusted("GroovyScript"); }
 

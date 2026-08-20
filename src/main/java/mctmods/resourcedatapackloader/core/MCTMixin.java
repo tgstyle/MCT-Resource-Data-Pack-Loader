@@ -31,10 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-@Mod(modid = MCTMixin.MIXIN_ID, name = "RDPL Mixin", version = "1.0", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*")
-@IFMLLoadingPlugin.Name("RDPLCore")
-@IFMLLoadingPlugin.SortingIndex(1001)
-public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
+@Mod(modid = MCTMixin.MIXIN_ID, name = "RDPL Mixin", version = "1.0", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*") @IFMLLoadingPlugin.Name("RDPLCore") @IFMLLoadingPlugin.MCVersion("1.12.2") @IFMLLoadingPlugin.SortingIndex(1001) public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
     public static final String MIXIN_ID = "resourcedatapackloader_mixin";
     public static final Logger LOGGER = LogManager.getLogger("RDPL");
 
@@ -81,11 +78,11 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
         MinecraftForge.EVENT_BUS.register(ContentBeard.class);
     }
 
-    @Override public String[] getASMTransformerClass() { return new String[0]; }
+    @Override public String[] getASMTransformerClass() { return new String[]{
+            "mctmods.resourcedatapackloader.core.transformer.RubicWorldEditTransformer"}; }
 
     @Override public String getModContainerClass() {
         if (cofhWorldPresent()) { return null; }
-
         LOGGER.info("CoFH World is not installed, providing an emulated container so mods that require it can load");
         return "mctmods.resourcedatapackloader.core.CofhWorldContainer";
     }
@@ -94,7 +91,6 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     private static boolean inModJars() {
         if (MCTMixin.class.getClassLoader().getResource("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
-
         try {
             File home = (File) net.minecraftforge.fml.relauncher.FMLInjectionData.data()[6];
             File[] roots = { new File(home, "mods"), new File(new File(home, "mods"), "1.12.2") };
@@ -135,12 +131,13 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override public String getAccessTransformerClass() { return null; }
 
-    @Override public List<String> getMixinConfigs() { return Arrays.asList("mixins.resourcedatapackloader.json", "mixins.resourcedatapackloader.fml.json", "mixins.resourcedatapackloader.groovyscript.json",
-            "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json"); }
+    @Override public List<String> getMixinConfigs() {
+        return Arrays.asList("mixins.resourcedatapackloader.rdpl.json", "mixins.resourcedatapackloader.fml.json", "mixins.resourcedatapackloader.groovyscript.json",
+                "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json");
+    }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (mixinConfig.endsWith(".fml.json")) { return !cleanroom(); }
-
         return true;
     }
 
@@ -157,5 +154,4 @@ public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
         }
         return cleanroomLoader;
     }
-
 }

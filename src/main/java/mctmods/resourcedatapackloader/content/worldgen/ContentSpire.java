@@ -21,7 +21,6 @@ public final class ContentSpire implements IContentShape {
         int height = Math.max(1, shape.height.pick(random));
         int step = shape.hanging ? -1 : 1;
         boolean round = shape.isRound();
-
         boolean placed = false;
         for (int level = 0; level < height; level++) {
             int reach = reach(radius, level / (double) height);
@@ -30,7 +29,6 @@ public final class ContentSpire implements IContentShape {
             for (int offX = -reach; offX <= reach; offX++) {
                 for (int offZ = -reach; offZ <= reach; offZ++) {
                     if (round && offX * offX + offZ * offZ > span) { continue; }
-
                     placed |= placer.place(world, random, origin.getX() + offX, y, origin.getZ() + offZ);
                 }
             }
@@ -41,7 +39,6 @@ public final class ContentSpire implements IContentShape {
     private int reach(int radius, double climbed) {
         if (ShapeDef.BELL.equals(shape.taper)) { return (int) Math.round(radius * Math.sqrt(Math.max(0.0D, 1.0D - climbed * climbed))); }
         if (ShapeDef.NEEDLE.equals(shape.taper)) { return (int) Math.round(radius * (1.0D - climbed) * (1.0D - climbed)); }
-
         return (int) Math.round(radius * (1.0D - climbed));
     }
 }

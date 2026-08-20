@@ -14,7 +14,6 @@ public final class PickDef {
 
     public static String pick(List<PickDef> choices, Random random, String fallback) {
         if (choices == null || choices.isEmpty()) { return fallback; }
-
         int total = 0;
         for (PickDef choice : choices) { total += choice.weight; }
         int roll = random.nextInt(total);

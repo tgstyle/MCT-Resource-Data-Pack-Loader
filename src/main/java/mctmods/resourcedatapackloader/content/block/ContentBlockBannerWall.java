@@ -25,8 +25,7 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockBannerWall extends BlockBanner.BlockBannerHanging implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockBannerWall extends BlockBanner.BlockBannerHanging implements IContentBlock {
     public static final String WALL_SUFFIX = "_wall";
     private final BlockDef def;
     @Nullable private ContentBlockBanner standing;
@@ -35,7 +34,6 @@ public class ContentBlockBannerWall extends BlockBanner.BlockBannerHanging imple
         this.def = def;
         BlockVariant variant = def.at(0);
         ContentSetup.material(this, def);
-
         setRegistryName(new ResourceLocation(def.registryName.getNamespace(), def.registryName.getPath() + WALL_SUFFIX));
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);

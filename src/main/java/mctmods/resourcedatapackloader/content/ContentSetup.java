@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.mixin.AccessorBlock;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.util.ContentCreativeTab;
 import mctmods.resourcedatapackloader.content.util.ContentTabs;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
 
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
@@ -42,8 +42,7 @@ public final class ContentSetup {
 
     public static void material(Block block, BlockDef def) {
         if (def.material == null) { return; }
-
-        AccessorBlock inside = (AccessorBlock) block;
+        IBlock inside = (IBlock) block;
         inside.rdpl$setMaterial(def.material);
         inside.rdpl$setMapColor(def.material.getMaterialMapColor());
     }
@@ -91,7 +90,6 @@ public final class ContentSetup {
     private static Supplier<ItemStack> declared(String label, Supplier<ItemStack> fallback) {
         String declared = ContentTabs.icon(label);
         if (declared == null) { return fallback; }
-
         return () -> {
             ItemStack stack = ContentStacks.parse(ContentTabs.source(label), declared, 1);
             return stack.isEmpty() ? fallback.get() : stack;
@@ -101,7 +99,6 @@ public final class ContentSetup {
     @Nullable public static CreativeTabs tab(String label, Supplier<ItemStack> icon) {
         if (label == null || label.isEmpty()) { return null; }
         if (FMLCommonHandler.instance().getSide() == Side.SERVER) { return null; }
-
         for (CreativeTabs tab : CreativeTabs.CREATIVE_TAB_ARRAY) {
             if (label.equals(tab.getTabLabel())) { return tab; }
         }

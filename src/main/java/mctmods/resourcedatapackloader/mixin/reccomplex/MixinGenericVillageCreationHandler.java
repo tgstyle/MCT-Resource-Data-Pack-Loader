@@ -11,14 +11,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Random;
 
-@Mixin(value = GenericVillageCreationHandler.class, remap = false)
-public abstract class MixinGenericVillageCreationHandler {
+@Mixin(value = GenericVillageCreationHandler.class, remap = false) public abstract class MixinGenericVillageCreationHandler {
     @Shadow public abstract Class<? extends StructureVillagePieces.Village> getComponentClass();
 
-    @Inject(method = "getVillagePieceWeight", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$standAside(Random random, int villageSize, CallbackInfoReturnable<StructureVillagePieces.PieceWeight> cir) {
+    @Inject(method = "getVillagePieceWeight", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$standAside(Random random, int villageSize, CallbackInfoReturnable<StructureVillagePieces.PieceWeight> cir) {
         if (!ContentBeard.wanted()) { return; }
-
         cir.setReturnValue(new StructureVillagePieces.PieceWeight(getComponentClass(), 0, 0));
     }
 }

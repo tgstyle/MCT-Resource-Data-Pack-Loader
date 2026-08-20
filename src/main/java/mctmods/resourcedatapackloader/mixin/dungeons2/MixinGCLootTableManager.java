@@ -19,14 +19,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.HashMap;
 import java.util.Map;
 
-@Mixin(value = LootTableManager.class, remap = false)
-@SuppressWarnings("deprecation") public abstract class MixinGCLootTableManager {
+@Mixin(value = LootTableManager.class, remap = false) @SuppressWarnings("deprecation") public abstract class MixinGCLootTableManager {
     @Shadow @Final private static Gson GSON_INSTANCE;
     @Unique private Map<ResourceLocation, LootTable> rdpl$cache;
 
-    @SuppressWarnings("ConstantConditions")
-    @Inject(method = "getLootTableFromLocation", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$serveFromPack(ResourceLocation location, CallbackInfoReturnable<LootTable> cir) {
+    @SuppressWarnings("ConstantConditions") @Inject(method = "getLootTableFromLocation", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$serveFromPack(ResourceLocation location, CallbackInfoReturnable<LootTable> cir) {
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
         if (rdpl$cache == null) { rdpl$cache = new HashMap<>(); }
@@ -50,8 +47,7 @@ import java.util.Map;
         }
     }
 
-    @Inject(method = "reloadLootTables", at = @At("HEAD"), remap = false)
-    private void rdpl$invalidate(CallbackInfo ci) {
+    @Inject(method = "reloadLootTables", at = @At("HEAD"), remap = false) private void rdpl$invalidate(CallbackInfo ci) {
         if (rdpl$cache != null) { rdpl$cache.clear(); }
     }
 }

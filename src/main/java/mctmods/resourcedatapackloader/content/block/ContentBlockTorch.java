@@ -29,7 +29,6 @@ public class ContentBlockTorch extends BlockTorch implements IContentBlock {
     public ContentBlockTorch(BlockDef def) {
         this.def = def;
         BlockVariant variant = def.at(0);
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);
@@ -46,24 +45,19 @@ public class ContentBlockTorch extends BlockTorch implements IContentBlock {
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
-    @Override @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Random rand) {
+    @Override @SideOnly(Side.CLIENT) public void randomDisplayTick(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Random rand) {
         if (Objects.equals(def.torchParticle, BlockDef.PARTICLE_NONE)) { return; }
-
         EnumFacing facing = state.getValue(FACING);
         double x = pos.getX() + 0.5;
         double y = pos.getY() + 0.7;
         double z = pos.getZ() + 0.5;
-
         if (facing.getAxis().isHorizontal()) {
             EnumFacing opposite = facing.getOpposite();
             x += 0.27 * opposite.getXOffset();
             y += 0.22;
             z += 0.27 * opposite.getZOffset();
         }
-
         if (def.torchSmoke) { world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0.0, 0.0, 0.0); }
-
         if (Objects.equals(def.torchParticle, BlockDef.PARTICLE_COLORED)) {
             world.spawnParticle(EnumParticleTypes.REDSTONE, x, y, z,
                     Math.max(MIN_RED, ContentTypes.red(def.torchColor)), ContentTypes.green(def.torchColor), ContentTypes.blue(def.torchColor));
@@ -71,5 +65,4 @@ public class ContentBlockTorch extends BlockTorch implements IContentBlock {
         }
         world.spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0.0, 0.0, 0.0);
     }
-
 }

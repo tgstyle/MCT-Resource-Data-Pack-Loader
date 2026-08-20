@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.mixin.AccessorStructureComponentBox;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
@@ -39,7 +39,6 @@ public final class BeardOpen {
         boolean traced = ContentLog.LOGGER.debugEnabled();
         if (traced) { ContentLog.LOGGER.debug("Hook for {} box {},{},{} known {} lowest {}", piece.getClass().getSimpleName(), box.minX, box.minY, box.minZ, known, lowestFooting == Integer.MAX_VALUE ? "none" : String.valueOf(lowestFooting - box.minY)); }
         if (lowestFooting == Integer.MAX_VALUE) { return; }
-
         StringBuilder trace = traced ? new StringBuilder() : null;
         int grounded = seat(start, piece, world, box, clip, at, footings, depth, traced, trace);
         int overhead = BeardGround.liftOffRoof(start, piece, world, box, clip, at);
@@ -74,7 +73,6 @@ public final class BeardOpen {
                     at.setPos(x, y, z);
                     Block held = world.getBlockState(at).getBlock();
                     if (held == Blocks.AIR || BeardBlocks.terrainBlock(held)) { continue; }
-
                     footing = y - 1;
                     fenced = held instanceof BlockFence;
                     break;
@@ -82,7 +80,6 @@ public final class BeardOpen {
                 for (int y = box.minY + ContentBeard.footingSink(piece) + 1; y <= box.maxY; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-
                     IBlockState held = world.getBlockState(at);
                     if (held.getBlock() == Blocks.STONE && !held.getValue(BlockStone.VARIANT).isNatural()) { continue; }
                     if (BeardBlocks.terrainBlock(held.getBlock()) || held.getMaterial() == Material.VINE) { eaves += BeardBlocks.clearAt(world, at); }
@@ -92,14 +89,12 @@ public final class BeardOpen {
                 if (footing < lowestFooting) { lowestFooting = footing; }
             }
         }
-
         return new int[] { lowestFooting, known, eaves };
     }
 
     private static int seat(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int[] footings, int depth, boolean traced, StringBuilder trace) {
         int width = box.maxX - box.minX + 1;
         int grounded = 0;
-
         int[] froms = new int[width * depth];
         int[] tops = new int[width * depth];
         for (int x = box.minX; x <= box.maxX; x++) {
@@ -111,14 +106,12 @@ public final class BeardOpen {
                 froms[spot] = Integer.MIN_VALUE;
                 tops[spot] = Integer.MIN_VALUE;
                 if (footing == Integer.MIN_VALUE) { continue; }
-
                 int from = box.minY - 1 + ContentBeard.groundCourse(piece);
                 froms[spot] = from;
                 for (int y = from; y >= box.minY - 24; y--) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                     if (!world.getBlockState(at).getMaterial().isSolid()) { continue; }
-
                     tops[spot] = y;
                     break;
                 }
@@ -144,7 +137,6 @@ public final class BeardOpen {
                         at.setPos(x, y, z);
                         if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                         if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-
                         boolean exposed = !world.getBlockState(at.up()).getMaterial().isSolid();
                         IBlockState laidAs = ground;
                         if (exposed && ground.getBlock() == Blocks.DIRT) { laidAs = Blocks.GRASS.getDefaultState(); }
@@ -165,19 +157,16 @@ public final class BeardOpen {
         for (int x = box.minX; x <= box.maxX; x++) {
             for (int z = box.minZ; z <= box.maxZ; z++) {
                 if (x != box.minX && x != box.maxX && z != box.minZ && z != box.maxZ) { continue; }
-
                 for (int y = box.minY; y <= box.maxY - 1; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at)) { break; }
                     if (!(world.getBlockState(at).getBlock() instanceof BlockDoor)) { continue; }
-
                     int outX = x == box.minX ? -1 : x == box.maxX ? 1 : 0;
                     int outZ = outX != 0 ? 0 : z == box.minZ ? -1 : 1;
                     at.setPos(x + outX, y - 1, z + outZ);
                     boolean floored = false;
                     if (clip.isVecInside(at) && !BeardPlots.underRoad(start, piece, x + outX, z + outZ) && !BeardPlots.insideAnother(start, piece, at) && !world.getBlockState(at).getMaterial().isSolid() && !world.getBlockState(at).getMaterial().isLiquid()) {
                         if (BeardKeep.holds(x + outX, y - 1, z + outZ)) { continue; }
-
                         IBlockState floor = BeardBlocks.fillGround(world, x + outX, z + outZ);
                         if (floor.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { floor = Blocks.GRASS.getDefaultState(); }
                         world.setBlockState(at, floor, 2);
@@ -190,7 +179,6 @@ public final class BeardOpen {
                         for (int up = 0; up <= 3; up++) {
                             at.setPos(x + outX * step, y + up, z + outZ * step);
                             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-
                             Block held = world.getBlockState(at).getBlock();
                             if (BeardRoads.clearable(world.getBlockState(at)) || held == Blocks.GRASS_PATH) { doorways += BeardBlocks.clearAt(world, at); }
                         }
@@ -206,10 +194,8 @@ public final class BeardOpen {
         int doorways = 0;
         for (StructureComponent other : start.getComponents()) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-
             int[] strip = ContentBeard.facingStrip(box, other.getBoundingBox(), ContentBeard.FACING_GAP);
             if (strip == null) { continue; }
-
             int fromX = strip[0];
             int toX = strip[1];
             int fromZ = strip[2];
@@ -217,7 +203,6 @@ public final class BeardOpen {
             for (int x = fromX; x <= toX; x++) {
                 for (int z = fromZ; z <= toZ; z++) {
                     if (BeardPlots.underRoad(start, piece, x, z)) { continue; }
-
                     for (int y = box.minY + 1; y <= box.minY + 4; y++) {
                         at.setPos(x, y, z);
                         if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
@@ -233,8 +218,7 @@ public final class BeardOpen {
         int bridged = 0;
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || other instanceof StructureVillagePieces.Path || !(other instanceof StructureVillagePieces.Village)) { continue; }
-
-            bridged += BeardRoads.bridge(world, start, piece, box, ((AccessorStructureComponentBox) other).rdpl$box(), clip, at);
+            bridged += BeardRoads.bridge(world, start, piece, box, ((IStructureComponentBox) other).rdpl$box(), clip, at);
         }
         return bridged;
     }

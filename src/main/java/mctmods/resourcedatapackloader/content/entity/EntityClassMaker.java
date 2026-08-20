@@ -24,15 +24,12 @@ public final class EntityClassMaker {
             ContentLog.LOGGER.error("Entity variant {} is based on {}, which has no plain world constructor, so it cannot be copied", key, base.getName());
             return null;
         }
-
         String check = ignoresSpawnRules ? spawnCheck(base) : null;
         if (ignoresSpawnRules && check == null) { ContentLog.LOGGER.error("Entity variant {} sets ignoresSpawnRules but {} has no reachable spawn check, so the rules still apply", key, base.getName()); }
-
         String name = PACKAGE + key.replaceAll("[^A-Za-z0-9_]", "_");
         ClassLoader loader = EntityClassMaker.class.getClassLoader();
         try { return loaded(loader.loadClass(name)); }
         catch (ClassNotFoundException expected) { ContentLog.LOGGER.debug("Making a class for entity variant {}", key); }
-
         byte[] bytes = write(name, base, check);
         try { return loaded((Class<?>) definer().invoke(loader, name, bytes, 0, bytes.length)); }
         catch (ReflectiveOperationException ex) {
@@ -46,7 +43,8 @@ public final class EntityClassMaker {
     @Nullable private static String spawnCheck(Class<?> base) {
         for (String candidate : SPAWN_CHECK) {
             try { return base.getMethod(candidate).getName(); }
-            catch (NoSuchMethodException absent) { continue; }
+            catch (NoSuchMethodException ignored) {
+            }
         }
         return null;
     }
@@ -63,7 +61,6 @@ public final class EntityClassMaker {
         String self = name.replace('.', '/');
         String parent = Type.getInternalName(base);
         String world = Type.getInternalName(World.class);
-
         ClassWriter writer = new ClassWriter(0);
         writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, self, null, parent, null);
         MethodVisitor made = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "(L" + world + ";)V", null, null);
@@ -74,7 +71,6 @@ public final class EntityClassMaker {
         made.visitInsn(Opcodes.RETURN);
         made.visitMaxs(2, 2);
         made.visitEnd();
-
         if (check != null) {
             MethodVisitor spawn = writer.visitMethod(Opcodes.ACC_PUBLIC, check, "()Z", null, null);
             spawn.visitCode();
@@ -83,7 +79,6 @@ public final class EntityClassMaker {
             spawn.visitMaxs(1, 1);
             spawn.visitEnd();
         }
-
         writer.visitEnd();
         return writer.toByteArray();
     }

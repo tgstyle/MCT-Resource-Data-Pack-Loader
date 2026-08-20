@@ -26,18 +26,15 @@ public final class ContentVein implements IContentShape {
         float turn = random.nextFloat() * HALF_TURN;
         double lowY = origin.getY() + random.nextInt(3) - 2;
         double highY = origin.getY() + random.nextInt(3) - 2;
-
         int blocks = MathHelper.clamp(size.pick(random), 1, MOST_BLOCKS);
         if (sparse) { blocks = thinned(blocks, turn, lowY > highY); }
         else if (blocks < SCATTER_BELOW) { return scatter(world, random, blocks, origin); }
-
         double reach = MathHelper.sin(turn) * blocks / 8.0D;
         double drift = MathHelper.cos(turn) * blocks / 8.0D;
         double lowX = origin.getX() + reach;
         double highX = origin.getX() - reach;
         double lowZ = origin.getZ() + drift;
         double highZ = origin.getZ() - drift;
-
         boolean placed = false;
         for (int step = 0; step <= blocks; step++) {
             double along = (double) step / blocks;
@@ -59,19 +56,15 @@ public final class ContentVein implements IContentShape {
 
     private boolean blob(World world, Random random, double centerX, double centerY, double centerZ, double radius) {
         if (radius <= 0.0D) { return false; }
-
         boolean placed = false;
         for (int x = MathHelper.floor(centerX - radius); x <= MathHelper.floor(centerX + radius); x++) {
             double offX = away(x, centerX, radius);
             if (offX >= 1.0D) { continue; }
-
             for (int y = MathHelper.floor(centerY - radius); y <= MathHelper.floor(centerY + radius); y++) {
                 double offY = offX + away(y, centerY, radius);
                 if (offY >= 1.0D) { continue; }
-
                 for (int z = MathHelper.floor(centerZ - radius); z <= MathHelper.floor(centerZ + radius); z++) {
                     if (offY + away(z, centerZ, radius) >= 1.0D) { continue; }
-
                     placed |= placer.place(world, random, x, y, z);
                 }
             }

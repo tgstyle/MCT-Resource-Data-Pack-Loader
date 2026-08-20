@@ -12,21 +12,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import twilightforest.world.ChunkGeneratorTFBase;
 import twilightforest.world.ChunkGeneratorTwilightVoid;
 
-@Mixin(value = ChunkGeneratorTwilightVoid.class, remap = false)
-public abstract class MixinChunkGeneratorTwilightVoid extends ChunkGeneratorTFBase {
+@Mixin(value = ChunkGeneratorTwilightVoid.class, remap = false) public abstract class MixinChunkGeneratorTwilightVoid extends ChunkGeneratorTFBase {
     @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) private MixinChunkGeneratorTwilightVoid() { super(null, 0L, false, false); }
 
-    @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
+    @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
         if (!ContentVoidWorld.appliesTo(world)) { return; }
-
         Chunk chunk = new Chunk(world, new ChunkPrimer(), x, z);
         chunk.generateSkylightMap();
         cir.setReturnValue(chunk);
     }
 
-    @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$skipPopulate(int x, int z, CallbackInfo ci) {
+    @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$skipPopulate(int x, int z, CallbackInfo ci) {
         if (ContentVoidWorld.appliesTo(world)) { ci.cancel(); }
     }
 }

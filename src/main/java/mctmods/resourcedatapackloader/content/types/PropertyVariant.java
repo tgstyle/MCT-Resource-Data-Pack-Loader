@@ -18,9 +18,7 @@ public final class PropertyVariant implements IProperty<String> {
 
     @Override @Nonnull public Class<String> getValueClass() { return String.class; }
 
-    @Override @Nonnull public Optional<String> parseValue(@Nonnull String value) {
-        return values.contains(value) ? Optional.of(value) : Optional.absent();
-    }
+    @Override @Nonnull public Optional<String> parseValue(@Nonnull String value) { return values.contains(value) ? Optional.of(value) : Optional.absent(); }
 
     @Override @Nonnull public String getName(@Nonnull String value) { return value; }
 }

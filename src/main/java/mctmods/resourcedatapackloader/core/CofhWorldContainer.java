@@ -22,8 +22,7 @@ public class CofhWorldContainer extends DummyModContainer {
         return metadata;
     }
 
-    @SuppressWarnings("UnstableApiUsage")
-    @Override public boolean registerBus(EventBus bus, LoadController controller) { return true; }
+    @SuppressWarnings("UnstableApiUsage") @Override public boolean registerBus(EventBus bus, LoadController controller) { return true; }
 
     public static boolean emulated() { return active; }
 }

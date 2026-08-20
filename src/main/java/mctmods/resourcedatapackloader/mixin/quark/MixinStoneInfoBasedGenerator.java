@@ -13,12 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import vazkii.quark.world.world.StoneInfoBasedGenerator;
 import java.util.Random;
 
-@Mixin(value = StoneInfoBasedGenerator.class, remap = false)
-public abstract class MixinStoneInfoBasedGenerator {
+@Mixin(value = StoneInfoBasedGenerator.class, remap = false) public abstract class MixinStoneInfoBasedGenerator {
     @Unique private BlockPos rdpl$middle;
 
-    @Inject(method = "generateChunkPart", at = @At("HEAD"))
-    private void rdpl$rememberMiddle(BlockPos src, Random random, int chunkX, int chunkZ, World world, CallbackInfo ci) {
+    @Inject(method = "generateChunkPart", at = @At("HEAD")) private void rdpl$rememberMiddle(BlockPos src, Random random, int chunkX, int chunkZ, World world, CallbackInfo ci) {
         rdpl$middle = src;
     }
 
@@ -28,10 +26,8 @@ public abstract class MixinStoneInfoBasedGenerator {
         int reach = generator.infoSupplier.get().clusterSize;
         if (middle != null && pos.distanceSq(middle) >= (double) reach * (double) reach) {
             if (ContentChunkWatch.watching()) { ContentChunkWatch.stoneSpared(); }
-
             return false;
         }
-
         return generator.canPlaceBlock(world, pos);
     }
 }

@@ -47,10 +47,8 @@ public final class EntityAIThrower extends EntityAIBase {
 
     @Override public boolean shouldExecute() {
         if (retreating > 0 || reloading > 0) { return true; }
-
         EntityLivingBase found = mob.getAttackTarget();
         if (found == null || held().isEmpty()) { return false; }
-
         double away = mob.getDistanceSq(found);
         return away < range * range && away > REACH * REACH && mob.getEntitySenses().canSee(found);
     }
@@ -69,23 +67,19 @@ public final class EntityAIThrower extends EntityAIBase {
             return;
         }
         if (target == null || target.isDead) { return; }
-
         if (spent()) {
             if (!held().isEmpty()) { mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY); }
             return;
         }
-
         mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
         mob.getNavigator().clearPath();
         ItemStack thrown = held();
         if (thrown.isEmpty() || mob.world.isRemote) { return; }
-
         Vec3d at = new Vec3d(target.posX - mob.posX, target.posY + target.getEyeHeight() - (mob.posY + mob.getEyeHeight()), target.posZ - mob.posZ);
         double far = Math.max(1.0D, at.length());
         Vec3d push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
         if (isTnt(thrown)) { lit(push); }
         else { tossed(thrown, push); }
-
         spend();
     }
 
@@ -127,7 +121,6 @@ public final class EntityAIThrower extends EntityAIBase {
 
     private void backAway() {
         if (target == null || !mob.getNavigator().noPath()) { return; }
-
         Vec3d away = RandomPositionGenerator.findRandomTargetBlockAwayFrom(mob, 12, 5, new Vec3d(target.posX, target.posY, target.posZ));
         if (away != null) { mob.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, 1.4D); }
     }

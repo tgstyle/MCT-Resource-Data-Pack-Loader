@@ -23,8 +23,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentItemFood extends ItemFood implements IContentItem {
+@SuppressWarnings("deprecation") public class ContentItemFood extends ItemFood implements IContentItem {
     private final ItemDef def;
 
     public ContentItemFood(ItemDef def) {
@@ -77,13 +76,10 @@ public class ContentItemFood extends ItemFood implements IContentItem {
     @Override public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
         ItemVariant value = variant(stack);
         if (value == null) { return; }
-
         PotionEffect effect = value.getResolvedPotion();
         if (effect == null) { return; }
-
         Potion potion = effect.getPotion();
         if (!potion.isBeneficial()) { return; }
-
         String name = new TextComponentTranslation(effect.getEffectName()).getFormattedText();
         String level = RomanNumerals.of(effect.getAmplifier());
         tooltip.add(TextFormatting.GREEN + (level.isEmpty() ? name : name + " " + level));

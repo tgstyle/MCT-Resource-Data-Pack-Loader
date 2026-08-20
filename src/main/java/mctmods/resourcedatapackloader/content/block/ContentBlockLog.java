@@ -24,8 +24,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockLog extends BlockLog implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockLog extends BlockLog implements IContentBlock {
     public static final int MAX_VARIANTS = 4;
     private static final ThreadLocal<PropertyVariant> PENDING = new ThreadLocal<>();
     private static final int VARIANT_MASK = 3;
@@ -42,7 +41,6 @@ public class ContentBlockLog extends BlockLog implements IContentBlock {
     protected ContentBlockLog(BlockDef def, PropertyVariant property) {
         this.def = def;
         this.variant = property;
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName.toString());
         ContentSetup.harvest(this, def);
@@ -53,9 +51,7 @@ public class ContentBlockLog extends BlockLog implements IContentBlock {
         setDefaultState(this.blockState.getBaseState().withProperty(LOG_AXIS, EnumAxis.Y).withProperty(property, def.at(0).name));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, LOG_AXIS, PENDING.get());
-    }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, LOG_AXIS, PENDING.get()); }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -89,15 +85,11 @@ public class ContentBlockLog extends BlockLog implements IContentBlock {
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return ContentSetup.metaOf(def, state.getValue(variant)); }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
-        return def.at(damageDropped(state)).light;
-    }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).light; }
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(damageDropped(state)).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) {
-        return def.at(damageDropped(state)).hardness;
-    }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).hardness; }
 
     @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.flammability; }
 

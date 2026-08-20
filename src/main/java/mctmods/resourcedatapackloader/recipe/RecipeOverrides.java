@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentOwners;
-import mctmods.resourcedatapackloader.mixin.InvokerJsonContext;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.InvokerJsonContext;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -108,10 +108,8 @@ public final class RecipeOverrides {
     private static boolean skipPackRecipe(ResourceLocation key, String contents, String namespace) {
         JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
         if (json == null) { return false; }
-
         String missing = findMissing(json, namespace);
         if (missing == null) { return false; }
-
         ContentLog.LOGGER.debug("Skipping pack recipe {}, it uses '{}' which is not registered", key, missing);
         skipped++;
         return true;
@@ -197,7 +195,7 @@ public final class RecipeOverrides {
                 return null;
             }
             if (!CraftingHelper.processConditions(json, CONDITIONS, ctx)) {
-                ContentLog.LOGGER.info("Recipe {} was skipped by its own conditions, leaving the original in place", key);
+                ContentLog.LOGGER.debug("Recipe {} was skipped by its own conditions, leaving the original in place", key);
                 return null;
             }
             IRecipe recipe = CraftingHelper.getRecipe(json, ctx);

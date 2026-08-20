@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
-import mctmods.resourcedatapackloader.mixin.AccessorChunkGeneratorOverworld;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorOverworld;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.state.IBlockState;
@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
+
 public final class BeardSurface {
     private static final Map<World, ChunkGeneratorOverworld> SAMPLERS = new WeakHashMap<>();
     private static final Set<World> UNSAMPLED = Collections.newSetFromMap(new WeakHashMap<>());
@@ -41,7 +42,6 @@ public final class BeardSurface {
 
     private static Map<Long, Integer> topsFor(World world) {
         if (world == lastWorld) { return lastTops; }
-
         lastTops = TOPS.computeIfAbsent(world, held -> new HashMap<>());
         lastWorld = world;
         return lastTops;
@@ -52,18 +52,15 @@ public final class BeardSurface {
         int y = pos.getY();
         if (surface < 0) { return Blocks.AIR.getDefaultState(); }
         if (y > surface) { return y <= world.getSeaLevel() ? Blocks.WATER.getDefaultState() : Blocks.AIR.getDefaultState(); }
-
         Biome biome = world.getBiome(pos);
         if (y == surface) { return surface < world.getSeaLevel() ? biome.fillerBlock : biome.topBlock; }
         if (y > surface - 5) { return biome.fillerBlock; }
-
         return Blocks.STONE.getDefaultState();
     }
 
     public static int surfaceAt(World world, int blockX, int blockZ) {
         ChunkGeneratorOverworld sampled = samplerFor(world);
         if (sampled == null) { return -1; }
-
         Integer known = knownTop(world, blockX, blockZ);
         return known != null ? known : keepTop(world, blockX, blockZ, surface(sampled, world, blockX, blockZ));
     }
@@ -76,7 +73,6 @@ public final class BeardSurface {
     public static int surfaceAt(World world, ChunkGeneratorOverworld sampled, Biome[] region, int originX, int originZ, int size, int blockX, int blockZ) {
         Integer known = knownTop(world, blockX, blockZ);
         if (known != null) { return known; }
-
         Biome[] window = SCRATCH.get().window;
         int nx = blockX >> 2;
         int nz = blockZ >> 2;
@@ -87,14 +83,12 @@ public final class BeardSurface {
         ChunkGeneratorOverworld sampled = SAMPLERS.get(world);
         if (sampled != null) { return sampled; }
         if (UNSAMPLED.contains(world)) { return null; }
-
         IChunkGenerator made = world.provider.createChunkGenerator();
         if (!(made instanceof ChunkGeneratorOverworld)) {
             UNSAMPLED.add(world);
             ContentLog.LOGGER.info("The land in dimension {} is made by {}, which is not the shape this mod can read ahead, so it is asked once and not again", world.provider.getDimension(), made.getClass().getName());
             return null;
         }
-
         sampled = (ChunkGeneratorOverworld) made;
         SAMPLERS.put(world, sampled);
         return sampled;
@@ -104,7 +98,7 @@ public final class BeardSurface {
         return surface(generator, biomes, blockX, blockZ);
     }
     private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ) {
-        AccessorChunkGeneratorOverworld inside = (AccessorChunkGeneratorOverworld) generator;
+        IChunkGeneratorOverworld inside = (IChunkGeneratorOverworld) generator;
         ChunkGeneratorSettings settings = inside.rdpl$settings();
         int nx = blockX >> 2;
         int nz = blockZ >> 2;
@@ -132,7 +126,6 @@ public final class BeardSurface {
                 }
                 float share = weights[dx + 2 + (dz + 2) * 5] / (depthHere + 2.0F);
                 if (beside.getBaseHeight() > middle.getBaseHeight()) { share /= 2.0F; }
-
                 variation += scaleHere * share;
                 base += depthHere * share;
                 weight += share;
@@ -149,7 +142,6 @@ public final class BeardSurface {
         for (int cell = 32; cell >= 0; cell--) {
             double falloff = (cell - middleHeight) * settings.stretchY * 128.0 / 256.0 / variation;
             if (falloff < 0.0) { falloff *= 4.0; }
-
             double least = lower[cell] / settings.lowerLimitScale;
             double most = upper[cell] / settings.upperLimitScale;
             double mix = (main[cell] / 10.0 + 1.0) / 2.0;
@@ -159,7 +151,6 @@ public final class BeardSurface {
                 density = density * (1.0 - taper) + -10.0 * taper;
             }
             if (density > 0.0) { return MathHelper.clamp((int) (cell * 8 + density / (density - over) * 8.0), 1, 254); }
-
             over = density;
         }
         return -1;
@@ -168,16 +159,13 @@ public final class BeardSurface {
     private static double wander(double raw) {
         double wander = raw / 8000.0;
         if (wander < 0.0) { wander = -wander * 0.3; }
-
         wander = wander * 3.0 - 2.0;
         if (wander < 0.0) {
             wander /= 2.0;
             if (wander < -1.0) { wander = -1.0; }
-
             return wander / 1.4 / 2.0;
         }
         if (wander > 1.0) { wander = 1.0; }
-
         return wander / 8.0;
     }
 }

@@ -19,13 +19,11 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockVine extends BlockVine implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockVine extends BlockVine implements IContentBlock {
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
     public static final int MAX_VARIANTS = 1;
@@ -35,7 +33,6 @@ public class ContentBlockVine extends BlockVine implements IContentBlock {
     public ContentBlockVine(BlockDef def, GrowthDef growth) {
         this.def = def;
         this.growth = growth;
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + def.at(0).name);
         if (def.soundType != null) { setSoundType(def.soundType); }
@@ -57,21 +54,16 @@ public class ContentBlockVine extends BlockVine implements IContentBlock {
     @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random random) {
         if (world.isRemote) { return; }
         if (random.nextInt(Math.max(1, growth.stages)) != 0) { return; }
-
         if (growth.spread > 0 && spread(world, pos, random)) { return; }
         if (growth.maxHeight <= 1) { return; }
-
         BlockPos below = pos.down();
         if (!world.isAirBlock(below)) { return; }
-
         int hanging = 1;
         while (world.getBlockState(pos.up(hanging)).getBlock() == this) { hanging++; }
         if (hanging >= growth.maxHeight) { return; }
-
         IBlockState copy = state;
         for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) {
             if (!state.getValue(getPropertyFor(facing))) { continue; }
-
             copy = copy.withProperty(getPropertyFor(facing), Boolean.TRUE);
         }
         world.setBlockState(below, copy, 2);
@@ -79,21 +71,17 @@ public class ContentBlockVine extends BlockVine implements IContentBlock {
 
     private boolean spread(World world, BlockPos pos, Random random) {
         if (crowded(world, pos)) { return false; }
-
         EnumFacing side = EnumFacing.Plane.HORIZONTAL.random(random);
         BlockPos beside = pos.offset(side);
         if (!world.isAirBlock(beside)) { return false; }
-
         IBlockState carried = getDefaultState();
         boolean anchored = false;
         for (EnumFacing wall : EnumFacing.Plane.HORIZONTAL) {
             if (!attachable(world, beside.offset(wall), wall.getOpposite())) { continue; }
-
             carried = carried.withProperty(getPropertyFor(wall), Boolean.TRUE);
             anchored = true;
         }
         if (!anchored) { return false; }
-
         world.setBlockState(beside, carried, 2);
         return true;
     }
@@ -116,7 +104,6 @@ public class ContentBlockVine extends BlockVine implements IContentBlock {
             drops.add(new ItemStack(this, growth.dropCount));
             return;
         }
-
         ItemStack stack = ContentStacks.parse(def.registryName, growth.drop, growth.dropCount);
         if (!stack.isEmpty()) { drops.add(stack); }
     }

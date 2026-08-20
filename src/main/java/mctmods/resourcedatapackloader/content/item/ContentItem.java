@@ -14,8 +14,7 @@ import net.minecraft.util.NonNullList;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentItem extends Item implements IContentItem {
+@SuppressWarnings("deprecation") public class ContentItem extends Item implements IContentItem {
     private final ItemDef def;
 
     public ContentItem(ItemDef def) {

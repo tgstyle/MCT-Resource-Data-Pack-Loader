@@ -21,17 +21,13 @@ public final class ContentBasin implements IContentShape {
         int depth = Math.max(1, shape.height.pick(random));
         boolean round = shape.isRound();
         int span = radius * radius;
-
         boolean placed = false;
         for (int offX = -radius; offX <= radius; offX++) {
             for (int offZ = -radius; offZ <= radius; offZ++) {
                 int flat = offX * offX + offZ * offZ;
                 if (round && flat > span) { continue; }
-
                 int reach = round ? depth - (int) Math.round(Math.sqrt(flat) * depth / (double) radius) : depth;
-                for (int offY = 0; offY < reach; offY++) {
-                    placed |= placer.place(world, random, origin.getX() + offX, origin.getY() - offY, origin.getZ() + offZ);
-                }
+                for (int offY = 0; offY < reach; offY++) { placed |= placer.place(world, random, origin.getX() + offX, origin.getY() - offY, origin.getZ() + offZ); }
             }
         }
         return placed;

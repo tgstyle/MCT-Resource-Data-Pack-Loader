@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.loot;
 
-import mctmods.resourcedatapackloader.mixin.AccessorLootTable;
-import mctmods.resourcedatapackloader.mixin.AccessorLootTableManager;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.ILootTable;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.ILootTableManager;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -35,14 +35,12 @@ public final class LootInjections {
         BY_TABLE.clear();
         generation = PackManager.get().getGeneration();
         if (!Config.data.lootInjections) { return; }
-
         int[] count = new int[1];
         PackManager.get().forEach(PackManager.LOOT_INJECTIONS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try { read(key, contents, count); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in loot injection {}, ignoring it", key, ex); }
         });
-
         if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
     }
 
@@ -52,18 +50,15 @@ public final class LootInjections {
             ContentLog.LOGGER.error("Loot injection {} is empty, ignoring it", key);
             return;
         }
-
         String target = JsonUtils.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
             return;
         }
-
         if (!json.has(POOLS)) {
             ContentLog.LOGGER.error("Loot injection {} has no pools, ignoring it", key);
             return;
         }
-
         List<String> pools = BY_TABLE.computeIfAbsent(new ResourceLocation(target), k -> new ArrayList<>());
         for (com.google.gson.JsonElement element : JsonUtils.getJsonArray(json, POOLS)) {
             pools.add(element.toString());
@@ -71,22 +66,19 @@ public final class LootInjections {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onLootTableLoad(LootTableLoadEvent event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onLootTableLoad(LootTableLoadEvent event) {
         if (!Config.data.lootInjections) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
-
         List<String> pools = BY_TABLE.get(event.getName());
         LootTable table = event.getTable();
         if (pools == null || table == null) { return; }
-
-        Gson gson = AccessorLootTableManager.rdpl$gson();
+        Gson gson = ILootTableManager.rdpl$gson();
         ResourceLocation synthetic = new ResourceLocation(event.getName().getNamespace(), event.getName().getPath() + "_rdpl_injection");
         for (String pool : pools) {
             try {
                 LootTable parsed = ForgeHooks.loadLootTable(gson, synthetic, "{\"pools\":[" + pool + "]}", true, event.getLootTableManager());
                 if (parsed == null) { continue; }
-                for (LootPool each : ((AccessorLootTable) parsed).rdpl$getPools()) { table.addPool(each); }
+                for (LootPool each : ((ILootTable) parsed).rdpl$getPools()) { table.addPool(each); }
             }
             catch (RuntimeException ex) {
                 ContentLog.LOGGER.error("Could not add an injected pool to loot table {}. A pool with the same name may already be there, give each injected pool its own name", event.getName(), ex);

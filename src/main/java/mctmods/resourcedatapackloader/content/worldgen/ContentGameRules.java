@@ -9,11 +9,9 @@ import mctmods.resourcedatapackloader.util.Summary;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 public final class ContentGameRules {
@@ -24,20 +22,16 @@ public final class ContentGameRules {
     public static void load() {
         BY_DIMENSION.clear();
         Map<Integer, Map<String, String>> wanted = new LinkedHashMap<>();
-
         PackManager.get().forEach(PackManager.GAMERULES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             for (Map.Entry<Integer, Map<String, String>> entry : ContentParser.gameRuleFile(key, contents).entrySet()) {
                 wanted.computeIfAbsent(entry.getKey(), id -> new LinkedHashMap<>()).putAll(entry.getValue());
             }
         });
-
         for (DimensionDef def : ContentDimensions.all().values()) {
             if (def.gameRules.isEmpty()) { continue; }
-
             wanted.computeIfAbsent(def.id, id -> new LinkedHashMap<>()).putAll(def.gameRules);
         }
-
         for (Map.Entry<Integer, Map<String, String>> entry : wanted.entrySet()) {
             GameRules rules = new GameRules();
             for (Map.Entry<String, String> rule : entry.getValue().entrySet()) {
@@ -54,7 +48,6 @@ public final class ContentGameRules {
 
     @Nullable public static GameRules forWorld(World world) {
         if (BY_DIMENSION.isEmpty() || world == null || world.provider == null) { return null; }
-
         return BY_DIMENSION.get(world.provider.getDimension());
     }
 }

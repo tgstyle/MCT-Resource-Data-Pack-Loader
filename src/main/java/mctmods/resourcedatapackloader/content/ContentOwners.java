@@ -25,7 +25,6 @@ public final class ContentOwners {
 
     public static boolean reserved(ResourceLocation key) {
         if (!RESERVED.contains(key.getNamespace())) { return false; }
-
         if (WARNED.add(key.getNamespace())) {
             ContentLog.LOGGER.error("A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace());
         }
@@ -35,7 +34,6 @@ public final class ContentOwners {
     public static ModContainer of(String namespace) {
         ModContainer existing = Loader.instance().getIndexedModList().get(namespace);
         if (existing != null) { return existing; }
-
         return CONTAINERS.computeIfAbsent(namespace, id -> {
             ModMetadata metadata = new ModMetadata();
             metadata.modId = id;

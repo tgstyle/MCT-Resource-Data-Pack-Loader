@@ -9,12 +9,10 @@ import net.minecraft.client.resources.ResourcePackListEntry;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 import javax.annotation.Nonnull;
 import java.io.IOException;
 
-@SideOnly(Side.CLIENT)
-public final class PackListEntry extends ResourcePackListEntry {
+@SideOnly(Side.CLIENT) public final class PackListEntry extends ResourcePackListEntry {
     private static final ResourceLocation UNKNOWN_PACK = new ResourceLocation("textures/misc/unknown_pack.png");
     private static ResourceLocation normalIcon;
     private static ResourceLocation overrideIcon;

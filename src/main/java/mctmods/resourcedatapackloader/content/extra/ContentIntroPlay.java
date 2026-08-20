@@ -7,7 +7,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -22,11 +21,9 @@ public final class ContentIntroPlay {
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) { return; }
-
         EntityPlayerMP player = (EntityPlayerMP) event.player;
         if (!enabled()) { return; }
         if (ContentWorldIntro.once() && persisted(player).getBoolean(SEEN)) { return; }
-
         PLAYING.add(player.getUniqueID());
         RDPLNetwork.playIntro(player);
     }

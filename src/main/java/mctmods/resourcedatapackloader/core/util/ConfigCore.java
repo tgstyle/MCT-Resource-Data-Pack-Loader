@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.core.util;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Loader;
-
 import java.io.File;
 
 public final class ConfigCore {
@@ -18,7 +17,6 @@ public final class ConfigCore {
             Configuration cfg = new Configuration(new File(directory(), ConfigLate.FILE));
             cfg.load();
             if (!cfg.hasCategory(category)) { return false; }
-
             Property prop = cfg.getCategory(category).get(name);
             return prop != null && prop.getBoolean();
         }
@@ -30,7 +28,6 @@ public final class ConfigCore {
             Configuration cfg = new Configuration(new File(directory(), ConfigLate.FILE));
             cfg.load();
             if (!cfg.hasCategory(category)) { return fallback; }
-
             Property prop = cfg.getCategory(category).get(name);
             return prop == null ? fallback : prop.getString();
         }
@@ -39,13 +36,11 @@ public final class ConfigCore {
 
     private static File directory() {
         if (configDir != null) { return configDir; }
-
         try {
             File known = Loader.instance().getConfigDir();
             if (known != null) { return known; }
         }
         catch (RuntimeException tooEarly) { return new File("config"); }
-
         return new File("config");
     }
 }

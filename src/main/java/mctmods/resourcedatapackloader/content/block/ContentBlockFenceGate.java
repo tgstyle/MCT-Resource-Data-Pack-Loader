@@ -29,7 +29,6 @@ public class ContentBlockFenceGate extends BlockFenceGate implements IContentBlo
         this.def = def;
         BlockVariant variant = def.at(0);
         ContentSetup.material(this, def);
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);

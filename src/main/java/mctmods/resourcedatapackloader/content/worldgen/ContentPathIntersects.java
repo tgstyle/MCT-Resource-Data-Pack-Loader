@@ -19,33 +19,29 @@ public class ContentPathIntersects {
 
     public static void load() {
         if (loaded) { return; }
-
         loaded = true;
         PackManager.get().forEach(PackManager.PATHINTERSECTS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             PathIntersectDef def = ContentParser.pathIntersect(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
-        if (!DEFS.isEmpty()) { ContentLog.LOGGER.info("Loaded {} path intersect design(s): {}", DEFS.size(), DEFS.keySet()); }
+        if (!DEFS.isEmpty()) { ContentLog.LOGGER.debug("Loaded {} path intersect design(s): {}", DEFS.size(), DEFS.keySet()); }
     }
 
     public static PathIntersectDef forJunction(World world, int x, int z) {
         String[] wanted = ContentControl.list(ContentControl.VILLAGES, "villagePathIntersects", Config.worldgen.villagePathIntersects);
         if (wanted.length == 0) { return null; }
-
         int total = 0;
         for (String key : wanted) {
             PathIntersectDef def = DEFS.get(key);
             if (def != null) { total += def.weight; }
         }
         if (total == 0) { return null; }
-
         Random random = new Random(world.getSeed() ^ (x * 341873128712L + z * 132897987541L));
         int roll = random.nextInt(total);
         for (String key : wanted) {
             PathIntersectDef def = DEFS.get(key);
             if (def == null) { continue; }
-
             roll -= def.weight;
             if (roll < 0) { return def; }
         }

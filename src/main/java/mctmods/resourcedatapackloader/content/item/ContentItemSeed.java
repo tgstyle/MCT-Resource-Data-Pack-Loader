@@ -12,8 +12,7 @@ import net.minecraft.item.ItemStack;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentItemSeed extends ItemSeeds implements IContentItem {
+@SuppressWarnings("deprecation") public class ContentItemSeed extends ItemSeeds implements IContentItem {
     private final ItemDef def;
 
     public ContentItemSeed(ItemDef def, Block crop, Block soil) {

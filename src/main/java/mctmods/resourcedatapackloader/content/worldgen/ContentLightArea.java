@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
+
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -55,52 +56,42 @@ public final class ContentLightArea {
     public static int answer(World world, BlockPos pos, int radius) {
         ContentLightArea area = ((ILightAreaHolder) world).rdpl$lightArea();
         if (area == null || area.inside != world) { return UNKNOWN; }
-
         int dx = (pos.getX() >> 4) - area.chunkX;
         int dz = (pos.getZ() >> 4) - area.chunkZ;
         if (dx == 0 && dz == 0) {
             if (radius <= 16) { return area.ringLoaded ? YES : NO; }
-
             return area.wideLoaded ? YES : UNKNOWN;
         }
         if (dx < -1 || dx > 1 || dz < -1 || dz > 1) { return UNKNOWN; }
-
         return radius <= 16 && area.wideLoaded ? YES : UNKNOWN;
     }
 
     public static Chunk at(World world, BlockPos pos) {
         ContentLightArea area = ((ILightAreaHolder) world).rdpl$lightArea();
         if (area == null || area.inside != world || !area.ringLoaded) { return null; }
-
         int dx = (pos.getX() >> 4) - area.chunkX;
         int dz = (pos.getZ() >> 4) - area.chunkZ;
         if (dx < -1 || dx > 1 || dz < -1 || dz > 1) { return null; }
-
         return area.nearby[(dx + 1) * 3 + dz + 1];
     }
 
     public static boolean skySettled(World world, BlockPos pos) {
         int y = pos.getY();
         if (y < 1 || y > 254) { return false; }
-
         Chunk here = at(world, pos);
         if (here == null) { return false; }
-
         int stored = here.getLightFor(EnumSkyBlock.SKY, pos);
         if (here.canSeeSky(pos)) { return stored == 15; }
-
         IBlockState state = here.getBlockState(pos);
         int opacity = state.getBlock().getLightOpacity(state, world, pos);
         if (opacity < 1) { opacity = 1; }
         if (opacity >= 15) { return stored == 0; }
-
         int raw = 0;
         BlockPos.MutableBlockPos beside = new BlockPos.MutableBlockPos();
         for (EnumFacing facing : EnumFacing.VALUES) {
             beside.setPos(pos.getX() + facing.getXOffset(), y + facing.getYOffset(), pos.getZ() + facing.getZOffset());
             Chunk next = at(world, beside);
             if (next == null) { return false; }
-
             int reaching = next.getLightFor(EnumSkyBlock.SKY, beside) - opacity;
             if (reaching > raw) { raw = reaching; }
             if (raw >= 14) { break; }

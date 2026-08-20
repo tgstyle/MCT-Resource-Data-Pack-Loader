@@ -35,7 +35,6 @@ public final class ContentAttributes {
     @Nullable public static IAttribute find(String name, Object context) {
         IAttribute attribute = ATTRIBUTES.get(key(name));
         if (attribute != null) { return attribute; }
-
         ContentLog.LOGGER.error("Unknown attribute '{}' in {}, skipping that modifier", name, context);
         return null;
     }

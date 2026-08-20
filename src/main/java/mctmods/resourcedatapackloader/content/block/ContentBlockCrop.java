@@ -28,7 +28,6 @@ public class ContentBlockCrop extends BlockCrops implements IContentBlock {
     public ContentBlockCrop(BlockDef def) {
         this.def = def;
         BlockVariant variant = def.at(0);
-
         setRegistryName(def.registryName);
         ContentSetup.properties(this, def);
         setTranslationKey(def.registryName + "." + variant.name);
@@ -59,10 +58,8 @@ public class ContentBlockCrop extends BlockCrops implements IContentBlock {
             drops.add(seed.copy());
             return;
         }
-
         Random rand = world instanceof World ? ((World) world).rand : RANDOM;
         drops.add(crop.copy());
-
         for (int i = 0; i < 3 + fortune; i++) {
             if (rand.nextInt(2 * getMaxAge()) <= age) { drops.add(seed.copy()); }
         }

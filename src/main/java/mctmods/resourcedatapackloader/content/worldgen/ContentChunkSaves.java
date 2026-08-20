@@ -25,15 +25,12 @@ public final class ContentChunkSaves {
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
-
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
-
         if (mark < 0) {
             mark = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "hurryWritesAbove", Config.chunks.hurryWritesAbove));
             if (mark > 0) { Summary.info("chunks.hurry", "Writing chunks out without pausing whenever more than " + mark + " are waiting"); }
         }
-
         int pending = 0;
         for (WorldServer world : server.worlds) {
             ChunkProviderServer provider = world.getChunkProvider();

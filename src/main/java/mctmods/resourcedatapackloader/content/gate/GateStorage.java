@@ -48,7 +48,6 @@ public final class GateStorage extends WorldSavedData {
     public static int tallyGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return 0; }
-
         int now = data.kills.getInteger(key) + 1;
         data.kills.setInteger(key, now);
         data.markDirty();
@@ -66,7 +65,6 @@ public final class GateStorage extends WorldSavedData {
     public static void clearTallyGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return; }
-
         data.kills.removeTag(key);
         data.markDirty();
     }
@@ -79,7 +77,6 @@ public final class GateStorage extends WorldSavedData {
     public static void unlockGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return; }
-
         data.open.setBoolean(key, true);
         data.markDirty();
     }
@@ -87,7 +84,6 @@ public final class GateStorage extends WorldSavedData {
     public static void lockGlobally(World world, String key) {
         GateStorage data = get(world);
         if (data == null) { return; }
-
         data.open.removeTag(key);
         data.markDirty();
     }
@@ -98,7 +94,6 @@ public final class GateStorage extends WorldSavedData {
         World overworld = DimensionManager.getWorld(0);
         MapStorage storage = overworld == null ? world.getMapStorage() : overworld.getMapStorage();
         if (storage == null) { return null; }
-
         GateStorage data = (GateStorage) storage.getOrLoadData(GateStorage.class, NAME);
         if (data == null) {
             data = new GateStorage(NAME);

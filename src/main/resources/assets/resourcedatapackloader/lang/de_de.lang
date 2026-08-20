@@ -81,6 +81,7 @@ rdpl.pregen.stopped=Vorgenerierung der Welt gestoppt
 rdpl.pregen.tooktime= - Total time %02d:%02d:%02d
 rdpl.pregen.welcome=Willkommen in deiner Welt!
 rdpl.world.type=Das ist eine %s-Welt
+rdpl.gui.verticaldistance=Vertikale Sichtweite: %d Würfel
 rdpl.gui.packOptions=Pack-Optionen...
 rdpl.gui.packOptions.title=RDPL-Pack-Optionen
 rdpl.gui.packOptions.restart=Änderungen greifen nach einem Neustart des Spiels

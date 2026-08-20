@@ -10,8 +10,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import twilightforest.world.ChunkGeneratorTFBase;
 
-@Mixin(value = ChunkGeneratorTFBase.class, remap = false)
-public abstract class MixinChunkGeneratorTFBase {
-    @Inject(method = "replaceBiomeBlocks", at = @At("RETURN"), remap = false)
-    private void rdpl$packStone(int x, int z, ChunkPrimer primer, Biome[] biomesIn, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomesIn); }
+@Mixin(value = ChunkGeneratorTFBase.class, remap = false) public abstract class MixinChunkGeneratorTFBase {
+    @Inject(method = "replaceBiomeBlocks", at = @At("RETURN"), remap = false) private void rdpl$packStone(int x, int z, ChunkPrimer primer, Biome[] biomesIn, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomesIn); }
 }

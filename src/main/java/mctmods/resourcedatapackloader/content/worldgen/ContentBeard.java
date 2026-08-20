@@ -1,24 +1,27 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
-import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGround;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardOpen;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlaza;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
-import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.RecurrentPlots;
-import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
-import mctmods.resourcedatapackloader.mixin.*;
+import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillage;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import mctmods.blastplaster.util.TreeCollector;
 import net.minecraft.block.BlockColored;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockLeaves;
@@ -97,10 +100,6 @@ public final class ContentBeard {
 
     public static void layingBuilding(boolean now) { layingBuilding = now; }
 
-
-
-
-
     public static boolean spacedLayout() {
         if (!layingBuilding || !wanted()) { return false; }
         if (peeks < 30 && ContentLog.LOGGER.debugEnabled()) {
@@ -112,20 +111,15 @@ public final class ContentBeard {
         return true;
     }
 
-
-
-
     public static boolean roughGround(World world, int blockX, int blockZ, int halfWidth, int tolerance) {
         int middle = surfaceAt(world, blockX, blockZ);
         if (middle < 0) { return false; }
-
         int lowest = middle;
         int highest = middle;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 int sampled = surfaceAt(world, blockX + dx * halfWidth, blockZ + dz * halfWidth);
                 if (sampled < 0) { return false; }
-
                 lowest = Math.min(lowest, sampled);
                 highest = Math.max(highest, sampled);
                 if (highest - lowest > tolerance) { return true; }
@@ -133,7 +127,6 @@ public final class ContentBeard {
         }
         return false;
     }
-
 
     public static int surfaceAt(World world, int blockX, int blockZ) { return BeardSurface.surfaceAt(world, blockX, blockZ); }
 
@@ -143,38 +136,28 @@ public final class ContentBeard {
 
     public static int villageSpacing(World world) {
         if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return 32; }
-
         IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
         if (!(maker instanceof ChunkGeneratorOverworld)) { return 32; }
-
-        return ((AccessorMapGenVillage) ((AccessorChunkGeneratorBeardFields) maker).rdpl$villages()).rdpl$distance();
+        return ((IMapGenVillage) ((IChunkGeneratorBeardFields) maker).rdpl$villages()).rdpl$distance();
     }
 
-
     public static long siteIn(World world, ContentSites known, int cellX, int cellZ, int spacing) { return BeardSite.siteFor(world, known, cellX, cellZ, spacing); }
-
-
-
 
     @SubscribeEvent public static void onDressed(PopulateChunkEvent.Post event) {
         if (event.getWorld().isRemote || !wanted()) { return; }
         if (!(event.getWorld().getChunkProvider() instanceof ChunkProviderServer)) { return; }
-
         IChunkGenerator maker = ((ChunkProviderServer) event.getWorld().getChunkProvider()).chunkGenerator;
         if (!(maker instanceof ChunkGeneratorOverworld)) { return; }
-
-        MapGenVillage shell = ((AccessorChunkGeneratorBeardFields) maker).rdpl$villages();
+        MapGenVillage shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages();
         if (shell == null) { return; }
-
         MapGenStructure found = ContentStructureSearch.theRealOne(shell);
         if (!(found instanceof MapGenVillage)) { return; }
-
         MapGenVillage villages = (MapGenVillage) found;
         int blockX = (event.getChunkX() << 4) + 8;
         int blockZ = (event.getChunkZ() << 4) + 8;
         StructureBoundingBox clip = new StructureBoundingBox(blockX, 0, blockZ, blockX + 15, 255, blockZ + 15);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (StructureStart start : ((AccessorMapGenStructure) villages).rdpl$getStructureMap().values()) {
+        for (StructureStart start : ((IMapGenStructure) villages).rdpl$getStructureMap().values()) {
             if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(clip)) { continue; }
             BeardRoads.repairRoads(event.getWorld(), start);
             int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
@@ -183,10 +166,8 @@ public final class ContentBeard {
             if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
             for (StructureComponent piece : start.getComponents()) {
                 if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
-
                 StructureBoundingBox box = piece.getBoundingBox();
                 if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { continue; }
-
                 int felled = fellAround(event.getWorld(), start, piece, box, clip, at, false);
                 if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) crowding {} at {}, {}", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
                 if (piece instanceof StructureVillagePieces.Path) {
@@ -206,10 +187,8 @@ public final class ContentBeard {
 
     public static void fellFor(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         if (!(piece instanceof StructureVillagePieces.Village)) { return; }
-
         StructureBoundingBox box = piece.getBoundingBox();
         if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { return; }
-
         int felled = fellAround(world, start, piece, box, clip, new BlockPos.MutableBlockPos(), true);
         if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) before {} at {}, {} was built", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
     }
@@ -223,10 +202,8 @@ public final class ContentBeard {
             for (int z = box.minZ - 2; z <= box.maxZ + 2; z++) {
                 for (int y = box.minY + 1; y <= box.maxY + 16; y++) {
                     if (!bare && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && y <= top) { continue; }
-
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-
                     IBlockState held = world.getBlockState(at);
                     if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { seeds.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.LEAVES) { canopy.add(at.toImmutable()); }
@@ -238,7 +215,6 @@ public final class ContentBeard {
         Set<BlockPos> felledLogs = new HashSet<>();
         for (BlockPos seed : seeds) {
             if (felledLogs.contains(seed)) { continue; }
-
             TreeCollector.Tree tree = TreeCollector.collect(world, seed, mctmods.blastplaster.Config.view(world).getMaxTreeSize(), within);
             for (BlockPos log : tree.logs) {
                 felledLogs.add(log);
@@ -255,12 +231,10 @@ public final class ContentBeard {
                         for (int y = log.getY() - 5; y <= log.getY() + 5; y++) {
                             at.setPos(x, y, z);
                             if (!within.test(at)) { continue; }
-
                             IBlockState held = world.getBlockState(at);
                             if (held.getMaterial() != Material.LEAVES) { continue; }
                             if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
                             if (sustained(world, at.toImmutable(), within)) { continue; }
-
                             felled += BeardBlocks.clearAt(world, at);
                         }
                     }
@@ -272,7 +246,6 @@ public final class ContentBeard {
             if (held.getMaterial() != Material.LEAVES) { continue; }
             if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
             if (sustained(world, leaf, within)) { continue; }
-
             at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
             felled += BeardBlocks.clearAt(world, at);
         }
@@ -281,17 +254,11 @@ public final class ContentBeard {
 
     private static boolean sustained(World world, BlockPos leaf, Predicate<BlockPos> within) { return BeardGround.sustainer(world, leaf, within) != null; }
 
-
-
-
-
-
     private static void lampPosts(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         boolean alongX = BeardPlots.roadAlongX(box);
         int from = alongX ? box.minX : box.minZ;
         int to = alongX ? box.maxX : box.maxZ;
         if (to - from < 4) { return; }
-
         Random rand = new Random(world.getSeed() ^ ((long) box.minX << 32) ^ box.minZ);
         List<Integer> along = new ArrayList<>();
         along.add(from);
@@ -299,10 +266,8 @@ public final class ContentBeard {
         along.add(to);
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox met = other.getBoundingBox();
             if (!box.intersectsWith(met)) { continue; }
-
             int meeting = alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ);
             if (meeting >= from && meeting <= to && !along.contains(meeting)) { along.add(meeting); }
         }
@@ -341,7 +306,6 @@ public final class ContentBeard {
 
     private static boolean inPlaza(StructureStart start, int x, int z) {
         if (start.getComponents().isEmpty()) { return false; }
-
         StructureBoundingBox well = start.getComponents().get(0).getBoundingBox();
         int reach = plazaReach();
         return x >= well.minX - reach && x <= well.maxX + reach && z >= well.minZ - reach && z <= well.maxZ + reach;
@@ -351,8 +315,7 @@ public final class ContentBeard {
         int reach = (BeardRoads.pathFullWidth() - 3) / 2;
         for (StructureComponent other : start.getComponents()) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-
-            StructureBoundingBox held = ((AccessorStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox held = ((IStructureComponentBox) other).rdpl$box();
             if (held == null) { continue; }
             if (other == piece) {
                 if (x >= held.minX && x <= held.maxX && z >= held.minZ && z <= held.maxZ) { return true; }
@@ -366,21 +329,17 @@ public final class ContentBeard {
     private static boolean raise(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int z, StructureBoundingBox box, int roadTop) {
         at.setPos(x, box.minY, z);
         if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
-
         int bed = Integer.MIN_VALUE;
         for (int y = box.minY + 6; y >= box.minY - 3; y--) {
             at.setPos(x, y, z);
             if (!clip.isVecInside(at)) { continue; }
-
             Material material = world.getBlockState(at).getMaterial();
             if (material.isLiquid()) { return false; }
             if (!material.isSolid()) { continue; }
-
             bed = y;
             break;
         }
         if (bed == Integer.MIN_VALUE) { return false; }
-
         for (int y = bed - 1; y >= bed - 3; y--) {
             at.setPos(x, y, z);
             if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
@@ -394,11 +353,9 @@ public final class ContentBeard {
             if (!world.getBlockState(at).getMaterial().isReplaceable() && world.getBlockState(at).getMaterial() != Material.AIR) { return false; }
         }
         if (beforeADoor(world, clip, at, x, bed, z)) { return false; }
-
         if (bed > stood) { BeardBlocks.fillBank(world, at, x, z, bed, stood + 1, false); }
         at.setPos(x, bed, z);
         if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
-
         for (int y = stood; y <= bed; y++) { BeardKeep.holdSpot(x, y, z); }
         for (int y = bed + 1; y <= bed + 3; y++) {
             at.setPos(x, y, z);
@@ -412,17 +369,11 @@ public final class ContentBeard {
             at.setPos(x + facing.getXOffset(), bed + 4, z + facing.getZOffset());
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
             if (world.getBlockState(at).getMaterial() != Material.AIR) { continue; }
-
             world.setBlockState(at, Blocks.TORCH.getDefaultState().withProperty(BlockTorch.FACING, facing), 2);
             BeardKeep.holdSpot(x + facing.getXOffset(), bed + 4, z + facing.getZOffset());
         }
         return true;
     }
-
-
-
-
-
 
     public static void wellPlaza(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) { BeardPlaza.wellPlaza(start, piece, world, clip); }
 
@@ -465,24 +416,18 @@ public final class ContentBeard {
             return;
         }
         if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path) { return; }
-
         BeardOpen.around(start, piece, world, clip);
     }
 
     private static void settleFeature(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, String name) {
         loadModes();
         if (MODES.getOrDefault(name, Mode.NONE) == Mode.NONE) { return; }
-
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int worked = BeardGround.bankRing(start, piece, world, box, clip, at);
         int freed = BeardGround.openOver(start, piece, world, box, clip, at)[0];
         if (worked + freed > 0) { ContentLog.LOGGER.debug("Settled {} at {}, {} into its ground, {} block(s) banked or cut around it and {} opened over it", piece.getClass().getSimpleName(), box.minX, box.minZ, worked, freed); }
     }
-
-
-
-
 
     private static StructureStart CURRENT;
     private static List<StructureComponent> LAYING;
@@ -496,11 +441,6 @@ public final class ContentBeard {
     @Nullable public static List<StructureComponent> laid() { return LAYING; }
 
     @Nullable public static List<StructureComponent> components() { return CURRENT != null ? CURRENT.getComponents() : LAYING; }
-
-
-
-
-
 
     @Nullable public static int[] facingStrip(StructureBoundingBox box, StructureBoundingBox near, int mostGap) {
         int lowX = Math.max(box.minX, near.minX);
@@ -526,20 +466,15 @@ public final class ContentBeard {
 
     public static void attach(StructureStart start, StructureComponent piece) {
         if (!(piece instanceof StructureVillagePieces.Path)) { return; }
-
-        StructureBoundingBox box = ((AccessorStructureComponentBox) piece).rdpl$box();
+        StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
         if (box == null) { return; }
-
         boolean alongX = BeardPlots.roadAlongX(piece);
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
-            StructureBoundingBox met = ((AccessorStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
             if (met == null) { continue; }
-
             boolean lined = alongX ? met.maxZ >= box.minZ && met.minZ <= box.maxZ : met.maxX >= box.minX && met.minX <= box.maxX;
             if (!lined) { continue; }
-
             int ahead = alongX ? met.minX - box.maxX : met.minZ - box.maxZ;
             int behind = alongX ? box.minX - met.maxX : box.minZ - met.maxZ;
             if (ahead > 1 && ahead <= ATTACH_GAP && free(start, piece, box, alongX, met)) {
@@ -553,19 +488,15 @@ public final class ContentBeard {
         }
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
-            StructureBoundingBox met = ((AccessorStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
             if (met == null) { continue; }
-
             boolean otherAlongX = BeardPlots.roadAlongX(other);
             if (otherAlongX == alongX) { continue; }
-
             int acrossLeast = alongX ? box.minZ : box.minX;
             int acrossMost = alongX ? box.maxZ : box.maxX;
             int metAlongLeast = otherAlongX ? met.minX : met.minZ;
             int metAlongMost = otherAlongX ? met.maxX : met.maxZ;
             if (metAlongMost < acrossLeast - 1 || metAlongLeast > acrossMost + 1) { continue; }
-
             int metAcrossLeast = otherAlongX ? met.minZ : met.minX;
             int metAcrossMost = otherAlongX ? met.maxZ : met.maxX;
             int least = alongX ? box.minX : box.minZ;
@@ -588,7 +519,6 @@ public final class ContentBeard {
         int most = alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ);
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-
             StructureBoundingBox held = other.getBoundingBox();
             boolean acrossed = alongX ? held.maxZ >= box.minZ && held.minZ <= box.maxZ : held.maxX >= box.minX && held.minX <= box.maxX;
             boolean along = alongX ? held.maxX >= least && held.minX <= most : held.maxZ >= least && held.minZ <= most;
@@ -597,20 +527,14 @@ public final class ContentBeard {
         return true;
     }
 
-
-
-
-
     public static int noiseAverage(World world, StructureBoundingBox box) {
         if (samplerFor(world) == null) { return Integer.MIN_VALUE; }
-
         long total = 0;
         int count = 0;
         for (int z = box.minZ; z <= box.maxZ; z++) {
             for (int x = box.minX; x <= box.maxX; x++) {
                 int sampled = surfaceAt(world, x, z);
                 if (sampled < 0) { continue; }
-
                 total += sampled + 1;
                 count++;
             }
@@ -629,13 +553,6 @@ public final class ContentBeard {
 
     public static int plazaReach() { return 3 + (BeardRoads.pathFullWidth() - 3) / 2; }
 
-
-
-
-
-
-
-
     public static boolean wanted() {
         WorldTemplateDef active = ContentWorldTemplates.active();
         if (!wantedKnown || active != wantedFrom) {
@@ -648,7 +565,6 @@ public final class ContentBeard {
 
     public static void apply(World world, ChunkGeneratorOverworld generator, MapGenStructure[] generators, String[] names, double[] heightMap, int chunkX, int chunkZ) {
         if (applying) { return; }
-
         applying = true;
         try { seat(world, generator, generators, names, heightMap, chunkX, chunkZ); }
         finally { applying = false; }
@@ -666,19 +582,16 @@ public final class ContentBeard {
         for (int at = 0; at < generators.length; at++) {
             Mode mode = MODES.getOrDefault(names[at], Mode.NONE);
             if (mode == Mode.NONE) { continue; }
-
             sampler = generator;
             samplerWorld = world;
             generators[at].generate(world, chunkX, chunkZ, UNUSED);
             sampler = null;
             samplerWorld = null;
-            for (StructureStart start : ((AccessorMapGenStructure) generators[at]).rdpl$getStructureMap().values()) {
+            for (StructureStart start : ((IMapGenStructure) generators[at]).rdpl$getStructureMap().values()) {
                 if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(reach)) { continue; }
                 for (StructureComponent piece : start.getComponents()) {
                     if (!piece.getBoundingBox().intersectsWith(reach)) { continue; }
-
                     if (piece instanceof StructureVillagePieces.Start) { continue; }
-
                     boxes.add(piece.getBoundingBox());
                     bases.add(piece.getBoundingBox().minY + 1);
                     modes.add(mode);
@@ -687,7 +600,6 @@ public final class ContentBeard {
         }
         System.arraycopy(before, 0, heightMap, 0, heightMap.length);
         if (boxes.isEmpty()) { return; }
-
         if (ContentLog.LOGGER.debugEnabled()) {
             int lowest = Integer.MAX_VALUE;
             int highest = Integer.MIN_VALUE;
@@ -697,7 +609,6 @@ public final class ContentBeard {
             }
             ContentLog.LOGGER.debug("Seating {} structure piece(s) under chunk {}, {}, on bases from y {} to y {}", boxes.size(), chunkX, chunkZ, lowest, highest);
         }
-
         int at = 0;
         for (int gridX = 0; gridX < 5; gridX++) {
             int x = blockX + gridX * 4;
@@ -718,7 +629,6 @@ public final class ContentBeard {
             int dx = Math.max(0, Math.max(box.minX - x, x - box.maxX));
             int dz = Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
             if (dx > RADIUS || dz > RADIUS) { continue; }
-
             int base = bases.get(i);
             int dy = y - base;
             Mode mode = modes.get(i);
@@ -733,13 +643,11 @@ public final class ContentBeard {
     private static double bury(double x, double y, double z) {
         double length = Math.sqrt(x * x + y * y + z * z);
         if (length >= 6.0D) { return 0.0D; }
-
         return 1.0D - length / 6.0D;
     }
 
     private static void loadModes() {
         if (modesLoaded) { return; }
-
         modesLoaded = true;
         MODES.put("villages", Mode.BEARD_THIN);
         MODES.put("mansions", Mode.BEARD_THIN);
@@ -749,7 +657,6 @@ public final class ContentBeard {
                 ContentLog.LOGGER.error("structureAdaptation entry '{}' is not structure=mode, ignoring it", entry);
                 continue;
             }
-
             String name = parts[0].trim().toLowerCase(Locale.ROOT);
             String asked = parts[1].trim().toUpperCase(Locale.ROOT);
             if (("temples".equals(name) || "mansions".equals(name)) && !"NONE".equals(asked) && !"BEARD_THIN".equals(asked)) {
@@ -766,7 +673,6 @@ public final class ContentBeard {
         int atY = y + RADIUS;
         int atZ = z + RADIUS;
         if (atX < 0 || atX >= SIZE || atY < 0 || atY >= SIZE || atZ < 0 || atZ >= SIZE) { return 0.0D; }
-
         double lifted = (double) height + 0.5D;
         double squared = (double) x * (double) x + lifted * lifted + (double) z * (double) z;
         double falloff = -lifted * MathHelper.fastInvSqrt(squared / 2.0D) / 2.0D;

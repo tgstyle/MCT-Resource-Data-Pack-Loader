@@ -24,44 +24,35 @@ public final class ContentLargeVein implements IContentShape {
         int x = origin.getX();
         int y = origin.getY();
         int z = origin.getZ();
-
         int veinSize = size.pick(random);
         int branchSize = spindly ? 1 : 1 + (veinSize / 30);
         int subBranchSize = spindly ? 1 : 1 + (branchSize / 5);
-
         boolean placed = false;
         for (int blocksVein = 0; blocksVein <= veinSize; ) {
             int posX = x;
             int posY = y;
             int posZ = z;
-
             int directionChange = random.nextInt(6);
             int directionX = stride(random);
             int directionY = stride(random);
             int directionZ = stride(random);
-
             for (int blocksBranch = 0; blocksBranch <= branchSize; ) {
                 if (directionChange != 1) { posX += random.nextInt(2) * directionX; }
                 if (directionChange != 2) { posY += random.nextInt(2) * directionY; }
                 if (directionChange != 3) { posZ += random.nextInt(2) * directionZ; }
-
                 if (random.nextInt(3) == 0) {
                     int posX2 = posX;
                     int posY2 = posY;
                     int posZ2 = posZ;
-
                     int directionChange2 = random.nextInt(6);
                     int directionX2 = stride(random);
                     int directionY2 = stride(random);
                     int directionZ2 = stride(random);
-
                     for (int blocksSubBranch = 0; blocksSubBranch <= subBranchSize; ) {
                         if (directionChange2 != 0) { posX2 += random.nextInt(2) * directionX2; }
                         if (directionChange2 != 1) { posY2 += random.nextInt(2) * directionY2; }
                         if (directionChange2 != 2) { posZ2 += random.nextInt(2) * directionZ2; }
-
                         placed |= place(world, random, posX2, posY2, posZ2);
-
                         if (sparse) {
                             blocksVein++;
                             blocksBranch++;
@@ -69,11 +60,9 @@ public final class ContentLargeVein implements IContentShape {
                         blocksSubBranch++;
                     }
                 }
-
                 placed |= place(world, random, posX, posY, posZ);
                 blocksBranch++;
             }
-
             x = x + (random.nextInt(3) - 1);
             y = y + (random.nextInt(3) - 1);
             z = z + (random.nextInt(3) - 1);

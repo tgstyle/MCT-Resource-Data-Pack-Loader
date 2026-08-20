@@ -8,10 +8,8 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 import javax.annotation.Nullable;
 
 public final class ContentControl {
@@ -60,16 +58,14 @@ public final class ContentControl {
             "villagePathSidewalkWidth", "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
-            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "worldBorder", "worldGameMode", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "rubicWorld", "worldBorder", "worldGameMode", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
     private ContentControl() {}
 
     public static void check(@Nullable WorldTemplateDef template) {
         if (template == null || template.settings == null) { return; }
-
         for (Map.Entry<String, JsonElement> entry : template.settings.entrySet()) {
             if (KNOWN.contains(entry.getKey())) { continue; }
-
             ContentLog.LOGGER.error("World template {} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", template.getKey(), entry.getKey());
         }
     }
@@ -82,7 +78,6 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive()) { return rejected(key, "true or false", fallback); }
-
         return value.getAsBoolean();
     }
 
@@ -90,7 +85,6 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
-
         return value.getAsInt();
     }
 
@@ -98,7 +92,6 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
-
         return value.getAsFloat();
     }
 
@@ -106,7 +99,6 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
-
         return value.getAsString();
     }
 
@@ -114,11 +106,9 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonArray()) { return rejected(key, "a list of text values", fallback); }
-
         List<String> found = new ArrayList<>();
         for (JsonElement entry : value.getAsJsonArray()) {
             if (!entry.isJsonPrimitive()) { return rejected(key, "a list of text values", fallback); }
-
             found.add(entry.getAsString());
         }
         return found.toArray(new String[0]);
@@ -128,13 +118,11 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonArray()) { return rejected(key, "a list of numbers", fallback); }
-
         JsonArray array = value.getAsJsonArray();
         int[] found = new int[array.size()];
         for (int i = 0; i < found.length; i++) {
             JsonElement entry = array.get(i);
             if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isNumber()) { return rejected(key, "a list of numbers", fallback); }
-
             found[i] = entry.getAsInt();
         }
         return found;
@@ -142,16 +130,13 @@ public final class ContentControl {
 
     private static <T> T rejected(String key, String wanted, T fallback) {
         if (WARNED.add(key)) { ContentLog.LOGGER.error("The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted); }
-
         return fallback;
     }
 
     @Nullable private static JsonElement setting(String group, String key) {
         if (!packDecides(group)) { return null; }
-
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || template.settings == null) { return null; }
-
         JsonObject settings = template.settings;
         return settings.has(key) ? settings.get(key) : null;
     }
@@ -160,7 +145,6 @@ public final class ContentControl {
         String held = raw(group);
         String[] known = MODES.get(group);
         if (known != null && Objects.equals(known[0], held)) { return known[1]; }
-
         String value = held.trim().toLowerCase(Locale.ROOT);
         if (!DEFAULT.equals(value) && !GLOBAL.equals(value) && !OFF.equals(value)) {
             ContentLog.LOGGER.error("control.{} is '{}', which is not default, global or off, using default", group, value);

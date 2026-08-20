@@ -13,13 +13,11 @@ public final class ContentFreezeCheck {
     public static boolean couldFreeze(World world, int chunkX, int chunkZ) {
         Chunk chunk = world.getChunkProvider().getLoadedChunk(chunkX, chunkZ);
         if (chunk == null) { return true; }
-
         byte[] biomes = chunk.getBiomeArray();
         boolean[] asked = new boolean[256];
         for (byte id : biomes) {
             int index = id & 255;
             if (asked[index]) { continue; }
-
             asked[index] = true;
             Biome biome = Biome.getBiome(index);
             if (biome == null || biome.getDefaultTemperature() - COLDEST_HEIGHT_GAIN < FREEZES_BELOW) { return true; }

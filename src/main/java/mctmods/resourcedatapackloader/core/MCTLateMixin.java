@@ -8,8 +8,7 @@ import zone.rong.mixinbooter.ILateMixinLoader;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings("unused")
-public class MCTLateMixin implements ILateMixinLoader {
+@SuppressWarnings("unused") public class MCTLateMixin implements ILateMixinLoader {
     private static Boolean tinkersFix;
 
     @Override public List<String> getMixinConfigs() {
@@ -62,5 +61,4 @@ public class MCTLateMixin implements ILateMixinLoader {
         if (tinkersFix == null) { tinkersFix = ConfigCore.read(ConfigLate.COMPAT, "fixTinkersModelErrors"); }
         return tinkersFix;
     }
-
 }

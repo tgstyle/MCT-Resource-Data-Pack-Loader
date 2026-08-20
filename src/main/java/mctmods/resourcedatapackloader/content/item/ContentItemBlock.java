@@ -8,8 +8,7 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import javax.annotation.Nonnull;
 
-@SuppressWarnings("deprecation")
-public class ContentItemBlock extends ItemBlock {
+@SuppressWarnings("deprecation") public class ContentItemBlock extends ItemBlock {
     private final BlockDef def;
 
     public ContentItemBlock(Block block, BlockDef def) {
@@ -19,9 +18,7 @@ public class ContentItemBlock extends ItemBlock {
         setMaxDamage(0);
     }
 
-    @Override @Nonnull public String getTranslationKey(ItemStack stack) {
-        return super.getTranslationKey() + "." + def.at(stack.getMetadata()).name;
-    }
+    @Override @Nonnull public String getTranslationKey(ItemStack stack) { return super.getTranslationKey() + "." + def.at(stack.getMetadata()).name; }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) { return def.at(stack.getMetadata()).rarity; }
 

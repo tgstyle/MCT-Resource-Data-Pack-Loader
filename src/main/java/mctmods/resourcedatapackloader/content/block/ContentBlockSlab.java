@@ -29,8 +29,7 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockSlab extends BlockSlab implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockSlab extends BlockSlab implements IContentBlock {
     public static final int MAX_VARIANTS = 8;
     public static final String DOUBLE_SUFFIX = "_double";
     private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
@@ -58,7 +57,6 @@ public class ContentBlockSlab extends BlockSlab implements IContentBlock {
         this.def = def;
         this.isDouble = isDouble;
         this.variant = property;
-
         ResourceLocation name = isDouble ? new ResourceLocation(def.registryName.getNamespace(), def.registryName.getPath() + DOUBLE_SUFFIX) : def.registryName;
         setRegistryName(name);
         setTranslationKey(def.registryName.toString());
@@ -66,7 +64,6 @@ public class ContentBlockSlab extends BlockSlab implements IContentBlock {
         if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultSlipperiness(def.slipperiness);
         if (!isDouble) { ContentSetup.apply(this, def.creativeTab); }
-
         IBlockState state = this.blockState.getBaseState().withProperty(this.variant, def.at(0).name);
         setDefaultState(isDouble ? state : state.withProperty(HALF, EnumBlockHalf.BOTTOM));
         useNeighborBrightness = !isDouble;
@@ -117,9 +114,7 @@ public class ContentBlockSlab extends BlockSlab implements IContentBlock {
         return new ItemStack(single(), 1, damageDropped(state));
     }
 
-    @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) {
-        return Item.getItemFromBlock(single());
-    }
+    @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) { return Item.getItemFromBlock(single()); }
 
     private ContentBlockSlab single() { return isDouble && other != null ? other : this; }
 

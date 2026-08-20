@@ -39,28 +39,24 @@ public final class PackOptions {
         HOME = home;
         for (RDPLPack pack : packs) {
             if (PackManager.ROOT_PACK.equals(pack.getName())) { continue; }
-
             JsonObject defaults = new JsonObject();
             Map<String, String> about = new LinkedHashMap<>();
             Set<String> shy = new HashSet<>();
             for (String fileName : pack.packFiles("config", "json")) {
                 JsonObject read = booleansOf(pack, fileName, about, shy);
                 if (read == null) { continue; }
-
                 for (Map.Entry<String, JsonElement> entry : read.entrySet()) {
                     if (defaults.has(entry.getKey())) { ContentLog.LOGGER.warn("Pack '{}' defines option '{}' more than once across its config files, keeping the value from {}", pack.getName(), entry.getKey(), fileName); }
                     defaults.add(entry.getKey(), entry.getValue());
                 }
             }
             if (defaults.entrySet().isEmpty()) { continue; }
-
             String key = pack.getName();
             if (defaults.has("hide") && defaults.get("hide").getAsBoolean()) {
                 defaults.remove("hide");
                 for (Map.Entry<String, JsonElement> entry : defaults.entrySet()) { shy.add(entry.getKey()); }
             }
             defaults.remove("hide");
-
             Map<String, Boolean> unseen = new HashMap<>();
             JsonObject shown = new JsonObject();
             for (Map.Entry<String, JsonElement> entry : defaults.entrySet()) {
@@ -69,7 +65,6 @@ public final class PackOptions {
             }
             if (!unseen.isEmpty()) { HIDDEN.put(key, unseen); }
             if (shown.entrySet().isEmpty()) { continue; }
-
             try {
                 Files.createDirectories(home);
                 Path held = home.resolve(key + ".json");
@@ -92,7 +87,6 @@ public final class PackOptions {
     public static List<String> orphans() {
         List<String> stale = new ArrayList<>();
         if (HOME == null || !Files.isDirectory(HOME)) { return stale; }
-
         try (Stream<Path> held = Files.list(HOME)) {
             held.filter(Files::isRegularFile)
                     .map(one -> one.getFileName().toString())
@@ -112,7 +106,7 @@ public final class PackOptions {
         for (String one : stale) {
             try {
                 Files.delete(HOME.resolve(one + ".json"));
-                ContentLog.LOGGER.info("Removed unused option file '{}.json'", one);
+                ContentLog.LOGGER.debug("Removed unused option file '{}.json'", one);
                 gone++;
             }
             catch (IOException ex) { ContentLog.LOGGER.error("Could not remove '{}.json'", one, ex); }
@@ -124,7 +118,6 @@ public final class PackOptions {
         try {
             String text = pack.readPackFile("config/" + fileName);
             if (text == null) { return null; }
-
             JsonObject read = new JsonParser().parse(text).getAsJsonObject();
             JsonObject defaults = new JsonObject();
             for (Map.Entry<String, JsonElement> entry : read.entrySet()) {
@@ -164,7 +157,7 @@ public final class PackOptions {
         }
         for (Map.Entry<String, JsonElement> entry : kept.entrySet()) {
             if (!"_note".equals(entry.getKey()) && !defaults.has(entry.getKey())) {
-                ContentLog.LOGGER.info("Option '{}' in {} is no longer defined by the pack, so it is dropped", entry.getKey(), held.getFileName());
+                ContentLog.LOGGER.debug("Option '{}' in {} is no longer defined by the pack, so it is dropped", entry.getKey(), held.getFileName());
                 differs = true;
             }
         }
@@ -178,7 +171,6 @@ public final class PackOptions {
         Map<String, Boolean> options = VALUES.get(fileKey);
         Boolean held = options == null ? null : options.get(name);
         if (held != null) { return held; }
-
         Map<String, Boolean> unseen = HIDDEN.get(fileKey);
         return unseen == null ? null : unseen.get(name);
     }
@@ -199,7 +191,6 @@ public final class PackOptions {
         for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) {
             Map<String, Boolean> was = LOADED.get(entry.getKey());
             if (was == null) { continue; }
-
             for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
                 if (!gates(entry.getKey(), option.getKey())) { continue; }
                 if (!option.getValue().equals(was.get(option.getKey()))) { return false; }
@@ -234,7 +225,6 @@ public final class PackOptions {
     public static void save(String fileKey, Map<String, Boolean> options) {
         Map<String, Boolean> held = VALUES.get(fileKey);
         if (held == null || HOME == null) { return; }
-
         held.clear();
         held.putAll(options);
         JsonObject out = new JsonObject();
@@ -255,14 +245,12 @@ public final class PackOptions {
             Boolean held = options.get(name);
             if (held == null) { continue; }
             if (!held) { return false; }
-
             found = true;
         }
         for (Map<String, Boolean> options : HIDDEN.values()) {
             Boolean held = options.get(name);
             if (held == null) { continue; }
             if (!held) { return false; }
-
             found = true;
         }
         return found;

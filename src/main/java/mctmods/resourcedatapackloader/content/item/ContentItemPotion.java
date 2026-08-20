@@ -33,13 +33,11 @@ public class ContentItemPotion extends ItemPotion implements IContentItem {
 
     @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> items) {
         if (!isInCreativeTab(tab)) { return; }
-
         for (PotionType type : types()) { items.add(PotionUtils.addPotionToItemStack(new ItemStack(this), type)); }
     }
 
     private List<PotionType> types() {
         if (resolved != null) { return resolved; }
-
         resolved = resolve();
         return resolved;
     }
@@ -53,7 +51,6 @@ public class ContentItemPotion extends ItemPotion implements IContentItem {
             }
             return found;
         }
-
         for (String name : def.potionTypes) {
             ResourceLocation location = new ResourceLocation(name);
             if (!ForgeRegistries.POTION_TYPES.containsKey(location)) {

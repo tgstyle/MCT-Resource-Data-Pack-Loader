@@ -44,7 +44,6 @@ public final class DropDef {
         int total = 0;
         for (DropDef drop : pool) { total += Math.max(1, drop.weight); }
         if (total <= 0) { return null; }
-
         int roll = random.nextInt(total);
         for (DropDef drop : pool) {
             roll -= Math.max(1, drop.weight);

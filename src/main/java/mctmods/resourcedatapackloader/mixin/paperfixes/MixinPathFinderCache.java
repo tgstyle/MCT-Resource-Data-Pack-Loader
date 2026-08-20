@@ -11,8 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(PathFinder.class)
-public abstract class MixinPathFinderCache {
+@Mixin(PathFinder.class) public abstract class MixinPathFinderCache {
     @Inject(method = "findPath(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/entity/EntityLiving;DDDF)Lnet/minecraft/pathfinding/Path;", at = @At("HEAD"))
     private void rdpl$openPaperCache(IBlockAccess worldIn, EntityLiving entitylivingIn, double x, double y, double z, float maxDistance, CallbackInfoReturnable<Path> cir) { PaperPathCache.open(); }
 

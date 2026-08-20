@@ -10,8 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = LostCitiesTerrainGenerator.class, remap = false)
-public abstract class MixinLostCitiesTerrainGenerator {
-    @Inject(method = "replaceBlocksForBiome", at = @At("RETURN"), remap = false)
-    private void rdpl$packStone(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomes); }
+@Mixin(value = LostCitiesTerrainGenerator.class, remap = false) public abstract class MixinLostCitiesTerrainGenerator {
+    @Inject(method = "replaceBlocksForBiome", at = @At("RETURN"), remap = false) private void rdpl$packStone(int chunkX, int chunkZ, ChunkPrimer primer, Biome[] biomes, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomes); }
 }

@@ -26,12 +26,10 @@ public class ContentBlockStairs extends BlockStairs implements IContentBlock {
     protected ContentBlockStairs(BlockDef def, IBlockState model) {
         super(model);
         this.def = def;
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + def.at(0).name);
         ContentSetup.harvest(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-
         BlockVariant variant = def.at(0);
         setHardness(variant.hardness);
         setResistance(variant.resistance / def.explosionResistanceDivisor);
@@ -47,7 +45,6 @@ public class ContentBlockStairs extends BlockStairs implements IContentBlock {
             ContentLog.LOGGER.error("Stairs {} name modelBlock {}, which is not registered, using stone", def.registryName, name);
             return Objects.requireNonNull(Blocks.STONE).getDefaultState();
         }
-
         Block block = ForgeRegistries.BLOCKS.getValue(name);
         if (block == null) { return Objects.requireNonNull(Blocks.STONE).getDefaultState(); }
         return ContentStates.of(block, def.modelMeta);

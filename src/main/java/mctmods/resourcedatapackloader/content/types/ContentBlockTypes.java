@@ -58,7 +58,6 @@ public final class ContentBlockTypes {
                 twin.pair(single);
                 return Arrays.asList(single, twin);
             }
-
             @Override public int maxVariants() { return ContentBlockSlab.MAX_VARIANTS; }
         });
         register("fence", def -> Collections.singletonList(ContentBlockFence.create(def)));
@@ -66,12 +65,10 @@ public final class ContentBlockTypes {
         register("wall", def -> Collections.singletonList(ContentBlockWall.create(def)));
         register("ladder", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockLadder(def)); }
-
             @Override public int maxVariants() { return ContentBlockLadder.MAX_VARIANTS; }
         });
         register("torch", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockTorch(def)); }
-
             @Override public int maxVariants() { return ContentBlockTorch.MAX_VARIANTS; }
         });
         register("portal", new IBlockType() {
@@ -79,7 +76,6 @@ public final class ContentBlockTypes {
                 ContentBlockPortal block = ContentBlockPortal.create(def);
                 return block == null ? Collections.emptyList() : Collections.singletonList(block);
             }
-
             @Override public int maxVariants() { return ContentBlockPortal.MAX_VARIANTS; }
         });
         register("flower", new IBlockType() {
@@ -87,7 +83,6 @@ public final class ContentBlockTypes {
                 GrowthDef growth = def.growth == null ? GrowthDef.bush() : def.growth;
                 return Collections.singletonList(ContentBlockFlower.create(def, growth));
             }
-
             @Override public int maxVariants() { return ContentBlockFlower.MAX_VARIANTS; }
         });
         register("vine", new IBlockType() {
@@ -95,7 +90,6 @@ public final class ContentBlockTypes {
                 GrowthDef growth = def.growth == null ? GrowthDef.bush() : def.growth;
                 return Collections.singletonList(new ContentBlockVine(def, growth));
             }
-
             @Override public int maxVariants() { return ContentBlockVine.MAX_VARIANTS; }
         });
         register("cane", new IBlockType() {
@@ -106,22 +100,18 @@ public final class ContentBlockTypes {
                 }
                 return Collections.singletonList(new ContentBlockCane(def, def.growth));
             }
-
             @Override public int maxVariants() { return ContentBlockCane.MAX_VARIANTS; }
         });
         register("crop", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockCrop(def)); }
-
             @Override public int maxVariants() { return ContentBlockCrop.MAX_VARIANTS; }
         });
         register("log", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockLog.create(def)); }
-
             @Override public int maxVariants() { return ContentBlockLog.MAX_VARIANTS; }
         });
         register("leaves", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockLeaves.create(def)); }
-
             @Override public int maxVariants() { return ContentBlockLeaves.MAX_VARIANTS; }
         });
         register("sapling", new IBlockType() {
@@ -132,12 +122,10 @@ public final class ContentBlockTypes {
                 }
                 return Collections.singletonList(ContentBlockSapling.create(def, def.sapling));
             }
-
             @Override public int maxVariants() { return ContentBlockSapling.MAX_VARIANTS; }
         });
         register("door", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockDoor(def)); }
-
             @Override public int maxVariants() { return ContentBlockDoor.MAX_VARIANTS; }
         });
         register("banner", new IBlockType() {
@@ -148,22 +136,18 @@ public final class ContentBlockTypes {
                 wall.pair(standing);
                 return Arrays.asList(standing, wall);
             }
-
             @Override public int maxVariants() { return ContentBlockBanner.MAX_VARIANTS; }
         });
         register("trapdoor", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockTrapDoor(def)); }
-
             @Override public int maxVariants() { return ContentBlockTrapDoor.MAX_VARIANTS; }
         });
         register("fence_gate", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockFenceGate(def)); }
-
             @Override public int maxVariants() { return ContentBlockFenceGate.MAX_VARIANTS; }
         });
         register("stairs", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockStairs.create(def)); }
-
             @Override public int maxVariants() { return ContentBlockStairs.MAX_VARIANTS; }
         });
     }
@@ -178,7 +162,6 @@ public final class ContentBlockTypes {
     public static IBlockType get(String name, Object context) {
         IBlockType type = find(name);
         if (type != null) { return type; }
-
         ContentLog.LOGGER.error("Unknown block type '{}' in {}, treating it as '{}'. Known types are {}", name, context, DEFAULT, names());
         return TYPES.get(DEFAULT);
     }

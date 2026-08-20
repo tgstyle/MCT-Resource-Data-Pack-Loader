@@ -30,7 +30,6 @@ public final class RecipeBlocking {
 
     public static boolean disabled() {
         if (ContentControl.off(ContentControl.RECIPES)) { return true; }
-
         return !ContentControl.flag(ContentControl.RECIPES, "blockRecipes", Config.recipes.blockRecipes) && ContentControl.list(ContentControl.RECIPES, "blockedRecipeMods", Config.recipes.blockedRecipeMods).length == 0;
     }
 
@@ -40,27 +39,21 @@ public final class RecipeBlocking {
             ContentLog.LOGGER.error("The recipe registry cannot be modified, no recipes were blocked");
             return;
         }
-
         BLOCKED.clear();
         Set<String> whitelist = Names.lower(ContentControl.list(ContentControl.RECIPES, "recipeWhitelist", Config.recipes.recipeWhitelist));
         Set<String> blocked = Names.lower(ContentControl.list(ContentControl.RECIPES, "blockedRecipeMods", Config.recipes.blockedRecipeMods));
         String match = ContentControl.text(ContentControl.RECIPES, "recipeMatch", Config.recipes.recipeMatch).toLowerCase(Locale.ROOT);
-
         List<ResourceLocation> doomed = new ArrayList<>();
         for (ResourceLocation key : registry.getKeys()) {
             Set<String> owners = owners(key, registry.getValue(key), match);
             String reason = reason(owners, whitelist, blocked);
             if (reason == null) { continue; }
-
             doomed.add(key);
             BLOCKED.count(reason);
         }
-
         IForgeRegistryModifiable<IRecipe> modifiable = (IForgeRegistryModifiable<IRecipe>) registry;
         for (ResourceLocation key : doomed) { modifiable.remove(key); }
-
         if (doomed.isEmpty()) { return; }
-
         Summary.info("recipes.blocked", "Blocked " + doomed.size() + " crafting recipe(s)");
         if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes)) { BLOCKED.report("crafting recipe(s)"); }
     }
@@ -70,12 +63,10 @@ public final class RecipeBlocking {
             if (blocked.contains(owner)) { return owner; }
         }
         if (!ContentControl.flag(ContentControl.RECIPES, "blockRecipes", Config.recipes.blockRecipes)) { return null; }
-
         for (String owner : owners) {
             if (whitelist.contains(owner)) { return null; }
         }
         for (String owner : owners) { return owner; }
-
         return null;
     }
 
@@ -83,7 +74,6 @@ public final class RecipeBlocking {
         Set<String> owners = new LinkedHashSet<>();
         String namespace = key.getNamespace().toLowerCase(Locale.ROOT);
         String output = output(recipe);
-
         if (MATCH_OUTPUT.equals(match)) {
             if (output != null) { owners.add(output); }
             return owners;
@@ -93,7 +83,6 @@ public final class RecipeBlocking {
             if (output != null) { owners.add(output); }
             return owners;
         }
-
         if (!MATCH_RECIPE.equals(match) && WARNED.add(match)) {
             ContentLog.LOGGER.error("recipeMatch is '{}', which is not one of {}, {} or {}. Reading the mod id from the recipe name instead", match, MATCH_RECIPE, MATCH_OUTPUT, MATCH_BOTH);
         }
@@ -103,12 +92,9 @@ public final class RecipeBlocking {
 
     @Nullable private static String output(@Nullable IRecipe recipe) {
         if (recipe == null) { return null; }
-
         ItemStack result = recipe.getRecipeOutput();
         if (result.isEmpty()) { return null; }
-
         ResourceLocation name = result.getItem().getRegistryName();
         return name == null ? null : name.getNamespace().toLowerCase(Locale.ROOT);
     }
-
 }

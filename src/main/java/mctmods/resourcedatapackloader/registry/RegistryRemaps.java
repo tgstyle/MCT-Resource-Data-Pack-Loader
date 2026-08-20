@@ -74,8 +74,7 @@ public final class RegistryRemaps {
         return null;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    @SubscribeEvent public static void onMissingMappings(RegistryEvent.MissingMappings event) {
+    @SuppressWarnings({"rawtypes", "unchecked"}) @SubscribeEvent public static void onMissingMappings(RegistryEvent.MissingMappings event) {
         if (!Config.data.registryRemaps) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
         Map<ResourceLocation, ResourceLocation> target = REMAPS.get(event.getName());
@@ -90,7 +89,7 @@ public final class RegistryRemaps {
                 continue;
             }
             mapping.remap(value);
-            ContentLog.LOGGER.info("Remapped {} to {} in {}", mapping.key, renamed, event.getName());
+            ContentLog.LOGGER.debug("Remapped {} to {} in {}", mapping.key, renamed, event.getName());
         }
     }
 }

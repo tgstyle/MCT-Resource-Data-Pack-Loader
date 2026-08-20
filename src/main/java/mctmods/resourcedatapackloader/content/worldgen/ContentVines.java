@@ -10,9 +10,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-
 import java.util.Random;
-
 import javax.annotation.Nullable;
 
 public final class ContentVines implements IContentShape {
@@ -39,19 +37,15 @@ public final class ContentVines implements IContentShape {
         for (int attempt = 0; attempt < attempts; attempt++) {
             BlockPos start = origin.add(scatter(random, scatterX), scatter(random, scatterY), scatter(random, scatterZ));
             if (!world.isBlockLoaded(start) || !world.isAirBlock(start)) { continue; }
-
             EnumFacing wall = wallBeside(world, start);
             if (wall == null) { continue; }
-
             IBlockState state = placer.choose(random);
             if (!(state.getBlock() instanceof BlockVine)) { continue; }
-
             IBlockState attached = state.withProperty(BlockVine.getPropertyFor(wall), Boolean.TRUE);
             int length = drop.pick(random);
             BlockPos at = start;
             for (int step = 0; step < length; step++) {
                 if (!world.isAirBlock(at) || !attachable(world, at.offset(wall), wall.getOpposite())) { break; }
-
                 world.setBlockState(at, attached, FLAGS);
                 placed = true;
                 at = at.down();
@@ -69,7 +63,6 @@ public final class ContentVines implements IContentShape {
 
     private static boolean attachable(World world, BlockPos pos, EnumFacing face) {
         if (!world.isBlockLoaded(pos)) { return false; }
-
         return ContentBlockVine.attachable(world, pos, face);
     }
 

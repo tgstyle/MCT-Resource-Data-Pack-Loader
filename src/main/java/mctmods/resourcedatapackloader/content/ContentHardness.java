@@ -51,7 +51,6 @@ public final class ContentHardness {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.hardness) { return false; }
-
         PackManager.get().forEach(PackManager.HARDNESS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
@@ -60,7 +59,6 @@ public final class ContentHardness {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in hardness file {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         if (!DEFS.isEmpty()) { Summary.info("hardness", "Loaded " + DEFS.size() + " hardness group(s)"); }
         return !DEFS.isEmpty();
     }
@@ -71,10 +69,8 @@ public final class ContentHardness {
         DENIED.clear();
         DENIED_EXACT.clear();
         anyRolls = false;
-
         for (HardnessDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
-
             int found = 0;
             for (BlockMatchDef name : def.except) { found += bind(def, name, DENIED, DENIED_EXACT, "except"); }
             for (BlockMatchDef name : def.blocks) { found += bind(def, name, WHOLE, EXACT, "blocks"); }
@@ -89,7 +85,6 @@ public final class ContentHardness {
     private static int bind(HardnessDef def, BlockMatchDef name, Map<Block, HardnessDef> whole, Map<IBlockState, HardnessDef> exact, String where) {
         Block block = ContentStates.block(name.block.toString(), def.registryName + " " + where);
         if (block == null) { return 0; }
-
         if (!name.properties.isEmpty()) { exact.put(ContentStates.of(block, 0, name.properties, def.registryName), def); }
         else if (name.meta >= 0) { exact.put(ContentStates.of(block, name.meta), def); }
         else { whole.put(block, def); }
@@ -108,7 +103,6 @@ public final class ContentHardness {
         if (state == null || WHOLE.isEmpty() && EXACT.isEmpty()) { return null; }
         if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return null; }
         if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return null; }
-
         HardnessDef def = WHOLE.get(state.getBlock());
         if (def == null && !EXACT.isEmpty()) { def = EXACT.get(state); }
         return def;
@@ -117,7 +111,6 @@ public final class ContentHardness {
     public static int bucket(HardnessDef def, int x, int y, int z) {
         if (def.buckets <= 1) { return 0; }
         if (y < def.minHeight || y > def.maxHeight) { return 0; }
-
         float strength = def.field.strength(salt, x, y, z);
         int bucket = Math.round(strength * (def.buckets - 1));
         return Math.max(0, Math.min(def.buckets - 1, bucket));
@@ -126,21 +119,18 @@ public final class ContentHardness {
     public static float miningAt(@Nullable IBlockState state, int x, int y, int z) {
         HardnessDef def = groupFor(state);
         if (def == null) { return 1.0F; }
-
         return Math.max(0.0001F, def.mining(bucket(def, x, y, z)));
     }
 
     public static float blastAt(@Nullable IBlockState state, int x, int y, int z) {
         HardnessDef def = groupFor(state);
         if (def == null) { return 1.0F; }
-
         return Math.max(0.0F, def.blast(bucket(def, x, y, z)));
     }
 
     public static long modelSeed(@Nullable IBlockState state, Vec3i at, long fallback) {
         HardnessDef def = groupFor(state);
         if (def == null || def.buckets <= 1) { return fallback; }
-
         return ((long) bucket(def, at.getX(), at.getY(), at.getZ())) << 16;
     }
 
@@ -148,26 +138,21 @@ public final class ContentHardness {
 
     @SubscribeEvent public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
         if (WHOLE.isEmpty() && EXACT.isEmpty()) { return; }
-
         BlockPos pos = event.getPos();
         if (pos == null) { return; }
-
         float multiplier = miningAt(event.getState(), pos.getX(), pos.getY(), pos.getZ());
         if (multiplier == 1.0F) { return; }
-
         event.setNewSpeed(event.getOriginalSpeed() / multiplier);
     }
 
     @SubscribeEvent public static void onLogin(PlayerLoggedInEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) { return; }
-
         RDPLNetwork.sendHardnessSalt((EntityPlayerMP) event.player, salt);
     }
 
     @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) {
         World world = event.getWorld();
         if (world.isRemote || world.provider.getDimension() != 0) { return; }
-
         salt(derive(world.getSeed()));
     }
 
@@ -185,17 +170,14 @@ public final class ContentHardness {
             ContentLog.LOGGER.error("Hardness group {} is empty, ignoring it", key);
             return null;
         }
-
         List<BlockMatchDef> blocks = matches(key, json, "blocks");
         if (blocks.isEmpty()) {
             ContentLog.LOGGER.error("Hardness group {} names no blocks, ignoring it", key);
             return null;
         }
-
         float[] mining = range(json, "miningTime");
         float[] blast = range(json, "blastResistance");
         int buckets = Math.max(1, Math.min(256, JsonUtils.getInt(json, "buckets", 10)));
-
         int minHeight = JsonUtils.getInt(json, "minHeight", 0);
         int maxHeight = JsonUtils.getInt(json, "maxHeight", 255);
         if (maxHeight < minHeight) {
@@ -204,7 +186,6 @@ public final class ContentHardness {
             minHeight = maxHeight;
             maxHeight = swap;
         }
-
         return new HardnessDef(key, blocks, matches(key, json, "except"),
                 mining[0], mining[1], blast[0], blast[1], buckets,
                 minHeight, maxHeight, strings(json), field(json));
@@ -212,13 +193,11 @@ public final class ContentHardness {
 
     private static ContentField field(JsonObject json) {
         if (!json.has("field")) { return new ContentField(ContentField.CHANCES, ContentField.SPREAD); }
-
         return fieldFrom(JsonUtils.getJsonObject(json, "field"));
     }
 
     public static ContentField fieldFrom(JsonObject entry) {
         if (!"seeded".equals(JsonUtils.getString(entry, "type", "speckle"))) { return new ContentField(chances(entry), JsonUtils.getFloat(entry, "spread", ContentField.SPREAD)); }
-
         return new ContentField(
                 JsonUtils.getInt(entry, "cell", ContentField.CELL),
                 JsonUtils.getInt(entry, "seeds", ContentField.SEEDS),
@@ -229,7 +208,6 @@ public final class ContentHardness {
 
     private static int[] chances(JsonObject json) {
         if (!json.has("chances")) { return ContentField.CHANCES; }
-
         JsonArray held = JsonUtils.getJsonArray(json, "chances");
         int[] values = new int[held.size()];
         for (int index = 0; index < values.length; index++) { values[index] = Math.max(0, held.get(index).getAsInt()); }
@@ -238,7 +216,6 @@ public final class ContentHardness {
 
     private static float[] range(JsonObject json, String name) {
         if (!json.has(name)) { return new float[] { 1.0F, 1.0F }; }
-
         JsonElement element = json.get(name);
         if (element.isJsonObject()) {
             JsonObject entry = element.getAsJsonObject();
@@ -253,7 +230,6 @@ public final class ContentHardness {
     private static List<BlockMatchDef> matches(ResourceLocation key, JsonObject json, String name) {
         List<BlockMatchDef> values = new ArrayList<>();
         if (!json.has(name)) { return values; }
-
         JsonElement element = json.get(name);
         if (!element.isJsonArray()) {
             values.add(match(key, element));
@@ -273,11 +249,9 @@ public final class ContentHardness {
             }
             return new BlockMatchDef(new ResourceLocation(JsonUtils.getString(entry, "block", "minecraft:stone")), JsonUtils.getInt(entry, "meta", -1), properties);
         }
-
         String name = element.getAsString();
         String[] parts = name.split(":");
         if (parts.length < 3) { return new BlockMatchDef(new ResourceLocation(name), -1, new LinkedHashMap<>()); }
-
         ResourceLocation block = new ResourceLocation(parts[0] + ":" + parts[1]);
         try { return new BlockMatchDef(block, Integer.parseInt(parts[2]), new LinkedHashMap<>()); }
         catch (NumberFormatException ex) {
@@ -289,7 +263,6 @@ public final class ContentHardness {
     private static List<String> strings(JsonObject json) {
         List<String> values = new ArrayList<>();
         if (!json.has("requires")) { return values; }
-
         for (JsonElement element : JsonUtils.getJsonArray(json, "requires")) { values.add(element.getAsString()); }
         return values;
     }

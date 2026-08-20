@@ -1,25 +1,24 @@
 package mctmods.resourcedatapackloader.content.entity;
 
-import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIKamikaze;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIThrower;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
-import mctmods.resourcedatapackloader.mixin.AccessorEntity;
-import mctmods.resourcedatapackloader.mixin.AccessorEntityLiving;
-import mctmods.resourcedatapackloader.mixin.AccessorEntityLivingNavigator;
-import mctmods.resourcedatapackloader.mixin.AccessorEntityVillager;
-
-import com.google.gson.JsonParseException;
-import net.minecraft.entity.Entity;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntity;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLiving;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingNavigator;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityVillager;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 
+import com.google.gson.JsonParseException;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
@@ -90,28 +89,25 @@ public final class ContentEntities {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.entities) { return false; }
-
         PackManager.get().forEach(PackManager.ENTITIES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
                 EntityVariantDef def = ContentParser.entityVariant(key, contents);
                 if (def == null) { return; }
                 if (!present(def)) {
-                    ContentLog.LOGGER.info("Entity variant {} needs {}, which is not here, so it is left out", key, def.requires);
+                    ContentLog.LOGGER.debug("Entity variant {} needs {}, which is not here, so it is left out", key, def.requires);
                     return;
                 }
                 DEFS.put(key, def);
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in entity file {}, ignoring it", key, ex); }
         });
-
         if (!DEFS.isEmpty()) { Summary.info("entities", "Loaded " + DEFS.size() + " entity variant(s) from packs"); }
         return !DEFS.isEmpty();
     }
 
     public static void register(IForgeRegistry<EntityEntry> registry) {
         if (!load()) { return; }
-
         int made = 0;
         int network = 0;
         for (Map.Entry<ResourceLocation, EntityVariantDef> entry : DEFS.entrySet()) {
@@ -121,58 +117,48 @@ public final class ContentEntities {
                 ContentLog.LOGGER.error("Entity variant {} is based on {}, which nothing registers, leaving it out", entry.getKey(), def.base);
                 continue;
             }
-
             Class<? extends Entity> made$class = EntityClassMaker.make(base.getEntityClass(), entry.getKey().getNamespace() + "_" + entry.getKey().getPath(), def.ignoresSpawnRules);
             if (made$class == null) { continue; }
-
             EntityEntryBuilder<Entity> builder = EntityEntryBuilder.create();
             builder.entity(made$class).id(entry.getKey(), network++)
                     .name(entry.getKey().getNamespace() + "." + entry.getKey().getPath())
                     .tracker(def.trackingRange, def.trackingFrequency, def.trackVelocity);
             if (def.egg) { builder.egg(eggColor(def, true), eggColor(def, false)); }
-
             registry.register(builder.build());
             BY_CLASS.put(made$class, def);
             addSpawns(made$class, def);
             made++;
-            ContentLog.LOGGER.info("Entity variant {} read from the pack with attributes {} and equipment {}", entry.getKey(), def.attributes, def.equipment);
+            ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", entry.getKey(), def.attributes, def.equipment);
         }
-
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
     }
 
     @Nullable public static ResourceLocation texture(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.texture.isEmpty()) { return null; }
-
         return TEXTURES.computeIfAbsent(def.texture, ResourceLocation::new);
     }
 
     @Nullable public static ResourceLocation lootTable(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.lootTable.isEmpty()) { return null; }
-
         return NAMES.computeIfAbsent(def.lootTable, ResourceLocation::new);
     }
 
     @Nullable public static SoundEvent soundEvent(Entity entity, int which) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return null; }
-
         String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : def.deathSound;
         if (name.isEmpty()) { return null; }
-
         ResourceLocation key = new ResourceLocation(name);
         SoundEvent event = ForgeRegistries.SOUND_EVENTS.containsKey(key) ? ForgeRegistries.SOUND_EVENTS.getValue(key) : null;
         if (event == null) { ContentLog.LOGGER.error("Entity variant {} names sound {}, which nothing registers", def.registryName, key); }
-
         return event;
     }
 
     public static boolean immune(Entity entity, String damageType) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.immuneTo.isEmpty()) { return false; }
-
         for (String wanted : def.immuneTo) {
             if (wanted.equalsIgnoreCase(damageType)) { return true; }
         }
@@ -182,7 +168,6 @@ public final class ContentEntities {
     public static float scale(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return 1.0F; }
-
         return entity.isSprinting() ? def.angryScale : def.scale;
     }
 
@@ -196,29 +181,23 @@ public final class ContentEntities {
         return def != null && def.steerable;
     }
 
-    @SubscribeEvent
-    public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
+    @SubscribeEvent public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         EntityLivingBase living = event.getEntityLiving();
         if (!(living instanceof EntityLiving)) { return; }
-
         EntityVariantDef def = BY_CLASS.get(living.getClass());
         if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0)) { return; }
-
         if (living.world.isRemote) {
             if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
             return;
         }
-
         if (def.despawnTicks > 0 && timeIsUp(living, def)) {
             living.setDead();
             return;
         }
         if (def.amphibious) { amphibious((EntityLiving) living); }
         if (def.baby > 0.0F && living.getEntityData().getBoolean(YOUNG) && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
-
         boolean angry = stillRoused((EntityLiving) living);
         if (angry != living.isSprinting()) { living.setSprinting(angry); }
-
         resize(living, angry ? def.angryScale : def.scale);
     }
 
@@ -235,7 +214,6 @@ public final class ContentEntities {
     public static float sound(Entity entity, float original, boolean pitch) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return original; }
-
         return original * (pitch ? def.soundPitch : def.soundVolume);
     }
 
@@ -272,7 +250,6 @@ public final class ContentEntities {
     @Nullable public static EnumCreatureAttribute creatureAttribute(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.creatureAttribute.isEmpty()) { return null; }
-
         for (EnumCreatureAttribute value : EnumCreatureAttribute.values()) {
             if (value.name().equalsIgnoreCase(def.creatureAttribute)) { return value; }
         }
@@ -298,50 +275,40 @@ public final class ContentEntities {
     public static int tint(Entity entity, String part) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.tint == 0 || !def.tintParts.contains(part)) { return 0; }
-
         return def.tint;
     }
 
-    @SubscribeEvent
-    public static void onJoin(EntityJoinWorldEvent event) {
+    @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
         EntityVariantDef def = BY_CLASS.get(event.getEntity().getClass());
         if (def == null) { return; }
-
         if (!event.getWorld().isRemote && swapped(event, def)) { return; }
-
         remember(event.getEntity(), def);
         if (event.getWorld().isRemote) {
             resize(event.getEntity(), event.getEntity().isSprinting() ? def.angryScale : def.scale);
             return;
         }
-
         apply(event.getEntity(), def);
     }
 
     private static boolean swapped(EntityJoinWorldEvent event, EntityVariantDef def) {
         if (def.becomes.isEmpty() || SWAPPING.get() == Boolean.TRUE) { return false; }
-
         PickDef chosen = pick(def.becomes, event.getWorld().rand);
         if (chosen == null || chosen.name.equals(def.registryName.toString())) { return false; }
-
         ResourceLocation wanted = new ResourceLocation(chosen.name);
         if (!EntityList.isRegistered(wanted)) {
             ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.registryName, chosen.name);
             return false;
         }
-
         Entity was = event.getEntity();
         SWAPPING.set(Boolean.TRUE);
         try {
             Entity becomes = EntityList.createEntityByIDFromName(wanted, event.getWorld());
             if (becomes == null) { return false; }
-
             becomes.setLocationAndAngles(was.posX, was.posY, was.posZ, was.rotationYaw, was.rotationPitch);
             if (becomes instanceof EntityLiving) { ((EntityLiving) becomes).onInitialSpawn(event.getWorld().getDifficultyForLocation(new BlockPos(becomes)), null); }
             event.getWorld().spawnEntity(becomes);
         }
         finally { SWAPPING.set(Boolean.FALSE); }
-
         event.setCanceled(true);
         return true;
     }
@@ -350,7 +317,6 @@ public final class ContentEntities {
         int total = 0;
         for (PickDef entry : pool) { total += entry.weight; }
         if (total <= 0) { return null; }
-
         int roll = random.nextInt(total);
         for (PickDef entry : pool) {
             roll -= entry.weight;
@@ -367,17 +333,15 @@ public final class ContentEntities {
         if (def.silent) { entity.setSilent(true); }
         if (def.glowing) { entity.setGlowing(true); }
         if (def.invisible) { entity.setInvisible(true); }
-        if (def.fireproof) { ((AccessorEntity) entity).rdpl$setImmuneToFire(true); }
+        if (def.fireproof) { ((IEntity) entity).rdpl$setImmuneToFire(true); }
         if (def.invulnerable) { entity.setEntityInvulnerable(true); }
         resize(entity, def.scale);
         if (!(entity instanceof EntityLivingBase)) { return; }
-
         EntityLivingBase alive = (EntityLivingBase) entity;
         attributes(alive, def);
         if (def.absorption > 0.0F) { alive.setAbsorptionAmount(def.absorption); }
         effects(alive, def);
         if (!(entity instanceof EntityLiving)) { return; }
-
         EntityLiving living = (EntityLiving) entity;
         if (def.swims) { swimmer(living); }
         if (def.amphibious && living.getNavigator() instanceof PathNavigateGround) { ((PathNavigateGround) living.getNavigator()).setCanSwim(true); }
@@ -387,7 +351,7 @@ public final class ContentEntities {
             }
         }
         ResourceLocation table = lootTable(living);
-        if (table != null) { ((AccessorEntityLiving) living).rdpl$setDeathLootTable(table); }
+        if (table != null) { ((IEntityLiving) living).rdpl$setDeathLootTable(table); }
         if (def.baby > 0.0F && rolledYoung(living, def)) { child(living); }
         if (living instanceof EntityVillager && !def.profession.isEmpty()) { profession((EntityVillager) living, def); }
         if (def.persistent) { living.enablePersistence(); }
@@ -406,7 +370,6 @@ public final class ContentEntities {
                 ContentLog.LOGGER.error("Entity variant {} names attribute '{}', which is not one of maxHealth, movementSpeed, attackDamage, knockbackResistance, followRange or armor", def.registryName, entry.getKey());
                 continue;
             }
-
             AbstractAttributeMap map = living.getAttributeMap();
             IAttributeInstance instance = map.getAttributeInstanceByName(attribute.getName());
             if (instance == null) { instance = map.registerAttribute(attribute); }
@@ -431,12 +394,10 @@ public final class ContentEntities {
             ContentLog.LOGGER.error("Entity variant {} asks to be hostile, but {} does not walk the ground the way the attack behavior needs", def.registryName, def.base);
             return;
         }
-
         EntityCreature creature = (EntityCreature) living;
         for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(living.tasks.taskEntries)) {
             if (entry.action instanceof EntityAIAvoidEntity || entry.action instanceof EntityAIPanic) { living.tasks.removeTask(entry.action); }
         }
-
         boolean already = false;
         for (EntityAITasks.EntityAITaskEntry task : living.tasks.taskEntries) {
             if (task.action instanceof EntityAIAttackMelee) {
@@ -447,14 +408,12 @@ public final class ContentEntities {
         if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
         if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
         if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, carrying(def), def.explosionFuse, def.throwReload > 0 ? def.throwReload : def.explosionFuse, def.throwRetreat > 0 ? def.throwRetreat : def.explosionFuse, def.throwAmmo, def.throwPower, def.throwArc, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue())); }
-
         living.targetTasks.addTask(1, new EntityAIHurtByTarget(creature, true));
         int priority = 2;
         List<String> targets = def.targets.isEmpty() ? PLAYER_ONLY : def.targets;
         for (String name : targets) {
             Class<? extends EntityLivingBase> type = living(name, def);
             if (type == null) { continue; }
-
             living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, true));
         }
     }
@@ -506,9 +465,8 @@ public final class ContentEntities {
             ContentLog.LOGGER.error("Entity variant {} names profession {}, which nothing registers", def.registryName, key);
             return;
         }
-
         villager.setProfession(found);
-        if (def.career > 0) { ((AccessorEntityVillager) villager).rdpl$setCareer(def.career); }
+        if (def.career > 0) { ((IEntityVillager) villager).rdpl$setCareer(def.career); }
     }
 
     private static void remember(Entity entity, EntityVariantDef def) {
@@ -517,7 +475,6 @@ public final class ContentEntities {
             return;
         }
         if (entity instanceof EntitySlime) { return; }
-
         SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
     }
 
@@ -526,14 +483,12 @@ public final class ContentEntities {
                 ? new float[] { 0.51000005F * ((EntitySlime) entity).getSlimeSize(), 0.51000005F * ((EntitySlime) entity).getSlimeSize() }
                 : SIZES.get(entity.getClass());
         if (base == null) { return; }
-
         boolean young = entity instanceof EntityAgeable && ((EntityAgeable) entity).isChild()
                 || entity instanceof EntityZombie && ((EntityZombie) entity).isChild();
         float factor = young ? scale / 2.0F : scale;
         float width = base[0] * factor;
         float height = base[1] * factor;
         if (entity.width == width && entity.height == height) { return; }
-
         AxisAlignedBB before = entity.getEntityBoundingBox();
         double centerX = (before.minX + before.maxX) / 2.0D;
         double centerZ = (before.minZ + before.maxZ) / 2.0D;
@@ -544,24 +499,22 @@ public final class ContentEntities {
     }
 
     private static void swimmer(EntityLiving living) {
-        ((AccessorEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateSwimmer(living, living.world));
-        ((AccessorEntityLivingNavigator) living).rdpl$setMoveHelper(new SwimmingMoveHelper(living));
+        ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateSwimmer(living, living.world));
+        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new SwimmingMoveHelper(living));
     }
 
     private static void amphibious(EntityLiving living) {
         boolean wet = living.isInWater();
         boolean swimming = living.getNavigator() instanceof PathNavigateSwimmer;
         if (wet == swimming) { return; }
-
         if (wet) {
             swimmer(living);
             return;
         }
-
         PathNavigateGround ground = new PathNavigateGround(living, living.world);
         ground.setCanSwim(true);
-        ((AccessorEntityLivingNavigator) living).rdpl$setNavigator(ground);
-        ((AccessorEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
+        ((IEntityLivingNavigator) living).rdpl$setNavigator(ground);
+        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
     }
 
     private static void effects(EntityLivingBase living, EntityVariantDef def) {
@@ -593,7 +546,6 @@ public final class ContentEntities {
     private static ItemStack carrying(EntityVariantDef def) {
         String named = def.equipment.get("mainhand");
         if (named == null) { return ItemStack.EMPTY; }
-
         ResourceLocation name = new ResourceLocation(named);
         Item item = ForgeRegistries.ITEMS.containsKey(name) ? ForgeRegistries.ITEMS.getValue(name) : null;
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
@@ -606,7 +558,6 @@ public final class ContentEntities {
                 ContentLog.LOGGER.error("Entity variant {} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", def.registryName, entry.getKey());
                 continue;
             }
-
             ResourceLocation name = new ResourceLocation(entry.getValue());
             Item item = ForgeRegistries.ITEMS.containsKey(name) ? ForgeRegistries.ITEMS.getValue(name) : null;
             if (item == null) {
@@ -620,10 +571,8 @@ public final class ContentEntities {
 
     private static void addSpawns(Class<? extends Entity> type, EntityVariantDef def) {
         if (def.spawns.isEmpty() || !EntityLiving.class.isAssignableFrom(type)) { return; }
-
         List<Biome> biomes = biomes(def);
         if (biomes.isEmpty()) { return; }
-
         for (SpawnEntryDef entry : def.spawns) {
             net.minecraft.entity.EnumCreatureType creature = creatureType(entry.creatureType);
             if (creature == null) {
@@ -640,13 +589,11 @@ public final class ContentEntities {
             if (matches(biome, def)) { found.add(biome); }
         }
         if (found.isEmpty()) { ContentLog.LOGGER.error("Entity variant {} names biomes nothing matches, so it will not spawn on its own", def.registryName); }
-
         return found;
     }
 
     private static boolean matches(Biome biome, EntityVariantDef def) {
         if (def.biomes.isEmpty() && def.biomeTypes.isEmpty()) { return true; }
-
         ResourceLocation name = biome.getRegistryName();
         for (String wanted : def.biomes) {
             if (name != null && wanted.equalsIgnoreCase(name.toString())) { return true; }
@@ -663,10 +610,8 @@ public final class ContentEntities {
     private static int eggColor(EntityVariantDef def, boolean primary) {
         int wanted = primary ? def.eggPrimary : def.eggSecondary;
         if (wanted >= 0) { return wanted; }
-
         EntityList.EntityEggInfo info = EntityList.ENTITY_EGGS.get(def.base);
         if (info == null) { return primary ? 0xFFFFFF : 0x808080; }
-
         return primary ? info.primaryColor : info.secondaryColor;
     }
 
@@ -709,7 +654,6 @@ public final class ContentEntities {
     @Nullable private static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
         ResourceLocation location = new ResourceLocation(name);
         if ("minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return EntityPlayer.class; }
-
         EntityEntry entry = ForgeRegistries.ENTITIES.containsKey(location) ? ForgeRegistries.ENTITIES.getValue(location) : null;
         if (entry == null || !EntityLivingBase.class.isAssignableFrom(entry.getEntityClass())) {
             ContentLog.LOGGER.error("Entity variant {} wants to attack '{}', which is not a living entity that is registered", def.registryName, name);

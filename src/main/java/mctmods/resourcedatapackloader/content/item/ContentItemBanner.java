@@ -14,7 +14,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-
 import javax.annotation.Nonnull;
 
 public class ContentItemBanner extends ItemBlock {
@@ -33,12 +32,10 @@ public class ContentItemBanner extends ItemBlock {
         if (facing == EnumFacing.DOWN) { return EnumActionResult.FAIL; }
         if (!state.getMaterial().isSolid() && !replaceable) { return EnumActionResult.FAIL; }
         if (replaceable && facing != EnumFacing.UP) { return EnumActionResult.FAIL; }
-
         BlockPos placed = pos.offset(facing);
         ItemStack held = player.getHeldItem(hand);
         if (!player.canPlayerEdit(placed, facing, held) || !standing.canPlaceBlockAt(world, placed)) { return EnumActionResult.FAIL; }
         if (world.isRemote) { return EnumActionResult.SUCCESS; }
-
         if (replaceable) { placed = placed.down(); }
         if (facing == EnumFacing.UP) {
             int rotation = MathHelper.floor((double) ((player.rotationYaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
@@ -47,7 +44,6 @@ public class ContentItemBanner extends ItemBlock {
         else {
             ContentBlockBannerWall wall = standing.getWall();
             if (wall == null) { return EnumActionResult.FAIL; }
-
             world.setBlockState(placed, wall.getDefaultState().withProperty(BlockBanner.FACING, facing), 3);
         }
         held.shrink(1);

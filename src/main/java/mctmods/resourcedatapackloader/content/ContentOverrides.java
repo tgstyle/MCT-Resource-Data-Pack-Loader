@@ -3,11 +3,11 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.OverrideDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
-import mctmods.resourcedatapackloader.mixin.AccessorBlock;
-import mctmods.resourcedatapackloader.mixin.AccessorBlockFire;
-import mctmods.resourcedatapackloader.mixin.AccessorItem;
-import mctmods.resourcedatapackloader.mixin.AccessorItemFood;
-import mctmods.resourcedatapackloader.mixin.AccessorPotionType;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockFire;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IItem;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IItemFood;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IPotionType;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -60,12 +60,10 @@ public final class ContentOverrides {
     public static void reload() {
         if (generation == PackManager.get().getGeneration()) { return; }
         generation = PackManager.get().getGeneration();
-
         restoreAll();
         DEFS.clear();
         EDIBLE.clear();
         if (!Config.content.overrides) { return; }
-
         PackManager.get().forEach(PackManager.OVERRIDES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation source = new ResourceLocation(namespace, PackManager.OVERRIDES + "/" + path);
             int split = path.indexOf('/');
@@ -78,11 +76,10 @@ public final class ContentOverrides {
                 OverrideDef def = read(target, source, contents);
                 if (def == null) { return; }
                 OverrideDef previous = DEFS.put(target, def);
-                if (previous != null) { ContentLog.LOGGER.info("Override for {} from {} replaces the one from {}", target, source, previous.source); }
+                if (previous != null) { ContentLog.LOGGER.debug("Override for {} from {} replaces the one from {}", target, source, previous.source); }
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in override file {}, ignoring it: {}", source, ex.getMessage()); }
         });
-
         int applied = 0;
         for (OverrideDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires, def.target)) { continue; }
@@ -97,7 +94,6 @@ public final class ContentOverrides {
             ContentLog.LOGGER.error("Override file {} is empty, ignoring it", source);
             return null;
         }
-
         OverrideDef def = new OverrideDef(target, source,
                 floatOrNull(json, "hardness"),
                 floatOrNull(json, "resistance"),
@@ -115,7 +111,6 @@ public final class ContentOverrides {
                 json.has("effects") ? effects(source, json) : null,
                 json.has("food") ? food(source, JsonUtils.getJsonObject(json, "food")) : null,
                 requires(json));
-
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
@@ -138,8 +133,7 @@ public final class ContentOverrides {
         if (!ForgeRegistries.BLOCKS.containsKey(def.target)) { return false; }
         Block block = ForgeRegistries.BLOCKS.getValue(def.target);
         if (block == null) { return false; }
-
-        AccessorBlock inside = (AccessorBlock) block;
+        IBlock inside = (IBlock) block;
         if (!BLOCKS.containsKey(block)) { BLOCKS.put(block, BlockSnapshot.of(block)); }
         if (def.hardness != null) { block.setHardness(def.hardness); }
         if (def.resistance != null) { block.setResistance(def.resistance); }
@@ -161,7 +155,6 @@ public final class ContentOverrides {
         if (!ForgeRegistries.ITEMS.containsKey(def.target)) { return false; }
         Item item = ForgeRegistries.ITEMS.getValue(def.target);
         if (item == null) { return false; }
-
         if (!ITEMS.containsKey(item)) { ITEMS.put(item, ItemSnapshot.of(item)); }
         if (def.maxStackSize != null) { item.setMaxStackSize(Math.max(1, Math.min(64, def.maxStackSize))); }
         if (def.maxDamage != null) { item.setMaxDamage(Math.max(0, def.maxDamage)); }
@@ -177,7 +170,7 @@ public final class ContentOverrides {
     private static void applyFood(OverrideDef def, OverrideDef.FoodDef food, Item item) {
         if (item instanceof ItemFood) {
             if (!FOODS.containsKey(item)) { FOODS.put(item, FoodSnapshot.of((ItemFood) item)); }
-            AccessorItemFood inside = (AccessorItemFood) item;
+            IItemFood inside = (IItemFood) item;
             inside.rdpl$setHealAmount(food.heal);
             inside.rdpl$setSaturationModifier(food.saturation);
             inside.rdpl$setAlwaysEdible(food.alwaysEdible);
@@ -192,7 +185,6 @@ public final class ContentOverrides {
         if (effects == null || !ForgeRegistries.POTION_TYPES.containsKey(def.target)) { return false; }
         PotionType type = ForgeRegistries.POTION_TYPES.getValue(def.target);
         if (type == null) { return false; }
-
         List<PotionEffect> resolved = new ArrayList<>(effects.size());
         for (PotionEffectDef effect : effects) {
             Potion potion = ForgeRegistries.POTIONS.getValue(new ResourceLocation(effect.potion));
@@ -202,8 +194,7 @@ public final class ContentOverrides {
             }
             resolved.add(new PotionEffect(potion, effect.duration, effect.amplifier, effect.ambient, effect.showParticles));
         }
-
-        AccessorPotionType inside = (AccessorPotionType) type;
+        IPotionType inside = (IPotionType) type;
         if (!TYPES.containsKey(type)) { TYPES.put(type, ImmutableList.copyOf(inside.rdpl$getEffects())); }
         inside.rdpl$setEffects(ImmutableList.copyOf(resolved));
         return true;
@@ -214,7 +205,7 @@ public final class ContentOverrides {
         for (Map.Entry<Block, FireSnapshot> entry : FIRE.entrySet()) { entry.getValue().restore(entry.getKey()); }
         for (Map.Entry<Item, ItemSnapshot> entry : ITEMS.entrySet()) { entry.getValue().restore(entry.getKey()); }
         for (Map.Entry<Item, FoodSnapshot> entry : FOODS.entrySet()) { entry.getValue().restore((ItemFood) entry.getKey()); }
-        for (Map.Entry<PotionType, ImmutableList<PotionEffect>> entry : TYPES.entrySet()) { ((AccessorPotionType) entry.getKey()).rdpl$setEffects(entry.getValue()); }
+        for (Map.Entry<PotionType, ImmutableList<PotionEffect>> entry : TYPES.entrySet()) { ((IPotionType) entry.getKey()).rdpl$setEffects(entry.getValue()); }
         BLOCKS.clear();
         FIRE.clear();
         ITEMS.clear();
@@ -241,7 +232,6 @@ public final class ContentOverrides {
 
     private static List<PotionEffectDef> readEffects(ResourceLocation source, JsonObject json) {
         if (!json.has("effects")) { return Collections.emptyList(); }
-
         List<PotionEffectDef> effects = new ArrayList<>();
         for (JsonElement element : JsonUtils.getJsonArray(json, "effects")) {
             if (!element.isJsonObject()) {
@@ -265,7 +255,6 @@ public final class ContentOverrides {
 
     private static List<String> requires(JsonObject json) {
         if (!json.has("requires")) { return Collections.emptyList(); }
-
         List<String> values = new ArrayList<>();
         for (JsonElement element : JsonUtils.getJsonArray(json, "requires")) { values.add(element.getAsString()); }
         return Collections.unmodifiableList(values);
@@ -301,7 +290,7 @@ public final class ContentOverrides {
         }
 
         static BlockSnapshot of(Block block) {
-            AccessorBlock inside = (AccessorBlock) block;
+            IBlock inside = (IBlock) block;
             List<IBlockState> states = new ArrayList<>(block.getBlockState().getValidStates());
             String[] tools = new String[states.size()];
             int[] levels = new int[states.size()];
@@ -313,7 +302,7 @@ public final class ContentOverrides {
         }
 
         void restore(Block block) {
-            AccessorBlock inside = (AccessorBlock) block;
+            IBlock inside = (IBlock) block;
             inside.rdpl$setHardness(hardness);
             inside.rdpl$setResistance(resistance);
             inside.rdpl$setSlipperiness(slipperiness);
@@ -334,12 +323,12 @@ public final class ContentOverrides {
         }
 
         static FireSnapshot of(Block block) {
-            AccessorBlockFire fire = (AccessorBlockFire) fire();
+            IBlockFire fire = (IBlockFire) fire();
             return new FireSnapshot(fire.rdpl$getEncouragements().get(block), fire.rdpl$getFlammabilities().get(block));
         }
 
         void restore(Block block) {
-            AccessorBlockFire fire = (AccessorBlockFire) fire();
+            IBlockFire fire = (IBlockFire) fire();
             if (encouragement == null || flammability == null) {
                 fire.rdpl$getEncouragements().remove(block);
                 fire.rdpl$getFlammabilities().remove(block);
@@ -361,14 +350,14 @@ public final class ContentOverrides {
         }
 
         static ItemSnapshot of(Item item) {
-            AccessorItem inside = (AccessorItem) item;
+            IItem inside = (IItem) item;
             return new ItemSnapshot(inside.rdpl$getMaxStackSize(), inside.rdpl$getMaxDamage(), item.getContainerItem());
         }
 
         void restore(Item item) {
             item.setMaxStackSize(maxStackSize);
             item.setMaxDamage(maxDamage);
-            ((AccessorItem) item).rdpl$setContainerItem(containerItem);
+            ((IItem) item).rdpl$setContainerItem(containerItem);
         }
     }
 
@@ -384,12 +373,12 @@ public final class ContentOverrides {
         }
 
         static FoodSnapshot of(ItemFood item) {
-            AccessorItemFood inside = (AccessorItemFood) item;
+            IItemFood inside = (IItemFood) item;
             return new FoodSnapshot(inside.rdpl$getHealAmount(), inside.rdpl$getSaturationModifier(), inside.rdpl$getAlwaysEdible());
         }
 
         void restore(ItemFood item) {
-            AccessorItemFood inside = (AccessorItemFood) item;
+            IItemFood inside = (IItemFood) item;
             inside.rdpl$setHealAmount(heal);
             inside.rdpl$setSaturationModifier(saturation);
             inside.rdpl$setAlwaysEdible(alwaysEdible);

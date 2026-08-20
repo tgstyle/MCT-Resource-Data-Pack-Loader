@@ -19,7 +19,6 @@ public class SwimmingMoveHelper extends EntityMoveHelper {
             action = EntityMoveHelper.Action.WAIT;
             return;
         }
-
         double toX = posX - swimmer.posX;
         double toY = posY - swimmer.posY;
         double toZ = posZ - swimmer.posZ;
@@ -29,11 +28,9 @@ public class SwimmingMoveHelper extends EntityMoveHelper {
             action = EntityMoveHelper.Action.WAIT;
             return;
         }
-
         swimmer.rotationYaw = limitAngle(swimmer.rotationYaw, (float) (MathHelper.atan2(toZ, toX) * (180D / Math.PI)) - 90.0F, 10.0F);
         swimmer.renderYawOffset = swimmer.rotationYaw;
         swimmer.rotationYawHead = swimmer.rotationYaw;
-
         float wanted = (float) (speed * swimmer.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue());
         swimmer.setAIMoveSpeed(swimmer.isInWater() ? wanted * 0.6F : wanted);
         swimmer.motionY += swimmer.getAIMoveSpeed() * (toY / away) * 0.1D;

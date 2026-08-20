@@ -36,7 +36,6 @@ public final class ContentGates {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.load) { return; }
-
         PackManager.get().forEach(PackManager.GATES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
@@ -45,14 +44,11 @@ public final class ContentGates {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in gate definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         for (Map.Entry<ResourceLocation, GateDef> entry : DEFS.entrySet()) {
             GateDef def = entry.getValue();
             if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }
-
             BY_DIMENSION.computeIfAbsent(def.dimension, k -> new ArrayList<>()).add(def);
         }
-
         if (!BY_DIMENSION.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + count() + " gate(s)"); }
     }
 
@@ -74,16 +70,13 @@ public final class ContentGates {
         if (!def.hold.isEmpty() && carrying(player, def.hold)) { return true; }
         if (!def.advancement.isEmpty() && earned(player, def.advancement)) { return true; }
         if (def.global) { return GateStorage.unlockedGlobally(player.world, def.getKey()); }
-
         return GateStorage.unlockedFor(player, def.getKey());
     }
 
     public static void unlock(EntityPlayer player, GateDef def, boolean announce) {
         if (def.global) { GateStorage.unlockGlobally(player.world, def.getKey()); }
         else { GateStorage.unlockFor(player, def.getKey()); }
-
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
-
         String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());
         if (def.global) { broadcast(player, message); }
         else { player.sendStatusMessage(new TextComponentString(TextFormatting.GREEN + message), false); }
@@ -96,10 +89,8 @@ public final class ContentGates {
 
     public static void refuse(EntityPlayer player, GateDef def) {
         if (def.blockedMessage.isEmpty()) { return; }
-
         String needed = def.consume.isEmpty() ? def.craft : def.consume;
         if (needed.isEmpty()) { needed = def.hold; }
-
         String message = def.blockedMessage.replace("%dim%", def.name).replace("%item%", describe(needed));
         player.sendStatusMessage(new TextComponentString(TextFormatting.RED + message), true);
     }
@@ -107,7 +98,6 @@ public final class ContentGates {
     public static boolean carrying(EntityPlayer player, String item) {
         ItemStack wanted = ContentStacks.parse(new ResourceLocation("rdpl", "gate"), item, 1);
         if (wanted.isEmpty()) { return false; }
-
         for (ItemStack held : player.inventory.mainInventory) {
             if (matches(held, wanted)) { return true; }
         }
@@ -116,32 +106,26 @@ public final class ContentGates {
 
     public static boolean matches(ItemStack found, ItemStack wanted) {
         if (found.isEmpty() || found.getItem() != wanted.getItem()) { return false; }
-
         return wanted.getMetadata() == 32767 || found.getMetadata() == wanted.getMetadata();
     }
 
     private static boolean earned(EntityPlayer player, String name) {
         if (!(player instanceof EntityPlayerMP)) { return false; }
-
         MinecraftServer server = player.getServer();
         if (server == null) { return false; }
-
         Advancement advancement = server.getAdvancementManager().getAdvancement(new ResourceLocation(name));
         if (advancement == null) { return false; }
-
         return ((EntityPlayerMP) player).getAdvancements().getProgress(advancement).isDone();
     }
 
     private static void broadcast(EntityPlayer player, String message) {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
-
         for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { online.sendStatusMessage(new TextComponentString(TextFormatting.GREEN + message), false); }
     }
 
     private static String describe(String item) {
         if (item.isEmpty()) { return "something"; }
-
         ItemStack stack = ContentStacks.parse(new ResourceLocation("rdpl", "gate"), item, 1);
         return stack.isEmpty() ? item : stack.getDisplayName();
     }

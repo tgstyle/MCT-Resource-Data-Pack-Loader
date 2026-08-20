@@ -32,8 +32,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
     public static final int MAX_VARIANTS = 4;
     public static final Set<String> HIDDEN = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(CHECK_DECAY.getName(), DECAYABLE.getName())));
     private static final ThreadLocal<PropertyVariant> PENDING = new ThreadLocal<>();
@@ -58,7 +57,6 @@ public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
     protected ContentBlockLeaves(BlockDef def, PropertyVariant property) {
         this.def = def;
         this.variant = property;
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName.toString());
         ContentSetup.harvest(this, def);
@@ -72,9 +70,7 @@ public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
                 .withProperty(CHECK_DECAY, Boolean.TRUE));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, PENDING.get(), CHECK_DECAY, DECAYABLE);
-    }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, PENDING.get(), CHECK_DECAY, DECAYABLE); }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -111,19 +107,14 @@ public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
         ItemStack sapling = ContentStacks.parse(def.registryName, def.leafSapling, 1);
         if (sapling.isEmpty()) { return; }
-
         Random rand = world instanceof World ? ((World) world).rand : RANDOM;
         int percent = Math.min(100, def.leafSaplingChance + fortune * FORTUNE_BONUS);
         if (1 + rand.nextInt(100) <= percent) { drops.add(sapling); }
     }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
-        return def.at(damageDropped(state)).light;
-    }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).light; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) {
-        return def.at(damageDropped(state)).hardness;
-    }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).hardness; }
 
     @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.flammability; }
 
@@ -141,7 +132,6 @@ public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
 
     @Override @SideOnly(Side.CLIENT) public boolean shouldSideBeRendered(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {
         if (def().opaque && world.getBlockState(pos.offset(side)).getBlock() == this) { return false; }
-
         return super.shouldSideBeRendered(state, world, pos, side);
     }
 }

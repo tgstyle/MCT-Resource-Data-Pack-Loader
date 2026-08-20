@@ -10,16 +10,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = OTGBiomeProvider.class, remap = false)
-public abstract class MixinOTGBiomeProvider {
-    @SuppressWarnings("ConstantConditions")
-    @Inject(method = "getBiomesForGeneration", at = @At("RETURN"), remap = false)
-    private void rdpl$substituteForGeneration(Biome[] paramArrayOfBiomeBase, int x, int z, int width, int height, CallbackInfoReturnable<Biome[]> cir) {
+@Mixin(value = OTGBiomeProvider.class, remap = false) public abstract class MixinOTGBiomeProvider {
+    @SuppressWarnings("ConstantConditions") @Inject(method = "getBiomesForGeneration", at = @At("RETURN"), remap = false) private void rdpl$substituteForGeneration(Biome[] paramArrayOfBiomeBase, int x, int z, int width, int height, CallbackInfoReturnable<Biome[]> cir) {
         ContentBiomeControl.substitute((BiomeProvider) (Object) this, cir.getReturnValue(), width * height);
     }
 
-    @SuppressWarnings("ConstantConditions")
-    @Inject(method = "getBiomes([Lnet/minecraft/world/biome/Biome;IIIIZ)[Lnet/minecraft/world/biome/Biome;", at = @At("RETURN"), remap = false)
+    @SuppressWarnings("ConstantConditions") @Inject(method = "getBiomes([Lnet/minecraft/world/biome/Biome;IIIIZ)[Lnet/minecraft/world/biome/Biome;", at = @At("RETURN"), remap = false)
     private void rdpl$substitute(Biome[] listToReuse, int x, int z, int width, int length, boolean cacheFlag, CallbackInfoReturnable<Biome[]> cir) {
         ContentBiomeControl.substitute((BiomeProvider) (Object) this, cir.getReturnValue(), width * length);
     }

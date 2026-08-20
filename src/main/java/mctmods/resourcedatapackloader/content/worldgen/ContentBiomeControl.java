@@ -1,8 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.mixin.AccessorBiomeName;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeName;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -46,37 +46,30 @@ public final class ContentBiomeControl {
 
     public static boolean enabled() {
         if (ContentControl.off(ContentControl.BIOMES)) { return false; }
-
         return ContentControl.flag(ContentControl.BIOMES, "blockBiomes", Config.worldgen.blockBiomes) || ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames).length > 0;
     }
 
     public static void apply() {
         if (!enabled()) { return; }
-
         BLOCKED.clear();
         dimensions = new HashSet<>();
         for (int dimension : ContentControl.numbers(ContentControl.BIOMES, "blockBiomeDimensions", Config.worldgen.blockBiomeDimensions)) { dimensions.add(dimension); }
-
         Set<String> whitelist = Names.lower(ContentControl.list(ContentControl.BIOMES, "biomeWhitelist", Config.worldgen.biomeWhitelist));
         Set<String> names = Names.lower(ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames));
         int removed = 0;
-
         for (BiomeManager.BiomeType type : BiomeManager.BiomeType.values()) {
             List<BiomeManager.BiomeEntry> entries = BiomeManager.getBiomes(type);
             if (entries == null || entries.isEmpty()) { continue; }
-
             List<BiomeManager.BiomeEntry> doomed = new ArrayList<>();
             for (BiomeManager.BiomeEntry entry : entries) {
                 if (allowed(entry.biome, whitelist, names)) { continue; }
                 doomed.add(entry);
             }
-
             if (doomed.isEmpty()) { continue; }
             if (doomed.size() == entries.size()) {
                 ContentLog.LOGGER.info("Every biome in the {} group is blocked, so the group is left as it is rather than emptied. The replacement is applied to the finished biome map instead", type);
                 continue;
             }
-
             for (BiomeManager.BiomeEntry entry : doomed) {
                 BiomeManager.removeBiome(type, entry);
                 BiomeManager.removeSpawnBiome(entry.biome);
@@ -86,10 +79,8 @@ public final class ContentBiomeControl {
                 removed++;
             }
         }
-
         substitutions(whitelist, names);
         if (removed == 0) { return; }
-
         Summary.info("biomes.blocked", "Thinned " + removed + " biome entry/entries out of world generation");
         if (ContentControl.flag(ContentControl.BIOMES, "logBlockedBiomes", Config.worldgen.logBlockedBiomes)) { BLOCKED.report("biome(s)"); }
     }
@@ -100,26 +91,20 @@ public final class ContentBiomeControl {
         SUBSTITUTED.clear();
         replacement = null;
         everythingBlocked = false;
-
         Biome chosen = Biomes.VOID;
-
         int survivors = 0;
         for (Biome biome : ForgeRegistries.BIOMES) {
             if (biome == chosen) { continue; }
             if (allowed(biome, whitelist, names)) { survivors++; }
             else { SUBSTITUTED.add(biome); }
         }
-
         if (SUBSTITUTED.isEmpty()) { return; }
-
         ContentWorldTemplates.resolve(SUBSTITUTED);
         replacement = chosen;
         everythingBlocked = survivors == 0 && ContentWorldTemplates.isVoid();
-
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null) { ContentLog.LOGGER.info("Replacing {} blocked biome(s) with {} wherever they are generated, including oceans, mesas and hill variants that the biome lists do not reach. Set worldTemplate to fill them with real biomes instead", SUBSTITUTED.size(), chosen.getRegistryName()); }
         else { ContentLog.LOGGER.info("Replacing {} blocked biome(s) using world template {}, which maps them by role and falls back to {}", SUBSTITUTED.size(), template.getKey(), template.fallback.isEmpty() ? chosen.getRegistryName() : template.fallback); }
-
         if (everythingBlocked) { ContentLog.LOGGER.info("No biome survived blocking and the template is void, so the overworld is generated as a void world"); }
     }
 
@@ -127,14 +112,11 @@ public final class ContentBiomeControl {
         Biome fallback = replacement;
         if (fallback == null || biomes == null || SUBSTITUTED.isEmpty()) { return; }
         if (outsideScope(provider)) { return; }
-
         Integer dimension = dimensionOf(provider);
         boolean templated = dimension == null || ContentWorldTemplates.appliesTo(dimension);
-
         int limit = Math.min(count, biomes.length);
         for (int i = 0; i < limit; i++) {
             if (!SUBSTITUTED.contains(biomes[i])) { continue; }
-
             Biome mapped = templated ? ContentWorldTemplates.replacement(biomes[i]) : null;
             biomes[i] = mapped == null ? fallback : mapped;
         }
@@ -144,7 +126,6 @@ public final class ContentBiomeControl {
         Biome fallback = replacement;
         if (fallback == null || SUBSTITUTED.isEmpty() || !SUBSTITUTED.contains(held)) { return allowed.contains(held); }
         if (outsideScope(provider)) { return allowed.contains(held); }
-
         Integer dimension = dimensionOf(provider);
         boolean templated = dimension == null || ContentWorldTemplates.appliesTo(dimension);
         Biome mapped = templated ? ContentWorldTemplates.replacement(held) : null;
@@ -154,7 +135,6 @@ public final class ContentBiomeControl {
     private static boolean outsideScope(BiomeProvider provider) {
         Set<Integer> allowed = dimensions;
         if (allowed == null || allowed.isEmpty()) { return false; }
-
         Integer dimension = dimensionOf(provider);
         if (dimension == null) {
             if (WARNED.add(System.identityHashCode(provider))) {
@@ -168,10 +148,8 @@ public final class ContentBiomeControl {
     @Nullable private static Integer dimensionOf(BiomeProvider provider) {
         Integer known = DIMENSIONS.get(provider);
         if (known != null) { return known; }
-
         for (WorldServer world : DimensionManager.getWorlds()) {
             if (world == null || world.getBiomeProvider() != provider) { continue; }
-
             Integer dimension = world.provider.getDimension();
             DIMENSIONS.put(provider, dimension);
             return dimension;
@@ -182,12 +160,10 @@ public final class ContentBiomeControl {
     @SubscribeEvent public static void onDecorate(DecorateBiomeEvent.Decorate event) {
         World world = event.getWorld();
         Biome biome = world.getBiome(event.getChunkPos().getBlock(8, 0, 8));
-
         if (biome instanceof ContentBiome && ((ContentBiome) biome).suppresses(event.getType())) {
             event.setResult(Event.Result.DENY);
             return;
         }
-
         if (SUBSTITUTED.isEmpty()) { return; }
         if (outsideScope(world.getBiomeProvider())) { return; }
         if (SUBSTITUTED.contains(biome)) { event.setResult(Event.Result.DENY); }
@@ -203,7 +179,6 @@ public final class ContentBiomeControl {
         lines.add("  provider dimension known: " + (dimension == null ? "NO, MixinWorldProvider has not fired for this world" : String.valueOf(dimension)));
         lines.add("  blockBiomes=" + ContentControl.flag(ContentControl.BIOMES, "blockBiomes", Config.worldgen.blockBiomes) + " blocked=" + SUBSTITUTED.size() + " template=" + (ContentWorldTemplates.active() == null ? "none" : ContentWorldTemplates.active().getKey()));
         lines.add("  biome topBlock=" + biome.topBlock.getBlock().getRegistryName() + " fillerBlock=" + biome.fillerBlock.getBlock().getRegistryName());
-
         BlockPos ground = world.getHeight(pos);
         lines.add("  ground at " + ground.getX() + "," + (ground.getY() - 1) + "," + ground.getZ() + " is " + world.getBlockState(ground.down()).getBlock().getRegistryName());
         lines.add("  one below that: " + world.getBlockState(ground.down(2)).getBlock().getRegistryName());
@@ -213,7 +188,6 @@ public final class ContentBiomeControl {
 
     public static void remember(World world) {
         if (world.provider == null) { return; }
-
         DIMENSIONS.put(world.provider.getBiomeProvider(), world.provider.getDimension());
     }
 
@@ -226,14 +200,12 @@ public final class ContentBiomeControl {
         if (!names.isEmpty() && named(biome, name, names) == ContentControl.flag(ContentControl.BIOMES, "biomeNamesAreBlacklist", Config.worldgen.biomeNamesAreBlacklist)) { return false; }
         if (name == null) { return true; }
         if (!ContentControl.flag(ContentControl.BIOMES, "blockBiomes", Config.worldgen.blockBiomes)) { return true; }
-
         return whitelist.contains(name.getNamespace().toLowerCase(Locale.ROOT));
     }
 
     public static String shownName(Biome biome) {
-        String held = ((AccessorBiomeName) biome).rdpl$biomeName();
+        String held = ((IBiomeName) biome).rdpl$biomeName();
         if (held != null) { return held; }
-
         ResourceLocation name = biome.getRegistryName();
         return name == null ? "unknown" : name.getPath();
     }

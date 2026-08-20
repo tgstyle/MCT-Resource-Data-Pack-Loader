@@ -42,7 +42,6 @@ public final class HardnessDef {
 
     private float at(float least, float most, int bucket) {
         if (buckets <= 1 || least == most) { return most; }
-
         float along = Math.max(0, Math.min(buckets - 1, bucket)) / (float) (buckets - 1);
         return most - along * (most - least);
     }

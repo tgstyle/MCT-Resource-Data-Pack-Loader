@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
+import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -254,7 +255,6 @@ public final class PackManager {
 
     public void warnAboutDisabledFeatures() {
         if (packs.isEmpty()) { return; }
-
         List<String[]> off = new ArrayList<>();
         collect(off, Config.content.load, "content.load", JSON, BLOCKS, ITEMS, FLUIDS, MATERIALS);
         collect(off, Config.content.sounds, "content.sounds", JSON, SOUNDS);
@@ -276,7 +276,6 @@ public final class PackManager {
         collect(off, Config.worldgen.load, "worldgen.load", JSON, WORLDGEN);
         collect(off, Config.data.functions, "data.functions", MCFUNCTION, FUNCTIONS);
         if (off.isEmpty()) { return; }
-
         for (RDPLPack pack : packs) {
             for (String[] entry : off) {
                 int count = pack.count(entry[0], entry[1]);
@@ -301,7 +300,7 @@ public final class PackManager {
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
             String tier = pack.isOverriding() ? " overriding" : "";
-            ContentLog.LOGGER.info("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} player_loot={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={} hardness={}",
+            ContentLog.LOGGER.debug("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} player_loot={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={} hardness={}",
                     pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(PLAYER_LOOT, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON), pack.count(HARDNESS, JSON));
         }
     }
@@ -364,7 +363,6 @@ public final class PackManager {
         Entry entry = resolve(namespace, path, overriding);
         if (entry != null) { return entry.pack.open(namespace, entry.actual); }
         if (!ContentPixelMaps.couldBeDrawn(path)) { return null; }
-
         byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
         return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
@@ -835,7 +833,6 @@ public final class PackManager {
         }
         Path file = rootFile(name);
         if (file == null) { return null; }
-
         try { return Files.newInputStream(file); }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read {}", file, ex); }
         return null;
@@ -844,7 +841,6 @@ public final class PackManager {
     @Nullable private Path rootFile(String name) {
         Path base = root;
         if (base == null) { return null; }
-
         Path file = base.resolve(name);
         return Files.isRegularFile(file) ? file : null;
     }
@@ -862,12 +858,10 @@ public final class PackManager {
             }
             if (contents == null) { continue; }
             if (validMeta(contents)) { return contents; }
-
             ContentLog.LOGGER.warn("Pack '{}': {} is not valid JSON with a 'pack' section, so it is being ignored", pack.getName(), PACK_META);
         }
         Path file = rootFile(PACK_META);
         if (file == null) { return null; }
-
         String contents;
         try { contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8); }
         catch (IOException ex) {
@@ -875,7 +869,6 @@ public final class PackManager {
             return null;
         }
         if (validMeta(contents)) { return contents; }
-
         ContentLog.LOGGER.warn("{} is not valid JSON with a 'pack' section, so it is being ignored", file);
         return null;
     }
@@ -893,7 +886,7 @@ public final class PackManager {
         if (entry == null) { return null; }
         try {
             String contents = entry.pack.read(namespace, entry.actual);
-            ContentLog.LOGGER.info("Serving {} {}:{} from pack '{}'", type, namespace, path, entry.pack.getName());
+            ContentLog.LOGGER.debug("Serving {} {}:{} from pack '{}'", type, namespace, path, entry.pack.getName());
             return contents;
         }
         catch (IOException ex) {
@@ -902,7 +895,7 @@ public final class PackManager {
         }
     }
 
-    public void forEach(String type, String ext, PackConsumer consumer) {
+    public void forEach(String type, String ext, IPackConsumer consumer) {
         for (RDPLPack pack : packs) { pack.forEach(type, ext, consumer); }
     }
 

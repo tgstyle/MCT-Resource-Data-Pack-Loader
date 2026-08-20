@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.util;
 
-import mctmods.resourcedatapackloader.mixin.AccessorPlayerLanguage;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IPlayerLanguage;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -70,14 +70,12 @@ public final class Lang {
 
     public static String tr(ICommandSender sender, String key, Object... args) {
         if (sender instanceof EntityPlayer) { return tr((EntityPlayer) sender, key, args); }
-
         return tr(key, args);
     }
 
     public static String tr(EntityPlayer player, String key, Object... args) {
         if (!(player instanceof EntityPlayerMP)) { return tr(key, args); }
-
-        String locale = ((AccessorPlayerLanguage) player).rdpl$language();
+        String locale = ((IPlayerLanguage) player).rdpl$language();
         Map<String, String> table = locale == null ? null : TABLES.get(locale.toLowerCase(Locale.ROOT));
         if (table == null || !table.containsKey(key)) { table = TABLES.get("en_us"); }
         return line(table, key, args);
@@ -91,10 +89,8 @@ public final class Lang {
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty() || line.startsWith("#")) { continue; }
-
                 int split = line.indexOf('=');
                 if (split < 1) { continue; }
-
                 lines.put(line.substring(0, split), line.substring(split + 1));
             }
         }
@@ -106,7 +102,6 @@ public final class Lang {
         String held = table == null ? null : table.get(key);
         if (held == null) { return key; }
         if (args.length == 0) { return held; }
-
         try { return String.format(held, args); }
         catch (Exception ex) { return held; }
     }

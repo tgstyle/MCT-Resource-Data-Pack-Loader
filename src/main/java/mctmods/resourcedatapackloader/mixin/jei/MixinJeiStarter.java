@@ -14,11 +14,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
-@Mixin(value = JeiStarter.class, remap = false)
-public abstract class MixinJeiStarter {
-
-    @Inject(method = "registerPlugins", at = @At("HEAD"))
-    private static void rdpl$reset(List<IModPlugin> plugins, ModRegistry modRegistry, CallbackInfo ci) { JEIPluginOrder.reset(); }
+@Mixin(value = JeiStarter.class, remap = false) public abstract class MixinJeiStarter {
+    @Inject(method = "registerPlugins", at = @At("HEAD")) private static void rdpl$reset(List<IModPlugin> plugins, ModRegistry modRegistry, CallbackInfo ci) { JEIPluginOrder.reset(); }
 
     @Redirect(method = "registerPlugins", at = @At(value = "INVOKE", target = "Lmezz/jei/api/IModPlugin;register(Lmezz/jei/api/IModRegistry;)V"))
     private static void rdpl$trackRegister(IModPlugin plugin, IModRegistry registry) {
@@ -27,6 +24,5 @@ public abstract class MixinJeiStarter {
         finally { JEIPluginOrder.end(); }
     }
 
-    @ModifyVariable(method = "sendRuntime", at = @At("HEAD"), argsOnly = true, index = 0)
-    private static List<IModPlugin> rdpl$orderRuntime(List<IModPlugin> plugins) { return JEIPluginOrder.reorder(plugins); }
+    @ModifyVariable(method = "sendRuntime", at = @At("HEAD"), argsOnly = true, index = 0) private static List<IModPlugin> rdpl$orderRuntime(List<IModPlugin> plugins) { return JEIPluginOrder.reorder(plugins); }
 }

@@ -20,7 +20,6 @@ public class MessageHardnessSalt implements IMessage {
     @Override public void toBytes(ByteBuf buf) { buf.writeLong(salt); }
 
     public static class Handler implements IMessageHandler<MessageHardnessSalt, IMessage> {
-
         @Override public IMessage onMessage(MessageHardnessSalt message, MessageContext ctx) {
             if (ctx.side != Side.CLIENT) { return null; }
 

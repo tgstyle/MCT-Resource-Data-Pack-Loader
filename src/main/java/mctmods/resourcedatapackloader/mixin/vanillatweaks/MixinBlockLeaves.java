@@ -12,10 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(value = BlockLeaves.class, remap = false)
-public abstract class MixinBlockLeaves {
-    @Inject(method = "beginLeavesDecay", at = @At("TAIL"))
-    private void rdpl$decaySoon(IBlockState state, World world, BlockPos pos, CallbackInfo ci) {
+@Mixin(value = BlockLeaves.class, remap = false) public abstract class MixinBlockLeaves {
+    @Inject(method = "beginLeavesDecay", at = @At("TAIL")) private void rdpl$decaySoon(IBlockState state, World world, BlockPos pos, CallbackInfo ci) {
         if (!Config.tweaks.promptLeafDecay || !world.getChunk(pos).isPopulated() || !state.getValue(BlockLeaves.DECAYABLE)) { return; }
 
         world.scheduleUpdate(pos, state.getBlock(), MathHelper.getInt(world.rand, 10, 20));

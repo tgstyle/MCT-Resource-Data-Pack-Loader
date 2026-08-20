@@ -13,21 +13,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ChunkProviderAether.class, remap = false)
-public abstract class MixinChunkProviderAether {
+@Mixin(value = ChunkProviderAether.class, remap = false) public abstract class MixinChunkProviderAether {
     @Shadow private World worldObj;
 
-    @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
+    @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
         if (!ContentVoidWorld.appliesTo(worldObj)) { return; }
-
         Chunk chunk = new Chunk(worldObj, new ChunkPrimer(), x, z);
         chunk.generateSkylightMap();
         cir.setReturnValue(chunk);
     }
 
-    @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$skipPopulate(int chunkX, int chunkZ, CallbackInfo ci) {
+    @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$skipPopulate(int chunkX, int chunkZ, CallbackInfo ci) {
         if (ContentVoidWorld.appliesTo(worldObj)) { ci.cancel(); }
     }
 }

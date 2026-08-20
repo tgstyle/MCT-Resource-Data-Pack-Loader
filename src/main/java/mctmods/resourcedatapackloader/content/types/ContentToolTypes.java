@@ -32,7 +32,6 @@ public final class ContentToolTypes {
                 Blocks.CLAY, Blocks.DIRT, Blocks.FARMLAND, Blocks.GRASS, Blocks.GRAVEL, Blocks.MYCELIUM,
                 Blocks.SAND, Blocks.SNOW, Blocks.SNOW_LAYER, Blocks.SOUL_SAND, Blocks.GRASS_PATH, Blocks.CONCRETE_POWDER)));
         TOOLS.put("sword", new Profile("sword", 3.0F, -2.4F, Collections.emptySet()));
-
         SLOTS.put("helmet", EntityEquipmentSlot.HEAD);
         SLOTS.put("head", EntityEquipmentSlot.HEAD);
         SLOTS.put("chestplate", EntityEquipmentSlot.CHEST);
@@ -46,7 +45,6 @@ public final class ContentToolTypes {
     @Nullable public static Profile tool(String name, Object context) {
         Profile profile = TOOLS.get(name == null ? "" : name.toLowerCase(Locale.ROOT));
         if (profile != null) { return profile; }
-
         ContentLog.LOGGER.error("Unknown toolClass '{}' in {}, the item is skipped. Known classes are {}", name, context, TOOLS.keySet());
         return null;
     }
@@ -54,7 +52,6 @@ public final class ContentToolTypes {
     @Nullable public static EntityEquipmentSlot slot(String name, Object context) {
         EntityEquipmentSlot slot = SLOTS.get(name == null ? "" : name.toLowerCase(Locale.ROOT));
         if (slot != null) { return slot; }
-
         ContentLog.LOGGER.error("Unknown armor slot '{}' in {}, the item is skipped. Known slots are {}", name, context, SLOTS.keySet());
         return null;
     }

@@ -33,7 +33,6 @@ public final class BeardKeep {
 
     private static void hold(Set<Long> spots) {
         if (spots.isEmpty()) { return; }
-
         if (HELD.size() + spots.size() > CROWDED) {
             int shed = 0;
             Iterator<Long> oldest = HELD.iterator();
@@ -57,7 +56,6 @@ public final class BeardKeep {
         watching = null;
         before = null;
         if (!(world instanceof WorldServer)) { return; }
-
         StructureBoundingBox box = piece.getBoundingBox();
         boolean vanilla = settles(piece);
         int reach = vanilla ? REACH : 16;
@@ -66,7 +64,6 @@ public final class BeardKeep {
         int leastZ = Math.max(box.minZ - reach, clip.minZ);
         int mostZ = Math.min(box.maxZ + reach, clip.maxZ);
         if (leastX > mostX || leastZ > mostZ) { return; }
-
         int floor;
         int roof;
         if (vanilla) {
@@ -78,7 +75,6 @@ public final class BeardKeep {
             floor = Math.max(0, Math.min(box.minY, ground) - 16);
             roof = Math.min(world.getActualHeight() - 1, Math.max(box.maxY, ground) + 48);
         }
-
         int wide = mostX - leastX + 1;
         int deep = mostZ - leastZ + 1;
         int tall = roof - floor + 1;
@@ -124,7 +120,6 @@ public final class BeardKeep {
         watching = null;
         before = null;
         if (piece == null || seen == null) { return; }
-
         Set<Long> mine = new HashSet<>();
         int found = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -136,14 +131,12 @@ public final class BeardKeep {
                     at.setPos(x, y, z);
                     IBlockState now = world.getBlockState(at);
                     if (now == was || now.getBlock() == Blocks.AIR) { continue; }
-
                     mine.add(packed(x, y, z));
                     found++;
                 }
             }
         }
         if (mine.isEmpty()) { return; }
-
         hold(mine);
         if (found > 0 && ContentLog.LOGGER.debugEnabled()) {
             StructureBoundingBox box = piece.getBoundingBox();
@@ -173,5 +166,4 @@ public final class BeardKeep {
     public static StructureBoundingBox watchingBox() { return watching == null ? null : watching.getBoundingBox(); }
 
     public static String watchingName() { return watching == null ? null : watching.getClass().getSimpleName(); }
-
 }

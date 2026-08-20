@@ -25,8 +25,7 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockBanner extends BlockBanner.BlockBannerStanding implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockBanner extends BlockBanner.BlockBannerStanding implements IContentBlock {
     public static final int MAX_VARIANTS = 1;
     private final BlockDef def;
     @Nullable private ContentBlockBannerWall wall;
@@ -36,7 +35,6 @@ public class ContentBlockBanner extends BlockBanner.BlockBannerStanding implemen
         this.def = def;
         BlockVariant variant = def.at(0);
         ContentSetup.material(this, def);
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);

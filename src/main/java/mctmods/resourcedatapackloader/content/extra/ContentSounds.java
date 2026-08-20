@@ -27,15 +27,12 @@ public final class ContentSounds {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.sounds) { return; }
-
         PackManager.get().forEach(PackManager.SOUNDS, PackManager.JSON, (namespace, path, contents) ->
                 NAMES.add(new ResourceLocation(namespace, path)));
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void registerSounds(RegistryEvent.Register<SoundEvent> event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerSounds(RegistryEvent.Register<SoundEvent> event) {
         load();
-
         int count = 0;
         for (ResourceLocation name : NAMES) {
             if (ForgeRegistries.SOUND_EVENTS.containsKey(name)) {
@@ -52,7 +49,6 @@ public final class ContentSounds {
             }
             finally { Loader.instance().setActiveModContainer(previous); }
         }
-
         if (count > 0) { Summary.info("sounds", "Registered " + count + " sound event(s) from packs"); }
     }
 }

@@ -36,7 +36,7 @@ public final class AdvancementOverrides {
             map.put(entry.getKey(), builder);
             applied++;
         }
-        if (!quiet && applied > 0) { ContentLog.LOGGER.info("Applied {} advancement override(s)", applied); }
+        if (!quiet && applied > 0) { ContentLog.LOGGER.debug("Applied {} advancement override(s)", applied); }
         quiet = true;
     }
 

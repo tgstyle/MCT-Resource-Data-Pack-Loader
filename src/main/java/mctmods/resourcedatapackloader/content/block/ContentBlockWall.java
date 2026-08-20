@@ -33,8 +33,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockWall extends BlockWall implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockWall extends BlockWall implements IContentBlock {
     public static final Set<String> HIDDEN = Collections.singleton(VARIANT.getName());
     private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
@@ -50,7 +49,6 @@ public class ContentBlockWall extends BlockWall implements IContentBlock {
         super(model(def));
         this.def = def;
         this.variant = property;
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName.toString());
         ContentSetup.harvest(this, def);
@@ -58,7 +56,6 @@ public class ContentBlockWall extends BlockWall implements IContentBlock {
         setDefaultSlipperiness(def.slipperiness);
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
-
         setDefaultState(this.blockState.getBaseState()
                 .withProperty(this.variant, def.at(0).name)
                 .withProperty(UP, Boolean.FALSE)
@@ -73,14 +70,11 @@ public class ContentBlockWall extends BlockWall implements IContentBlock {
             ContentLog.LOGGER.error("Wall {} names modelBlock {}, which is not registered, using cobblestone", def.registryName, name);
             return Objects.requireNonNull(Blocks.COBBLESTONE);
         }
-
         Block block = ForgeRegistries.BLOCKS.getValue(name);
         return block == null ? Objects.requireNonNull(Blocks.COBBLESTONE) : block;
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, PROPERTY.get(), UP, NORTH, EAST, WEST, SOUTH, VARIANT);
-    }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, PROPERTY.get(), UP, NORTH, EAST, WEST, SOUTH, VARIANT); }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -92,17 +86,13 @@ public class ContentBlockWall extends BlockWall implements IContentBlock {
         for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
     }
 
-    @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(variant, def.at(meta).name);
-    }
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
 
     @Override public int getMetaFromState(IBlockState state) { return ContentSetup.metaOf(def, state.getValue(variant)); }
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return getMetaFromState(state); }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
-        return def.at(getMetaFromState(state)).light;
-    }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).light; }
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
 

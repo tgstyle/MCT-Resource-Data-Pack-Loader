@@ -81,6 +81,7 @@ rdpl.pregen.stopped=World pregeneration stopped
 rdpl.pregen.tooktime= - Total time %02d:%02d:%02d
 rdpl.pregen.welcome=Welcome to your World!
 rdpl.world.type=This is a %s world
+rdpl.gui.verticaldistance=Vertical Distance: %d cubes
 rdpl.gui.packOptions=Pack Options...
 rdpl.gui.packOptions.title=RDPL Pack Options
 rdpl.gui.packOptions.restart=Changes apply after restarting the game

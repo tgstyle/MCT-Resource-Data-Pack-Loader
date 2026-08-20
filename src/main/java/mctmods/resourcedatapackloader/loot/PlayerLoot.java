@@ -40,13 +40,11 @@ public final class PlayerLoot {
         ENTRIES.clear();
         generation = PackManager.get().getGeneration();
         if (!Config.data.playerLoot) { return; }
-
         PackManager.get().forEach(PackManager.PLAYER_LOOT, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try { read(key, contents); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in player loot {}, ignoring it", key, ex); }
         });
-
         if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
     }
 
@@ -56,31 +54,25 @@ public final class PlayerLoot {
             ContentLog.LOGGER.error("Player loot {} is empty, ignoring it", key);
             return;
         }
-
         String table = JsonUtils.getString(json, TABLE, "");
         if (table.isEmpty()) {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
             return;
         }
-
         String mode = JsonUtils.getString(json, MODE, ADD);
         if (!mode.equals(ADD) && !mode.equals(REPLACE)) {
             ContentLog.LOGGER.error("Player loot {} has mode '{}', which is neither '{}' nor '{}', ignoring it", key, mode, ADD, REPLACE);
             return;
         }
-
         ENTRIES.add(new Entry(new ResourceLocation(table), mode.equals(REPLACE), JsonUtils.getBoolean(json, KEEP_INVENTORY, false), JsonUtils.getBoolean(json, DROP_LOOSE, false)));
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onPlayerDrops(PlayerDropsEvent event) {
+    @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onPlayerDrops(PlayerDropsEvent event) {
         if (!Config.data.playerLoot) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
         if (ENTRIES.isEmpty()) { return; }
-
         EntityPlayer player = event.getEntityPlayer();
         if (player == null || !(player.world instanceof WorldServer)) { return; }
-
         WorldServer world = (WorldServer) player.world;
         boolean keeping = world.getGameRules().getBoolean(KEEP_INVENTORY_RULE) || player.isSpectator();
         List<Entry> rolling = new ArrayList<>();
@@ -91,10 +83,8 @@ public final class PlayerLoot {
             replacing |= entry.replace;
         }
         if (rolling.isEmpty()) { return; }
-
         List<EntityItem> drops = event.getDrops();
         if (replacing) { drops.clear(); }
-
         EntityPlayer killer = killer(event);
         for (Entry entry : rolling) {
             LootTable table = world.getLootTableManager().getLootTableFromLocation(entry.table);

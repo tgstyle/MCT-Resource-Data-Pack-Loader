@@ -13,7 +13,6 @@ import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 public final class ContentStructures {
@@ -34,16 +32,13 @@ public final class ContentStructures {
 
     public static void load() {
         BY_DIMENSION.clear();
-
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template != null && !template.structures.isEmpty()) { remember(template.structures, template.dimensions); }
-
         if (!BY_DIMENSION.isEmpty()) { Summary.info("structures", "Controlling structure generation in " + BY_DIMENSION.keySet()); }
     }
 
     public static void remember(Map<String, Boolean> settings, List<Integer> dimensions) {
         if (settings.isEmpty()) { return; }
-
         if (dimensions.isEmpty()) {
             BY_DIMENSION.computeIfAbsent(Integer.MIN_VALUE, key -> new LinkedHashMap<>()).putAll(settings);
             return;
@@ -53,20 +48,17 @@ public final class ContentStructures {
 
     public static boolean enabled() {
         if (ContentControl.off(ContentControl.STRUCTURES)) { return false; }
-
         return !BY_DIMENSION.isEmpty();
     }
 
     public static boolean blocks(World world, MapGenBase generator) {
         if (BY_DIMENSION.isEmpty() || world == null || world.provider == null) { return false; }
-
         String key = keyFor(generator);
         return key != null && !allows(world.provider.getDimension(), key);
     }
 
     public static boolean blocks(World world, String structure) {
         if (BY_DIMENSION.isEmpty() || world == null || world.provider == null) { return false; }
-
         String key = STRUCTURE_NAMES.get(structure);
         return key != null && !allows(world.provider.getDimension(), key);
     }
@@ -75,31 +67,25 @@ public final class ContentStructures {
         if (generator instanceof MapGenStructure) { return STRUCTURE_NAMES.get(((MapGenStructure) generator).getStructureName()); }
         if (generator instanceof MapGenCaves) { return "caves"; }
         if (generator instanceof MapGenRavine) { return "ravines"; }
-
         return null;
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onPopulate(PopulateChunkEvent.Populate event) {
         World world = event.getWorld();
         if (world == null || world.provider == null) { return; }
-
         String key = keyFor(event.getType());
         if (key == null || allows(world.provider.getDimension(), key)) { return; }
-
         event.setResult(Event.Result.DENY);
     }
 
     private static boolean allows(int dimension, String key) {
         Boolean scoped = lookup(BY_DIMENSION.get(dimension), key);
         if (scoped != null) { return scoped; }
-
         Boolean global = lookup(BY_DIMENSION.get(Integer.MIN_VALUE), key);
         return global == null || global;
     }
 
-    @Nullable private static Boolean lookup(@Nullable Map<String, Boolean> settings, String key) {
-        return settings == null ? null : settings.get(key);
-    }
+    @Nullable private static Boolean lookup(@Nullable Map<String, Boolean> settings, String key) { return settings == null ? null : settings.get(key); }
 
     @Nullable private static String keyFor(PopulateChunkEvent.Populate.EventType type) {
         for (Map.Entry<String, PopulateChunkEvent.Populate.EventType> entry : POPULATES.entrySet()) {

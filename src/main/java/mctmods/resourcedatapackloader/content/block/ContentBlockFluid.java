@@ -39,7 +39,6 @@ public class ContentBlockFluid extends BlockFluidClassic {
         if (world.isRemote) { return; }
         if (effects == null || effects.isEmpty()) { return; }
         if (!(entity instanceof EntityLivingBase)) { return; }
-
         for (PotionEffect effect : effects) {
             if (effect != null) { ((EntityLivingBase) entity).addPotionEffect(new PotionEffect(effect)); }
         }

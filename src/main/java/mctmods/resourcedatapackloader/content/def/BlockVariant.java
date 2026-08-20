@@ -1,10 +1,8 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.item.EnumRarity;
-
 import java.util.Collections;
 import java.util.List;
-
 import javax.annotation.Nullable;
 
 public final class BlockVariant {

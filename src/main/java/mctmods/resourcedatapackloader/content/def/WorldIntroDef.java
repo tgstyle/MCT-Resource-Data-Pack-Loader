@@ -1,9 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.util.ResourceLocation;
-
 import java.util.List;
-
 import javax.annotation.Nullable;
 
 public final class WorldIntroDef {

@@ -71,11 +71,9 @@ public final class RecurrentPlots {
             Structure<?> structure = pair.getLeft();
             String id = StructureRegistry.INSTANCE.id(structure);
             if (id == null || !StructureRegistry.INSTANCE.hasActive(id) || !(structure instanceof GenericStructure)) { continue; }
-
             VanillaGeneration how = pair.getRight();
             int weight = how.getVanillaWeight(RCConfig.tweakedSpawnRate(id));
             if (weight <= 0) { continue; }
-
             out.add(new Plot(id, how.id(), weight, how.minBaseLimit, how.maxBaseLimit, how.minScaledLimit, how.maxScaledLimit, how.front, courseFor(id), seatFor(id, how.id())));
         }
         return out;
@@ -95,12 +93,10 @@ public final class RecurrentPlots {
     public static int classify(String structureId, int x, int y, int z) {
         IvBlockCollection held = collection(structureId);
         if (held == null) { return SKIPPED; }
-
         IBlockState state = held.getBlockState(new BlockPos(x, y, z));
         if (state.getBlock() == RCBlocks.genericSolid) { return GROUND; }
         if (state.getBlock().getRegistryName() != null && "reccomplex".equals(state.getBlock().getRegistryName().getNamespace())) { return SKIPPED; }
         if (state.getMaterial() == Material.AIR) { return OPEN; }
-
         return BUILT;
     }
 
@@ -117,7 +113,6 @@ public final class RecurrentPlots {
     public static int courseFor(String structureId) {
         Integer known = COURSES.get(structureId);
         if (known != null) { return known; }
-
         int course = 0;
         IvBlockCollection held = collection(structureId);
         if (held != null) {
@@ -126,7 +121,6 @@ public final class RecurrentPlots {
                 for (int x = 0; x < held.width && !ground; x++) {
                     for (int z = 0; z < held.length; z++) {
                         if (held.getBlockState(new BlockPos(x, y, z)).getBlock() != RCBlocks.genericSolid) { continue; }
-
                         ground = true;
                         break;
                     }
@@ -143,7 +137,6 @@ public final class RecurrentPlots {
         String named = structureId + '\u0000' + generationId;
         Integer known = SEATS.get(named);
         if (known != null) { return known; }
-
         int stand = standLayer(structureId);
         int seated = Math.max(-5, -stand);
         SEATS.put(named, seated);
@@ -154,10 +147,8 @@ public final class RecurrentPlots {
     private static int standLayer(String structureId) {
         int courses = courseFor(structureId);
         if (courses <= 0) { return 1; }
-
         IvBlockCollection held = collection(structureId);
         if (held == null || courses >= held.height) { return courses - 1; }
-
         int built = 0;
         int space = 0;
         for (int x = 0; x < held.width; x++) {
@@ -174,12 +165,10 @@ public final class RecurrentPlots {
 
     public static int sink(StructureComponent piece) {
         if (!(piece instanceof GenericVillagePiece)) { return 0; }
-
         GenericVillagePiece plot = (GenericVillagePiece) piece;
         String named = plot.structureID + '\u0000' + plot.generationID;
         Integer known = SINKS.get(named);
         if (known != null) { return known; }
-
         Structure<?> structure = StructureRegistry.INSTANCE.get(plot.structureID);
         GenerationType how = structure != null ? structure.generationType(plot.generationID) : null;
         int sunk = how instanceof VanillaGeneration ? Math.max(0, Math.min(-((VanillaGeneration) how).spawnShift.getY(), ContentBeard.FOOTING_COURSE)) : 0;
@@ -189,14 +178,12 @@ public final class RecurrentPlots {
 
     public static int seat(StructureComponent piece) {
         if (!(piece instanceof GenericVillagePiece)) { return -1; }
-
         GenericVillagePiece plot = (GenericVillagePiece) piece;
         return seatFor(plot.structureID, plot.generationID);
     }
 
     public static int groundCourse(StructureComponent piece) {
         if (!(piece instanceof GenericVillagePiece)) { return 0; }
-
         return courseFor(((GenericVillagePiece) piece).structureID);
     }
 
@@ -207,7 +194,6 @@ public final class RecurrentPlots {
 
     private static IvWorldData worldData(String structureId) {
         if (DATA.containsKey(structureId)) { return DATA.get(structureId); }
-
         Structure<?> structure = StructureRegistry.INSTANCE.get(structureId);
         IvWorldData data = structure instanceof GenericStructure ? ((GenericStructure) structure).constructWorldData() : null;
         DATA.put(structureId, data);

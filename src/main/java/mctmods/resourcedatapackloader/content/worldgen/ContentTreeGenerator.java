@@ -6,10 +6,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
-
 import java.util.Random;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 
 public class ContentTreeGenerator extends WorldGenAbstractTree {
@@ -32,10 +30,8 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
         if (position.getY() >= world.getHeight() - height - 1) { return false; }
         if (!rooted(world, position.down())) { return false; }
         if (!clear(world, position, height)) { return false; }
-
         IBlockState under = world.getBlockState(position.down());
         under.getBlock().onPlantGrow(under, world, position.down(), position);
-
         canopy(world, random, position, height);
         trunk(world, position, height);
         return true;
@@ -44,7 +40,6 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
     private boolean rooted(World world, BlockPos below) {
         IBlockState state = world.getBlockState(below);
         if (!soil.isEmpty()) { return soil.contains(state.getBlock()); }
-
         return state.getBlock().canSustainPlant(state, world, below, net.minecraft.util.EnumFacing.UP, (net.minecraft.block.BlockSapling) net.minecraft.init.Blocks.SAPLING);
     }
 
@@ -54,7 +49,6 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
             int reach = 1;
             if (y == position.getY()) { reach = 0; }
             if (y >= position.getY() + 1 + height - 2) { reach = 2; }
-
             for (int x = position.getX() - reach; x <= position.getX() + reach; x++) {
                 for (int z = position.getZ() - reach; z <= position.getZ() + reach; z++) {
                     if (y < 0 || y >= world.getHeight()) { return false; }
@@ -69,17 +63,14 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
         for (int y = position.getY() - 3 + height; y <= position.getY() + height; y++) {
             int depth = y - (position.getY() + height);
             int reach = 1 - depth / 2;
-
             for (int x = position.getX() - reach; x <= position.getX() + reach; x++) {
                 int dx = x - position.getX();
                 for (int z = position.getZ() - reach; z <= position.getZ() + reach; z++) {
                     int dz = z - position.getZ();
                     if (Math.abs(dx) == reach && Math.abs(dz) == reach && (random.nextInt(2) == 0 || depth == 0)) { continue; }
-
                     BlockPos at = new BlockPos(x, y, z);
                     IBlockState state = world.getBlockState(at);
                     if (!state.getBlock().isAir(state, world, at) && !state.getBlock().isLeaves(state, world, at) && state.getMaterial() != Material.VINE) { continue; }
-
                     setBlockAndNotifyAdequately(world, at, leaves);
                 }
             }
@@ -91,7 +82,6 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
             BlockPos at = position.up(y);
             IBlockState state = world.getBlockState(at);
             if (!state.getBlock().isAir(state, world, at) && !state.getBlock().isLeaves(state, world, at) && state.getMaterial() != Material.VINE) { continue; }
-
             setBlockAndNotifyAdequately(world, at, log);
         }
     }

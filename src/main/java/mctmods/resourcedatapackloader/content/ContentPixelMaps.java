@@ -60,16 +60,13 @@ public final class ContentPixelMaps {
 
     public static boolean couldBeDrawn(String path) { return path.endsWith(PNG); }
 
-    public static boolean exists(String namespace, String path, boolean overriding) {
-        return PackManager.get().existsRaw(namespace, path + SUFFIX, overriding);
-    }
+    public static boolean exists(String namespace, String path, boolean overriding) { return PackManager.get().existsRaw(namespace, path + SUFFIX, overriding); }
 
     @Nullable public static byte[] made(String namespace, String path, boolean overriding) {
         String key = namespace + ":" + path + (overriding ? "!" : "");
         byte[] held = MADE.get(key);
         if (held != null) { return held; }
         if (FAILED.contains(key)) { return null; }
-
         byte[] drawn = build(namespace, path, overriding);
         if (drawn == null) {
             FAILED.add(key);
@@ -82,11 +79,9 @@ public final class ContentPixelMaps {
     @Nullable private static byte[] build(String namespace, String path, boolean overriding) {
         Resolved resolved = resolve(namespace, path, overriding);
         if (resolved == null) { return null; }
-
         String stamp = hash(resolved.sources);
         byte[] cached = fromCache(namespace, path, overriding, stamp);
         if (cached != null) { return cached; }
-
         byte[] drawn = paint(namespace, path, resolved);
         if (drawn != null) { toCache(namespace, path, overriding, stamp, drawn); }
         return drawn;
@@ -112,7 +107,6 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} reaches itself again through {}:{}, so nothing is drawn", namespace, path, where, at);
                 return null;
             }
-
             String contents = read(where, at, overriding);
             if (contents == null) {
                 ContentLog.LOGGER.error("Pixel map {}:{} needs {}:{}, which no pack provides, so nothing is drawn", namespace, path, where, at);
@@ -120,7 +114,6 @@ public final class ContentPixelMaps {
             }
             sources.append(where).append(':').append(at).append('\n').append(contents).append('\n');
             chain.add(where + ":" + at);
-
             JsonObject json;
             try { json = new Gson().fromJson(contents, JsonObject.class); }
             catch (JsonParseException ex) {
@@ -131,10 +124,8 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} is empty, so nothing is drawn", where, at);
                 return null;
             }
-
             for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, PALETTE, new JsonObject()).entrySet()) {
                 if (palette.containsKey(entry.getKey())) { continue; }
-
                 palette.put(entry.getKey(), entry.getValue().getAsString());
                 from.put(entry.getKey(), where + ":" + at);
             }
@@ -162,10 +153,8 @@ public final class ContentPixelMaps {
                     return null;
                 }
             }
-
             String next = JsonUtils.getString(json, EXTENDS, "");
             if (next.isEmpty()) { break; }
-
             int colon = next.indexOf(':');
             String nextWhere = colon < 0 ? where : next.substring(0, colon);
             String nextPath = colon < 0 ? next : next.substring(colon + 1);
@@ -174,13 +163,11 @@ public final class ContentPixelMaps {
                 at = nextPath + SUFFIX;
                 continue;
             }
-
             int[][] image = image(nextWhere, nextPath);
             if (image == null) {
                 ContentLog.LOGGER.error("Pixel map {}:{} builds on {}:{}, which is neither a pixel map nor an image any pack or the game provides, so nothing is drawn", namespace, path, nextWhere, nextPath);
                 return null;
             }
-
             if (size == null) { size = image[0]; }
             base = image[1];
             baseFrom = nextWhere + ":" + nextPath;
@@ -188,7 +175,6 @@ public final class ContentPixelMaps {
             sources.append(baseFrom).append('\n').append(hash(base)).append('\n');
             at = null;
         }
-
         if (size == null) {
             ContentLog.LOGGER.error("Pixel map {}:{} names no size and inherits none, so nothing is drawn. Give it a size such as \"16x16\"", namespace, path);
             return null;
@@ -218,7 +204,6 @@ public final class ContentPixelMaps {
                 return null;
             }
         }
-
         return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, null, null, sources.toString());
     }
 
@@ -251,7 +236,6 @@ public final class ContentPixelMaps {
 
         public int used(String character) {
             if (rows == null || character.length() != 1) { return 0; }
-
             char wanted = character.charAt(0);
             int count = 0;
             for (String row : rows) {
@@ -274,7 +258,6 @@ public final class ContentPixelMaps {
     @Nullable private static int[] size(String written) {
         int split = written.indexOf('x');
         if (split < 1 || split == written.length() - 1) { return null; }
-
         try { return new int[] { Integer.parseInt(written.substring(0, split).trim()), Integer.parseInt(written.substring(split + 1).trim()) }; }
         catch (NumberFormatException ex) { return null; }
     }
@@ -283,7 +266,6 @@ public final class ContentPixelMaps {
         int[] size = resolved.size;
         Map<String, String> palette = resolved.palette;
         if (resolved.base != null) { return repaint(namespace, path, resolved, resolved.base); }
-
         List<String> rows = resolved.rows;
         Map<Character, Integer> colors = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : palette.entrySet()) {
@@ -291,7 +273,6 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} has the palette key '{}', which is not a single character, ignoring it", namespace, path, entry.getKey());
                 continue;
             }
-
             Integer color = color(entry.getValue());
             if (color == null) {
                 ContentLog.LOGGER.error("Pixel map {}:{} gives '{}' the color '{}', which is not #RRGGBB or #AARRGGBB, ignoring it", namespace, path, entry.getKey(), entry.getValue());
@@ -299,7 +280,6 @@ public final class ContentPixelMaps {
             }
             colors.put(entry.getKey().charAt(0), resolved.tint == null ? color : resolved.tint.shade(color));
         }
-
         BufferedImage image = new BufferedImage(size[0], size[1], BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < size[1]; y++) {
             String row = rows.get(y);
@@ -308,7 +288,6 @@ public final class ContentPixelMaps {
                 image.setRGB(x, y, color == null ? 0 : color);
             }
         }
-
         return written(namespace, path, image);
     }
 
@@ -339,7 +318,6 @@ public final class ContentPixelMaps {
     @Nullable private static byte[] fromCache(String namespace, String path, boolean overriding, String hash) {
         Path file = cacheFile(namespace, path, overriding, hash);
         if (file == null || !Files.isRegularFile(file)) { return null; }
-
         try { return Files.readAllBytes(file); }
         catch (IOException ex) {
             ContentLog.LOGGER.warn("Cached pixel map {} could not be read, drawing it again", file, ex);
@@ -350,7 +328,6 @@ public final class ContentPixelMaps {
     private static void toCache(String namespace, String path, boolean overriding, String hash, byte[] drawn) {
         Path file = cacheFile(namespace, path, overriding, hash);
         if (file == null) { return; }
-
         try {
             Files.createDirectories(file.getParent());
             sweep(file.getParent(), name(path), overriding, file.getFileName().toString());
@@ -368,7 +345,6 @@ public final class ContentPixelMaps {
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder, name + "-" + (overriding ? OVERRIDING : PLAIN) + "*" + PNG)) {
             for (Path entry : entries) {
                 if (entry.getFileName().toString().equals(keep)) { continue; }
-
                 try { Files.deleteIfExists(entry); }
                 catch (IOException ex) { ContentLog.LOGGER.warn("Stale cached pixel map {} could not be removed", entry, ex); }
             }
@@ -378,12 +354,10 @@ public final class ContentPixelMaps {
     public static void tidy() {
         Path folder = cacheFolder();
         if (folder == null || !Files.isDirectory(folder)) { return; }
-
         List<Path> dropped = new ArrayList<>();
         try (Stream<Path> found = Files.walk(folder)) {
             found.filter(Files::isRegularFile).forEach(file -> {
                 if (!orphaned(folder, file)) { return; }
-
                 dropped.add(file);
             });
         }
@@ -391,7 +365,6 @@ public final class ContentPixelMaps {
             ContentLog.LOGGER.warn("The pixel map cache at {} could not be looked over", folder, ex);
             return;
         }
-
         int removed = 0;
         for (Path file : dropped) {
             try {
@@ -400,28 +373,23 @@ public final class ContentPixelMaps {
             }
             catch (IOException ex) { ContentLog.LOGGER.warn("Cached pixel map {} is no longer wanted but could not be removed", file, ex); }
         }
-        if (removed > 0) { ContentLog.LOGGER.info("Cleared {} cached pixel map(s) whose map no packs provide any more", removed); }
+        if (removed > 0) { ContentLog.LOGGER.debug("Cleared {} cached pixel map(s) whose map no packs provide any more", removed); }
         prune(folder);
     }
 
     private static boolean orphaned(Path folder, Path file) {
         Path relative = folder.relativize(file);
         if (relative.getNameCount() < 2) { return true; }
-
         String namespace = relative.getName(0).toString();
         StringBuilder path = new StringBuilder();
         for (int i = 1; i < relative.getNameCount(); i++) { path.append(i > 1 ? "/" : "").append(relative.getName(i)); }
-
         String held = path.toString();
         int dash = held.lastIndexOf('-');
         if (!held.endsWith(PNG) || dash < 0) { return true; }
-
         String stamp = held.substring(dash + 1, held.length() - PNG.length());
         if (stamp.isEmpty()) { return true; }
-
         boolean overriding = stamp.charAt(0) == OVERRIDING;
         if (!overriding && stamp.charAt(0) != PLAIN) { return true; }
-
         return !PackManager.get().existsRaw(namespace, held.substring(0, dash) + SUFFIX, overriding);
     }
 
@@ -462,7 +430,6 @@ public final class ContentPixelMaps {
             }
             swaps.put(was, becomes);
         }
-
         int[] size = resolved.size;
         BufferedImage image = new BufferedImage(size[0], size[1], BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < size[1]; y++) {
@@ -479,7 +446,6 @@ public final class ContentPixelMaps {
     @Nullable private static int[][] image(String namespace, String path) {
         if (FMLCommonHandler.instance().getSide() != Side.CLIENT) { return null; }
         if (!ContentPixelImages.exists(namespace, path)) { return null; }
-
         return ContentPixelImages.read(namespace, path);
     }
 

@@ -39,14 +39,12 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     private net.minecraft.world.biome.BiomeProvider provider() {
         if (def == null || DimensionDef.INHERIT.equals(def.biomeSource)) { return new net.minecraft.world.biome.BiomeProvider(world.getWorldInfo()); }
-
         Biome single = ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
         return new BiomeProviderSingle(single == null ? Biomes.PLAINS : single);
     }
 
     @Override @Nonnull public IChunkGenerator createChunkGenerator() {
         if (def == null) { return super.createChunkGenerator(); }
-
         switch (def.terrain) {
             case DimensionDef.FLAT: return new ChunkGeneratorFlat(world, world.getSeed(), def.structures, def.generatorOptions.isEmpty() ? FLAT_DEFAULT : def.generatorOptions);
             case DimensionDef.VOID: return new ChunkGeneratorFlat(world, world.getSeed(), false, "3;minecraft:air;1");
@@ -66,13 +64,11 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override @Nonnull public WorldProvider.WorldSleepResult canSleepAt(@Nonnull EntityPlayer player, @Nonnull BlockPos pos) {
         if (def != null && !def.beds) { return WorldProvider.WorldSleepResult.BED_EXPLODES; }
-
         return super.canSleepAt(player, pos);
     }
 
     @Override public int getRespawnDimension(@Nonnull EntityPlayerMP player) {
         if (def == null || def.respawnDimension == Integer.MIN_VALUE) { return super.getRespawnDimension(player); }
-
         return def.respawnDimension;
     }
 
@@ -80,19 +76,16 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override @SideOnly(Side.CLIENT) public float getStarBrightness(float partialTicks) {
         if (def == null || def.starBrightness < 0.0F) { return super.getStarBrightness(partialTicks); }
-
         return def.starBrightness;
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) {
         if (def == null || def.cloudColor < 0) { return super.getCloudColor(partialTicks); }
-
         return new Vec3d(((def.cloudColor >> 16) & 255) / 255.0D, ((def.cloudColor >> 8) & 255) / 255.0D, (def.cloudColor & 255) / 255.0D);
     }
 
     @Override @Nonnull public float[] getLightBrightnessTable() {
         if (def == null || def.ambientLight <= 0.0F) { return super.getLightBrightnessTable(); }
-
         float[] table = new float[16];
         for (int level = 0; level <= 15; level++) {
             float fade = 1.0F - level / 15.0F;
@@ -111,32 +104,27 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override public long getWorldTime() {
         if (def == null || def.fixedTime < 0) { return super.getWorldTime(); }
-
         return def.fixedTime;
     }
 
     @Override public boolean isDaytime() {
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
-
         long time = def.fixedTime % 24000L;
         return time < 12300L || time > 23850L;
     }
 
     @Override @SideOnly(Side.CLIENT) @Nullable public float[] calcSunriseSunsetColors(float celestialAngle, float partialTicks) {
         if (def != null && !def.sunriseColors) { return null; }
-
         return super.calcSunriseSunsetColors(celestialAngle, partialTicks);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getSkyColor(@Nonnull Entity camera, float partialTicks) {
         if (def == null || def.skyColor < 0) { return super.getSkyColor(camera, partialTicks); }
-
         return new Vec3d(((def.skyColor >> 16) & 255) / 255.0D, ((def.skyColor >> 8) & 255) / 255.0D, (def.skyColor & 255) / 255.0D);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
         if (def == null || def.fogColor < 0) { return super.getFogColor(celestialAngle, partialTicks); }
-
         return new Vec3d(((def.fogColor >> 16) & 255) / 255.0D, ((def.fogColor >> 8) & 255) / 255.0D, (def.fogColor & 255) / 255.0D);
     }
 

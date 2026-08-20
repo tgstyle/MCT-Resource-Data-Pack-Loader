@@ -35,19 +35,15 @@ public final class ContentFieldShape implements IContentShape {
         int lowest = Math.max(1, minHeight);
         int highest = Math.min(world.getHeight() - 1, maxHeight);
         if (highest < lowest) { return; }
-
         long seed = world.getSeed() ^ salt;
         Random random = new Random(seed ^ (chunkX * 341873128712L + chunkZ * 132897987541L));
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-
         for (int x = baseX; x < baseX + 16; x++) {
             for (int z = baseZ; z < baseZ + 16; z++) {
                 at.setPos(x, lowest, z);
                 if (!valid.test(at)) { continue; }
-
                 for (int y = lowest; y <= highest; y++) {
                     if (field.strength(seed, x, y, z) < threshold) { continue; }
-
                     placer.place(world, random, x, y, z);
                 }
             }

@@ -8,13 +8,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
-
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -29,7 +27,6 @@ public final class PortalStorage extends WorldSavedData {
         PortalStorage data = get(world);
         String stored = owner == null ? "" : owner.toString();
         if (stored.equals(data.positions.get(pos.toLong()))) { return; }
-
         data.positions.put(pos.toLong(), stored);
         data.markDirty();
     }
@@ -37,7 +34,6 @@ public final class PortalStorage extends WorldSavedData {
     @Nullable public static UUID owner(World world, BlockPos pos) {
         String stored = get(world).positions.get(pos.toLong());
         if (stored == null || stored.isEmpty()) { return null; }
-
         try { return UUID.fromString(stored); }
         catch (IllegalArgumentException broken) { return null; }
     }
@@ -45,14 +41,12 @@ public final class PortalStorage extends WorldSavedData {
     public static void remove(World world, BlockPos pos) {
         PortalStorage data = get(world);
         if (data.positions.remove(pos.toLong()) == null) { return; }
-
         data.markDirty();
     }
 
     @Nullable public static BlockPos nearest(World world, BlockPos around) {
         PortalStorage data = get(world);
         if (data.positions.isEmpty()) { return null; }
-
         BlockPos best = null;
         double closest = Double.MAX_VALUE;
         Set<Long> stale = new LinkedHashSet<>();
@@ -62,10 +56,8 @@ public final class PortalStorage extends WorldSavedData {
                 stale.add(packed);
                 continue;
             }
-
             double distance = at.distanceSq(around);
             if (distance >= closest) { continue; }
-
             closest = distance;
             best = at;
         }

@@ -46,11 +46,9 @@ public final class EntityAIKamikaze extends EntityAIBase {
             lit = 0;
             return;
         }
-
         lit++;
         if (lit < fuse) { return; }
         if (mob.world.isRemote) { return; }
-
         mob.world.newExplosion(mob, mob.posX, mob.posY, mob.posZ, power, fire, mob.world.getGameRules().getBoolean("mobGriefing"));
         mob.setDead();
     }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+
 public final class PotionEffectDef {
     public final String potion;
     public final int duration;

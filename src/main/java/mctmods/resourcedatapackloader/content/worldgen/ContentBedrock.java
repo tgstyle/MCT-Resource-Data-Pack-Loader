@@ -40,7 +40,6 @@ public final class ContentBedrock {
 
     public static boolean enabled() {
         if (ContentControl.off(ContentControl.BEDROCK)) { return false; }
-
         return ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock);
     }
 
@@ -48,15 +47,12 @@ public final class ContentBedrock {
 
     public static boolean roofWanted() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRoof", Config.worldgen.flatBedrockRoof); }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onPopulate(PopulateChunkEvent.Pre event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onPopulate(PopulateChunkEvent.Pre event) {
         if (!enabled()) { return; }
-
         World world = event.getWorld();
         if (world.isRemote) { return; }
         int dimension = world.provider.getDimension();
         if (!appliesTo(dimension)) { return; }
-
         flatten(world, event.getChunkX(), event.getChunkZ(), dimension);
     }
 
@@ -70,31 +66,24 @@ public final class ContentBedrock {
         int baseX = chunkX * 16;
         int baseZ = chunkZ * 16;
         int layers = layers();
-
         if (voidWorld(world, baseX, baseZ)) { return; }
-
         IBlockState filler = filler(dimension);
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-
         boolean filtered = filtered();
-
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 if (filtered && biomeSkipped(world, baseX + x, baseZ + z)) { continue; }
-
                 for (int y = MAX_LAYERS - 1; y >= layers; y--) {
                     pos.setPos(baseX + x, y, baseZ + z);
                     if (world.getBlockState(pos).getBlock() == Blocks.BEDROCK) { world.setBlockState(pos, filler, FLAGS); }
                 }
-
                 for (int y = layers - 1; y >= 0; y--) {
                     pos.setPos(baseX + x, y, baseZ + z);
                     if (world.getBlockState(pos).getBlock() != Blocks.BEDROCK) { world.setBlockState(pos, bedrock, FLAGS); }
                 }
             }
         }
-
         if (roofWanted()) { roof(world, baseX, baseZ, layers, filler, bedrock, pos); }
     }
 
@@ -102,18 +91,14 @@ public final class ContentBedrock {
         int top = world.getActualHeight() - 1;
         pos.setPos(baseX, top, baseZ);
         if (world.getBlockState(pos).getBlock() != Blocks.BEDROCK) { return; }
-
         boolean filtered = filtered();
-
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 if (filtered && biomeSkipped(world, baseX + x, baseZ + z)) { continue; }
-
                 for (int y = top - MAX_LAYERS + 1; y <= top - layers; y++) {
                     pos.setPos(baseX + x, y, baseZ + z);
                     if (world.getBlockState(pos).getBlock() == Blocks.BEDROCK) { world.setBlockState(pos, filler, FLAGS); }
                 }
-
                 for (int y = top - layers + 1; y <= top; y++) {
                     pos.setPos(baseX + x, y, baseZ + z);
                     if (world.getBlockState(pos).getBlock() != Blocks.BEDROCK) { world.setBlockState(pos, bedrock, FLAGS); }
@@ -136,7 +121,6 @@ public final class ContentBedrock {
         ResourceLocation name = biome.getRegistryName();
         if (name != null && biomeNames.contains(name.toString().toLowerCase(Locale.ROOT))) { return true; }
         if (biomeNames.contains(ContentBiomeControl.shownName(biome).toLowerCase(Locale.ROOT))) { return true; }
-
         for (BiomeDictionary.Type type : biomeTypes) {
             if (BiomeDictionary.hasType(biome, type)) { return true; }
         }
@@ -156,7 +140,6 @@ public final class ContentBedrock {
         IBlockState perDimension = byDimension.get(dimension);
         if (perDimension != null) { return perDimension; }
         if (configured != null) { return configured; }
-
         switch (dimension) {
             case -1: return Objects.requireNonNull(Blocks.NETHERRACK).getDefaultState();
             case 1: return Objects.requireNonNull(Blocks.END_STONE).getDefaultState();
@@ -166,7 +149,6 @@ public final class ContentBedrock {
 
     @Nullable private static IBlockState state(String name) {
         if (name.isEmpty()) { return null; }
-
         ResourceLocation location = new ResourceLocation(name);
         Block block = ForgeRegistries.BLOCKS.containsKey(location) ? ForgeRegistries.BLOCKS.getValue(location) : null;
         if (block == null) {
@@ -179,30 +161,23 @@ public final class ContentBedrock {
     private static void load() {
         dimensions = new HashSet<>();
         for (int dimension : ContentControl.numbers(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions)) { dimensions.add(dimension); }
-
         biomeNames = new HashSet<>();
         for (String name : ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomes", Config.worldgen.flatBedrockBiomes)) { biomeNames.add(name.trim().toLowerCase(Locale.ROOT)); }
-
         biomeTypes = new ArrayList<>();
         for (String name : ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomeTypes", Config.worldgen.flatBedrockBiomeTypes)) { biomeTypes.add(BiomeDictionary.Type.getType(name.trim())); }
-
         for (String entry : ContentControl.list(ContentControl.BEDROCK, "flatBedrockFillers", Config.worldgen.flatBedrockFillers)) {
             int split = entry.indexOf('=');
             if (split < 1) {
                 ContentLog.LOGGER.error("flatBedrockFillers entry '{}' is not written as dimension=block, ignoring it", entry);
                 continue;
             }
-
             String number = entry.substring(0, split).trim();
             IBlockState state = state(entry.substring(split + 1).trim());
             if (state == null) { continue; }
-
             try { byDimension.put(Integer.parseInt(number), state); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("flatBedrockFillers entry '{}' does not start with a dimension number, ignoring it", entry); }
         }
-
         configured = state(ContentControl.text(ContentControl.BEDROCK, "flatBedrockFiller", Config.worldgen.flatBedrockFiller).trim());
-
         Summary.info("bedrock", "Flattening bedrock to " + layers() + " layer(s) in "
                 + (dimensions.isEmpty() ? "every dimension" : "dimension(s) " + dimensions));
     }

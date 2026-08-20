@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.mixin.AccessorFurnaceRecipes;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IFurnaceRecipes;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -42,12 +42,10 @@ public final class FurnaceBlocking {
             TRUSTED_OUTPUTS.add(result);
             return false;
         }
-
         String owner = owner(result);
         if (owner == null) { return false; }
         if (blockedMods().contains(owner)) { return count(owner); }
         if (ContentControl.flag(ContentControl.RECIPES, "blockFurnaceRecipes", Config.recipes.blockFurnaceRecipes) && !allowedMods().contains(owner)) { return count(owner); }
-
         return false;
     }
 
@@ -68,40 +66,32 @@ public final class FurnaceBlocking {
 
     public static boolean disabled() {
         if (ContentControl.off(ContentControl.RECIPES)) { return true; }
-
         return !ContentControl.flag(ContentControl.RECIPES, "blockFurnaceRecipes", Config.recipes.blockFurnaceRecipes) && ContentControl.list(ContentControl.RECIPES, "blockedFurnaceMods", Config.recipes.blockedFurnaceMods).length == 0;
     }
 
     public static void apply() {
         if (disabled()) { return; }
-
         Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
-        Map<ItemStack, Float> experience = ((AccessorFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
+        Map<ItemStack, Float> experience = ((IFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
         Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
         int removed = 0;
-
         while (iterator.hasNext()) {
             Map.Entry<ItemStack, ItemStack> entry = iterator.next();
             if (TRUSTED_OUTPUTS.contains(entry.getValue())) { continue; }
             if (!rejects(entry.getValue())) { continue; }
-
             experience.remove(entry.getValue());
             iterator.remove();
             removed++;
         }
-
         int total = BLOCKED.total();
         if (total == 0) { return; }
-
         Summary.info("furnace.blocked", "Blocked " + total + " furnace recipe(s), " + removed + " of them already registered before the block list could be read");
         if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes)) { BLOCKED.report("furnace recipe(s)"); }
     }
 
     @Nullable private static String owner(ItemStack result) {
         if (result.isEmpty()) { return null; }
-
         ResourceLocation name = result.getItem().getRegistryName();
         return name == null ? null : name.getNamespace().toLowerCase(Locale.ROOT);
     }
-
 }

@@ -11,13 +11,11 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
 import net.minecraft.util.ResourceLocation;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 public final class ContentWorldIntro {
@@ -30,7 +28,6 @@ public final class ContentWorldIntro {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.load) { return; }
-
         PackManager.get().forEach(PackManager.WORLDINTRO, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
@@ -39,7 +36,6 @@ public final class ContentWorldIntro {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in world intro {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         int pages = pages().size();
         if (pages > 0) { Summary.info("worldintro", "Showing an intro of " + pages + " page(s) when a player enters the world"); }
     }

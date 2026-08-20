@@ -37,18 +37,15 @@ public final class ContentBelt implements IContentShape {
         Random worldRandom = new Random(worldSeed);
         long xSeed = worldRandom.nextLong() >> 3;
         long zSeed = worldRandom.nextLong() >> 3;
-
         for (int x = chunkX - reach; x <= chunkX + reach; x++) {
             for (int z = chunkZ - reach; z <= chunkZ + reach; z++) {
                 Random chunkRandom = new Random(xSeed * x + zSeed * z ^ worldSeed);
                 int count = perChunk ? rarity : 1;
                 if (!perChunk && chunkRandom.nextInt(rarity) != 0) { continue; }
-
                 for (int index = 0; index < count; index++) {
                     BlockPos source = source(chunkRandom, x, z);
                     if (source == null || !withinReach(source, chunkX, chunkZ)) { continue; }
                     if (!valid.test(source)) { continue; }
-
                     fill(world, chunkRandom, chunkX, chunkZ, source);
                 }
             }
@@ -58,7 +55,6 @@ public final class ContentBelt implements IContentShape {
     private BlockPos source(Random random, int chunkX, int chunkZ) {
         int span = Math.abs(maxHeight - minHeight);
         if (span <= 0) { return null; }
-
         return new BlockPos(chunkX * 16 + random.nextInt(16) + OFFSET, Math.abs(minHeight) + random.nextInt(span), chunkZ * 16 + random.nextInt(16) + OFFSET);
     }
 
@@ -76,21 +72,17 @@ public final class ContentBelt implements IContentShape {
         int highest = Math.min(world.getHeight() - 1, Math.min(maxHeight + radius, source.getY() + radius));
         int baseX = chunkX * 16 + OFFSET;
         int baseZ = chunkZ * 16 + OFFSET;
-
         for (int x = baseX; x < baseX + 16; x++) {
             int offX = x - source.getX();
             int alongX = offX * offX;
             if (alongX >= span) { continue; }
-
             for (int z = baseZ; z < baseZ + 16; z++) {
                 int offZ = z - source.getZ();
                 int alongXZ = alongX + offZ * offZ;
                 if (alongXZ >= span) { continue; }
-
                 for (int y = lowest; y <= highest; y++) {
                     int offY = y - source.getY();
                     if (alongXZ + offY * offY >= span) { continue; }
-
                     placer.place(world, random, x, y, z);
                 }
             }

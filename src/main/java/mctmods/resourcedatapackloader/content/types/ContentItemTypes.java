@@ -67,7 +67,6 @@ public final class ContentItemTypes {
     public static IItemType get(String name, Object context) {
         IItemType type = find(name);
         if (type != null) { return type; }
-
         ContentLog.LOGGER.error("Unknown item type '{}' in {}, treating it as '{}'. Known types are {}", name, context, DEFAULT, names());
         return TYPES.get(DEFAULT);
     }

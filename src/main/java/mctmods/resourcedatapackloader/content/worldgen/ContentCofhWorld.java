@@ -14,7 +14,6 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +28,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
 import javax.annotation.Nullable;
 
 public final class ContentCofhWorld {
@@ -60,11 +58,9 @@ public final class ContentCofhWorld {
         for (ModContainer container : Loader.instance().getModList()) {
             File source = container.getSource();
             if (source == null || !source.isFile()) { continue; }
-
             readJar(source, container.getModId(), found);
         }
         if (found.isEmpty()) { return found; }
-
         ContentLog.LOGGER.warn("Converted {} CoFH World entry/entries from mod jars. Anything with no equivalent here is named in the lines above and was left out. Translating them into a pack is still the supported way, and the only way to change what they generate", found.size());
         return found;
     }
@@ -76,7 +72,6 @@ public final class ContentCofhWorld {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (entry.isDirectory() || !entry.getName().startsWith(prefix) || !entry.getName().endsWith(".json")) { continue; }
-
                 try (InputStream stream = zip.getInputStream(entry)) {
                     source = jar;
                     owner = modid;
@@ -95,7 +90,6 @@ public final class ContentCofhWorld {
         while (read < out.length) {
             int step = stream.read(out, read, out.length - read);
             if (step < 0) { break; }
-
             read += step;
         }
         return out;
@@ -105,11 +99,9 @@ public final class ContentCofhWorld {
         File jar = TEMPLATE_JARS.get(id);
         String entry = TEMPLATE_ENTRIES.get(id);
         if (jar == null || entry == null) { return null; }
-
         try (ZipFile zip = new ZipFile(jar)) {
             ZipEntry found = zip.getEntry(entry);
             if (found == null) { return null; }
-
             try (InputStream stream = zip.getInputStream(found)) { return new ByteArrayInputStream(bytes(stream, (int) found.getSize())); }
         }
         catch (IOException ex) {
@@ -121,11 +113,9 @@ public final class ContentCofhWorld {
     private static void convert(String modid, String path, String contents, Map<ResourceLocation, String> found) {
         JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
         if (json == null || !json.has("populate")) { return; }
-
         JsonObject populate = JsonUtils.getJsonObject(json, "populate");
         for (Map.Entry<String, JsonElement> entry : populate.entrySet()) {
             if (!entry.getValue().isJsonObject()) { continue; }
-
             expand(modid, path, entry.getKey(), entry.getValue().getAsJsonObject(), found);
         }
     }
@@ -144,7 +134,6 @@ public final class ContentCofhWorld {
             }
             return;
         }
-
         List<JsonObject> generators = new ArrayList<>();
         flatten(JsonUtils.getJsonObject(source, "generator", new JsonObject()), generators);
         int index = 0;
@@ -152,7 +141,6 @@ public final class ContentCofhWorld {
             JsonObject translated = translate(name, source, generator);
             index++;
             if (translated == null) { continue; }
-
             String suffix = generators.size() > 1 ? "_" + index : "";
             found.put(new ResourceLocation(modid, name(path, name + suffix)), GSON.toJson(translated));
         }
@@ -168,7 +156,6 @@ public final class ContentCofhWorld {
         JsonElement nested = generator.get("generators");
         if (!"sequential".equals(type) && !"consecutive".equals(type)) { out.add(generator); return; }
         if (nested == null || !nested.isJsonArray()) { return; }
-
         for (JsonElement element : nested.getAsJsonArray()) {
             if (element.isJsonObject()) { flatten(element.getAsJsonObject(), out); }
         }
@@ -203,27 +190,22 @@ public final class ContentCofhWorld {
             ContentLog.LOGGER.warn("CoFH World entry '{}' uses the '{}' generator, which has nothing to convert to, leaving it out", name, type);
             return null;
         }
-
         JsonArray weighted = blocks(generator);
         if (weighted == null && ShapeDef.IMPRINT.equals(shape)) {
             weighted = new JsonArray();
             weighted.add(weighted("minecraft:stone", 0, 100, new JsonObject()));
         }
         if (weighted == null) { return null; }
-
         JsonObject out = new JsonObject();
         JsonObject first = weighted.get(0).getAsJsonObject();
         out.addProperty("block", first.get("block").getAsString());
         out.addProperty("meta", first.get("meta").getAsInt());
         if (weighted.size() > 1 || first.has("properties")) { out.add("blocks", weighted); }
-
         amount(source, "cluster-count", out, "attempts", 1);
         out.add("replace", ShapeDef.IMPRINT.equals(shape) && generator.has("ignored-block") ? ignored(generator) : material(generator));
         out.addProperty("retrogen", "true".equalsIgnoreCase(JsonUtils.getString(source, "retrogen", "false")));
         if ("sparse-cluster".equals(type) || sparse(generator, type)) { out.addProperty("sparse", true); }
-
         if (!shaped(name, generator, type, shape, out)) { return null; }
-
         spread(name, source, out);
         dimensions(source, out);
         biomes(source, out);
@@ -303,7 +285,6 @@ public final class ContentCofhWorld {
                 ContentLog.LOGGER.warn("CoFH World entry '{}' places a structure but names no file, leaving it out", name);
                 return false;
             }
-
             ResourceLocation id = new ResourceLocation(owner, file.toLowerCase(Locale.ROOT).replace(".nbt", "").replaceAll("[^a-z0-9_]", "_"));
             TEMPLATE_JARS.put(id, source);
             TEMPLATE_ENTRIES.put(id, folder + file);
@@ -316,7 +297,6 @@ public final class ContentCofhWorld {
             amount(generator, "cluster-size", out, "size", 8);
             if (ShapeDef.LARGEVEIN.equals(value)) { shape.addProperty("slim", "true".equalsIgnoreCase(JsonUtils.getString(generator, "spindly", "false"))); }
         }
-
         out.add("shape", shape);
         return true;
     }
@@ -324,7 +304,6 @@ public final class ContentCofhWorld {
     private static double doubled(JsonObject source) {
         JsonElement element = source.get("integrity");
         if (!number(element)) { return 1.0; }
-
         return element.getAsDouble();
     }
 
@@ -367,7 +346,6 @@ public final class ContentCofhWorld {
                 out.addProperty("maxHeight", bound(source, "y-offset", 64, false));
                 return;
         }
-
         String surface = surfaced(distribution);
         if (surface != null) {
             spread.addProperty("type", surface);
@@ -388,7 +366,6 @@ public final class ContentCofhWorld {
         if ("surface".equals(distribution) || "decoration".equals(distribution)) { return SpreadDef.TERRAIN; }
         if ("cave".equals(distribution)) { return SpreadDef.CAVERN; }
         if ("underwater".equals(distribution) || "underfluid".equals(distribution)) { return SpreadDef.SUBMERGED; }
-
         return null;
     }
 
@@ -416,17 +393,14 @@ public final class ContentCofhWorld {
     private static void addStructures(JsonObject shape, JsonObject generator, String owner, String folder, File source) {
         JsonElement held = generator.get("structure");
         if (held == null || !held.isJsonArray() || held.getAsJsonArray().size() < 2) { return; }
-
         JsonArray out = new JsonArray();
         for (JsonElement element : held.getAsJsonArray()) {
             boolean object = element.isJsonObject();
             String file = object ? JsonUtils.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
             if (file.isEmpty()) { continue; }
-
             ResourceLocation id = new ResourceLocation(owner, file.toLowerCase(Locale.ROOT).replace(".nbt", "").replaceAll("[^a-z0-9_]", "_"));
             TEMPLATE_JARS.put(id, source);
             TEMPLATE_ENTRIES.put(id, folder + file);
-
             JsonObject pick = new JsonObject();
             pick.addProperty("structure", id.toString());
             if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", JsonUtils.getInt(element.getAsJsonObject(), "weight", 1)); }
@@ -441,17 +415,14 @@ public final class ContentCofhWorld {
         if (element.isJsonArray()) { element = element.getAsJsonArray().size() == 0 ? null : element.getAsJsonArray().get(0); }
         if (element == null) { return ""; }
         if (element.isJsonObject()) { return JsonUtils.getString(element.getAsJsonObject(), "value", ""); }
-
         return element.getAsString();
     }
 
     private static String named(JsonElement element) {
         if (!element.isJsonObject()) { return qualified(element.getAsString()); }
-
         JsonObject one = element.getAsJsonObject();
         String name = JsonUtils.getString(one, "name", "");
         if (name.isEmpty()) { return ""; }
-
         int meta = integer(one, "data", integer(one, "metadata", -1));
         return meta < 0 ? qualified(name) : qualified(name) + ":" + Math.min(15, meta);
     }
@@ -460,7 +431,6 @@ public final class ContentCofhWorld {
         JsonElement element = source.get(key);
         if (element == null) { out.addProperty(name, fallback); return; }
         if (number(element)) { out.addProperty(name, element.getAsInt()); return; }
-
         if (element.isJsonObject()) {
             JsonObject range = element.getAsJsonObject();
             if (number(range.get("min")) && number(range.get("max"))) {
@@ -491,7 +461,6 @@ public final class ContentCofhWorld {
         JsonElement element = source.get(key);
         if (element == null) { return fallback; }
         if (number(element)) { return element.getAsInt(); }
-
         if (element.isJsonObject()) {
             JsonObject range = element.getAsJsonObject();
             JsonElement end = low ? range.get("min") : range.get("max");
@@ -509,7 +478,6 @@ public final class ContentCofhWorld {
     private static int integer(JsonObject source, String key, int fallback) {
         JsonElement element = source.get(key);
         if (!number(element)) { return fallback; }
-
         return element.getAsInt();
     }
 
@@ -518,7 +486,6 @@ public final class ContentCofhWorld {
     @Nullable private static JsonArray blocks(JsonObject generator) {
         JsonElement block = generator.get("block");
         if (block == null) { return null; }
-
         JsonArray out = new JsonArray();
         if (block.isJsonPrimitive()) {
             out.add(weighted(qualified(block.getAsString()), 0, 100, new JsonObject()));
@@ -545,10 +512,8 @@ public final class ContentCofhWorld {
         JsonObject out = new JsonObject();
         JsonElement properties = one.get("properties");
         if (properties == null || !properties.isJsonObject()) { return out; }
-
         for (Map.Entry<String, JsonElement> property : properties.getAsJsonObject().entrySet()) {
             if (!property.getValue().isJsonPrimitive()) { continue; }
-
             out.addProperty(property.getKey(), property.getValue().getAsString());
         }
         return out;
@@ -560,7 +525,6 @@ public final class ContentCofhWorld {
         one.addProperty("meta", meta);
         one.addProperty("weight", weight);
         if (!properties.entrySet().isEmpty()) { one.add("properties", properties); }
-
         return one;
     }
 
@@ -569,7 +533,6 @@ public final class ContentCofhWorld {
     private static void addTurns(JsonObject shape, JsonObject generator) {
         JsonArray turns = named(generator, "rotation", "turn");
         if (turns.size() > 0) { shape.add("turns", turns); }
-
         JsonArray mirrors = named(generator, "mirror", "mirror");
         if (mirrors.size() > 0) { shape.add("mirrors", mirrors); }
     }
@@ -578,17 +541,14 @@ public final class ContentCofhWorld {
         JsonArray out = new JsonArray();
         JsonElement held = generator.get(key);
         if (held == null) { return out; }
-
         JsonArray listed = new JsonArray();
         if (held.isJsonArray()) { listed = held.getAsJsonArray(); }
         else { listed.add(held); }
-
         for (JsonElement element : listed) {
             boolean object = element.isJsonObject();
             String raw = object ? JsonUtils.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
             String mapped = TURN_NAMES.get(raw.trim().toUpperCase(Locale.ROOT));
             if (mapped == null) { continue; }
-
             JsonObject pick = new JsonObject();
             pick.addProperty(nameKey, mapped);
             if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", JsonUtils.getInt(element.getAsJsonObject(), "weight", 1)); }
@@ -602,7 +562,6 @@ public final class ContentCofhWorld {
         JsonElement held = generator.get("ignored-block");
         if (held == null) { return out; }
         if (!held.isJsonArray()) { out.add(target(held)); return out; }
-
         for (JsonElement element : held.getAsJsonArray()) { out.add(target(element)); }
         return out;
     }
@@ -612,38 +571,31 @@ public final class ContentCofhWorld {
         JsonElement material = generator.get("material");
         if (material == null) { out.add("minecraft:stone"); return out; }
         if (!material.isJsonArray()) { out.add(target(material)); return out; }
-
         for (JsonElement element : material.getAsJsonArray()) { out.add(target(element)); }
         return out;
     }
 
     private static JsonElement target(JsonElement material) {
         if (!material.isJsonObject()) { return new JsonPrimitive(qualified(material.getAsString())); }
-
         JsonObject one = material.getAsJsonObject();
         JsonObject out = new JsonObject();
         out.addProperty("block", qualified(JsonUtils.getString(one, "name", "minecraft:stone")));
-
         JsonObject properties = properties(one);
         if (!properties.entrySet().isEmpty()) {
             out.add("properties", properties);
             return out;
         }
-
         int meta = integer(one, "data", integer(one, "metadata", -1));
         if (meta >= 0) { out.addProperty("meta", Math.min(15, meta)); }
-
         return out;
     }
 
     private static void dimensions(JsonObject source, JsonObject out) {
         JsonElement dimension = source.get("dimension");
         if (dimension == null || !dimension.isJsonObject()) { return; }
-
         JsonObject one = dimension.getAsJsonObject();
         JsonArray values = JsonUtils.getJsonArray(one, "value", new JsonArray());
         if (values.size() == 0) { return; }
-
         out.add("dimensions", values);
         if ("blacklist".equalsIgnoreCase(JsonUtils.getString(one, "restriction", "whitelist"))) { out.addProperty("dimensionsAreBlacklist", true); }
     }
@@ -651,14 +603,12 @@ public final class ContentCofhWorld {
     private static void biomes(JsonObject source, JsonObject out) {
         JsonElement biome = source.get("biome");
         if (biome == null || !biome.isJsonObject()) { return; }
-
         JsonObject one = biome.getAsJsonObject();
         JsonArray names = new JsonArray();
         JsonArray types = new JsonArray();
         for (JsonElement element : JsonUtils.getJsonArray(one, "value", new JsonArray())) {
             if (element.isJsonPrimitive()) { names.add(element.getAsString()); continue; }
             if (!element.isJsonObject()) { continue; }
-
             JsonObject value = element.getAsJsonObject();
             if ("dictionary".equalsIgnoreCase(JsonUtils.getString(value, "type", ""))) { types.add(JsonUtils.getString(value, "entry", "").toUpperCase(Locale.ROOT)); }
             else { names.add(JsonUtils.getString(value, "entry", JsonUtils.getString(value, "name", ""))); }
@@ -667,5 +617,4 @@ public final class ContentCofhWorld {
         if (types.size() > 0) { out.add("biomeTypes", types); }
         if ((names.size() > 0 || types.size() > 0) && "blacklist".equalsIgnoreCase(JsonUtils.getString(one, "restriction", "whitelist"))) { out.addProperty("biomesAreBlacklist", true); }
     }
-
 }

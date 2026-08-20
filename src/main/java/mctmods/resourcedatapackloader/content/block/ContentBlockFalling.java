@@ -27,8 +27,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockFalling extends BlockFalling implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockFalling extends BlockFalling implements IContentBlock {
     private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
     private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
@@ -71,17 +70,13 @@ public class ContentBlockFalling extends BlockFalling implements IContentBlock {
         for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
     }
 
-    @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(variant, def.at(meta).name);
-    }
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
 
     @Override public int getMetaFromState(IBlockState state) { return ContentSetup.metaOf(def, state.getValue(variant)); }
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return getMetaFromState(state); }
 
-    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
-        return def.at(getMetaFromState(state)).light;
-    }
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).light; }
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
 

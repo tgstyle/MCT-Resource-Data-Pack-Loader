@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT)
-public final class PackInjector {
+@SideOnly(Side.CLIENT) public final class PackInjector {
     private static RDPLResourcePack normal;
     private static RDPLResourcePack override;
 
@@ -24,13 +23,11 @@ public final class PackInjector {
         PackManager manager = PackManager.get();
         Path root = manager.getRoot();
         if (manager.isEmpty() || root == null) { return list; }
-
         List<IResourcePack> ordered = new ArrayList<>(list);
         ordered.remove(pack(root, false));
         ordered.remove(pack(root, true));
         if (manager.hasTier(false)) { ordered.add(beforeSelectedPacks(ordered), pack(root, false)); }
         if (manager.hasTier(true)) { ordered.add(pack(root, true)); }
-
         return ordered;
     }
 
@@ -62,7 +59,6 @@ public final class PackInjector {
         for (ResourcePackRepository.Entry entry : repository.getRepositoryEntries()) { packs.add(entry.getResourcePack()); }
         IResourcePack server = repository.getServerResourcePack();
         if (server != null) { packs.add(server); }
-
         return packs;
     }
 }

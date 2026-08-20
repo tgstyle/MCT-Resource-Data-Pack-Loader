@@ -22,7 +22,6 @@ public final class ContentVent implements IContentShape {
         int step = shape.hanging ? -1 : 1;
         boolean round = shape.isRound();
         int span = radius * radius;
-
         boolean placed = false;
         for (int level = 0; level < height; level++) {
             int y = origin.getY() + step * level;
@@ -30,12 +29,10 @@ public final class ContentVent implements IContentShape {
             for (int offX = -radius; offX <= radius; offX++) {
                 for (int offZ = -radius; offZ <= radius; offZ++) {
                     if (round && offX * offX + offZ * offZ > span) { continue; }
-
                     any |= placer.place(world, random, origin.getX() + offX, y, origin.getZ() + offZ);
                 }
             }
             if (!any) { break; }
-
             placed = true;
         }
         return placed;

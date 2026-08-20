@@ -20,15 +20,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockLadder extends BlockLadder implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockLadder extends BlockLadder implements IContentBlock {
     public static final int MAX_VARIANTS = 1;
     private final BlockDef def;
 
     public ContentBlockLadder(BlockDef def) {
         this.def = def;
         BlockVariant variant = def.at(0);
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);

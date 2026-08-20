@@ -23,7 +23,6 @@ public final class PaperPathCache {
             stepAside();
             return;
         }
-
         try {
             closes.invoke(null);
             opens.invoke(null);
@@ -34,7 +33,6 @@ public final class PaperPathCache {
 
     public static void close() {
         if (closes == null || !ours) { return; }
-
         try {
             closes.invoke(null);
             ours = false;
@@ -56,7 +54,6 @@ public final class PaperPathCache {
 
     private static synchronized void look() {
         if (looked) { return; }
-
         looked = true;
         try {
             Class<?> held = Class.forName(HOLDER, false, PaperPathCache.class.getClassLoader());
@@ -78,7 +75,6 @@ public final class PaperPathCache {
         closes = null;
         switched = null;
         if (told) { return; }
-
         told = true;
         ContentLog.LOGGER.error("PaperFixes would not take its own note of safe chunk sections, so it is left switched off", ex);
     }

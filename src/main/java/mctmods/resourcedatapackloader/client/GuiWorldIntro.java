@@ -17,7 +17,6 @@ import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.io.IOUtils;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,11 +24,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT)
-public class GuiWorldIntro extends GuiScreen {
+@SideOnly(Side.CLIENT) public class GuiWorldIntro extends GuiScreen {
     private static final int TEXT_WIDTH = 274;
     private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
@@ -53,14 +50,12 @@ public class GuiWorldIntro extends GuiScreen {
     public static void open() {
         List<IntroPageDef> pages = ContentWorldIntro.pages();
         if (pages.isEmpty()) { return; }
-
         Minecraft.getMinecraft().displayGuiScreen(new GuiWorldIntro(pages, track()));
     }
 
     @Nullable private static ISound track() {
         ResourceLocation key = ContentWorldIntro.music();
         if (key == null) { return null; }
-
         SoundEvent event = SoundEvent.REGISTRY.getObject(key);
         if (event == null) {
             ContentLog.LOGGER.error("World intro names music {}, which nothing registers, so it plays silently", key);
@@ -92,7 +87,6 @@ public class GuiWorldIntro extends GuiScreen {
 
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawPageBackground(partialTicks);
-
         IntroPageDef def = pages.get(page);
         float scale = def.textScale;
         float step = LINE_HEIGHT * scale;
@@ -107,7 +101,6 @@ public class GuiWorldIntro extends GuiScreen {
             y += step;
         }
         GlStateManager.popMatrix();
-
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -125,7 +118,6 @@ public class GuiWorldIntro extends GuiScreen {
             finish();
             return;
         }
-
         page++;
         ticks = 0.0F;
         initGui();
@@ -143,7 +135,6 @@ public class GuiWorldIntro extends GuiScreen {
     private float duration() {
         IntroPageDef def = pages.get(page);
         if (def.time > IntroPageDef.DERIVE) { return def.time * 20.0F; }
-
         return Math.abs(endOffset() - startOffset()) / DERIVED_SPEED;
     }
 
@@ -161,11 +152,9 @@ public class GuiWorldIntro extends GuiScreen {
     private float offset(float partialTicks) {
         IntroPageDef def = pages.get(page);
         if (def.still()) { return (height - totalScrollLength) / 2.0F; }
-
         float start = startOffset();
         float span = duration();
         if (span <= 0.0F) { return endOffset(); }
-
         return start + (endOffset() - start) * Math.min((ticks + partialTicks) / span, 1.0F);
     }
 
@@ -175,7 +164,6 @@ public class GuiWorldIntro extends GuiScreen {
             drawBackground(0);
             return;
         }
-
         int index = def.cycles() ? (int) ((ticks + partialTicks) / (def.interval * 20.0F)) % def.backgrounds.size() : 0;
         mc.getTextureManager().bindTexture(def.backgrounds.get(index));
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -188,7 +176,6 @@ public class GuiWorldIntro extends GuiScreen {
         IntroPageDef def = pages.get(page);
         wrapWidth = (int) Math.min(TEXT_WIDTH, Math.max(1.0F, (width - MARGIN) / def.textScale));
         if (def.text == null) { return; }
-
         InputStream stream = null;
         try {
             stream = mc.getResourceManager().getResource(def.text).getInputStream();
@@ -203,7 +190,6 @@ public class GuiWorldIntro extends GuiScreen {
         }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read intro text {}, showing the page without it: {}", def.text, ex.getMessage()); }
         finally { IOUtils.closeQuietly(stream); }
-
         totalScrollLength = lines.size() * LINE_HEIGHT * def.textScale;
     }
 }

@@ -28,7 +28,6 @@ public final class RecurrentVillages {
     public static void register() {
         if (registered || !Loader.isModLoaded("reccomplex")) { return; }
         registered = true;
-
         MapGenStructureIO.registerStructureComponent(RecurrentVillagePiece.class, "RdplRcVillage");
         VillagerRegistry.instance().registerVillageCreationHandler(new Handler());
         ContentLog.LOGGER.info("Recurrent Complex village buildings are placed by the loader whenever terrain adaptation is on: its own placement stands down then, and its structures are laid through the same village pipeline as everything else");
@@ -38,7 +37,6 @@ public final class RecurrentVillages {
         if (front == EnumFacing.EAST) { return Rotation.COUNTERCLOCKWISE_90; }
         if (front == EnumFacing.SOUTH) { return Rotation.CLOCKWISE_180; }
         if (front == EnumFacing.WEST) { return Rotation.CLOCKWISE_90; }
-
         return Rotation.NONE;
     }
 
@@ -47,7 +45,6 @@ public final class RecurrentVillages {
 
         @Override public StructureVillagePieces.PieceWeight getVillagePieceWeight(Random random, int size) {
             if (!ContentBeard.wanted()) { return new StructureVillagePieces.PieceWeight(RecurrentVillagePiece.class, 0, 0); }
-
             int weight = 0;
             int limit = 0;
             Map<String, Integer> capped = new HashMap<>();
@@ -75,19 +72,16 @@ public final class RecurrentVillages {
 
         @Override @SuppressWarnings({"ConstantConditions", "ConstantValue"}) public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
             if (!ContentBeard.wanted()) { return null; }
-
             Map<String, Integer> capped = LIMITS.get(random);
             List<RecurrentPlots.Plot> plots = new ArrayList<>();
             int total = 0;
             for (RecurrentPlots.Plot plot : RecurrentPlots.plots()) {
                 if (!RecurrentPlots.fits(plot.structure, plot.generation, start.biome)) { continue; }
                 if (capped != null && standing(placed, plot.structure) >= capped.getOrDefault(plot.structure, 0)) { continue; }
-
                 plots.add(plot);
                 total += plot.weight;
             }
             if (total <= 0) { return null; }
-
             RecurrentPlots.Plot chosen = null;
             int roll = random.nextInt(total);
             for (RecurrentPlots.Plot plot : plots) {
@@ -98,10 +92,8 @@ public final class RecurrentVillages {
                 }
             }
             if (chosen == null) { return null; }
-
             int[] size = RecurrentPlots.sizeOf(chosen.structure);
             if (size == null) { return null; }
-
             Rotation turned = facingFront(chosen.front);
             boolean quarter = turned == Rotation.CLOCKWISE_90 || turned == Rotation.COUNTERCLOCKWISE_90;
             int wide = quarter ? size[2] : size[0];
@@ -110,7 +102,6 @@ public final class RecurrentVillages {
             StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x + road.getXOffset(), y, z + road.getZOffset(), 0, 0, 0, wide, size[1], deep, facing);
             if (!RecurrentVillagePiece.deepEnough(box)) { return null; }
             if (StructureComponent.findIntersecting(placed, box) != null) { return null; }
-
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The Recurrent Complex plot {} is laid by the loader at {}, {} facing {}", chosen.structure, box.minX, box.minZ, facing); }
             return new RecurrentVillagePiece(start, type, box, facing, chosen, turned);
         }

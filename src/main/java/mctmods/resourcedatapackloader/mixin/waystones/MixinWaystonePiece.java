@@ -12,16 +12,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ComponentVillageWaystone.class)
-public abstract class MixinWaystonePiece extends StructureVillagePieces.Village {
+@Mixin(ComponentVillageWaystone.class) public abstract class MixinWaystonePiece extends StructureVillagePieces.Village {
     @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("RETURN"))
     private void rdpl$trimToTemplate(StructureVillagePieces.Start start, int type, StructureBoundingBox boundingBox, EnumFacing facing, CallbackInfo ci) {
         if (!ContentBeard.wanted() || this.boundingBox == null || facing == null) { return; }
-
         int wide = this.boundingBox.maxX - this.boundingBox.minX + 1;
         int deep = this.boundingBox.maxZ - this.boundingBox.minZ + 1;
         if (wide <= 5 && deep <= 5) { return; }
-
         int wasMinX = this.boundingBox.minX;
         int wasMinZ = this.boundingBox.minZ;
         if (wide > 5) {

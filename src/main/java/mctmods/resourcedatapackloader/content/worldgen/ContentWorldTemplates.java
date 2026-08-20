@@ -14,14 +14,12 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 public final class ContentWorldTemplates {
@@ -42,9 +40,7 @@ public final class ContentWorldTemplates {
         if (loaded) { return; }
         loaded = true;
         if (!Config.content.load) { return; }
-
         for (WorldTemplateDef def : builtins()) { DEFS.put(def.registryName, def); }
-
         PackManager.get().forEach(PackManager.WORLDTEMPLATES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {
@@ -53,7 +49,6 @@ public final class ContentWorldTemplates {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in world template {}, ignoring it: {}", key, ex.getMessage()); }
         });
-
         active = select();
         ContentControl.check(active);
         ContentStructures.load();
@@ -69,7 +64,6 @@ public final class ContentWorldTemplates {
     public static void resolve(Iterable<Biome> blocked) {
         RESOLVED.clear();
         if (active == null) { return; }
-
         List<String> missing = new ArrayList<>();
         for (Biome biome : blocked) {
             Biome target = replacementFor(biome, missing);
@@ -83,20 +77,16 @@ public final class ContentWorldTemplates {
     public static boolean appliesTo(int dimension) {
         if (active == null) { return false; }
         if (active.dimensions.isEmpty()) { return true; }
-
         return active.dimensions.contains(dimension);
     }
 
     @Nullable private static Biome replacementFor(Biome blocked, List<String> missing) {
         if (active == null) { return null; }
-
         for (String role : ROLE_ORDER) {
             String named = active.roles.get(role);
             if (named == null || named.isEmpty()) { continue; }
-
             BiomeDictionary.Type type = ROLES.get(role);
             if (type == null || !BiomeDictionary.hasType(blocked, type)) { continue; }
-
             Biome found = biome(named, missing);
             if (found != null) { return found; }
         }
@@ -105,27 +95,22 @@ public final class ContentWorldTemplates {
 
     @Nullable private static Biome biome(String name, List<String> missing) {
         if (name.isEmpty() || WorldTemplateDef.VOID.equals(name)) { return null; }
-
         ResourceLocation key = new ResourceLocation(name);
         Biome found = ForgeRegistries.BIOMES.containsKey(key) ? ForgeRegistries.BIOMES.getValue(key) : null;
         if (found == null && !missing.contains(name)) { missing.add(name); }
-
         return found;
     }
 
     @Nullable private static WorldTemplateDef select() {
         String wanted = Config.worldgen.worldTemplate.trim();
         if (wanted.isEmpty()) { return null; }
-
         List<WorldTemplateDef> usable = new ArrayList<>();
         for (Map.Entry<ResourceLocation, WorldTemplateDef> entry : DEFS.entrySet()) {
             if (ContentRegistry.available(entry.getValue().requires, entry.getKey())) { usable.add(entry.getValue()); }
         }
-
         for (WorldTemplateDef def : usable) {
             if (def.getKey().equalsIgnoreCase(wanted) || def.registryName.getPath().equalsIgnoreCase(wanted)) { return def; }
         }
-
         if ("auto".equalsIgnoreCase(wanted)) {
             WorldTemplateDef chosen = null;
             for (WorldTemplateDef def : usable) {
@@ -133,7 +118,6 @@ public final class ContentWorldTemplates {
             }
             return chosen;
         }
-
         ContentLog.LOGGER.error("worldTemplate is '{}' but nothing defines it. Known templates: {}", wanted, DEFS.keySet());
         return null;
     }
@@ -141,7 +125,6 @@ public final class ContentWorldTemplates {
     private static List<WorldTemplateDef> builtins() {
         List<WorldTemplateDef> list = new ArrayList<>();
         list.add(built("void", "Void", WorldTemplateDef.VOID, Collections.emptyMap()));
-
         Map<String, String> vanilla = new LinkedHashMap<>();
         vanilla.put("ocean", "minecraft:ocean");
         vanilla.put("river", "minecraft:river");
@@ -151,12 +134,10 @@ public final class ContentWorldTemplates {
         vanilla.put("hills", "minecraft:extreme_hills");
         vanilla.put("mountain", "minecraft:extreme_hills");
         list.add(built("vanilla", "Vanilla shoreline", "minecraft:plains", vanilla));
-
         Map<String, String> water = new LinkedHashMap<>();
         water.put("river", "minecraft:river");
         water.put("beach", "minecraft:beach");
         list.add(built("ocean", "Ocean world", "minecraft:ocean", water));
-
         list.add(built("plains", "Plains world", "minecraft:plains", Collections.emptyMap()));
         list.add(built("desert", "Desert world", "minecraft:desert", Collections.emptyMap()));
         return list;

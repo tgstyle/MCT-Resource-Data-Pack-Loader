@@ -15,8 +15,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentItemTool extends ItemTool implements IContentItem {
+@SuppressWarnings("deprecation") public class ContentItemTool extends ItemTool implements IContentItem {
     private final ItemDef def;
 
     public ContentItemTool(ItemDef def, Item.ToolMaterial material, float damage, float speed, Set<Block> effective) {

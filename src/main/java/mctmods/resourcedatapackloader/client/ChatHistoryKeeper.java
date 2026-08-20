@@ -16,8 +16,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mod.EventBusSubscriber(value = Side.CLIENT, modid = ResourceDataPackLoader.MOD_ID)
-public final class ChatHistoryKeeper {
+@Mod.EventBusSubscriber(value = Side.CLIENT, modid = ResourceDataPackLoader.MOD_ID) public final class ChatHistoryKeeper {
     private static final int KEPT = 10;
     private static final List<String> typed = new ArrayList<>();
     private static boolean loaded = false;
@@ -27,10 +26,8 @@ public final class ChatHistoryKeeper {
 
     @SubscribeEvent public static void onChatOpened(GuiOpenEvent event) {
         if (!(event.getGui() instanceof GuiChat)) { return; }
-
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.ingameGUI == null) { return; }
-
         if (!loaded) {
             loaded = true;
             typed.addAll(load(mc));
@@ -53,17 +50,14 @@ public final class ChatHistoryKeeper {
     public static void commandRan(String command) {
         String held = pending;
         if (held == null) { return; }
-
         String bare = command.startsWith("/") ? command.substring(1) : command;
         if (!held.substring(1).trim().equals(bare.trim())) { return; }
-
         pending = null;
         Minecraft.getMinecraft().addScheduledTask(() -> commit(held));
     }
 
     private static void commit(String line) {
         if (!typed.isEmpty() && typed.get(typed.size() - 1).equals(line)) { return; }
-
         typed.add(line);
         while (typed.size() > KEPT) { typed.remove(0); }
         save(Minecraft.getMinecraft());
@@ -72,7 +66,6 @@ public final class ChatHistoryKeeper {
     private static List<String> load(Minecraft mc) {
         File kept = file(mc);
         if (!kept.isFile()) { return new ArrayList<>(); }
-
         try { return Files.readAllLines(kept.toPath(), StandardCharsets.UTF_8); }
         catch (IOException failed) {
             ContentLog.LOGGER.warn("Could not read the kept chat history from {}: {}", kept, failed.toString());

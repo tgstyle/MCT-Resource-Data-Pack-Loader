@@ -27,7 +27,6 @@ public class ContentBlockTrapDoor extends BlockTrapDoor implements IContentBlock
         super(def.material);
         this.def = def;
         BlockVariant variant = def.at(0);
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);

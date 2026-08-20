@@ -43,21 +43,17 @@ public final class ContentBiomes {
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onCreateDecorator(BiomeEvent.CreateDecorator event) {
         if (!(event.getBiome() instanceof ContentBiome)) { return; }
-
         ((ContentBiome) event.getBiome()).applyDecoration(event.getNewBiomeDecorator());
     }
 
     public static void replaceStone(ChunkPrimer primer, Biome[] biomes) {
         if (biomes == null) { return; }
-
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 Biome biome = biomes[z * 16 + x];
                 if (!(biome instanceof ContentBiome)) { continue; }
-
                 IBlockState stone = ((ContentBiome) biome).getStoneState();
                 if (stone == null) { continue; }
-
                 for (int y = 0; y < 256; y++) {
                     if (primer.getBlockState(x, y, z).getBlock() == Blocks.STONE) { primer.setBlockState(x, y, z, stone); }
                 }
@@ -76,14 +72,12 @@ public final class ContentBiomes {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.biomes) { return false; }
-
         PackManager.get().forEach(PackManager.BIOMES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }
             try { read(key, contents); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in biome file {}, ignoring it", key, ex); }
         });
-
         if (!DEFS.isEmpty()) { Summary.info("biomes", "Loaded " + DEFS.size() + " biome definition(s) from packs"); }
         return !DEFS.isEmpty();
     }
@@ -94,7 +88,6 @@ public final class ContentBiomes {
             ContentLog.LOGGER.error("Biome file {} is empty, ignoring it", key);
             return;
         }
-
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (json.has("spawns")) {
             for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
@@ -102,7 +95,6 @@ public final class ContentBiomes {
                     ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
                     continue;
                 }
-
                 JsonObject entry = element.getAsJsonObject();
                 String entity = JsonUtils.getString(entry, "entity", "");
                 if (entity.isEmpty()) {
@@ -114,20 +106,16 @@ public final class ContentBiomes {
                         Math.max(1, JsonUtils.getInt(entry, "weight", 10)), min, Math.max(min, JsonUtils.getInt(entry, "max", min))));
             }
         }
-
         Map<String, Integer> decoration = new LinkedHashMap<>();
         JsonObject decorationJson = JsonUtils.getJsonObject(json, "decoration", new JsonObject());
         for (Map.Entry<String, JsonElement> entry : decorationJson.entrySet()) {
             if (!entry.getValue().isJsonPrimitive()) { continue; }
             decoration.put(entry.getKey(), entry.getValue().getAsInt());
         }
-
         for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "spawnRates", new JsonObject()).entrySet()) {
             if (RATE_KEYS.contains(entry.getKey())) { continue; }
-
             ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, entry.getKey(), RATE_KEYS);
         }
-
         JsonObject placement = JsonUtils.getJsonObject(json, "placement", new JsonObject());
         DEFS.put(key, new BiomeDef(key,
                 JsonUtils.getString(json, "name", key.getPath()),
@@ -170,14 +158,12 @@ public final class ContentBiomes {
         if ("sandstone".equalsIgnoreCase(written)) { return 1; }
         if ("acacia".equalsIgnoreCase(written)) { return 2; }
         if ("spruce".equalsIgnoreCase(written)) { return 3; }
-
         ContentLog.LOGGER.error("Biome {} sets villageType '{}', which is not oak, sandstone, acacia or spruce, so villages here build with oak as they would without it", key, written);
         return -1;
     }
 
     private static float spawnChance(ResourceLocation key, float wanted) {
         if (wanted < 0.99F) { return Math.max(0.0F, wanted); }
-
         ContentLog.LOGGER.error("Biome {} asks for a spawnChance of {}. The game keeps starting another herd for as long as that roll succeeds, so at 1 it never stops and the world fills until it runs out of room. Using 0.99 instead", key, wanted);
         return 0.99F;
     }
@@ -194,21 +180,18 @@ public final class ContentBiomes {
 
     private static List<String> strings(JsonObject json, String name) {
         if (!json.has(name)) { return Collections.emptyList(); }
-
         List<String> values = new ArrayList<>();
         for (JsonElement element : JsonUtils.getJsonArray(json, name)) { values.add(element.getAsString()); }
         return Collections.unmodifiableList(values);
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void registerBiomes(RegistryEvent.Register<Biome> event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerBiomes(RegistryEvent.Register<Biome> event) {
         for (BiomeDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
             if (ForgeRegistries.BIOMES.containsKey(def.registryName)) {
-                ContentLog.LOGGER.info("Biome {} is already registered, leaving it alone", def.registryName);
+                ContentLog.LOGGER.debug("Biome {} is already registered, leaving it alone", def.registryName);
                 continue;
             }
-
             ModContainer previous = Loader.instance().activeModContainer();
             try {
                 Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
@@ -219,9 +202,8 @@ public final class ContentBiomes {
             }
             finally { Loader.instance().setActiveModContainer(previous); }
         }
-
         for (ContentBiome biome : REGISTERED) {
-            ContentLog.LOGGER.info("Biome {} registered with id {}{}", biome.getRegistryName(), Biome.getIdForBiome(biome), biome.getDef().isAutoId() ? "" : " (pinned by the pack)");
+            ContentLog.LOGGER.debug("Biome {} registered with id {}{}", biome.getRegistryName(), Biome.getIdForBiome(biome), biome.getDef().isAutoId() ? "" : " (pinned by the pack)");
         }
         if (!REGISTERED.isEmpty()) { Summary.info("content_biomes", "Registered " + REGISTERED.size() + " biome(s) from packs"); }
     }
@@ -232,13 +214,10 @@ public final class ContentBiomes {
             BiomeDef def = biome.getDef();
             biome.resolveSpawns();
             types(biome, def);
-
             if (def.spawnBiome) { BiomeManager.addSpawnBiome(biome); }
             if (def.villageBiome) { BiomeManager.addVillageBiome(biome, def.villageSpawn); }
             if (def.strongholdBiome) { BiomeManager.addStrongholdBiome(biome); }
-
             if (def.climate.isEmpty() || def.weight <= 0) { continue; }
-
             BiomeManager.BiomeType climate = BiomeManager.BiomeType.getType(def.climate);
             BiomeManager.addBiome(climate, new BiomeManager.BiomeEntry(biome, def.weight));
             placed++;
@@ -249,10 +228,9 @@ public final class ContentBiomes {
     private static void types(ContentBiome biome, BiomeDef def) {
         if (def.types.isEmpty()) {
             BiomeDictionary.makeBestGuess(biome);
-            ContentLog.LOGGER.info("Biome {} lists no types, guessing them from its properties", def.registryName);
+            ContentLog.LOGGER.debug("Biome {} lists no types, guessing them from its properties", def.registryName);
             return;
         }
-
         List<BiomeDictionary.Type> types = new ArrayList<>();
         for (String name : def.types) { types.add(BiomeDictionary.Type.getType(name)); }
         BiomeDictionary.addTypes(biome, types.toArray(new BiomeDictionary.Type[0]));

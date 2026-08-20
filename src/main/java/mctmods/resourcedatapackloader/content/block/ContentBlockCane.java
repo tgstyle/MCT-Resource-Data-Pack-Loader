@@ -25,15 +25,13 @@ import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentBlockCane extends Block implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockCane extends Block implements IContentBlock {
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
     public static final int MAX_VARIANTS = 1;
@@ -48,7 +46,6 @@ public class ContentBlockCane extends Block implements IContentBlock {
         this.def = def;
         this.growth = growth;
         BlockVariant variant = def.at(0);
-
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         if (def.soundType != null) { setSoundType(def.soundType); }
@@ -93,14 +90,11 @@ public class ContentBlockCane extends Block implements IContentBlock {
         if (!world.isAreaLoaded(pos, 1)) { return; }
         if (!checkStay(world, pos)) { return; }
         if (!world.isAirBlock(pos.up())) { return; }
-
         int height = 1;
         while (world.getBlockState(pos.down(height)).getBlock() == this) { height++; }
         if (height >= growth.maxHeight) { return; }
-
         int age = state.getValue(AGE);
         if (!ForgeHooks.onCropsGrowPre(world, pos, state, true)) { return; }
-
         if (age >= growth.stages - 1) {
             world.setBlockState(pos.up(), getDefaultState());
             world.setBlockState(pos, state.withProperty(AGE, 0), 4);
@@ -117,7 +111,6 @@ public class ContentBlockCane extends Block implements IContentBlock {
 
     @Override public void onEntityCollision(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Entity entity) {
         if (!growth.damage) { return; }
-
         entity.attackEntityFrom(DamageSource.CACTUS, growth.damageAmount);
     }
 
@@ -126,7 +119,6 @@ public class ContentBlockCane extends Block implements IContentBlock {
             drops.add(new ItemStack(this, growth.dropCount));
             return;
         }
-
         ItemStack stack = ContentStacks.parse(def.registryName, growth.drop, growth.dropCount);
         if (!stack.isEmpty()) { drops.add(stack); }
     }
@@ -137,7 +129,6 @@ public class ContentBlockCane extends Block implements IContentBlock {
 
     private boolean checkStay(World world, BlockPos pos) {
         if (supported(world, pos)) { return true; }
-
         dropBlockAsItem(world, pos, world.getBlockState(pos), 0);
         world.setBlockToAir(pos);
         return false;
@@ -145,7 +136,6 @@ public class ContentBlockCane extends Block implements IContentBlock {
 
     private void checkDrop(World world, BlockPos pos) {
         if (world.isRemote) { return; }
-
         checkStay(world, pos);
     }
 
@@ -157,7 +147,6 @@ public class ContentBlockCane extends Block implements IContentBlock {
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }
         if (growth.breaksNeighbors && crowded(world, pos)) { return false; }
         if (!growth.needsWater) { return true; }
-
         for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) {
             for (int step = 1; step <= growth.waterRange; step++) {
                 BlockPos side = below.offset(facing, step);

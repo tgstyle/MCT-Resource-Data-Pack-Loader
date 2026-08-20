@@ -19,14 +19,12 @@ public final class VanillaPortalLink {
         Entity entity = event.getEntity();
         if (entity == null || entity.getEntityWorld().provider == null) { return; }
         if (entity.getEntityWorld().provider.getDimension() != OVERWORLD || event.getDimension() != NETHER) { return; }
-
         write(entity);
     }
 
     public static double[] stored(Entity entity) {
         if (entity == null || entity.getEntityWorld().provider == null) { return new double[0]; }
         if (entity.getEntityWorld().provider.getDimension() != NETHER) { return new double[0]; }
-
         return read(entity);
     }
 
@@ -42,10 +40,8 @@ public final class VanillaPortalLink {
     private static double[] read(Entity entity) {
         NBTTagCompound data = entity.getEntityData();
         if (!data.hasKey(TAG, 10)) { return new double[0]; }
-
         NBTTagCompound portal = data.getCompoundTag(TAG);
         if (!portal.hasKey(X) || !portal.hasKey(Y) || !portal.hasKey(Z)) { return new double[0]; }
-
         return new double[] { portal.getDouble(X), portal.getDouble(Y), portal.getDouble(Z) };
     }
 }

@@ -27,14 +27,12 @@ public final class ContentOreDict {
         if (applied) { return; }
         applied = true;
         if (!Config.content.oreDictionary) { return; }
-
         int[] count = new int[1];
         PackManager.get().forEach(PackManager.OREDICT, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try { read(key, contents, count); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in ore dictionary file {}, ignoring it", key, ex); }
         });
-
         if (count[0] > 0) { Summary.info("oredict_extra", "Added " + count[0] + " extra ore dictionary entry/entries"); }
     }
 
@@ -44,16 +42,13 @@ public final class ContentOreDict {
             ContentLog.LOGGER.error("Ore dictionary file {} is empty, ignoring it", key);
             return;
         }
-
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String name = entry.getKey();
             if (name.startsWith("_")) { continue; }
-
             if (!entry.getValue().isJsonArray()) {
                 ContentLog.LOGGER.error("Ore dictionary name '{}' in {} is not an array, skipping it", name, key);
                 continue;
             }
-
             for (JsonElement element : entry.getValue().getAsJsonArray()) {
                 ItemStack stack = ContentStacks.parse(key, element.getAsString(), 1);
                 if (stack.isEmpty()) { continue; }

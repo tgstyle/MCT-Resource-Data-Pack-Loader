@@ -93,7 +93,6 @@ public final class ContentChunkOrder {
         }
         inRegion++;
         if (inRegion >= spanX * spanZ) { advance(); }
-
         return new ChunkPos(x, z);
     }
 
@@ -124,11 +123,9 @@ public final class ContentChunkOrder {
         else { regionX++; }
         step++;
         if (step < span) { return; }
-
         step = 0;
         side++;
         if (side < 4) { return; }
-
         ring++;
         side = 0;
         regionX++;

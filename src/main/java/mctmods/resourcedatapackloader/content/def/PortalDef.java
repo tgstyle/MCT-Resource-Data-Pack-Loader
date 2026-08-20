@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+
 public final class PortalDef {
     public final int dimension;
     public final int returnDimension;
@@ -20,5 +21,4 @@ public final class PortalDef {
         this.sound = sound;
         this.owned = owned;
     }
-
 }

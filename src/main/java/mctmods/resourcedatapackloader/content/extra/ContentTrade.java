@@ -32,7 +32,6 @@ public class ContentTrade implements EntityVillager.ITradeList {
 
     private static ItemStack sized(ItemStack stack, TradeStackDef def, Random rand) {
         if (stack.isEmpty()) { return ItemStack.EMPTY; }
-
         ItemStack copy = stack.copy();
         copy.setCount(def.max <= def.min ? def.min : def.min + rand.nextInt(def.max - def.min + 1));
         return copy;

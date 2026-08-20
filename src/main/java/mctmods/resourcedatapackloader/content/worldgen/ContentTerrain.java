@@ -43,43 +43,36 @@ public final class ContentTerrain {
 
     public static String worldType() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-
         return ContentControl.text(ContentControl.TERRAIN, "worldType", Config.worldgen.worldType).trim();
     }
 
     public static String worldSeed() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-
         return ContentControl.text(ContentControl.TERRAIN, "worldSeed", Config.worldgen.worldSeed).trim();
     }
 
     public static String worldName() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-
         return ContentControl.text(ContentControl.TERRAIN, "worldName", Config.worldgen.worldName).trim();
     }
 
     public static String worldGameMode() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-
         return ContentControl.text(ContentControl.TERRAIN, "worldGameMode", Config.worldgen.worldGameMode).trim();
     }
 
     public static String worldSpawn() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-
         return ContentControl.text(ContentControl.TERRAIN, "worldSpawn", Config.worldgen.worldSpawn).trim();
     }
 
     public static int worldTime() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return -1; }
-
         return ContentControl.number(ContentControl.TERRAIN, "worldTime", Config.worldgen.worldTime);
     }
 
     public static int worldBorder() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return 0; }
-
         return ContentControl.number(ContentControl.TERRAIN, "worldBorder", Config.worldgen.worldBorder);
     }
 
@@ -89,7 +82,6 @@ public final class ContentTerrain {
             ContentLog.LOGGER.error("worldSpawn is '{}', which is not written as x,z or x,y,z, so the world is spawned the way the game chooses", written);
             return null;
         }
-
         try {
             int x = Integer.parseInt(parts[0].trim());
             int y = parts.length == 3 ? Integer.parseInt(parts[1].trim()) : groundLevel;
@@ -116,21 +108,17 @@ public final class ContentTerrain {
 
     @SubscribeEvent public static void onLoginPackOptions(PlayerEvent.PlayerLoggedInEvent event) {
         if (PackOptions.worldChanged().isEmpty() || event.player.getEntityWorld().provider.getDimension() != 0) { return; }
-
         event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.packOptions", String.join(", ", PackOptions.worldChanged()))));
         PackOptions.worldTold();
     }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!Config.worldgen.tellWorldType) { return; }
-
         String wanted = worldType();
         World world = event.player.getEntityWorld();
         if (wanted.isEmpty() || world.provider.getDimension() != 0) { return; }
-
         WorldType made = world.getWorldInfo().getTerrainType();
         if (!wanted.equalsIgnoreCase(made.getName())) { return; }
-
         event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.type", Lang.vanilla(made.getTranslationKey()))));
     }
 
@@ -143,10 +131,8 @@ public final class ContentTerrain {
 
     public static boolean leaves(String worldType) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return true; }
-
         String[] wanted = ContentControl.list(ContentControl.TERRAIN, "terrainWorldTypes", Config.worldgen.terrainWorldTypes);
         if (wanted.length == 0) { return false; }
-
         boolean listed = false;
         for (String name : wanted) {
             if (name.equalsIgnoreCase(worldType)) {
@@ -154,7 +140,6 @@ public final class ContentTerrain {
                 break;
             }
         }
-
         return listed == ContentControl.flag(ContentControl.TERRAIN, "terrainWorldTypesAreBlacklist", Config.worldgen.terrainWorldTypesAreBlacklist);
     }
 
@@ -162,7 +147,6 @@ public final class ContentTerrain {
         String options = options(worldType);
         if (options.isEmpty()) { return existing; }
         if (existing == null || existing.trim().isEmpty()) { return options; }
-
         JsonObject was;
         JsonObject wanted;
         try {
@@ -170,37 +154,29 @@ public final class ContentTerrain {
             wanted = new JsonParser().parse(options).getAsJsonObject();
         }
         catch (RuntimeException notJson) { return options; }
-
         for (Map.Entry<String, JsonElement> entry : wanted.entrySet()) { was.add(entry.getKey(), entry.getValue()); }
-
         return was.toString();
     }
 
     public static String options(String worldType) {
         if (leaves(worldType)) { return ""; }
-
         String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
         if (options.isEmpty() || !BOP.equalsIgnoreCase(worldType)) { return options; }
-
         return forBiomesOPlenty(options);
     }
 
     public static String owner(String worldType) {
         if (leaves(worldType)) { return ""; }
-
         String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
         if (options.isEmpty()) { return ""; }
-
         WorldTemplateDef template = ContentWorldTemplates.active();
         return template == null ? "the settings" : template.name;
     }
 
     @Nullable public static JsonObject settings(String worldType) {
         if (leaves(worldType)) { return null; }
-
         String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
         if (options.isEmpty()) { return null; }
-
         try { return new JsonParser().parse(options).getAsJsonObject(); }
         catch (RuntimeException notJson) { return null; }
     }
@@ -212,7 +188,6 @@ public final class ContentTerrain {
             ContentLog.LOGGER.error("The terrain settings are not something Biomes O' Plenty can read, so the world is shaped the way that mod shapes it: {}", options);
             return "";
         }
-
         JsonObject kept = new JsonObject();
         List<String> dropped = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
@@ -223,7 +198,6 @@ public final class ContentTerrain {
             if ("biomeSize".equals(entry.getKey())) { kept.addProperty("biomeSize", biomeSize(entry.getValue())); }
             else { kept.add(entry.getKey(), entry.getValue()); }
         }
-
         if (!dropped.isEmpty()) {
             Summary.info("terrain.bop.dropped", "Biomes O' Plenty shapes the land its own way and has no use for " + dropped
                     + ", so those settings do nothing on one of its worlds. It reads " + BOP_KEYS + ", and is told " + BOP_HANDED_OVER + " directly");
@@ -234,7 +208,6 @@ public final class ContentTerrain {
     private static String biomeSize(JsonElement value) {
         try {
             if (value.getAsJsonPrimitive().isString()) { return value.getAsString().toLowerCase(Locale.ROOT); }
-
             int size = Math.max(0, Math.min(BOP_SIZES.size() - 1, value.getAsInt() - 2));
             return BOP_SIZES.get(size);
         }

@@ -28,8 +28,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation")
-public class ContentItemDrink extends Item implements IContentItem {
+@SuppressWarnings("deprecation") public class ContentItemDrink extends Item implements IContentItem {
     private final ItemDef def;
 
     public ContentItemDrink(ItemDef def) {
@@ -78,19 +77,15 @@ public class ContentItemDrink extends Item implements IContentItem {
 
     @Override @Nonnull public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase entity) {
         ItemVariant value = variant(stack);
-
         if (!world.isRemote && value != null) {
             PotionEffect effect = value.getResolvedPotion();
             if (effect != null) { entity.addPotionEffect(new PotionEffect(effect.getPotion(), effect.getDuration(), effect.getAmplifier(), effect.getIsAmbient(), false)); }
         }
-
         if (entity instanceof EntityPlayer && ((EntityPlayer) entity).capabilities.isCreativeMode) { return stack; }
-
         stack.shrink(1);
         ItemStack container = def.getResolvedContainer();
         if (container.isEmpty()) { return stack; }
         if (stack.isEmpty()) { return container.copy(); }
-
         if (entity instanceof EntityPlayer && !((EntityPlayer) entity).inventory.addItemStackToInventory(container.copy())) {
             ((EntityPlayer) entity).dropItem(container.copy(), false);
         }
@@ -100,13 +95,10 @@ public class ContentItemDrink extends Item implements IContentItem {
     @Override public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
         ItemVariant value = variant(stack);
         if (value == null) { return; }
-
         PotionEffect effect = value.getResolvedPotion();
         if (effect == null) { return; }
-
         Potion potion = effect.getPotion();
         if (!potion.isBeneficial()) { return; }
-
         String name = new TextComponentTranslation(effect.getEffectName()).getFormattedText();
         String level = RomanNumerals.of(effect.getAmplifier());
         tooltip.add(TextFormatting.GREEN + (level.isEmpty() ? name : name + " " + level));

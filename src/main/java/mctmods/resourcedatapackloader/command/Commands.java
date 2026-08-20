@@ -43,12 +43,10 @@ import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT)
-public class Commands extends CommandBase {
+@SideOnly(Side.CLIENT) public class Commands extends CommandBase {
     private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "biome", "config", "pixelmap");
     private static final List<String> CONFIG_SUBCOMMANDS = Arrays.asList("unused", "prune");
     private static final Map<String, IResourceType> GROUPS = groups();
-
     private static final List<String> BIOME_SUBCOMMANDS = Arrays.asList("list", "here", "find");
     private static final List<String> FORWARDED = Arrays.asList("oregen", "generators", "gate", "dimensions", "pregen", "intro", "goto");
     private static final int FIND_RANGE = 6400;
@@ -85,7 +83,7 @@ public class Commands extends CommandBase {
     }
 
     @Override public void execute(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
-        ContentLog.LOGGER.info("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
+        ContentLog.LOGGER.debug("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
         if (args.length == 1 && "reload".equals(args[0])) { reloadAll(sender); }
         else if (args.length == 2 && "reload".equals(args[0])) { reloadGroup(sender, args[1]); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
@@ -162,7 +160,6 @@ public class Commands extends CommandBase {
             return;
         }
         if (!"prune".equals(action)) { throw new WrongUsageException(getUsage(sender)); }
-
         int gone = PackOptions.prune();
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
     }
@@ -186,23 +183,19 @@ public class Commands extends CommandBase {
     private static void forward(String[] args) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
         if (player == null) { return; }
-
         player.sendChatMessage("/rdplserver " + String.join(" ", args));
     }
 
     private void pixelmap(ICommandSender sender, String target) throws CommandException {
         int colon = target.indexOf(':');
         if (colon < 1) { throw new CommandException(Lang.tr(sender, "rdpl.command.pixelmapname")); }
-
         String namespace = target.substring(0, colon);
         String path = target.substring(colon + 1);
         if (!path.startsWith("textures/")) { path = "textures/" + path; }
         if (!path.endsWith(ContentPixelMaps.PNG)) { path = path + ContentPixelMaps.PNG; }
-
         ContentPixelMaps.Resolved resolved = ContentPixelMaps.resolve(namespace, path, false);
         if (resolved == null) { resolved = ContentPixelMaps.resolve(namespace, path, true); }
         if (resolved == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.pixelmapnone", namespace + ":" + path)); }
-
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.pixelmapis", namespace + ":" + path, resolved.size[0], resolved.size[1]));
         for (String held : resolved.chain) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.pixelmapfrom", held)); }
         send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.pixelmaprows", resolved.rowsFrom));
@@ -226,9 +219,7 @@ public class Commands extends CommandBase {
         RDPLPack winner = holders.get(holders.size() - 1);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.provided", namespace + ":" + path, winner.getName(), winner.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : ""));
         send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.providednote"));
-        for (int i = holders.size() - 2; i >= 0; i--) {
-            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName()));
-        }
+        for (int i = holders.size() - 2; i >= 0; i--) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName())); }
     }
 
     private void biome(ICommandSender sender, String[] args) throws CommandException {
@@ -241,7 +232,6 @@ public class Commands extends CommandBase {
     private void biomeList(ICommandSender sender, boolean all) {
         int vanilla = 0;
         int shown = 0;
-
         for (Biome biome : ForgeRegistries.BIOMES) {
             ResourceLocation name = biome.getRegistryName();
             if (name == null) { continue; }
@@ -252,7 +242,6 @@ public class Commands extends CommandBase {
             send(sender, TextFormatting.GRAY, "  " + Biome.getIdForBiome(biome) + "  " + name + "  '" + biome.getBiomeName() + "'");
             shown++;
         }
-
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Lang.tr(sender, "rdpl.command.biomesmore", vanilla)));
     }
 
@@ -265,16 +254,13 @@ public class Commands extends CommandBase {
     private void biomeFind(ICommandSender sender, String name) throws CommandException {
         Biome target = findBiome(name);
         if (target == null) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.nobiome", name)); }
-
         World world = sender.getEntityWorld();
         BlockPos from = sender.getPosition();
         BlockPos found = world.getBiomeProvider().findBiomePosition(from.getX(), from.getZ(), FIND_RANGE, Collections.singletonList(target), new Random());
-
         if (found == null) {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", target.getBiomeName(), FIND_RANGE));
             return;
         }
-
         int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
     }
@@ -282,7 +268,6 @@ public class Commands extends CommandBase {
     @Nullable private static Biome findBiome(String name) {
         ResourceLocation location = new ResourceLocation(name);
         if (ForgeRegistries.BIOMES.containsKey(location)) { return ForgeRegistries.BIOMES.getValue(location); }
-
         for (Biome biome : ForgeRegistries.BIOMES) {
             if (biome.getBiomeName().equalsIgnoreCase(name)) { return biome; }
         }
@@ -305,11 +290,11 @@ public class Commands extends CommandBase {
 
     private static void send(ICommandSender sender, TextFormatting color, String message) {
         sender.sendMessage(new TextComponentString(color + message));
-        ContentLog.LOGGER.info("  {}", message);
+        ContentLog.LOGGER.debug("  {}", message);
     }
 
     private static void send(ICommandSender sender, ITextComponent message, String logged) {
         sender.sendMessage(message);
-        ContentLog.LOGGER.info("  {}", logged);
+        ContentLog.LOGGER.debug("  {}", logged);
     }
 }

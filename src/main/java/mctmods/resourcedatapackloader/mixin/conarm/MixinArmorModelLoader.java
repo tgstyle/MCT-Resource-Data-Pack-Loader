@@ -8,11 +8,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ArmorModelLoader.class, remap = false)
-public abstract class MixinArmorModelLoader {
-
-    @Inject(method = "accepts", at = @At("HEAD"), cancellable = true)
-    private void rdpl$declineVariantLocations(ResourceLocation modelLocation, CallbackInfoReturnable<Boolean> cir) {
+@Mixin(value = ArmorModelLoader.class, remap = false) public abstract class MixinArmorModelLoader {
+    @Inject(method = "accepts", at = @At("HEAD"), cancellable = true) private void rdpl$declineVariantLocations(ResourceLocation modelLocation, CallbackInfoReturnable<Boolean> cir) {
         if (modelLocation instanceof ModelResourceLocation) { cir.setReturnValue(Boolean.FALSE); }
     }
 }

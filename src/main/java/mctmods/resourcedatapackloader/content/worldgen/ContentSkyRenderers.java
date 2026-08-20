@@ -9,8 +9,7 @@ import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
-public final class ContentSkyRenderers {
+@SideOnly(Side.CLIENT) public final class ContentSkyRenderers {
     private static final IRenderHandler NOTHING = new IRenderHandler() {
         @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {}
     };

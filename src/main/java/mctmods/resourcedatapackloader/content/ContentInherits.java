@@ -19,7 +19,6 @@ public final class ContentInherits {
     public static Map<ResourceLocation, String> collect(String type) {
         Map<ResourceLocation, String> raw = new LinkedHashMap<>();
         PackManager.get().forEach(type, PackManager.JSON, (namespace, path, contents) -> raw.put(new ResourceLocation(namespace, path), contents));
-
         Map<ResourceLocation, JsonObject> parsed = new LinkedHashMap<>();
         Map<ResourceLocation, ResourceLocation> owners = new LinkedHashMap<>();
         for (Map.Entry<ResourceLocation, String> entry : raw.entrySet()) {
@@ -34,10 +33,8 @@ public final class ContentInherits {
             }
             catch (Exception ignored) {}
         }
-
         Map<ResourceLocation, JsonObject> resolved = new LinkedHashMap<>();
         for (ResourceLocation key : parsed.keySet()) { resolve(key, parsed, owners, resolved, new HashSet<>()); }
-
         Map<ResourceLocation, String> out = new LinkedHashMap<>();
         for (Map.Entry<ResourceLocation, String> entry : raw.entrySet()) {
             JsonObject held = resolved.get(entry.getKey());
@@ -49,7 +46,6 @@ public final class ContentInherits {
     private static JsonObject resolve(ResourceLocation key, Map<ResourceLocation, JsonObject> parsed, Map<ResourceLocation, ResourceLocation> owners, Map<ResourceLocation, JsonObject> resolved, Set<ResourceLocation> walking) {
         JsonObject known = resolved.get(key);
         if (known != null) { return known; }
-
         JsonObject held = parsed.get(key);
         if (held == null) { return null; }
         if (!held.has("inherits")) {
@@ -61,7 +57,6 @@ public final class ContentInherits {
             resolved.put(key, held);
             return held;
         }
-
         String asked = held.get("inherits").getAsString();
         ResourceLocation parentName = asked.contains(":") ? new ResourceLocation(asked) : new ResourceLocation(key.getNamespace(), asked);
         ResourceLocation parentFile = owners.get(parentName);
@@ -77,14 +72,12 @@ public final class ContentInherits {
             resolved.put(key, held);
             return held;
         }
-
         JsonObject made = copy(parent);
         made.remove("variants");
         made.remove("inherits");
         for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
             if (!"variants".equals(entry.getKey()) && !"inherits".equals(entry.getKey())) { made.add(entry.getKey(), entry.getValue()); }
         }
-
         JsonObject parentVariant = parentVariantName != null && parent.has("variants") && parent.get("variants").isJsonObject() && parent.getAsJsonObject("variants").has(parentVariantName)
                 ? parent.getAsJsonObject("variants").getAsJsonObject(parentVariantName) : new JsonObject();
         JsonObject variants = new JsonObject();

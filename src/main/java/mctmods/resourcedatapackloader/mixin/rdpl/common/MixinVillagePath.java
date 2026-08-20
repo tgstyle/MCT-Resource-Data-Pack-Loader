@@ -1,0 +1,135 @@
+package mctmods.resourcedatapackloader.mixin.rdpl.common;
+
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
+
+import net.minecraft.util.EnumFacing;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.List;
+import java.util.Random;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.template.TemplateManager;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import javax.annotation.Nullable;
+
+@Mixin(StructureVillagePieces.Path.class) public abstract class MixinVillagePath extends StructureVillagePieces.Road implements RoadLayout {
+    @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$backOff(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
+        StructureBoundingBox box = cir.getReturnValue();
+        if (box == null || facing == null || !ContentBeard.wanted()) { return; }
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
+        List<StructureComponent> held = ContentBeard.laid();
+        int kept;
+        ContentBeard.laying(p_175848_1_);
+        try { kept = BeardRoads.roadReach(box, facing); }
+        finally { ContentBeard.laying(held); }
+        if (kept >= rows) { return; }
+        if (kept < 7) {
+            ContentLog.LOGGER.debug("A road from {}, {} facing {} cannot be graded to a walkable slope, so it is not laid", p_175848_3_, p_175848_5_, facing);
+            cir.setReturnValue(null);
+            return;
+        }
+        int step = (alongX ? facing.getXOffset() : facing.getZOffset()) >= 0 ? 1 : -1;
+        if (alongX && step > 0) { box.maxX = box.minX + kept - 1; }
+        else if (alongX) { box.minX = box.maxX - kept + 1; }
+        else if (step > 0) { box.maxZ = box.minZ + kept - 1; }
+        else { box.minZ = box.maxZ - kept + 1; }
+        ContentLog.LOGGER.debug("A road from {}, {} facing {} backs off from {} to {} block(s) to keep a walkable slope", p_175848_3_, p_175848_5_, facing, rows, kept);
+    }
+
+    @Unique private BeardRoads.Grade rdpl$stored;
+
+    @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I"))
+    private static int rdpl$longerRuns(Random random, int minimum, int maximum) {
+        int rolled = MathHelper.getInt(random, ContentBeard.wanted() ? 5 : minimum, ContentBeard.wanted() ? 7 : maximum);
+        ContentLog.LOGGER.debug("A road rolls {} segments of 7, {} blocks", rolled, rolled * 7);
+        return rolled;
+    }
+
+    @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;findIntersecting(Ljava/util/List;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Lnet/minecraft/world/gen/structure/StructureComponent;"))
+    @SuppressWarnings("ConstantConditions") private static StructureComponent rdpl$whoBlocks(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn) {
+        StructureComponent blocker = StructureComponent.findIntersecting(listIn, boundingboxIn);
+        if (blocker != null) { ContentLog.LOGGER.debug("A road attempt {} is blocked by {} at {}", boundingboxIn, blocker.getClass().getSimpleName(), blocker.getBoundingBox()); }
+        return blocker;
+    }
+
+    @SuppressWarnings("ConstantConditions") @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$widen(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
+        StructureBoundingBox found = cir.getReturnValue();
+        ContentLog.LOGGER.debug("A road box comes back {} facing {}: {}", found == null ? "null" : (Math.max(found.maxX - found.minX, found.maxZ - found.minZ) + 1) + " long", facing, found);
+        if (found == null || !ContentBeard.wanted()) { return; }
+        if (rdpl$acrossPlaza(p_175848_1_, found)) {
+            cir.setReturnValue(null);
+            return;
+        }
+        int half = (BeardRoads.pathFullWidth() - 3) / 2;
+        if (half > 0) {
+            StructureBoundingBox wide = new StructureBoundingBox(found);
+            if (facing == EnumFacing.NORTH || facing == EnumFacing.SOUTH) {
+                wide.minX -= half;
+                wide.maxX += half;
+            }
+            else {
+                wide.minZ -= half;
+                wide.maxZ += half;
+            }
+            if (StructureComponent.findIntersecting(p_175848_1_, wide) == null) {
+                cir.setReturnValue(wide);
+                return;
+            }
+        }
+        if (3 < BeardRoads.pathMinimumWidth()) { cir.setReturnValue(null); }
+    }
+
+    @Unique private static boolean rdpl$acrossPlaza(List<StructureComponent> components, StructureBoundingBox road) {
+        if (!BeardRoads.pathChosen() || components.isEmpty()) { return false; }
+        StructureBoundingBox well = components.get(0).getBoundingBox();
+        int reach = BeardRoads.pathFullWidth();
+        if (road.maxX < well.minX - reach || road.minX > well.maxX + reach || road.maxZ < well.minZ - reach || road.minZ > well.maxZ + reach) { return false; }
+        boolean alongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+        boolean radial = alongX ? road.maxZ >= well.minZ && road.minZ <= well.maxZ : road.maxX >= well.minX && road.minX <= well.maxX;
+        return !radial;
+    }
+
+    @Inject(method = "addComponentParts", at = @At("HEAD"), cancellable = true) private void rdpl$grade(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
+        if (!ContentBeard.wanted()) { return; }
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The game asked the road at {}, {} to build itself for the patch of land from {}, {} to {}, {}", this.getBoundingBox().minX, this.getBoundingBox().minZ, structureBoundingBoxIn.minX, structureBoundingBoxIn.minZ, structureBoundingBoxIn.maxX, structureBoundingBoxIn.maxZ); }
+        rdpl$pave(worldIn, structureBoundingBoxIn);
+        cir.setReturnValue(true);
+    }
+
+    @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
+        IBlockState deck = getBiomeSpecificBlockState(Blocks.PLANKS.getDefaultState());
+        if (deck.getMaterial() != Material.WOOD) { deck = Blocks.PLANKS.getDefaultState(); }
+        BeardRoads.pave(this, world, clip,
+                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState())),
+                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState())),
+                BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, deck),
+                BeardRoads.pathChosen());
+    }
+
+    @Override public void rdpl$layout(BeardRoads.Grade grade) { this.rdpl$stored = grade; }
+
+    @Override @Nullable public BeardRoads.Grade rdpl$layout() { return this.rdpl$stored; }
+
+    @Override public void rdpl$repave(World world, StructureBoundingBox clip) { rdpl$pave(world, clip); }
+
+    @Inject(method = "writeStructureToNBT", at = @At("TAIL")) private void rdpl$keepLayout(NBTTagCompound tagCompound, CallbackInfo ci) { if (rdpl$stored != null) { rdpl$stored.write(tagCompound); } }
+
+    @Inject(method = "readStructureFromNBT", at = @At("TAIL")) private void rdpl$loadLayout(NBTTagCompound tagCompound, TemplateManager p_143011_2_, CallbackInfo ci) { rdpl$stored = BeardRoads.Grade.read(tagCompound); }
+}

@@ -22,16 +22,12 @@ public final class ContentPlate implements IContentShape {
         int centerY = origin.getY() + 1;
         boolean round = shape.isRound();
         int square = radius * radius;
-
         boolean placed = false;
         for (int offX = -radius; offX <= radius; offX++) {
             for (int offZ = -radius; offZ <= radius; offZ++) {
                 if (round && offX * offX + offZ * offZ > square) { continue; }
-
                 int top = shape.slim ? centerY + thickness - 1 : centerY + thickness;
-                for (int y = centerY - thickness; y <= top; y++) {
-                    placed |= placer.place(world, random, origin.getX() + offX, y, origin.getZ() + offZ);
-                }
+                for (int y = centerY - thickness; y <= top; y++) { placed |= placer.place(world, random, origin.getX() + offX, y, origin.getZ() + offZ); }
             }
         }
         return placed;

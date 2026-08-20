@@ -2,9 +2,10 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
-import mctmods.resourcedatapackloader.mixin.AccessorChunk;
-import mctmods.resourcedatapackloader.mixin.AccessorMinecraftServerMessage;
-import mctmods.resourcedatapackloader.mixin.AccessorWorldProviderEnd;
+import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunk;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IWorldProviderEnd;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -101,6 +102,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private long darkAtEdge;
     private long missing;
     private long brightened;
+    private boolean rubicRun;
     private int round = -1;
     private long roundSpent;
     private long spoke;
@@ -127,24 +129,18 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         this.started = System.currentTimeMillis();
     }
 
-    public static int[] wantedDimensions() {
-        return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensions", Config.chunks.pregenDimensions);
-    }
+    public static int[] wantedDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensions", Config.chunks.pregenDimensions); }
 
-    public static boolean makesEveryDimension() {
-        return ContentControl.flag(ContentControl.CHUNKS, "pregenAllDimensions", Config.chunks.pregenAllDimensions);
-    }
+    public static boolean makesEveryDimension() { return ContentControl.flag(ContentControl.CHUNKS, "pregenAllDimensions", Config.chunks.pregenAllDimensions); }
 
     private static int[] chosenDimensions() {
         if (!makesEveryDimension()) { return wantedDimensions(); }
-
         List<Integer> picked = new ArrayList<>();
         for (Integer dimension : DimensionManager.getStaticDimensionIDs()) {
             if (madeUpFront(dimension)) { picked.add(dimension); }
         }
         Collections.sort(picked);
         if (picked.remove(Integer.valueOf(0))) { picked.add(0, 0); }
-
         int[] chosen = new int[picked.size()];
         for (int at = 0; at < chosen.length; at++) { chosen[at] = picked.get(at); }
         return chosen;
@@ -166,13 +162,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if ((radius <= 0 && !reachesTheBorder()) || madeUpFront(dimension)) { return; }
         if (running != null && running.dimension == dimension) { return; }
         if (PENDING.contains(dimension)) { return; }
-
         WorldServer entered = DimensionManager.getWorld(dimension);
         if (!reachesTheBorder() && entered != null) {
             BlockPos spawn = entered.getSpawnPoint();
             if (alreadyMade(memory(), dimension, radius, entered, spawn.getX() >> 4, spawn.getZ() >> 4)) { return; }
         }
-
         PENDING.addLast(dimension);
         wantedRadius = radius;
         chaining = true;
@@ -207,13 +201,9 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return fallBack ? everywhere : null;
     }
 
-    public static boolean reachesTheBorder() {
-        return ContentControl.flag(ContentControl.CHUNKS, "pregenToBorder", Config.chunks.pregenToBorder);
-    }
+    public static boolean reachesTheBorder() { return ContentControl.flag(ContentControl.CHUNKS, "pregenToBorder", Config.chunks.pregenToBorder); }
 
-    public static boolean picksUpAgain() {
-        return ContentControl.flag(ContentControl.CHUNKS, "pregenResume", Config.chunks.pregenResume);
-    }
+    public static boolean picksUpAgain() { return ContentControl.flag(ContentControl.CHUNKS, "pregenResume", Config.chunks.pregenResume); }
 
     public static int wantedOnNewWorld() {
         int asked = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld));
@@ -239,7 +229,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) {
         World world = event.getWorld();
         if (world.isRemote || world.provider.getDimension() != 0 || busy()) { return; }
-
         int radius = wantedOnNewWorld();
         IPregenMemory memory = (IPregenMemory) world.getWorldInfo();
         NBTTagCompound run = memory.rdpl$pregenRun();
@@ -257,7 +246,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             return;
         }
         if ((radius <= 0 && !reachesTheBorder()) || !PENDING.isEmpty()) { return; }
-
         for (int dimension : chosenDimensions()) {
             if (reachesTheBorder() || memory.rdpl$landMadeTo(dimension) < radius) { PENDING.addLast(dimension); }
         }
@@ -304,13 +292,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void holdEveryone() {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
-
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { hold(player); }
     }
 
     private static void hold(EntityPlayerMP player) {
         if (HELD.containsKey(player.getUniqueID())) { return; }
-
         NBTTagCompound data = player.getEntityData();
         GameType before = data.hasKey(HELD_MODE) ? GameType.getByID(data.getInteger(HELD_MODE)) : player.interactionManager.getGameType();
         data.setInteger(HELD_MODE, before.getID());
@@ -323,7 +309,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private static void startFlashing() {
         if (flasher != null) { return; }
-
         beats = 0L;
         lastSaid = "";
         flasher = Executors.newSingleThreadScheduledExecutor(run -> {
@@ -336,7 +321,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private static void stopFlashing() {
         if (flasher == null) { return; }
-
         flasher.shutdown();
         flasher = null;
     }
@@ -363,28 +347,24 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private static void tellBar(MinecraftServer server, String said) {
         if (server == null || said.isEmpty()) { return; }
-
         SPacketChat packet = bar(said);
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { player.connection.sendPacket(packet); }
     }
 
     private static void flash(Held held) {
         if (held.warning.isEmpty()) { return; }
-
-        held.connection.sendPacket(new SPacketTitle(0, 70, 0));
+        held.connection.sendPacket(new SPacketTitle(0, 15, 10));
         held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(held.warning).setStyle(new Style().setColor(TextFormatting.RED))));
         held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
     private static void releaseEveryone(boolean welcomed) {
         if (HELD.isEmpty()) { return; }
-
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server != null) {
             for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
                 Held held = HELD.get(player.getUniqueID());
                 if (held == null) { continue; }
-
                 release(player, held);
                 if (welcomed) { welcome(player); }
             }
@@ -396,7 +376,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void welcome(EntityPlayerMP player) {
         String greeting = welcomeAtDefault() ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player.dimension, true);
         if (greeting == null || greeting.isEmpty()) { return; }
-
         player.connection.sendPacket(new SPacketTitle(10, 70, 20));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
@@ -419,7 +398,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         Held held = HELD.remove(event.player.getUniqueID());
         if (HELD.isEmpty()) { stopFlashing(); }
         if (held == null || !(event.player instanceof EntityPlayerMP)) { return; }
-
         release((EntityPlayerMP) event.player, held);
     }
 
@@ -437,14 +415,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                 BlockFalling.fallInstantly = true;
                 watch();
             }
-
             return;
         }
         if (HELD.isEmpty()) { return; }
-
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
-
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUniqueID());
             if (held == null) { continue; }
@@ -456,7 +431,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void watch() {
         ContentPregen worker = running;
         if (worker == null) { return; }
-
         long now = System.currentTimeMillis();
         if (worker.done != watchedDone) {
             watchedDone = worker.done;
@@ -464,7 +438,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             return;
         }
         if (now - watchedAt < 60000L) { return; }
-
         ContentLog.LOGGER.error("Making land in dimension {} has not moved past {} of {} chunk(s) for a minute, so it is being stopped rather than left hanging. What went wrong should be written above this line", worker.dimension, worker.done, worker.order.total());
         worker.stopping = true;
         worker.finish(DimensionManager.getWorld(worker.dimension));
@@ -473,25 +446,19 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     public static void tell(String said, TextFormatting colour) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || said.isEmpty()) { return; }
-
         server.getPlayerList().sendMessage(new TextComponentString(said).setStyle(new Style().setColor(colour)));
     }
-
-
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         startWhenEntered(event.player.dimension);
         ContentPregen worker = running;
         if (worker == null) {
             if (event.player instanceof EntityPlayerMP) { welcome((EntityPlayerMP) event.player); }
-
             return;
         }
         if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player); }
-
         String said = worker.sofar();
         if (said.isEmpty()) { return; }
-
         event.player.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(TextFormatting.YELLOW)));
     }
 
@@ -517,7 +484,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                 continue;
             }
             if (DimensionManager.getWorld(dimension) == null) { DimensionManager.initDimension(dimension); }
-
             WorldServer world = DimensionManager.getWorld(dimension);
             if (world == null) {
                 ContentLog.LOGGER.error("Dimension {} would not open, so no land is made in it", dimension);
@@ -532,7 +498,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                     ContentLog.LOGGER.error("A pack asks for the land of dimension {} to be made out to its border, but no border has been set there, so there is nothing to reach and none is made", dimension);
                     continue;
                 }
-
                 reach = (int) Math.ceil(border.getDiameter() / 2.0D / 16.0D);
                 if (reach > Config.chunks.pregenBorderLimit) {
                     ContentLog.LOGGER.error("The border of dimension {} stands {} block(s) across, which is {} chunk(s) either way and past the {} allowed by pregenBorderLimit, so no land is made out to it", dimension, (long) border.getDiameter(), reach, Config.chunks.pregenBorderLimit);
@@ -548,7 +513,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                 centreZ = spawn.getZ() >> 4;
             }
             if (alreadyMade(memory(), dimension, reach, world, centreX, centreZ)) { continue; }
-
             long total = start(null, dimension, centreX, centreZ, reach);
             ContentLog.LOGGER.info("Making {} chunk(s) of land in dimension {}, reaching {} chunk(s) either way from {}, {}, before anybody sets foot in it", total, dimension, reach, centreX, centreZ);
             return;
@@ -557,10 +521,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private static boolean alreadyMade(IPregenMemory memory, int dimension, int reach, WorldServer world, int centerX, int centerZ) {
         if (memory == null || memory.rdpl$landMadeTo(dimension) < reach) { return false; }
-
         File region = regionFolder(world);
         if (region == null) { return true; }
-
         int expected = 0;
         int missing = 0;
         for (int rx = (centerX - reach) >> 5; rx <= (centerX + reach) >> 5; rx++) {
@@ -570,28 +532,24 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             }
         }
         if (missing == 0) { return true; }
-
         ContentLog.LOGGER.info("Dimension {} was made before, but {} of the {} region file(s) its land lives in are missing from the disk, so it is being made again", dimension, missing, expected);
         memory.rdpl$setLandMadeTo(dimension, 0);
         memory.rdpl$setLandMadeAt(dimension, 0);
         if (missing == expected) { freshDragon(world); }
-
         return false;
     }
 
     private static void freshDragon(WorldServer world) {
         if (!(world.provider instanceof WorldProviderEnd) || !ContentEndDragon.wanted(world)) { return; }
-
         NBTTagCompound data = world.getWorldInfo().getDimensionData(world.provider.getDimension());
         data.removeTag("DragonFight");
         world.getWorldInfo().setDimensionData(world.provider.getDimension(), data);
-        ((AccessorWorldProviderEnd) world.provider).rdpl$setDragonFightManager(new DragonFightManager(world, new NBTTagCompound()));
+        ((IWorldProviderEnd) world.provider).rdpl$setDragonFightManager(new DragonFightManager(world, new NBTTagCompound()));
         ContentLog.LOGGER.info("The end's land is gone, so the dragon and its fight start over with it");
     }
 
     private static File regionFolder(WorldServer world) {
         if (!(world.getChunkProvider().chunkLoader instanceof AnvilChunkLoader)) { return null; }
-
         return new File(((AnvilChunkLoader) world.getChunkProvider().chunkLoader).chunkSaveLocation, "region");
     }
 
@@ -617,7 +575,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (worker == null || worker.lightOnly) { return false; }
         if (world.provider.getDimension() != worker.dimension) { return false; }
         if (chunkX < worker.lowX || chunkX > worker.highX || chunkZ < worker.lowZ || chunkZ > worker.highZ) { return false; }
-
         return !ContentLightArea.inside(world);
     }
 
@@ -648,9 +605,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         running = worker;
         watchedDone = -1L;
         if (chainBegun == 0L) { chainBegun = System.currentTimeMillis(); }
-
         if (dimension != 0) { DimensionManager.keepDimensionLoaded(dimension, true); }
-
         holdEveryone();
         WorldWorkerManager.addWorker(worker);
         return worker.order.total();
@@ -658,7 +613,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     public static boolean stop() {
         if (running == null) { return false; }
-
         running.stopping = true;
         return true;
     }
@@ -666,7 +620,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     public static String state() {
         ContentPregen worker = running;
         if (worker == null) { return "Nothing is being made at the moment"; }
-
         return worker.report();
     }
 
@@ -683,42 +636,47 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             finish(world);
             return false;
         }
-
         ChunkProviderServer provider = world.getChunkProvider();
         if (behind(provider)) {
             paused++;
             speak();
             return false;
         }
-
         int tick = server == null ? 0 : server.getTickCounter();
         if (tick != round) {
             round = tick;
             roundSpent = 0L;
         }
         if (roundSpent >= slice * 1000000L) { return false; }
-
         long began = System.nanoTime();
         ChunkPos next = order.next();
         done++;
         Chunk chunk = lightOnly ? already(provider, next.x, next.z, true) : provider.provideChunk(next.x, next.z);
         if (chunk != null) {
-            if (!chunk.isTerrainPopulated()) {
+            boolean rubic = RubicWorldControl.rubicWorld(provider);
+            rubicRun = rubic;
+            if (!lightOnly && rubic) { RubicWorldControl.makeColumnCubes(provider, next.x, next.z); }
+            if (rubic) { made += lightOnly ? 0L : 1L; }
+            else if (!chunk.isTerrainPopulated()) {
                 undressed++;
                 if (!lightOnly) { made++; }
             }
-
             retain(provider, ChunkPos.asLong(next.x, next.z));
-            if (lightOnly && !chunk.isLightPopulated()) {
+            if (lightOnly && !rubic && !chunk.isLightPopulated()) {
                 fetchRing(provider, next.x, next.z);
                 dressLate(provider, chunk, next.x, next.z);
             }
-
-            brighten(provider, next.x, next.z);
+            if (!rubic) { brighten(provider, next.x, next.z); }
         }
         roundSpent += System.nanoTime() - began;
         speak();
-        if ((done & 63L) == 0L) { tellScreen(server); }
+        tellScreen(server);
+        if ((done & 63L) == 0L && RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
+        if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) {
+            Runtime memory = Runtime.getRuntime();
+            long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
+            ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20);
+        }
         progress = sofar();
         int tenth = (int) (done * 10L / Math.max(1L, order.total()));
         if (tenth > loggedAt) {
@@ -739,15 +697,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (loaded != null) { return loaded; }
         if (!provider.chunkLoader.isChunkGeneratedAt(x, z)) {
             if (counted) { missing++; }
-
             return null;
         }
         return provider.loadChunk(x, z);
     }
 
     private boolean behind(ChunkProviderServer provider) {
-        if (backlog <= 0 || !(provider.chunkLoader instanceof AnvilChunkLoader)) { return false; }
-
+        if (backlog <= 0) { return false; }
+        if (RubicWorldControl.rubicWorld(provider)) { return RubicWorldControl.pendingSaves(provider) > backlog; }
+        if (!(provider.chunkLoader instanceof AnvilChunkLoader)) { return false; }
         return ((AnvilChunkLoader) provider.chunkLoader).getPendingSaveCount() > backlog;
     }
 
@@ -764,22 +722,20 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 if (dx == 0 && dz == 0) { continue; }
-
                 int x = middleX + dx;
                 int z = middleZ + dz;
                 if (held.contains(ChunkPos.asLong(x, z))) { continue; }
                 if (already(provider, x, z, false) == null) { continue; }
-
                 retain(provider, ChunkPos.asLong(x, z));
             }
         }
     }
 
     private void dressLate(ChunkProviderServer provider, Chunk chunk, int x, int z) {
+        if (RubicWorldControl.rubicWorld(provider)) { return; }
         if (chunk.isTerrainPopulated()) { return; }
         if (provider.getLoadedChunk(x + 1, z) == null || provider.getLoadedChunk(x, z + 1) == null || provider.getLoadedChunk(x + 1, z + 1) == null) { return; }
-
-        ((AccessorChunk) chunk).rdpl$dress(provider.chunkGenerator);
+        ((IChunk) chunk).rdpl$dress(provider.chunkGenerator);
         dressedLate++;
     }
 
@@ -789,10 +745,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                 int x = madeX + dx;
                 int z = madeZ + dz;
                 if (!held.contains(ChunkPos.asLong(x, z)) || !ringHeld(x, z)) { continue; }
-
                 Chunk chunk = provider.getLoadedChunk(x, z);
                 if (chunk == null || chunk.isLightPopulated() || !chunk.isTerrainPopulated()) { continue; }
-
                 chunk.checkLight();
                 if (chunk.isLightPopulated()) {
                     brightened++;
@@ -815,8 +769,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private void release(ChunkProviderServer provider, long key) {
         Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
         if (chunk == null) { return; }
-
-        if (!chunk.isLightPopulated()) {
+        if (!RubicWorldControl.rubicWorld(provider) && !chunk.isLightPopulated()) {
             int x = (int) key;
             int z = (int) (key >> 32);
             if (x <= lowX || x >= highX || z <= lowZ || z >= highZ) { darkAtEdge++; }
@@ -827,37 +780,35 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private void tellScreen(MinecraftServer server) {
         if (server == null) { return; }
-
-        ((AccessorMinecraftServerMessage) server).rdpl$setUserMessage("Building terrain - " + done + " / " + order.total());
+        long total = order.total();
+        int percent = total <= 0L ? 0 : (int) Math.min(100L, done * 100L / total);
+        IMinecraftServerMessage progress = (IMinecraftServerMessage) server;
+        progress.rdpl$setCurrentTask("Preparing spawn area");
+        progress.rdpl$setPercentDone(percent);
+        progress.rdpl$setUserMessage("menu.generatingTerrain");
     }
 
     private void speak() {
         long now = System.currentTimeMillis();
         if (now - spoke < 10000L) { return; }
-
         spoke = now;
         ContentLog.LOGGER.info(report());
         if (!picksUpAgain() || lightOnly) { return; }
-
         IPregenMemory memory = memory();
         if (memory != null) { memory.rdpl$setLandMadeAt(dimension, (int) done); }
     }
 
-    private static String says(String key, String fallback) {
-        return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim();
-    }
+    private static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
 
     private static String defaulted(String key, String fallback, String shipped, String langKey, EntityPlayerMP player) {
         String said = says(key, fallback);
         if (!said.equals(shipped.trim())) { return said; }
-
         return player == null ? Lang.tr(langKey) : Lang.tr(player, langKey);
     }
 
     private String sofar() {
         String wording = lightOnly ? defaulted("pregenRelightSays", Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted("pregenRunningSays", Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
         if (wording.isEmpty()) { return ""; }
-
         long stepped = Math.min(100L, done * 100L / Math.max(1L, order.total()));
         try { return String.format(wording, order.hasNext() ? stepped : 100L, dimensionName()) + eta(); }
         catch (IllegalFormatException wrong) {
@@ -869,7 +820,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private String eta() {
         long total = order.total();
         if (begun == 0L || done <= 0L || done >= total) { return ""; }
-
         long left = (System.currentTimeMillis() - begun) * (total - done) / done / 1000L;
         return Lang.tr("rdpl.pregen.eta", left / 3600L, left / 60L % 60L, left % 60L);
     }
@@ -881,10 +831,18 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private String report() {
         long seconds = Math.max(1L, (System.currentTimeMillis() - started) / 1000L);
+        boolean rubic = rubicRun;
         if (lightOnly) {
+            if (rubic) {
+                return String.format("Went over %d of %d column(s) in dimension %d, all of them lit and dressed cube by cube as they were made", done, order.total(), dimension);
+            }
             return String.format("Went over %d of %d chunk(s) in dimension %d looking for ones the light never reached, lighting %d and leaving %d, with %d never made in the first place%s",
                     done, order.total(), dimension, brightened, dark + darkAtEdge, missing,
                     undressed == 0L ? "" : ", and " + undressed + " of them had never been dressed, " + dressedLate + " of which were dressed on the spot and the rest left alone to be dressed when somebody comes to them");
+        }
+        if (rubic) {
+            return String.format("Made %d of %d column(s) in dimension %d, %d of them new, at %d a second, holding %d and resting %d time(s) for the writing to catch up. Every cube was lit and dressed as it was made, keeping within %d ms a round",
+                    done, order.total(), dimension, made, done / seconds, resident.size(), paused, slice);
         }
         return String.format("Made %d of %d chunk(s) in dimension %d, %d of them new, at %d a second, holding %d and resting %d time(s) for the writing to catch up. Light reached %d of them, %d were left for later and %d could never be lit, having been asked for at the very edge of what was wanted, keeping within %d ms a round",
                 done, order.total(), dimension, made, done / seconds, resident.size(), paused, brightened, dark, darkAtEdge, slice);
@@ -892,7 +850,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     public static boolean holdsStill(net.minecraft.world.World world) {
         if (world.isRemote) { return false; }
-
         ContentPregen worker = running;
         if (worker != null) { return world.provider.getDimension() == worker.dimension; }
         return System.currentTimeMillis() < stillUntil;
@@ -903,7 +860,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             over = true;
             return;
         }
-
         over = true;
         running = null;
         progress = "";
@@ -933,7 +889,6 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             start(asked, dimension, middleX, middleZ, reach, true);
             return;
         }
-
         if (chaining && !PENDING.isEmpty()) { nextDimension(wantedRadius); }
         else { chaining = false; }
         if (running == null) {

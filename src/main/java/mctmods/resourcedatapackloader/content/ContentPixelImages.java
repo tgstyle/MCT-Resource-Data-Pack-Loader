@@ -13,14 +13,11 @@ import java.io.InputStream;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
-@SideOnly(Side.CLIENT)
-public final class ContentPixelImages {
+@SideOnly(Side.CLIENT) public final class ContentPixelImages {
     private ContentPixelImages() {}
 
     public static boolean exists(String namespace, String path) {
-        try (IResource ignored = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(namespace, path))) {
-            return true;
-        }
+        try (IResource ignored = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(namespace, path))) { return true; }
         catch (IOException ex) { return false; }
     }
 
@@ -29,7 +26,6 @@ public final class ContentPixelImages {
             InputStream stream = held.getInputStream();
             BufferedImage image = ImageIO.read(stream);
             if (image == null) { return null; }
-
             int wide = image.getWidth();
             int tall = image.getHeight();
             int[] pixels = new int[wide * tall];

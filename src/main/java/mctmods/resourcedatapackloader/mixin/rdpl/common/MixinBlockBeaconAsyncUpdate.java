@@ -1,0 +1,56 @@
+package mctmods.resourcedatapackloader.mixin.rdpl.common;
+
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer;
+import mctmods.resourcedatapackloader.util.Coords;
+
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityBeacon;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@SuppressWarnings("unresolvable-target") @Mixin(targets = "net.minecraft.block.BlockBeacon$1") public class MixinBlockBeaconAsyncUpdate {
+    @Shadow(remap = false, aliases = "field_180358_a") @Final World val$worldIn;
+    @Shadow(remap = false, aliases = "field_180357_b") @Final BlockPos val$glassPos;
+
+    @Inject(method = "run", at = @At("HEAD"), cancellable = true) private void runRubic(CallbackInfo ci) {
+        if (!((IRubicWorld) val$worldIn).rdpl$isRubicWorld()) { return; }
+        ci.cancel();
+        final int blockX = val$glassPos.getX();
+        final int blockZ = val$glassPos.getZ();
+        int blockY = val$glassPos.getY();
+        final int cubeX = Coords.blockToCube(blockX);
+        final int cubeZ = Coords.blockToCube(blockZ);
+        int cubeY = Coords.blockToCube(val$glassPos.getY());
+        ICubeProviderServer cubeProvider = ((IRubicWorldServer) val$worldIn).rdpl$getCubeCache();
+        ICube cube = cubeProvider.getCube(cubeX, cubeY, cubeZ, ICubeProviderServer.Requirement.GET_CACHED);
+        while (cube != null) {
+            final BlockPos blockpos = new BlockPos(blockX, blockY, blockZ);
+            if (!cube.getColumn().canSeeSky(blockpos)) { break; }
+            IBlockState block = cube.getBlockState(blockpos);
+            if (block.getBlock() == Blocks.BEACON) {
+                ((WorldServer) val$worldIn).addScheduledTask(() -> {
+                    TileEntity tileentity = val$worldIn.getTileEntity(blockpos);
+                    if (tileentity instanceof TileEntityBeacon) {
+                        ((TileEntityBeacon) tileentity).updateBeacon();
+                        val$worldIn.addBlockEvent(blockpos, Blocks.BEACON, 1, 0);
+                    }
+                });
+            }
+            blockY--;
+            cubeY = Coords.blockToCube(blockY);
+            cube = cubeProvider.getCube(cubeX, cubeY, cubeZ, ICubeProviderServer.Requirement.GET_CACHED);
+        }
+    }
+}

@@ -81,6 +81,7 @@ rdpl.pregen.stopped=Предгенерация мира остановлена
 rdpl.pregen.tooktime= - Total time %02d:%02d:%02d
 rdpl.pregen.welcome=Добро пожаловать в ваш мир!
 rdpl.world.type=Это мир типа %s
+rdpl.gui.verticaldistance=Вертикальная дистанция: %d кубов
 rdpl.gui.packOptions=Настройки паков...
 rdpl.gui.packOptions.title=Настройки паков RDPL
 rdpl.gui.packOptions.restart=Изменения применятся после перезапуска игры

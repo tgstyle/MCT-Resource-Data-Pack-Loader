@@ -11,10 +11,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-
 import java.util.Random;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 public final class ContentTree implements IContentShape {
@@ -41,19 +39,16 @@ public final class ContentTree implements IContentShape {
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         if (log == null || leaves == null) { return false; }
-
         boolean placed = false;
         int attempts = count.pick(random);
         for (int attempt = 0; attempt < attempts; attempt++) {
             int x = origin.getX() + scatter(random, scatterX);
             int z = origin.getZ() + scatter(random, scatterZ);
-
             BlockPos top = world.getHeight(new BlockPos(x, 0, z));
             if (!world.isAreaLoaded(top, 3)) { continue; }
             if (Math.abs(top.getY() - origin.getY()) > drift) { continue; }
             if (!surface.isEmpty() && !surface.contains(world.getBlockState(top.down()).getBlock())) { continue; }
             if (!world.isAirBlock(top)) { continue; }
-
             ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, height.pick(random)), log, leaves, surface);
             placed |= tree.generate(world, random, top);
         }

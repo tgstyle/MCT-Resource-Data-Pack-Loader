@@ -25,12 +25,10 @@ public final class ContentSpawnChunks {
     private static void load() {
         if (loaded) { return; }
         loaded = true;
-
         if (ContentControl.off(ContentControl.CHUNKS)) {
             everywhere = VANILLA;
             return;
         }
-
         everywhere = clamp(ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius));
         for (String entry : ContentControl.list(ContentControl.CHUNKS, "spawnChunkRadii", Config.chunks.spawnChunkRadii)) {
             int split = entry.indexOf('=');
@@ -38,13 +36,10 @@ public final class ContentSpawnChunks {
                 ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not written as dimension=blocks, ignoring it", entry);
                 continue;
             }
-
             try { BY_DIMENSION.put(Integer.parseInt(entry.substring(0, split).trim()), clamp(Integer.parseInt(entry.substring(split + 1).trim()))); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not two numbers written as dimension=blocks, ignoring it", entry); }
         }
-
         if (everywhere == VANILLA && BY_DIMENSION.isEmpty()) { return; }
-
         Summary.info("chunks.spawn", "Holding " + describe(everywhere) + " around the spawn point"
                 + (BY_DIMENSION.isEmpty() ? "" : ", and " + BY_DIMENSION + " for the dimension(s) named"));
     }

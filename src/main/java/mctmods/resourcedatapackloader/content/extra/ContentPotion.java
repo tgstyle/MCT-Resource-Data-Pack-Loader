@@ -25,17 +25,14 @@ public class ContentPotion extends Potion {
         super(def.badEffect, def.liquidColor);
         this.def = def;
         this.icon = def.iconTexture.isEmpty() ? null : new ResourceLocation(def.iconTexture);
-
         setRegistryName(def.registryName);
         setPotionName(def.name);
         setIconIndex(def.iconX, def.iconY);
         setEffectiveness(def.effectiveness);
         if (def.beneficial) { setBeneficial(); }
-
         for (AttributeDef modifier : def.attributes) {
             IAttribute attribute = ContentAttributes.find(modifier.attribute, def.registryName);
             if (attribute == null) { continue; }
-
             try { registerPotionAttributeModifier(attribute, modifier.uuid, modifier.amount, modifier.operation); }
             catch (IllegalArgumentException ex) { ContentLog.LOGGER.error("Attribute modifier for {} has an unusable uuid '{}', skipping it", def.registryName, modifier.uuid); }
         }
@@ -51,11 +48,9 @@ public class ContentPotion extends Potion {
 
     @Override @SideOnly(Side.CLIENT) public void renderHUDEffect(@Nonnull PotionEffect effect, @Nonnull Gui gui, int x, int y, float z, float alpha) { draw(x + 3, y + 3, alpha); }
 
-    @SideOnly(Side.CLIENT)
-    private void draw(int x, int y, float alpha) {
+    @SideOnly(Side.CLIENT) private void draw(int x, int y, float alpha) {
         ResourceLocation texture = icon;
         if (texture == null) { return; }
-
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
         GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
         Gui.drawModalRectWithCustomSizedTexture(x, y, 0.0F, 0.0F, 18, 18, 18.0F, 18.0F);

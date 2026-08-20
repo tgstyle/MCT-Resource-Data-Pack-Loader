@@ -26,7 +26,6 @@ public final class ContentPlacer {
         this.nearby = nearby;
         this.nearbyExact = nearbyExact;
         this.wantsNearby = !nearby.isEmpty() || !nearbyExact.isEmpty();
-
         int[] steps = new int[states.size()];
         int running = 0;
         for (int index = 0; index < states.size(); index++) {
@@ -39,23 +38,19 @@ public final class ContentPlacer {
 
     public boolean place(World world, Random random, int x, int y, int z) {
         if (occupied(world, x, y, z)) { return false; }
-
         return world.setBlockState(new BlockPos(x, y, z), choose(random), FLAGS);
     }
 
     public boolean placeExactly(World world, IBlockState state, int x, int y, int z) {
         if (y < 1 || y >= world.getHeight()) { return false; }
-
         return world.setBlockState(new BlockPos(x, y, z), state, FLAGS);
     }
 
     public boolean occupied(World world, int x, int y, int z) {
         if (y < 1 || y >= world.getHeight()) { return true; }
-
         BlockPos pos = new BlockPos(x, y, z);
         IBlockState found = world.getBlockState(pos);
         if (!found.getBlock().isReplaceableOreGen(found, world, pos, replaceable)) { return true; }
-
         return wantsNearby && !beside(world, x, y, z);
     }
 
@@ -65,13 +60,10 @@ public final class ContentPlacer {
             for (int offY = -1; offY <= 1; offY++) {
                 int nearY = y + offY;
                 if (nearY < 0 || nearY >= world.getHeight()) { continue; }
-
                 for (int offZ = -1; offZ <= 1; offZ++) {
                     if (offX == 0 && offY == 0 && offZ == 0) { continue; }
-
                     pos.setPos(x + offX, nearY, z + offZ);
                     if (!ContentCascade.loaded(world, pos)) { continue; }
-
                     IBlockState state = world.getBlockState(pos);
                     if (nearby.contains(state.getBlock()) || nearbyExact.contains(state)) { return true; }
                 }
@@ -82,7 +74,6 @@ public final class ContentPlacer {
 
     public IBlockState choose(Random random) {
         if (states.size() < 2) { return states.get(0); }
-
         int roll = random.nextInt(weight);
         for (int index = 0; index < ladder.length; index++) {
             if (roll < ladder[index]) { return states.get(index); }

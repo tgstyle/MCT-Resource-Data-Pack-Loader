@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
-import mctmods.resourcedatapackloader.mixin.AccessorStructureComponentBox;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -28,7 +28,6 @@ public final class BeardPlots {
     public static boolean roadAlongX(StructureComponent piece) {
         EnumFacing facing = piece.getCoordBaseMode();
         if (facing != null) { return facing.getAxis() == EnumFacing.Axis.X; }
-
         StructureBoundingBox box = piece.getBoundingBox();
         return box.maxX - box.minX >= box.maxZ - box.minZ;
     }
@@ -45,7 +44,6 @@ public final class BeardPlots {
     public static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {
         if (start != plotsStart || piece != plotsPiece || start.getComponents().size() != plotsCount) { snapshotPlots(start, piece); }
         if (plotsUnion == null || !plotsUnion.isVecInside(at)) { return false; }
-
         for (int i = 0; i < plotsBoxes.length; i++) {
             StructureBoundingBox box = plotsBoxes[i];
             if (box.isVecInside(at)) { return true; }
@@ -61,7 +59,6 @@ public final class BeardPlots {
         StructureBoundingBox union = null;
         for (StructureComponent other : components) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-
             StructureBoundingBox box = other.getBoundingBox();
             boxes.add(box);
             owners.add(other);
@@ -81,7 +78,6 @@ public final class BeardPlots {
     public static boolean underAnother(StructureStart start, @Nullable StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece) { continue; }
-
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
@@ -92,7 +88,6 @@ public final class BeardPlots {
     public static boolean nearRoad(StructureStart start, StructureComponent piece, int x, int z, int reach) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach) { return true; }
         }
@@ -102,7 +97,6 @@ public final class BeardPlots {
     public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
@@ -111,7 +105,6 @@ public final class BeardPlots {
     public static boolean underBuilding(StructureStart start, StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
@@ -120,8 +113,7 @@ public final class BeardPlots {
     public static boolean overRoad(StructureStart start, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-
-            StructureBoundingBox held = ((AccessorStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox held = ((IStructureComponentBox) other).rdpl$box();
             if (held != null && x >= held.minX && x <= held.maxX && z >= held.minZ && z <= held.maxZ) { return true; }
         }
         return false;
@@ -129,10 +121,8 @@ public final class BeardPlots {
     public static boolean roadCore(StructureStart start, StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-
             StructureBoundingBox box = other.getBoundingBox();
             if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
-
             boolean alongX = roadAlongX(other);
             int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
             int offset = Math.abs((alongX ? z : x) - center);
@@ -149,10 +139,8 @@ public final class BeardPlots {
         int spotZ = spot % depth;
         for (int i = 0; i < tops.length; i++) {
             if (i == spot || tops[i] == Integer.MIN_VALUE) { continue; }
-
             int cost = (Math.abs(i / depth - spotX) + Math.abs(i % depth - spotZ)) * 4 + Math.max(0, from - tops[i]);
             if (cost >= best) { continue; }
-
             best = cost;
             floor = tops[i];
         }

@@ -27,7 +27,6 @@ public final class PathNodeMemo {
         long key = packed(x, y, z);
         int slot = slot(key, world, owner);
         if (when[slot] != tick || worlds[slot] != world || owners[slot] != owner || where[slot] != key) { return null; }
-
         return KINDS[kinds[slot]];
     }
 

@@ -71,10 +71,8 @@ public final class ContentSpread {
         for (int y = def.maxHeight; y > def.minHeight; y--) {
             pos.setPos(x, y, z);
             if (!world.isAirBlock(pos)) { continue; }
-
             pos.setPos(x, spread.ceiling ? y + 1 : y - 1, z);
             if (world.isAirBlock(pos)) { continue; }
-
             return new BlockPos(x, spread.ceiling ? y + 1 : y - 1, z);
         }
         return null;
@@ -87,10 +85,8 @@ public final class ContentSpread {
         for (int y = def.maxHeight; y > def.minHeight; y--) {
             pos.setPos(x, y, z);
             if (!world.getBlockState(pos).getMaterial().isLiquid()) { continue; }
-
             pos.setPos(x, y - 1, z);
             if (world.getBlockState(pos).getMaterial().isLiquid() || world.isAirBlock(pos)) { continue; }
-
             return new BlockPos(x, y - 1, z);
         }
         return null;

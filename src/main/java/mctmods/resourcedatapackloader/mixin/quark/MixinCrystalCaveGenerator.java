@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import vazkii.quark.world.world.CrystalCaveGenerator;
 import java.util.Random;
 
-@Mixin(value = CrystalCaveGenerator.class, remap = false)
-public abstract class MixinCrystalCaveGenerator {
+@Mixin(value = CrystalCaveGenerator.class, remap = false) public abstract class MixinCrystalCaveGenerator {
     @Unique private static final int rdpl$SAFE_OFFSET = 8;
 
     @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I", ordinal = 0), remap = false)

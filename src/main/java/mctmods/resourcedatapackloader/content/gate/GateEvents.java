@@ -32,15 +32,12 @@ public final class GateEvents {
 
     @SubscribeEvent public static void onTravel(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof EntityPlayerMP)) { return; }
-
         EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
         List<GateDef> defs = ContentGates.forDimension(event.getDimension());
         for (GateDef def : defs) {
             if (ContentGates.unlocked(player, def)) { continue; }
-
             event.setCanceled(true);
             if (quiet(player)) { return; }
-
             ContentGates.refuse(player, def);
             if (def.safeReturn) { retreat(player); }
             return;
@@ -50,22 +47,18 @@ public final class GateEvents {
     @SubscribeEvent public static void onKill(LivingDeathEvent event) {
         Entity slayer = event.getSource().getTrueSource();
         if (!(slayer instanceof EntityPlayerMP)) { return; }
-
         ResourceLocation fallen = EntityList.getKey(event.getEntity());
         if (fallen == null) { return; }
-
         EntityPlayerMP player = (EntityPlayerMP) slayer;
         for (GateDef def : ContentGates.all().values()) {
             if (def.killed.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!fallen.equals(new ResourceLocation(def.killed))) { continue; }
-
             int slain = def.global ? GateStorage.tallyGlobally(player.world, def.getKey()) : GateStorage.tallyFor(player, def.getKey());
             if (slain < def.killedCount) { continue; }
             if (def.killedDrops.isEmpty()) {
                 ContentGates.unlock(player, def, true);
                 continue;
             }
-
             if (def.global) { GateStorage.clearTallyGlobally(player.world, def.getKey()); }
             else { GateStorage.clearTallyFor(player, def.getKey()); }
             reward(player, def);
@@ -75,7 +68,6 @@ public final class GateEvents {
     private static void reward(EntityPlayerMP player, GateDef def) {
         ItemStack key = ContentStacks.parse(def.registryName, def.killedDrops, 1);
         if (key.isEmpty()) { return; }
-
         EntityItem drop = new EntityItem(player.world, player.posX, player.posY, player.posZ, key);
         drop.setDefaultPickupDelay();
         player.world.spawnEntity(drop);
@@ -84,11 +76,9 @@ public final class GateEvents {
     @SubscribeEvent public static void onCraft(PlayerEvent.ItemCraftedEvent event) {
         EntityPlayer player = event.player;
         if (!(player instanceof EntityPlayerMP)) { return; }
-
         for (GateDef def : ContentGates.all().values()) {
             if (def.craft.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!ContentGates.matches(event.crafting, stack(def.craft))) { continue; }
-
             ContentGates.unlock(player, def, true);
         }
     }
@@ -96,21 +86,17 @@ public final class GateEvents {
     @SubscribeEvent public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
         EntityPlayer player = event.getEntityPlayer();
         if (event.getWorld().isRemote || !(player instanceof EntityPlayerMP)) { return; }
-
         ItemStack held = event.getItemStack();
         if (held.isEmpty()) { return; }
-
         BlockPos pos = event.getPos();
         Block clicked = event.getWorld().getBlockState(pos).getBlock();
         ResourceLocation name = clicked.getRegistryName();
         if (name == null) { return; }
-
         for (GateDef def : ContentGates.all().values()) {
             if (def.consume.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!def.portalBlocks.isEmpty() && !def.portalBlocks.contains(name.toString())) { continue; }
             if (!ContentGates.matches(held, stack(def.consume))) { continue; }
             if (held.getCount() < def.consumeCount) { continue; }
-
             if (!player.capabilities.isCreativeMode) { held.shrink(def.consumeCount); }
             ContentGates.unlock(player, def, true);
             event.setCanceled(true);
@@ -121,12 +107,10 @@ public final class GateEvents {
     @SubscribeEvent public static void onAdvancement(AdvancementEvent event) {
         EntityPlayer player = event.getEntityPlayer();
         if (!(player instanceof EntityPlayerMP)) { return; }
-
         ResourceLocation earned = event.getAdvancement().getId();
         for (GateDef def : ContentGates.all().values()) {
             if (def.advancement.isEmpty() || !def.global) { continue; }
             if (!def.advancement.equals(earned.toString())) { continue; }
-
             ContentGates.unlock(player, def, true);
         }
     }
@@ -146,7 +130,6 @@ public final class GateEvents {
         long now = System.currentTimeMillis();
         Long last = SPOKEN.get(player.getUniqueID());
         if (last != null && now - last < QUIET_MILLIS) { return true; }
-
         SPOKEN.put(player.getUniqueID(), now);
         return false;
     }
