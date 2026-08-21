@@ -114,6 +114,7 @@
     "common.MixinMapGenScatteredFeature",
     "common.MixinMapGenStronghold",
     "common.MixinMapGenStructure",
+    "common.MixinMapGenStructureData",
     "common.MixinMapGenVillage",
     "common.MixinMinecraftServer",
     "common.MixinMineshaftCorridor",

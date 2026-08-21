@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.rubic;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer;
@@ -63,12 +65,27 @@ public final class RubicWorldControl {
         return provider instanceof CubeProviderServer && ((IRubicWorld) provider.world).rdpl$isRubicWorld();
     }
 
-    public static void makeColumnCubes(ChunkProviderServer provider, int chunkX, int chunkZ) {
+    public static boolean makeColumnCubes(ChunkProviderServer provider, Chunk column) {
+        if (((IColumnInternal) column).pregenDone()) { return false; }
         IRubicWorld world = (IRubicWorld) provider.world;
         ICubeProviderServer cubes = (ICubeProviderServer) provider;
         int lowest = world.rdpl$getMinHeight() >> 4;
         int highest = (world.rdpl$getMaxHeight() >> 4) - 1;
-        for (int cubeY = lowest; cubeY <= highest; cubeY++) { cubes.getCube(chunkX, cubeY, chunkZ, ICubeProviderServer.Requirement.LIGHT); }
+        boolean worked = false;
+        boolean whole = true;
+        for (int cubeY = lowest; cubeY <= highest; cubeY++) {
+            if (!worked) {
+                ICube had = cubes.getCube(column.x, cubeY, column.z, ICubeProviderServer.Requirement.LOAD);
+                if (had == null || !had.isFullyPopulated() || !had.isInitialLightingDone()) { worked = true; }
+            }
+            ICube after = cubes.getCube(column.x, cubeY, column.z, ICubeProviderServer.Requirement.LIGHT);
+            if (after == null || !after.isFullyPopulated() || !after.isInitialLightingDone()) { whole = false; }
+        }
+        if (whole) {
+            ((IColumnInternal) column).markPregenDone();
+            column.setModified(true);
+        }
+        return worked;
     }
 
     public static int pendingSaves(ChunkProviderServer provider) { return ((CubeProviderServer) provider).getCubeIO().getPendingCubeCount(); }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.AddressTools;
@@ -33,9 +34,14 @@ public class IONbtReader {
         if (column == null) { return null; }
         readBiomes(level, column);
         readOpacityIndex(level, column);
+        readPregenDone(level, column);
 
         column.setModified(false);
         return column;
+    }
+
+    private static void readPregenDone(NBTTagCompound nbt, Chunk column) {
+        if (nbt.getBoolean("PregenDone")) { ((IColumnInternal) column).markPregenDone(); }
     }
 
     @Nullable private static Chunk readBaseColumn(World world, int x, int z, NBTTagCompound nbt) {

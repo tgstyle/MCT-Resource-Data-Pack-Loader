@@ -132,6 +132,7 @@ public abstract class MixinChunk {
     @Unique private Cube rdpl$cachedCube;
     @Unique private StagingHeightMap rdpl$stagingHeightMap;
     @Unique private boolean rdpl$isColumn = false;
+    @Unique private boolean rdpl$pregenDone;
     @Unique private ChunkPrimer rdpl$compatGenerationPrimer;
 
     @Shadow public abstract byte[] getBiomeArray();
@@ -670,6 +671,10 @@ public abstract class MixinChunk {
     public int chunk$getHeightValue(int localX, int blockY, int localZ) { return rdpl$topBlockY(localX, localZ) + 1; }
 
     public boolean chunk_internal$isRubicColumn() { return rdpl$isColumn; }
+
+    public boolean chunk_internal$pregenDone() { return rdpl$pregenDone; }
+
+    public void chunk_internal$markPregenDone() { rdpl$pregenDone = true; }
 
     public ChunkPrimer chunk_internal$getCompatGenerationPrimer() { return rdpl$compatGenerationPrimer; }
 

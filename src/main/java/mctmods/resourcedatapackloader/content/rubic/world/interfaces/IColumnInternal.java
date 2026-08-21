@@ -18,6 +18,10 @@ public interface IColumnInternal extends IColumn {
 
     boolean isRubicColumn();
 
+    default boolean pregenDone() { return false; }
+
+    default void markPregenDone() {}
+
     default void writeHeightmapDataForClient(PacketBuffer out) {
         for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { out.writeInt(getTopYWithStaging(AddressTools.getLocalX(i), AddressTools.getLocalZ(i))); }
     }

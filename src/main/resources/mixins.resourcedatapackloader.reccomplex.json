@@ -11,8 +11,11 @@
     "MixinGenericVillagePiece",
     "MixinHeightMapFreezer",
     "MixinMazeComponentConnector",
+    "MixinStructureEntry",
     "MixinStructureSpawnContext",
-    "MixinTransformerRuins"
+    "MixinTransformerRuins",
+    "MixinWorldGenStructures",
+    "MixinWorldStructureGenerationData"
   ],
   "client": [],
   "server": []

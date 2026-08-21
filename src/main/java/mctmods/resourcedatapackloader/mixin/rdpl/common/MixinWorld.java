@@ -79,7 +79,18 @@ import net.minecraft.util.math.AxisAlignedBB;
 
     @Inject(method = "updateEntities", at = @At("HEAD"), cancellable = true) private void rdpl$standStillWhileLandIsMade(CallbackInfo ci) {
         if (((World) (Object) this).isRemote || !ContentPregen.busy()) { return; }
+        rdpl$letGoOfUnloadedEntities();
         ci.cancel();
+    }
+
+    @Unique private void rdpl$letGoOfUnloadedEntities() {
+        if (unloadedEntityList.isEmpty()) { return; }
+        loadedEntityList.removeAll(unloadedEntityList);
+        for (Entity leaving : unloadedEntityList) {
+            if (leaving.addedToChunk && isChunkLoaded(leaving.chunkCoordX, leaving.chunkCoordZ, true)) { ((World) (Object) this).getChunk(leaving.chunkCoordX, leaving.chunkCoordZ).removeEntity(leaving); }
+        }
+        for (Entity leaving : unloadedEntityList) { onEntityRemoved(leaving); }
+        unloadedEntityList.clear();
     }
 
     @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;onUpdate()V"))
@@ -168,6 +179,9 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Shadow public abstract boolean canSnowAt(BlockPos pos, boolean checkLight);
 
     @Shadow protected abstract boolean isChunkLoaded(int i, int i1, boolean allowEmpty);
+    @Shadow @Final public List<Entity> loadedEntityList;
+    @Shadow @Final protected List<Entity> unloadedEntityList;
+    @Shadow public abstract void onEntityRemoved(Entity entityIn);
 
     @Unique @Nullable protected LightingManager rdpl$lightingManager;
     @Unique protected boolean rdpl$isRubicWorld;

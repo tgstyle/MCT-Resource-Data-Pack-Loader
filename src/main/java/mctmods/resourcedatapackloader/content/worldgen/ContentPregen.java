@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
+import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunk;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IWorldProviderEnd;
@@ -28,6 +29,7 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProviderEnd;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.end.DragonFightManager;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
@@ -106,6 +108,14 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private int round = -1;
     private long roundSpent;
     private long spoke;
+    private long checkpointed;
+    private long checkpointCost;
+    private long resumedFrom;
+    private long etaFigured;
+    private long etaSeconds;
+    private long etaAt;
+    private long etaMade;
+    private double etaRate;
     private int loggedAt;
     private volatile long begun;
     private boolean over;
@@ -125,7 +135,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         this.order = new ContentChunkOrder(centreX, centreZ, radius + 1);
         this.keep = Math.max(64, ContentControl.number(ContentControl.CHUNKS, "pregenKeepLoaded", Config.chunks.pregenKeepLoaded));
         this.backlog = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenPauseAbove", Config.chunks.pregenPauseAbove));
-        this.slice = Math.max(1, ContentControl.number(ContentControl.CHUNKS, "pregenMillisPerRound", Config.chunks.pregenMillisPerRound));
+        this.slice = Math.min(1000, Math.max(1, ContentControl.number(ContentControl.CHUNKS, "pregenMillisPerRound", Config.chunks.pregenMillisPerRound)));
         this.started = System.currentTimeMillis();
     }
 
@@ -234,6 +244,13 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         NBTTagCompound run = memory.rdpl$pregenRun();
         if (!run.isEmpty()) {
             int dimension = run.getInteger("dimension");
+            if (!picksUpAgain()) {
+                memory.rdpl$setPregenRun(null);
+                memory.rdpl$setLandMadeAt(dimension, 0);
+                if (run.getInteger("reach") > memory.rdpl$landMadeTo(dimension)) { memory.rdpl$setLandMadeTo(dimension, run.getInteger("reach")); }
+                ContentLog.LOGGER.info("Land was still being made in dimension {} when the last session ended, and picking up again is off, so the world stands as far as it was made", dimension);
+                return;
+            }
             if (PENDING.isEmpty() && (radius > 0 || reachesTheBorder())) {
                 for (int held : chosenDimensions()) {
                     if (held != dimension && (reachesTheBorder() || memory.rdpl$landMadeTo(held) < radius)) { PENDING.addLast(held); }
@@ -555,6 +572,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     public static boolean busy() { return running != null; }
 
+    public static boolean makingLand(World world) {
+        ContentPregen worker = running;
+        return worker != null && !worker.lightOnly && world.provider.getDimension() == worker.dimension;
+    }
+
     public static boolean lightingOnly() {
         ContentPregen worker = running;
         return worker != null && worker.lightOnly;
@@ -599,6 +621,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             int reached = memory == null ? 0 : memory.rdpl$landMadeAt(dimension);
             if (reached > 0) {
                 worker.done = worker.order.skip(reached);
+                worker.resumedFrom = worker.done;
                 ContentLog.LOGGER.info("Picking the making of land in dimension {} up again where it left off, {} chunk(s) in", dimension, worker.done);
             }
         }
@@ -651,13 +674,20 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         long began = System.nanoTime();
         ChunkPos next = order.next();
         done++;
-        Chunk chunk = lightOnly ? already(provider, next.x, next.z, true) : provider.provideChunk(next.x, next.z);
+        Chunk chunk;
+        if (lightOnly) { chunk = already(provider, next.x, next.z, true); }
+        else {
+            try {
+                WorldgenHangWatchdog.startWorldGen();
+                chunk = provider.provideChunk(next.x, next.z);
+            }
+            finally { WorldgenHangWatchdog.endWorldGen(); }
+        }
         if (chunk != null) {
             boolean rubic = RubicWorldControl.rubicWorld(provider);
             rubicRun = rubic;
-            if (!lightOnly && rubic) { RubicWorldControl.makeColumnCubes(provider, next.x, next.z); }
-            if (rubic) { made += lightOnly ? 0L : 1L; }
-            else if (!chunk.isTerrainPopulated()) {
+            if (!lightOnly && rubic && RubicWorldControl.makeColumnCubes(provider, chunk)) { made++; }
+            if (!rubic && !chunk.isTerrainPopulated()) {
                 undressed++;
                 if (!lightOnly) { made++; }
             }
@@ -670,7 +700,9 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         }
         roundSpent += System.nanoTime() - began;
         speak();
+        checkpoint(world);
         tellScreen(server);
+        if ((done & 1023L) == 0L) { ContentStructures.forgetFarStarts(world, next.x, next.z); }
         if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
         if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) {
             Runtime memory = Runtime.getRuntime();
@@ -735,7 +767,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (RubicWorldControl.rubicWorld(provider)) { return; }
         if (chunk.isTerrainPopulated()) { return; }
         if (provider.getLoadedChunk(x + 1, z) == null || provider.getLoadedChunk(x, z + 1) == null || provider.getLoadedChunk(x + 1, z + 1) == null) { return; }
-        ((IChunk) chunk).rdpl$dress(provider.chunkGenerator);
+        try {
+            WorldgenHangWatchdog.startWorldGen();
+            ((IChunk) chunk).rdpl$dress(provider.chunkGenerator);
+        }
+        finally { WorldgenHangWatchdog.endWorldGen(); }
         dressedLate++;
     }
 
@@ -789,6 +825,25 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         progress.rdpl$setUserMessage("menu.generatingTerrain");
     }
 
+    private void checkpoint(WorldServer world) {
+        long now = System.currentTimeMillis();
+        if (checkpointed == 0L) { checkpointed = now; }
+        if (now - checkpointed < Math.max(120000L, checkpointCost * 100L)) { return; }
+        checkpointed = now;
+        long writing = System.nanoTime();
+        try {
+            world.getSaveHandler().saveWorldInfo(world.getWorldInfo());
+            MapStorage shared = world.getMapStorage();
+            if (shared != null) { shared.saveAllData(); }
+            world.getPerWorldStorage().saveAllData();
+        }
+        catch (Exception oops) { ContentLog.LOGGER.error("The safeguard save of the world records failed, so a crash from here would lose progress made since the last one that worked", oops); }
+        long spent = (System.nanoTime() - writing) / 1000000L;
+        checkpointCost = spent;
+        ContentLog.LOGGER.debug("Safeguard save of the world records took {} ms at {} column(s)", spent, done);
+        if (spent > 500L) { ContentLog.LOGGER.info("The safeguard save of the world records took {} ms and grows with the land already made; this is the checkpoint cost, not generation", spent); }
+    }
+
     private void speak() {
         long now = System.currentTimeMillis();
         if (now - spoke < 10000L) { return; }
@@ -808,6 +863,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     private String sofar() {
+        if (!lightOnly && made == 0L && done > 0L && order.hasNext()) { return checking(); }
         String wording = lightOnly ? defaulted("pregenRelightSays", Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted("pregenRunningSays", Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
         if (wording.isEmpty()) { return ""; }
         long stepped = Math.min(100L, done * 100L / Math.max(1L, order.total()));
@@ -818,10 +874,29 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         }
     }
 
+    private String checking() {
+        long stepped = Math.min(100L, done * 100L / Math.max(1L, order.total()));
+        long spent = begun == 0L ? 0L : (System.currentTimeMillis() - begun) / 1000L;
+        return Lang.tr("rdpl.pregen.checking", stepped) + Lang.tr("rdpl.pregen.checked", spent / 3600L, spent / 60L % 60L, spent % 60L);
+    }
+
     private String eta() {
         long total = order.total();
-        if (begun == 0L || done <= 0L || done >= total) { return ""; }
-        long left = (System.currentTimeMillis() - begun) * (total - done) / done / 1000L;
+        if (begun == 0L || done <= resumedFrom || done >= total) { return ""; }
+        long metric = lightOnly ? done : made;
+        long now = System.currentTimeMillis();
+        if (etaFigured == 0L || now - etaFigured >= 5000L) {
+            if (etaAt != 0L && now > etaAt && metric > etaMade) {
+                double lately = (metric - etaMade) * 1000.0D / (now - etaAt);
+                etaRate = etaRate == 0.0D ? lately : etaRate * 0.9D + lately * 0.1D;
+            }
+            etaAt = now;
+            etaMade = metric;
+            etaFigured = now;
+            if (etaRate > 0.0D) { etaSeconds = (long) ((total - done) / etaRate); }
+        }
+        if (etaRate <= 0.0D) { return ""; }
+        long left = Math.max(0L, etaSeconds - (now - etaFigured) / 1000L);
         return Lang.tr("rdpl.pregen.eta", left / 3600L, left / 60L % 60L, left % 60L);
     }
 
@@ -832,6 +907,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private String report() {
         long seconds = Math.max(1L, (System.currentTimeMillis() - started) / 1000L);
+        long rate = (done - resumedFrom) / seconds;
         boolean rubic = rubicRun;
         if (lightOnly) {
             if (rubic) {
@@ -843,10 +919,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         }
         if (rubic) {
             return String.format("Made %d of %d column(s) in dimension %d, %d of them new, at %d a second, holding %d and resting %d time(s) for the writing to catch up. Every cube was lit and dressed as it was made, keeping within %d ms a round",
-                    done, order.total(), dimension, made, done / seconds, resident.size(), paused, slice);
+                    done, order.total(), dimension, made, rate, resident.size(), paused, slice);
         }
         return String.format("Made %d of %d chunk(s) in dimension %d, %d of them new, at %d a second, holding %d and resting %d time(s) for the writing to catch up. Light reached %d of them, %d were left for later and %d could never be lit, having been asked for at the very edge of what was wanted, keeping within %d ms a round",
-                done, order.total(), dimension, made, done / seconds, resident.size(), paused, brightened, dark, darkAtEdge, slice);
+                done, order.total(), dimension, made, rate, resident.size(), paused, brightened, dark, darkAtEdge, slice);
     }
 
     public static boolean holdsStill(net.minecraft.world.World world) {
@@ -870,7 +946,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (world != null) {
             IPregenMemory memory = memory();
             if (memory != null) {
-                if (whole && !lightOnly && reach > memory.rdpl$landMadeTo(dimension)) { memory.rdpl$setLandMadeTo(dimension, reach); }
+                if ((whole || (stopping && !picksUpAgain())) && !lightOnly && reach > memory.rdpl$landMadeTo(dimension)) { memory.rdpl$setLandMadeTo(dimension, reach); }
                 if (!lightOnly) {
                     memory.rdpl$setLandMadeAt(dimension, whole || !picksUpAgain() ? 0 : (int) done);
                     memory.rdpl$setPregenRun(null);

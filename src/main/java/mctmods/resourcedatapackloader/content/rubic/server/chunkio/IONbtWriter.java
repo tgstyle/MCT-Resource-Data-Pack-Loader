@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.CubeDataEvent;
 import mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.Coords;
@@ -66,6 +67,7 @@ class IONbtWriter {
         nbt.setInteger("z", column.z);
         nbt.setByte("v", (byte) 1);
         nbt.setLong("InhabitedTime", column.getInhabitedTime());
+        if (((IColumnInternal) column).pregenDone()) { nbt.setBoolean("PregenDone", true); }
         if (column.getCapabilities() != null) {
             try {
                 nbt.setTag("ForgeCaps", column.getCapabilities().serializeNBT());

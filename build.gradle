@@ -117,6 +117,7 @@ dependencies {
     implementation rfg.deobf("curse.maven:${common.wayb_version}")
     implementation rfg.deobf("curse.maven:${common.redf_version}")
     implementation rfg.deobf("curse.maven:${common.cofh_version}")
+    compileOnly rfg.deobf("curse.maven:${common.bf3r_version}")
     compileOnly rfg.deobf("curse.maven:${common.quar_version}")
     compileOnly rfg.deobf("curse.maven:${common.gcor_version}")
     compileOnly rfg.deobf("curse.maven:${common.dngn_version}")

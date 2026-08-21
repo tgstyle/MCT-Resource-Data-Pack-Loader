@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.compat.IForgettingStarts;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.MapGenBase;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentStructures {
@@ -50,6 +52,18 @@ public final class ContentStructures {
         if (ContentControl.off(ContentControl.STRUCTURES)) { return false; }
         return !BY_DIMENSION.isEmpty();
     }
+
+    public static void watchStarts(World world, MapGenStructure generator) {
+        STARTS_WATCHED.computeIfAbsent(world, held -> Collections.newSetFromMap(new WeakHashMap<>())).add(generator);
+    }
+
+    public static void forgetFarStarts(World world, int chunkX, int chunkZ) {
+        Set<MapGenStructure> watched = STARTS_WATCHED.get(world);
+        if (watched == null) { return; }
+        for (MapGenStructure generator : watched) { ((IForgettingStarts) generator).rdpl$forgetFarStarts(chunkX, chunkZ); }
+    }
+
+    private static final Map<World, Set<MapGenStructure>> STARTS_WATCHED = new WeakHashMap<>();
 
     public static boolean blocks(World world, MapGenBase generator) {
         if (BY_DIMENSION.isEmpty() || world == null || world.provider == null) { return false; }

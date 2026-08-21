@@ -93,6 +93,10 @@ import net.minecraft.world.GameRules;
         world.setWorldTime(time);
     }
 
+    @Inject(method = "updateWeather", at = @At("HEAD"), cancellable = true) private void rdpl$holdWeatherWhileMaking(CallbackInfo ci) {
+        if (ContentPregen.busyIn((WorldServer) (Object) this)) { ci.cancel(); }
+    }
+
     @Inject(method = "initialize", at = @At("RETURN")) private void rdpl$borderAsAsked(WorldSettings settings, CallbackInfo ci) {
         int wanted = ContentTerrain.worldBorder();
         if (wanted <= 0) { return; }
