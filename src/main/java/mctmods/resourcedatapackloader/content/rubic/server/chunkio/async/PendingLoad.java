@@ -49,7 +49,7 @@ abstract class PendingLoad<T> implements Runnable {
         }
     }
 
-    boolean hasBeenRead() { return read.getCount() == 0; }
+    boolean hasBeenHandedOver() { return handedOver.get(); }
 
     void handOver() {
         if (!handedOver.compareAndSet(false, true)) { return; }

@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
         Chunk column = cache.getColumn(cubeX, cubeZ, ICubeProviderServer.Requirement.LIGHT);
         CubeAt at = new CubeAt(world, cubeX, cubeY, cubeZ);
         PendingCube queued = cubeReads.remove(at);
-        if (queued == null) {
+        if (queued == null || queued.hasBeenHandedOver()) {
             PendingCube here = new PendingCube(io, cubeX, cubeY, cubeZ);
             here.tellColumn(column);
             here.readNow();
@@ -69,7 +69,7 @@ import javax.annotation.Nullable;
     @Nullable public static Chunk syncColumnLoad(World world, ICubeIO io, int columnX, int columnZ, Consumer<Chunk> tellProviderLoading) {
         ColumnAt at = new ColumnAt(world, columnX, columnZ);
         PendingColumn queued = columnReads.remove(at);
-        if (queued == null) {
+        if (queued == null || queued.hasBeenHandedOver()) {
             PendingColumn here = new PendingColumn(io, world, columnX, columnZ, ((IRubicWorldInternal.Server) world).rdpl$getCubeCache().getCubeGenerator(), tellProviderLoading);
             here.readNow();
             here.handOver();
@@ -84,7 +84,7 @@ import javax.annotation.Nullable;
     public static void queueCubeLoad(World world, ICubeIO io, CubeProviderServer cache, int cubeX, int cubeY, int cubeZ, Consumer<Cube> whenLoaded) {
         CubeAt at = new CubeAt(world, cubeX, cubeY, cubeZ);
         PendingCube waiting = cubeReads.get(at);
-        if (waiting != null) {
+        if (waiting != null && !waiting.hasBeenHandedOver()) {
             waiting.waitFor(whenLoaded);
             return;
         }
@@ -100,7 +100,7 @@ import javax.annotation.Nullable;
     public static void queueColumnLoad(World world, ICubeIO io, int columnX, int columnZ, Consumer<Chunk> whenLoaded, Consumer<Chunk> tellProviderLoading) {
         ColumnAt at = new ColumnAt(world, columnX, columnZ);
         PendingColumn waiting = columnReads.get(at);
-        if (waiting != null) {
+        if (waiting != null && !waiting.hasBeenHandedOver()) {
             waiting.waitFor(whenLoaded);
             return;
         }
@@ -136,8 +136,8 @@ import javax.annotation.Nullable;
 
     public static void tick() {
         for (PendingLoad<?> ready = readyToHandOver.poll(); ready != null; ready = readyToHandOver.poll()) { ready.handOver(); }
-        cubeReads.values().removeIf(PendingLoad::hasBeenRead);
-        columnReads.values().removeIf(PendingLoad::hasBeenRead);
+        cubeReads.values().removeIf(PendingLoad::hasBeenHandedOver);
+        columnReads.values().removeIf(PendingLoad::hasBeenHandedOver);
     }
 
     public static void shutdownNowBlocking() {

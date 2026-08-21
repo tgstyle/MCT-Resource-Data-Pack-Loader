@@ -12,7 +12,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class WorldgenHangWatchdog {
-    private static final int worldgenWatchdogTimeLimit = 10000;
+    private static final int worldgenWatchdogTimeLimit = 60000;
     public static final boolean ENABLED = "true".equalsIgnoreCase(System.getProperty("rdpl.rubic.wgen_hang_watchdog", "true"));
     private static final WorldgenHangWatchdog INSTANCE = new WorldgenHangWatchdog();
 
@@ -62,6 +62,12 @@ public class WorldgenHangWatchdog {
             } catch (InterruptedException e) {
                 Rubic.LOGGER.error("WorldGen hang watchdog interrupted", e);
             }
+            try { watch(); }
+            catch (Throwable oops) { Rubic.LOGGER.error("WorldGen hang watchdog failed to report a hang and would have died; it keeps watching instead", oops); }
+        }
+    }
+
+    private void watch() {
             synchronized (entries) {
                 for (Iterator<Map.Entry<Thread, Entry>> iterator = entries.entrySet().iterator(); iterator.hasNext(); ) {
                     Map.Entry<Thread, Entry> entry = iterator.next();
@@ -95,7 +101,6 @@ public class WorldgenHangWatchdog {
                     }
                 }
             }
-        }
     }
 
     private static class Entry {

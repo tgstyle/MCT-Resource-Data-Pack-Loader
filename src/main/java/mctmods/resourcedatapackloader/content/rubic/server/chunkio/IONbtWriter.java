@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.util.Coords;
 
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -115,8 +116,21 @@ class IONbtWriter {
         byte[] add2neid = null;
         BlockStateContainer states = ebs.getData();
         @SuppressWarnings("deprecation") ObjectIntIdentityMap<IBlockState> ids = Block.BLOCK_STATE_IDS;
+        IBlockState airState = Blocks.AIR.getDefaultState();
+        int airId = ids.get(airState);
+        IBlockState lastState = airState;
+        int lastId = airId;
         for (int i = 0; i < abyte.length; ++i) {
-            int id = ids.get(states.get(i & 15, i >> 8 & 15, i >> 4 & 15));
+            IBlockState state = states.get(i & 15, i >> 8 & 15, i >> 4 & 15);
+            int id;
+            if (state == airState) { id = airId; }
+            else {
+                if (state != lastState) {
+                    lastState = state;
+                    lastId = ids.get(state);
+                }
+                id = lastId;
+            }
             int in1 = (id >> 12) & 0xF;
             int in2 = (id >> 16) & 0xF;
             int nibble = i >> 1;

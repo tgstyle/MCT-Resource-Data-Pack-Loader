@@ -160,6 +160,11 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         }
         if (cube == null) {
             CubeIoQueue.queueCubeLoad(worldServer, cubeIO, this, cubeX, cubeY, cubeZ, loaded -> {
+                Cube resident = getLoadedCube(cubeX, cubeY, cubeZ);
+                if (resident != null) {
+                    callback.accept(postCubeLoadAttempt(cubeX, cubeY, cubeZ, resident, resident.getColumn(), req, false));
+                    return;
+                }
                 Chunk col = getLoadedColumn(cubeX, cubeZ);
                 if (col != null) {
                     assert !col.isEmpty();
@@ -315,6 +320,13 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     Iterator<Cube> cubesIterator() { return cubeMap.iterator(); }
 
     Iterator<Chunk> columnsIterator() { return loadedChunks.values().iterator(); }
+
+    public void unloadColumnCubes(Chunk column) {
+        for (Object each : ((IColumn) column).getLoadedCubes().toArray()) {
+            Cube cube = (Cube) each;
+            if (tryUnloadCube(cube)) { cubeMap.remove(cube.getX(), cube.getY(), cube.getZ()); }
+        }
+    }
 
     boolean tryUnloadCube(Cube cube) {
         if (ForgeChunkManager.getPersistentChunksFor(world).containsKey(cube.getColumn().getPos())) { return false; }

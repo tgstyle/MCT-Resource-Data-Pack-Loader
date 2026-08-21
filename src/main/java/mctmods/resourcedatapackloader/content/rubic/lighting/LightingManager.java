@@ -86,8 +86,9 @@ public class LightingManager implements ILightingManager {
         if (!world.isRemote) {
             BlockPos min = cube.getCoords().getMinBlockPos();
             BlockPos max = cube.getCoords().getMaxBlockPos();
-            for (BlockPos.MutableBlockPos pos : BlockPos.getAllInBoxMutable(min, max.add(1, 1, 1))) {
-                ((PlayerCubeMap) ((WorldServer) world).getPlayerChunkMap()).heightUpdated(pos.getX(), pos.getZ());
+            PlayerCubeMap watchers = (PlayerCubeMap) ((WorldServer) world).getPlayerChunkMap();
+            for (int x = min.getX(); x <= max.getX() + 1; x++) {
+                for (int z = min.getZ(); z <= max.getZ() + 1; z++) { watchers.heightUpdated(x, z); }
             }
             tryScheduleOnLoadHeightChangeRelight(cube);
         }

@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.fml.common.StartupQuery;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,4 +76,6 @@ public final class RubicWorldControl {
     public static int loadedCubes(ChunkProviderServer provider) { return ((CubeProviderServer) provider).getLoadedCubeCount(); }
 
     public static void rdpl$unloadOldCubes(ChunkProviderServer provider) { ((IRubicWorldServer) provider.world).rdpl$unloadOldCubes(); }
+
+    public static void unloadColumnCubes(ChunkProviderServer provider, Chunk column) { ((CubeProviderServer) provider).unloadColumnCubes(column); }
 }

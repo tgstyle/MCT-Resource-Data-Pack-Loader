@@ -671,7 +671,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         roundSpent += System.nanoTime() - began;
         speak();
         tellScreen(server);
-        if ((done & 63L) == 0L && RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
+        if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
         if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) {
             Runtime memory = Runtime.getRuntime();
             long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
@@ -769,7 +769,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private void release(ChunkProviderServer provider, long key) {
         Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
         if (chunk == null) { return; }
-        if (!RubicWorldControl.rubicWorld(provider) && !chunk.isLightPopulated()) {
+        if (RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.unloadColumnCubes(provider, chunk); }
+        else if (!chunk.isLightPopulated()) {
             int x = (int) key;
             int z = (int) (key >> 32);
             if (x <= lowX || x >= highX || z <= lowZ || z >= highZ) { darkAtEdge++; }
@@ -884,7 +885,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         held.clear();
         ContentLog.LOGGER.info("Finished. " + report());
         if (stopping) { PENDING.clear(); }
-        if (whole && !lightOnly) {
+        if (whole && !lightOnly && !rubicRun) {
             ContentLog.LOGGER.info("Going back over dimension {} to light what the making of it could not reach", dimension);
             start(asked, dimension, middleX, middleZ, reach, true);
             return;

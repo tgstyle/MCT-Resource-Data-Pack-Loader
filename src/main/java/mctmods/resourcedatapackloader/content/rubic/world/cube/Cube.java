@@ -87,11 +87,12 @@ public class Cube implements ICube {
 
     public Cube(Chunk column, int cubeY, CubePrimer primer) {
         this(column, cubeY);
+        IBlockState air = Blocks.AIR.getDefaultState();
         for (int y = Cube.SIZE - 1; y >= 0; y--) {
             for (int z = 0; z < Cube.SIZE; z++) {
                 for (int x = 0; x < Cube.SIZE; x++) {
                     IBlockState newstate = primer.getBlockState(x, y, z);
-                    if (newstate.getMaterial() != Material.AIR) {
+                    if (newstate != air && newstate.getMaterial() != Material.AIR) {
                         if (storage == NULL_STORAGE) { newStorage(); }
                         storage.set(x, y, z, newstate);
                     }
@@ -288,14 +289,16 @@ public class Cube implements ICube {
     }
 
     @SuppressWarnings("deprecation") public void trackSurface() {
-        IHeightMap opindex = ((IColumn) column).getOpacityIndex();
-        int miny = getCoords().getMinBlockY();
-        for (int x = 0; x < Cube.SIZE; x++) {
-            for (int z = 0; z < Cube.SIZE; z++) {
-                for (int y = Cube.SIZE - 1; y >= 0; y--) {
-                    IBlockState newstate = this.getBlockState(x, y, z);
-                    column.setModified(true);
-                    opindex.onOpacityChange(x, miny + y, z, newstate.getLightOpacity());
+        if (storage != NULL_STORAGE && !storage.isEmpty()) {
+            IHeightMap opindex = ((IColumn) column).getOpacityIndex();
+            int miny = getCoords().getMinBlockY();
+            column.setModified(true);
+            for (int x = 0; x < Cube.SIZE; x++) {
+                for (int z = 0; z < Cube.SIZE; z++) {
+                    for (int y = Cube.SIZE - 1; y >= 0; y--) {
+                        IBlockState newstate = storage.get(x, y, z);
+                        opindex.onOpacityChange(x, miny + y, z, newstate.getLightOpacity());
+                    }
                 }
             }
         }
