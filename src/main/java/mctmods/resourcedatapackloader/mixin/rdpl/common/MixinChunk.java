@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import com.google.common.base.Predicate;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
@@ -122,6 +123,7 @@ public abstract class MixinChunk {
     @Shadow @Final public int z;
     @Shadow @Final @Mutable private Map<BlockPos, TileEntity> tileEntities;
     @Shadow @Final private int[] heightMap;
+    @Shadow @Final private int[] precipitationHeightMap;
     @Shadow @Final private World world;
     @Shadow private boolean loaded;
     @Shadow private boolean ticked;
@@ -588,10 +590,35 @@ public abstract class MixinChunk {
     }
 
     @Inject(method = "getPrecipitationHeight", at = @At(value = "HEAD"), cancellable = true) private void getPrecipitationHeight_Rubic_Replace(BlockPos pos, CallbackInfoReturnable<BlockPos> cbi) {
-        if (rdpl$isColumn) {
-            BlockPos ret = new BlockPos(pos.getX(), ((IColumn) this).getHeightValue(blockToLocal(pos.getX()), pos.getY(), blockToLocal(pos.getZ())), pos.getZ());
-            cbi.setReturnValue(ret);
+        if (!rdpl$isColumn) { return; }
+        int localX = blockToLocal(pos.getX());
+        int localZ = blockToLocal(pos.getZ());
+        int held = precipitationHeightMap[localX | localZ << 4];
+        if (held == -999) {
+            held = rdpl$findPrecipitationHeight(localX, pos.getY(), localZ);
+            precipitationHeightMap[localX | localZ << 4] = held;
         }
+        cbi.setReturnValue(new BlockPos(pos.getX(), held, pos.getZ()));
+    }
+
+    @Unique private int rdpl$findPrecipitationHeight(int localX, int blockY, int localZ) {
+        int lightTop = ((IColumn) this).getHeightValue(localX, blockY, localZ);
+        int highest = Integer.MIN_VALUE;
+        for (Cube cube : rdpl$cubeMap) {
+            if (cube.getY() > highest) { highest = cube.getY(); }
+        }
+        if (highest == Integer.MIN_VALUE) { return lightTop; }
+        for (Cube cube : rdpl$cubeMap.cubes(highest, blockToCube(lightTop))) {
+            ExtendedBlockStorage storage = cube.getStorage();
+            if (storage == null || storage.isEmpty()) { continue; }
+            for (int y = 15; y >= 0; y--) {
+                int worldY = Coords.cubeToMinBlock(cube.getY()) + y;
+                if (worldY < lightTop) { return lightTop; }
+                Material material = storage.get(localX, y, localZ).getMaterial();
+                if (material.blocksMovement() || material.isLiquid()) { return worldY + 1; }
+            }
+        }
+        return lightTop;
     }
 
     @Inject(method = "onTick", at = @At(value = "RETURN")) private void onTick_Rubic_TickCubes(boolean skipRecheckGaps, CallbackInfo cbi) {
@@ -694,10 +721,14 @@ public abstract class MixinChunk {
         return rdpl$getRubicWorld().rdpl$getCubeCache().getCube(x, cubeY, z);
     }
 
-    public void chunk$addCube(@NotNull ICube cube) { this.rdpl$cubeMap.put((Cube) cube); }
+    public void chunk$addCube(@NotNull ICube cube) {
+        this.rdpl$cubeMap.put((Cube) cube);
+        Arrays.fill(precipitationHeightMap, -999);
+    }
 
     public ICube chunk$removeCube(int cubeY) {
         if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == cubeY) { rdpl$invalidateCachedCube(); }
+        Arrays.fill(precipitationHeightMap, -999);
         return this.rdpl$cubeMap.remove(cubeY);
     }
 
