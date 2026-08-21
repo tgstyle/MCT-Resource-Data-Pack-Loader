@@ -704,10 +704,16 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         tellScreen(server);
         if ((done & 1023L) == 0L) { ContentStructures.forgetFarStarts(world, next.x, next.z); }
         if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
-        if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) {
+        if ((done & 255L) == 0L) {
             Runtime memory = Runtime.getRuntime();
             long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
-            ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20);
+            if (RubicWorldControl.rubicWorld(provider)) {
+                ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20);
+            }
+            else {
+                int pending = provider.chunkLoader instanceof AnvilChunkLoader ? ((AnvilChunkLoader) provider.chunkLoader).getPendingSaveCount() : -1;
+                ContentLog.LOGGER.debug("Pregen telemetry: chunks={}/{} loadedChunks={} pendingChunkSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), pending, used, memory.maxMemory() >> 20);
+            }
         }
         progress = sofar();
         int tenth = (int) (done * 10L / Math.max(1L, order.total()));
