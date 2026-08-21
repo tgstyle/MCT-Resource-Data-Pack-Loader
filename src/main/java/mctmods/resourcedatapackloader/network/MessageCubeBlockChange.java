@@ -2,10 +2,12 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.CubePos;
 import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
@@ -98,18 +100,21 @@ public class MessageCubeBlockChange implements IMessage {
                 return;
             }
 
-            ClientHeightMap index = (ClientHeightMap) cube.getColumn().getOpacityIndex();
-            for (int hmapUpdate : packet.heightValues) {
-                int x = hmapUpdate & 0xF;
-                int z = (hmapUpdate >> 4) & 0xF;
-                int height = hmapUpdate >> 8;
-                index.setHeight(x, z, height);
-            }
-
             for (int i = 0; i < packet.localAddresses.length; i++) {
                 BlockPos pos = cube.localAddressToBlockPos(packet.localAddresses[i]);
                 worldClient.invalidateBlockReceiveRegion(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
                 worldClient.setBlockState(pos, packet.blockStates[i], 3);
+            }
+
+            ClientHeightMap index = (ClientHeightMap) cube.getColumn().getOpacityIndex();
+            ILightingManager lm = ((IRubicWorldInternal.Client) world).rdpl$getLightingManager();
+            for (int hmapUpdate : packet.heightValues) {
+                int x = hmapUpdate & 0xF;
+                int z = (hmapUpdate >> 4) & 0xF;
+                int height = hmapUpdate >> 8;
+                int oldHeight = index.getTopBlockY(x, z);
+                index.setHeight(x, z, height);
+                if (oldHeight != height) { lm.updateLightBetween(cube.getColumn(), x, oldHeight, height, z); }
             }
             cube.getTileEntityMap().values().forEach(TileEntity::updateContainingBlockInfo);
         }
