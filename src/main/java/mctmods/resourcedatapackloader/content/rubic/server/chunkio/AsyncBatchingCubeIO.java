@@ -112,7 +112,7 @@ public class AsyncBatchingCubeIO implements ICubeIO {
     @Override public int getPendingColumnCount() {
         this.lock.readLock().lock();
         try {
-            this.ensureOpen();
+            if (!this.open) { return 0; }
             return this.pendingColumns.size();
         } finally {
             this.lock.readLock().unlock();
@@ -122,7 +122,7 @@ public class AsyncBatchingCubeIO implements ICubeIO {
     @Override public int getPendingCubeCount() {
         this.lock.readLock().lock();
         try {
-            this.ensureOpen();
+            if (!this.open) { return 0; }
             return this.pendingCubes.size();
         } finally {
             this.lock.readLock().unlock();
