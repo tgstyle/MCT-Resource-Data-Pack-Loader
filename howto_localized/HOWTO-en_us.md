@@ -2714,7 +2714,7 @@ A pack cannot set a border of any size it likes. `worldBorderLimit` in the confi
 
 
 
-**Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
+**Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`, and `reccomplex`, which switches off everything Recurrent Complex generates on its own — its natural structures and its decoration stand-ins — leaving what already stands in the world untouched.
 
 **Creature types** for biome spawns and rates. `creature`, `monster`, `ambient`, `water_creature`.
 

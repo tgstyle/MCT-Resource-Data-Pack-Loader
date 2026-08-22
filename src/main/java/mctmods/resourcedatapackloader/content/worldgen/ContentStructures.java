@@ -129,6 +129,7 @@ public final class ContentStructures {
         map.put("Mansion", "mansions");
         map.put("Fortress", "netherbridges");
         map.put("EndCity", "endcities");
+        map.put("reccomplex", "reccomplex");
         return Collections.unmodifiableMap(map);
     }
 
@@ -144,6 +145,7 @@ public final class ContentStructures {
         keys.add("mansions");
         keys.add("netherbridges");
         keys.add("endcities");
+        keys.add("reccomplex");
         return Collections.unmodifiableSet(keys);
     }
 

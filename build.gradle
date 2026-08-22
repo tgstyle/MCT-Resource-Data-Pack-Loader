@@ -102,7 +102,7 @@ dependencies {
         implementation rfg.deobf("curse.maven:${common.blpl_version}")
     }
     compileOnly rfg.deobf("${common.mjei_version}")
-    //runtimeOnly rfg.deobf("${common.mjei_version}")
+    runtimeOnly rfg.deobf("curse.maven:${common.heit_version}")
 
     //implementation rfg.deobf("curse.maven:${common.drtr_version}")
 
@@ -131,8 +131,8 @@ dependencies {
 
     implementation rfg.deobf("curse.maven:${common.tekt_version}")
     implementation rfg.deobf("curse.maven:${common.movl_version}")
-    compileOnly rfg.deobf("curse.maven:${common.ivtk_version}")
-    compileOnly rfg.deobf("curse.maven:${common.rcmp_version}")
+    implementation rfg.deobf("curse.maven:${common.ivtk_version}")
+    implementation rfg.deobf("curse.maven:${common.rcmp_version}")
     implementation rfg.deobf("curse.maven:${common.mcal_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.cstd_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thfo_version}")
@@ -147,8 +147,9 @@ dependencies {
     runtimeOnly rfg.deobf("curse.maven:${common.rbcr_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.rsto_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.rbst_version}")
-    //runtimeOnly rfg.deobf("curse.maven:${common.cmsp_version}")
-    //runtimeOnly rfg.deobf("curse.maven:${common.mocr_version}")
+    compileOnly rfg.deobf("curse.maven:${common.cmsp_version}")
+    runtimeOnly rfg.deobf("curse.maven:${common.cmsp_version}")
+    runtimeOnly rfg.deobf("curse.maven:${common.mocr_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.rndt_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.indc_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thcr_version}")

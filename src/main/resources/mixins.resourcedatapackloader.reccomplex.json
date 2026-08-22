@@ -11,6 +11,7 @@
     "MixinGenericVillagePiece",
     "MixinHeightMapFreezer",
     "MixinMazeComponentConnector",
+    "MixinRCBiomeDecorator",
     "MixinStructureEntry",
     "MixinStructureSpawnContext",
     "MixinTransformerRuins",

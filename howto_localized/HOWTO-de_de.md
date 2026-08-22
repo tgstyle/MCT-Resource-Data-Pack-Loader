@@ -2710,7 +2710,7 @@ Ein Pack kann keine Grenze beliebiger Größe setzen. `worldBorderLimit` in der 
 
 **Der Schwierigkeitsgrad** wird mit `worldDifficulty` in der Gruppe `terrain` festgehalten, einer von `peaceful`, `easy`, `normal` oder `hard`. Ein bloßer Schwierigkeitsgrad gilt für jede Dimension, und eine Zeile der Form `Dimension=Schwierigkeitsgrad`, etwa `-1=hard`, gilt nur für diese Dimension und gewinnt gegen den bloßen, sodass der Nether härter zubeißen kann als die Oberwelt. Festgehalten heißt festgehalten: Im Pausenmenü kann den ganzen Tag geklickt werden, die Welt spielt trotzdem mit dem, was das Pack verlangt hat. Leer, der Standard, überlässt den Schwierigkeitsgrad dem, der spielt.
 
-**Strukturen** für eine Weltvorlage. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`.
+**Strukturen** für eine Weltvorlage. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines` und `reccomplex`, das alles abschaltet, was Recurrent Complex von sich aus erzeugt – seine natürlichen Strukturen und seine Dekorations-Stellvertreter –, während das, was schon in der Welt steht, unangetastet bleibt.
 
 **Kreaturtypen** für Biom-Spawns und -Raten. `creature`, `monster`, `ambient`, `water_creature`.
 
