@@ -91,7 +91,7 @@ public class Cube implements ICube {
             for (int z = 0; z < Cube.SIZE; z++) {
                 for (int x = 0; x < Cube.SIZE; x++) {
                     IBlockState newstate = primer.getBlockState(x, y, z);
-                    if (newstate != air && newstate.getMaterial() != Material.AIR) {
+                    if (newstate != air) {
                         if (storage == NULL_STORAGE) { newStorage(); }
                         storage.set(x, y, z, newstate);
                     }

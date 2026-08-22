@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.*;
 import mctmods.resourcedatapackloader.content.rubic.world.column.ColumnTileEntityMap;
 import mctmods.resourcedatapackloader.content.rubic.world.column.CubeMap;
@@ -541,12 +542,12 @@ public abstract class MixinChunk {
     }
 
     @Inject(method = "getTileEntity", at = @At("HEAD"), cancellable = true)
-    private void getTileEntity_CompatTemplate(BlockPos pos, Chunk.EnumCreateEntityType type, CallbackInfoReturnable<TileEntity> cir) {
+    private void getTileEntity_CompatTemplate(BlockPos pos, Chunk.EnumCreateEntityType creationMode, CallbackInfoReturnable<TileEntity> cir) {
         if (rdpl$compatGenerating()) { cir.setReturnValue(null); }
     }
 
     @Inject(method = "addTileEntity(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/tileentity/TileEntity;)V", at = @At("HEAD"), cancellable = true)
-    private void addTileEntity_CompatTemplate(BlockPos pos, TileEntity tileEntity, CallbackInfo cbi) {
+    private void addTileEntity_CompatTemplate(BlockPos pos, TileEntity tileEntityIn, CallbackInfo cbi) {
         if (rdpl$compatGenerating()) { cbi.cancel(); }
     }
 
@@ -742,6 +743,24 @@ public abstract class MixinChunk {
     public void chunk_internal$markPregenDone() { rdpl$pregenDone = true; }
 
     public ChunkPrimer chunk_internal$getCompatGenerationPrimer() { return rdpl$compatGenerationPrimer; }
+
+    public void chunk_internal$syncCompatGenerationWrites() {
+        if (!rdpl$compatArraysFilled) { return; }
+        for (int section = 0; section < 16; section++) {
+            ExtendedBlockStorage storage = storageArrays[section];
+            if (storage == null || storage == NULL_BLOCK_STORAGE) { continue; }
+            for (int localY = 0; localY < 16; localY++) {
+                for (int localZ = 0; localZ < 16; localZ++) {
+                    for (int localX = 0; localX < 16; localX++) {
+                        int y = (section << 4) + localY;
+                        IBlockState held = storage.get(localX, localY, localZ);
+                        if (rdpl$compatGenerationPrimer.getBlockState(localX, y, localZ) != held) { rdpl$compatGenerationPrimer.setBlockState(localX, y, localZ, held); }
+                    }
+                }
+            }
+        }
+        rdpl$compatArraysFilled = false;
+    }
 
     public void chunk_internal$removeFromStagingHeightmap(ICube cube) { rdpl$stagingHeightMap.removeStagedCube(cube); }
 

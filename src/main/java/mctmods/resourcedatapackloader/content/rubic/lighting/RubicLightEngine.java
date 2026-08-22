@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInte
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvider;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.compat.GcRubicSunlight;
 import mctmods.resourcedatapackloader.util.Coords;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -136,7 +137,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
                 int z = minZ + localZ;
                 if (hasStorage) {
                     for (int y = maxY; y >= minY; y--) {
-                        if (stateAt(cube, x, y, z).getLightValue(world, at.setPos(x, y, z)) > 0) { scheduleLightUpdate(EnumSkyBlock.BLOCK, at.setPos(x, y, z)); }
+                        if (GcRubicSunlight.lightValue(stateAt(cube, x, y, z), world, at.setPos(x, y, z)) > 0) { scheduleLightUpdate(EnumSkyBlock.BLOCK, at.setPos(x, y, z)); }
                     }
                 }
                 if (!sky) { continue; }
@@ -339,7 +340,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
     private int lightWanted(ICube cube, EnumSkyBlock lightType, int x, int y, int z) {
         int own = lightType == EnumSkyBlock.SKY
                 ? (skyReaches(cube, x, y, z) ? MAX_LIGHT : 0)
-                : stateAt(cube, x, y, z).getLightValue(world, at.setPos(x, y, z));
+                : GcRubicSunlight.lightValue(stateAt(cube, x, y, z), world, at.setPos(x, y, z));
         if (own >= MAX_LIGHT) { return MAX_LIGHT; }
         int opacity = opacityAt(cube, x, y, z);
         if (opacity >= MAX_LIGHT && own == 0) { return 0; }

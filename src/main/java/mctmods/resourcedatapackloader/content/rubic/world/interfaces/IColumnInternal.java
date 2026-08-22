@@ -10,6 +10,8 @@ import net.minecraft.world.chunk.ChunkPrimer;
 public interface IColumnInternal extends IColumn {
     ChunkPrimer getCompatGenerationPrimer();
 
+    default void syncCompatGenerationWrites() {}
+
     void removeFromStagingHeightmap(ICube cube);
 
     void addToStagingHeightmap(ICube cube);
