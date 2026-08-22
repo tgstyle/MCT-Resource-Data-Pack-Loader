@@ -23,7 +23,6 @@ import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
-import org.jetbrains.annotations.NotNull;
 
 public class EmptyColumn extends Chunk implements IColumnInternal {
 	private final ICube emptyCube;
@@ -41,23 +40,23 @@ public class EmptyColumn extends Chunk implements IColumnInternal {
 
 	@Override public boolean shouldTick() { return false; }
 
-	@Override @NotNull public IHeightMap getOpacityIndex() { return opacityIndex; }
+	@Override @Nonnull public IHeightMap getOpacityIndex() { return opacityIndex; }
 
-	@Override @NotNull public Collection<? extends ICube> getLoadedCubes() { return Collections.emptyList(); }
+	@Override @Nonnull public Collection<? extends ICube> getLoadedCubes() { return Collections.emptyList(); }
 
-	@Override @NotNull public Iterable<? extends ICube> getLoadedCubes(int startY, int endY) { return Collections.emptyList(); }
+	@Override @Nonnull public Iterable<? extends ICube> getLoadedCubes(int startY, int endY) { return Collections.emptyList(); }
 
 	@Nullable @Override public ICube getLoadedCube(int cubeY) { return null; }
 
-	@Override @NotNull public ICube getCube(int cubeY) { return emptyCube; }
+	@Override @Nonnull public ICube getCube(int cubeY) { return emptyCube; }
 
-	@Override public void addCube(@NotNull ICube cube) { throw new RuntimeException("This should never be called!"); }
+	@Override public void addCube(@Nonnull ICube cube) { throw new RuntimeException("This should never be called!"); }
 
 	@Nullable @Override public ICube removeCube(int cubeY) { return null; }
 
 	@Override public boolean hasLoadedCubes() { return false; }
 
-	@Override public void preCacheCube(@NotNull ICube cube) {
+	@Override public void preCacheCube(@Nonnull ICube cube) {
 	}
 
 	@Override public int getX() { return 0; }
@@ -82,37 +81,37 @@ public class EmptyColumn extends Chunk implements IColumnInternal {
 	@Override public void generateSkylightMap() {
 	}
 
-	@Override @Nonnull public IBlockState getBlockState(@NotNull BlockPos pos) { return Blocks.AIR.getDefaultState(); }
+	@Override @Nonnull public IBlockState getBlockState(@Nonnull BlockPos pos) { return Blocks.AIR.getDefaultState(); }
 
-	@Override public int getBlockLightOpacity(@NotNull BlockPos pos) { return 255; }
+	@Override public int getBlockLightOpacity(@Nonnull BlockPos pos) { return 255; }
 
-	@Override public int getLightFor(EnumSkyBlock type, @NotNull BlockPos pos) { return type.defaultLightValue; }
+	@Override public int getLightFor(EnumSkyBlock type, @Nonnull BlockPos pos) { return type.defaultLightValue; }
 
-	@Override public void setLightFor(@NotNull EnumSkyBlock type, @NotNull BlockPos pos, int value) {
+	@Override public void setLightFor(@Nonnull EnumSkyBlock type, @Nonnull BlockPos pos, int value) {
 	}
 
-	@Override public int getLightSubtracted(@NotNull BlockPos pos, int amount) { return 0; }
+	@Override public int getLightSubtracted(@Nonnull BlockPos pos, int amount) { return 0; }
 
-	@Override public void addEntity(@NotNull Entity entityIn) {
+	@Override public void addEntity(@Nonnull Entity entityIn) {
 	}
 
-	@Override public void removeEntity(@NotNull Entity entityIn) {
+	@Override public void removeEntity(@Nonnull Entity entityIn) {
 	}
 
-	@Override public void removeEntityAtIndex(@NotNull Entity entityIn, int index) {
+	@Override public void removeEntityAtIndex(@Nonnull Entity entityIn, int index) {
 	}
 
-	@Override public boolean canSeeSky(@NotNull BlockPos pos) { return false; }
+	@Override public boolean canSeeSky(@Nonnull BlockPos pos) { return false; }
 
-	@Nullable @Override public TileEntity getTileEntity(@NotNull BlockPos pos, @NotNull Chunk.EnumCreateEntityType creationMode) { return null; }
+	@Nullable @Override public TileEntity getTileEntity(@Nonnull BlockPos pos, @Nonnull Chunk.EnumCreateEntityType creationMode) { return null; }
 
-	@Override public void addTileEntity(@NotNull TileEntity tileEntityIn) {
+	@Override public void addTileEntity(@Nonnull TileEntity tileEntityIn) {
 	}
 
-	@Override public void addTileEntity(@NotNull BlockPos pos, @NotNull TileEntity tileEntityIn) {
+	@Override public void addTileEntity(@Nonnull BlockPos pos, @Nonnull TileEntity tileEntityIn) {
 	}
 
-	@Override public void removeTileEntity(@NotNull BlockPos pos) {
+	@Override public void removeTileEntity(@Nonnull BlockPos pos) {
 	}
 
 	@Override public void onLoad() {
@@ -124,11 +123,11 @@ public class EmptyColumn extends Chunk implements IColumnInternal {
 	@Override public void markDirty() {
 	}
 
-	@Override public void getEntitiesWithinAABBForEntity(Entity entityIn, @NotNull AxisAlignedBB aabb,
-	                                                     @NotNull List<Entity> listToFill, @NotNull Predicate<? super Entity> filter) {
+	@Override public void getEntitiesWithinAABBForEntity(Entity entityIn, @Nonnull AxisAlignedBB aabb,
+	                                                     @Nonnull List<Entity> listToFill, @Nonnull Predicate<? super Entity> filter) {
 	}
 
-	@Override public <T extends Entity> void getEntitiesOfTypeWithinAABB(@NotNull Class<? extends T> entityClass, @NotNull AxisAlignedBB aabb, @NotNull List<T> listToFill, @NotNull Predicate<? super T> filter) {
+	@Override public <T extends Entity> void getEntitiesOfTypeWithinAABB(@Nonnull Class<? extends T> entityClass, @Nonnull AxisAlignedBB aabb, @Nonnull List<T> listToFill, @Nonnull Predicate<? super T> filter) {
 	}
 
 	@Override public boolean needsSaving(boolean p_76601_1_) { return false; }

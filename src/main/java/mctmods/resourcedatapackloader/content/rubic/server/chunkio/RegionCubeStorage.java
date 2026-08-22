@@ -20,7 +20,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -89,23 +89,23 @@ public class RegionCubeStorage implements IRubicStorage {
 
     public RegionCubeStorage(Path path) throws IOException { this.save = saveForPath(Objects.requireNonNull(path, "path")); }
 
-    @Override public boolean columnExists(@NotNull ChunkPos pos) throws IOException { return this.save.getSaveSection2D().hasEntry(new EntryLocation2D(pos.x, pos.z)); }
+    @Override public boolean columnExists(@Nonnull ChunkPos pos) throws IOException { return this.save.getSaveSection2D().hasEntry(new EntryLocation2D(pos.x, pos.z)); }
 
-    @Override public NBTTagCompound readColumn(@NotNull ChunkPos pos) throws IOException {
+    @Override public NBTTagCompound readColumn(@Nonnull ChunkPos pos) throws IOException {
         Optional<ByteBuffer> data = this.save.load(new EntryLocation2D(pos.x, pos.z), true);
         return data.isPresent()
                 ? CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.get().array()))
                 : null;
     }
 
-    @Override public NBTTagCompound readCube(@NotNull CubePos pos) throws IOException {
+    @Override public NBTTagCompound readCube(@Nonnull CubePos pos) throws IOException {
         Optional<ByteBuffer> data = this.save.load(new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ()), true);
         return data.isPresent()
                 ? CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.get().array()))
                 : null;
     }
 
-    @Override public void writeColumn(@NotNull ChunkPos pos, @NotNull NBTTagCompound nbt) throws IOException {
+    @Override public void writeColumn(@Nonnull ChunkPos pos, @Nonnull NBTTagCompound nbt) throws IOException {
         ByteBuf compressedBuf = UnpooledByteBufAllocator.DEFAULT.ioBuffer();
         try {
             CompressedStreamTools.writeCompressed(nbt, new ByteBufOutputStream(compressedBuf));
@@ -115,7 +115,7 @@ public class RegionCubeStorage implements IRubicStorage {
         }
     }
 
-    @Override public void writeCube(@NotNull CubePos pos, @NotNull NBTTagCompound nbt) throws IOException {
+    @Override public void writeCube(@Nonnull CubePos pos, @Nonnull NBTTagCompound nbt) throws IOException {
         ByteBuf compressedBuf = UnpooledByteBufAllocator.DEFAULT.ioBuffer();
         try {
             CompressedStreamTools.writeCompressed(nbt, new ByteBufOutputStream(compressedBuf));
@@ -125,7 +125,7 @@ public class RegionCubeStorage implements IRubicStorage {
         }
     }
 
-    @Override public void writeBatch(@NotNull NBTBatch batch) throws IOException {
+    @Override public void writeBatch(@Nonnull NBTBatch batch) throws IOException {
         Map<EntryLocation2D, ByteBuf> compressedColumns = Collections.emptyMap();
         Map<EntryLocation3D, ByteBuf> compressedCubes = Collections.emptyMap();
         try {

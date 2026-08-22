@@ -44,7 +44,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.ForgeChunkManager.Ticket;
 import net.minecraftforge.common.MinecraftForge;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -101,7 +101,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
         this.chunkGc = new CubeGC(((IRubicWorldInternal.Server) worldServer).rdpl$getCubeCache());
     }
 
-    @Override @Deprecated @NotNull public Iterator<Chunk> getChunkIterator() {
+    @Override @Deprecated @Nonnull public Iterator<Chunk> getChunkIterator() {
         Iterator<Chunk> chunkIt = this.cubeCache.getLoadedChunks().iterator();
         return new AbstractIterator<Chunk>() {
             @Override protected Chunk computeNext() {
@@ -335,7 +335,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
         return columnWatcher;
     }
 
-    @Override public void markBlockForUpdate(@NotNull BlockPos pos) {
+    @Override public void markBlockForUpdate(@Nonnull BlockPos pos) {
         CubeWatcher cubeWatcher = this.getCubeWatcher(CubePos.fromBlockCoords(pos));
         if (cubeWatcher != null) {
             int localX = blockToLocal(pos.getX());
@@ -452,7 +452,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
         cubeWatcher.scheduleAddPlayer(playerEntity);
     }
 
-    @Override public boolean isPlayerWatchingChunk(@NotNull EntityPlayerMP player, int cubeX, int cubeZ) {
+    @Override public boolean isPlayerWatchingChunk(@Nonnull EntityPlayerMP player, int cubeX, int cubeZ) {
         ColumnWatcher columnWatcher = this.getColumnWatcher(new ChunkPos(cubeX, cubeZ));
         return columnWatcher != null &&
                 columnWatcher.containsPlayer(player) &&
@@ -516,9 +516,9 @@ public class PlayerCubeMap extends PlayerChunkMap {
         this.verticalViewDistance = newVerticalViewDistance;
     }
 
-    @Override public void entryChanged(@NotNull PlayerChunkMapEntry entry) { throw new UnsupportedOperationException(); }
+    @Override public void entryChanged(@Nonnull PlayerChunkMapEntry entry) { throw new UnsupportedOperationException(); }
 
-    @Override public void removeEntry(@NotNull PlayerChunkMapEntry entry) { throw new UnsupportedOperationException(); }
+    @Override public void removeEntry(@Nonnull PlayerChunkMapEntry entry) { throw new UnsupportedOperationException(); }
 
     void addToUpdateEntry(CubeWatcher cubeWatcher) { this.cubeWatchersToUpdate.add(cubeWatcher); }
 

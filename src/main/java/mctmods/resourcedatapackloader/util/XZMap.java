@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.util.interfaces.IXZAddressable;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -148,7 +148,7 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         this.mask = this.buckets.length - 1;
     }
 
-    @NotNull public Iterator<T> iterator() {
+    @Nonnull public Iterator<T> iterator() {
         return new Iterator<T>() {
             int at = -1;
             int next = -1;

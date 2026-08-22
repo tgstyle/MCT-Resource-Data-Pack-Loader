@@ -28,7 +28,6 @@ import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.fml.common.StartupQuery;
-import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -54,7 +53,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     @Nonnull private final Profiler profiler;
     private Chunk currentlyLoadingColumn;
 
-    public CubeProviderServer(@NotNull WorldServer worldServer, @NotNull ICubeGenerator cubeGen) {
+    public CubeProviderServer(@Nonnull WorldServer worldServer, @Nonnull ICubeGenerator cubeGen) {
         super(worldServer,
                 worldServer.getSaveHandler().getChunkLoader(worldServer.provider),
                 worldServer.provider.createChunkGenerator());
@@ -83,7 +82,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         this.emptyCube = new BlankCube(emptyColumn);
     }
 
-    @Override @Detainted public void queueUnload(@NotNull Chunk chunk) {
+    @Override @Detainted public void queueUnload(@Nonnull Chunk chunk) {
     }
 
     @Override @Detainted public void queueUnloadAll() {
@@ -109,7 +108,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         return column == null ? emptyColumn : column;
     }
 
-    @Override @NotNull @Deprecated public Chunk provideChunk(int cubeX, int cubeZ) { return provideColumn(cubeX, cubeZ); }
+    @Override @Nonnull @Deprecated public Chunk provideChunk(int cubeX, int cubeZ) { return provideColumn(cubeX, cubeZ); }
 
     @Override public boolean saveChunks(boolean alwaysTrue) {
         for (Cube cube : cubeMap) {
@@ -130,20 +129,20 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         return false;
     }
 
-    @Override @NotNull public String makeString() {
+    @Override @Nonnull public String makeString() {
         return "CubeProviderServer: " + this.loadedChunks.size() + " columns, "
                 + this.cubeMap.getSize() + " cubes";
     }
 
-    @Override @NotNull public List<Biome.SpawnListEntry> getPossibleCreatures(@NotNull final EnumCreatureType type, @NotNull final BlockPos pos) { return cubeGen.getPossibleCreatures(type, pos); }
+    @Override @Nonnull public List<Biome.SpawnListEntry> getPossibleCreatures(@Nonnull final EnumCreatureType type, @Nonnull final BlockPos pos) { return cubeGen.getPossibleCreatures(type, pos); }
 
-    @Nullable @Override public BlockPos getNearestStructurePos(@NotNull World worldIn, @NotNull String name, @NotNull BlockPos pos, boolean findUnexplored) {
+    @Nullable @Override public BlockPos getNearestStructurePos(@Nonnull World worldIn, @Nonnull String name, @Nonnull BlockPos pos, boolean findUnexplored) {
         return cubeGen.getClosestStructure(name, pos, findUnexplored);
     }
 
     @Override public boolean chunkExists(int cubeX, int cubeZ) { return this.loadedChunks.get(ChunkPos.asLong(cubeX, cubeZ)) != null; }
 
-    @Override public boolean isInsideStructure(@NotNull World p_193413_1_, @NotNull String p_193413_2_, @NotNull BlockPos p_193413_3_) { return false; }
+    @Override public boolean isInsideStructure(@Nonnull World p_193413_1_, @Nonnull String p_193413_2_, @Nonnull BlockPos p_193413_3_) { return false; }
 
     @Override public Cube getCube(int cubeX, int cubeY, int cubeZ) {
         Cube cube = getCube(cubeX, cubeY, cubeZ, Requirement.GENERATE);
@@ -320,7 +319,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         return column;
     }
 
-    @Override @NotNull public ICubeIO getCubeIO() { return cubeIO; }
+    @Override @Nonnull public ICubeIO getCubeIO() { return cubeIO; }
 
     Iterator<Cube> cubesIterator() { return cubeMap.iterator(); }
 

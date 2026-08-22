@@ -16,7 +16,6 @@ import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,7 +25,7 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
     @Nonnull private final Cube blankCube;
     @Nonnull private final XYZMap<Cube> cubeMap = new XYZMap<>(0.7f, 8000);
 
-    public CubeProviderClient(@NotNull IRubicWorldInternal.Client world) {
+    public CubeProviderClient(@Nonnull IRubicWorldInternal.Client world) {
         super((World) world);
         this.world = world;
         this.blankCube = new BlankCube(super.provideChunk(Integer.MAX_VALUE, 0));
@@ -36,11 +35,11 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
 
     @Override public Chunk provideColumn(int x, int z) { return provideChunk(x, z); }
 
-    @Override @NotNull public Chunk provideChunk(int x, int z) { return super.provideChunk(x, z); }
+    @Override @Nonnull public Chunk provideChunk(int x, int z) { return super.provideChunk(x, z); }
 
     @Nullable @Override public Chunk getLoadedChunk(int x, int z) { return super.getLoadedChunk(x, z); }
 
-    @Override @NotNull public Chunk loadChunk(int cubeX, int cubeZ) {
+    @Override @Nonnull public Chunk loadChunk(int cubeX, int cubeZ) {
         Chunk column = new Chunk((World) this.world, cubeX, cubeZ);
         ((IChunkProviderClient) this).getLoadedChunks().put(ChunkPos.asLong(cubeX, cubeZ), column);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(column));
@@ -85,7 +84,7 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
 
     @Nullable @Override public Cube getLoadedCube(int cubeX, int cubeY, int cubeZ) { return cubeMap.get(cubeX, cubeY, cubeZ); }
 
-    @Override @NotNull public String makeString() {
+    @Override @Nonnull public String makeString() {
         return "MultiplayerChunkCache: " + ((IChunkProviderClient) this).getLoadedChunks().values()
                 .stream()
                 .map(c -> ((IColumn) c).getLoadedCubes().size())

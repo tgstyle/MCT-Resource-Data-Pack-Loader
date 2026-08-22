@@ -41,7 +41,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.world.ChunkEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -112,9 +111,9 @@ public class Cube implements ICube {
         isModified = true;
     }
 
-    protected Cube(@NotNull TicketList tickets, @NotNull World world, @NotNull Chunk column, @NotNull CubePos coords, @Nullable ExtendedBlockStorage storage,
-                   @NotNull EntityContainer entities, @NotNull Map<BlockPos, TileEntity> tileEntityMap,
-                   @NotNull ConcurrentLinkedQueue<BlockPos> tileEntityPosQueue, @Nullable ICubeLightTrackingInfo cubeLightData) {
+    protected Cube(@Nonnull TicketList tickets, @Nonnull World world, @Nonnull Chunk column, @Nonnull CubePos coords, @Nullable ExtendedBlockStorage storage,
+                   @Nonnull EntityContainer entities, @Nonnull Map<BlockPos, TileEntity> tileEntityMap,
+                   @Nonnull ConcurrentLinkedQueue<BlockPos> tileEntityPosQueue, @Nullable ICubeLightTrackingInfo cubeLightData) {
         this.tickets = tickets;
         this.world = world;
         this.column = column;
@@ -248,7 +247,7 @@ public class Cube implements ICube {
 
     @Override public int getZ() { return this.coords.getZ(); }
 
-    @Override @NotNull public CubePos getCoords() { return this.coords; }
+    @Override @Nonnull public CubePos getCoords() { return this.coords; }
 
     @Override @Nullable public ExtendedBlockStorage getStorage() { return this.storage; }
 
@@ -262,7 +261,7 @@ public class Cube implements ICube {
 
     private void newStorage() { storage = new ExtendedBlockStorage(cubeToMinBlock(getY()), world.provider.hasSkyLight()); }
 
-    @Override @NotNull public Map<BlockPos, TileEntity> getTileEntityMap() { return this.tileEntityMap; }
+    @Override @Nonnull public Map<BlockPos, TileEntity> getTileEntityMap() { return this.tileEntityMap; }
 
     @Override public ClassInheritanceMultiMap<Entity> getEntitySet() { return this.entities.getEntitySet(); }
 
@@ -331,7 +330,7 @@ public class Cube implements ICube {
 
     public void markDirty() { this.isModified = true; }
 
-    @NotNull public TicketList getTickets() { return tickets; }
+    @Nonnull public TicketList getTickets() { return tickets; }
 
     public void markForRenderUpdate() {
         this.world.markBlockRangeForRenderUpdate(
@@ -380,11 +379,11 @@ public class Cube implements ICube {
 
     @Override @Nullable public CapabilityDispatcher getCapabilities() { return this.capabilities; }
 
-    @Override public boolean hasCapability(@NotNull Capability<?> capability, @Nullable EnumFacing facing) {
+    @Override public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
         return this.capabilities != null && this.capabilities.hasCapability(capability, facing);
     }
 
-    @Override @Nullable public <T> T getCapability(@NotNull Capability<T> capability, @Nullable EnumFacing facing) {
+    @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
         return this.capabilities == null ? null : this.capabilities.getCapability(capability, facing);
     }
 

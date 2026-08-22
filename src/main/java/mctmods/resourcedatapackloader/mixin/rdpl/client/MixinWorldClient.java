@@ -9,7 +9,7 @@ import mctmods.resourcedatapackloader.util.IntRange;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -27,5 +27,5 @@ import org.spongepowered.asm.mixin.Shadow;
 
     @Override public void rdpl$tickRubicWorld() { rdpl$getLightingManager().onTick(); }
 
-    @Override @NotNull public CubeProviderClient rdpl$getCubeCache() { return (CubeProviderClient) this.clientChunkProvider; }
+    @Override @Nonnull public CubeProviderClient rdpl$getCubeCache() { return (CubeProviderClient) this.clientChunkProvider; }
 }

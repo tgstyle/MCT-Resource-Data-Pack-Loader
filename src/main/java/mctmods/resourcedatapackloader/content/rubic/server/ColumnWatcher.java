@@ -18,7 +18,6 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkWatchEvent;
-import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 import java.util.Objects;
 import javax.annotation.Nonnull;
@@ -27,7 +26,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
     @Nonnull private final PlayerCubeMap playerCubeMap;
     @Nonnull private final BitSet dirtyColumns = new BitSet(256);
 
-    ColumnWatcher(@NotNull PlayerCubeMap playerCubeMap, ChunkPos pos) {
+    ColumnWatcher(@Nonnull PlayerCubeMap playerCubeMap, ChunkPos pos) {
         super(playerCubeMap, pos.x, pos.z);
         this.playerCubeMap = playerCubeMap;
     }
@@ -46,7 +45,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         return self().getChunk() != null;
     }
 
-    @Override public void addPlayer(@NotNull EntityPlayerMP player) {
+    @Override public void addPlayer(@Nonnull EntityPlayerMP player) {
         if (self().getPlayerList().contains(player)) {
             ContentLog.LOGGER.debug("Failed to expand player. {} already is in chunk {}, {}", player,
                     this.getPos().x,
@@ -62,7 +61,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         }
     }
 
-    @Override public void removePlayer(@NotNull EntityPlayerMP player) {
+    @Override public void removePlayer(@Nonnull EntityPlayerMP player) {
         if (!self().getPlayerList().contains(player)) { return; }
         if (this.getChunk() == null) {
             self().getPlayerList().remove(player);
@@ -94,7 +93,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         return true;
     }
 
-    @Override @Deprecated public void sendToPlayer(@NotNull EntityPlayerMP player) {
+    @Override @Deprecated public void sendToPlayer(@Nonnull EntityPlayerMP player) {
     }
 
     @Override @Deprecated public void blockChanged(int x, int y, int z) {

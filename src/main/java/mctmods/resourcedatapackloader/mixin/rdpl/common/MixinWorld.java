@@ -34,7 +34,6 @@ import net.minecraft.profiler.Profiler;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -229,18 +228,18 @@ import net.minecraft.util.math.AxisAlignedBB;
 
     @Override public int rdpl$getMaxGenerationHeight() { return this.rdpl$maxGenerationHeight; }
 
-    @Override @NotNull public ICubeProviderInternal rdpl$getCubeCache() {
+    @Override @Nonnull public ICubeProviderInternal rdpl$getCubeCache() {
         if (!this.rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
         return (ICubeProviderInternal) this.chunkProvider;
     }
 
-    @Override @NotNull public LightingManager rdpl$getLightingManager() {
+    @Override @Nonnull public LightingManager rdpl$getLightingManager() {
         if (!this.rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
         assert this.rdpl$lightingManager != null;
         return this.rdpl$lightingManager;
     }
 
-    @Override public boolean rdpl$testForCubes(@NotNull CubePos start, @NotNull CubePos end, @NotNull Predicate<? super ICube> cubeAllowed) {
+    @Override public boolean rdpl$testForCubes(@Nonnull CubePos start, @Nonnull CubePos end, @Nonnull Predicate<? super ICube> cubeAllowed) {
         int minCubeX = start.getX();
         int minCubeY = start.getY();
         int minCubeZ = start.getZ();
@@ -258,9 +257,9 @@ import net.minecraft.util.math.AxisAlignedBB;
         return true;
     }
 
-    @Override @NotNull public Cube rdpl$getCubeFromCubeCoords(int cubeX, int cubeY, int cubeZ) { return this.rdpl$getCubeCache().getCube(cubeX, cubeY, cubeZ); }
+    @Override @Nonnull public Cube rdpl$getCubeFromCubeCoords(int cubeX, int cubeY, int cubeZ) { return this.rdpl$getCubeCache().getCube(cubeX, cubeY, cubeZ); }
 
-    @Override @NotNull public Cube rdpl$getCubeFromBlockCoords(@NotNull BlockPos pos) {
+    @Override @Nonnull public Cube rdpl$getCubeFromBlockCoords(@Nonnull BlockPos pos) {
         return this.rdpl$getCubeFromCubeCoords(blockToCube(pos.getX()), blockToCube(pos.getY()), blockToCube(pos.getZ()));
     }
 
@@ -323,9 +322,9 @@ import net.minecraft.util.math.AxisAlignedBB;
         cir.setReturnValue(currentPos);
     }
 
-    @Override public boolean rdpl$isBlockColumnLoaded(@NotNull BlockPos pos) { return rdpl$isBlockColumnLoaded(pos, true); }
+    @Override public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos) { return rdpl$isBlockColumnLoaded(pos, true); }
 
-    @Override public boolean rdpl$isBlockColumnLoaded(@NotNull BlockPos pos, boolean allowEmpty) {
+    @Override public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos, boolean allowEmpty) {
         return this.isChunkLoaded(blockToCube(pos.getX()), blockToCube(pos.getZ()), allowEmpty);
     }
 

@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.rubic.world.column;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 
 import com.google.common.collect.Lists;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +42,7 @@ public class CubeMap implements Iterable<Cube> {
 
     private boolean contains(int cubeY, int searchIndex) { return searchIndex < cubes.size() && cubes.get(searchIndex).getY() == cubeY; }
 
-    @Override @NotNull public Iterator<Cube> iterator() { return cubes.iterator(); }
+    @Override @Nonnull public Iterator<Cube> iterator() { return cubes.iterator(); }
 
     public Collection<Cube> all() { return cubes; }
 

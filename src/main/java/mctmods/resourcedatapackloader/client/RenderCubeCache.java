@@ -14,7 +14,6 @@ import net.minecraft.world.ChunkCache;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -26,7 +25,7 @@ public class RenderCubeCache extends ChunkCache {
     @Nonnull private final Map<BlockPos, TileEntity>[][][] tileEntities;
     @Nonnull private final World world;
 
-    public RenderCubeCache(@NotNull World world, BlockPos from, BlockPos to, int subtract) {
+    public RenderCubeCache(@Nonnull World world, BlockPos from, BlockPos to, int subtract) {
         super(world, from, to, subtract);
         this.world = world;
         this.cubeY = Coords.blockToCube(from.getY() - subtract);
@@ -53,7 +52,7 @@ public class RenderCubeCache extends ChunkCache {
         }
     }
 
-    @Override public int getCombinedLight(@NotNull BlockPos pos, int lightValue) {
+    @Override public int getCombinedLight(@Nonnull BlockPos pos, int lightValue) {
         int blockLight = this.getLightForExt(EnumSkyBlock.SKY, pos);
         int skyLight = this.getLightForExt(EnumSkyBlock.BLOCK, pos);
         if (skyLight < lightValue) { skyLight = lightValue; }
@@ -70,7 +69,7 @@ public class RenderCubeCache extends ChunkCache {
         return this.tileEntities[arrayX][arrayY][arrayZ].get(pos);
     }
 
-    @Override @NotNull public IBlockState getBlockState(@NotNull BlockPos pos) {
+    @Override @Nonnull public IBlockState getBlockState(@Nonnull BlockPos pos) {
         if (world.isOutsideBuildHeight(pos)) { return Blocks.AIR.getDefaultState(); }
         int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
         int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
@@ -103,7 +102,7 @@ public class RenderCubeCache extends ChunkCache {
         return getRawLight(cube, type, pos);
     }
 
-    @Override public int getLightFor(@NotNull EnumSkyBlock type, @NotNull BlockPos pos) {
+    @Override public int getLightFor(@Nonnull EnumSkyBlock type, @Nonnull BlockPos pos) {
         if (world.isOutsideBuildHeight(pos)) { return type.defaultLightValue; }
         int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
         int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
@@ -120,7 +119,7 @@ public class RenderCubeCache extends ChunkCache {
         else { return ebs.getSkyLight(blockToLocal(pos.getX()), blockToLocal(pos.getY()), blockToLocal(pos.getZ())); }
     }
 
-    @SuppressWarnings("deprecation") @Override public boolean isSideSolid(@NotNull BlockPos pos, @NotNull EnumFacing side, boolean defaultValue) {
+    @SuppressWarnings("deprecation") @Override public boolean isSideSolid(@Nonnull BlockPos pos, @Nonnull EnumFacing side, boolean defaultValue) {
         if (world.isOutsideBuildHeight(pos)) { return defaultValue; }
         int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
         int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;

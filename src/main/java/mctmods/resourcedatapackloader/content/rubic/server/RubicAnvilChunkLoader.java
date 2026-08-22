@@ -17,7 +17,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.AnvilChunkLoader;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 public class RubicAnvilChunkLoader extends AnvilChunkLoader {
     private ICubeIO cubeIOValue;
@@ -46,24 +46,24 @@ public class RubicAnvilChunkLoader extends AnvilChunkLoader {
 
     @Override public boolean isChunkGeneratedAt(int x, int z) { return this.getCubeIO().columnExists(x, z); }
 
-    @Override @Nullable protected Chunk checkedReadChunkFromNBT(@NotNull World worldIn, int x, int z, @NotNull NBTTagCompound compound) {
+    @Override @Nullable protected Chunk checkedReadChunkFromNBT(@Nonnull World worldIn, int x, int z, @Nonnull NBTTagCompound compound) {
         throw new UnsupportedOperationException();
     }
 
-    @Override @Nullable protected Object[] checkedReadChunkFromNBT__Async(@NotNull World worldIn, int x, int z, @NotNull NBTTagCompound compound) {
+    @Override @Nullable protected Object[] checkedReadChunkFromNBT__Async(@Nonnull World worldIn, int x, int z, @Nonnull NBTTagCompound compound) {
         throw new UnsupportedOperationException();
     }
 
-    @Override public void saveChunk(@NotNull World worldIn, @NotNull Chunk chunkIn) {
+    @Override public void saveChunk(@Nonnull World worldIn, @Nonnull Chunk chunkIn) {
         getCubeIO().saveColumn(chunkIn);
         for (ICube cube : ((IColumn) chunkIn).getLoadedCubes()) { getCubeIO().saveCube((Cube) cube); }
     }
 
-    @Override protected void addChunkToPending(@NotNull ChunkPos pos, @NotNull NBTTagCompound compound) { throw new UnsupportedOperationException(); }
+    @Override protected void addChunkToPending(@Nonnull ChunkPos pos, @Nonnull NBTTagCompound compound) { throw new UnsupportedOperationException(); }
 
     @Override public boolean writeNextIO() { return getCubeIO().writeNextIO(); }
 
-    @Override public void saveExtraChunkData(@NotNull World worldIn, @NotNull Chunk chunkIn) {
+    @Override public void saveExtraChunkData(@Nonnull World worldIn, @Nonnull Chunk chunkIn) {
     }
 
     @Override public void flush() {
@@ -74,7 +74,7 @@ public class RubicAnvilChunkLoader extends AnvilChunkLoader {
         }
     }
 
-    @Override public void loadEntities(@NotNull World worldIn, @NotNull NBTTagCompound compound, @NotNull Chunk chunk) { throw new UnsupportedOperationException(); }
+    @Override public void loadEntities(@Nonnull World worldIn, @Nonnull NBTTagCompound compound, @Nonnull Chunk chunk) { throw new UnsupportedOperationException(); }
 
     @Override public int getPendingSaveCount() { return getCubeIO().getPendingColumnCount() + getCubeIO().getPendingCubeCount() / 16; }
 }

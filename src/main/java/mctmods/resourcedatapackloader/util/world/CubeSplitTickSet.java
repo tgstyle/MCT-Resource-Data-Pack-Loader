@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.util.world;
 import mctmods.resourcedatapackloader.util.CubePos;
 
 import net.minecraft.world.NextTickListEntry;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -29,7 +29,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
 
     @Override public boolean contains(Object o) { return all.contains(o); }
 
-    @SuppressWarnings("Duplicates") @Override @NotNull public Iterator<NextTickListEntry> iterator() {
+    @SuppressWarnings("Duplicates") @Override @Nonnull public Iterator<NextTickListEntry> iterator() {
         return new Iterator<NextTickListEntry>() {
             private final Iterator<NextTickListEntry> it = all.iterator();
             private NextTickListEntry lastEntry = null;
@@ -49,9 +49,9 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
         if (set.isEmpty()) { byCube.remove(pos); }
     }
 
-    @Override @NotNull public Object[] toArray() { return all.toArray(); }
+    @Override @Nonnull public Object[] toArray() { return all.toArray(); }
 
-    @Override @NotNull public <T> T[] toArray(@NotNull T[] a) { return all.toArray(a); }
+    @Override @Nonnull public <T> T[] toArray(@Nonnull T[] a) { return all.toArray(a); }
 
     @Override public boolean add(NextTickListEntry e) {
         boolean ret = all.add(e);
@@ -65,7 +65,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
         return ret;
     }
 
-    @Override public boolean containsAll(@NotNull Collection<?> c) { return all.containsAll(c); }
+    @Override public boolean containsAll(@Nonnull Collection<?> c) { return all.containsAll(c); }
 
     @Override public boolean addAll(Collection<? extends NextTickListEntry> c) {
         boolean ret = false;
@@ -75,7 +75,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
         return ret;
     }
 
-    @Override public boolean retainAll(@NotNull Collection<?> c) {
+    @Override public boolean retainAll(@Nonnull Collection<?> c) {
         Iterator<NextTickListEntry> it = this.iterator();
         boolean changed = false;
         while (it.hasNext()) {
@@ -112,7 +112,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
             return this.entry.equals(((EqualsHashCodeWrapper<?>) entry).entry);
         }
 
-        @Override public int compareTo(@NotNull EqualsHashCodeWrapper<T> other) {
+        @Override public int compareTo(@Nonnull EqualsHashCodeWrapper<T> other) {
             if (this.equals(other)) { return 0; }
             return this.entry.compareTo(other.entry);
         }
@@ -121,7 +121,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
     public static final class NextTickListEntryHashSet extends AbstractSet<NextTickListEntry> {
         private final Set<EqualsHashCodeWrapper<NextTickListEntry>> backingSet = new HashSet<>();
 
-        @Override @NotNull public Iterator<NextTickListEntry> iterator() {
+        @Override @Nonnull public Iterator<NextTickListEntry> iterator() {
             return new Iterator<NextTickListEntry>() {
                 final Iterator<EqualsHashCodeWrapper<NextTickListEntry>> it = backingSet.iterator();
                 @Override public boolean hasNext() { return it.hasNext(); }

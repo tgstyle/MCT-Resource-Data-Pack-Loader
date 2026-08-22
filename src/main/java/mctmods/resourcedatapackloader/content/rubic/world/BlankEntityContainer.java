@@ -6,7 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ClassInheritanceMultiMap;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -15,15 +15,15 @@ import java.util.function.Consumer;
 public class BlankEntityContainer extends EntityContainer {
     public BlankEntityContainer() { this.entities = EntityContainer.EMPTY_ARR[0]; }
 
-    @Override public void addEntity(@NotNull Entity entity) {
+    @Override public void addEntity(@Nonnull Entity entity) {
     }
 
-    @Override public boolean remove(@NotNull Entity entity) { return false; }
+    @Override public boolean remove(@Nonnull Entity entity) { return false; }
 
     @Override public void clear() {
     }
 
-    @Override @NotNull public Collection<Entity> getEntities() { return Collections.emptyList(); }
+    @Override @Nonnull public Collection<Entity> getEntities() { return Collections.emptyList(); }
 
     @Override public int size() { return 0; }
 
@@ -32,10 +32,10 @@ public class BlankEntityContainer extends EntityContainer {
     @Override public void markSaved(long time) {
     }
 
-    @Override public void writeToNbt(@NotNull NBTTagCompound nbt, @NotNull String name, @NotNull Consumer<Entity> listener) {
+    @Override public void writeToNbt(@Nonnull NBTTagCompound nbt, @Nonnull String name, @Nonnull Consumer<Entity> listener) {
     }
 
-    @Override public void readFromNbt(@NotNull NBTTagCompound nbt, @NotNull String name, @NotNull World world, @NotNull Consumer<Entity> listener) {
+    @Override public void readFromNbt(@Nonnull NBTTagCompound nbt, @Nonnull String name, @Nonnull World world, @Nonnull Consumer<Entity> listener) {
     }
 
     public static final class BlankEntityMap extends ClassInheritanceMultiMap<Entity> {
@@ -46,13 +46,13 @@ public class BlankEntityContainer extends EntityContainer {
             return false;
         }
 
-        @Override public boolean remove(@NotNull Object o) { return false; }
+        @Override public boolean remove(@Nonnull Object o) { return false; }
 
         @Override public boolean contains(Object o) { return false; }
 
-        @Override @NotNull public <S> Iterable<S> getByClass(@NotNull final Class<S> cl) { return Collections.emptyList(); }
+        @Override @Nonnull public <S> Iterable<S> getByClass(@Nonnull final Class<S> cl) { return Collections.emptyList(); }
 
-        @Override @NotNull public Iterator<Entity> iterator() { return Collections.emptyIterator(); }
+        @Override @Nonnull public Iterator<Entity> iterator() { return Collections.emptyIterator(); }
 
         @Override public int size() { return 0; }
     }

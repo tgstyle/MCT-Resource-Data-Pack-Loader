@@ -30,7 +30,6 @@ import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
-import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.List;
@@ -52,7 +51,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     @Nonnull private IBlockState extensionBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
     private boolean hasTopBedrock = false, hasBottomBedrock = true;
 
-    public VanillaCompatibilityGenerator(@NotNull IChunkGenerator vanilla, @NotNull World world) {
+    public VanillaCompatibilityGenerator(@Nonnull IChunkGenerator vanilla, @Nonnull World world) {
         this.vanilla = vanilla;
         this.world = world;
         this.offsetCubes = RubicWorldControl.terrainOffsetCubes();

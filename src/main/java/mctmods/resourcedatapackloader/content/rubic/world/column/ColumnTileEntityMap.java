@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.util.Coords;
 
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -78,12 +78,12 @@ public class ColumnTileEntityMap implements Map<BlockPos, TileEntity> {
 
     @Override public void clear() { throw new UnsupportedOperationException(); }
 
-    @Override @NotNull public Set<BlockPos> keySet() {
+    @Override @Nonnull public Set<BlockPos> keySet() {
         return new AbstractSet<BlockPos>() {
             @Override public int size() { return ColumnTileEntityMap.this.size(); }
             @Override public boolean isEmpty() { return ColumnTileEntityMap.this.isEmpty(); }
             @Override public boolean contains(Object o) { return ColumnTileEntityMap.this.containsKey(o); }
-            @Override @NotNull public Iterator<BlockPos> iterator() {
+            @Override @Nonnull public Iterator<BlockPos> iterator() {
                 return new Iterator<BlockPos>() {
                     final Iterator<? extends ICube> cubes = column.getLoadedCubes().iterator();
                     Iterator<BlockPos> curIt = !cubes.hasNext() ? null : cubes.next().getTileEntityMap().keySet().iterator();
@@ -111,12 +111,12 @@ public class ColumnTileEntityMap implements Map<BlockPos, TileEntity> {
         };
     }
 
-    @Override @NotNull public Collection<TileEntity> values() {
+    @Override @Nonnull public Collection<TileEntity> values() {
         return new AbstractCollection<TileEntity>() {
             @Override public int size() { return ColumnTileEntityMap.this.size(); }
             @Override public boolean isEmpty() { return ColumnTileEntityMap.this.isEmpty(); }
             @Override public boolean contains(Object o) { return ColumnTileEntityMap.this.containsValue(o); }
-            @Override @NotNull public Iterator<TileEntity> iterator() {
+            @Override @Nonnull public Iterator<TileEntity> iterator() {
                 return new Iterator<TileEntity>() {
                     final Iterator<? extends ICube> cubes = column.getLoadedCubes().iterator();
                     Iterator<TileEntity> curIt = !cubes.hasNext() ? null : cubes.next().getTileEntityMap().values().iterator();
@@ -149,12 +149,12 @@ public class ColumnTileEntityMap implements Map<BlockPos, TileEntity> {
         };
     }
 
-    @Override @NotNull public Set<Entry<BlockPos, TileEntity>> entrySet() {
+    @Override @Nonnull public Set<Entry<BlockPos, TileEntity>> entrySet() {
         return new AbstractSet<Entry<BlockPos, TileEntity>>() {
             @Override public int size() { return ColumnTileEntityMap.this.size(); }
             @Override public boolean isEmpty() { return ColumnTileEntityMap.this.isEmpty(); }
             @Override public boolean contains(Object o) { return ColumnTileEntityMap.this.containsKey(o); }
-            @Override @NotNull public Iterator<Entry<BlockPos, TileEntity>> iterator() {
+            @Override @Nonnull public Iterator<Entry<BlockPos, TileEntity>> iterator() {
                 return new Iterator<Entry<BlockPos, TileEntity>>() {
                     final Iterator<? extends ICube> cubes = column.getLoadedCubes().iterator();
                     Iterator<Entry<BlockPos, TileEntity>> curIt = !cubes.hasNext() ? null : cubes.next().getTileEntityMap().entrySet().iterator();

@@ -12,7 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
     @Unique private int rdpl$owner;
     @Unique private BlockPos.MutableBlockPos rdpl$standing;
     @Unique private BlockPos.MutableBlockPos rdpl$underfoot;
-    @Shadow @NotNull public abstract PathNodeType getPathNodeType(@NotNull IBlockAccess blockaccessIn, int x, int y, int z);
+    @Shadow @Nonnull public abstract PathNodeType getPathNodeType(@Nonnull IBlockAccess blockaccessIn, int x, int y, int z);
 
     @Redirect(method = "getPathNodeType(Lnet/minecraft/world/IBlockAccess;IIILnet/minecraft/entity/EntityLiving;IIIZZ)Lnet/minecraft/pathfinding/PathNodeType;",
             at = @At(value = "NEW", target = "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/math/BlockPos;"))

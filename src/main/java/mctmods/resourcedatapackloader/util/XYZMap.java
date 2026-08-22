@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.util.interfaces.IXYZAddressable;
-import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -201,7 +200,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
         }
     }
 
-    @NotNull public Iterator<T> iterator() {
+    @Nonnull public Iterator<T> iterator() {
         return new Iterator<T>() {
             int at = 1;
             @Override public boolean hasNext() { return at <= size; }

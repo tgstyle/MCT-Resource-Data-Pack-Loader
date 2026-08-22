@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.util.world;
 import mctmods.resourcedatapackloader.util.CubePos;
 
 import net.minecraft.world.NextTickListEntry;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.*;
 
@@ -22,7 +22,7 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
 
     @Override public boolean contains(Object o) { return all.contains(o); }
 
-    @NotNull
+    @Nonnull
     @SuppressWarnings("Duplicates") @Override public Iterator<NextTickListEntry> iterator() {
         return new Iterator<NextTickListEntry>() {
             private final Iterator<NextTickListEntry> it = all.iterator();
@@ -45,9 +45,9 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
 
     private void addByCube(NextTickListEntry e) { byCube.computeIfAbsent(CubePos.fromBlockCoords(e.position), x -> new ArrayList<>()).add(e); }
 
-    @Override @NotNull public Object[] toArray() { return all.toArray(); }
+    @Override @Nonnull public Object[] toArray() { return all.toArray(); }
 
-    @Override @NotNull public <T> T[] toArray(@NotNull T[] a) { return all.toArray(a); }
+    @Override @Nonnull public <T> T[] toArray(@Nonnull T[] a) { return all.toArray(a); }
 
     @Override public boolean add(NextTickListEntry e) {
         all.add(e);
@@ -61,7 +61,7 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
         return ret;
     }
 
-    @Override public boolean containsAll(@NotNull Collection<?> c) { return new HashSet<>(all).containsAll(c); }
+    @Override public boolean containsAll(@Nonnull Collection<?> c) { return new HashSet<>(all).containsAll(c); }
 
     @Override public void clear() {
         all.clear();

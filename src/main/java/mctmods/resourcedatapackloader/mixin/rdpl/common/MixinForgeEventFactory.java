@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
+import mctmods.resourcedatapackloader.util.compat.StreamsRubicValleys;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -17,7 +18,10 @@ import java.util.Random;
      * @reason Route the pre-populate event through the per-mod fake world height poster.
      */
     @Overwrite(remap = false) public static void onChunkPopulate(boolean pre, IChunkGenerator gen, World world, Random rand, int x, int z, boolean hasVillageGenerated) {
-        if (pre) { CompatHandler.postChunkPopulatePreWithFakeWorldHeight(new PopulateChunkEvent.Pre(gen, world, rand, x, z, hasVillageGenerated)); }
+        if (pre) {
+            StreamsRubicValleys.carveAhead(world, x, z);
+            CompatHandler.postChunkPopulatePreWithFakeWorldHeight(new PopulateChunkEvent.Pre(gen, world, rand, x, z, hasVillageGenerated));
+        }
         else { MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Post(gen, world, rand, x, z, hasVillageGenerated)); }
     }
 }

@@ -34,7 +34,7 @@ import static mctmods.resourcedatapackloader.util.ReflectionUtil.cast;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldSettings;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -189,7 +189,7 @@ import net.minecraft.world.GameRules;
 
     @Shadow protected abstract boolean canAddEntity(Entity entityIn);
 
-    @Override public void rdpl$initRubicWorldServer(@NotNull IntRange heightRange, @NotNull IntRange generationRange) {
+    @Override public void rdpl$initRubicWorldServer(@Nonnull IntRange heightRange, @Nonnull IntRange generationRange) {
         super.rdpl$initRubicWorld(heightRange, generationRange);
         this.rdpl$isRubicWorld = true;
         IWorldEntitySpawner spawner = new CubeWorldEntitySpawner();
@@ -207,13 +207,13 @@ import net.minecraft.world.GameRules;
         this.rdpl$lightingManager = new LightingManager((World) (Object) this);
     }
 
-    @Override public void rdpl$setSpawnArea(@NotNull SpawnCubes spawn) { this.rdpl$spawnArea = spawn; }
+    @Override public void rdpl$setSpawnArea(@Nonnull SpawnCubes spawn) { this.rdpl$spawnArea = spawn; }
 
-    @Override @NotNull public SpawnCubes rdpl$getSpawnArea() { return rdpl$spawnArea; }
+    @Override @Nonnull public SpawnCubes rdpl$getSpawnArea() { return rdpl$spawnArea; }
 
-    @Override @NotNull public CubeSplitTickSet rdpl$getScheduledTicks() { return (CubeSplitTickSet) pendingTickListEntriesHashSet; }
+    @Override @Nonnull public CubeSplitTickSet rdpl$getScheduledTicks() { return (CubeSplitTickSet) pendingTickListEntriesHashSet; }
 
-    @Override @NotNull public CubeSplitTickList rdpl$getThisTickScheduledTicks() { return (CubeSplitTickList) pendingTickListEntriesThisTick; }
+    @Override @Nonnull public CubeSplitTickList rdpl$getThisTickScheduledTicks() { return (CubeSplitTickList) pendingTickListEntriesThisTick; }
 
     @Override public void rdpl$tickRubicWorld() {
         if (!this.rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
@@ -221,12 +221,12 @@ import net.minecraft.world.GameRules;
         if (this.rdpl$spawnArea != null) { this.rdpl$spawnArea.update((World) (Object) this); }
     }
 
-    @Override @NotNull public CubeProviderServer rdpl$getCubeCache() {
+    @Override @Nonnull public CubeProviderServer rdpl$getCubeCache() {
         if (!this.rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
         return (CubeProviderServer) this.chunkProvider;
     }
 
-    @Override public void rdpl$removeForcedCube(@NotNull ICube cube) {
+    @Override public void rdpl$removeForcedCube(@Nonnull ICube cube) {
         if (!rdpl$forcedChunksCubes.get(cube.getColumn()).remove(cube)) {
             Rubic.LOGGER.error("Trying to remove forced cube {}, but it's not forced!", cube.getCoords()); }
         rdpl$forcedCubes.remove(cube);
@@ -236,7 +236,7 @@ import net.minecraft.world.GameRules;
         }
     }
 
-    @Override public void rdpl$addForcedCube(@NotNull ICube cube) {
+    @Override public void rdpl$addForcedCube(@Nonnull ICube cube) {
         if (!rdpl$forcedChunksCubes.computeIfAbsent(cube.getColumn(), chunk -> new HashSet<>()).add(cube)) {
             Rubic.LOGGER.error("Trying to add forced cube {}, but it's already forced!", cube.getCoords());
         }
@@ -244,13 +244,13 @@ import net.minecraft.world.GameRules;
         rdpl$forcedColumns.put(cube.getColumn());
     }
 
-    @Override @NotNull public XYZMap<ICube> rdpl$getForcedCubes() { return rdpl$forcedCubes; }
+    @Override @Nonnull public XYZMap<ICube> rdpl$getForcedCubes() { return rdpl$forcedCubes; }
 
-    @Override @NotNull public XZMap<IColumn> rdpl$getForcedColumns() { return rdpl$forcedColumns; }
+    @Override @Nonnull public XZMap<IColumn> rdpl$getForcedColumns() { return rdpl$forcedColumns; }
 
     @Override public void rdpl$unloadOldCubes() { rdpl$worldChunkGc.chunkGc(); }
 
-    @Override @NotNull public CompatGenerationScope rdpl$doCompatibilityGeneration() {
+    @Override @Nonnull public CompatGenerationScope rdpl$doCompatibilityGeneration() {
         rdpl$runningCompatibilityGenerator = true;
         return () -> rdpl$runningCompatibilityGenerator = false;
     }

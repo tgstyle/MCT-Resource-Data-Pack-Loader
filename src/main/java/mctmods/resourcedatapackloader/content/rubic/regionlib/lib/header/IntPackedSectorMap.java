@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Iterator;
 import java.util.Optional;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 public class IntPackedSectorMap<K extends IKey>
 	implements IKeyIdToSectorMap<IntHeaderEntry, EntryLocationHeaderEntryProvider<K>, K> {
@@ -37,7 +37,7 @@ public class IntPackedSectorMap<K extends IKey>
 		entrySectorOffsets[key.getId()] = packed(location);
 	}
 
-	@Override @NotNull public Iterator<RegionEntryLocation> iterator() {
+	@Override @Nonnull public Iterator<RegionEntryLocation> iterator() {
 		int first = 0;
 		while (first < entrySectorOffsets.length && entrySectorOffsets[first] == 0) { first++; }
 		int firstIdx = first;

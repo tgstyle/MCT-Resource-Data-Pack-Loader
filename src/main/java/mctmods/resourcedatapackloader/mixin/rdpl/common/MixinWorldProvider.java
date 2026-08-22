@@ -12,7 +12,7 @@ import mctmods.resourcedatapackloader.util.NotRubicWorldException;
 
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -90,5 +90,5 @@ import javax.annotation.Nullable;
         }
     }
 
-    @Override @NotNull public World rdpl$getWorld() { return world; }
+    @Override @Nonnull public World rdpl$getWorld() { return world; }
 }

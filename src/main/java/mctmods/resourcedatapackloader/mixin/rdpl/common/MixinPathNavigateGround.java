@@ -9,8 +9,8 @@ import net.minecraft.pathfinding.PathNavigate;
 import net.minecraft.pathfinding.PathNavigateGround;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.Overwrite;
      * @author tgstyle
      * @reason Clamp the air and solid scans to the world height bounds and loaded blocks so pathing terminates on cube worlds.
      */
-    @Nullable @Overwrite public Path getPathToPos(@NotNull BlockPos posIn) {
+    @Nullable @Overwrite public Path getPathToPos(@Nonnull BlockPos posIn) {
         BlockPos posOriginal = posIn;
         if (world.getBlockState(posIn).getMaterial() == Material.AIR) {
             BlockPos pos = posIn.down();

@@ -25,7 +25,7 @@ import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.List;
 
@@ -105,7 +105,7 @@ public class RubicClientEvents {
 
         @Override protected int getHoverState(boolean mouseOver) { return 0; }
 
-        @Override protected void mouseDragged(@NotNull Minecraft mc, int mouseX, int mouseY) {
+        @Override protected void mouseDragged(@Nonnull Minecraft mc, int mouseX, int mouseY) {
             if (this.visible) {
                 if (this.dragging) {
                     this.sliderValue = (float) (mouseX - (this.x + 4)) / (float) (this.width - 8);
@@ -121,7 +121,7 @@ public class RubicClientEvents {
             }
         }
 
-        @Override public boolean mousePressed(@NotNull Minecraft mc, int mouseX, int mouseY) {
+        @Override public boolean mousePressed(@Nonnull Minecraft mc, int mouseX, int mouseY) {
             if (super.mousePressed(mc, mouseX, mouseY)) {
                 this.sliderValue = (float) (mouseX - (this.x + 4)) / (float) (this.width - 8);
                 this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0F, 1.0F);

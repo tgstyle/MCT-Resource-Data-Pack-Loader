@@ -20,7 +20,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.gen.IChunkGenerator;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Implements;
@@ -717,12 +717,12 @@ public abstract class MixinChunk {
         return rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(x, cubeY, z);
     }
 
-    @NotNull public ICube chunk$getCube(int cubeY) {
+    @Nonnull public ICube chunk$getCube(int cubeY) {
         if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == cubeY) { return rdpl$cachedCube; }
         return rdpl$getRubicWorld().rdpl$getCubeCache().getCube(x, cubeY, z);
     }
 
-    public void chunk$addCube(@NotNull ICube cube) {
+    public void chunk$addCube(@Nonnull ICube cube) {
         this.rdpl$cubeMap.put((Cube) cube);
         Arrays.fill(precipitationHeightMap, -999);
     }
@@ -742,13 +742,13 @@ public abstract class MixinChunk {
         return false;
     }
 
-    @NotNull public IHeightMap chunk$getOpacityIndex() { return this.rdpl$opacityIndex; }
+    @Nonnull public IHeightMap chunk$getOpacityIndex() { return this.rdpl$opacityIndex; }
 
-    @NotNull public Collection<? extends ICube> chunk$getLoadedCubes() { return this.rdpl$cubeMap.all(); }
+    @Nonnull public Collection<? extends ICube> chunk$getLoadedCubes() { return this.rdpl$cubeMap.all(); }
 
-    @NotNull public Iterable<? extends ICube> chunk$getLoadedCubes(int startY, int endY) { return this.rdpl$cubeMap.cubes(startY, endY); }
+    @Nonnull public Iterable<? extends ICube> chunk$getLoadedCubes(int startY, int endY) { return this.rdpl$cubeMap.cubes(startY, endY); }
 
-    public void chunk$preCacheCube(@NotNull ICube cube) { this.rdpl$cachedCube = (Cube) cube; }
+    public void chunk$preCacheCube(@Nonnull ICube cube) { this.rdpl$cachedCube = (Cube) cube; }
 
     @Intrinsic public int chunk$getX() { return x; }
 
