@@ -37,8 +37,6 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
     @Nonnull private final Set<CubePos> cubesForSpawn = new HashSet<>();
 
     @Override public int findChunksForSpawning(WorldServer world, boolean hostileEnable, boolean peacefulEnable, boolean spawnOnSetTickRate) {
-        if (!hostileEnable) { hostileOff++; }
-        tellWhySpawnsFail(world);
         if (!hostileEnable && !peacefulEnable) { return 0; }
         this.cubesForSpawn.clear();
         int chunkCount = addEligibleChunks(world, this.cubesForSpawn);
@@ -47,10 +45,7 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
             if (!shouldSpawnType(mobType, hostileEnable, peacefulEnable, spawnOnSetTickRate)) { continue; }
             int worldEntityCount = world.countEntities(mobType, true);
             int maxEntityCount = mobType.getMaxNumberOfCreature() * chunkCount / MOB_COUNT_DIV;
-            if (worldEntityCount > maxEntityCount) {
-                if (mobType == EnumCreatureType.MONSTER) { capped++; }
-                continue;
-            }
+            if (worldEntityCount > maxEntityCount) { continue; }
             ArrayList<CubePos> shuffled = getShuffledCopy(this.cubesForSpawn);
             totalSpawnCount += spawnCreatureTypeInAllChunks(mobType, world, shuffled);
         }
@@ -94,16 +89,9 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
         nextChunk:
         for (CubePos currentChunkPos : chunkList) {
             BlockPos blockpos = getRandomChunkPosition(world, currentChunkPos);
-            if (blockpos == null) {
-                aboveHeight++;
-                continue;
-            }
+            if (blockpos == null) { continue; }
             IBlockState block = world.getBlockState(blockpos);
-            if (block.isNormalCube()) {
-                insideSolid++;
-                continue;
-            }
-            openPicks++;
+            if (block.isNormalCube()) { continue; }
             int blockX = blockpos.getX();
             int blockY = blockpos.getY();
             int blockZ = blockpos.getZ();
@@ -123,24 +111,14 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
                     float entityX = (float) entityBlockX + 0.5F;
                     float entityZ = (float) entityBlockZ + 0.5F;
                     if (world.isAnyPlayerWithinRangeAt(entityX, blockY, entityZ, 24.0D) ||
-                            spawnPoint.distanceSq(entityX, blockY, entityZ) < 576.0D) {
-                        nearSomebody++;
-                        continue;
-                    }
+                            spawnPoint.distanceSq(entityX, blockY, entityZ) < 576.0D) { continue; }
                     if (biomeMobs == null) {
                         biomeMobs = world.getSpawnListEntryForTypeAt(mobType, blockPos);
-                        if (biomeMobs == null) {
-                            noBiomeEntry++;
-                            if (!world.getChunkProvider().getPossibleCreatures(mobType, blockPos).isEmpty()) { emptiedByEvent++; }
-                            break;
-                        }
+                        if (biomeMobs == null) { break; }
                     }
                     if (!world.canCreatureTypeSpawnHere(mobType, biomeMobs, blockPos) ||
                             !WorldEntitySpawner.canCreatureTypeSpawnAtLocation(EntitySpawnPlacementRegistry
-                                    .getPlacementForEntity(biomeMobs.entityClass), world, blockPos)) {
-                        badFooting++;
-                        continue;
-                    }
+                                    .getPlacementForEntity(biomeMobs.entityClass), world, blockPos)) { continue; }
                     EntityLiving toSpawn;
                     try {
                         toSpawn = biomeMobs.entityClass.getConstructor(new Class[]{
@@ -152,8 +130,6 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
                     }
                     toSpawn.setLocationAndAngles(entityX, blockY, entityZ, rand.nextFloat() * 360.0F, 0.0F);
                     Event.Result canSpawn = ForgeEventFactory.canEntitySpawn(toSpawn, world, entityX, blockY, entityZ, null);
-                    if (canSpawn == Event.Result.DENY) { forgeSaidNo++; }
-                    else if (canSpawn == Event.Result.DEFAULT && !toSpawn.getCanSpawnHere()) { mobSaidNo++; }
                     if (canSpawn == Event.Result.ALLOW ||
                             (canSpawn == Event.Result.DEFAULT && toSpawn.getCanSpawnHere() &&
                                     toSpawn.isNotColliding())) {
@@ -162,7 +138,6 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
                         }
                         if (toSpawn.isNotColliding()) {
                             ++currentPackSize;
-                            spawned++;
                             world.spawnEntity(toSpawn);
                         }
                         else { toSpawn.setDead(); }
@@ -173,28 +148,6 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
             }
         }
         return totalSpawned;
-    }
-
-    private long hostileOff;
-    private long capped;
-    private long aboveHeight;
-    private long insideSolid;
-    private long openPicks;
-    private long nearSomebody;
-    private long noBiomeEntry;
-    private long emptiedByEvent;
-    private long badFooting;
-    private long forgeSaidNo;
-    private long mobSaidNo;
-    private long spawned;
-    private long lastTold;
-
-    private void tellWhySpawnsFail(WorldServer world) {
-        long now = world.getTotalWorldTime();
-        if (now - lastTold < 200L) { return; }
-        lastTold = now;
-        Rubic.LOGGER.info("Spawn counters: hostileOff={} capped={} aboveHeight={} insideSolid={} openPicks={} nearSomebody={} noBiomeEntry={} emptiedByEvent={} badFooting={} forgeSaidNo={} mobSaidNo={} spawned={} skylightSubtracted={} difficulty={}",
-                hostileOff, capped, aboveHeight, insideSolid, openPicks, nearSomebody, noBiomeEntry, emptiedByEvent, badFooting, forgeSaidNo, mobSaidNo, spawned, world.getSkylightSubtracted(), world.getDifficulty());
     }
 
     private static <T> ArrayList<T> getShuffledCopy(Collection<T> collection) {
