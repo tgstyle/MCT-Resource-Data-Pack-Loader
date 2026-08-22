@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -45,6 +46,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.WorldProvider;
@@ -76,6 +78,13 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Unique private static int rdpl$lastZ = Integer.MIN_VALUE;
     @Unique private static final int rdpl$NOTIFY_NEIGHBORS = 1;
     @Unique private static final int rdpl$SUPPRESS_OBSERVERS = 16;
+
+    @Inject(method = "getDifficulty", at = @At("HEAD"), cancellable = true) private void rdpl$difficultyAsAsked(CallbackInfoReturnable<EnumDifficulty> cir) {
+        World self = (World) (Object) this;
+        if (self.provider == null) { return; }
+        EnumDifficulty asked = ContentTerrain.difficultyFor(self.provider.getDimension());
+        if (asked != null) { cir.setReturnValue(asked); }
+    }
 
     @Inject(method = "updateEntities", at = @At("HEAD"), cancellable = true) private void rdpl$standStillWhileLandIsMade(CallbackInfo ci) {
         if (((World) (Object) this).isRemote || !ContentPregen.busy()) { return; }

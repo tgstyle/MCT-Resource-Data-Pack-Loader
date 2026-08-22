@@ -61,6 +61,18 @@ public final class RubicWorldControl {
 
     private static final AtomicBoolean WARNED = new AtomicBoolean();
 
+    public static int terrainOffsetCubes() {
+        int offset = ContentControl.number(ContentControl.TERRAIN, "terrainOffset", Config.worldgen.terrainOffset);
+        if (offset == 0) { return 0; }
+        if (offset < 0 || (offset & 15) != 0) {
+            if (OFFSET_WARNED.compareAndSet(false, true)) { ContentLog.LOGGER.error("terrainOffset is {}, which is not a non-negative multiple of 16, so the terrain is not shifted", offset); }
+            return 0;
+        }
+        return offset >> 4;
+    }
+
+    private static final AtomicBoolean OFFSET_WARNED = new AtomicBoolean();
+
     public static boolean rubicWorld(ChunkProviderServer provider) {
         return provider instanceof CubeProviderServer && ((IRubicWorld) provider.world).rdpl$isRubicWorld();
     }

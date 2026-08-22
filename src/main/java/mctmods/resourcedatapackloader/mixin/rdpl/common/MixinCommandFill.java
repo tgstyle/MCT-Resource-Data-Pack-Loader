@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import static mctmods.resourcedatapackloader.util.Coords.blockToCube;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -10,6 +11,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -58,13 +60,14 @@ import javax.annotation.Nullable;
     @Redirect(method = "execute",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isBlockLoaded(Lnet/minecraft/util/math/BlockPos;)Z"))
     private boolean isBlockLoadedCheckForHeightRangeRedirect(World world, BlockPos pos) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return world.isBlockLoaded(pos); }
+        if (!((IRubicWorld) world).rdpl$isRubicWorld() || !(world instanceof WorldServer)) { return world.isBlockLoaded(pos); }
         if (rdpl$minY == null) {
             assert rdpl$maxY == null;
             return ((IRubicWorld) world).rdpl$isBlockColumnLoaded(pos);
         }
-        for (int blockY = rdpl$minY; blockY <= rdpl$maxY; blockY += Cube.SIZE) {
-            if (!world.isBlockLoaded(new BlockPos(pos.getX(), blockY, pos.getZ()))) { return false; }
+        ICubeProviderServer cubes = (ICubeProviderServer) ((WorldServer) world).getChunkProvider();
+        for (int cubeY = blockToCube(rdpl$minY); cubeY <= blockToCube(rdpl$maxY); cubeY++) {
+            if (cubes.getCube(blockToCube(pos.getX()), cubeY, blockToCube(pos.getZ()), ICubeProviderServer.Requirement.LIGHT) == null) { return false; }
         }
         return true;
     }

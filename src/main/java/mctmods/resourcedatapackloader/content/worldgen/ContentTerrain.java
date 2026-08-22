@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.EnumDifficulty;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
@@ -21,6 +22,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -71,6 +73,47 @@ public final class ContentTerrain {
         return ContentControl.number(ContentControl.TERRAIN, "worldTime", Config.worldgen.worldTime);
     }
 
+    @Nullable public static EnumDifficulty difficultyFor(int dimension) {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
+        String[] asked = ContentControl.list(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty);
+        if (asked.length == 0) { return null; }
+        if (!Arrays.equals(asked, difficultyRaw)) {
+            EnumDifficulty everywhere = null;
+            Map<Integer, EnumDifficulty> scoped = new HashMap<>();
+            for (String entry : asked) {
+                String line = entry.trim();
+                int split = line.indexOf('=');
+                String name = split < 0 ? line : line.substring(split + 1).trim();
+                EnumDifficulty found = difficultyFrom(name);
+                if (found == null) {
+                    ContentLog.LOGGER.error("worldDifficulty names '{}', which is not one of peaceful, easy, normal or hard, ignoring it", line);
+                    continue;
+                }
+                if (split < 0) { everywhere = found; }
+                else {
+                    try { scoped.put(Integer.parseInt(line.substring(0, split).trim()), found); }
+                    catch (NumberFormatException wrong) { ContentLog.LOGGER.error("worldDifficulty names '{}', whose dimension is not a whole number, ignoring it", line); }
+                }
+            }
+            difficultyEverywhere = everywhere;
+            difficultyByDimension = scoped;
+            difficultyRaw = asked;
+        }
+        EnumDifficulty found = difficultyByDimension.get(dimension);
+        return found != null ? found : difficultyEverywhere;
+    }
+
+    @Nullable private static EnumDifficulty difficultyFrom(String name) {
+        for (EnumDifficulty difficulty : EnumDifficulty.values()) {
+            if (difficulty.name().equalsIgnoreCase(name)) { return difficulty; }
+        }
+        return null;
+    }
+
+    @Nullable private static String[] difficultyRaw;
+    @Nullable private static EnumDifficulty difficultyEverywhere;
+    private static Map<Integer, EnumDifficulty> difficultyByDimension = Collections.emptyMap();
+
     public static int worldBorder() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return 0; }
         return ContentControl.number(ContentControl.TERRAIN, "worldBorder", Config.worldgen.worldBorder);
@@ -95,11 +138,14 @@ public final class ContentTerrain {
     }
 
     public static GameType gameModeFrom(String written) {
+        if (written.equalsIgnoreCase("hardcore")) { return GameType.SURVIVAL; }
         for (GameType type : GameType.values()) {
             if (type != GameType.NOT_SET && written.equalsIgnoreCase(type.getName())) { return type; }
         }
         return GameType.NOT_SET;
     }
+
+    public static boolean hardcoreAsked() { return worldGameMode().equalsIgnoreCase("hardcore"); }
 
     public static long seedFrom(String written) {
         try { return Long.parseLong(written); }

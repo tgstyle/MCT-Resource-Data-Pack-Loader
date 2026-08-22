@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
@@ -40,6 +41,7 @@ import javax.annotation.Nullable;
 public class VanillaCompatibilityGenerator implements ICubeGenerator {
     private boolean isInit = false;
     private int worldHeightCubes;
+    private final int offsetCubes;
     @Nonnull private final IChunkGenerator vanilla;
     @Nonnull private final World world;
     private Chunk lastChunk;
@@ -52,6 +54,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     public VanillaCompatibilityGenerator(@NotNull IChunkGenerator vanilla, @NotNull World world) {
         this.vanilla = vanilla;
         this.world = world;
+        this.offsetCubes = RubicWorldControl.terrainOffsetCubes();
     }
 
     private void tryInit(IChunkGenerator vanilla, World world) {
@@ -124,12 +127,13 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             Random rand = new Random(world.getSeed());
             rand.setSeed(rand.nextInt() ^ cubeX);
             rand.setSeed(rand.nextInt() ^ cubeZ);
-            if (cubeY < 0 || cubeY >= worldHeightCubes) {
+            int vanillaY = cubeY - offsetCubes;
+            if (vanillaY < 0 || vanillaY >= worldHeightCubes) {
                 for (int y = 0; y < Cube.SIZE; y++) {
                     for (int z = 0; z < Cube.SIZE; z++) {
                         for (int x = 0; x < Cube.SIZE; x++) {
-                            IBlockState state = cubeY < 0 ? extensionBlockBottom : extensionBlockTop;
-                            int blockY = Coords.localToBlock(cubeY, y);
+                            IBlockState state = vanillaY < 0 ? extensionBlockBottom : extensionBlockTop;
+                            int blockY = Coords.localToBlock(vanillaY, y);
                             state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5,
                                     hasTopBedrock, hasBottomBedrock);
                             primer.setBlockState(x, y, z, state);
@@ -150,22 +154,22 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                 if (!optimizationHack) {
                     optimizationHack = true;
                     for (int y = worldHeightCubes - 1; y >= 0; y--) {
-                        if (y == cubeY) { continue; }
-                        ((IRubicWorld) world).rdpl$getCubeFromCubeCoords(cubeX, y, cubeZ);
+                        if (y == vanillaY) { continue; }
+                        ((IRubicWorld) world).rdpl$getCubeFromCubeCoords(cubeX, y + offsetCubes, cubeZ);
                     }
                     optimizationHack = false;
                 }
                 ChunkPrimer chunkPrimer = ((IColumnInternal) lastChunk).getCompatGenerationPrimer();
-                if (chunkPrimer != null) { return new CubePrimerWrapper(chunkPrimer, cubeY); }
-                ExtendedBlockStorage storage = lastChunk.getBlockStorageArray()[cubeY];
+                if (chunkPrimer != null) { return new CubePrimerWrapper(chunkPrimer, vanillaY); }
+                ExtendedBlockStorage storage = lastChunk.getBlockStorageArray()[vanillaY];
                 if (((IRubicWorld) world).rdpl$getMaxHeight() == 16) {
-                    if (cubeY != 0) { storage = null; }
+                    if (vanillaY != 0) { storage = null; }
                     else { storage = lastChunk.getBlockStorageArray()[4]; }
                 }
                 if (storage != null && !storage.isEmpty()) {
                     IBlockState bedrockState = Objects.requireNonNull(Blocks.BEDROCK).getDefaultState();
                     for (int y = 0; y < Cube.SIZE; y++) {
-                        int blockY = Coords.localToBlock(cubeY, y);
+                        int blockY = Coords.localToBlock(vanillaY, y);
                         for (int z = 0; z < Cube.SIZE; z++) {
                             for (int x = 0; x < Cube.SIZE; x++) {
                                 IBlockState state = storage.get(x, y, z);
@@ -217,17 +221,16 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         try {
             WorldgenHangWatchdog.startWorldGen();
             tryInit(vanilla, world);
-            if (cube.getY() < 0 || cube.getY() >= worldHeightCubes) { return; }
-            if (cube.getY() >= 0 && cube.getY() < worldHeightCubes) {
-                for (int y = worldHeightCubes - 1; y >= 0; y--) { ((IRubicWorldInternal) world).rdpl$getCubeFromCubeCoords(cube.getX(), y, cube.getZ()).setPopulated(true); }
-                try {
-                    CompatHandler.beforePopulate(world);
-                    vanilla.populate(cube.getX(), cube.getZ());
-                } finally {
-                    CompatHandler.afterPopulate(world);
-                }
-                applyModGenerators(cube.getX(), cube.getZ(), world, vanilla, world.getChunkProvider());
+            int vanillaY = cube.getY() - offsetCubes;
+            if (vanillaY < 0 || vanillaY >= worldHeightCubes) { return; }
+            for (int y = worldHeightCubes - 1; y >= 0; y--) { ((IRubicWorldInternal) world).rdpl$getCubeFromCubeCoords(cube.getX(), y + offsetCubes, cube.getZ()).setPopulated(true); }
+            try {
+                CompatHandler.beforePopulate(world);
+                vanilla.populate(cube.getX(), cube.getZ());
+            } finally {
+                CompatHandler.afterPopulate(world);
             }
+            applyModGenerators(cube.getX(), cube.getZ(), world, vanilla, world.getChunkProvider());
         } finally {
             WorldgenHangWatchdog.endWorldGen();
         }
@@ -257,20 +260,22 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     }
 
     @Override public Box getFullPopulationRequirements(ICube cube) {
-        if (cube.getY() >= 0 && cube.getY() < worldHeightCubes) {
+        int vanillaY = cube.getY() - offsetCubes;
+        if (vanillaY >= 0 && vanillaY < worldHeightCubes) {
             return new Box(
-                    -1, -cube.getY(), -1,
-                    0, worldHeightCubes - cube.getY() - 1, 0
+                    -1, -vanillaY, -1,
+                    0, worldHeightCubes - vanillaY - 1, 0
             );
         }
         return NO_REQUIREMENT;
     }
 
     @Override public Box getPopulationPregenerationRequirements(ICube cube) {
-        if (cube.getY() >= 0 && cube.getY() < worldHeightCubes) {
+        int vanillaY = cube.getY() - offsetCubes;
+        if (vanillaY >= 0 && vanillaY < worldHeightCubes) {
             return new Box(
-                    0, -cube.getY(), 0,
-                    1, worldHeightCubes - cube.getY() - 1, 1
+                    0, -vanillaY, 0,
+                    1, worldHeightCubes - vanillaY - 1, 1
             );
         }
         return NO_REQUIREMENT;

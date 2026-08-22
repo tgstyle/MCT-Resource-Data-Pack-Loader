@@ -32,8 +32,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (!seed.isEmpty()) { worldSeed = seed; }
         GameType asked = ContentTerrain.gameModeFrom(ContentTerrain.worldGameMode());
         if (asked != GameType.SURVIVAL && asked != GameType.CREATIVE) { return; }
-        gameMode = asked.getName();
-        hardCoreMode = false;
+        boolean hardcore = ContentTerrain.hardcoreAsked();
+        gameMode = hardcore ? "hardcore" : asked.getName();
+        hardCoreMode = hardcore;
         if (allowCheatsWasSetByUser) { return; }
         allowCheats = asked == GameType.CREATIVE;
     }

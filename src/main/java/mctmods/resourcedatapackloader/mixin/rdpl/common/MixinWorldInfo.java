@@ -72,6 +72,7 @@ import java.util.Map;
     @Shadow private WorldType terrainType;
     @Shadow private GameType gameType;
     @Shadow private boolean allowCommands;
+    @Shadow private boolean hardcore;
 
     @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
     private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
@@ -84,11 +85,12 @@ import java.util.Map;
         String mode = ContentTerrain.worldGameMode();
         if (!mode.isEmpty()) {
             GameType asked = ContentTerrain.gameModeFrom(mode);
-            if (asked == GameType.NOT_SET) { ContentLog.LOGGER.error("A pack asks for the game mode '{}', which is not one of survival, creative, adventure or spectator, so '{}' is played the way it was chosen", mode, name); }
+            if (asked == GameType.NOT_SET) { ContentLog.LOGGER.error("A pack asks for the game mode '{}', which is not one of survival, hardcore, creative, adventure or spectator, so '{}' is played the way it was chosen", mode, name); }
             else {
                 gameType = asked;
                 if (asked == GameType.CREATIVE) { allowCommands = true; }
-                Summary.info("terrain.gamemode", "Starting every new world in " + asked.getName() + ", which is what a pack asks for");
+                if (ContentTerrain.hardcoreAsked()) { hardcore = true; }
+                Summary.info("terrain.gamemode", "Starting every new world in " + (ContentTerrain.hardcoreAsked() ? "hardcore" : asked.getName()) + ", which is what a pack asks for");
             }
         }
         String wanted = ContentTerrain.worldType();

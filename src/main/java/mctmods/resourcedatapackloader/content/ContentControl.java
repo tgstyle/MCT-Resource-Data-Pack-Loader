@@ -58,7 +58,7 @@ public final class ContentControl {
             "villagePathSidewalkWidth", "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
-            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "rubicWorld", "worldBorder", "worldGameMode", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "structureAt", "rubicWorld", "terrainOffset", "worldBorder", "worldDifficulty", "worldGameMode", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
     private ContentControl() {}
 
