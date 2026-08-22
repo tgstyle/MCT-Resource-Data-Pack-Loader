@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
+import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IGameRegistry;
 import mctmods.resourcedatapackloader.util.Box;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -224,11 +225,13 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             int vanillaY = cube.getY() - offsetCubes;
             if (vanillaY < 0 || vanillaY >= worldHeightCubes) { return; }
             for (int y = worldHeightCubes - 1; y >= 0; y--) { ((IRubicWorldInternal) world).rdpl$getCubeFromCubeCoords(cube.getX(), y + offsetCubes, cube.getZ()).setPopulated(true); }
-            try {
-                CompatHandler.beforePopulate(world);
-                vanilla.populate(cube.getX(), cube.getZ());
-            } finally {
-                CompatHandler.afterPopulate(world);
+            if (!ContentVoidWorld.appliesTo(world)) {
+                try {
+                    CompatHandler.beforePopulate(world);
+                    vanilla.populate(cube.getX(), cube.getZ());
+                } finally {
+                    CompatHandler.afterPopulate(world);
+                }
             }
             applyModGenerators(cube.getX(), cube.getZ(), world, vanilla, world.getChunkProvider());
         } finally {

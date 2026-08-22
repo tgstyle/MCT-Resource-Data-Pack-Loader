@@ -18,5 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (rdpl$rubicWorld().rdpl$isRubicWorld()) { cir.setReturnValue(Double.NaN); }
     }
 
+    @Inject(method = "getHorizon", at = @At(value = "HEAD"), cancellable = true, remap = false) private void getHorizon_injectReplace(CallbackInfoReturnable<Double> cir) {
+        if (rdpl$rubicWorld().rdpl$isRubicWorld()) { cir.setReturnValue((double) rdpl$rubicWorld().rdpl$getMinHeight()); }
+    }
+
     @Unique private IRubicWorld rdpl$rubicWorld() { return (IRubicWorld) this.world; }
 }
