@@ -228,6 +228,11 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     private Optional<Cube> generateCube(int cubeX, int cubeY, int cubeZ, Chunk column, boolean forceGenerate) {
         return cubeGen.tryGenerateCube(cubeX, cubeY, cubeZ, this.cubePrimer, forceGenerate)
                 .map(primer -> {
+                    Cube already = getLoadedCube(cubeX, cubeY, cubeZ);
+                    if (already != null) {
+                        if (primer == this.cubePrimer) { primer.reset(); }
+                        return already;
+                    }
                     Cube cube = new Cube(column, cubeY, primer);
                     onCubeLoaded(cube, column);
                     if (primer == this.cubePrimer) { primer.reset(); }

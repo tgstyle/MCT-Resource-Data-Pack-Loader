@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
+import mctmods.resourcedatapackloader.util.compat.CbmpRubicParts;
 import mctmods.resourcedatapackloader.util.compat.CmsRubicSpawns;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
@@ -125,6 +126,7 @@ public class ResourceDataPackLoader {
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
         CmsRubicSpawns.register();
+        CbmpRubicParts.register();
         if (ContentPaths.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPaths.class); }
         if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
         if (ContentOreControl.enabled()) { MinecraftForge.ORE_GEN_BUS.register(ContentOreControl.class); }
