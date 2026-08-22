@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.util.Bits;
 import mctmods.resourcedatapackloader.util.CubePos;
@@ -59,6 +60,10 @@ public class MessageCubeSkyLightUpdates implements IMessage {
     public static class Handler extends AbstractClientMessageHandler<MessageCubeSkyLightUpdates> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageCubeSkyLightUpdates message, MessageContext ctx) {
             WorldClient worldClient = (WorldClient) world;
+            if (!(worldClient.getChunkProvider() instanceof CubeProviderClient)) {
+                Rubic.LOGGER.warn("Ignored a sky light update for a world the client no longer sees as rubic");
+                return;
+            }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
             Cube cube = cubeCache.getCube(message.getCubePos());
             if (message.getData() == null) {

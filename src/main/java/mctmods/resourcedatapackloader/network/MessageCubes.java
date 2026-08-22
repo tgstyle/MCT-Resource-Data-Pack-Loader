@@ -80,6 +80,10 @@ public class MessageCubes implements IMessage {
     public static class Handler extends AbstractClientMessageHandler<MessageCubes> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageCubes message, MessageContext ctx) {
             WorldClient worldClient = (WorldClient) player.getEntityWorld();
+            if (!(worldClient.getChunkProvider() instanceof CubeProviderClient)) {
+                Rubic.LOGGER.warn("Ignored cubes sent for a world the client no longer sees as rubic");
+                return;
+            }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
             CubePos[] cubePos = message.getCubePos();
             List<Cube> cubes = new ArrayList<>();

@@ -32,6 +32,7 @@ public class MessageUnloadCube implements IMessage {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageUnloadCube message, MessageContext ctx) {
             IRubicWorld worldClient = (IRubicWorld) world;
             if (!worldClient.rdpl$isRubicWorld()) { return; }
+            if (!(((World) worldClient).getChunkProvider() instanceof CubeProviderClient)) { return; }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.rdpl$getCubeCache();
 
             cubeCache.getCube(message.getCubePos()).markForRenderUpdate();

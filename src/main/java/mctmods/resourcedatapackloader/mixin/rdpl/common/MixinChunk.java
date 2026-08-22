@@ -136,6 +136,7 @@ public abstract class MixinChunk {
     @Unique private boolean rdpl$isColumn = false;
     @Unique private boolean rdpl$pregenDone;
     @Unique private ChunkPrimer rdpl$compatGenerationPrimer;
+    @Unique private boolean rdpl$compatArraysFilled;
 
     @Shadow public abstract byte[] getBiomeArray();
 
@@ -143,7 +144,28 @@ public abstract class MixinChunk {
 
     @Unique @SuppressWarnings("unchecked") public <T extends World & IRubicWorldInternal> T rdpl$getRubicWorld() { return (T) this.world; }
 
+    @Unique private boolean rdpl$compatGenerating() { return rdpl$compatGenerationPrimer != null; }
+
+    @Unique private void rdpl$fillCompatArrays() {
+        rdpl$compatArraysFilled = true;
+        boolean skylight = world.provider.hasSkyLight();
+        for (int y = 0; y < 256; y++) {
+            for (int localZ = 0; localZ < 16; localZ++) {
+                for (int localX = 0; localX < 16; localX++) {
+                    IBlockState state = rdpl$compatGenerationPrimer.getBlockState(localX, y, localZ);
+                    if (state.getMaterial() == Material.AIR) { continue; }
+                    if (storageArrays[y >> 4] == NULL_BLOCK_STORAGE) { storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, skylight); }
+                    storageArrays[y >> 4].set(localX, y & 15, localZ, state);
+                }
+            }
+        }
+    }
+
     @Unique @Nullable private ExtendedBlockStorage getEBS_Rubic(int index) {
+        if (rdpl$compatGenerating()) {
+            if (!rdpl$compatArraysFilled) { rdpl$fillCompatArrays(); }
+            return index >= 0 && index < 16 ? storageArrays[index] : NULL_BLOCK_STORAGE;
+        }
         if (index < blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()) || index >= blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight())) { return NULL_BLOCK_STORAGE; }
         if (!rdpl$isColumn) { return storageArrays[index - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())]; }
         if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == index) { return rdpl$cachedCube.getStorage(); }
@@ -153,6 +175,11 @@ public abstract class MixinChunk {
     }
 
     @Unique private void setEBS_Rubic(int index, ExtendedBlockStorage ebs) {
+        if (rdpl$compatGenerating()) {
+            if (!rdpl$compatArraysFilled) { rdpl$fillCompatArrays(); }
+            if (index >= 0 && index < 16) { storageArrays[index] = ebs; }
+            return;
+        }
         if (!rdpl$isColumn) {
             storageArrays[index - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())] = ebs;
             return;
@@ -220,7 +247,7 @@ public abstract class MixinChunk {
     }
 
     @Inject(method = "getTopFilledSegment", at = @At(value = "HEAD"), cancellable = true) private void getTopFilledSegment_Rubic(CallbackInfoReturnable<Integer> cbi) {
-        if (!rdpl$isColumn) { return; }
+        if (!rdpl$isColumn || rdpl$compatGenerating()) { return; }
         int blockY = Coords.NO_HEIGHT;
         for (int localX = 0; localX < Cube.SIZE; localX++) {
             for (int localZ = 0; localZ < Cube.SIZE; localZ++) {
@@ -272,7 +299,7 @@ public abstract class MixinChunk {
     @Inject(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;relightBlock(III)V"))
     private void setBlockState_Rubic_relightBlockReplace(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir,
                                                          @Local(name = "i") int i, @Local(name = "j") int j, @Local(name = "k") int k, @Local(name = "i1") int i1) {
-        if (rdpl$isColumn && ((IColumn) this).getCube(blockToCube(j)).isInitialLightingDone()) {
+        if (rdpl$isColumn && !rdpl$compatGenerating() && ((IColumn) this).getCube(blockToCube(j)).isInitialLightingDone()) {
             if (i1 == j + 1) { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, i, getHeightValue(i, k), j, k); }
             else { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, i, i1, j, k); }
         }
@@ -322,7 +349,7 @@ public abstract class MixinChunk {
     @Inject(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;set"
             + "(IIILnet/minecraft/block/state/IBlockState;)V", shift = At.Shift.AFTER))
     private void onEBSSet_setBlockState_setOpacity(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir) {
-        if (!rdpl$isColumn) { return; }
+        if (!rdpl$isColumn || rdpl$compatGenerating()) { return; }
         this.dirty = true;
         if (((IColumn) this).getCube(blockToCube(pos.getY())).isSurfaceTracked()) {
             rdpl$opacityIndex.onOpacityChange(blockToLocal(pos.getX()), pos.getY(), blockToLocal(pos.getZ()), state.getLightOpacity(world, pos));
@@ -351,16 +378,16 @@ public abstract class MixinChunk {
             opcode = Opcodes.GETFIELD, args = "array=set"
     ), cancellable = true)
     private void setBlockState_Rubic_EBSSetInject(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir) {
-        if (rdpl$isColumn && rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(CubePos.fromBlockCoords(pos)) == null) { cir.setReturnValue(null); }
+        if (rdpl$isColumn && !rdpl$compatGenerating() && rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(CubePos.fromBlockCoords(pos)) == null) { cir.setReturnValue(null); }
     }
 
     @Redirect(method = "setBlockState", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;dirty:Z", opcode = Opcodes.PUTFIELD)) private void setIsModifiedFromSetBlockState_Field(Chunk chunk, boolean isModifiedIn, BlockPos pos, IBlockState state) {
-        if (rdpl$isColumn) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
+        if (rdpl$isColumn && !rdpl$compatGenerating()) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
         else { dirty = isModifiedIn; }
     }
 
     @Inject(method = "getLightFor", at = @At("HEAD"), cancellable = true) private void replacedGetLightForRubic(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (!rdpl$isColumn) { return; }
+        if (!rdpl$isColumn || rdpl$compatGenerating()) { return; }
         ((IRubicWorldInternal) world).rdpl$getLightingManager().onGetLight();
         cir.setReturnValue(((Cube) ((IColumn) this).getCube(blockToCube(pos.getY()))).getCachedLightFor(type, pos));
     }
@@ -392,7 +419,7 @@ public abstract class MixinChunk {
     private void setLightFor_Rubic_EBSSetRedirect(ExtendedBlockStorage[] array, int index, ExtendedBlockStorage ebs) { setEBS_Rubic(index, ebs); }
 
     @Redirect(method = "setLightFor", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;dirty:Z", opcode = Opcodes.PUTFIELD)) private void setIsModifiedFromSetLightFor_Field(Chunk chunk, boolean isModifiedIn, EnumSkyBlock type, BlockPos pos, int value) {
-        if (rdpl$isColumn) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
+        if (rdpl$isColumn && !rdpl$compatGenerating()) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
         else { dirty = isModifiedIn; }
     }
 
@@ -511,6 +538,16 @@ public abstract class MixinChunk {
         if (!rdpl$isColumn) { return obj.remove(p_remove_1_); }
         assert obj == null;
         return true;
+    }
+
+    @Inject(method = "getTileEntity", at = @At("HEAD"), cancellable = true)
+    private void getTileEntity_CompatTemplate(BlockPos pos, Chunk.EnumCreateEntityType type, CallbackInfoReturnable<TileEntity> cir) {
+        if (rdpl$compatGenerating()) { cir.setReturnValue(null); }
+    }
+
+    @Inject(method = "addTileEntity(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/tileentity/TileEntity;)V", at = @At("HEAD"), cancellable = true)
+    private void addTileEntity_CompatTemplate(BlockPos pos, TileEntity tileEntity, CallbackInfo cbi) {
+        if (rdpl$compatGenerating()) { cbi.cancel(); }
     }
 
     @Redirect(method = "addTileEntity(Lnet/minecraft/tileentity/TileEntity;)V",

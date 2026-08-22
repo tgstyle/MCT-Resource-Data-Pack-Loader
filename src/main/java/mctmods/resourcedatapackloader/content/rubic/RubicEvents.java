@@ -42,9 +42,10 @@ public class RubicEvents {
         WorldSavedRubicData savedData =
                 (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData");
         boolean savedRubic = savedData != null && savedData.isRubicWorld;
-        boolean rubicWorldInfo = ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() && (savedData == null || savedData.isRubicWorld);
+        boolean claimed = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.claims(world.provider.getDimension());
+        boolean rubicWorldInfo = ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() && claimed && (savedData == null || savedData.isRubicWorld);
         boolean isRubic = savedRubic || rubicWorldInfo;
-        if (mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.wanted()) { isRubic = true; }
+        if (claimed && mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.wanted()) { isRubic = true; }
 
         if (savedData == null) {
             int minY = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.minHeight();

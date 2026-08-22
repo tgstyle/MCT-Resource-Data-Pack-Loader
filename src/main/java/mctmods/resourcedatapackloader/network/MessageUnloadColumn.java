@@ -31,6 +31,7 @@ public class MessageUnloadColumn implements IMessage {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageUnloadColumn message, MessageContext ctx) {
             IRubicWorld worldClient = (IRubicWorld) world;
             if (!worldClient.rdpl$isRubicWorld()) { return; }
+            if (!(((World) worldClient).getChunkProvider() instanceof CubeProviderClient)) { return; }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.rdpl$getCubeCache();
             ChunkPos chunkPos = message.getColumnPos();
             cubeCache.unloadChunk(chunkPos.x, chunkPos.z);

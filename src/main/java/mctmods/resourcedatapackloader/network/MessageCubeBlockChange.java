@@ -93,6 +93,10 @@ public class MessageCubeBlockChange implements IMessage {
     public static class Handler extends AbstractClientMessageHandler<MessageCubeBlockChange> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageCubeBlockChange packet, MessageContext ctx) {
             WorldClient worldClient = (WorldClient) world;
+            if (!(worldClient.getChunkProvider() instanceof CubeProviderClient)) {
+                Rubic.LOGGER.warn("Ignored a cube block change for a world the client no longer sees as rubic");
+                return;
+            }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
             Cube cube = cubeCache.getCube(packet.cubePos);
             if (cube instanceof BlankCube) {

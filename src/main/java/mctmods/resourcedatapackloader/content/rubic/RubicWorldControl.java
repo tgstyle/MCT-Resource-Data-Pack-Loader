@@ -26,6 +26,19 @@ public final class RubicWorldControl {
         return false;
     }
 
+    public static boolean claims(int dimension) {
+        int[] listed = ContentControl.numbers(ContentControl.TERRAIN, "rubicWorldDimensions", Config.worldgen.rubicWorldDimensions);
+        if (listed.length == 0) { return true; }
+        boolean found = false;
+        for (int held : listed) {
+            if (held == dimension) {
+                found = true;
+                break;
+            }
+        }
+        return found != ContentControl.flag(ContentControl.TERRAIN, "rubicWorldDimensionsAreBlacklist", Config.worldgen.rubicWorldDimensionsAreBlacklist);
+    }
+
     private static void standDown() {
         String message = "A pack asks for a rubic world, but CubicChunks is installed and this mod's cubic worlds have stood down for it."
                 + " Running the two together is not supported: take CubicChunks out to use this mod's own cubic worlds, or take the rubicWorld setting"
