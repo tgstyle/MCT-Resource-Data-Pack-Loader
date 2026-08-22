@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
+import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -22,10 +24,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Mixin(WorldInfo.class) public abstract class MixinWorldInfo implements IPregenMemory, IRubicWorldSettings {
+@Mixin(WorldInfo.class) public abstract class MixinWorldInfo implements IPregenMemory, IRubicWorldSettings, IVoidMemory {
     @Unique private NBTTagCompound rdpl$landMade = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$pregenRun = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$packOptions = new NBTTagCompound();
+    @Unique private NBTTagCompound rdpl$voidMade = new NBTTagCompound();
+
+    @Override public boolean rdpl$voidRecorded() { return rdpl$voidMade.hasKey("enabled"); }
+
+    @Override public boolean rdpl$voidAppliesTo(int dimension) {
+        if (!rdpl$voidMade.getBoolean("enabled")) { return false; }
+        boolean listed = false;
+        for (int held : rdpl$voidMade.getIntArray("dimensions")) {
+            if (held == dimension) {
+                listed = true;
+                break;
+            }
+        }
+        return listed != rdpl$voidMade.getBoolean("areBlacklist");
+    }
+
+    @Override public void rdpl$recordVoid(boolean enabled, int[] dimensions, boolean areBlacklist) {
+        rdpl$voidMade.setBoolean("enabled", enabled);
+        rdpl$voidMade.setIntArray("dimensions", dimensions);
+        rdpl$voidMade.setBoolean("areBlacklist", areBlacklist);
+    }
 
     @Override public NBTTagCompound rdpl$pregenRun() { return rdpl$pregenRun; }
 
@@ -44,12 +67,14 @@ import java.util.Map;
         if (nbt.hasKey("RDPLLandMade", 10)) { rdpl$landMade = nbt.getCompoundTag("RDPLLandMade"); }
         if (nbt.hasKey("RDPLPregenRun", 10)) { rdpl$pregenRun = nbt.getCompoundTag("RDPLPregenRun"); }
         if (nbt.hasKey("RDPLPackOptions", 10)) { rdpl$packOptions = nbt.getCompoundTag("RDPLPackOptions"); }
+        if (nbt.hasKey("RDPLVoidWorld", 10)) { rdpl$voidMade = nbt.getCompoundTag("RDPLVoidWorld"); }
         rdpl$comparePackOptions();
     }
 
     @Inject(method = "updateTagCompound", at = @At("TAIL")) private void rdpl$writeLandMade(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo ci) {
         if (!rdpl$landMade.isEmpty()) { nbt.setTag("RDPLLandMade", rdpl$landMade); }
         if (!rdpl$pregenRun.isEmpty()) { nbt.setTag("RDPLPregenRun", rdpl$pregenRun); }
+        if (!rdpl$voidMade.isEmpty()) { nbt.setTag("RDPLVoidWorld", rdpl$voidMade); }
         NBTTagCompound options = new NBTTagCompound();
         for (Map.Entry<String, Boolean> entry : PackOptions.gatingValues().entrySet()) { options.setBoolean(entry.getKey(), entry.getValue()); }
         if (!options.isEmpty()) { nbt.setTag("RDPLPackOptions", options); }
@@ -77,6 +102,7 @@ import java.util.Map;
     @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
     private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
         PackOptions.worldTold();
+        ContentVoidWorld.record(this);
         String seed = ContentTerrain.worldSeed();
         if (!seed.isEmpty()) {
             randomSeed = ContentTerrain.seedFrom(seed);

@@ -157,6 +157,7 @@ public abstract class MixinChunk {
             storageArrays[index - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())] = ebs;
             return;
         }
+        if (index < blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()) || index >= blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight())) { return; }
         if (index >= 0 && index < 16) { storageArrays[index] = ebs; }
         if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == index) {
             rdpl$cachedCube.setStorage(ebs);

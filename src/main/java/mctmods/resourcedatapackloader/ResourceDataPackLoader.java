@@ -128,7 +128,7 @@ public class ResourceDataPackLoader {
         if (ContentPaths.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPaths.class); }
         if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
         if (ContentOreControl.enabled()) { MinecraftForge.ORE_GEN_BUS.register(ContentOreControl.class); }
-        if (ContentVoidWorld.enabled()) { MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class); }
+        MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
         if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
         List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
         if (veins.isEmpty()) { ContentRetrogen.setup(veins, null); }

@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.Gson;
@@ -551,7 +552,7 @@ public final class ContentParser {
             minHeight = maxHeight;
             maxHeight = swap;
         }
-        minHeight = Math.max(0, minHeight);
+        minHeight = Math.max(-Config.worldgen.rubicHeightLimit, minHeight);
         maxHeight = Math.max(minHeight, maxHeight);
         return new WorldgenDef(key, new ResourceLocation(block),
                 JsonUtils.getInt(json, "meta", 0),
@@ -837,7 +838,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Worldgen {} asks for plane '{}', which is not {} or {}, using {}", key, plane, ShapeDef.CIRCLE, ShapeDef.SQUARE, ShapeDef.CIRCLE);
             plane = ShapeDef.CIRCLE;
         }
-        return new ShapeDef(type,
+        ShapeDef made = new ShapeDef(type,
                 amount(entry, "radius", ShapeDef.BELT.equals(type) ? 32 : 6, 0),
                 amount(entry, "height", ShapeDef.GEODE.equals(type) ? 8 : ShapeDef.TREE.equals(type) ? 5 : 1, 0),
                 amount(entry, "width", 12, 3),
@@ -866,6 +867,13 @@ public final class ContentParser {
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
                 JsonUtils.getFloat(entry, "threshold", 0.5F));
+        made.locateAs = JsonUtils.getString(entry, "locateAs", "");
+        if (entry.has("at")) {
+            JsonArray pinned = JsonUtils.getJsonArray(entry, "at");
+            if (pinned.size() == 2) { made.at = new int[] { pinned.get(0).getAsInt(), pinned.get(1).getAsInt() }; }
+            else { ContentLog.LOGGER.error("Worldgen {} pins its imprint with 'at', which needs exactly [x, z], so it places by chance instead", key); }
+        }
+        return made;
     }
 
     private static float baby(JsonObject json) {

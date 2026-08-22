@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IDragonFightManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -13,6 +14,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProviderEnd;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraft.world.end.DragonFightManager;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -31,7 +34,10 @@ public final class ContentVoidWorld {
     }
 
     public static boolean appliesTo(@Nullable World world) {
-        if (!enabled() || world == null || world.isRemote) { return false; }
+        if (world == null || world.isRemote) { return false; }
+        IVoidMemory memory = memory();
+        if (memory != null && memory.rdpl$voidRecorded()) { return memory.rdpl$voidAppliesTo(world.provider.getDimension()); }
+        if (!enabled()) { return false; }
         int[] wanted = ContentControl.numbers(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions);
         boolean listed = false;
         for (int dimension : wanted) {
@@ -41,6 +47,17 @@ public final class ContentVoidWorld {
             }
         }
         return listed != ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist);
+    }
+
+    public static void record(IVoidMemory memory) {
+        memory.rdpl$recordVoid(enabled(),
+                ContentControl.numbers(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions),
+                ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist));
+    }
+
+    @Nullable private static IVoidMemory memory() {
+        WorldServer overworld = DimensionManager.getWorld(0);
+        return overworld == null ? null : (IVoidMemory) overworld.getWorldInfo();
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onCreateSpawn(WorldEvent.CreateSpawnPosition event) {

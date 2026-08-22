@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvider;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Coords;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -29,6 +30,8 @@ public final class RubicLightEngine implements ICubeLightEngine {
     private static final int[] STEP_Y = {0, 0, -1, 1, 0, 0};
     private static final int[] STEP_Z = {0, 0, 0, 0, -1, 1};
     private final World world;
+    private final int lowestCube;
+    private final int highestCube;
     private final LightQueue[] scheduled = new LightQueue[EnumSkyBlock.values().length];
     private final LightQueue[] brightening = new LightQueue[MAX_LIGHT + 1];
     private final LightQueue[] darkening = new LightQueue[MAX_LIGHT + 1];
@@ -51,6 +54,8 @@ public final class RubicLightEngine implements ICubeLightEngine {
 
     public RubicLightEngine(World world) {
         this.world = world;
+        this.lowestCube = Coords.blockToCube(((IRubicWorld) world).rdpl$getMinHeight());
+        this.highestCube = Coords.blockToCube(((IRubicWorld) world).rdpl$getMaxHeight()) - 1;
         for (int i = 0; i < scheduled.length; i++) { scheduled[i] = new LightQueue(); }
         for (int i = 0; i <= MAX_LIGHT; i++) {
             brightening[i] = new LightQueue();
@@ -409,6 +414,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
         int cubeX = Coords.blockToCube(x);
         int cubeY = Coords.blockToCube(y);
         int cubeZ = Coords.blockToCube(z);
+        if (cubeY < lowestCube || cubeY > highestCube) { return null; }
         int slot = slotFor(cubeX - nearbyCubeX, cubeY - nearbyCubeY, cubeZ - nearbyCubeZ);
         if (slot >= 0 && (probedSlots & 1 << slot) != 0) { return nearby[slot]; }
         ICube found = ((ICubeProvider) world.getChunkProvider()).getLoadedCube(cubeX, cubeY, cubeZ);
