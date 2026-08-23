@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityFallingBlock;
@@ -33,4 +34,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
                     to = @At(value = "CONSTANT:LAST", args = "stringValue=doEntityDrops")
             ))
     private int onUpdateGetMaxHeight(int orig) { return ((IRubicWorld) world).rdpl$getMaxHeight(); }
+
+    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.03999999910593033D))
+    private double rdpl$worldGravity(double base) { return ContentPhysics.gravity(world, base); }
 }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 
 import net.minecraft.entity.Entity;
@@ -22,6 +23,10 @@ import net.minecraft.world.World;
     @Shadow protected abstract int getExperiencePoints(EntityPlayer player);
     @Shadow protected abstract float getWaterSlowDown();
     @Shadow protected abstract SoundEvent getDeathSound();
+
+
+    @ModifyConstant(method = "travel", constant = @Constant(doubleValue = 0.08D), require = 0, expect = 0)
+    private double rdpl$worldGravity(double base) { return ContentPhysics.gravity(world, base); }
 
     @Inject(method = "jump", at = @At("RETURN")) private void rdpl$jumpHigher(CallbackInfo ci) {
         EntityLivingBase self = (EntityLivingBase) (Object) this;
