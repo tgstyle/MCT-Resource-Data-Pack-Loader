@@ -13,7 +13,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 
 **Getting started**
 - [What it is](#what-it-is)
-- [Writing JSON](#writing-json)
+- [Reading the tables](#reading-the-tables)
 - [The one rule](#the-one-rule)
 - [Organizing packs](#organizing-packs)
 - [Resource packs: who wins](#resource-packs-who-wins)
@@ -42,6 +42,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [Dimensions](#dimensions)
 - [Portals and gates](#portals-and-gates)
 - [World templates](#world-templates)
+- [Rubic worlds](#rubic-worlds)
 - [World intro](#world-intro)
 - [Game rules](#game-rules)
 - [Hardness groups](#hardness-groups)
@@ -79,17 +80,15 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 
 ## What it is
 
-Resource Data Pack Loader (RDPL) adds a single folder to your instance: `rdploader`. It does three jobs.
+Resource Data Pack Loader (RDPL) reads a single folder, `rdploader`, and does three jobs:
 
-**Overrides.** Drop a file in, and it replaces the one the game or a mod would have used. There is no toggle, no per-world setup, and nothing for players to enable in a menu. If the file is in the folder, it is what the game loads.
+- **Overrides.** A file in the folder replaces the one the game or a mod would have loaded. No toggle, no per-world setup, nothing for players to enable.
+- **New content.** JSON definitions register blocks, items, fluids, biomes, dimensions, potions and villagers. No Java, no jar.
+- **Control.** Block ore, biome, structure or recipe generation, flatten bedrock, set spawn rates, void the overworld, set world defaults.
 
-**New content.** Add a JSON file describing a block, item, fluid, biome, dimension, potion or villager, and it is registered. No Java, no jar.
+## Reading the tables
 
-**Control.** Stop ore, biomes, structures or recipes generating, flatten bedrock, set spawn rates, or turn the overworld into a void.
-
-## Writing JSON
-
-Every file here is JSON. This is one, a real worldgen entry, and it contains every shape JSON has:
+Every file is standard JSON. A representative worldgen entry:
 
 ```json
 {
@@ -106,91 +105,54 @@ Every file here is JSON. This is one, a real worldgen entry, and it contains eve
 }
 ```
 
-Reading it line by line:
-
-- The whole file is one **object**: it opens with `{` on the first line, closes with `}` on the last, and holds `"key": value` pairs with a comma after each pair except the final one.
-- `"attempts": 12`, a **number**, written bare. `"maxTemperature": 0.5` is the same with a decimal.
-- `"sparse": true`, a **boolean**, `true` or `false`, also bare.
-- `"block": "minecraft:wool"`, **text**, always in double quotes.
-- `"dimensions": [0, -1]`, a **list**, square brackets, commas between the entries. This one holds numbers.
-- `"replace": ["minecraft:stone", "minecraft:andesite"]`, the same list shape holding text, so every entry is quoted.
-- `"size": { "min": 4, "max": 12 }`, an **object as a value**: braces nest inside the file's own braces.
-- `"blocks": [ { ... }, { ... } ]`, a **list of objects**: braces inside brackets, a comma between the two objects, and each object holds its own pairs. `"properties"` inside the first one is an object inside an object inside a list, and it nests as deep as a table asks.
-
-The same five shapes, as a table:
-
-| Shape | Written as | Example |
-| --- | --- | --- |
-| text (a string) | double quotes, always | `"minecraft:stone"` |
-| number | bare, no quotes | `8`, `-1`, `0.5` |
-| true or false (a boolean) | bare, no quotes | `true` |
-| list (an array) | square brackets, entries separated by commas | `[0, -1]` |
-| object | curly braces holding `"key": value` pairs separated by commas | `{ "min": 4, "max": 12 }` |
-
-The rules that break files when missed:
-
-- Keys are always in double quotes. Values are quoted only when they are text: `"8"` is text and `8` is a number, and a key expecting a number rejects the text form.
-- Commas go between entries, never after the last one. A comma after the final entry is the most common broken file there is.
-- A list holds entries of one kind, and the tables say which: a list of ints is `[0, -1]`, a list of block names is `["minecraft:stone", "minecraft:andesite"]`, and a list of one entry still needs its brackets, `[0]`.
-- Objects nest inside other objects and inside lists, so a value can be as deep as `"shape": { "type": "cluster" }` or a list of objects like `[{ "block": "minecraft:wool", "weight": 80 }]`.
-
-**Reading the tables.** Every table says whether a key is required, what it may hold, and what happens if you leave it out. A value the parser doesn't recognize is logged and replaced with the default rather than crashing the game. What the value words mean, each with exactly what you would type:
+The key tables in this document state whether a key is required, what it holds, and the default when omitted. Unrecognized values are logged and replaced with the default; they do not crash the game. Value types used throughout:
 
 | When a table says | You write |
 | --- | --- |
 | int | `8` |
-| int, ticks | `100`, twenty to a second |
+| int, ticks | `100` (20 ticks = 1 second) |
 | int or range | `8`, or `{ "min": 4, "max": 12 }` to roll between them |
 | 0 to 15, 1 to 100 and such | an int inside those bounds |
 | float | `0.5` |
 | boolean | `true` or `false` |
 | string | `"words in quotes"` |
-| block name, item name | `"minecraft:stone"`, with metadata as a third part, `"minecraft:stone:3"` |
+| block name, item name | `"minecraft:stone"`, metadata as a third part: `"minecraft:stone:3"` |
 | `namespace:name` | `"mypack:ruby_ore"` |
 | biome name, sound name, tab name | the same quoted `namespace:name` form |
-| hex color | six hex digits, `"A0C8FF"`, with or without a leading `#` |
+| hex color | six hex digits, `"A0C8FF"`, `#` optional |
 | texture path | `"mypack:blocks/ruby_ore"` |
 | list of ints | `[0, -1]` |
 | list of block names | `["minecraft:stone", "minecraft:andesite"]` |
 | list of biome names | `["minecraft:extreme_hills", "mypack:ruby_hills"]` |
 | list of dictionary types | `["MOUNTAIN", "FOREST"]` |
 | list of mod ids or pack namespaces | `["quark", "mypack"]` |
-| list of objects | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`, each object's keys given by its own table |
-| object | `{ "type": "cluster" }`, its keys given by its own table |
-| object of role to biome, of variant name to variant | an object whose keys are the first thing and values the second, `{ "ocean": "mypack:ruby_ocean" }` |
+| list of objects | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`, keys per that object's own table |
+| object | `{ "type": "cluster" }`, keys per its own table |
+| object of role to biome, of variant name to variant | keys are the first thing, values the second: `{ "ocean": "mypack:ruby_ocean" }` |
 
 Most definitions also accept `requires`, a list of mod ids or pack namespaces that must be present or the file is skipped.
 
 ## The one rule
 
-Open the mod's jar, find the file you want to change, and copy its path from `assets` onwards.
-
-The iron ore texture inside the Minecraft jar lives at:
+Open the jar, find the file you want to change, and copy its path from `assets` onwards:
 
 ```
-assets/minecraft/textures/blocks/iron_ore.png
+assets/minecraft/textures/blocks/iron_ore.png        (in the Minecraft jar)
+rdploader/assets/minecraft/textures/blocks/iron_ore.png    (your override)
 ```
 
-So your version goes at:
-
-```
-rdploader/assets/minecraft/textures/blocks/iron_ore.png
-```
-
-That's the whole system. The path after `assets` is always identical to the path inside the jar, so nothing ever needs renaming or moving.
+The path after `assets` is always identical to the path inside the jar. Nothing is renamed or moved.
 
 ## Organizing packs
 
-Loose files work fine, but you can group them instead, as a folder or a zip:
+Loose files work. Grouping works too, as a folder or a zip, and the two behave identically:
 
 ```
 rdploader/MyTextures/assets/...
 rdploader/MyTextures.zip
 ```
 
-Folders are easier while you're working. Zips are easier to hand to someone else. They behave identically.
-
-**Control which pack wins.** If two packs contain the same file, prefix the name with `RDPL` and a number. Higher numbers load later and win:
+**Priority.** When two packs contain the same file, prefix the names with `RDPL` and a number; higher numbers load later and win:
 
 ```
 rdploader/RDPL0 BaseTextures.zip
@@ -198,35 +160,25 @@ rdploader/RDPL1 SeasonalTextures.zip
 rdploader/RDPL9 ModFixes.zip
 ```
 
-Upper or lower case both work, a space, dash or underscore after the number is optional, and the prefix is hidden from the pack's display name. A pack with no prefix loads first, so it loses to any numbered pack.
+Case-insensitive; a space, dash or underscore after the number is optional; the prefix is hidden from the display name. An unprefixed pack loads first and loses to any numbered pack. Priority also orders worldgen entries, which matters when one pack lays down blocks another replaces.
 
-Priority also decides the order worldgen entries generate in, which matters when one pack lays down blocks another pack replaces.
-
-**Turn a pack off without deleting it** by adding `.disabled` to the end of its name.
+**Disable a pack** by appending `.disabled` to its name.
 
 ## Resource packs: who wins
 
-By default your files sit *above* the resource packs a player picks in the options screen, so a resource pack can't override them. That's right for a modpack logo and wrong for textures you'd like people to be able to reskin.
-
-Add `O` or `N` after the `RDPL` prefix to decide per pack:
+By default RDPL files sit above the resource packs a player selects, so a resource pack cannot override them. Add `O` or `N` after the `RDPL` prefix to decide per pack:
 
 ```
-rdploader/RDPLO Branding        always wins, resource packs cannot touch it
+rdploader/RDPLO Branding        always wins; resource packs cannot touch it
 rdploader/RDPLN BaseTextures    a resource pack can override it
-rdploader/RDPL1O Seasonal       priority and override, both at once
+rdploader/RDPL1O Seasonal       priority and override combined
 ```
 
-Packs with no letter follow the `overrideResourcePacks` option in the config. `/rdpl list` marks the ones that override.
-
-The letter has to be the end of the prefix, so it needs a space, dash or underscore after it, or nothing at all. That is what keeps a pack named `RDPLOverhaul` from having its `O` read as the letter and showing up as `Overhaul`.
-
----
+Packs without a letter follow the `overrideResourcePacks` config option. `/rdpl list` marks the packs that override. The letter must end the prefix (followed by a space, dash, underscore, or nothing), so `RDPLOverhaul` is a pack named `Overhaul`, not an `O` flag.
 
 ## Server-side packs
 
-A pack can live on the server alone, with every player on a plain vanilla client, as long as it stays on the right side of one line: **nothing in it may register anything**. The mod itself never demands to be on the client, both of its ids accept any remote, so what decides is the pack. A vanilla client plays with the block, item and sound lists it shipped with; a pack that adds to those lists needs to be on both sides, which means shipping a modpack, and this section stops applying.
-
-What stays on the safe side, and what does not:
+A pack can live on the server alone, with players on plain vanilla clients, under one constraint: **nothing in it may register anything**. Both mod ids accept any remote; the pack decides. A vanilla client plays with the registries it shipped with, so a pack that adds to them must be on both sides.
 
 | Server alone is enough | Needs the pack on the client too |
 | --- | --- |
@@ -234,18 +186,18 @@ What stays on the safe side, and what does not:
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
-| the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders, with no client, leave them out) |
+| the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 
-The right-hand registry folders are hard stops, not preferences: a vanilla client sent into a dimension it has never heard of disconnects on the spot, and blocks it does not know cannot even be described to it. The left-hand column works because all of it either happens entirely on the server, generation, loot, functions, removals, the control layer, or reaches the client through packets vanilla already speaks. The crafting result slot is filled by the server in this version, advancements arrive by the ordinary advancement packets, gate refusals are plain status messages, and the pregeneration hold is nothing but vanilla game mode, title and teleport packets, so a vanilla client is held, warned and welcomed exactly like a modded one.
+The right-hand column is a hard stop: a vanilla client sent to an unknown dimension disconnects, and unknown blocks cannot be described to it. The left-hand column works because everything there either runs entirely server-side or reaches the client through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
 
-What to do, in order:
+Setup:
 
-1. Turn on `vanillaClients` in the config, in the `content` category. It is the right-hand column as a rule rather than a discipline: everything there is skipped at loading, each pack's skipped files are named in the log, and nothing registers, so a slipped block file becomes a log line instead of a refused connection. It needs a restart, like everything else that decides what registers.
-2. Keep every definition out of the right-hand folders anyway, the switch protects the door, but files that do nothing are dead weight in the pack. Where the pack reaches for an item, a gate's `hold`, a `killedDrops`, a recipe output, a trade, name only items vanilla or the server's other both-sided mods provide.
-3. Entity variants may stay, with one eye open: their attributes, drops and spawns are applied by the server, but a variant's looks are painted by the client, so a vanilla client sees the ordinary creature wearing the new behavior. If the look is the point, the pack is not server-side.
-4. Put the pack on the server the same way as always, in the server's pack folder. Nothing extra is installed on anybody else's machine, and `/rdpl` will not exist for them, it belongs to the mod, not the game.
-5. Prove it before players do: join once with a clean vanilla client of the same version. Getting it wrong is loud, not subtle, the connection is refused or dropped at the door, not quietly broken later, so one clean join is a real test.
-6. Expect the two cosmetic gaps and decide they are fine: server-added recipes craft normally but do not appear in the recipe book, and behavior-only entity variants wear stock looks. Everything else, the generated world, the rules, the loot, the locked dimensions, the pregeneration with its hold and its greeting, is the same experience the modded client gets.
+1. Enable `vanillaClients` in the config (`content` category, needs a restart). It enforces the right-hand column: those folders are skipped at load and each skipped file is named in the log, so a slipped block file becomes a log line instead of a refused connection.
+2. Keep definitions out of the right-hand folders anyway; skipped files are dead weight. Where the pack references items (a gate's `hold`, `killedDrops`, recipe outputs, trades), name only items vanilla or the server's other both-sided mods provide.
+3. Entity variants may stay: attributes, drops and spawns are server-applied, but looks are client-rendered, so vanilla clients see the stock creature with the new behavior. If the look is the point, the pack is not server-side.
+4. Install on the server as usual. Nothing goes on players' machines; `/rdpl` will not exist for them.
+5. Test with one clean vanilla client join of the same version. Failures are loud — the connection is refused at the door, not quietly broken later.
+6. Two accepted cosmetic gaps: server-added recipes craft but do not appear in the recipe book, and behavior-only entity variants wear stock looks.
 
 # Overriding
 
@@ -447,7 +399,7 @@ The registry is the one the entry belongs to, usually `minecraft:items` or `mine
 
 ## Player loot
 
-Players have no loot table of their own in this version. Their death drops nothing but the inventory, and there is no name a pack can point at to change that. A file in `player_loot/` gives them one:
+Vanilla 1.12 gives players no loot table — death drops only the inventory, and there is no table name a pack could override. RDPL adds one: a file in `player_loot/` is rolled when a player dies:
 
 ```json
 {
@@ -465,17 +417,17 @@ Players have no loot table of their own in this version. Their death drops nothi
 | `rollOnKeepInventory` | no | boolean | `false` | Whether the table is rolled at all on a death that kept the inventory |
 | `dropLoose` | no | boolean | `false` | Whether the items are put on the ground directly instead of joining the death drops |
 
-`add` leaves the death alone and puts the table's items down beside everything the player was carrying, which is the one to reach for when the table is a bounty on a kill rather than a punishment for dying. `replace` throws the inventory away and drops only what the table rolls, so a pack can decide what death costs and what it leaves behind, down to a single bone.
+`add` drops the table's items alongside the inventory — use it for kill bounties. `replace` discards the inventory and drops only what the table rolls.
 
-`keepInventory` normally means nothing drops, and an entry stays out of the way of that: with `rollOnKeepInventory` off it does not roll on those deaths at all. A player who dies while spectating keeps their inventory too, whatever the game rule says, and counts as the same kind of death here. Turning it on is how a pack keeps a death expensive on a world where inventories are kept, a toll paid every time rather than the whole bag.
+With `rollOnKeepInventory` off, deaths under `keepInventory` (and spectator deaths, which always keep the inventory) roll nothing. Turning it on keeps deaths costly on keep-inventory worlds.
 
-Several files stack, and each is decided on its own, so a pack can carry one entry that always rolls and another that only bites when the inventory is really lost. If any entry that applies is `replace`, the inventory is cleared once before anything is rolled, so an `add` entry sitting alongside it still lands.
+Multiple files stack, each evaluated on its own terms. If any applicable entry is `replace`, the inventory is cleared once before rolling, so an `add` entry alongside it still lands.
 
-The table is an ordinary loot table, looked up by name like any other, which means it can live in your pack at `loot_tables/entities/player.json`, be a vanilla or mod table you never wrote, and be reached by `loot_injections` the same as any table. Conditions have the dying player as the looted entity, the killer as the player who did it when the death was a kill, and the damage source, so `killed_by_player`, `entity_properties`, `random_chance_with_looting` and `looting_enchant` all read what you would expect, and the killer's luck reaches `quality`.
+The table is an ordinary loot table looked up by name: it can live in the pack at `loot_tables/entities/player.json`, be any vanilla or mod table, and be reached by `loot_injections`. Loot context: the dying player is the looted entity, the killer (if any) is the killing player, and the damage source is set — `killed_by_player`, `entity_properties`, `random_chance_with_looting`, `looting_enchant` and `quality` all behave normally.
 
-**Grave mods.** The rolled items are put down as ordinary death drops before any grave mod looks at them, so a grave mod that sweeps up a player's drops sweeps these up too: they go in the grave with everything else rather than lying loose beside it, and `replace` gives the grave the table's contents instead of the inventory. This holds for Gravestone, GraveStone Mod, Corail Tombstone and anything else that works from the drops the death produced. Nothing needs to be installed or configured for it, and there is nothing to switch on.
+**Grave mods.** Rolled items join the ordinary death drops before any grave mod reads them, so they end up in the grave with everything else (`replace` puts the table's contents in the grave instead of the inventory). Holds for Gravestone, GraveStone Mod, Corail Tombstone and anything else that works from the death's drop list. No setup required.
 
-`dropLoose` is for when that is the wrong answer. The items never join the death drops at all, they are put into the world on their own, so nothing that reads that list ever sees them: the inventory goes into the grave as it always did and the table's items lie on the ground beside the stone, for whoever did the killing to pick up. That is the setting for spoils, a head, a heart, whatever the body is supposed to leave behind, which belong to the killer rather than locked in the victim's grave waiting for them to walk back. With no grave mod installed it changes almost nothing, the items land in the same place either way; what it really decides is who gets them when one is. It does mean the items are in the world before anything downstream could have stopped the drops, so an entry that must not survive a canceled death should stay off it.
+`dropLoose` bypasses the drop list entirely: the items are placed in the world directly, so grave mods never see them — the inventory goes in the grave, the table's items lie on the ground for the killer. Use it for spoils that belong to the killer rather than the victim's grave. Without a grave mod it changes little. Caveat: the items exist before anything downstream could cancel the drops, so entries that must not survive a canceled death should leave it off.
 
 Set `playerLoot` in the `data` config category to `false` to turn the folder off entirely.
 
@@ -512,7 +464,7 @@ A missing *pack* is different. Pack namespaces are not mods, so they never reach
 
 The mod's own two ids, `resourcedatapackloader` and `resourcedatapackloader_mixin`, are reserved. Defining content under them is ignored and logged, because it would claim ownership of things this mod registers. Overriding this mod's own assets is still fine, only registering content there is not.
 
-Every table below follows the conventions in [Writing JSON](#writing-json): whether a key is required, what it may hold, and what happens if you leave it out.
+Every table below follows the conventions in [Reading the tables](#reading-the-tables).
 
 Most definitions also accept `requires`, a list of mod ids or pack namespaces that must be present or the file is skipped.
 
@@ -1744,6 +1696,42 @@ A `portal` block carries a `portal` section:
 
 Which template is active is decided by the `worldTemplate` config option. Left at `auto`, the highest priority pack that ships one wins, the same order everything else follows. Naming a template there picks it outright.
 
+## Rubic worlds
+
+`rubicWorld` in the `terrain` settings rebuilds a dimension's world out of 16×16×16 cubes instead of 256-block columns, so its floor and ceiling can sit wherever the pack puts them. Terrain generation itself is unchanged — vanilla's generator and other mods' worldgen run as usual and produce the same land; there is simply world above and below it.
+
+```json
+{
+  "settings": {
+    "rubicWorld": true,
+    "worldMinHeight": -1024,
+    "worldMaxHeight": 1024,
+    "rubicWorldDimensions": [0, -1]
+  }
+}
+```
+
+All keys sit in the `terrain` group, in a world template's `settings` block like the rest:
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `rubicWorld` | boolean | `false` | Turns rubic worlds on |
+| `worldMinHeight` | int, multiple of 16 | `-64` | The world floor |
+| `worldMaxHeight` | int, multiple of 16 | `320` | The world ceiling |
+| `rubicWorldDimensions` | list of ints | empty | Which dimensions become rubic. Empty means every dimension |
+| `rubicWorldDimensionsAreBlacklist` | boolean | `false` | Treat the list as the dimensions to leave alone instead |
+| `terrainOffset` | int, non-negative multiple of 16 | `0` | Shifts the whole vanilla terrain window upward. For plain layered presets: a flat world with `272` puts its surface near y 275, above the vanilla ceiling. Decorations and structures a preset asks for still generate at their unshifted heights |
+
+**Heights.** `worldMinHeight` must be below `worldMaxHeight`, both multiples of 16, and both inside the reach `rubicHeightLimit` in the config allows (`4096` blocks either way by default; config only, never a pack key). Anything else is refused with a log line and the world is made at `-64` to `320`. Height costs room: every 16 blocks is another cube in every column, so memory, disk and pregeneration time scale with it — the config comment on `rubicHeightLimit` carries the numbers.
+
+**Decided per save, once.** Whether a dimension is rubic and what its heights are is written into its save the first time it loads, and stands from then on: a rubic world stays rubic even with the pack removed, and its heights cannot be changed afterward. Dimensions other than the overworld take the overworld's heights. Existing Anvil land is not converted — rubic keeps its land in `region2d`/`region3d` files of its own, so a dimension that already generated as Anvil starts its terrain over. Turn it on for new worlds.
+
+**Excluding dimensions.** A dimension left out of `rubicWorldDimensions` keeps its ordinary Anvil world, in the same save — rubic and Anvil dimensions mix freely. That is the right call for dimensions whose generators write into chunk internals instead of going through the ordinary populate cycle. Independently of the list, a world whose server classes another mod replaced is skipped, with a log line saying so.
+
+**CubicChunks.** Running both is not supported. With CubicChunks installed and a pack asking for `rubicWorld`, loading stops with a message: remove CubicChunks, or take `rubicWorld` out of the pack and let CubicChunks make the worlds.
+
+**Client.** Video settings gain a vertical render distance slider, the vertical analog of render distance (`verticalCubeLoadDistance` in the config). Everything else in the `terrain` group — pregeneration, world physics, spawn, border — applies to rubic worlds unchanged.
+
 ## World intro
 
 `worldintro/*.json` shows a run of pages when a player enters the world, before they take control. Scrolling text over a picture, a title card, a slideshow, or all three in a row.
@@ -2042,6 +2030,20 @@ An entry naming only blocks that are not registered is skipped with an error rat
 
 A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 
+```json
+{
+  "shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
+}
+```
+
+```json
+{
+  "shape": { "type": "tree", "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves", "height": { "min": 4, "max": 7 }, "surface": ["minecraft:grass"] }
+}
+```
+
+A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
+
 | Type | What it makes |
 | --- | --- |
 | `cluster` | The default blob, an ore vein. Uses `size` |
@@ -2091,20 +2093,6 @@ A `shape` block with a `type`. Keys not listed for a type are ignored by it.
 | `rarity` | belt | int | `400` | One cluster per this many chunks |
 | `rarityIsPerChunk` | belt | boolean | `false` | Turn `rarity` into how many clusters each chunk gets instead |
 
-```json
-{
-  "shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
-}
-```
-
-```json
-{
-  "shape": { "type": "tree", "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves", "height": { "min": 4, "max": 7 }, "surface": ["minecraft:grass"] }
-}
-```
-
-A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
-
 A `field` vein is the one shape you describe rather than pick. It runs the same lattice the hardness groups use, so `seeded` with a few arms gives knots with tendrils reaching toward their neighbors, which is a vein rather than a blob, and `threshold` decides how much of it is solid enough to place:
 
 ```json
@@ -2139,6 +2127,12 @@ Cost grows with the cube of `radius`, and a low `rarity` multiplies it, so start
 
 A `spread` block with a `type`.
 
+```json
+{
+  "spread": { "type": "centered", "center": 32, "range": 12, "smoothness": 3 }
+}
+```
+
 | Type | Where it puts things |
 | --- | --- |
 | `even` | Anywhere between the heights, evenly. The default |
@@ -2161,12 +2155,6 @@ A `spread` block with a `type`.
 | `offsetMin` | terrain | int | `0` | Lowest offset from the surface |
 | `offsetMax` | terrain | int | `offsetMin` | Highest offset from the surface |
 | `ceiling` | cavern | boolean | `false` | Attach to the cave roof instead of the floor |
-
-```json
-{
-  "spread": { "type": "centered", "center": 32, "range": 12, "smoothness": 3 }
-}
-```
 
 ## Retrogen
 
@@ -2200,22 +2188,6 @@ The first 12 chunks around the spawn are always taken in hand, whatever a pack o
 
 While a run is going everybody is held: made a spectator, kept in place, shown a pulsing line mid-screen, the world paused around them. The mode each player arrived in is written onto the player as they are held, so a save taken mid-run, a crash, or a rejoin never strands anyone as a spectator; the run's finish gives back exactly the mode it took, or the pack's `worldGameMode` when one is set. Progress is announced every tenth of the way, each run relights its own square when it finishes, and when everything is done players are released and greeted. How far each dimension was made is saved in the world, so a finished world never runs again, unless any of the files a dimension's land lives in go missing from the disk, which is noticed and makes that one over.
 
-| Key | What it does | Why you would set it |
-| --- | --- | --- |
-| `pregenOnNewWorld` | Radius in chunks made around the spawn before anybody plays. 12 is the floor and 0 means that floor rather than nothing, since the game makes 12 chunks around the spawn on its own anyway: the run adopts that ground and lights it in one pass instead of leaving it to trickle in behind the player. Raise it to reach further than the game does | Sets how far a pack reaches past the ground the game already makes |
-| `pregenDimensions` | Which dimensions are made, in order, each around its own spawn | Add the nether, the end, or your own dimensions |
-| `pregenAllDimensions` | Every registered dimension instead of a list, overworld first | Packs with many dimensions. Every mod's dimensions count, so mind the size |
-| `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done | Dimensions most players never visit; the ones who never go pay nothing |
-| `pregenToBorder` | Fill each dimension out to its world border instead of a radius | Bounded worlds |
-| `pregenBorderLimit` | How far a border may reach before the run is refused. Config only, never a pack key | A guard against a runaway run; raise it only knowing the time and disk it allows |
-| `pregenResume` | A stopped or interrupted run picks up where it left off. The run's dimension, center and radius are written into the save when it starts, so a crash, a power cut or a quit mid-run all resume within about ten seconds of where they died on the next load. A run stopped on purpose, by command or by the watchdog, stays stopped | Long runs on servers; small runs restart cheaply without it |
-| `pregenKeepLoaded` | Chunks kept loaded behind the run so a chunk's neighbors are on hand when it is dressed and lit | Raise it if the relight reports many chunks left for later; costs memory |
-| `pregenPauseAbove` | The run rests when this many chunks are waiting to be written | Lower it for a slow disk |
-| `pregenMillisPerRound` | How long each tick may spend making land | Turn it up on an empty world, down on a server people are playing on |
-| `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | The chat messages for each stage. The first two may hold `%d` for the percent and, after it, `%s` for the dimension's name, or `%1$d` and `%2$s` to put them in any order, and always end with ` - ETA 00:00:00` for that pass, which is not a setting. Finished and stopped are said once, when everything asked for is done, ending with ` - Total time 00:00:00` for the whole of it, which is not a setting either | Reword them in your pack's voice, name the dimension when several are made, or silence them |
-| `pregenSpectatingSays` | The mid-screen hold line while land is being made. Left at its default it speaks each player's language; empty shows nothing | Keep it under about thirty-five characters or small windows clip it |
-| `welcomeSays` | The green greeting, shown on every login and after land-making. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
-
 In a pack these go in a [world template's](#world-templates) `settings` block, like every other `chunks` key. Every one of them shown, with `pregenBorderLimit` the one absence since the config alone holds it:
 
 ```json
@@ -2239,6 +2211,22 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
   }
 }
 ```
+
+| Key | What it does | Why you would set it |
+| --- | --- | --- |
+| `pregenOnNewWorld` | Radius in chunks made around the spawn before anybody plays. 12 is the floor and 0 means that floor rather than nothing, since the game makes 12 chunks around the spawn on its own anyway: the run adopts that ground and lights it in one pass instead of leaving it to trickle in behind the player. Raise it to reach further than the game does | Sets how far a pack reaches past the ground the game already makes |
+| `pregenDimensions` | Which dimensions are made, in order, each around its own spawn | Add the nether, the end, or your own dimensions |
+| `pregenAllDimensions` | Every registered dimension instead of a list, overworld first | Packs with many dimensions. Every mod's dimensions count, so mind the size |
+| `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done | Dimensions most players never visit; the ones who never go pay nothing |
+| `pregenToBorder` | Fill each dimension out to its world border instead of a radius | Bounded worlds |
+| `pregenBorderLimit` | How far a border may reach before the run is refused. Config only, never a pack key | A guard against a runaway run; raise it only knowing the time and disk it allows |
+| `pregenResume` | A stopped or interrupted run picks up where it left off. The run's dimension, center and radius are written into the save when it starts, so a crash, a power cut or a quit mid-run all resume within about ten seconds of where they died on the next load. A run stopped on purpose, by command or by the watchdog, stays stopped | Long runs on servers; small runs restart cheaply without it |
+| `pregenKeepLoaded` | Chunks kept loaded behind the run so a chunk's neighbors are on hand when it is dressed and lit | Raise it if the relight reports many chunks left for later; costs memory |
+| `pregenPauseAbove` | The run rests when this many chunks are waiting to be written | Lower it for a slow disk |
+| `pregenMillisPerRound` | How long each tick may spend making land | Turn it up on an empty world, down on a server people are playing on |
+| `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | The chat messages for each stage. The first two may hold `%d` for the percent and, after it, `%s` for the dimension's name, or `%1$d` and `%2$s` to put them in any order, and always end with ` - ETA 00:00:00` for that pass, which is not a setting. Finished and stopped are said once, when everything asked for is done, ending with ` - Total time 00:00:00` for the whole of it, which is not a setting either | Reword them in your pack's voice, name the dimension when several are made, or silence them |
+| `pregenSpectatingSays` | The mid-screen hold line while land is being made. Left at its default it speaks each player's language; empty shows nothing | Keep it under about thirty-five characters or small windows clip it |
+| `welcomeSays` | The green greeting, shown on every login and after land-making. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
 
 Run it yourself before shipping, at the radius being shipped, start to finish. Chunks grow with the square of the radius, 63 either way is sixteen thousand chunks, 500 is over a million, at roughly ten kilobytes each, so your test world's region folder and wall clock are the honest numbers to put in front of players. Do not ship a radius that was never run.
 
@@ -2554,7 +2542,7 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 
 ## Universal Tweaks
 
-Universal Tweaks changes several of the same vanilla blocks and behaviors this mod does. Where they overlap, this mod stands down and lets Universal Tweaks have it, rather than both editing the same method and leaving the result to whichever loaded last. Every time that happens it says so in the log, naming what was left out.
+Universal Tweaks overlaps several of this mod's vanilla tweaks. Where they overlap, this mod stands down (logged each time, naming what was skipped) rather than have two mods edit the same method.
 
 | What overlaps | When this mod steps aside |
 | --- | --- |
@@ -2566,13 +2554,13 @@ Universal Tweaks changes several of the same vanilla blocks and behaviors this m
 
 The first two read Universal Tweaks' own switches out of `config/Universal Tweaks - Tweaks.cfg`, so turning one off there hands that job back here. The height pair has no such switch to read, only `Cactus Size` and `Sugar Cane Size`, so this mod steps aside whenever Universal Tweaks is present at all and you set the height there instead.
 
-**Nether portal return** is the one with no option on this side. Without it, walking back through a nether portal drops you at whatever portal vanilla's search happens to find, which after enough travelling is often not the one you came from. This mod records where you entered the nether and puts you back there. Universal Tweaks has its own handling, so this is skipped entirely when it is installed.
+**Nether portal return**: this mod records where you entered the nether and returns you there, instead of vanilla's nearest-portal search. Universal Tweaks has its own handling, so this is skipped entirely when it is installed.
 
 **None of it touches a pack.** Everything above is about Minecraft's own cactus, cane, leaves, paths and portals. Blocks your pack defines carry their own behavior, and pack portals under `portals/*.json` are a separate system that Universal Tweaks never sees.
 
 ## Mo' Villages
 
-Mo' Villages puts villages in biomes the game never would and rebuilds them from different blocks. Both of those are things this mod also has an opinion about, and unlike Universal Tweaks, here this mod keeps the last word.
+Mo' Villages adds village biomes and swaps village materials — both things packs can also set. Unlike the Universal Tweaks overlaps, here the pack keeps the last word.
 
 | What overlaps | What happens |
 | --- | --- |
@@ -2610,11 +2598,7 @@ Everything else never went through the generator to begin with and works the sam
 
 ## Blast Plaster integration
 
-Explosions were the last thing a pack could not describe. Everything else a world looks like is a file in this folder, but what a creeper leaves behind was fixed by whichever mod happened to own it. Blast Plaster already solved the hard half of that, putting a crater back together block by block and knowing where one tree ends and the next begins, so rather than write a second version of it this mod builds on it and ships it as a dependency.
-
-What that buys you is control it does not have on its own. Blast Plaster reads one config for the whole game; driven from a pack it answers per dimension, so an overworld can keep its scars while the nether mends itself behind you, and a pack ships that decision along with everything else instead of asking players to edit a config. The same work also pays off where you would not expect it: village tree felling uses Blast Plaster's tree geometry, which is why a tree leaning over a new road comes down whole instead of being sheared off at the boundary.
-
-Installed alone, Blast Plaster works from its own config exactly as it always has. This mod only takes the wheel when a pack asks for it.
+Blast Plaster (a dependency of this mod) handles post-explosion behavior: healing craters block by block, tree-aware felling, drop control. On its own it reads one global config. Driven from a pack it answers **per dimension**, and the pack ships the decision instead of asking players to edit a config. Village tree felling also reuses its tree geometry, which is why a tree over a new road comes down whole. Without pack files, Blast Plaster behaves exactly as if installed alone.
 
 Files go in `assets/<namespace>/blastplaster/*.json`. Keys written at the top of the file apply everywhere; a `dimensions` block overrides them for one dimension by id. Anything a pack never names keeps whatever Blast Plaster's own config says, so a pack sets the handful it cares about and leaves the rest alone.
 
@@ -2630,7 +2614,7 @@ Files go in `assets/<namespace>/blastplaster/*.json`. Keys written at the top of
 }
 ```
 
-`explosionMode` is the one that decides the shape of everything else. `HEAL` blows the blocks out and then puts the world back together, `EJECT_DROPS` leaves the hole and drops about a third of what was there, the way a creeper does in an untouched game, and `VISUAL_TOSS` leaves the hole and drops nothing. Whenever this mod is driving, the default is `EJECT_DROPS` rather than Blast Plaster's own `HEAL`, so a pack that installs both and writes nothing gets explosions that behave the way the game they know behaves. A pack that wants the world to mend itself asks for `HEAL`, everywhere or in one dimension.
+`explosionMode` is the primary switch: `HEAL` restores the crater over time, `EJECT_DROPS` leaves the hole and drops roughly a third of the blocks (vanilla behavior), `VISUAL_TOSS` leaves the hole and drops nothing. When driven by a pack the default is `EJECT_DROPS` (not Blast Plaster's `HEAL`), so an unconfigured install behaves like vanilla.
 
 | Key | Value | What it does |
 | --- | --- | --- |
@@ -2651,21 +2635,15 @@ Files go in `assets/<namespace>/blastplaster/*.json`. Keys written at the top of
 | `enableDropSuppression`, `dtSpecialDrops` | true or false | Drops inside a blast, and Dynamic Trees' own drops |
 | `preventMobDrops` | true or false | Whether mobs killed by a blast still drop |
 
-**Vanilla to the eye.** A pack that wants explosions nobody could tell from an untouched game writes `EJECT_DROPS` and turns off `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` and `playerTNTAlwaysDrops`. Everything else is Blast Plaster showing its hand, and each of those keys can also be set per dimension, so the overworld can look untouched while another dimension mends itself.
+**Fully vanilla appearance:** `EJECT_DROPS` plus `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` and `playerTNTAlwaysDrops` all off. Each key is per-dimension-capable.
 
-**Players without the mod** see nothing unusual either way. The flash is the one part that puts a block of its own into the world, so when a pack sets `vanillaClients` the flash is turned off no matter what any file says, and the rest is particles and items a plain client already understands.
+**Vanilla clients** see nothing unusual. The flash is the only feature that places a block, so with `vanillaClients` set it is forced off; everything else is particles and items a plain client understands.
 
-Two of Blast Plaster's settings are not pack keys: its debug logging, and the list pairing each kind of log with its leaves. The pairing is what tells the mod a tree is a tree, here as much as there, so it stays one answer for the whole game rather than a different one per dimension. Both live in Blast Plaster's own config.
+Not pack keys: Blast Plaster's debug logging and its log-to-leaves pairing (tree identification must be one answer game-wide). Both stay in Blast Plaster's own config.
 
 ## Grave mods
 
-Nothing here needs installing, configuring or switching on. A grave mod and this one share exactly one piece of ground, the loot table a pack rolls when a player dies, and it is settled in advance so that neither has to know about the other.
-
-RDPL puts those items down as ordinary death drops, and it does so before any grave mod looks at the death. A grave mod works from the drops the death produced, so it finds them there with everything else and puts them in the grave: the loot ends up wherever the player's inventory ended up, which is what somebody who installed a grave mod expects. Gravestone, GraveStone Mod and Corail Tombstone all work this way, as does anything else built on the same drops.
-
-`dropLoose` in a `player_loot` file is the switch for the other intent, per entry. The items skip the drops entirely and are put in the world on their own, so no grave mod sees them: the inventory goes into the grave as always, and the loot lies on the ground beside the stone for whoever did the killing. That is the setting for spoils, a head or a heart that ought to belong to the killer rather than sit locked in the victim's grave.
-
-[Player loot](#player-loot) has the keys, the rest of the behavior, and the one caveat that comes with `dropLoose`.
+No setup needed. `player_loot` items join the ordinary death drops before any grave mod reads them, so they end up in the grave with the inventory — works with Gravestone, GraveStone Mod, Corail Tombstone and anything else that reads the death's drop list. Per entry, `dropLoose` bypasses the drop list so the items lie on the ground for the killer instead of going into the grave. Keys and the `dropLoose` caveat: [Player loot](#player-loot).
 
 ---
 
@@ -2695,24 +2673,30 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 **Behaviors** for `behavesAs`. `till`, `path`.
 
-**The name of a new world** is set with `worldName` in the `terrain` group. The screen for making a world opens with that name already in the box, and the folder the world is saved in follows from it as it always does. It only fills the box while it still says what the game called it, so a name typed by the player is never taken away, and unlike the seed and the game mode it is not put back afterward: whatever is in the box when the world is made is what it is called.
+**`worldName`** (`terrain` group) prefills the create-world screen's name box; the save folder follows from it as usual. It only fills the box while the box still holds the game's default, so a player-typed name is never overwritten, and unlike the seed and game mode it is not reapplied afterward — whatever is in the box at creation is the name.
 
-**Game mode** is set with `worldGameMode` in the `terrain` group, one of `survival`, `hardcore`, `creative`, `adventure` or `spectator`. Hardcore is survival where death ends the world, the whole save at once, the same choice the world screen offers, and the screen shows it chosen when a pack asks for it. Every world made while the pack is on starts that way, and creative also opens commands, the same as ticking the box when making the world by hand. It only decides how a world begins; changing mode in a world afterward is left alone. The screen for making a world starts with that mode already chosen, and with the seed a pack asks for already filled in, so what is shown there is what will happen, and a player is free to change it before making the world even though the pack will set it back. Adventure and spectator are not offered on that screen, so a pack asking for either leaves it showing whatever was chosen and sets the mode as the world is made.
+**`worldGameMode`** (`terrain` group): `survival`, `hardcore`, `creative`, `adventure` or `spectator`. Applied at world creation only; existing worlds are untouched, and changing mode later is left alone. `hardcore` is survival plus the vanilla save-wide hardcore flag; `creative` also enables cheats, as the create screen's checkbox would. The create screen opens with the mode (and the pack's seed) pre-selected; a player may change it there, but the pack sets it back at creation. `adventure` and `spectator` are not offered on that screen and are applied as the world is made.
 
-**Where a new world spawns** is set with `worldSpawn` in the `terrain` group, written as `x,z` or `x,y,z`. Without a y the game's usual ground level for the world type is used, which is what vanilla stores anyway, and the player is put down on the surface there. It is applied as the world is made, so a world that already exists keeps the spawn it was born with, and an entry that is not whole numbers is reported and left to the game.
+**`worldSpawn`** (`terrain` group): `x,z` or `x,y,z`. Applied at creation only. Without a y the surface at the world type's ground level is used. Non-integer entries are reported and ignored. Relevant on superflat in particular: vanilla's spawn search looks for grass at sea level, never finds it on a layer stack, and can wander hundreds of blocks — `worldSpawn` pins it.
 
-This is worth knowing on flat worlds in particular. The game picks a spawn by looking for grass at sea level, and on a superflat the block above the layer stack is always air, so that check never passes and it wanders up to a thousand steps looking. A flat world can therefore open hundreds of blocks from the origin, nowhere near where a pack expects. Naming `worldSpawn` settles it.
+**`worldBorder`** (`terrain` group): border diameter in blocks, the figure `/worldborder set` takes. Applied at creation; `0` (default) leaves the border alone; it can still be moved by command afterward. `worldBorderLimit` in the config caps what a pack may request — a pack asking for more is refused and logged, not clamped, so a pack cannot hand a server a border the operator did not agree to.
 
-**The world border** is set with `worldBorder` in the `terrain` group, a whole number of blocks across, the same figure `/worldborder set` takes. It is applied as the world is made, so an existing world keeps the border it has, and `0`, the default, leaves the border where the game puts it. The border is centered wherever the game centers it, and can still be moved afterward by command in the usual way.
+**`worldTime`** (`terrain` group): a tick value as `/time set` takes (`18000` midnight, `6000` noon). Locks the overworld clock; everything that reads the time of day (mob spawning, sleeping) sees the locked value. `-1` (default) leaves time running. The overworld analog of a custom dimension's `fixedTime`, and independent of `doDaylightCycle`.
 
-A pack cannot set a border of any size it likes. `worldBorderLimit` in the config is the widest a pack is allowed to ask for, and a pack asking for more is refused outright rather than quietly cut down: the reason is logged and the border is left alone. Only the person running the game can raise that limit, so a pack cannot hand a server a border it did not agree to.
+**`worldDifficulty`** (`terrain` group): `peaceful`, `easy`, `normal` or `hard`. A bare value covers every dimension; `dimension=difficulty` lines (`-1=hard`) override per dimension. The lock holds against the pause menu. Empty (default) leaves difficulty to the player.
 
-**The time of day** is locked with `worldTime` in the `terrain` group, in ticks, the same figure `/time set` takes, so `18000` is midnight and `6000` is noon. The overworld clock stops there and never moves, and anything that reads whether it is day, mob spawning and sleeping among them, is told the locked time. `-1`, the default, leaves time running. This is the overworld's version of the `fixedTime` a dimension of your own can set, and unlike `doDaylightCycle` it does not matter what the clock said when the world was made.
+**World physics** — four `terrain` keys, each a multiplier of vanilla (`1.0` = unchanged), each taking a bare value for all dimensions or `dimension=value` overrides:
 
-**The difficulty** is locked with `worldDifficulty` in the `terrain` group, one of `peaceful`, `easy`, `normal` or `hard`. A bare difficulty covers every dimension, and a line written as `dimension=difficulty`, such as `-1=hard`, covers that dimension alone and wins over the bare one, so the nether can bite harder than the overworld. Locked means locked: the pause menu can be clicked all day and the world plays at what the pack asked for. Empty, the default, leaves the difficulty to whoever is playing.
+| Setting | Scales | Notes |
+| --- | --- | --- |
+| `worldGravity` | Fall acceleration of players, mobs, dropped items, falling blocks, arrows, thrown entities, TNT and XP orbs | `0.17` is moon-like; jump arcs and projectile ranges follow automatically |
+| `worldFallDamage` | Fall damage | A low-gravity dimension usually wants this matched |
+| `worldJumpStrength` | Jump velocity | Applied on top of the gravity change |
+| `worldTerminalVelocity` | Maximum fall speed, as a share of the vanilla cap | Elytra flight is untouched |
 
+All four empty (default) keep vanilla physics. On Galacticraft dimensions the gravity key scales Galacticraft's own gravity.
 
-
+**Rubic worlds** — `rubicWorld`, `worldMinHeight`, `worldMaxHeight`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist` and `terrainOffset` are `terrain` keys too: see [Rubic worlds](#rubic-worlds).
 
 **Structures** for a world template. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`, and `reccomplex`, which switches off everything Recurrent Complex generates on its own — its natural structures and its decoration stand-ins — leaving what already stands in the world untouched.
 
@@ -2799,19 +2783,6 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 **Opening `goto` up.** Every part of `/rdplserver` needs an operator, level 3, and stays that way. The three `goto` forms are the exception: each carries a permission level of its own that a pack or the config may lower, separately from the other two and from the rest of the command.
 
-| Setting | What it governs |
-| --- | --- |
-| `gotoLevel` | `goto <structure>` |
-| `gotoNextLevel` | `goto <structure> next` |
-| `gotoBackLevel` | `goto <structure> back` |
-| `gotoPlaceLevels` | One named place, in all three forms |
-
-The number is the permission level a sender needs. `3` is an operator, which is the default and where the rest of the command stays. `2` also lets a command block run it, so a pack can put a jump on a button, a pressure plate or a shop sign without handing anybody the rest of `/rdplserver`. `0` lets any player type it themselves. They are separate on purpose: a pack can open `next` to a command block for a tour that steps from one village to the next, while `back` stays with operators, or open the plain jump to players and keep the other two shut.
-
-Lowering one of them lets a non-operator reach the command, so every other part of it checks for an operator itself and refuses with a message rather than silently doing nothing. Tab completion follows suit: someone who is not an operator is offered `goto` alone.
-
-`gotoPlaceLevels` goes finer still, naming single places as `name=level` entries and overriding the three above for that place alone:
-
 ```json
 {
   "settings": {
@@ -2821,9 +2792,20 @@ Lowering one of them lets a non-operator reach the command, so every other part 
 }
 ```
 
-The name is whatever you would type after `goto`: a vanilla one such as `Village` or `Mansion`, or a name your own pack registered with `locateAs` on an imprint entry. Matching ignores case. So a pack can open the way to its own ruins for a command block, and its waystones to every player, while `Village` and the rest stay with operators — or the reverse, opening the vanilla structures for a guided start and keeping its own secrets shut. A level of `4` is above an operator and shuts a place to everybody, which is how you hide one place while the rest of `goto` is open.
+| Setting | What it governs |
+| --- | --- |
+| `gotoLevel` | `goto <structure>` |
+| `gotoNextLevel` | `goto <structure> next` |
+| `gotoBackLevel` | `goto <structure> back` |
+| `gotoPlaceLevels` | One named place, in all three forms |
 
-An entry sets one level for all three forms of that place, since a place either is somewhere a player may be sent or it is not. If a place is not listed, the three settings above decide it as usual, and a name nothing has registered is simply never matched.
+The value is the permission level a sender needs. `3` (operator) is the default. `2` also admits command blocks, so a pack can put a jump on a button or pressure plate without exposing the rest of `/rdplserver`. `0` opens it to any player. The three settings are independent: for example, `next` open to command blocks for a village tour while `back` stays operator-only.
+
+Lowering one lets non-operators reach the command, so every other subcommand checks for operator itself and refuses with a message. Tab completion matches: non-operators are offered `goto` alone.
+
+`gotoPlaceLevels` overrides the three settings for single places, as `name=level` entries, as in the example above. The name is whatever you would type after `goto`: a vanilla one such as `Village` or `Mansion`, or a name registered with `locateAs` on an imprint entry. Matching ignores case. A level of `4` is above operator and closes that place to everyone — the way to hide one place while the rest of `goto` is open.
+
+An entry sets one level for all three forms of that place. An unlisted place falls back to the three settings above, and an unregistered name never matches.
 
 Tab completion follows the same rules, so after `goto` a sender is offered only the places they may actually be carried to.
 
