@@ -61,7 +61,7 @@ public final class ContentSpread {
         BlockPos top = world.getHeight(new BlockPos(x, 0, z));
         int span = Math.max(1, spread.offsetMax - spread.offsetMin + 1);
         int y = top.getY() + spread.offsetMin + random.nextInt(span);
-        return y < 1 ? null : new BlockPos(x, y, z);
+        return y < ContentPlacer.floorY(world) ? null : new BlockPos(x, y, z);
     }
 
     @Nullable private static BlockPos cavern(WorldgenDef def, SpreadDef spread, World world, Random random, int baseX, int baseZ) {

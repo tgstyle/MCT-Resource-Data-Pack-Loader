@@ -55,7 +55,7 @@ public final class ContentBelt implements IContentShape {
     private BlockPos source(Random random, int chunkX, int chunkZ) {
         int span = Math.abs(maxHeight - minHeight);
         if (span <= 0) { return null; }
-        return new BlockPos(chunkX * 16 + random.nextInt(16) + OFFSET, Math.abs(minHeight) + random.nextInt(span), chunkZ * 16 + random.nextInt(16) + OFFSET);
+        return new BlockPos(chunkX * 16 + random.nextInt(16) + OFFSET, minHeight + random.nextInt(span), chunkZ * 16 + random.nextInt(16) + OFFSET);
     }
 
     private boolean withinReach(BlockPos source, int chunkX, int chunkZ) {
@@ -68,8 +68,8 @@ public final class ContentBelt implements IContentShape {
 
     private void fill(World world, Random random, int chunkX, int chunkZ, BlockPos source) {
         int span = radius * radius;
-        int lowest = Math.max(1, Math.max(minHeight - radius, source.getY() - radius));
-        int highest = Math.min(world.getHeight() - 1, Math.min(maxHeight + radius, source.getY() + radius));
+        int lowest = Math.max(ContentPlacer.floorY(world), Math.max(minHeight - radius, source.getY() - radius));
+        int highest = Math.min(ContentPlacer.ceilingY(world) - 1, Math.min(maxHeight + radius, source.getY() + radius));
         int baseX = chunkX * 16 + OFFSET;
         int baseZ = chunkZ * 16 + OFFSET;
         for (int x = baseX; x < baseX + 16; x++) {

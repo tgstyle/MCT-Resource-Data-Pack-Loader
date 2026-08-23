@@ -163,6 +163,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     }
 
     @Shadow protected IChunkProvider chunkProvider;
+    @Shadow protected boolean scheduledUpdatesAreImmediate;
     @Shadow @Final @Mutable public WorldProvider provider;
     @Shadow @Final public Random rand;
     @Shadow @Final public boolean isRemote;

@@ -17,10 +17,18 @@ import java.util.Map;
 import java.util.Random;
 
 public final class ContentWorldgen implements IWorldGenerator {
+    private static int deepestAsked = 0;
     private final List<WorldgenDef> defs;
     private final Map<Integer, List<WorldgenDef>> byDimension = new HashMap<>();
 
-    public ContentWorldgen(List<WorldgenDef> defs) { this.defs = defs; }
+    public ContentWorldgen(List<WorldgenDef> defs) {
+        this.defs = defs;
+        int lowest = 0;
+        for (WorldgenDef def : defs) { lowest = Math.min(lowest, def.minHeight); }
+        deepestAsked = lowest;
+    }
+
+    public static int deepestMinHeight() { return deepestAsked; }
 
     @Override public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator generator, IChunkProvider provider) {
         ContentRetrogen.markGenerated(world, chunkX, chunkZ);

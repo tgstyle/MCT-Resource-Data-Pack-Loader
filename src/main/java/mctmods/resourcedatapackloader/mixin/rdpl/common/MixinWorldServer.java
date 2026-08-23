@@ -31,6 +31,9 @@ import mctmods.resourcedatapackloader.util.world.CubeSplitTickSet;
 import static mctmods.resourcedatapackloader.util.Coords.cubeToMinBlock;
 import static mctmods.resourcedatapackloader.util.ReflectionUtil.cast;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import java.util.Random;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldSettings;
@@ -112,7 +115,27 @@ import net.minecraft.world.GameRules;
 
     @Shadow @Final private TreeSet<NextTickListEntry> pendingTickListEntriesTreeSet;
     @Shadow @Mutable @Final private List<NextTickListEntry> pendingTickListEntriesThisTick;
+    @Unique private int rdpl$immediateTickDepth;
     @Unique private final Map<Long, List<NextTickListEntry>> rdpl$byChunk = new HashMap<>();
+
+    @SuppressWarnings("UnusedAssignment") @WrapOperation(method = "updateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V"))
+    private void rdpl$boundImmediateTicks(Block block, World worldIn, BlockPos pos, IBlockState state, Random rand, Operation<Void> original) {
+        if (rdpl$isRubicWorld() && rdpl$immediateTickDepth >= 32) {
+            scheduledUpdatesAreImmediate = false;
+            try {
+                ((WorldServer) (Object) this).scheduleUpdate(pos, block, 1);
+            } finally {
+                scheduledUpdatesAreImmediate = true;
+            }
+            return;
+        }
+        rdpl$immediateTickDepth++;
+        try {
+            original.call(block, worldIn, pos, state, rand);
+        } finally {
+            rdpl$immediateTickDepth--;
+        }
+    }
     @Unique private int rdpl$builtFromCount = -1;
     @Unique private long rdpl$builtOnTick = -1L;
 

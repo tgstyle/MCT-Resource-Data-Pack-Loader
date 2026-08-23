@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
+
 import com.google.common.base.Predicate;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -42,12 +44,12 @@ public final class ContentPlacer {
     }
 
     public boolean placeExactly(World world, IBlockState state, int x, int y, int z) {
-        if (y < 1 || y >= world.getHeight()) { return false; }
+        if (y < floorY(world) || y >= ceilingY(world)) { return false; }
         return world.setBlockState(new BlockPos(x, y, z), state, FLAGS);
     }
 
     public boolean occupied(World world, int x, int y, int z) {
-        if (y < 1 || y >= world.getHeight()) { return true; }
+        if (y < floorY(world) || y >= ceilingY(world)) { return true; }
         BlockPos pos = new BlockPos(x, y, z);
         IBlockState found = world.getBlockState(pos);
         if (!found.getBlock().isReplaceableOreGen(found, world, pos, replaceable)) { return true; }
@@ -59,7 +61,7 @@ public final class ContentPlacer {
         for (int offX = -1; offX <= 1; offX++) {
             for (int offY = -1; offY <= 1; offY++) {
                 int nearY = y + offY;
-                if (nearY < 0 || nearY >= world.getHeight()) { continue; }
+                if (nearY < floorY(world) - 1 || nearY >= ceilingY(world)) { continue; }
                 for (int offZ = -1; offZ <= 1; offZ++) {
                     if (offX == 0 && offY == 0 && offZ == 0) { continue; }
                     pos.setPos(x + offX, nearY, z + offZ);
@@ -71,6 +73,10 @@ public final class ContentPlacer {
         }
         return false;
     }
+
+    public static int floorY(World world) { return ((IMinMaxHeight) world).rdpl$getMinHeight() + 1; }
+
+    public static int ceilingY(World world) { return ((IMinMaxHeight) world).rdpl$getMaxHeight(); }
 
     public IBlockState choose(Random random) {
         if (states.size() < 2) { return states.get(0); }

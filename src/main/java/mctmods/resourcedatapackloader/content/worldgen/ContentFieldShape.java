@@ -32,8 +32,8 @@ public final class ContentFieldShape implements IContentShape {
     public void generateChunk(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
         int baseX = chunkX * 16 + OFFSET;
         int baseZ = chunkZ * 16 + OFFSET;
-        int lowest = Math.max(1, minHeight);
-        int highest = Math.min(world.getHeight() - 1, maxHeight);
+        int lowest = Math.max(ContentPlacer.floorY(world), minHeight);
+        int highest = Math.min(ContentPlacer.ceilingY(world) - 1, maxHeight);
         if (highest < lowest) { return; }
         long seed = world.getSeed() ^ salt;
         Random random = new Random(seed ^ (chunkX * 341873128712L + chunkZ * 132897987541L));

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
@@ -11,6 +12,7 @@ import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IGameRegistry;
 import mctmods.resourcedatapackloader.util.Box;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -51,6 +53,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     @Nonnull private IBlockState extensionBlockBottom = Objects.requireNonNull(Blocks.STONE).getDefaultState();
     @Nonnull private IBlockState extensionBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
     private boolean hasTopBedrock = false, hasBottomBedrock = true;
+    private DeepGeneration deep;
+    private boolean deepPopulation;
 
     public VanillaCompatibilityGenerator(@Nonnull IChunkGenerator vanilla, @Nonnull World world) {
         this.vanilla = vanilla;
@@ -105,6 +109,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         }
         hasTopBedrock = blockHistogramTop.getOrDefault(bedrockState, 0) > 0;
         Rubic.LOGGER.info("Detected filler block {} from layers [{}, {}], bedrock={}", extensionBlockTop.getBlock().getTranslationKey(), worldHeightBlocks - 3, worldHeightBlocks - 1, hasTopBedrock);
+        deep = new DeepGeneration(world, offsetCubes << 4, extensionBlockBottom);
+        deepPopulation = ContentWorldgen.deepestMinHeight() < 0;
     }
 
     @Override public void generateColumn(Chunk column) {
@@ -130,14 +136,17 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             rand.setSeed(rand.nextInt() ^ cubeZ);
             int vanillaY = cubeY - offsetCubes;
             if (vanillaY < 0 || vanillaY >= worldHeightCubes) {
-                for (int y = 0; y < Cube.SIZE; y++) {
-                    for (int z = 0; z < Cube.SIZE; z++) {
-                        for (int x = 0; x < Cube.SIZE; x++) {
-                            IBlockState state = vanillaY < 0 ? extensionBlockBottom : extensionBlockTop;
-                            int blockY = Coords.localToBlock(vanillaY, y);
-                            state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5,
-                                    hasTopBedrock, hasBottomBedrock);
-                            primer.setBlockState(x, y, z, state);
+                if (vanillaY < 0 && deep.wantsDeep()) { deep.fillDeepCube(primer, cubeX, cubeY, cubeZ, rand, hasTopBedrock, hasBottomBedrock); }
+                else {
+                    for (int y = 0; y < Cube.SIZE; y++) {
+                        for (int z = 0; z < Cube.SIZE; z++) {
+                            for (int x = 0; x < Cube.SIZE; x++) {
+                                IBlockState state = vanillaY < 0 ? extensionBlockBottom : extensionBlockTop;
+                                int blockY = Coords.localToBlock(vanillaY, y);
+                                state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5,
+                                        hasTopBedrock, hasBottomBedrock);
+                                primer.setBlockState(x, y, z, state);
+                            }
                         }
                     }
                 }
@@ -152,6 +161,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                         else {
                             ((IColumnInternal) lastChunk).syncCompatGenerationWrites();
                             replaceBedrock(chunkPrimer, rand);
+                            deep.dressBandPrimer(chunkPrimer, cubeX, cubeZ);
                         }
                     }
                 }
@@ -270,7 +280,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         int vanillaY = cube.getY() - offsetCubes;
         if (vanillaY >= 0 && vanillaY < worldHeightCubes) {
             return new Box(
-                    -1, -vanillaY, -1,
+                    -1, rdpl$populationFloorOffset(cube), -1,
                     0, worldHeightCubes - vanillaY - 1, 0
             );
         }
@@ -281,11 +291,17 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         int vanillaY = cube.getY() - offsetCubes;
         if (vanillaY >= 0 && vanillaY < worldHeightCubes) {
             return new Box(
-                    0, -vanillaY, 0,
+                    0, rdpl$populationFloorOffset(cube), 0,
                     1, worldHeightCubes - vanillaY - 1, 1
             );
         }
         return NO_REQUIREMENT;
+    }
+
+    private int rdpl$populationFloorOffset(ICube cube) {
+        int vanillaY = cube.getY() - offsetCubes;
+        if (!deepPopulation) { return -vanillaY; }
+        return Coords.blockToCube(((IMinMaxHeight) world).rdpl$getMinHeight()) - cube.getY();
     }
 
     @Override public List<SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) { return vanilla.getPossibleCreatures(creatureType, pos); }
