@@ -97,7 +97,7 @@ public final class ShapeDef {
     }
 
     public static ShapeDef cluster() {
-        return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", Collections.emptyList(), AmountDef.of(1), true, true, 8, 4, 8, "", "", false, false, "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), STRAIGHT, 100, 400, false, null, 0.5F);
+        return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", Collections.emptyList(), AmountDef.of(1), true, true, 8, 4, 8, "", "", false, false, "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), STRAIGHT, 100, 0, false, null, 0.5F);
     }
 
     public boolean isRound() { return CIRCLE.equals(plane); }

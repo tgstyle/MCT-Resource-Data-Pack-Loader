@@ -22,7 +22,7 @@ public final class ContentBelt implements IContentShape {
     public ContentBelt(ContentPlacer placer, ShapeDef shape, int minHeight, int maxHeight, ResourceLocation name) {
         this.placer = placer;
         this.radius = Math.max(1, shape.radius.most);
-        this.rarity = Math.max(1, shape.rarity);
+        this.rarity = shape.rarity > 0 ? shape.rarity : 400;
         this.perChunk = shape.perChunk;
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;

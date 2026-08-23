@@ -66,6 +66,10 @@ public final class ContentWorldgen implements IWorldGenerator {
                     continue;
                 }
                 int tries = def.attempts.pick(random);
+                if (def.shape.rarity > 0) {
+                    if (def.shape.perChunk) { tries = def.shape.rarity; }
+                    else if (random.nextInt(def.shape.rarity) != 0) { continue; }
+                }
                 for (int attempt = 0; attempt < tries; attempt++) {
                     BlockPos pos = ContentSpread.position(def, world, random, region, baseX, baseZ);
                     if (pos == null) { continue; }

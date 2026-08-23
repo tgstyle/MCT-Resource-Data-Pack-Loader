@@ -949,7 +949,7 @@ public final class ContentParser {
                 picks(entry, "mirrors", "mirror"),
                 taper(key, entry),
                 Math.max(1, Math.min(100, JsonUtils.getInt(entry, "integrity", 100))),
-                Math.max(1, JsonUtils.getInt(entry, "rarity", 400)),
+                Math.max(0, JsonUtils.getInt(entry, "rarity", 0)),
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
                 JsonUtils.getFloat(entry, "threshold", 0.5F));
