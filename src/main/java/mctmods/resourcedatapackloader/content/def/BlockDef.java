@@ -54,8 +54,10 @@ public final class BlockDef {
     public final String tint;
     public final String leafSapling;
     public final int leafSaplingChance;
+    @Nullable public final ResourceLocation opensWith;
+    public final String openSound;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -96,6 +98,8 @@ public final class BlockDef {
         this.tint = tint;
         this.leafSapling = leafSapling;
         this.leafSaplingChance = leafSaplingChance;
+        this.opensWith = opensWith;
+        this.openSound = openSound;
     }
 
     public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }

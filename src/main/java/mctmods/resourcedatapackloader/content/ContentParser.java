@@ -123,7 +123,14 @@ public final class ContentParser {
                 behaviors(key, json),
                 JsonUtils.getString(json, "tint", ""),
                 JsonUtils.getString(json, "leafSapling", ""),
-                Math.max(0, Math.min(100, JsonUtils.getInt(json, "leafSaplingChance", 5))));
+                Math.max(0, Math.min(100, JsonUtils.getInt(json, "leafSaplingChance", 5))),
+                opensWith(json),
+                JsonUtils.getString(json, "openSound", "").trim());
+    }
+
+    @Nullable private static ResourceLocation opensWith(JsonObject json) {
+        String named = JsonUtils.getString(json, "opensWith", "").trim();
+        return named.isEmpty() ? null : new ResourceLocation(named);
     }
 
     @Nullable private static PortalDef portal(JsonObject json) {
@@ -502,7 +509,9 @@ public final class ContentParser {
                 JsonUtils.getString(json, "slot", ""),
                 JsonUtils.getString(json, "crop", ""),
                 JsonUtils.getString(json, "soil", "minecraft:farmland"),
-                strings(json, "potionTypes"));
+                strings(json, "potionTypes"),
+                json.has("attackSpeed") ? JsonUtils.getFloat(json, "attackSpeed") : Float.NaN,
+                Math.max(0, JsonUtils.getInt(json, "cooldown", 0)));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
@@ -531,6 +540,83 @@ public final class ContentParser {
                 JsonUtils.getInt(block, "fireSpread", 0),
                 JsonUtils.getInt(block, "quantaPerBlock", 0),
                 strings(block, "potions"), strings(json, "requires"));
+    }
+
+    @Nullable public static ExposureDef exposure(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Exposure definition {} is empty, ignoring it", key);
+            return null;
+        }
+        List<ExposureLevelDef> levels = new ArrayList<>();
+        for (JsonElement element : JsonUtils.getJsonArray(json, "levels", new JsonArray())) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A level in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject level = element.getAsJsonObject();
+            String effect = JsonUtils.getString(level, "effect", "");
+            if (effect.isEmpty()) {
+                ContentLog.LOGGER.error("A level in {} names no effect, skipping it", key);
+                continue;
+            }
+            List<PotionEffectDef> extras = new ArrayList<>();
+            for (JsonElement extraElement : JsonUtils.getJsonArray(level, "effects", new JsonArray())) {
+                if (!extraElement.isJsonObject()) { continue; }
+                JsonObject extra = extraElement.getAsJsonObject();
+                String potion = JsonUtils.getString(extra, "potion", "");
+                if (potion.isEmpty()) {
+                    ContentLog.LOGGER.error("An extra effect in {} names no potion, skipping it", key);
+                    continue;
+                }
+                extras.add(new PotionEffectDef(potion,
+                        Math.max(0, JsonUtils.getInt(extra, "duration", 0)),
+                        Math.max(0, JsonUtils.getInt(extra, "amplifier", 0)),
+                        JsonUtils.getBoolean(extra, "ambient", false),
+                        JsonUtils.getBoolean(extra, "showParticles", false)));
+            }
+            levels.add(new ExposureLevelDef(effect,
+                    Math.max(0.0F, JsonUtils.getFloat(level, "damage", 0.0F)),
+                    Math.max(0, JsonUtils.getInt(level, "damageInterval", 160)),
+                    Collections.unmodifiableList(extras)));
+        }
+        if (levels.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} has no usable levels, ignoring it", key);
+            return null;
+        }
+        Map<ResourceLocation, Integer> blocks = leveledNames(key, json, "blocks");
+        Map<ResourceLocation, Integer> items = leveledNames(key, json, "items");
+        if (blocks.isEmpty() && items.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks and no items, ignoring it", key);
+            return null;
+        }
+        return new ExposureDef(key,
+                Math.max(1, JsonUtils.getInt(json, "scanInterval", 20)),
+                Math.max(0, JsonUtils.getInt(json, "range", 10)),
+                JsonUtils.getBoolean(json, "skipsCreative", true),
+                Math.max(0, JsonUtils.getInt(json, "sourcesForNextLevel", 0)),
+                JsonUtils.getString(json, "immunity", "").trim(),
+                blocks, items, Collections.unmodifiableList(levels));
+    }
+
+    private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) {
+        Map<ResourceLocation, Integer> out = new LinkedHashMap<>();
+        for (String entry : strings(json, member)) {
+            String named = entry.trim();
+            int level = 1;
+            int split = named.indexOf('=');
+            if (split >= 0) {
+                try {
+                    level = Math.max(1, Integer.parseInt(named.substring(split + 1).trim()));
+                } catch (NumberFormatException bad) {
+                    ContentLog.LOGGER.error("The {} entry '{}' in {} has a level that is not a number, so it counts as level 1", member, entry, key);
+                }
+                named = named.substring(0, split).trim();
+            }
+            if (named.isEmpty()) { continue; }
+            out.put(new ResourceLocation(named), level);
+        }
+        return out;
     }
 
     @Nullable public static WorldgenDef worldgen(ResourceLocation key, String contents) {

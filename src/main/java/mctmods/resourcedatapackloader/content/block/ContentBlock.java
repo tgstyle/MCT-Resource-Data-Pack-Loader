@@ -15,10 +15,16 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -26,6 +32,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -119,11 +126,15 @@ import javax.annotation.Nullable;
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
         BlockVariant value = def.at(getMetaFromState(state));
-        if (value.drops.isEmpty()) {
+        if (value.drops.isEmpty() || def.opensWith != null) {
             super.getDrops(drops, world, pos, state, fortune);
             return;
         }
         Random rand = world instanceof World ? ((World) world).rand : RANDOM;
+        rollItems(drops, state, value, rand, fortune);
+    }
+
+    private void rollItems(NonNullList<ItemStack> drops, IBlockState state, BlockVariant value, Random rand, int fortune) {
         int count = quantityDropped(state, fortune, rand);
         List<DropDef> pool = new ArrayList<>();
         for (DropDef drop : value.drops) {
@@ -139,6 +150,29 @@ import javax.annotation.Nullable;
         }
     }
 
+    @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
+        if (def.opensWith == null) { return super.onBlockActivated(world, pos, state, player, hand, facing, hitX, hitY, hitZ); }
+        ItemStack held = player.getHeldItem(hand);
+        Item key = ForgeRegistries.ITEMS.getValue(def.opensWith);
+        BlockVariant value = def.at(getMetaFromState(state));
+        if (key == null || held.getItem() != key) {
+            if (!world.isRemote) { player.sendStatusMessage(new TextComponentTranslation(getTranslationKey() + "." + value.name + ".locked"), true); }
+            return true;
+        }
+        if (world.isRemote) { return true; }
+        SoundEvent opening = def.openSound.isEmpty() ? null : SoundEvent.REGISTRY.getObject(new ResourceLocation(def.openSound));
+        if (opening == null) { opening = getSoundType(state, world, pos, player).getBreakSound(); }
+        world.playSound(null, pos, opening, SoundCategory.BLOCKS, 1.0F, 0.9F + world.rand.nextFloat() * 0.2F);
+        NonNullList<ItemStack> loot = NonNullList.create();
+        rollItems(loot, state, value, world.rand, 0);
+        for (ItemStack stack : loot) { spawnAsEntity(world, pos, stack); }
+        spawnDropped(world, pos, value);
+        if (!player.capabilities.isCreativeMode) { held.shrink(1); }
+        world.playEvent(2001, pos, Block.getStateId(state));
+        world.setBlockToAir(pos);
+        return true;
+    }
+
     private static void give(NonNullList<ItemStack> drops, DropDef drop, Random rand, int fortune) {
         if (drop.getResolved() == null) { return; }
         int roll = 1 + rand.nextInt(100);
@@ -151,7 +185,7 @@ import javax.annotation.Nullable;
     }
 
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        if (!world.isRemote) { spawnDropped(world, pos, def.at(getMetaFromState(state))); }
+        if (!world.isRemote && def.opensWith == null) { spawnDropped(world, pos, def.at(getMetaFromState(state))); }
         super.breakBlock(world, pos, state);
     }
 

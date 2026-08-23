@@ -81,6 +81,7 @@ import javax.annotation.Nullable;
             PotionEffect effect = value.getResolvedPotion();
             if (effect != null) { entity.addPotionEffect(new PotionEffect(effect.getPotion(), effect.getDuration(), effect.getAmplifier(), effect.getIsAmbient(), false)); }
         }
+        if (entity instanceof EntityPlayer && def.cooldown > 0) { ((EntityPlayer) entity).getCooldownTracker().setCooldown(this, def.cooldown); }
         if (entity instanceof EntityPlayer && ((EntityPlayer) entity).capabilities.isCreativeMode) { return stack; }
         stack.shrink(1);
         ItemStack container = def.getResolvedContainer();

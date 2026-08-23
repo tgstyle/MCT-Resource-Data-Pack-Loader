@@ -50,6 +50,7 @@ public final class PackManager {
     public static final String FLUIDS = "fluids";
     public static final String FURNACE = "furnace";
     public static final String WORLDGEN = "worldgen";
+    public static final String EXPOSURES = "exposures";
     public static final String GATES = "gates";
     public static final String WORLDTEMPLATES = "worldtemplates";
     public static final String PATHINTERSECTS = "pathintersects";

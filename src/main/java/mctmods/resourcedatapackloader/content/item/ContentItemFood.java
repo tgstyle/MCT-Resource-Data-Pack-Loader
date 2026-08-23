@@ -87,6 +87,7 @@ import javax.annotation.Nullable;
 
     @Override protected void onFoodEaten(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityPlayer player) {
         if (world.isRemote) { return; }
+        if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }
         ItemVariant value = variant(stack);
         if (value == null) { return; }
         PotionEffect effect = value.getResolvedPotion();

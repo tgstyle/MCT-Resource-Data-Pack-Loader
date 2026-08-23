@@ -22,9 +22,11 @@ public final class ItemDef {
     public final String crop;
     public final String soil;
     public final List<String> potionTypes;
+    public final float attackSpeed;
+    public final int cooldown;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -41,6 +43,8 @@ public final class ItemDef {
         this.crop = crop;
         this.soil = soil;
         this.potionTypes = potionTypes;
+        this.attackSpeed = attackSpeed;
+        this.cooldown = cooldown;
     }
 
     public void resolveContainer(ItemStack stack) { this.resolvedContainer = stack; }

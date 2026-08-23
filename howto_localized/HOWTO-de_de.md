@@ -35,6 +35,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Materialien, Tabs, Sounds, Ore Dictionary](#materialien-tabs-sounds-ore-dictionary)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
+- [Expositionen](#expositionen)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
 - [Entity-Varianten](#entity-varianten)
 - [Dorfgrundstücke](#dorfgrundstücke)
@@ -425,6 +426,13 @@ Mehrere Dateien stapeln sich, jede wird für sich entschieden. Ist ein zutreffen
 
 Die Tabelle ist eine gewöhnliche Beutetabelle, über ihren Namen gesucht: Sie kann im Pack unter `loot_tables/entities/player.json` liegen, eine beliebige Vanilla- oder Mod-Tabelle sein und wird von `loot_injections` erreicht. Beutekontext: Der sterbende Spieler ist die erbeutete Entity, der Töter (falls vorhanden) der tötende Spieler, die Schadensquelle ist gesetzt – `killed_by_player`, `entity_properties`, `random_chance_with_looting`, `looting_enchant` und `quality` verhalten sich normal.
 
+Eine Beutefunktion bringt RDPL selbst mit, nutzbar in jeder Tabelle mit einem geplünderten Wesen: `rdpl:killed_name` benennt das Item nach dem Opfer. `format` formt den Anzeigenamen (`%s` ist das Opfer, ohne Angabe nur der Name), `tag` schreibt stattdessen den bloßen Namen in einen NBT-Schlüssel für Items, die ihn selbst auslesen.
+
+```json
+{ "item": "mypack:human_skull", "weight": 1,
+  "functions": [ { "function": "rdpl:killed_name", "format": "Schädel von %s" } ] }
+```
+
 **Grab-Mods.** Die gewürfelten Items kommen zu den normalen Todesdrops, bevor ein Grab-Mod sie liest, und landen darum mit allem anderen im Grab (`replace` legt den Tabelleninhalt statt des Inventars ins Grab). Gilt für Gravestone, GraveStone Mod, Corail Tombstone und alles andere, was mit der Dropliste des Todes arbeitet. Keine Einrichtung nötig.
 
 `dropLoose` umgeht die Dropliste vollständig: Die Items werden direkt in die Welt gesetzt, Grab-Mods sehen sie nie – das Inventar wandert ins Grab, die Items der Tabelle liegen für den Töter auf dem Boden. Die Einstellung für Beute, die dem Töter gehört statt dem Grab des Opfers. Ohne Grab-Mod ändert sie wenig. Vorbehalt: Die Items existieren, bevor irgendetwas nachgelagert die Drops noch abbrechen könnte – ein Eintrag, der einen abgebrochenen Tod nicht überleben darf, lässt sie besser aus.
@@ -541,6 +549,8 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 | `harvestTool` | nein | `pickaxe`, `axe`, `shovel` | `pickaxe` | Welches Werkzeug ihn abbaut |
 | `harvestToolLevel` | nein | 0 bis 3 | `0` | 0 Holz, 1 Stein, 2 Eisen, 3 Diamant |
 | `silkHarvest` | nein | boolean | `true` | Ob Behutsamkeit den Block selbst zurückgibt |
+| `opensWith` | nein | Item-Id | keine | Macht den Block zur Schatzkiste: Abbauen liefert den Block selbst, ein Rechtsklick mit dem genannten Item verbraucht eines, spielt den Abbau-Sound, schüttet die `drops`-Liste der Variante aus und entfernt den Block. Jeder andere Klick zeigt die Aktionsleisten-Zeile `tile.<pack>:<block>.<variante>.locked` aus den Sprachdateien |
+| `openSound` | nein | Sound-Name | der Abbau-Sound | Was eine Schatzkiste beim Öffnen statt ihres Abbau-Sounds spielt |
 | `expDrop` | nein | Objekt mit `min` und `max` | keines | Erfahrung beim Abbauen ohne Behutsamkeit |
 | `creativeTab` | nein | Tab-Name | keiner | Der Tab, in dem er auftaucht |
 | `renderLayer` | nein | `solid`, `cutout`, `cutout_mipped`, `translucent` | passend zum Typ | Wie er gezeichnet wird |
@@ -716,7 +726,7 @@ Jeder Block mit mehr als einer Variante bekommt eine Eigenschaft namens `blocks`
 }
 ```
 
-Ein Block mit einer einzigen Variante und ohne weitere Eigenschaften nutzt stattdessen `normal`.
+Auch ein Block mit nur einer Variante behält die `blocks`-Eigenschaft, sein Schlüssel bleibt also `blocks=<name>`. Nur die Typen unten ganz ohne Varianten-Eigenschaft schlüsseln anders.
 
 Hat der Block eigene Eigenschaften, werden sie mit Kommas verbunden, in der Reihenfolge, in der der Zustand sie auflistet: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Zwei bleiben mit Absicht weg: die eigene Varianteneigenschaft einer Mauer sowie `check_decay` und `decayable` eines Blätterblocks – Blätter brauchen also nur `blocks=ruby_leaves`. Ein Banner hat gar keine Varianteneigenschaft und wird stehend über `rotation=0` bis `15` und an der Wand über `facing=north` angesprochen, siehe [Banner](#banner).
 
@@ -1007,6 +1017,8 @@ Ein `potion_bottle` listet mit `potionTypes` auf, was es fassen kann, als Array 
 | `eat` | food | boolean | `false` | Nutzt die Ess-Animation |
 | `alwaysEdible` | food | boolean | `false` | Lässt sich auch bei voller Hungerleiste essen |
 | `useDuration` | nein | int, Ticks | `32` | Wie lange das Benutzen dauert |
+| `attackSpeed` | nein | float | passend zur Werkzeugklasse | Für `tool` das Angriffstempo-Attribut, ein Schwert liegt bei `-2.4` |
+| `cooldown` | nein | int, Ticks | `0` | Für `food`, `drink` und `potion`: wie lange das Item nach dem Verzehr die erneute Benutzung verweigert |
 | `container` | drink | Itemname | keiner | Was übrig bleibt, etwa eine Flasche |
 | `crop` | seed | Blockname | keiner | Die Feldfrucht, die es pflanzt |
 | `soil` | seed | Blockname | `minecraft:farmland` | Worauf es gepflanzt werden kann |
@@ -1093,12 +1105,12 @@ Variantenschlüssel:
 `tabs/*.json`
 
 ```json
-{ "label": "Ruby Pack", "icon": "mypack:ruby" }
+{ "label": "rubypack", "icon": "mypack:ruby" }
 ```
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `label` | nein | string | der Dateiname | Der Name des Tabs |
+| `label` | nein | string | der Dateiname | Die Id des Tabs: Blöcke und Items nennen sie in `creativeTab`, der angezeigte Name kommt aus `itemGroup.<label>` in den Sprachdateien |
 | `icon` | nein | Itemname | keiner | Das Item, das auf dem Tab abgebildet ist |
 
 `sounds/*.json` ist das Vanilla-Format von `sounds.json`, ein Pack kann also eigenes Audio mitbringen. `oredict/*.json` fügt Ore-Dictionary-Namen zu Items hinzu, die es schon gibt.
@@ -1207,6 +1219,46 @@ Jeder Effekt nimmt `potion` (Pflicht), `duration` (`3600`), `amplifier` (`0`), `
 ```
 
 Jeder Eintrag besteht entweder aus `input`, `ingredient` und `output` oder aus `from`, `ingredient` und `to`.
+
+## Expositionen
+
+Eine vom Pack definierte Gefahr: benannte Blöcke und Items belasten Spieler, die in der Nähe stehen oder sie bei sich tragen, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Datei in `exposures/` definiert eine Gefahr, mehrere laufen nebeneinander. Die Vorgabewerte der Schlüssel entsprechen der Strahlung von Immersive World.
+
+```json
+{
+  "immunity": "mypack:antirad",
+  "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
+  "items": [ "mypack:nuclear_waste" ],
+  "levels": [
+    { "effect": "mypack:radiation_1", "damage": 4.0,
+      "effects": [ { "potion": "minecraft:nausea" }, { "potion": "minecraft:hunger" } ] },
+    { "effect": "mypack:radiation_2", "damage": 8.0,
+      "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
+  ]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Vorgabe | Wirkung |
+| --- | --- | --- | --- | --- |
+| `blocks` | eines von beiden | Liste aus `block` oder `block=stufe` | | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1 |
+| `items` | eines von beiden | Liste aus `item` oder `item=stufe` | | Items, die einen Spieler belasten, der sie trägt |
+| `levels` | ja | Liste von Stufen | | Die Schwereleiter, der erste Eintrag ist Stufe 1. Ein Spieler bekommt die höchste erreichte Stufe |
+| `immunity` | nein | Trankname | keine | Ein Effekt, dessen Träger gar nicht belastet wird |
+| `scanInterval` | nein | Ticks | `20` | Wie oft Umgebung und Inventar geprüft werden |
+| `range` | nein | Blöcke | `10` | Wie weit ein Block wirkt, als Kugel |
+| `sourcesForNextLevel` | nein | int | `0` | So viele Quellen einer Stufe in der Nähe heben sie um eine weitere an. `0` schaltet das ab |
+| `skipsCreative` | nein | boolean | `true` | Kreativ- und Zuschauerspieler bleiben verschont |
+
+Jede Stufe:
+
+| Schlüssel | Pflicht | Wert | Vorgabe | Wirkung |
+| --- | --- | --- | --- | --- |
+| `effect` | ja | Trankname | | Der Effekt, der die Stufe am Spieler markiert. Seine Anwesenheit steuert den Schaden, es sollte also einer sein, den das Pack dafür definiert |
+| `damage` | nein | halbe Herzen | `0` | Schaden alle `damageInterval` Ticks, solange die Stufe anliegt. Er ignoriert Rüstung |
+| `damageInterval` | nein | Ticks | `160` | Wie oft der Schaden fällt |
+| `effects` | nein | Liste von Effekten | keine | Zusätzliche Effekte, gleiche Form wie bei Trankarten. Ohne `duration` folgen sie dem Prüfintervall |
+
+Die Stufeneffekte halten etwas über die nächste Prüfung hinaus, Weggehen lässt sie also von selbst auslaufen. Der Tod durch den Schaden liest seine Meldung aus `death.attack.rdpl.<dateiname>`, die die Sprachdateien des Packs liefern.
 
 ## Dorfbewohner und Handel
 

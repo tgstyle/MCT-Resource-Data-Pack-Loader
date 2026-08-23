@@ -35,6 +35,7 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
+- [Exposures](#exposures)
 - [Villagers and trades](#villagers-and-trades)
 - [Entity variants](#entity-variants)
 - [Village plots](#village-plots)
@@ -425,6 +426,13 @@ Multiple files stack, each evaluated on its own terms. If any applicable entry i
 
 The table is an ordinary loot table looked up by name: it can live in the pack at `loot_tables/entities/player.json`, be any vanilla or mod table, and be reached by `loot_injections`. Loot context: the dying player is the looted entity, the killer (if any) is the killing player, and the damage source is set — `killed_by_player`, `entity_properties`, `random_chance_with_looting`, `looting_enchant` and `quality` all behave normally.
 
+One loot function is RDPL's own, usable in any table with a looted entity: `rdpl:killed_name` names the dropped item after the victim. `format` shapes the display name (`%s` is the victim, default just the name), and `tag` instead writes the plain name into an NBT string key for items that read it themselves.
+
+```json
+{ "item": "mypack:human_skull", "weight": 1,
+  "functions": [ { "function": "rdpl:killed_name", "format": "%s's Skull" } ] }
+```
+
 **Grave mods.** Rolled items join the ordinary death drops before any grave mod reads them, so they end up in the grave with everything else (`replace` puts the table's contents in the grave instead of the inventory). Holds for Gravestone, GraveStone Mod, Corail Tombstone and anything else that works from the death's drop list. No setup required.
 
 `dropLoose` bypasses the drop list entirely: the items are placed in the world directly, so grave mods never see them — the inventory goes in the grave, the table's items lie on the ground for the killer. Use it for spoils that belong to the killer rather than the victim's grave. Without a grave mod it changes little. Caveat: the items exist before anything downstream could cancel the drops, so entries that must not survive a canceled death should leave it off.
@@ -541,6 +549,8 @@ Most definitions also accept `requires`, a list of mod ids or pack namespaces th
 | `harvestTool` | no | `pickaxe`, `axe`, `shovel` | `pickaxe` | Which tool harvests it |
 | `harvestToolLevel` | no | 0 to 3 | `0` | 0 wood, 1 stone, 2 iron, 3 diamond |
 | `silkHarvest` | no | boolean | `true` | Whether silk touch returns the block itself |
+| `opensWith` | no | item id | none | Makes the block a lockbox: breaking it drops the block itself, and right-clicking with the named item consumes one, plays the block's break sound, pays out the variant's `drops` list and removes the block. Any other click shows the action-bar line `tile.<pack>:<block>.<variant>.locked` from the lang files |
+| `openSound` | no | sound name | the break sound | What a lockbox plays when opened instead of its break sound |
 | `expDrop` | no | object with `min` and `max` | none | Experience dropped when broken without silk touch |
 | `creativeTab` | no | tab name | none | The tab it appears in |
 | `renderLayer` | no | `solid`, `cutout`, `cutout_mipped`, `translucent` | to suit the type | How it is drawn |
@@ -716,7 +726,7 @@ Every block with more than one variant gets a property called `blocks`, and its 
 }
 ```
 
-A block with a single variant and no other properties uses `normal` instead.
+Even a block with a single variant keeps the `blocks` property, so its key is still `blocks=<name>`. Only the types below that carry no variant property at all key differently.
 
 Where the block has properties of its own, they are joined with commas in the order the state lists them, `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Two are left out on purpose: a wall's own variant property, and a leaf block's `check_decay` and `decayable`, so leaves need only `blocks=ruby_leaves`. A banner has no variant property at all, and is keyed by `rotation=0` through `15` standing or `facing=north` on a wall, which [Banners](#banners) covers.
 
@@ -1007,6 +1017,8 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 | `eat` | food | boolean | `false` | Uses the eating animation |
 | `alwaysEdible` | food | boolean | `false` | Can be eaten on a full hunger bar |
 | `useDuration` | no | int, ticks | `32` | How long using it takes |
+| `attackSpeed` | no | float | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4` |
+| `cooldown` | no | int, ticks | `0` | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed |
 | `container` | drink | item name | none | What is left behind, such as a bottle |
 | `crop` | seed | block name | none | The crop it plants |
 | `soil` | seed | block name | `minecraft:farmland` | What it can be planted on |
@@ -1093,12 +1105,12 @@ Variant keys:
 `tabs/*.json`
 
 ```json
-{ "label": "Ruby Pack", "icon": "mypack:ruby" }
+{ "label": "rubypack", "icon": "mypack:ruby" }
 ```
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `label` | no | string | the file name | The tab's name |
+| `label` | no | string | the file name | The tab's id: blocks and items name it in `creativeTab`, and the shown name comes from `itemGroup.<label>` in the lang files |
 | `icon` | no | item name | none | The item shown on the tab |
 
 `sounds/*.json` is the vanilla `sounds.json` format, so a pack can ship its own audio. `oredict/*.json` adds ore dictionary names to items that already exist.
@@ -1207,6 +1219,46 @@ Each effect takes `potion` (required), `duration` (`3600`), `amplifier` (`0`), `
 ```
 
 Each entry is either `input`, `ingredient` and `output`, or `from`, `ingredient` and `to`.
+
+## Exposures
+
+A pack-defined hazard: named blocks and items expose players standing near them or carrying them, in levels, each level applying effects and periodic damage. A file in `exposures/` defines one hazard; several run side by side. The per-key defaults are the numbers Immersive World's radiation uses.
+
+```json
+{
+  "immunity": "mypack:antirad",
+  "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
+  "items": [ "mypack:nuclear_waste" ],
+  "levels": [
+    { "effect": "mypack:radiation_1", "damage": 4.0,
+      "effects": [ { "potion": "minecraft:nausea" }, { "potion": "minecraft:hunger" } ] },
+    { "effect": "mypack:radiation_2", "damage": 8.0,
+      "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
+  ]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `blocks` | one of the two | list of `block` or `block=level` | | Blocks that expose a player standing near them. No level means 1 |
+| `items` | one of the two | list of `item` or `item=level` | | Items that expose a player carrying or wearing them |
+| `levels` | yes | list of levels | | The severity ladder, first entry is level 1. A player gets the highest level any source reaches |
+| `immunity` | no | potion name | none | An effect whose bearer is not exposed at all |
+| `scanInterval` | no | ticks | `20` | How often surroundings and inventory are checked |
+| `range` | no | blocks | `10` | How far a block's exposure reaches, as a sphere |
+| `sourcesForNextLevel` | no | int | `0` | This many nearby sources of one level push it one level further. `0` turns that off |
+| `skipsCreative` | no | boolean | `true` | Creative and spectator players are left alone |
+
+Each level:
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `effect` | yes | potion name | | The effect that marks the level on the player. Its presence drives the damage, so it should be one the pack defines for this |
+| `damage` | no | half-hearts | `0` | Damage dealt every `damageInterval` ticks while the level holds. It ignores armor |
+| `damageInterval` | no | ticks | `160` | How often that damage lands |
+| `effects` | no | list of effects | none | Extra effects applied alongside, the same shape potion types use. Without a `duration` they follow the scan window |
+
+The level effects last slightly past the next scan, so walking away lets them lapse on their own. Death by exposure damage reads its message from `death.attack.rdpl.<file name>`, which the pack's lang files supply.
 
 ## Villagers and trades
 

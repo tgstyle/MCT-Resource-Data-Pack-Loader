@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
+import mctmods.resourcedatapackloader.content.ContentExposures;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
@@ -52,6 +53,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.loot.KilledName;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.recipe.FurnaceBlocking;
@@ -60,6 +62,7 @@ import mctmods.resourcedatapackloader.registry.RegistryRemaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.world.storage.loot.functions.LootFunctionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -98,12 +101,14 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
+        LootFunctionManager.registerFunction(new KilledName.Serializer());
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
         RecurrentVillages.register();
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
+        ContentRegistry.resolveItemPotions();
         ContentVillagers.applyTrades();
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
@@ -119,6 +124,7 @@ public class ResourceDataPackLoader {
         ContentSpawning.applyCaps();
         if (ContentSpawning.rateControlled()) { MinecraftForge.EVENT_BUS.register(ContentSpawning.class); }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
+        if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
         if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
         if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }
         ContentDimensions.load();

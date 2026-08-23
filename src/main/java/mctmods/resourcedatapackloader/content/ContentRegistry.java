@@ -51,6 +51,7 @@ public final class ContentRegistry {
     private static final Map<ResourceLocation, ItemDef> ITEM_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, WorldgenDef> WORLDGEN_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, ExposureDef> EXPOSURE_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Block> BLOCKS_BY_NAME = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Item> ITEMS_BY_NAME = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ContentBlockFluid> FLUID_BLOCKS = new LinkedHashMap<>();
@@ -59,6 +60,17 @@ public final class ContentRegistry {
     private static boolean loaded;
 
     private ContentRegistry() {}
+
+    public static Collection<ExposureDef> exposures() { return EXPOSURE_DEFS.values(); }
+
+    public static void resolveItemPotions() {
+        for (ItemDef def : ITEM_DEFS.values()) {
+            for (ItemVariant variant : def.visible) {
+                if (variant.potion == null) { continue; }
+                variant.resolvePotion(potion(def.registryName, variant.name, variant.potion));
+            }
+        }
+    }
 
     public static void load() {
         if (loaded) { return; }
@@ -99,6 +111,14 @@ public final class ContentRegistry {
                 if (def != null) { WORLDGEN_DEFS.put(key, def); }
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in worldgen definition {}, ignoring it: {}", key, ex.getMessage()); }
+        });
+        PackManager.get().forEach(PackManager.EXPOSURES, PackManager.JSON, (namespace, path, contents) -> {
+            ResourceLocation key = new ResourceLocation(namespace, path);
+            try {
+                ExposureDef def = ContentParser.exposure(key, contents);
+                if (def != null) { EXPOSURE_DEFS.put(key, def); }
+            }
+            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in exposure definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
         if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
@@ -419,10 +439,6 @@ public final class ContentRegistry {
             }
         }
         for (ItemDef def : ITEM_DEFS.values()) {
-            for (ItemVariant variant : def.visible) {
-                if (variant.potion == null) { continue; }
-                variant.resolvePotion(potion(def.registryName, variant.name, variant.potion));
-            }
             if (!def.container.isEmpty()) { def.resolveContainer(ContentStacks.parse(def.registryName, def.container, 1)); }
         }
         for (Map.Entry<ResourceLocation, ContentBlockFluid> entry : FLUID_BLOCKS.entrySet()) {

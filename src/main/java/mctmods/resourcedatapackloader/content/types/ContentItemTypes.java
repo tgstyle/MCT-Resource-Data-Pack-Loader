@@ -38,7 +38,8 @@ public final class ContentItemTypes {
             MaterialDef material = ContentMaterials.find(def.material, def.registryName);
             ContentToolTypes.Profile profile = ContentToolTypes.tool(def.toolClass, def.registryName);
             if (material == null || profile == null || material.getTool() == null) { return Collections.emptyList(); }
-            ContentItemTool tool = new ContentItemTool(def, material.getTool(), profile.damage, profile.speed, profile.effective);
+            float speed = Float.isNaN(def.attackSpeed) ? profile.speed : def.attackSpeed;
+            ContentItemTool tool = new ContentItemTool(def, material.getTool(), profile.damage, speed, profile.effective);
             tool.setHarvestLevel(profile.toolClass, material.harvestLevel);
             return Collections.singletonList(tool);
         });
