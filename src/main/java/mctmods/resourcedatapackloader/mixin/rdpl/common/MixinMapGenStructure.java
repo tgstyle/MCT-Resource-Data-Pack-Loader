@@ -2,8 +2,8 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
-import mctmods.resourcedatapackloader.util.compat.IForgettingStarts;
-import mctmods.resourcedatapackloader.util.compat.IPackingStructureData;
+import mctmods.resourcedatapackloader.util.compat.interfaces.IForgettingStarts;
+import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;

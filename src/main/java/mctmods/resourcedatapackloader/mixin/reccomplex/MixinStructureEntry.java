@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.reccomplex;
 
-import mctmods.resourcedatapackloader.util.compat.ISheddingEntry;
+import mctmods.resourcedatapackloader.util.compat.interfaces.ISheddingEntry;
 
 import ivorius.reccomplex.world.gen.feature.WorldStructureGenerationData;
 import org.spongepowered.asm.mixin.Mixin;

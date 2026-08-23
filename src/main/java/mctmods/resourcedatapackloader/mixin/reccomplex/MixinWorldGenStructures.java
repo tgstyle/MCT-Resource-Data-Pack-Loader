@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.reccomplex;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
-import mctmods.resourcedatapackloader.util.compat.ISheddingData;
+import mctmods.resourcedatapackloader.util.compat.interfaces.ISheddingData;
 
 import ivorius.reccomplex.world.gen.feature.WorldGenStructures;
 import ivorius.reccomplex.world.gen.feature.WorldStructureGenerationData;

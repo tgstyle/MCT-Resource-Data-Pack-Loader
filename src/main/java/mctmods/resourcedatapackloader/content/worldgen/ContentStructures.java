@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.util.Summary;
-import mctmods.resourcedatapackloader.util.compat.IForgettingStarts;
+import mctmods.resourcedatapackloader.util.compat.interfaces.IForgettingStarts;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.MapGenBase;
