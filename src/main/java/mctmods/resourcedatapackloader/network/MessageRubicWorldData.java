@@ -30,7 +30,7 @@ public class MessageRubicWorldData implements IMessage {
             this.minHeight = ((IRubicWorld) world).rdpl$getMinHeight();
             this.maxHeight = ((IRubicWorld) world).rdpl$getMaxHeight();
             this.minGenerationHeight = 0;
-            this.maxGenerationHeight = 256;
+            this.maxGenerationHeight = ((IRubicWorld) world).rdpl$getMaxGenerationHeight();
         }
     }
 

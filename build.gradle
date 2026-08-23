@@ -55,9 +55,9 @@ minecraft {
             '-Dforge.logging.console.level=debug',
             '-Dmixin.debug=true',
             '-XX:+UseG1GC',
-            '-Xmx4G',
+            '-Xmx6G',
             '-XX:+FlightRecorder',
-            '-XX:StartFlightRecording=duration=300s,filename=logs/pregen.jfr,settings=profile'
+            '-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/pregen.jfr,settings=profile'
     )
 }
 
@@ -142,20 +142,39 @@ dependencies {
     //runtimeOnly rfg.deobf("curse.maven:${common.cucm_version}")
     //runtimeOnly rfg.deobf("curse.maven:${common.mace_version}")
 
-    runtimeOnly rfg.deobf("curse.maven:${common.zcor_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.exre_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.rbcr_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.rsto_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.rbst_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.zcor_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.exre_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.rbcr_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.rsto_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.rbst_version}")
     compileOnly rfg.deobf("curse.maven:${common.cmsp_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.cmsp_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.mocr_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.rndt_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.indc_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.cmsp_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.mocr_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.rndt_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.indc_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thcr_version}")
     runtimeOnly rfg.deobf("curse.maven:${common.thel_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.opcm_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.woed_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.opcm_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.woed_version}")
+
+    //runtimeOnly rfg.deobf("curse.maven:${common.moui_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.rlib_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.vfix_version}")
+    compileOnly rfg.deobf("curse.maven:${common.fsek_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.fsek_version}")
+    compileOnly rfg.deobf("curse.maven:${common.strm_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.strm_version}")
+    compileOnly rfg.deobf("curse.maven:${common.ccli_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.ccli_version}")
+    compileOnly rfg.deobf("curse.maven:${common.cbmp_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.cbmp_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.mtjp_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.prbs_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.prin_version}")
+
+    // gclc dev RUNTIME needs a repaired jar (deobf duplicates miccore/IntCache methods); compileOnly is safe, javac never reads IntCache
+    compileOnly rfg.deobf("curse.maven:${common.gclc_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.gclc_version}")
 
     clientRuntime rfg.deobf("curse.maven:${common.bf3r_version}")
 

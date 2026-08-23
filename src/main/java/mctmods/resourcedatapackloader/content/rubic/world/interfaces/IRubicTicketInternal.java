@@ -14,6 +14,8 @@ public interface IRubicTicketInternal extends IRubicTicket, ITicket {
 
     void rdpl$setAllForcedChunkCubes(Map<ChunkPos, IntSet> cubePosMap);
 
+    void rdpl$capForcedCubes(int cap);
+
     void setModData(NBTTagCompound modData);
 
     void setPlayer(String player);

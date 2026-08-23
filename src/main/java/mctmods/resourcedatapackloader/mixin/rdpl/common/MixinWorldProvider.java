@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.SpawnPlaceFinder;
 import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
@@ -62,7 +63,15 @@ import javax.annotation.Nullable;
      */
     @Overwrite(remap = false) public int getHeight() { return ((IRubicWorld) world).rdpl$getMaxHeight(); }
 
-    @Override public int rdpl$getOriginalActualHeight() { return getActualHeight(); }
+    @Inject(method = "getActualHeight", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$rubicActualHeight(CallbackInfoReturnable<Integer> cir) {
+        IRubicWorld rubic = (IRubicWorld) world;
+        if (rubic.rdpl$isRubicWorld()) { cir.setReturnValue(Math.min(rubic.rdpl$getMaxHeight(), rubic.rdpl$getMaxGenerationHeight() + (RubicWorldControl.terrainOffsetCubes() << 4))); }
+    }
+
+    @Override public int rdpl$getOriginalActualHeight() {
+        if (((IRubicWorld) world).rdpl$isRubicWorld()) { return ((IRubicWorld) world).rdpl$getMaxGenerationHeight(); }
+        return getActualHeight();
+    }
 
     @Nullable @Override public ICubeGenerator rdpl$createCubeGenerator() {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }

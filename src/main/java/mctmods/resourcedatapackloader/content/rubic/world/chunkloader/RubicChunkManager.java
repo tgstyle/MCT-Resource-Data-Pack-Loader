@@ -27,12 +27,13 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.lang.invoke.MethodHandle;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Mod.EventBusSubscriber(modid = Rubic.MODID) public class RubicChunkManager {
     private static final MethodHandle ticketConstructor = ReflectionUtil.constructHandle(ForgeChunkManager.Ticket.class, String.class, ForgeChunkManager.Type.class, World.class);
+    private static final int MAX_FORCED_CUBES_PER_TICKET = 400;
 
     public static ForgeChunkManager.Ticket makeTicket(String str, ForgeChunkManager.Type type, World world) {
         try {
@@ -46,7 +47,7 @@ import java.util.Map;
         if (!ticketNBT.hasKey("rdplRubic", Constants.NBT.TAG_COMPOUND)) { return; }
         NBTTagCompound rubicNBT = ticketNBT.getCompoundTag("rdplRubic");
         int entityCubeY = rubicNBT.getInteger("entityCubeY");
-        Map<ChunkPos, IntSet> coordsMap = new HashMap<>();
+        Map<ChunkPos, IntSet> coordsMap = new LinkedHashMap<>();
         NBTTagList chunkMap = rubicNBT.getTagList("chunkMap", Constants.NBT.TAG_COMPOUND);
         for (NBTBase entryTagBase : chunkMap) {
             NBTTagCompound entry = (NBTTagCompound) entryTagBase;
@@ -117,6 +118,7 @@ import java.util.Map;
             }
         }
         ((IRubicTicketInternal) ticket).rdpl$setForcedChunkCubes(event.getLocation(), yCoords);
+        ((IRubicTicketInternal) ticket).rdpl$capForcedCubes(MAX_FORCED_CUBES_PER_TICKET);
     }
 
     @SubscribeEvent public static void onForgeChunkManagerUnforceChunk(ForgeChunkManager.UnforceChunkEvent event) {
