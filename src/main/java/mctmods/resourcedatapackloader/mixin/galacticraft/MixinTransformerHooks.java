@@ -1,0 +1,19 @@
+package mctmods.resourcedatapackloader.mixin.galacticraft;
+
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+
+import micdoodle8.mods.galacticraft.core.TransformerHooks;
+import net.minecraft.entity.Entity;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(value = TransformerHooks.class, remap = false) public class MixinTransformerHooks {
+    @Inject(method = "getRenderPosY", at = @At("HEAD"), cancellable = true)
+    private static void rdpl$honestCameraHeight(Entity viewEntity, double regular, CallbackInfoReturnable<Double> cir) {
+        if (viewEntity.world instanceof IRubicWorld && ((IRubicWorld) viewEntity.world).rdpl$isRubicWorld()) {
+            cir.setReturnValue(regular + viewEntity.getEyeHeight());
+        }
+    }
+}
