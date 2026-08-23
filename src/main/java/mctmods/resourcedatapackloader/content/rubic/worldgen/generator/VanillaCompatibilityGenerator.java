@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.util.Box;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
+import mctmods.resourcedatapackloader.util.compat.GcRubicWorldgen;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
@@ -254,6 +255,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         long zSeed = fmlRandom.nextLong() >> 2 + 1L;
         long chunkSeed = (xSeed * x + zSeed * z) ^ worldSeed;
         for (IWorldGenerator generator : generators) {
+            if (!GcRubicWorldgen.allows(world, generator)) { continue; }
             fmlRandom.setSeed(chunkSeed);
             try {
                 CompatHandler.beforeGenerate(world);

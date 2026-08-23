@@ -6,7 +6,8 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinBlockVec3",
-    "MixinThreadFindSeal"
+    "MixinThreadFindSeal",
+    "MixinWorldProviderExitHeight"
   ],
   "client": [
     "MixinTransformerHooks"
