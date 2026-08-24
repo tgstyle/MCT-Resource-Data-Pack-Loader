@@ -44,6 +44,8 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Portale und Tore](#portale-und-tore)
 - [Weltvorlagen](#weltvorlagen)
 - [Rubic-Welten](#rubic-welten)
+- [Die Tiefenwelt](#die-tiefenwelt)
+- [Höhlenregionen](#höhlenregionen)
 - [Welt-Intro](#welt-intro)
 - [Spielregeln](#spielregeln)
 - [Härtegruppen](#härtegruppen)
@@ -1783,6 +1785,74 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 **Client.** Die Grafikeinstellungen bekommen einen Regler für die vertikale Sichtweite, das vertikale Gegenstück zur Sichtweite (`verticalCubeLoadDistance` in der Config). Alles Übrige in der Gruppe `terrain` – Vorgenerierung, Weltphysik, Spawn, Weltgrenze – gilt auf Rubic-Welten unverändert.
 
+## Die Tiefenwelt
+
+Drei weitere `terrain`-Schlüssel füllen den Raum, den eine Rubic-Welt unter dem Vanilla-Terrainfenster öffnet, mit Generierung modernen Stils. Sie tun nur auf einer Rubic-Welt etwas:
+
+| Schlüssel | Wert | Standard | Was er tut |
+| --- | --- | --- | --- |
+| `deepStone` | `namespace:block`, Meta als `@meta` | keiner | Der Block, aus dem die Welt unter dem Fenster besteht, etwa der eigene Deepslate eines Packs. Er blendet über die untersten acht Schichten des Fensters in dessen Stein über, so wie moderne Versionen Deepslate überblenden |
+| `noiseCaves` | `off`, `deep`, `world` | `off` | Noise-Höhlen modernen Stils: Käsekavernen, Spaghetti-Tunnel, Höhlenmünder nahe der Oberfläche und Säulen in den großen Räumen. `deep` schnitzt nur unter dem Fenster, `world` die ganze Welt |
+| `oreVeins` | Liste aus `ore,extra,filler,lowest,highest` | keine | Große gebänderte Erzadern, überwiegend der `filler`-Block mit dem `ore` darin verstreut und einer seltenen Chance auf das `extra`, das leer bleiben darf. Höhen zählen vom Boden des Fensters, Negative erreichen also die Tiefenwelt |
+
+```json
+{
+  "settings": {
+    "rubicWorld": true,
+    "worldMinHeight": -64,
+    "deepStone": "mypack:slate",
+    "noiseCaves": "world",
+    "oreVeins": ["minecraft:iron_ore,,mypack:slate@1,-56,20"]
+  }
+}
+```
+
+Wasser und Lava benehmen sich dort unten. Die untersten Schichten füllt Lava, und die Höhlen darüber tragen lokale Aquifere — dasselbe Schema aus Stützpunkten und Druck, das moderne Versionen verwenden, portiert aus 26.1.2 — Taschen stillen Wassers stehen also auf eigenen Höhen, mit Wänden aus dem Tiefengestein, die das Rauschen formt, wo zwei Höhen aufeinandertreffen oder Wasser auf Lava trifft. Unter Ozeanen fluten die Höhlen zum Meeresspiegel hin, so wie moderne Versionen ihre Aquifere an die Oberfläche binden.
+
+Mit eingeschaltetem `noiseCaves` würfelt die Tiefe außerdem Monsterräume im modernen Stil — rund vier Versuche pro Chunk-Säule unterhalb des Fensters, keiner näher als sechs Blöcke am Weltboden —, sodass Dungeon-Spawner und ihre Kistenbeute in den tiefen Höhlen auftauchen wie in modernen Versionen.
+
+Der Umfang `world` räumt außerdem zwei Vanilla-Überbleibsel ab, die sich mit den neuen Höhlen beißen würden. Die Lava, die Vanilla unterhalb von y 10 in seine Höhlen gießt, beurteilt stattdessen der Aquifer, das alte Lavafenster entfällt also, und Vanillas vergrabene Wasserseen — Oberflächenteiche eingeschlossen — entstehen nicht mehr, so wie moderne Versionen sie gestrichen haben; an ihre Stelle treten die Becken des Aquifers.
+
+## Höhlenregionen
+
+`caveregions/*.json` malt benannte Regionen über den Untergrund, das Pack-Gegenstück zu modernen Höhlenbiomen. Der Untergrund wird in gerundete Zellen geteilt — `caveRegionCells` Blöcke breit und `caveRegionCellsY` hoch, beides `terrain`-Schlüssel — und jede Zelle würfelt nach Gewicht eine Region, oder keine. Alles, was eine Region tut, folgt deterministisch aus dem Seed, Chunks stimmen also überein, ohne je über eine Grenze zu schreiben.
+
+| Schlüssel | Wert | Standard | Was er tut |
+| --- | --- | --- | --- |
+| `weight` | int | `1` | Anteil der Zellen, die diese Region gewinnt. `0` schaltet sie ab |
+| `minHeight` | int | der Weltboden | Unterkante des Bandes, in dem die Region existiert |
+| `maxHeight` | int | `48` | Oberkante des Bandes. Eine Zelle, deren Mitte außerhalb liegt, wählt die Region nie |
+| `dimensions` | Liste von ints | alle | In welchen Dimensionen die Region erscheint |
+| `floorCover` | Block | keiner | Ersetzt den obersten Block von Höhlenböden innerhalb der Region |
+| `floorChance` | 0.0 bis 1.0 | `1.0` | Wie viel vom Boden bedeckt wird |
+| `ceilingCover` | Block | keiner | Ersetzt Höhlendeckenblöcke innerhalb der Region |
+| `ceilingChance` | 0.0 bis 1.0 | `1.0` | Wie viel von der Decke |
+| `coverReplace` | Liste von Blöcken | alles Steinartige | Was die Bedeckungen ersetzen dürfen |
+| `waterLevel` | int | keiner | Legt die Wasserhöhe jedes Aquifer-Stützpunkts innerhalb der Region fest, ihre Höhlen fluten also bis zu dieser Höhe. Wände, wo die Region auf trockene Höhlen trifft, formt dasselbe Druckrauschen wie bei modernen Aquiferen, und Wasser berührt den Lavaboden nie. Braucht eingeschaltete `noiseCaves` |
+| `spawns` | Liste | keine | Mobs, die innerhalb der Region spawnen, mit denselben Einträgen wie das `spawns` eines Bioms: `entity`, `type` (monster, creature, ambient oder water), `weight`, `min` und `max` für die Gruppengröße. Eine Stelle mit Himmelssicht bleibt dem Biom überlassen, wie bei den Belägen |
+| `keepDefaultSpawns` | boolean | `false` | Behält die Spawnliste des Bioms neben der der Region. Aus, ersetzt die Liste der Region sie innerhalb der Region vollständig |
+| `structures` | Liste | keine | Ein Bauwerk, einmal pro Regionszelle gesetzt, im Herzen der Zelle, auf den nächsten Höhlenboden gesetzt — so wie moderne Versionen einem Höhlenbiom sein Wahrzeichen geben. Einträge sind `namespace:name`-Vorlagen oder `{ "structure": "...", "weight": 3 }` zur Auswahl zwischen mehreren |
+| `structureChance` | 0,0 bis 1,0 | `1.0` | Die Chance, mit der jede Zelle der Region ihr Bauwerk tatsächlich bekommt |
+
+Wie viel vom Untergrund schlicht bleibt, bestimmt der `terrain`-Schlüssel `caveRegionPlainWeight`, Standard `4`: Mit einer einzigen Region vom Gewicht 1 bekommt etwa ein Fünftel der Zellen die Region. Bedeckungen greifen nur unter einem Dach — eine Stelle, die den Himmel sieht, bleibt unberührt — eine Region, die über den Boden hinausreicht, zeigt sich an der Oberfläche also nie. Bedeckungen wirken in jeder Höhle, egal welcher Generator sie geschnitzt hat; `waterLevel` ist der eine Schlüssel, der die Noise-Höhlen braucht, weil die Flut beim Schnitzen gesetzt wird.
+
+Features docken über zwei Schlüssel gewöhnlicher [Worldgen-Einträge](#worldgen-einträge) an. `caveRegions` zählt die Regionen auf, in denen ein Eintrag generieren darf, geprüft an der gesetzten Position, sodass Pilze, Kristalle oder was auch immer nur innerhalb ihrer Region erscheinen. `snap` verschiebt jeden Versuch zuerst senkrecht zur nächsten Höhlenfläche: `floor` für Stehendes, `ceiling` für Hängendes. Eine Tropfstein-Region braucht keine neuen Formen:
+
+```json
+{
+  "block": "mypack:stone_spike",
+  "attempts": { "min": 4, "max": 8 },
+  "minHeight": -60,
+  "maxHeight": 40,
+  "caveRegions": ["dripstone"],
+  "snap": "ceiling",
+  "replace": ["minecraft:air"],
+  "shape": { "type": "spire", "radius": 1, "height": { "min": 2, "max": 6 }, "taper": "needle", "hanging": true }
+}
+```
+
+Das `replace` mit `minecraft:air` ist wichtig: Was eine gesetzte Form überschreibt, wird gegen `replace` geprüft, dessen Standard Stein ist — alles, was in offenen Höhlenraum gebaut wird, braucht also Luft in der Liste. Derselbe Eintrag mit `"snap": "floor"` und ohne `hanging` lässt die passenden Stalagmiten wachsen. Der Regionsfilter funktioniert mit jeder gesetzten Form; `belt` und `field` setzen nach eigenen Regeln und ignorieren ihn.
+
 ## Welt-Intro
 
 `worldintro/*.json` zeigt eine Folge von Seiten, wenn ein Spieler die Welt betritt, bevor er die Kontrolle bekommt. Laufender Text über einem Bild, eine Titelkarte, eine Diaschau – oder alles drei hintereinander.
@@ -2024,6 +2094,8 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Der Eintrag wird übersprungen, wenn nicht alle da sind |
 | `shape` | nein | Objekt | `{ "type": "cluster" }` | Die Form, die es annimmt. Siehe [Formen](#formen) |
 | `spread` | nein | Objekt | `{ "type": "even" }` | Wo es hingesetzt wird. Siehe [Verteilung](#verteilung) |
+| `caveRegions` | nein | Liste von Regionsnamen | keine | Generiert nur innerhalb dieser [Höhlenregionen](#höhlenregionen) |
+| `snap` | nein | `floor` oder `ceiling` | keiner | Verschiebt jeden Versuch erst senkrecht zum nächsten Höhlenboden oder zur nächsten Höhlendecke |
 
 ### Gewichtete Blöcke
 
@@ -2141,6 +2213,7 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
 | `mirrors` | imprint | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight` |
 | `field` | field | Objekt | `{ "type": "speckle" }` | Wie das Feld errechnet wird. Dieselben Schlüssel wie das `field` einer Härtegruppe, beschrieben unter [Das Feld](#das-feld): `speckle` mit `chances` und `spread`, oder `seeded` mit `cell`, `seeds`, `reach`, `arms` und `armReach` |
 | `threshold` | field | 0,0 bis 1,0 | `0,5` | Wie stark das Feld an einem Block sein muss, bevor dort gesetzt wird. Niedriger füllt mehr |
+| `fade` | field | int | `0` | Lässt das Band oben ausfransen statt glatt zu enden: über die obersten so vielen Blöcke des Höhenbereichs sinkt die Chance jedes Blocks Stufe für Stufe, derselbe Look, den die Engine `deepStone` am Übergang zur Welt darüber gibt |
 | `rarity` | alle | int | keiner (`400` für belt) | Eine Platzierung pro so viele Chunks. Bei einem belt bestimmt das den Abstand der Gürtel; bei jeder anderen Form lässt es nur einen Chunk von so vielen überhaupt seine `attempts` würfeln. `field` ignoriert es |
 | `rarityIsPerChunk` | alle | boolean | `false` | Macht aus `rarity` stattdessen die Anzahl Platzierungen pro Chunk |
 
@@ -2482,7 +2555,7 @@ Der Abstand entscheidet, wo eine Struktur gesät wird, ihn in einer bestehenden 
 
 ### Spawnen
 
-Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wird über `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` und `undergroundNightMonsterRate` skaliert, jeweils ein Faktor, bei dem `1.0` Vanilla ist – Spawnen bei Tageslicht an der Oberfläche lässt sich also abschalten, ohne die Höhlen anzurühren. Die Obergrenzen sind `monsterCap`, `creatureCap` für friedliche Tiere, `ambientCap` für Fledermäuse und Ähnliches und `waterCreatureCap` für Tintenfische; Vanillas Werte sind 70, 10, 15 und 5, und `-1` lässt eine davon unangetastet.
+Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wird über `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` und `undergroundNightMonsterRate` skaliert, jeweils ein Faktor, bei dem `1.0` Vanilla ist – Spawnen bei Tageslicht an der Oberfläche lässt sich also abschalten, ohne die Höhlen anzurühren. Die Obergrenzen sind `monsterCap`, `creatureCap` für friedliche Tiere, `ambientCap` für Fledermäuse und Ähnliches und `waterCreatureCap` für Tintenfische; Vanillas Werte sind 70, 10, 15 und 5, und `-1` lässt eine davon unangetastet. `monsterSpawnLight` begrenzt zusätzlich zu den Vanilla-Prüfungen das Blocklicht, das ein feindlicher Spawn verträgt: `0` ist die moderne Regel, bei der eine Fackel eine Höhle vollständig schützt, und `-1`, der Standard, behält Vanillas Würfeln bei. Spawner ignorieren die Grenze.
 
 ### Strukturen aufsetzen
 

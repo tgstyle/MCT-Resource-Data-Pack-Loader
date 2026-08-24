@@ -640,7 +640,7 @@ public final class ContentParser {
         }
         minHeight = Math.max(-Config.worldgen.rubicHeightLimit, minHeight);
         maxHeight = Math.max(minHeight, maxHeight);
-        return new WorldgenDef(key, new ResourceLocation(block),
+        WorldgenDef made = new WorldgenDef(key, new ResourceLocation(block),
                 JsonUtils.getInt(json, "meta", 0),
                 weights(json),
                 amount(json, "size", 8, 1),
@@ -664,7 +664,72 @@ public final class ContentParser {
                 JsonUtils.getFloat(json, "minRainfall", -100.0F),
                 JsonUtils.getFloat(json, "maxRainfall", 100.0F),
                 json.has("replace"));
+        List<ResourceLocation> regions = new ArrayList<>();
+        for (String name : strings(json, "caveRegions")) {
+            regions.add(name.indexOf(':') >= 0 ? new ResourceLocation(name) : new ResourceLocation(key.getNamespace(), name));
+        }
+        if (!regions.isEmpty()) { made.caveRegions = regions; }
+        String snap = JsonUtils.getString(json, "snap", "").trim().toLowerCase(Locale.ROOT);
+        if (!snap.isEmpty() && !"floor".equals(snap) && !"ceiling".equals(snap)) {
+            ContentLog.LOGGER.error("Worldgen {} asks for snap '{}', which is not floor or ceiling, so it does not snap", key, snap);
+            snap = "";
+        }
+        made.snap = snap;
+        return made;
     }
+
+    @Nullable public static CaveRegionDef caveRegion(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Cave region definition {} is empty, ignoring it", key);
+            return null;
+        }
+        int minHeight = JsonUtils.getInt(json, "minHeight", -Config.worldgen.rubicHeightLimit);
+        int maxHeight = JsonUtils.getInt(json, "maxHeight", 48);
+        if (maxHeight < minHeight) {
+            ContentLog.LOGGER.error("Cave region definition {} has maxHeight below minHeight, swapping them", key);
+            int swap = minHeight;
+            minHeight = maxHeight;
+            maxHeight = swap;
+        }
+        int waterLevel = CaveRegionDef.NO_WATER;
+        if (json.has("waterLevel")) { waterLevel = JsonUtils.getInt(json, "waterLevel", CaveRegionDef.NO_WATER); }
+        List<SpawnEntryDef> spawns = new ArrayList<>();
+        if (json.has("spawns")) {
+            for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
+                if (!element.isJsonObject()) {
+                    ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
+                    continue;
+                }
+                JsonObject entry = element.getAsJsonObject();
+                String entity = JsonUtils.getString(entry, "entity", "");
+                if (entity.isEmpty()) {
+                    ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
+                    continue;
+                }
+                int min = Math.max(1, JsonUtils.getInt(entry, "min", 1));
+                spawns.add(new SpawnEntryDef(JsonUtils.getString(entry, "type", "creature"), entity,
+                        Math.max(1, JsonUtils.getInt(entry, "weight", 8)),
+                        min, Math.max(min, JsonUtils.getInt(entry, "max", 4))));
+            }
+        }
+        return new CaveRegionDef(key,
+                Math.max(0, JsonUtils.getInt(json, "weight", 1)),
+                minHeight, maxHeight,
+                integers(json),
+                JsonUtils.getString(json, "floorCover", ""),
+                clamp01(JsonUtils.getFloat(json, "floorChance", 1.0F)),
+                JsonUtils.getString(json, "ceilingCover", ""),
+                clamp01(JsonUtils.getFloat(json, "ceilingChance", 1.0F)),
+                strings(json, "coverReplace"),
+                waterLevel,
+                spawns,
+                JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
+                picks(json, "structures", "structure"),
+                clamp01(JsonUtils.getFloat(json, "structureChance", 1.0F)));
+    }
+
+    private static float clamp01(float value) { return value < 0.0F ? 0.0F : Math.min(value, 1.0F); }
 
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
         if (!json.has("spread")) { return SpreadDef.even(); }
@@ -954,6 +1019,7 @@ public final class ContentParser {
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
                 JsonUtils.getFloat(entry, "threshold", 0.5F));
         made.locateAs = JsonUtils.getString(entry, "locateAs", "");
+        made.fade = Math.max(0, JsonUtils.getInt(entry, "fade", 0));
         if (entry.has("at")) {
             JsonArray pinned = JsonUtils.getJsonArray(entry, "at");
             if (pinned.size() == 2) { made.at = new int[] { pinned.get(0).getAsInt(), pinned.get(1).getAsInt() }; }

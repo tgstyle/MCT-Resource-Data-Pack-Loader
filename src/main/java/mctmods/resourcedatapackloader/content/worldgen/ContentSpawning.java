@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
@@ -14,9 +15,11 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.monster.IMob;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.Collections;
@@ -63,6 +66,16 @@ public final class ContentSpawning {
         Summary.info("mobcaps", "Set the " + type.name().toLowerCase(Locale.ROOT) + " spawn cap to " + wanted + ", was " + current);
     }
 
+    @SubscribeEvent public static void onPotentialSpawns(WorldEvent.PotentialSpawns event) {
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+        if (world.canSeeSky(pos)) { return; }
+        CaveRegionDef region = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
+        if (region == null || !region.hasSpawns()) { return; }
+        if (!region.keepDefaultSpawns) { event.getList().clear(); }
+        event.getList().addAll(region.spawnsFor(event.getType()));
+    }
+
     @SubscribeEvent public static void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) {
         World world = event.getWorld();
         DimensionDef dimension = ContentDimensions.byId(world.provider.getDimension());
@@ -71,6 +84,13 @@ public final class ContentSpawning {
             return;
         }
         if (!(event.getEntity() instanceof IMob)) { return; }
+        if (event.getSpawner() == null) {
+            int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight);
+            if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, new BlockPos(event.getX(), event.getY(), event.getZ())) > lightCap) {
+                event.setResult(Event.Result.DENY);
+                return;
+            }
+        }
         float rate = rateFor(world, new BlockPos(event.getX(), event.getY(), event.getZ()));
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {

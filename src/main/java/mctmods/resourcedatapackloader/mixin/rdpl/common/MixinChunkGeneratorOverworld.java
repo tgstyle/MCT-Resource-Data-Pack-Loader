@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.DeepGeneration;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
@@ -53,6 +54,7 @@ import net.minecraft.world.gen.structure.WoodlandMansion;
     @Redirect(method = "populate", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/event/terraingen/TerrainGen;populate(Lnet/minecraft/world/gen/IChunkGenerator;Lnet/minecraft/world/World;Ljava/util/Random;IIZLnet/minecraftforge/event/terraingen/PopulateChunkEvent$Populate$EventType;)Z"), remap = false)
     private boolean rdpl$skipIceWhereNothingFreezes(IChunkGenerator chunkProvider, World world, Random rand, int chunkX, int chunkZ, boolean hasVillageGenerated, PopulateChunkEvent.Populate.EventType type) {
         boolean wanted = TerrainGen.populate(chunkProvider, world, rand, chunkX, chunkZ, hasVillageGenerated, type);
+        if (wanted && type == PopulateChunkEvent.Populate.EventType.LAKE && DeepGeneration.reworksBand(world)) { return false; }
         if (!wanted || type != PopulateChunkEvent.Populate.EventType.ICE) { return wanted; }
         if (ContentFreezeCheck.couldFreeze(world, chunkX, chunkZ)) { return true; }
         ContentChunkWatch.warmChunk();

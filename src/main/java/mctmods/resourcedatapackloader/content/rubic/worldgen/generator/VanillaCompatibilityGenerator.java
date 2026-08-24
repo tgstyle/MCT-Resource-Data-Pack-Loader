@@ -236,7 +236,10 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             WorldgenHangWatchdog.startWorldGen();
             tryInit(vanilla, world);
             int vanillaY = cube.getY() - offsetCubes;
-            if (vanillaY < 0 || vanillaY >= worldHeightCubes) { return; }
+            if (vanillaY < 0 || vanillaY >= worldHeightCubes) {
+                if (vanillaY < 0 && deep.wantsDeep()) { deep.populateDeepCube(cube.getX(), cube.getY(), cube.getZ()); }
+                return;
+            }
             for (int y = worldHeightCubes - 1; y >= 0; y--) { ((IRubicWorldInternal) world).rdpl$getCubeFromCubeCoords(cube.getX(), y + offsetCubes, cube.getZ()).setPopulated(true); }
             if (!ContentVoidWorld.appliesTo(world)) {
                 try {

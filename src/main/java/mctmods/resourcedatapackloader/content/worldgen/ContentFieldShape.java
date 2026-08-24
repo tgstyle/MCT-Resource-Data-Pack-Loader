@@ -16,6 +16,7 @@ public final class ContentFieldShape implements IContentShape {
     private final float threshold;
     private final int minHeight;
     private final int maxHeight;
+    private final int fade;
     private final int salt;
 
     public ContentFieldShape(ContentPlacer placer, ShapeDef shape, int minHeight, int maxHeight, ResourceLocation registryName) {
@@ -24,10 +25,22 @@ public final class ContentFieldShape implements IContentShape {
         this.threshold = shape.threshold;
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
+        this.fade = shape.fade;
         this.salt = registryName.toString().hashCode();
     }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) { return false; }
+
+    private static float hash01(long seed, int x, int y, int z) {
+        long h = seed ^ 0x9E3779B97F4A7C15L;
+        h ^= x * 0x2545F4914F6CDD1DL;
+        h ^= (long) y * 0x6C62272E07BB0142L;
+        h ^= (long) z * 0xCBF29CE484222325L;
+        h ^= h >>> 33;
+        h *= 0xFF51AFD7ED558CCDL;
+        h ^= h >>> 33;
+        return (h >>> 40) / (float) (1 << 24);
+    }
 
     public void generateChunk(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
         int baseX = chunkX * 16 + OFFSET;
@@ -44,6 +57,10 @@ public final class ContentFieldShape implements IContentShape {
                 if (!valid.test(at)) { continue; }
                 for (int y = lowest; y <= highest; y++) {
                     if (field.strength(seed, x, y, z) < threshold) { continue; }
+                    if (fade > 0) {
+                        int above = maxHeight - y;
+                        if (above < fade && hash01(seed, x, y, z) >= (above + 1) / (float) fade) { continue; }
+                    }
                     placer.place(world, random, x, y, z);
                 }
             }

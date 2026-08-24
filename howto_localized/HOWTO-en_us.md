@@ -44,6 +44,8 @@ Two working examples. Drop either straight into `rdploader` and look at how each
 - [Portals and gates](#portals-and-gates)
 - [World templates](#world-templates)
 - [Rubic worlds](#rubic-worlds)
+- [The deep world](#the-deep-world)
+- [Cave regions](#cave-regions)
 - [World intro](#world-intro)
 - [Game rules](#game-rules)
 - [Hardness groups](#hardness-groups)
@@ -1784,6 +1786,74 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 
 **Client.** Video settings gain a vertical render distance slider, the vertical analog of render distance (`verticalCubeLoadDistance` in the config). Everything else in the `terrain` group — pregeneration, world physics, spawn, border — applies to rubic worlds unchanged.
 
+## The deep world
+
+Three more `terrain` keys fill the space a rubic world opens below the vanilla terrain window with modern-style generation. They only do anything on a rubic world:
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `deepStone` | `namespace:block`, meta as `@meta` | none | The block the world below the window is made of, such as a pack's own deepslate. It blends into the window's stone across the window's lowest eight layers, the way modern versions blend deepslate |
+| `noiseCaves` | `off`, `deep`, `world` | `off` | Modern-style noise caves: cheese caverns, spaghetti tunnels, cave mouths near the surface and pillars in the big rooms. `deep` carves only below the window, `world` carves the whole world |
+| `oreVeins` | list of `ore,extra,filler,lowest,highest` | none | Large banded ore veins, mostly the `filler` block with the `ore` scattered through it and a rare chance of the `extra`, which may be left empty. Heights count from the bottom of the window, so negatives reach the deep world |
+
+```json
+{
+  "settings": {
+    "rubicWorld": true,
+    "worldMinHeight": -64,
+    "deepStone": "mypack:slate",
+    "noiseCaves": "world",
+    "oreVeins": ["minecraft:iron_ore,,mypack:slate@1,-56,20"]
+  }
+}
+```
+
+Water and lava behave down there. Bulk lava fills the lowest layers, and the caves above carry local aquifers — the same sample-point-and-pressure scheme modern versions use, ported from 26.1.2 — so pockets of still water sit at their own levels, with walls of the deep stone shaped by noise wherever two levels meet or water meets lava. Under oceans the caves flood toward sea level, the way modern versions tie their aquifers to the surface.
+
+With `noiseCaves` on, the deep also rolls modern-style monster rooms — about four tries per chunk column below the window, none closer than six blocks to the world floor — so dungeon spawners and their chest loot turn up in the deep caves the way they do in modern versions.
+
+The `world` scope also retires two vanilla leftovers that would fight the reworked caves. The lava vanilla pours into its caves below y 10 is judged by the aquifer instead, so the old lava window is gone, and vanilla's buried water lakes — surface ponds included — stop generating, the way modern versions dropped them; the aquifer's own pools take their place.
+
+## Cave regions
+
+`caveregions/*.json` paints named regions over the underground, the pack counterpart of modern cave biomes. The underground is divided into rounded cells — `caveRegionCells` blocks wide and `caveRegionCellsY` tall, both `terrain` keys — and each cell rolls one region, or none, by weight. Everything a region does comes deterministically from the seed, so chunks agree with each other without ever writing across a border.
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `weight` | int | `1` | Share of cells this region wins. `0` switches it off |
+| `minHeight` | int | the world floor | Bottom of the band the region exists in |
+| `maxHeight` | int | `48` | Top of that band. A cell whose center sits outside the band never picks the region |
+| `dimensions` | list of ints | all | Which dimensions the region appears in |
+| `floorCover` | block | none | Replaces the top block of cave floors inside the region |
+| `floorChance` | 0.0 to 1.0 | `1.0` | How much of the floor gets covered |
+| `ceilingCover` | block | none | Replaces cave ceiling blocks inside the region |
+| `ceilingChance` | 0.0 to 1.0 | `1.0` | How much of the ceiling |
+| `coverReplace` | list of blocks | anything stone-like | What the covers may replace |
+| `waterLevel` | int | none | Pins the water level of every aquifer sample point inside the region, so its caves flood to this height. Walls where the region meets dry caves are shaped by the same pressure noise as modern aquifers, and water never touches the lava floor. Needs `noiseCaves` on |
+| `spawns` | list | none | Mobs that spawn inside the region, the same entries a biome's `spawns` takes: `entity`, `type` (monster, creature, ambient or water), `weight`, `min` and `max` for the group size. A spot that can see the sky is left to the biome, like the covers are |
+| `keepDefaultSpawns` | boolean | `false` | Keep the biome's own spawn list alongside the region's. Off, the region's list replaces it entirely inside the region |
+| `structures` | list | none | A structure placed once per region cell, at the cell's heart, snapped to a cave floor — the way modern versions give a cave biome its landmark. Entries are `namespace:name` templates, or `{ "structure": "...", "weight": 3 }` to choose between several |
+| `structureChance` | 0.0 to 1.0 | `1.0` | The chance each cell of the region actually gets its structure |
+
+How much of the underground stays plain is the `caveRegionPlainWeight` `terrain` key, default `4`: with a single region of weight 1, about a fifth of the cells get the region. Covers only ever apply under a roof — a spot that can see the sky is left alone — so a region reaching above ground never shows on the surface. Covers work in every cave, whichever generator carved it; `waterLevel` is the one key that needs the noise caves, because the flood is placed while they are carved.
+
+Features tie in through two keys on ordinary [worldgen entries](#worldgen-entries). `caveRegions` lists the regions an entry may generate in, checked at the placed position, so mushrooms, crystals or anything else appear only inside their region. `snap` first moves each attempt vertically to the nearest cave surface: `floor` for things that stand, `ceiling` for things that hang. A dripstone-like region needs no new shapes:
+
+```json
+{
+  "block": "mypack:stone_spike",
+  "attempts": { "min": 4, "max": 8 },
+  "minHeight": -60,
+  "maxHeight": 40,
+  "caveRegions": ["dripstone"],
+  "snap": "ceiling",
+  "replace": ["minecraft:air"],
+  "shape": { "type": "spire", "radius": 1, "height": { "min": 2, "max": 6 }, "taper": "needle", "hanging": true }
+}
+```
+
+The `replace` of `minecraft:air` matters: what a placed shape writes over is checked against `replace`, whose default is stone, so anything built into open cave space needs air listed. The same entry with `"snap": "floor"` and no `hanging` grows the stalagmites to match. The region filter works with every placed shape; `belt` and `field` place by their own rules and ignore it.
+
 ## World intro
 
 `worldintro/*.json` shows a run of pages when a player enters the world, before they take control. Scrolling text over a picture, a title card, a slideshow, or all three in a row.
@@ -2025,6 +2095,8 @@ Only `block` is required; everything else may be left out and takes its default.
 | `requires` | no | list of mod ids or pack namespaces | none | The entry is skipped unless all are present |
 | `shape` | no | object | `{ "type": "cluster" }` | The form it takes. See [Shapes](#shapes) |
 | `spread` | no | object | `{ "type": "even" }` | Where it is put. See [Spreads](#spreads) |
+| `caveRegions` | no | list of region names | none | Only generate inside these [cave regions](#cave-regions) |
+| `snap` | no | `floor` or `ceiling` | none | Move each attempt vertically to the nearest cave floor or ceiling first |
 
 ### Weighted blocks
 
@@ -2142,6 +2214,7 @@ A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
 | `mirrors` | imprint | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight` |
 | `field` | field | object | `{ "type": "speckle" }` | How the field is worked out. Same keys as a hardness group's `field`, described under [The field](#the-field): `speckle` with `chances` and `spread`, or `seeded` with `cell`, `seeds`, `reach`, `arms` and `armReach` |
 | `threshold` | field | 0.0 to 1.0 | `0.5` | How strong the field must be at a block before it is placed. Lower fills more |
+| `fade` | field | int | `0` | Speckle out the top of the band instead of ending it flat: over the top this many blocks of the height range, each block's odds of placing thin out step by step, the same look the engine gives `deepStone` where it meets the world above |
 | `rarity` | any | int | none (`400` for belt) | One placement per this many chunks. On a belt this spaces the belts out; on any other shape it gates the whole entry so only one chunk in this many rolls its `attempts` at all. `field` ignores it |
 | `rarityIsPerChunk` | any | boolean | `false` | Turn `rarity` into how many placements each chunk gets instead |
 
@@ -2483,7 +2556,7 @@ Spacing decides where a structure is seeded, so changing it in a world that alre
 
 ### Spawning
 
-Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone.
+Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone. `monsterSpawnLight` caps the block light a hostile spawn tolerates on top of the vanilla checks: `0` is the modern rule, where a torch fully protects a cave, and `-1`, the default, keeps vanilla's dice. Spawners ignore the cap.
 
 ### Seating structures
 

@@ -127,7 +127,7 @@ dependencies {
     compileOnly rfg.deobf("curse.maven:${common.ntra_version}")
     compileOnly rfg.deobf("curse.maven:${common.otgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.rtgn_version}")
-    runtimeOnly rfg.deobf("curse.maven:${common.rtgn_version}")
+    //runtimeOnly rfg.deobf("curse.maven:${common.rtgn_version}")
     compileOnly rfg.deobf("curse.maven:${common.twfo_version}")
 
     compileOnly rfg.deobf("curse.maven:${common.tekt_version}")

@@ -56,6 +56,8 @@ public final class WorldgenDef {
     public final String retrogenKey;
     public final int minDistanceFromSpawn;
     public final SpreadDef spread;
+    public List<ResourceLocation> caveRegions = Collections.emptyList();
+    public String snap = "";
     private String token;
     @Nullable private IBlockState state;
     @Nullable private IContentShape figure;

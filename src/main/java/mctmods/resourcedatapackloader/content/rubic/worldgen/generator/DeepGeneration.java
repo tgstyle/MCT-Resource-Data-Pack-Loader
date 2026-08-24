@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Coords;
@@ -12,8 +13,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.gen.feature.WorldGenDungeons;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -30,6 +33,7 @@ public class DeepGeneration {
     private final int caveScope;
     private final List<Vein> veins = new ArrayList<>();
     private final Field cheese;
+    private final Field cheeseWide;
     private final Field layer;
     private final Field spagElev;
     private final Field spag2d;
@@ -42,8 +46,7 @@ public class DeepGeneration {
     private final Field pillar;
     private final Field pillarRare;
     private final Field pillarThick;
-    private final Field flooded;
-    private final Field lavaPocket;
+    private final RubicAquifer aquifer;
 
     public DeepGeneration(World world, int offsetBlocks, IBlockState extensionBottom) {
         this.world = world;
@@ -60,6 +63,7 @@ public class DeepGeneration {
             salt += 10;
         }
         this.cheese = new Field(seed, 1, 128, 192, 4, 2.5D);
+        this.cheeseWide = new Field(seed, 1, 128, 192, 1, 1.0D);
         this.layer = new Field(seed, 2, 256, 32, 1, 1.5D);
         this.spagElev = new Field(seed, 3, 1024, 1024, 1, 1.5D);
         this.spag2d = new Field(seed, 4, 128, 128, 1, 1.5D);
@@ -72,25 +76,45 @@ public class DeepGeneration {
         this.pillar = new Field(seed, 11, 5, 427, 1, 1.5D);
         this.pillarRare = new Field(seed, 12, 128, 128, 1, 1.5D);
         this.pillarThick = new Field(seed, 13, 128, 128, 1, 1.5D);
-        this.flooded = new Field(seed, 14, 190, 190, 1, 1.5D);
-        this.lavaPocket = new Field(seed, 15, 4, 4, 1, 1.5D);
+        this.aquifer = new RubicAquifer(world, seed, genFloor + 10, offsetBlocks, barrierState(), this);
+    }
+
+    boolean carvedAt(int x, int genY, int z) { return density(x, genY, z, 0.0D) <= CAVE_THRESHOLD; }
+
+    public static boolean reworksBand(World world) {
+        if (!(world instanceof IRubicWorld) || !((IRubicWorld) world).rdpl$isRubicWorld()) { return false; }
+        String scope = ContentControl.text(ContentControl.TERRAIN, "noiseCaves", Config.worldgen.noiseCaves);
+        return scope != null && "world".equalsIgnoreCase(scope.trim());
     }
 
     public boolean wantsDeep() { return deepStone != null || caveScope > 0 || !veins.isEmpty(); }
+
+    public void populateDeepCube(int cubeX, int cubeY, int cubeZ) {
+        if (caveScope == 0) { return; }
+        Random random = new Random(seed ^ (cubeX * 341873128712L + cubeZ * 132897987541L + cubeY * 1052717L));
+        int x = Coords.cubeToMinBlock(cubeX) + random.nextInt(16) + 8;
+        int y = Coords.cubeToMinBlock(cubeY) + 1 + random.nextInt(15);
+        int z = Coords.cubeToMinBlock(cubeZ) + random.nextInt(16) + 8;
+        if (y < ((IMinMaxHeight) world).rdpl$getMinHeight() + 6) { return; }
+        new WorldGenDungeons().generate(world, random, new BlockPos(x, y, z));
+    }
 
     private boolean dressesBand() { return deepStone != null || caveScope == 2 || !veins.isEmpty(); }
 
     public void fillDeepCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {
         int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
-        double[][][] lattice = caveScope > 0 ? sampleLattice(cubeX << 4, Coords.cubeToMinBlock(cubeY) - offsetBlocks, cubeZ << 4, Cube.SIZE) : null;
+        double[][][] lattice = caveScope > 0 ? sampleLattice(cubeX << 4, Coords.cubeToMinBlock(cubeY) - offsetBlocks, cubeZ << 4) : null;
         for (int y = 0; y < Cube.SIZE; y++) {
             for (int z = 0; z < Cube.SIZE; z++) {
                 for (int x = 0; x < Cube.SIZE; x++) {
                     int worldX = (cubeX << 4) + x;
                     int worldZ = (cubeZ << 4) + z;
                     int genY = Coords.cubeToMinBlock(cubeY) + y - offsetBlocks;
-                    if (lattice != null && trilerp(lattice, x, y, z) <= CAVE_THRESHOLD) {
-                        primer.setBlockState(x, y, z, fluidOrAir(worldX, genY, worldZ));
+                    double carved = lattice != null ? trilerp(lattice, x, y, z) : 1.0D;
+                    if (carved <= CAVE_THRESHOLD) {
+                        IBlockState opened = fluidOrAir(worldX, genY, worldZ, carved);
+                        opened = WorldGenUtils.getRandomBedrockReplacement(world, rand, opened, Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock);
+                        primer.setBlockState(x, y, z, opened);
                         continue;
                     }
                     IBlockState state = deepStone != null ? deepStone : extensionBottom;
@@ -111,14 +135,20 @@ public class DeepGeneration {
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     IBlockState state = primer.getBlockState(x, y, z);
-                    if (!carvable(state)) { continue; }
                     int worldX = (cubeX << 4) + x;
                     int worldZ = (cubeZ << 4) + z;
-                    if (lattice != null && trilerp(lattice, x, y, z) <= CAVE_THRESHOLD) {
+                    if (lattice != null && state.getMaterial() == Material.LAVA) {
+                        double lavaCarved = trilerp(lattice, x, y, z);
+                        primer.setBlockState(x, y, z, lavaCarved <= CAVE_THRESHOLD ? fluidOrAir(worldX, y, worldZ, lavaCarved) : Blocks.AIR.getDefaultState());
+                        continue;
+                    }
+                    if (!carvable(state)) { continue; }
+                    double carved = lattice != null ? trilerp(lattice, x, y, z) : 1.0D;
+                    if (carved <= CAVE_THRESHOLD) {
                         boolean carve = tops[(z << 4) | x] - y >= 16 || mouthTerm(worldX, y, worldZ) <= 0.0D;
-                        if (carve && y < 255 && primer.getBlockState(x, y + 1, z).getMaterial().isLiquid()) { carve = false; }
+                        if (carve && y < 255 && primer.getBlockState(x, y + 1, z).getMaterial() == Material.WATER) { carve = false; }
                         if (carve) {
-                            primer.setBlockState(x, y, z, fluidOrAir(worldX, y, worldZ));
+                            primer.setBlockState(x, y, z, fluidOrAir(worldX, y, worldZ, carved));
                             continue;
                         }
                     }
@@ -133,6 +163,24 @@ public class DeepGeneration {
             }
         }
         if (tops != null) { restoreEmptiedColumns(primer, tops); }
+        if (tops != null) { sealBandFluids(primer); }
+    }
+
+    private void sealBandFluids(ChunkPrimer primer) {
+        for (int y = 0; y < 256; y++) {
+            for (int z = 0; z < 16; z++) {
+                for (int x = 0; x < 16; x++) {
+                    Material material = primer.getBlockState(x, y, z).getMaterial();
+                    if (material != Material.WATER && material != Material.LAVA) { continue; }
+                    boolean leak = y > 0 && primer.getBlockState(x, y - 1, z).getMaterial() == Material.AIR;
+                    if (!leak && x > 0) { leak = primer.getBlockState(x - 1, y, z).getMaterial() == Material.AIR; }
+                    if (!leak && x < 15) { leak = primer.getBlockState(x + 1, y, z).getMaterial() == Material.AIR; }
+                    if (!leak && z > 0) { leak = primer.getBlockState(x, y, z - 1).getMaterial() == Material.AIR; }
+                    if (!leak && z < 15) { leak = primer.getBlockState(x, y, z + 1).getMaterial() == Material.AIR; }
+                    if (leak) { primer.setBlockState(x, y, z, barrierState()); }
+                }
+            }
+        }
     }
 
     private void restoreEmptiedColumns(ChunkPrimer primer, int[] tops) {
@@ -173,8 +221,8 @@ public class DeepGeneration {
         return deepStone != null && block == deepStone.getBlock();
     }
 
-    private double[][][] sampleLattice(int worldX, int genY, int worldZ, int height) {
-        int ySteps = height / 8 + 1;
+    private double[][][] sampleLattice(int worldX, int genY, int worldZ) {
+        int ySteps = Cube.SIZE / 8 + 1;
         double[][][] lattice = new double[5][ySteps][5];
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < ySteps; y++) {
@@ -213,8 +261,14 @@ public class DeepGeneration {
     }
 
     private double density(int x, int y, int z, double cheeseFade) {
+        int aboveFloor = y - genFloor;
         double layered = layer.sample(x, y, z);
         double result = 4.0D * layered * layered + clamp(0.27D + cheese.sample(x, y, z), -1.0D, 1.0D) + cheeseFade;
+        if (aboveFloor < 24) {
+            double regionalDepth = -cheeseWide.sample(x, y, z) - 0.3D;
+            if (regionalDepth > 0.0D) { result += (24 - aboveFloor) / 24.0D * regionalDepth * 12.0D; }
+            result += (24 - aboveFloor) * 0.01D;
+        }
         double elevation = spagElev.sample(x, 0, z) * 8.0D;
         double slab = Math.abs(elevation - 0.125D * y) - 0.95D;
         double spaghetti = Math.max(Math.abs(spag2d.sample(x, y, z)) - 0.1D, slab * slab * slab);
@@ -229,22 +283,16 @@ public class DeepGeneration {
             double noodle = 1.5D * Math.max(Math.abs(noodleA.sample(x, y, z)), Math.abs(noodleB.sample(x, y, z))) - 0.075D;
             result = Math.min(result, noodle);
         }
-        int aboveFloor = y - genFloor;
-        if (aboveFloor < 24) { result += (24 - aboveFloor) * 0.04D; }
+        if (aboveFloor < 8) { result += (8 - aboveFloor) * 0.02D; }
         return result;
     }
 
     private double mouthTerm(int x, int y, int z) { return mouth.sample(x, y, z) + 0.37D + 0.3D * clamp((30.0D - y) / 40.0D, 0.0D, 1.0D); }
 
-    private IBlockState fluidOrAir(int x, int genY, int z) {
+    private IBlockState fluidOrAir(int x, int genY, int z, double density) {
         int lavaLevel = genFloor + 10;
         if (genY < lavaLevel) { return Blocks.LAVA.getDefaultState(); }
-        double wet = flooded.sample(x, genY, z);
-        if (genY <= lavaLevel + 1) { return wet > 0.05D ? barrierState() : Blocks.AIR.getDefaultState(); }
-        double threshold = clamp(0.25D + (63 - genY) * 0.006D, 0.25D, 0.7D);
-        if (genY < -10 && wet < threshold - 0.1D && Math.abs(lavaPocket.sample(Math.floorDiv(x, 64), Math.floorDiv(genY, 40), Math.floorDiv(z, 64))) > 0.55D) { return Blocks.LAVA.getDefaultState(); }
-        if (genY < 63 && wet > threshold) { return Blocks.WATER.getDefaultState(); }
-        return Blocks.AIR.getDefaultState();
+        return aquifer.substance(x, genY, z, density);
     }
 
     private IBlockState barrierState() { return deepStone != null ? deepStone : extensionBottom; }
@@ -281,7 +329,7 @@ public class DeepGeneration {
 
     private static double clamp(double value, double low, double high) { return value < low ? low : Math.min(value, high); }
 
-    private static IBlockState parseState(String name, String key) {
+    public static IBlockState parseState(String name, String key) {
         if (name == null || name.trim().isEmpty()) { return null; }
         String trimmed = name.trim();
         int meta = 0;
@@ -353,7 +401,7 @@ public class DeepGeneration {
         }
     }
 
-    private static class Field {
+    static class Field {
         private final int[] perm = new int[512];
         private final double freqXZ;
         private final double freqY;

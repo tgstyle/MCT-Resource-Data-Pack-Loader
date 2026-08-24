@@ -54,6 +54,7 @@ public final class ShapeDef {
     public final String structure;
     public String locateAs = "";
     public int[] at = null;
+    public int fade = 0;
     public final List<PickDef> structures;
     public final List<PickDef> turns;
     public final List<PickDef> mirrors;

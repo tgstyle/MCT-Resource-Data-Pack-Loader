@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import javax.annotation.Nullable;
 
 public final class ContentWorldgen implements IWorldGenerator {
     private static int deepestAsked = 0;
@@ -32,6 +34,8 @@ public final class ContentWorldgen implements IWorldGenerator {
 
     @Override public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator generator, IChunkProvider provider) {
         ContentRetrogen.markGenerated(world, chunkX, chunkZ);
+        ContentCaveRegions.decorate(world, chunkX, chunkZ, random);
+        ContentCaveRegions.placeStructures(world, chunkX, chunkZ);
         List<WorldgenDef> active = forDimension(world.provider.getDimension());
         if (active.isEmpty()) { return; }
         generate(random, chunkX, chunkZ, world, active);
@@ -73,6 +77,14 @@ public final class ContentWorldgen implements IWorldGenerator {
                 for (int attempt = 0; attempt < tries; attempt++) {
                     BlockPos pos = ContentSpread.position(def, world, random, region, baseX, baseZ);
                     if (pos == null) { continue; }
+                    if (!def.snap.isEmpty()) {
+                        pos = snap(world, pos, "ceiling".equals(def.snap));
+                        if (pos == null) { continue; }
+                    }
+                    if (!def.caveRegions.isEmpty()) {
+                        CaveRegionDef cave = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
+                        if (cave == null || !def.caveRegions.contains(cave.key)) { continue; }
+                    }
                     Biome biome = world.getBiome(pos);
                     if (filtered && biomeBlocked(def, biome)) { continue; }
                     if (!def.climateAllows(biome.getDefaultTemperature(), biome.getRainfall())) { continue; }
@@ -81,6 +93,21 @@ public final class ContentWorldgen implements IWorldGenerator {
             }
             finally { ContentOreControl.endPack(); }
         }
+    }
+
+    @Nullable private static BlockPos snap(World world, BlockPos pos, boolean ceiling) {
+        BlockPos at = pos;
+        for (int step = 0; step < 24; step++) {
+            if (!world.isBlockLoaded(at)) { return null; }
+            boolean airHere = world.isAirBlock(at);
+            BlockPos against = ceiling ? at.up() : at.down();
+            if (airHere && !world.isAirBlock(against)) {
+                return world.getBlockState(against).getMaterial().isLiquid() ? null : at;
+            }
+            if (ceiling) { at = airHere ? at.up() : at.down(); }
+            else { at = airHere ? at.down() : at.up(); }
+        }
+        return null;
     }
 
     private static boolean allows(WorldgenDef def, World world, BlockPos source, boolean filtered) {

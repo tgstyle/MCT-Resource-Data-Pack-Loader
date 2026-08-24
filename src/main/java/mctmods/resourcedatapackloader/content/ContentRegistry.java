@@ -52,6 +52,7 @@ public final class ContentRegistry {
     private static final Map<ResourceLocation, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, WorldgenDef> WORLDGEN_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ExposureDef> EXPOSURE_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, CaveRegionDef> CAVEREGION_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Block> BLOCKS_BY_NAME = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Item> ITEMS_BY_NAME = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ContentBlockFluid> FLUID_BLOCKS = new LinkedHashMap<>();
@@ -62,6 +63,8 @@ public final class ContentRegistry {
     private ContentRegistry() {}
 
     public static Collection<ExposureDef> exposures() { return EXPOSURE_DEFS.values(); }
+
+    public static Collection<CaveRegionDef> caveRegions() { return CAVEREGION_DEFS.values(); }
 
     public static void resolveItemPotions() {
         for (ItemDef def : ITEM_DEFS.values()) {
@@ -119,6 +122,14 @@ public final class ContentRegistry {
                 if (def != null) { EXPOSURE_DEFS.put(key, def); }
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in exposure definition {}, ignoring it: {}", key, ex.getMessage()); }
+        });
+        PackManager.get().forEach(PackManager.CAVEREGIONS, PackManager.JSON, (namespace, path, contents) -> {
+            ResourceLocation key = new ResourceLocation(namespace, path);
+            try {
+                CaveRegionDef def = ContentParser.caveRegion(key, contents);
+                if (def != null) { CAVEREGION_DEFS.put(key, def); }
+            }
+            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in cave region definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
         if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
