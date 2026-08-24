@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes3D;
 import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.CubePos;
@@ -108,6 +109,7 @@ public class Cube implements ICube {
                 }
             }
         }
+        ContentBiomes3D.apply(this, world);
         isModified = true;
     }
 

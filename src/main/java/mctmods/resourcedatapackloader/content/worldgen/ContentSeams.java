@@ -206,11 +206,6 @@ public final class ContentSeams {
             BlockPos spot = known(world);
             if (spot == null) { spot = settle(world); }
             if (remembered != NO_COLUMN && world instanceof WorldServer) { SeamMemory.of((WorldServer) world).rememberLanding(remembered, spot); }
-            if (entity instanceof EntityPlayerMP) {
-                ContentLog.LOGGER.info("Seam put {} into dimension {} at {}, {}, {} aiming for {}, {}, {} between {} and {}",
-                        entity.getName(), world.provider.getDimension(), spot.getX(), spot.getY(), spot.getZ(),
-                        (int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z), floor, ceiling);
-            }
             if (entity instanceof EntityPlayerMP) { open(world, spot); }
             boolean sameColumn = spot.getX() == (int) Math.floor(x) && spot.getZ() == (int) Math.floor(z);
             double landX = sameColumn ? x : spot.getX() + 0.5;

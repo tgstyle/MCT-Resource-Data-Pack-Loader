@@ -31,12 +31,16 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class ContentBiomes {
     private static final List<String> RATE_KEYS = Collections.unmodifiableList(Arrays.asList(
@@ -64,6 +68,8 @@ public final class ContentBiomes {
 
     private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
+
+    static Collection<BiomeDef> defs() { return DEFS.values(); }
     private static final List<ContentBiome> REGISTERED = new ArrayList<>();
     private static boolean loaded;
 
@@ -148,6 +154,10 @@ public final class ContentBiomes {
                 rate(json, "undergroundNight"),
                 color(json, "grassColor", key),
                 color(json, "foliageColor", key),
+                json.has("minHeight") || json.has("maxHeight"),
+                JsonUtils.getInt(json, "minHeight", Integer.MIN_VALUE),
+                JsonUtils.getInt(json, "maxHeight", Integer.MAX_VALUE),
+                strings(json, "replaces"),
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
                 strings(json, "requires")));
@@ -190,8 +200,7 @@ public final class ContentBiomes {
             try {
                 Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
                 ContentBiome biome = ContentBiome.create(def);
-                if (def.isAutoId()) { event.getRegistry().register(biome); }
-                else { Biome.registerBiome(def.id, def.registryName.toString(), biome); }
+                if (def.isAutoId() || !pin(event.getRegistry(), biome, def.id)) { event.getRegistry().register(biome); }
                 REGISTERED.add(biome);
             }
             finally { Loader.instance().setActiveModContainer(previous); }
@@ -200,6 +209,32 @@ public final class ContentBiomes {
             ContentLog.LOGGER.debug("Biome {} registered with id {}{}", biome.getRegistryName(), Biome.getIdForBiome(biome), biome.getDef().isAutoId() ? "" : " (pinned by the pack)");
         }
         if (!REGISTERED.isEmpty()) { Summary.info("content_biomes", "Registered " + REGISTERED.size() + " biome(s) from packs"); }
+    }
+
+    @Nullable private static Method adder(IForgeRegistry<Biome> registry, ContentBiome biome) {
+        for (Class<?> held = registry.getClass(); held != null; held = held.getSuperclass()) {
+            for (Method one : held.getDeclaredMethods()) {
+                if (!"add".equals(one.getName()) || one.getParameterCount() != 2) { continue; }
+                if (one.getParameterTypes()[0] != int.class || !one.getParameterTypes()[1].isInstance(biome)) { continue; }
+                return one;
+            }
+        }
+        return null;
+    }
+
+    private static boolean pin(IForgeRegistry<Biome> registry, ContentBiome biome, int id) {
+        try {
+            Method add = adder(registry, biome);
+            if (add == null) { throw new NoSuchMethodException("add(int, entry)"); }
+            add.setAccessible(true);
+            int given = (int) add.invoke(registry, id, biome);
+            if (given != id) { ContentLog.LOGGER.error("Biome {} asks for id {}, which was already taken, so it has id {} instead", biome.getRegistryName(), id, given); }
+            return true;
+        }
+        catch (ReflectiveOperationException | RuntimeException refused) {
+            ContentLog.LOGGER.error("Biome {} asks for id {}, which this Forge build will not let a pack pin, so a free id is chosen instead", biome.getRegistryName(), id, refused);
+            return false;
+        }
     }
 
     public static void applyPlacement() {

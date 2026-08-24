@@ -1559,6 +1559,9 @@ Every pack plot is offered to villages as one entry, so `weight` decides which o
 | `spawnChance` | no | float, below 1 | `0.1` | How likely another herd is placed as the land is first made. The game keeps rolling for as long as it succeeds, so 1 never stops and fills the world until it runs out of room. Anything at or above 0.99 is refused and 0.99 used |
 | `spawnRates` | no | object of `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` to a multiplier | none | How often hostile mobs spawn here, in place of the global settings. See below |
 | `placement` | no | object |, | Where it generates. See below |
+| `minHeight` | no | int | none | Lowest y this biome takes over as a 3D biome. Setting either height turns the biome into a band: the column keeps its own biome outside it, and inside it every 4 by 4 by 4 cell of the world reports this one. Rubic worlds only, and applied as land is made, so existing land keeps what it had |
+| `maxHeight` | no | int | none | Highest y of that band |
+| `replaces` | no | list of biome names | every biome | Restricts the band to columns whose own biome is named here, so an alpine band can sit over mountains and nothing else |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
 
 A spawn entry takes `entity` (required), `type` (`creature`, one of the [creature types](#value-lists)), `weight` (`10`), `min` (`1`) and `max` (`min`).
@@ -1836,6 +1839,7 @@ The `world` scope also retires two vanilla leftovers that would fight the rework
 | `keepDefaultSpawns` | boolean | `false` | Keep the biome's own spawn list alongside the region's. Off, the region's list replaces it entirely inside the region |
 | `structures` | list | none | A structure placed once per region cell, at the cell's heart, snapped to a cave floor — the way modern versions give a cave biome its landmark. Entries are `namespace:name` templates, or `{ "structure": "...", "weight": 3 }` to choose between several |
 | `structureChance` | 0.0 to 1.0 | `1.0` | The chance each cell of the region actually gets its structure |
+| `biome` | biome name | none | The biome the region reports inside its volume, written into the cube as a 3D biome. Gives the region its own foliage, grass and water colors, music and ambient sounds, and lets vanilla spawn weighting read it. The surface above is untouched, since only the cells the region occupies are written |
 
 How much of the underground stays plain is the `caveRegionPlainWeight` `terrain` key, default `4`: with a single region of weight 1, about a fifth of the cells get the region. Covers only ever apply under a roof — a spot that can see the sky is left alone — so a region reaching above ground never shows on the surface. Covers work in every cave, whichever generator carved it; `waterLevel` is the one key that needs the noise caves, because the flood is placed while they are carved.
 
@@ -2811,6 +2815,8 @@ These are the names the parser accepts wherever the tables above say "one of the
 **`worldTime`** (`terrain` group): a tick value as `/time set` takes (`18000` midnight, `6000` noon). Locks the overworld clock; everything that reads the time of day (mob spawning, sleeping) sees the locked value. `-1` (default) leaves time running. The overworld analog of a custom dimension's `fixedTime`, and independent of `doDaylightCycle`.
 
 **`worldDifficulty`** (`terrain` group): `peaceful`, `easy`, `normal` or `hard`. A bare value covers every dimension; `dimension=difficulty` lines (`-1=hard`) override per dimension. The lock holds against the pause menu. Empty (default) leaves difficulty to the player.
+
+**`weatherCeiling`** (`terrain` group): the highest y rain and snow reach. A bare number covers every dimension; `dimension=y` lines (`0=128`) override per dimension. Above it rain does not fall, snow does not settle, cauldrons do not fill, lightning does not strike and no precipitation is drawn; below it weather is unchanged. Empty (default) means no ceiling. Ice is temperature rather than precipitation, so it still forms above the line.
 
 **World physics** — four `terrain` keys, each a multiplier of vanilla (`1.0` = unchanged), each taking a bare value for all dimensions or `dimension=value` overrides:
 

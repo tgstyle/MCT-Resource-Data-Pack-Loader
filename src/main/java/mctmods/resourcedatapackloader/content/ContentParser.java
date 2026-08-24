@@ -728,7 +728,8 @@ public final class ContentParser {
                 spawns,
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 picks(json, "structures", "structure"),
-                clamp01(JsonUtils.getFloat(json, "structureChance", 1.0F)));
+                clamp01(JsonUtils.getFloat(json, "structureChance", 1.0F)),
+                JsonUtils.getString(json, "biome", ""));
     }
 
     private static float clamp01(float value) { return value < 0.0F ? 0.0F : Math.min(value, 1.0F); }

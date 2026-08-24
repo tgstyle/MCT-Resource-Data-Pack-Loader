@@ -1558,6 +1558,9 @@ Jedes Pack-Grundstück wird den Dörfern als ein Eintrag angeboten, `weight` ent
 | `spawnChance` | nein | float, unter 1 | `0.1` | Wie wahrscheinlich beim ersten Erzeugen des Landes eine weitere Herde gesetzt wird. Das Spiel würfelt weiter, solange es Erfolg hat, `1` hört also nie auf und füllt die Welt, bis kein Platz mehr ist. Alles ab 0.99 wird abgelehnt und durch 0.99 ersetzt |
 | `spawnRates` | nein | Objekt aus `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` zu einem Faktor | keines | Wie oft feindliche Mobs hier spawnen, anstelle der globalen Einstellungen. Siehe unten |
 | `placement` | nein | Objekt |, | Wo es generiert. Siehe unten |
+| `minHeight` | nein | int | keiner | Unterste y, ab der dieses Biom als 3D-Biom übernimmt. Wird eine der beiden Höhen gesetzt, wird das Biom zu einem Band: außerhalb behält die Säule ihr eigenes Biom, innerhalb meldet jede 4 mal 4 mal 4 große Zelle der Welt dieses. Nur auf Rubic-Welten, und beim Erzeugen des Landes angewandt, vorhandenes Land behält also seines |
+| `maxHeight` | nein | int | keiner | Oberste y dieses Bandes |
+| `replaces` | nein | Liste von Biomnamen | jedes Biom | Beschränkt das Band auf Säulen, deren eigenes Biom hier genannt ist, ein Alpenband kann also über Bergen liegen und sonst nirgends |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 
 Ein Spawn-Eintrag nimmt `entity` (Pflicht), `type` (`creature`, einer der [Kreaturtypen](#wertelisten)), `weight` (`10`), `min` (`1`) und `max` (`min`).
@@ -1835,6 +1838,7 @@ Der Umfang `world` räumt außerdem zwei Vanilla-Überbleibsel ab, die sich mit 
 | `keepDefaultSpawns` | boolean | `false` | Behält die Spawnliste des Bioms neben der der Region. Aus, ersetzt die Liste der Region sie innerhalb der Region vollständig |
 | `structures` | Liste | keine | Ein Bauwerk, einmal pro Regionszelle gesetzt, im Herzen der Zelle, auf den nächsten Höhlenboden gesetzt — so wie moderne Versionen einem Höhlenbiom sein Wahrzeichen geben. Einträge sind `namespace:name`-Vorlagen oder `{ "structure": "...", "weight": 3 }` zur Auswahl zwischen mehreren |
 | `structureChance` | 0,0 bis 1,0 | `1.0` | Die Chance, mit der jede Zelle der Region ihr Bauwerk tatsächlich bekommt |
+| `biome` | Biomname | keiner | Das Biom, das die Region in ihrem Raum meldet, als 3D-Biom in den Würfel geschrieben. Gibt der Region eigene Laub-, Gras- und Wasserfarben, eigene Musik und Umgebungsgeräusche, und Vanillas Spawn-Gewichtung liest es. Die Oberfläche darüber bleibt unberührt, da nur die Zellen geschrieben werden, die die Region einnimmt |
 
 Wie viel vom Untergrund schlicht bleibt, bestimmt der `terrain`-Schlüssel `caveRegionPlainWeight`, Standard `4`: Mit einer einzigen Region vom Gewicht 1 bekommt etwa ein Fünftel der Zellen die Region. Bedeckungen greifen nur unter einem Dach — eine Stelle, die den Himmel sieht, bleibt unberührt — eine Region, die über den Boden hinausreicht, zeigt sich an der Oberfläche also nie. Bedeckungen wirken in jeder Höhle, egal welcher Generator sie geschnitzt hat; `waterLevel` ist der eine Schlüssel, der die Noise-Höhlen braucht, weil die Flut beim Schnitzen gesetzt wird.
 
@@ -2810,6 +2814,8 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 **`worldTime`** (Gruppe `terrain`): ein Tick-Wert wie bei `/time set` (`18000` Mitternacht, `6000` Mittag). Hält die Uhr der Oberwelt an; alles, was die Tageszeit liest (Mobspawn, Schlafen), sieht den festgehaltenen Wert. `-1` (Standard) lässt die Zeit laufen. Das Oberwelt-Gegenstück zum `fixedTime` einer eigenen Dimension, unabhängig von `doDaylightCycle`.
 
 **`worldDifficulty`** (Gruppe `terrain`): `peaceful`, `easy`, `normal` oder `hard`. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=Schwierigkeitsgrad` (`-1=hard`) überschreiben pro Dimension. Die Sperre hält dem Pausenmenü stand. Leer (Standard) überlässt den Schwierigkeitsgrad dem Spieler.
+
+**`weatherCeiling`** (Gruppe `terrain`): die höchste y, die Regen und Schnee erreichen. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=y` (`0=128`) überschreiben pro Dimension. Darüber fällt kein Regen, setzt sich kein Schnee ab, füllen sich keine Kessel, schlägt kein Blitz ein und wird kein Niederschlag gezeichnet; darunter bleibt das Wetter unverändert. Leer (Standard) heißt keine Grenze. Eis ist Temperatur und kein Niederschlag, bildet sich also weiterhin über der Linie.
 
 **Weltphysik** – vier `terrain`-Schlüssel, jeder ein Multiplikator des Vanilla-Werts (`1.0` = unverändert), jeder mit einem bloßen Wert für alle Dimensionen oder `Dimension=Wert`-Überschreibungen:
 

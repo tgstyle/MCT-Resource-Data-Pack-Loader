@@ -37,6 +37,7 @@ public final class CaveRegionDef {
     public final boolean keepDefaultSpawns;
     public final List<PickDef> structures;
     public final float structureChance;
+    public final String biome;
     private boolean resolved;
     @Nullable private IBlockState floorState;
     @Nullable private IBlockState ceilingState;
@@ -47,7 +48,7 @@ public final class CaveRegionDef {
     public CaveRegionDef(ResourceLocation key, int weight, int minHeight, int maxHeight, List<Integer> dimensions,
                          String floorCover, float floorChance, String ceilingCover, float ceilingChance,
                          List<String> coverReplace, int waterLevel, List<SpawnEntryDef> spawns, boolean keepDefaultSpawns,
-                         List<PickDef> structures, float structureChance) {
+                         List<PickDef> structures, float structureChance, String biome) {
         this.key = key;
         this.weight = weight;
         this.minHeight = minHeight;
@@ -63,9 +64,12 @@ public final class CaveRegionDef {
         this.keepDefaultSpawns = keepDefaultSpawns;
         this.structures = structures;
         this.structureChance = structureChance;
+        this.biome = biome;
     }
 
     public boolean hasWater() { return waterLevel != NO_WATER; }
+
+    public boolean hasBiome() { return !biome.isEmpty(); }
 
     public boolean hasSpawns() { return !spawns.isEmpty(); }
 
