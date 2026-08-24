@@ -4,6 +4,7 @@ One folder that changes what Minecraft and your mods provide, adds new content f
 plain JSON, and controls what generates. It applies to every world, in singleplayer
 and on dedicated servers, and there is nothing to switch on.
 
+- [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md), the full manual
 - [Discord](https://discord.gg/ujY2mV9)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/mct-resource-data-pack-loader)
 - [Modrinth](https://modrinth.com/mod/mct-resource-data-pack-loader)
@@ -125,6 +126,37 @@ already exist.
 A world template gathers these into one file, so a pack ships a whole world shape
 at once. Every group also answers to a config switch that lets the pack decide,
 forces the config's value, or turns the group off entirely.
+
+# Rubic worlds
+
+A pack can ask for a world built out of cubes instead of 256 block columns, and
+the world grows in both directions: a floor far below zero, a ceiling far above
+255, terrain and caves and ores through all of it. From the outside it is an
+ordinary world. You dig, build, light, spawn and travel the same way, and the
+whole vanilla generation window keeps its usual shape and sits inside the taller
+world, so terrain, structures and mods land where they always did.
+
+What a pack gets from it:
+
+- A world height of its own, in whole cubes, set once when the world is created
+- A deep world under the vanilla window, with modern style noise caves, aquifers
+  and banded ore veins, and a stone of the pack's choosing
+- Cave regions, the pack answer to cave biomes: named regions painted through the
+  underground in three dimensions, each with its own floors, ceilings, water
+  level, mobs and structures
+- Dimensions stacked on each other, so falling out of the bottom of one world
+  carries you into the next one down and climbing out the top brings you back
+- Any dimension left out, keeping its ordinary world in the same save, so rubic
+  and vanilla dimensions mix freely
+
+Inside, storage is 16 by 16 by 16 cubes in their own region files next to the
+vanilla ones, loaded and generated and saved on their own, with a light engine
+written for that shape. Vanilla's assumption that a world is 256 blocks tall is
+patched out wherever it is load bearing: build limits, kill planes, commands,
+pathing, portals, beacons, maps, the renderer and the client's own view distance
+gain a vertical half. Foreign generators keep running against a normal looking
+256 block window, which is why other mods' terrain still works. HOWTO.md covers
+the settings, the heights a world may take and the mods it will not run beside.
 
 # World intro
 
