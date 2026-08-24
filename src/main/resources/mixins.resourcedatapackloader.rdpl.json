@@ -233,6 +233,7 @@
     "client.MixinRenderGlobal",
     "client.MixinRenderGlobalNoOptifine",
     "client.MixinRenderGlobalOptifineE",
+    "client.MixinRenderGlobalSeamSky",
     "client.MixinRenderGlobalVertViewDistance",
     "client.MixinRenderList",
     "client.MixinRenderLivingBase",

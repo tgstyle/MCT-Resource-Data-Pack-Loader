@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
-import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
@@ -22,7 +21,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.HashSet;
@@ -56,15 +54,7 @@ import javax.annotation.Nullable;
         ContentSetup.properties(this, def);
     }
 
-    public void resolveSoil() {
-        Set<Block> resolved = new HashSet<>();
-        for (String name : growth.soil) {
-            ResourceLocation key = new ResourceLocation(name);
-            Block block = ForgeRegistries.BLOCKS.containsKey(key) ? ForgeRegistries.BLOCKS.getValue(key) : null;
-            if (block != null) { resolved.add(block); }
-        }
-        this.soil = resolved;
-    }
+    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth); }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -114,14 +104,7 @@ import javax.annotation.Nullable;
         entity.attackEntityFrom(DamageSource.CACTUS, growth.damageAmount);
     }
 
-    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-        if (growth.drop.isEmpty()) {
-            drops.add(new ItemStack(this, growth.dropCount));
-            return;
-        }
-        ItemStack stack = ContentStacks.parse(def.registryName, growth.drop, growth.dropCount);
-        if (!stack.isEmpty()) { drops.add(stack); }
-    }
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) { ContentSetup.growthDrops(this, def, growth, drops); }
 
     @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return new ItemStack(this); }
 

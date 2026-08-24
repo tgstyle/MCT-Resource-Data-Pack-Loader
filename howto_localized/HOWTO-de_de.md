@@ -1781,6 +1781,8 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 **Dimensionen ausnehmen.** Eine Dimension, die in `rubicWorldDimensions` fehlt, behält ihre gewöhnliche Anvil-Welt, im selben Spielstand – Rubic- und Anvil-Dimensionen mischen sich frei. Das ist die richtige Wahl für Dimensionen, deren Generatoren direkt in die Chunk-Interna schreiben, statt den gewöhnlichen Populate-Zyklus zu durchlaufen. Unabhängig von der Liste wird eine Welt, deren Server-Klassen eine andere Mod ersetzt hat, übersprungen, mit einer Log-Zeile, die es sagt.
 
+**Raum außerhalb des Fensters.** Der Bereich des Generators behält seine gewohnte Gestalt, und der Raum, den eine Rubic-Welt darum herum schafft, wird mit dem Block gefüllt, in dem dieser Bereich endet: Stein unter der Oberwelt, Luft darüber. Eine Dimension, deren Obergrenze mit Bedrock versiegelt ist, allen voran der Nether, gilt als geschlossen, der Raum darüber bleibt also leer statt mit dem Netherrack unter ihrem Dach vollgepackt zu werden. Das Dach selbst bleibt unangetastet. `deepStone` benennt den Block für den Raum unter dem Fenster.
+
 **CubicChunks.** Beide zusammen laufen nicht. Ist CubicChunks installiert und ein Pack verlangt `rubicWorld`, stoppt das Laden mit einer Meldung: CubicChunks herausnehmen, oder `rubicWorld` aus dem Pack nehmen und CubicChunks die Welten machen lassen.
 
 **Client.** Die Grafikeinstellungen bekommen einen Regler für die vertikale Sichtweite, das vertikale Gegenstück zur Sichtweite (`verticalCubeLoadDistance` in der Config). Alles Übrige in der Gruppe `terrain` – Vorgenerierung, Weltphysik, Spawn, Weltgrenze – gilt auf Rubic-Welten unverändert.
@@ -2819,6 +2821,30 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 | `worldTerminalVelocity` | Maximale Fallgeschwindigkeit, als Anteil der Vanilla-Obergrenze | Elytrenflug bleibt unberührt |
 
 Alle vier leer (Standard) behalten die Vanilla-Physik. Auf Galacticraft-Dimensionen skaliert der Gravitationsschlüssel Galacticrafts eigene Schwerkraft.
+
+**Weltnähte** — Dimensionen vertikal stapeln: wer eine Welt durch Boden oder Decke verlässt, gelangt bei gleichem x und z in die Dimension darunter oder darüber.
+
+```json
+{
+  "settings": {
+    "worldBelow": ["0=-1"],
+    "worldAbove": ["-1=0"],
+    "worldSeamEntities": true,
+    "worldSeamBedrock": false
+  }
+}
+```
+
+| Einstellung | Wert | Standard | Wirkung |
+| --- | --- | --- | --- |
+| `worldBelow` | Zeilen `dimension=ziel`, oder eine nackte Id für jede Dimension | keiner | Dimension, in die ein Sturz unter den Weltboden führt |
+| `worldAbove` | dasselbe | keiner | Dimension, in die der Aufstieg über die erzeugte Obergrenze führt, also über das Netherdach und nicht über das Baulimit |
+| `worldSeamEntities` | boolean | `true` | Ob Gegenstände, Mobs und andere Entitäten mitreisen oder nur Spieler |
+| `worldSeamBedrock` | boolean | `false` | Bedrock an einer Nahtgrenze behalten. Aus, erzeugt die Grenze keinen, der Weg hindurch lässt sich also graben |
+
+Beide Listen leer (Standard) halten jede Welt geschlossen. Die äußerste Blockschicht einer Welt ist ihre Tür: wer die unterste betritt, fährt hinunter, wer die oberste betritt, kommt zurück herauf. Ankünfte landen davon frei, drei Schichten tief nach unten und eine nach oben, damit niemand sofort zurückgeworfen wird. Nach unten wird zugleich alles über der Ankunft bis zur Tür hin freigeschlagen, der Weg hinein bleibt also von unten sichtbar und dient als Rückweg. Schlägt man einen Block in einer Türschicht heraus, scheint die Welt dahinter hindurch: unter dem Boden der Himmel der Dimension darunter, über der Decke der Himmel der darüber. Das zeichnet allein der Client, innerhalb der Sichtweite, und an der Welt selbst ändert es nichts. Der Schwung bleibt erhalten. Die Übergänge eines Spielers werden gemerkt. Der Weg nach unten markiert das Loch, und wer in dessen Nähe zurückkommt, landet dort, wo ihn dieses Loch beim letzten Mal abgesetzt hat, ein oft benutzter Schacht bringt einen also immer an dieselbe bekannte Stelle statt jedes Mal woandershin. Die erste Rückkehr ermittelt den Platz: diese Stelle, wenn dort fester Boden darunter liegt, sonst der nächste freie Stand, Höhe für Höhe von der Naht nach außen, und sonst eine Nische im Rand direkt neben dem Loch, denn ein glatt hinuntergegrabener Schacht hat noch keine eigene Kante. Wer ohne eigenes Loch in der Nähe nach oben wechselt, bekommt dort einfach einen neuen Platz. Kommt man von unten und ist nirgends fester Stand, bleibt die Oberfläche derselben Säule. Fuß- und Kopfhöhe werden freigehauen, falls die Stelle im Fels liegt, wobei diese Blöcke ordentlich abgebaut werden und fallen, Behälter eingeschlossen. Ketten entstehen, indem jede Dimension eigene Zeilen bekommt; Reiter und Reittiere wechseln getrennt.
+
+Tore gelten für Spieler. Wer das Ziel nicht freigeschaltet hat, bekommt die Meldung des Tors und wird auf den zuletzt betretenen festen Boden gesetzt, sonst auf einen Sims nahe der Naht; Nähte setzen keine Blöcke, ein verriegelter Schacht lässt sich also nicht durch Hineinspringen abfarmen. Gegenstände und Mobs haben kein eigenes Tor: bei eingeschaltetem `worldSeamEntities` reisen sie unabhängig davon, wer sie verloren hat, ausgeschaltet fallen sie bei offenem Boden an ihm vorbei und sind verloren wie in jedem Loch. `worldSeamBedrock` schließt stattdessen den Boden; ein Pack, das den Bedrock behält, stellt den Durchgang selbst bereit, üblicherweise mit einer [Eigenschaftsüberschreibung](#eigenschaften-überschreiben), die `minecraft:bedrock` eine positive `hardness` gibt. Vor der Naht erzeugte Chunks behalten ihren Bedrock.
 
 **Rubic-Welten** – auch `rubicWorld`, `worldMinHeight`, `worldMaxHeight`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist` und `terrainOffset` sind `terrain`-Schlüssel: siehe [Rubic-Welten](#rubic-welten).
 

@@ -1,5 +1,11 @@
 package mctmods.resourcedatapackloader.command;
 
+import static mctmods.resourcedatapackloader.command.CommandShared.send;
+import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
+import static mctmods.resourcedatapackloader.command.CommandShared.biomeNames;
+import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
+import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
+import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
@@ -28,12 +34,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +44,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -52,7 +54,6 @@ public class ServerCommands extends CommandBase {
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
-    private static final int FIND_RANGE = 6400;
     private static final List<String> STRUCTURE_NAMES = Arrays.asList("Village", "Temple", "Mansion", "Monument", "Mineshaft", "Stronghold", "Fortress", "EndCity");
     private static final Map<String, String> STRUCTURE_ALIASES = new HashMap<>();
     static {
@@ -348,60 +349,6 @@ public class ServerCommands extends CommandBase {
         for (String line : ContentBiomeControl.inspect(sender.getEntityWorld(), sender.getPosition())) { send(sender, TextFormatting.WHITE, line); }
     }
 
-    private void biomeList(ICommandSender sender, boolean all) {
-        int vanilla = 0;
-        int shown = 0;
-        for (Biome biome : ForgeRegistries.BIOMES) {
-            ResourceLocation name = biome.getRegistryName();
-            if (name == null) { continue; }
-            if (!all && "minecraft".equals(name.getNamespace())) {
-                vanilla++;
-                continue;
-            }
-            send(sender, TextFormatting.GRAY, "  " + Biome.getIdForBiome(biome) + "  " + name + "  '" + biome.getBiomeName() + "'");
-            shown++;
-        }
-        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Lang.tr(sender, "rdpl.command.biomesmore", vanilla)));
-    }
-
-    private void biomeHere(ICommandSender sender) {
-        BlockPos pos = sender.getPosition();
-        Biome biome = sender.getEntityWorld().getBiome(pos);
-        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.here", biome.getBiomeName(), biome.getRegistryName(), Biome.getIdForBiome(biome)));
-    }
-
-    private void biomeFind(ICommandSender sender, String name) throws CommandException {
-        Biome target = findBiome(name);
-        if (target == null) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.nobiome", name)); }
-        World world = sender.getEntityWorld();
-        BlockPos from = sender.getPosition();
-        BlockPos found = world.getBiomeProvider().findBiomePosition(from.getX(), from.getZ(), FIND_RANGE, Collections.singletonList(target), new Random());
-        if (found == null) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", target.getBiomeName(), FIND_RANGE));
-            return;
-        }
-        int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
-        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
-    }
-
-    @Nullable private static Biome findBiome(String name) {
-        ResourceLocation location = new ResourceLocation(name);
-        if (ForgeRegistries.BIOMES.containsKey(location)) { return ForgeRegistries.BIOMES.getValue(location); }
-        for (Biome biome : ForgeRegistries.BIOMES) {
-            if (biome.getBiomeName().equalsIgnoreCase(name)) { return biome; }
-        }
-        return null;
-    }
-
-    private static List<String> biomeNames() {
-        List<String> names = new ArrayList<>();
-        for (Biome biome : ForgeRegistries.BIOMES) {
-            ResourceLocation name = biome.getRegistryName();
-            if (name != null) { names.add(name.toString()); }
-        }
-        return names;
-    }
-
     private void dimensions(ICommandSender sender) {
         Map<ResourceLocation, DimensionDef> defs = ContentDimensions.all();
         if (defs.isEmpty()) {
@@ -439,11 +386,6 @@ public class ServerCommands extends CommandBase {
         return names;
     }
 
-    private static String elapsed(long start) {
-        long time = System.currentTimeMillis() - start;
-        return time < 1000L ? (time + "ms") : String.format("%.02fs", time / 1000D);
-    }
-
     private void intro(ICommandSender sender) throws CommandException {
         if (!ContentIntroPlay.enabled()) { throw new CommandException(Lang.tr(sender, "rdpl.command.intronone")); }
         if (!(sender instanceof EntityPlayerMP)) { throw new CommandException(Lang.tr(sender, "rdpl.command.introplayer")); }
@@ -451,8 +393,4 @@ public class ServerCommands extends CommandBase {
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.introagain"));
     }
 
-    private static void send(ICommandSender sender, TextFormatting color, String message) {
-        sender.sendMessage(new TextComponentString(color + message));
-        ContentLog.LOGGER.debug("  {}", message);
-    }
 }

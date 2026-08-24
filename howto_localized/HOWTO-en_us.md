@@ -1782,6 +1782,8 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 
 **Excluding dimensions.** A dimension left out of `rubicWorldDimensions` keeps its ordinary Anvil world, in the same save — rubic and Anvil dimensions mix freely. That is the right call for dimensions whose generators write into chunk internals instead of going through the ordinary populate cycle. Independently of the list, a world whose server classes another mod replaced is skipped, with a log line saying so.
 
+**Space outside the window.** The generator's own range keeps its usual shape, and the room a rubic world adds around it is filled with the block that range ends in: stone under the overworld, air over it. A dimension whose top is sealed with bedrock, the nether above all, counts as closed, so the room above it is left empty rather than packed with the netherrack under its roof. The roof itself is untouched. `deepStone` names the block for the room below the window.
+
 **CubicChunks.** Running both is not supported. With CubicChunks installed and a pack asking for `rubicWorld`, loading stops with a message: remove CubicChunks, or take `rubicWorld` out of the pack and let CubicChunks make the worlds.
 
 **Client.** Video settings gain a vertical render distance slider, the vertical analog of render distance (`verticalCubeLoadDistance` in the config). Everything else in the `terrain` group — pregeneration, world physics, spawn, border — applies to rubic worlds unchanged.
@@ -2820,6 +2822,30 @@ These are the names the parser accepts wherever the tables above say "one of the
 | `worldTerminalVelocity` | Maximum fall speed, as a share of the vanilla cap | Elytra flight is untouched |
 
 All four empty (default) keep vanilla physics. On Galacticraft dimensions the gravity key scales Galacticraft's own gravity.
+
+**World seams** — stack dimensions vertically: leaving a world through its floor or ceiling delivers the entity into the dimension below or above, at the same x and z.
+
+```json
+{
+  "settings": {
+    "worldBelow": ["0=-1"],
+    "worldAbove": ["-1=0"],
+    "worldSeamEntities": true,
+    "worldSeamBedrock": false
+  }
+}
+```
+
+| Setting | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `worldBelow` | `dimension=target` lines, or a bare id for every dimension | none | Dimension entered on falling past the world floor |
+| `worldAbove` | the same | none | Dimension entered on rising past the generated top, meaning the nether's roof rather than its build limit |
+| `worldSeamEntities` | boolean | `true` | Whether items, mobs and other entities cross, or players alone |
+| `worldSeamBedrock` | boolean | `false` | Keep bedrock at a seam boundary. Off, the boundary generates none, so the way through can be dug |
+
+Both lists empty (the default) keep every world closed. A world's outermost block layer is its doorway: entering the bottom layer carries you down, entering the top layer carries you back up. Arrivals land clear of it, three layers inside when travelling down and one when travelling up, so nothing bounces straight back. Coming down also cuts the layers above the arrival open all the way to the doorway, so the way in stays visible from below and serves as the way back. Break a block in a doorway layer and the world on the other side shows through it: the sky of the dimension below appears under the floor, and the sky of the one above appears over the ceiling. That is drawn on the client alone, within render distance, and changes nothing about the world itself. Momentum carries across. A player's crossings are remembered. Going down marks the hole, and coming back up near it lands you where that hole put you last time, so a shaft you use often always returns you to the same known spot instead of somewhere new. The first return works the landing out: that spot if it has ground under it, otherwise the nearest standing room working outward from the seam a height at a time, and otherwise a pocket cut into the rim right beside the hole, since a shaft dug straight down has no ledge of its own yet. Crossing up somewhere with no hole of yours nearby simply makes a new landing there. Arriving from below with nothing standable anywhere near falls back to the surface of that column. Feet and head are carved clear if the spot is inside rock, breaking those blocks properly so they drop, containers included. Chains stack by giving each dimension its own lines, and riders and mounts cross separately.
+
+Gates apply to players. A player who has not unlocked the target gets the gate's refusal message and is set back on the last ground they stood on, or a ledge near the seam; seams place no blocks, so a locked shaft cannot be farmed by falling down it. Items and mobs carry no gate of their own: with `worldSeamEntities` on they cross regardless of who lost them, and off they fall past an open floor and are lost as in any hole. `worldSeamBedrock` seals the floor instead, and a pack that keeps its bedrock supplies the passage itself, commonly a [property override](#property-overrides) giving `minecraft:bedrock` a positive `hardness`. Chunks generated before the seam keep the bedrock they already have.
 
 **Rubic worlds** — `rubicWorld`, `worldMinHeight`, `worldMaxHeight`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist` and `terrainOffset` are `terrain` keys too: see [Rubic worlds](#rubic-worlds).
 

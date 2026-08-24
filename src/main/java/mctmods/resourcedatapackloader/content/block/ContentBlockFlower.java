@@ -17,10 +17,8 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.HashSet;
@@ -59,15 +57,7 @@ import javax.annotation.Nullable;
         setDefaultState(blockState.getBaseState().withProperty(variant, def.at(0).name));
     }
 
-    public void resolveSoil() {
-        Set<Block> resolved = new HashSet<>();
-        for (String name : growth.soil) {
-            ResourceLocation key = new ResourceLocation(name);
-            Block block = ForgeRegistries.BLOCKS.containsKey(key) ? ForgeRegistries.BLOCKS.getValue(key) : null;
-            if (block != null) { resolved.add(block); }
-        }
-        this.soil = resolved;
-    }
+    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth); }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() {
         PropertyVariant property = new PropertyVariant(ContentSetup.names(CONSTRUCTING.get()));

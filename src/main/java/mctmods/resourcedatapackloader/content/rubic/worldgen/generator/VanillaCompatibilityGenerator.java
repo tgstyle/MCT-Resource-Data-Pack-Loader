@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IGameRegistry;
 import mctmods.resourcedatapackloader.util.Box;
@@ -52,6 +53,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     private Biome[] biomes;
     @Nonnull private IBlockState extensionBlockBottom = Objects.requireNonNull(Blocks.STONE).getDefaultState();
     @Nonnull private IBlockState extensionBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
+    @Nonnull private IBlockState fillBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
     private boolean hasTopBedrock = false, hasBottomBedrock = true;
     private DeepGeneration deep;
     private boolean deepPopulation;
@@ -108,7 +110,17 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             }
         }
         hasTopBedrock = blockHistogramTop.getOrDefault(bedrockState, 0) > 0;
+        fillBlockTop = hasTopBedrock ? airState : extensionBlockTop;
         Rubic.LOGGER.info("Detected filler block {} from layers [{}, {}], bedrock={}", extensionBlockTop.getBlock().getTranslationKey(), worldHeightBlocks - 3, worldHeightBlocks - 1, hasTopBedrock);
+        if (hasTopBedrock) { Rubic.LOGGER.info("Dimension {} is capped with bedrock at {}, so the world above it is left empty instead of being filled with {}", world.provider.getDimension(), worldHeightBlocks, extensionBlockTop.getBlock().getTranslationKey()); }
+        if (hasBottomBedrock && ContentSeams.opensFloor(world.provider.getDimension())) {
+            hasBottomBedrock = false;
+            Rubic.LOGGER.info("A world seam opens the floor of dimension {}, so its bedrock is not generated", world.provider.getDimension());
+        }
+        if (hasTopBedrock && ContentSeams.opensCeiling(world.provider.getDimension())) {
+            hasTopBedrock = false;
+            Rubic.LOGGER.info("A world seam opens the ceiling of dimension {}, so its bedrock is not generated", world.provider.getDimension());
+        }
         deep = new DeepGeneration(world, offsetCubes << 4, extensionBlockBottom);
         deepPopulation = ContentWorldgen.deepestMinHeight() < 0;
     }
@@ -141,7 +153,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                     for (int y = 0; y < Cube.SIZE; y++) {
                         for (int z = 0; z < Cube.SIZE; z++) {
                             for (int x = 0; x < Cube.SIZE; x++) {
-                                IBlockState state = vanillaY < 0 ? extensionBlockBottom : extensionBlockTop;
+                                IBlockState state = vanillaY < 0 ? extensionBlockBottom : fillBlockTop;
                                 int blockY = Coords.localToBlock(vanillaY, y);
                                 state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5,
                                         hasTopBedrock, hasBottomBedrock);

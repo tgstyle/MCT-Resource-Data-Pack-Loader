@@ -1,11 +1,17 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.util.ContentCreativeTab;
 import mctmods.resourcedatapackloader.content.util.ContentTabs;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
 
+import java.util.HashSet;
+import java.util.Set;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.NonNullList;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.creativetab.CreativeTabs;
@@ -103,5 +109,24 @@ public final class ContentSetup {
             if (label.equals(tab.getTabLabel())) { return tab; }
         }
         return CREATED.computeIfAbsent(label, created -> new ContentCreativeTab(created, declared(created, icon)));
+    }
+
+    public static Set<Block> resolveSoil(GrowthDef growth) {
+        Set<Block> resolved = new HashSet<>();
+        for (String name : growth.soil) {
+            ResourceLocation key = new ResourceLocation(name);
+            Block block = ForgeRegistries.BLOCKS.containsKey(key) ? ForgeRegistries.BLOCKS.getValue(key) : null;
+            if (block != null) { resolved.add(block); }
+        }
+        return resolved;
+    }
+
+    public static void growthDrops(Block block, BlockDef def, GrowthDef growth, NonNullList<ItemStack> drops) {
+        if (growth.drop.isEmpty()) {
+            drops.add(new ItemStack(block, growth.dropCount));
+            return;
+        }
+        ItemStack stack = ContentStacks.parse(def.registryName, growth.drop, growth.dropCount);
+        if (!stack.isEmpty()) { drops.add(stack); }
     }
 }

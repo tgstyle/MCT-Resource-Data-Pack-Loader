@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
-import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
@@ -99,14 +98,7 @@ import javax.annotation.Nullable;
         return false;
     }
 
-    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-        if (growth.drop.isEmpty()) {
-            drops.add(new ItemStack(this, growth.dropCount));
-            return;
-        }
-        ItemStack stack = ContentStacks.parse(def.registryName, growth.drop, growth.dropCount);
-        if (!stack.isEmpty()) { drops.add(stack); }
-    }
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) { ContentSetup.growthDrops(this, def, growth, drops); }
 
     @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return new ItemStack(this); }
 }

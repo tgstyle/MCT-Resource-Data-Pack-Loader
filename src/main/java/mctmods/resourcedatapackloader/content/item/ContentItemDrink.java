@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentItem;
-import mctmods.resourcedatapackloader.util.RomanNumerals;
 
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
@@ -15,14 +14,11 @@ import net.minecraft.item.EnumAction;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -93,15 +89,5 @@ import javax.annotation.Nullable;
         return stack;
     }
 
-    @Override public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) {
-        ItemVariant value = variant(stack);
-        if (value == null) { return; }
-        PotionEffect effect = value.getResolvedPotion();
-        if (effect == null) { return; }
-        Potion potion = effect.getPotion();
-        if (!potion.isBeneficial()) { return; }
-        String name = new TextComponentTranslation(effect.getEffectName()).getFormattedText();
-        String level = RomanNumerals.of(effect.getAmplifier());
-        tooltip.add(TextFormatting.GREEN + (level.isEmpty() ? name : name + " " + level));
-    }
+    @Override public void addInformation(@Nonnull ItemStack stack, World world, @Nonnull List<String> tooltip, @Nonnull ITooltipFlag flag) { IContentItem.potionTooltip(variant(stack), tooltip); }
 }

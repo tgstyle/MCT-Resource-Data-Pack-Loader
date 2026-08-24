@@ -11,14 +11,11 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.fml.common.registry.EntityEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -78,43 +75,18 @@ public final class CaveRegionDef {
         if (spawnLists == null) {
             Map<EnumCreatureType, List<Biome.SpawnListEntry>> made = new EnumMap<>(EnumCreatureType.class);
             for (SpawnEntryDef entry : spawns) {
-                EnumCreatureType wanted = creatureType(entry.creatureType);
+                EnumCreatureType wanted = SpawnEntryDef.creatureType(entry.creatureType);
                 if (wanted == null) {
                     ContentLog.LOGGER.error("Spawn entry in cave region {} has creature type '{}', which is not one of monster, creature, ambient or water", key, entry.creatureType);
                     continue;
                 }
-                Class<? extends EntityLiving> living = living(entry.entity);
+                Class<? extends EntityLiving> living = SpawnEntryDef.living("Cave region", key, entry.entity);
                 if (living == null) { continue; }
                 made.computeIfAbsent(wanted, type1 -> new ArrayList<>()).add(new Biome.SpawnListEntry(living, entry.weight, entry.min, entry.max));
             }
             spawnLists = made;
         }
         return spawnLists.getOrDefault(type, Collections.emptyList());
-    }
-
-    @Nullable private static EnumCreatureType creatureType(String name) {
-        String wanted = name.trim().replace("_", "").toLowerCase(Locale.ROOT);
-        if ("water".equals(wanted)) { return EnumCreatureType.WATER_CREATURE; }
-        for (EnumCreatureType type : EnumCreatureType.values()) {
-            if (type.name().replace("_", "").toLowerCase(Locale.ROOT).equals(wanted)) { return type; }
-        }
-        return null;
-    }
-
-    @Nullable private Class<? extends EntityLiving> living(String name) {
-        ResourceLocation location = new ResourceLocation(name);
-        if (!ForgeRegistries.ENTITIES.containsKey(location)) {
-            ContentLog.LOGGER.error("Cave region {} names spawn entity '{}', which is not registered, skipping that entry", key, name);
-            return null;
-        }
-        EntityEntry entry = ForgeRegistries.ENTITIES.getValue(location);
-        if (entry == null) { return null; }
-        Class<?> type = entry.getEntityClass();
-        if (!EntityLiving.class.isAssignableFrom(type)) {
-            ContentLog.LOGGER.error("Cave region {} names spawn entity '{}', which is not a living entity, skipping that entry", key, name);
-            return null;
-        }
-        return type.asSubclass(EntityLiving.class);
     }
 
     public boolean hasCovers() {

@@ -13,10 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-// The 26.1.2 NoiseBasedAquifer, ported onto DeepGeneration's noise fields. Gen-space
-// y throughout. Vanilla's preliminary surface comes from its density functions; here
-// the biome provider's base height and variation stand in — order-independent, so
-// generation stays deterministic whatever order the chunks come in.
 public final class RubicAquifer {
     private static final int SEA_LEVEL = 63;
     private static final int DRY = -1000000;
@@ -115,9 +111,6 @@ public final class RubicAquifer {
         return settled(state, x, y, z);
     }
 
-    // Vanilla lets boundary fluid leak and settles it with scheduled fluid ticks after
-    // generation; 1.12 primer liquids never tick on their own, so a fluid facing carved
-    // air under a differing sample point hardens to the barrier block instead.
     private IBlockState settled(IBlockState state, int x, int y, int z) {
         if (state.getBlock() != Blocks.WATER && state.getBlock() != Blocks.LAVA) { return state; }
         if (state.getBlock() == Blocks.WATER && y - 1 < lavaLevel) { return barrierBlock; }

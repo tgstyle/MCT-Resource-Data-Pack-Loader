@@ -41,6 +41,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
@@ -125,6 +126,7 @@ public class ResourceDataPackLoader {
         ContentSpawning.applyCaps();
         if (ContentSpawning.rateControlled()) { MinecraftForge.EVENT_BUS.register(ContentSpawning.class); }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
+        if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
         if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
         if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }

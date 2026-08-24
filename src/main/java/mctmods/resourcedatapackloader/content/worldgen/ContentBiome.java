@@ -12,9 +12,6 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import net.minecraft.world.biome.BiomeDecorator;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
@@ -70,7 +67,7 @@ public class ContentBiome extends Biome {
     }
 
     private void addSpawn(SpawnEntryDef entry) {
-        Class<? extends EntityLiving> type = living(entry.entity);
+        Class<? extends EntityLiving> type = SpawnEntryDef.living("Biome", def.registryName, entry.entity);
         if (type == null) { return; }
         List<SpawnListEntry> list = listFor(entry.creatureType);
         if (list == null) {
@@ -81,7 +78,7 @@ public class ContentBiome extends Biome {
     }
 
     @Nullable private List<SpawnListEntry> listFor(String creatureType) {
-        EnumCreatureType type = creatureType(creatureType);
+        EnumCreatureType type = SpawnEntryDef.creatureType(creatureType);
         if (type == null) { return null; }
         switch (type) {
             case MONSTER: return spawnableMonsterList;
@@ -90,31 +87,6 @@ public class ContentBiome extends Biome {
             case AMBIENT: return spawnableCaveCreatureList;
             default: return null;
         }
-    }
-
-    @Nullable private static EnumCreatureType creatureType(String name) {
-        String wanted = name.trim().replace("_", "").toLowerCase(Locale.ROOT);
-        if ("water".equals(wanted)) { return EnumCreatureType.WATER_CREATURE; }
-        for (EnumCreatureType type : EnumCreatureType.values()) {
-            if (type.name().replace("_", "").toLowerCase(Locale.ROOT).equals(wanted)) { return type; }
-        }
-        return null;
-    }
-
-    @Nullable private Class<? extends EntityLiving> living(String name) {
-        ResourceLocation location = new ResourceLocation(name);
-        if (!ForgeRegistries.ENTITIES.containsKey(location)) {
-            ContentLog.LOGGER.error("Biome {} names spawn entity '{}', which is not registered, skipping that entry", def.registryName, name);
-            return null;
-        }
-        EntityEntry entry = ForgeRegistries.ENTITIES.getValue(location);
-        if (entry == null) { return null; }
-        Class<?> type = entry.getEntityClass();
-        if (!EntityLiving.class.isAssignableFrom(type)) {
-            ContentLog.LOGGER.error("Biome {} names spawn entity '{}', which is not a living entity, skipping that entry", def.registryName, name);
-            return null;
-        }
-        return type.asSubclass(EntityLiving.class);
     }
 
     @Nullable private IBlockState block(String name) { return ContentStates.parse(name, def.registryName); }
