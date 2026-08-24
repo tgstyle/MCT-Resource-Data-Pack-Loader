@@ -12,6 +12,8 @@ public final class ConfigCore {
 
     public static void at(File mcDir) { configDir = new File(mcDir, "config"); }
 
+    public static File gameDir() { return configDir != null ? configDir.getParentFile() : new File("."); }
+
     public static boolean read(String category, String name) {
         try {
             Configuration cfg = new Configuration(new File(directory(), ConfigLate.FILE));
