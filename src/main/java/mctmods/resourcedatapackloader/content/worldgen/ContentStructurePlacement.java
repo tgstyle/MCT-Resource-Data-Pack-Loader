@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.entity.EntityLiving;
@@ -305,16 +306,13 @@ public final class ContentStructurePlacement {
     }
 
     private static String[] split(String entry, String setting) {
-        int mark = entry.indexOf('=');
-        if (mark < 1) {
-            ContentLog.LOGGER.error("{} entry '{}' is not written as structure=value, ignoring it", setting, entry);
-            return null;
-        }
-        String key = ContentStructures.normalise(entry.substring(0, mark));
+        String[] parts = Settings.pair(entry, setting, "structure=value");
+        if (parts == null) { return null; }
+        String key = ContentStructures.normalise(parts[0]);
         if (!ContentStructures.known(key)) {
             ContentLog.LOGGER.error("{} entry '{}' names '{}', which is not one of {}, ignoring it", setting, entry, key, ContentStructures.describe());
             return null;
         }
-        return new String[] { key, entry.substring(mark + 1) };
+        return new String[] { key, parts[1] };
     }
 }

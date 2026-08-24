@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -300,9 +302,9 @@ public final class ContentParser {
     @Nullable public static DimensionDef dimension(ResourceLocation key, String contents) {
         JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
         if (json == null) { return null; }
-        JsonObject terrain = json.has("terrain") ? JsonUtils.getJsonObject(json, "terrain") : new JsonObject();
-        JsonObject biomes = json.has("biomes") ? JsonUtils.getJsonObject(json, "biomes") : new JsonObject();
-        JsonObject sky = json.has("sky") ? JsonUtils.getJsonObject(json, "sky") : new JsonObject();
+        JsonObject terrain = JsonUtils.getJsonObject(json, "terrain", new JsonObject());
+        JsonObject biomes = JsonUtils.getJsonObject(json, "biomes", new JsonObject());
+        JsonObject sky = JsonUtils.getJsonObject(json, "sky", new JsonObject());
         String skyColor = JsonUtils.getString(sky, "skyColor", "").trim();
         String cloudColor = JsonUtils.getString(sky, "cloudColor", "").trim();
         String type = JsonUtils.getString(terrain, "type", DimensionDef.OVERWORLD).trim().toLowerCase(Locale.ROOT);
@@ -424,7 +426,7 @@ public final class ContentParser {
         return new BlockVariant(name, meta,
                 ContentTypes.rarity(JsonUtils.getString(json, "rarity", "COMMON"), key + " " + name),
                 JsonUtils.getInt(json, "maxSize", 64),
-                strings(json),
+                strings(json, "oreDict"),
                 JsonUtils.getFloat(json, "hardness", 1.0F),
                 JsonUtils.getFloat(json, "resistance", 5.0F),
                 JsonUtils.getInt(json, "harvestLevel", 0),
@@ -488,7 +490,7 @@ public final class ContentParser {
             ItemVariant parsed = new ItemVariant(name, meta,
                     ContentTypes.rarity(JsonUtils.getString(variant, "rarity", "COMMON"), key + " " + name),
                     JsonUtils.getInt(variant, "maxSize", 64),
-                    strings(variant),
+                    strings(variant, "oreDict"),
                     JsonUtils.getInt(variant, "healAmount", 0),
                     JsonUtils.getFloat(variant, "saturation", 0.0F),
                     potion(variant));
@@ -510,7 +512,7 @@ public final class ContentParser {
                 JsonUtils.getString(json, "crop", ""),
                 JsonUtils.getString(json, "soil", "minecraft:farmland"),
                 strings(json, "potionTypes"),
-                json.has("attackSpeed") ? JsonUtils.getFloat(json, "attackSpeed") : Float.NaN,
+                JsonUtils.getFloat(json, "attackSpeed", Float.NaN),
                 Math.max(0, JsonUtils.getInt(json, "cooldown", 0)));
     }
 
@@ -771,7 +773,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.PLAYER);
             scope = GateDef.PLAYER;
         }
-        JsonObject unlock = json.has("unlock") ? JsonUtils.getJsonObject(json, "unlock") : new JsonObject();
+        JsonObject unlock = JsonUtils.getJsonObject(json, "unlock", new JsonObject());
         return new GateDef(key,
                 JsonUtils.getInt(json, "dimension"),
                 JsonUtils.getString(json, "name", key.getPath()),
@@ -840,7 +842,7 @@ public final class ContentParser {
                         Math.max(1, JsonUtils.getInt(entry, "max", 4))));
             }
         }
-        JsonObject sounds = json.has("sounds") ? JsonUtils.getJsonObject(json, "sounds") : new JsonObject();
+        JsonObject sounds = JsonUtils.getJsonObject(json, "sounds", new JsonObject());
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (json.has("effects")) {
             for (JsonElement element : JsonUtils.getJsonArray(json, "effects")) {
@@ -872,9 +874,9 @@ public final class ContentParser {
                 Math.max(0, JsonUtils.getInt(json, "career", 0)),
                 baby(json),
                 picks(json, "becomes", "variant"),
-                sounds.has("ambient") ? JsonUtils.getString(sounds, "ambient", "") : "",
-                sounds.has("hurt") ? JsonUtils.getString(sounds, "hurt", "") : "",
-                sounds.has("death") ? JsonUtils.getString(sounds, "death", "") : "",
+                JsonUtils.getString(sounds, "ambient", ""),
+                JsonUtils.getString(sounds, "hurt", ""),
+                JsonUtils.getString(sounds, "death", ""),
                 strings(json, "immuneTo"),
                 Math.max(0.1F, JsonUtils.getFloat(json, "jumpMultiplier", 1.0F)),
                 Math.max(0.0F, JsonUtils.getFloat(json, "fallDamage", 1.0F)),
@@ -1080,10 +1082,10 @@ public final class ContentParser {
         return Collections.unmodifiableList(values);
     }
 
-    private static BlockMatchDef match(ResourceLocation key, JsonElement element) {
+    public static BlockMatchDef match(ResourceLocation key, JsonElement element) {
         if (!element.isJsonObject()) { return match(key, element.getAsString()); }
         JsonObject entry = element.getAsJsonObject();
-        return new BlockMatchDef(new ResourceLocation(JsonUtils.getString(entry, "block", "minecraft:stone")), JsonUtils.getInt(entry, "meta", -1), blockProperties(entry));
+        return new BlockMatchDef(new ResourceLocation(JsonUtils.getString(entry, "block", "minecraft:stone")), JsonUtils.getInt(entry, "meta", -1), Json.map(entry, "properties"));
     }
 
     private static BlockMatchDef match(ResourceLocation key, String name) {
@@ -1108,20 +1110,9 @@ public final class ContentParser {
             values.add(new BlockWeightDef(new ResourceLocation(name),
                     JsonUtils.getInt(entry, "meta", 0),
                     Math.max(1, JsonUtils.getInt(entry, "weight", 1)),
-                    blockProperties(entry)));
+                    Json.map(entry, "properties")));
         }
         return Collections.unmodifiableList(values);
-    }
-
-    private static Map<String, String> blockProperties(JsonObject entry) {
-        if (!entry.has("properties")) { return Collections.emptyMap(); }
-        JsonObject object = JsonUtils.getJsonObject(entry, "properties");
-        Map<String, String> values = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> property : object.entrySet()) {
-            if (!property.getValue().isJsonPrimitive()) { continue; }
-            values.put(property.getKey(), property.getValue().getAsString());
-        }
-        return Collections.unmodifiableMap(values);
     }
 
     private static List<Integer> integers(JsonObject json) {
@@ -1157,19 +1148,6 @@ public final class ContentParser {
         if (!json.has("potion") || json.get("potion").isJsonNull()) { return null; }
         String value = JsonUtils.getString(json, "potion");
         return value.trim().isEmpty() ? null : value;
-    }
-
-    private static List<String> strings(JsonObject json) { return strings(json, "oreDict"); }
-
-    public static List<String> strings(JsonObject json, String member) {
-        if (!json.has(member)) { return Collections.emptyList(); }
-        JsonArray array = JsonUtils.getJsonArray(json, member);
-        List<String> values = new ArrayList<>(array.size());
-        for (JsonElement element : array) {
-            String value = element.getAsString();
-            if (!value.isEmpty()) { values.add(value); }
-        }
-        return Collections.unmodifiableList(values);
     }
 
     public static String placeholderName(int meta, int digits) {

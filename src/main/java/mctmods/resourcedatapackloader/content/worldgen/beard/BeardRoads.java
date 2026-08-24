@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStone;
@@ -666,7 +667,7 @@ public final class BeardRoads {
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
-            int gap = Math.max(Math.max(road.minX - box.maxX, box.minX - road.maxX), Math.max(road.minZ - box.maxZ, box.minZ - road.maxZ));
+            int gap = MathUtil.max(road.minX - box.maxX, box.minX - road.maxX, road.minZ - box.maxZ, box.minZ - road.maxZ);
             if (gap > 2) { continue; }
             boolean alongX = BeardPlots.roadAlongX(other);
             int start = alongX ? road.minX : road.minZ;

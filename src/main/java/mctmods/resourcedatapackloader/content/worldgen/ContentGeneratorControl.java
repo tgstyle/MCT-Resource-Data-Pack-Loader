@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Names;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.world.World;
@@ -54,8 +54,8 @@ public final class ContentGeneratorControl {
     }
 
     public static void load() {
-        whitelist = Names.lower(ContentControl.list(ContentControl.GENERATORS, "generatorWhitelist", Config.worldgen.generatorWhitelist));
-        named = Names.lower(ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators));
+        whitelist = Settings.lower(ContentControl.list(ContentControl.GENERATORS, "generatorWhitelist", Config.worldgen.generatorWhitelist));
+        named = Settings.lower(ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators));
         kinds = new LinkedHashSet<>();
         for (String name : ContentControl.list(ContentControl.GENERATORS, "generatorTypes", Config.worldgen.generatorTypes)) {
             String kind = name.trim().toLowerCase(Locale.ROOT);
@@ -68,17 +68,10 @@ public final class ContentGeneratorControl {
         }
         mapped = new LinkedHashMap<>();
         for (String entry : ContentControl.list(ContentControl.GENERATORS, "generatorTypeMap", Config.worldgen.generatorTypeMap)) {
-            int split = entry.indexOf('=');
-            if (split < 1) {
-                ContentLog.LOGGER.error("generatorTypeMap entry '{}' is not written as pattern=type, ignoring it", entry);
-                continue;
-            }
-            String pattern = entry.substring(0, split).trim().toLowerCase(Locale.ROOT);
-            String kind = entry.substring(split + 1).trim().toLowerCase(Locale.ROOT);
-            if (pattern.isEmpty() || kind.isEmpty()) {
-                ContentLog.LOGGER.error("generatorTypeMap entry '{}' is missing a pattern or a type, ignoring it", entry);
-                continue;
-            }
+            String[] parts = Settings.pair(entry, "generatorTypeMap", "pattern=type");
+            if (parts == null) { continue; }
+            String pattern = parts[0].toLowerCase(Locale.ROOT);
+            String kind = parts[1].toLowerCase(Locale.ROOT);
             if (!PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN)) {
                 ContentLog.LOGGER.error("generatorTypeMap entry '{}' names a type that is not one of {} or {}, ignoring it", entry, PATTERNS.keySet(), UNKNOWN);
                 continue;

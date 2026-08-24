@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -102,7 +103,7 @@ public final class BeardPlaza {
         int paved = 0;
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
-                int band = Math.max(Math.max(box.minX - x, x - box.maxX), Math.max(box.minZ - z, z - box.maxZ));
+                int band = MathUtil.max(box.minX - x, x - box.maxX, box.minZ - z, z - box.maxZ);
                 if (band < 1) { continue; }
                 at.setPos(x, ground, z);
                 if (!clip.isVecInside(at) || BeardPlots.underBuilding(start, piece, x, z)) { continue; }
@@ -123,7 +124,7 @@ public final class BeardPlaza {
         int widest = 0;
         for (int x = box.minX - reach - 3; x <= box.maxX + reach + 3; x++) {
             for (int z = box.minZ - reach - 3; z <= box.maxZ + reach + 3; z++) {
-                int band = Math.max(Math.max(box.minX - x, x - box.maxX), Math.max(box.minZ - z, z - box.maxZ)) - reach;
+                int band = MathUtil.max(box.minX - x, x - box.maxX, box.minZ - z, z - box.maxZ) - reach;
                 if (band < 1) { continue; }
                 int rings = plazaTaper(world, x, z);
                 if (rings > widest) { widest = rings; }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.block.Block;
@@ -138,13 +139,10 @@ public final class ContentReplacements {
         EXACT.clear();
         WHOLE.clear();
         for (String entry : ContentControl.list(ContentControl.REPLACEMENTS, "blockReplacements", Config.worldgen.blockReplacements)) {
-            int split = entry.indexOf('=');
-            if (split < 1) {
-                ContentLog.LOGGER.error("blockReplacements entry '{}' is not written as block=block, ignoring it", entry);
-                continue;
-            }
-            String from = entry.substring(0, split).trim();
-            IBlockState wanted = state(entry.substring(split + 1).trim(), entry);
+            String[] parts = Settings.pair(entry, "blockReplacements", "block=block");
+            if (parts == null) { continue; }
+            String from = parts[0];
+            IBlockState wanted = state(parts[1], entry);
             if (wanted == null) { continue; }
             Block block = block(from, entry);
             if (block == null) { continue; }

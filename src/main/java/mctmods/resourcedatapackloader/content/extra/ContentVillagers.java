@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.VillagerDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -26,7 +27,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,13 +119,6 @@ public final class ContentVillagers {
         JsonObject entry = JsonUtils.getJsonObject(json, name);
         int min = Math.max(1, JsonUtils.getInt(entry, "min", 1));
         return new TradeStackDef(JsonUtils.getString(entry, "item", ""), min, Math.max(min, JsonUtils.getInt(entry, "max", min)));
-    }
-
-    private static List<String> strings(JsonObject json, String name) {
-        if (!json.has(name)) { return Collections.emptyList(); }
-        List<String> values = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, name)) { values.add(element.getAsString()); }
-        return Collections.unmodifiableList(values);
     }
 
     @SubscribeEvent public static void registerProfessions(RegistryEvent.Register<VillagerRegistry.VillagerProfession> event) {

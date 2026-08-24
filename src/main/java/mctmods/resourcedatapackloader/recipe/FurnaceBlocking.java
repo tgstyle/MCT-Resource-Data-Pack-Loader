@@ -5,7 +5,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IFurnaceRecipes;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Names;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.item.ItemStack;
@@ -55,12 +55,12 @@ public final class FurnaceBlocking {
     }
 
     private static Set<String> allowedMods() {
-        if (whitelist == null) { whitelist = Names.lower(ContentControl.list(ContentControl.RECIPES, "furnaceWhitelist", Config.recipes.furnaceWhitelist)); }
+        if (whitelist == null) { whitelist = Settings.lower(ContentControl.list(ContentControl.RECIPES, "furnaceWhitelist", Config.recipes.furnaceWhitelist)); }
         return whitelist;
     }
 
     private static Set<String> blockedMods() {
-        if (blocked == null) { blocked = Names.lower(ContentControl.list(ContentControl.RECIPES, "blockedFurnaceMods", Config.recipes.blockedFurnaceMods)); }
+        if (blocked == null) { blocked = Settings.lower(ContentControl.list(ContentControl.RECIPES, "blockedFurnaceMods", Config.recipes.blockedFurnaceMods)); }
         return blocked;
     }
 

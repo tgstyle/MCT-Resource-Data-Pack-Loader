@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.util;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -69,7 +69,7 @@ public final class ContentMaterials {
                 JsonUtils.getString(json, "equipSound", "item.armor.equip_iron"),
                 JsonUtils.getString(json, "armorTexture", key.toString()),
                 JsonUtils.getString(json, "repairItem", ""),
-                ContentParser.strings(json, "requires")));
+                Json.strings(json, "requires")));
     }
 
     public static void register() {

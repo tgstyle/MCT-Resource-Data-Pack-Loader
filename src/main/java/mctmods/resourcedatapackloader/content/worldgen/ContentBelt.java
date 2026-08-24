@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import java.util.Random;
 import java.util.function.Predicate;
@@ -59,8 +60,8 @@ public final class ContentBelt implements IContentShape {
     }
 
     private boolean withinReach(BlockPos source, int chunkX, int chunkZ) {
-        int nearX = clamp(source.getX(), chunkX * 16 + OFFSET, chunkX * 16 + OFFSET + 15);
-        int nearZ = clamp(source.getZ(), chunkZ * 16 + OFFSET, chunkZ * 16 + OFFSET + 15);
+        int nearX = MathHelper.clamp(source.getX(), chunkX * 16 + OFFSET, chunkX * 16 + OFFSET + 15);
+        int nearZ = MathHelper.clamp(source.getZ(), chunkZ * 16 + OFFSET, chunkZ * 16 + OFFSET + 15);
         int offX = source.getX() - nearX;
         int offZ = source.getZ() - nearZ;
         return offX * offX + offZ * offZ < radius * radius;
@@ -89,5 +90,4 @@ public final class ContentBelt implements IContentShape {
         }
     }
 
-    private static int clamp(int value, int least, int most) { return value < least ? least : Math.min(value, most); }
 }

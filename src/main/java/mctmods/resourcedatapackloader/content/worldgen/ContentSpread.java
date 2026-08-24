@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.SpreadDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import java.util.Random;
 import javax.annotation.Nullable;
@@ -45,7 +46,7 @@ public final class ContentSpread {
             for (int roll = 0; roll < rolls; roll++) { y += random.nextInt(spread.range); }
             y = Math.round(y - spread.range * (rolls * 0.5F));
         }
-        return new BlockPos(baseX + SAFE_OFFSET + random.nextInt(16), clamp(y, def.minHeight, def.maxHeight), baseZ + SAFE_OFFSET + random.nextInt(16));
+        return new BlockPos(baseX + SAFE_OFFSET + random.nextInt(16), MathHelper.clamp(y, def.minHeight, def.maxHeight), baseZ + SAFE_OFFSET + random.nextInt(16));
     }
 
     private static BlockPos sprawl(WorldgenDef def, SpreadDef spread, Random region, int baseX, int baseZ) {
@@ -101,5 +102,4 @@ public final class ContentSpread {
         return total;
     }
 
-    private static int clamp(int value, int low, int high) { return value < low ? low : Math.min(value, high); }
 }

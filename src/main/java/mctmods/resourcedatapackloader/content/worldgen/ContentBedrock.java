@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.block.Block;
@@ -161,18 +162,14 @@ public final class ContentBedrock {
     private static void load() {
         dimensions = new HashSet<>();
         for (int dimension : ContentControl.numbers(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions)) { dimensions.add(dimension); }
-        biomeNames = new HashSet<>();
-        for (String name : ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomes", Config.worldgen.flatBedrockBiomes)) { biomeNames.add(name.trim().toLowerCase(Locale.ROOT)); }
+        biomeNames = Settings.lower(ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomes", Config.worldgen.flatBedrockBiomes));
         biomeTypes = new ArrayList<>();
         for (String name : ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomeTypes", Config.worldgen.flatBedrockBiomeTypes)) { biomeTypes.add(BiomeDictionary.Type.getType(name.trim())); }
         for (String entry : ContentControl.list(ContentControl.BEDROCK, "flatBedrockFillers", Config.worldgen.flatBedrockFillers)) {
-            int split = entry.indexOf('=');
-            if (split < 1) {
-                ContentLog.LOGGER.error("flatBedrockFillers entry '{}' is not written as dimension=block, ignoring it", entry);
-                continue;
-            }
-            String number = entry.substring(0, split).trim();
-            IBlockState state = state(entry.substring(split + 1).trim());
+            String[] parts = Settings.pair(entry, "flatBedrockFillers", "dimension=block");
+            if (parts == null) { continue; }
+            String number = parts[0];
+            IBlockState state = state(parts[1]);
             if (state == null) { continue; }
             try { byDimension.put(Integer.parseInt(number), state); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("flatBedrockFillers entry '{}' does not start with a dimension number, ignoring it", entry); }

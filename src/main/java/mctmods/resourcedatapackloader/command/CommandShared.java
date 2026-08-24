@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
@@ -92,5 +94,33 @@ public final class CommandShared {
         }
         int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
+    }
+
+    static void config(ICommandSender sender, String action, String usage, String note) throws CommandException {
+        List<String> stale = PackOptions.orphans();
+        if (stale.isEmpty()) {
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.none"));
+            return;
+        }
+        if ("unused".equals(action)) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.config.unused", stale.size()));
+            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + ".json"); }
+            send(sender, TextFormatting.GRAY, Lang.tr(sender, note));
+            return;
+        }
+        if (!"prune".equals(action)) { throw new WrongUsageException(usage); }
+        int gone = PackOptions.prune();
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
+    }
+
+    static void unused(ICommandSender sender, String note) {
+        List<String> unused = PackManager.get().findUnused();
+        if (unused.isEmpty()) {
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.allused"));
+            return;
+        }
+        send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unused", unused.size()));
+        for (String entry : unused) { ContentLog.LOGGER.warn("  {}", entry); }
+        send(sender, TextFormatting.GRAY, Lang.tr(sender, note));
     }
 }

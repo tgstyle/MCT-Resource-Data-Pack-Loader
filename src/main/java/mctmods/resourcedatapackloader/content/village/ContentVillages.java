@@ -11,7 +11,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Names;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
@@ -104,7 +104,7 @@ public final class ContentVillages {
     private static Set<String> names() {
         WorldTemplateDef active = ContentWorldTemplates.active();
         if (named == null || active != namedFrom) {
-            named = Names.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces));
+            named = Settings.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces));
             namedFrom = active;
         }
         return named;
@@ -127,13 +127,10 @@ public final class ContentVillages {
     private static void loadBlocks() {
         BLOCKS = new HashMap<>();
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
-            int split = entry.indexOf('=');
-            if (split <= 0 || split == entry.length() - 1) {
-                ContentLog.LOGGER.error("villageBlocks entry '{}' is not written as original=replacement, ignoring it", entry);
-                continue;
-            }
-            IBlockState from = ContentStates.parse(entry.substring(0, split).trim(), "villageBlocks");
-            IBlockState to = ContentStates.parse(entry.substring(split + 1).trim(), "villageBlocks");
+            String[] parts = Settings.pair(entry, "villageBlocks", "original=replacement");
+            if (parts == null) { continue; }
+            IBlockState from = ContentStates.parse(parts[0], "villageBlocks");
+            IBlockState to = ContentStates.parse(parts[1], "villageBlocks");
             if (from == null || to == null) { continue; }
             BLOCKS.put(from, to);
         }

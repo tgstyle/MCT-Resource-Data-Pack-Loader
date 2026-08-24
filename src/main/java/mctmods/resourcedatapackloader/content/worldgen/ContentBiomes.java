@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -176,13 +177,6 @@ public final class ContentBiomes {
     private static int color(JsonObject json, String name, ResourceLocation key) {
         if (!json.has(name)) { return ContentTypes.NO_COLOR; }
         return ContentTypes.color(JsonUtils.getString(json, name, "FFFFFF"), key.toString());
-    }
-
-    private static List<String> strings(JsonObject json, String name) {
-        if (!json.has(name)) { return Collections.emptyList(); }
-        List<String> values = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, name)) { values.add(element.getAsString()); }
-        return Collections.unmodifiableList(values);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerBiomes(RegistryEvent.Register<Biome> event) {

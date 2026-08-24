@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Names;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.world.gen.feature.WorldGenerator;
@@ -91,7 +91,7 @@ public final class ContentOreControl {
     public static Map<String, Integer> blocked() { return BLOCKED.map(); }
 
     private static void load() {
-        whitelist = Names.lower(ContentControl.list(ContentControl.ORES, "oreWhitelist", Config.worldgen.oreWhitelist));
+        whitelist = Settings.lower(ContentControl.list(ContentControl.ORES, "oreWhitelist", Config.worldgen.oreWhitelist));
         oreTypes = new LinkedHashSet<>();
         for (String name : ContentControl.list(ContentControl.ORES, "oreTypes", Config.worldgen.oreTypes)) { oreTypes.add(name.toUpperCase(Locale.ROOT)); }
         if (ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres)) {

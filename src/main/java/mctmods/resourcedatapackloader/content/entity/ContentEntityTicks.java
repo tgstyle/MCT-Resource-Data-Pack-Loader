@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityAITasks;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityItem;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Names;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -155,7 +155,7 @@ public final class ContentEntityTicks {
 
     private static boolean kindSlowed(Entity entity) {
         if (kinds == null) {
-            kinds = Names.lower(ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds));
+            kinds = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds));
             for (String kind : kinds) {
                 if (KINDS.contains(kind)) { continue; }
                 ContentLog.LOGGER.error("slowedKinds names '{}', which is not one of {}, so nothing is slowed for it. Anything that thinks for itself is already given a slower pace without being named, and machines are never slowed", kind, KINDS);
@@ -174,7 +174,7 @@ public final class ContentEntityTicks {
             if (living.isNoDespawnRequired() || living.getLeashed() || living.getAttackTarget() != null) { return true; }
         }
         if (entity instanceof EntityLivingBase && !((EntityLivingBase) entity).getActivePotionEffects().isEmpty()) { return true; }
-        if (spared == null) { spared = Names.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)); }
+        if (spared == null) { spared = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)); }
         if (spared.isEmpty()) { return false; }
         ResourceLocation name = EntityList.getKey(entity);
         return name != null && spared.contains(name.toString().toLowerCase(Locale.ROOT));

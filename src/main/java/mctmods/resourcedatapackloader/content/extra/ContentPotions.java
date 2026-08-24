@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -117,7 +118,7 @@ public final class ContentPotions {
                 JsonUtils.getBoolean(json, "instant", false),
                 JsonUtils.getFloat(json, "effectiveness", 0.5F),
                 Collections.unmodifiableList(attributes),
-                strings(json)));
+                strings(json, "requires")));
     }
 
     private static void readType(ResourceLocation key, String contents) {
@@ -151,7 +152,7 @@ public final class ContentPotions {
         TYPES.put(key, new PotionTypeDef(key,
                 JsonUtils.getString(json, "baseName", key.getNamespace() + "." + key.getPath()),
                 Collections.unmodifiableList(effects),
-                strings(json)));
+                strings(json, "requires")));
     }
 
     private static void readBrewing(ResourceLocation key, String contents) {
@@ -172,7 +173,7 @@ public final class ContentPotions {
                     JsonUtils.getString(entry, "ingredient", ""),
                     JsonUtils.getString(entry, "input", ""),
                     JsonUtils.getString(entry, "output", ""),
-                    strings(entry));
+                    strings(entry, "requires"));
             if (def.ingredient.isEmpty()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} has no ingredient, skipping it", key);
                 continue;
@@ -183,13 +184,6 @@ public final class ContentPotions {
             }
             BREWING.add(def);
         }
-    }
-
-    private static List<String> strings(JsonObject json) {
-        if (!json.has("requires")) { return Collections.emptyList(); }
-        List<String> values = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, "requires")) { values.add(element.getAsString()); }
-        return Collections.unmodifiableList(values);
     }
 
     @SubscribeEvent public static void registerPotions(RegistryEvent.Register<Potion> event) {

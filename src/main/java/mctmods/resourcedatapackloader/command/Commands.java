@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.command;
 
+import static mctmods.resourcedatapackloader.command.CommandShared.config;
 import static mctmods.resourcedatapackloader.command.CommandShared.send;
+import static mctmods.resourcedatapackloader.command.CommandShared.unused;
 import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeNames;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
@@ -9,7 +11,6 @@ import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.PackManager;
-import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -88,9 +89,9 @@ import javax.annotation.Nullable;
         else if (args.length == 2 && "reload".equals(args[0])) { reloadGroup(sender, args[1]); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
-        else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
+        else if (args.length == 1 && "unused".equals(args[0])) { unused(sender, "rdpl.command.unusednote"); }
         else if (args.length > 0 && "biome".equals(args[0])) { biome(sender, args); }
-        else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
+        else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.note"); }
         else if (args.length == 2 && "pixelmap".equals(args[0])) { pixelmap(sender, args[1]); }
         else if (args.length > 0 && FORWARDED.contains(args[0])) { forward(args); }
         else { throw new WrongUsageException(getUsage(sender)); }
@@ -145,34 +146,6 @@ import javax.annotation.Nullable;
             line.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/rdpl which " + firstNamespace(pack) + ":"));
             send(sender, line, "  " + pack.getName() + priority + tier + " " + detail.replace('\n', ' '));
         }
-    }
-
-    private void config(ICommandSender sender, String action) throws CommandException {
-        List<String> stale = PackOptions.orphans();
-        if (stale.isEmpty()) {
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.none"));
-            return;
-        }
-        if ("unused".equals(action)) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.config.unused", stale.size()));
-            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + ".json"); }
-            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.config.note"));
-            return;
-        }
-        if (!"prune".equals(action)) { throw new WrongUsageException(getUsage(sender)); }
-        int gone = PackOptions.prune();
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
-    }
-
-    private void unused(ICommandSender sender) {
-        List<String> unused = PackManager.get().findUnused();
-        if (unused.isEmpty()) {
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.allused"));
-            return;
-        }
-        send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unused", unused.size()));
-        for (String entry : unused) { ContentLog.LOGGER.warn("  {}", entry); }
-        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.unusednote"));
     }
 
     private static String firstNamespace(RDPLPack pack) {

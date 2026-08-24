@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -188,7 +189,7 @@ public final class ContentHardness {
         }
         return new HardnessDef(key, blocks, matches(key, json, "except"),
                 mining[0], mining[1], blast[0], blast[1], buckets,
-                minHeight, maxHeight, strings(json), field(json));
+                minHeight, maxHeight, strings(json, "requires"), field(json));
     }
 
     private static ContentField field(JsonObject json) {
@@ -232,38 +233,10 @@ public final class ContentHardness {
         if (!json.has(name)) { return values; }
         JsonElement element = json.get(name);
         if (!element.isJsonArray()) {
-            values.add(match(key, element));
+            values.add(ContentParser.match(key, element));
             return values;
         }
-        for (JsonElement held : element.getAsJsonArray()) { values.add(match(key, held)); }
-        return values;
-    }
-
-    private static BlockMatchDef match(ResourceLocation key, JsonElement element) {
-        if (element.isJsonObject()) {
-            JsonObject entry = element.getAsJsonObject();
-            Map<String, String> properties = new LinkedHashMap<>();
-            if (entry.has("properties")) {
-                JsonObject held = JsonUtils.getJsonObject(entry, "properties");
-                for (Map.Entry<String, JsonElement> pair : held.entrySet()) { properties.put(pair.getKey(), pair.getValue().getAsString()); }
-            }
-            return new BlockMatchDef(new ResourceLocation(JsonUtils.getString(entry, "block", "minecraft:stone")), JsonUtils.getInt(entry, "meta", -1), properties);
-        }
-        String name = element.getAsString();
-        String[] parts = name.split(":");
-        if (parts.length < 3) { return new BlockMatchDef(new ResourceLocation(name), -1, new LinkedHashMap<>()); }
-        ResourceLocation block = new ResourceLocation(parts[0] + ":" + parts[1]);
-        try { return new BlockMatchDef(block, Integer.parseInt(parts[2]), new LinkedHashMap<>()); }
-        catch (NumberFormatException ex) {
-            ContentLog.LOGGER.error("Block metadata '{}' in {} is not a number, using 0", parts[2], key);
-            return new BlockMatchDef(block, 0, new LinkedHashMap<>());
-        }
-    }
-
-    private static List<String> strings(JsonObject json) {
-        List<String> values = new ArrayList<>();
-        if (!json.has("requires")) { return values; }
-        for (JsonElement element : JsonUtils.getJsonArray(json, "requires")) { values.add(element.getAsString()); }
+        for (JsonElement held : element.getAsJsonArray()) { values.add(ContentParser.match(key, held)); }
         return values;
     }
 }

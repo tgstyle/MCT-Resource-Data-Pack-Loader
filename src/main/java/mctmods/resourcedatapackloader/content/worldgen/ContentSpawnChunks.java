@@ -3,10 +3,12 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.util.math.MathHelper;
 
 public final class ContentSpawnChunks {
     public static final int VANILLA = 128;
@@ -31,12 +33,9 @@ public final class ContentSpawnChunks {
         }
         everywhere = clamp(ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius));
         for (String entry : ContentControl.list(ContentControl.CHUNKS, "spawnChunkRadii", Config.chunks.spawnChunkRadii)) {
-            int split = entry.indexOf('=');
-            if (split < 1) {
-                ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not written as dimension=blocks, ignoring it", entry);
-                continue;
-            }
-            try { BY_DIMENSION.put(Integer.parseInt(entry.substring(0, split).trim()), clamp(Integer.parseInt(entry.substring(split + 1).trim()))); }
+            String[] parts = Settings.pair(entry, "spawnChunkRadii", "dimension=blocks");
+            if (parts == null) { continue; }
+            try { BY_DIMENSION.put(Integer.parseInt(parts[0]), clamp(Integer.parseInt(parts[1]))); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not two numbers written as dimension=blocks, ignoring it", entry); }
         }
         if (everywhere == VANILLA && BY_DIMENSION.isEmpty()) { return; }
@@ -46,5 +45,5 @@ public final class ContentSpawnChunks {
 
     private static String describe(int radius) { return radius <= 0 ? "no chunks" : radius + " block(s) of chunks"; }
 
-    private static int clamp(int wanted) { return Math.max(0, Math.min(1024, wanted)); }
+    private static int clamp(int wanted) { return MathHelper.clamp(wanted, 0, 1024); }
 }

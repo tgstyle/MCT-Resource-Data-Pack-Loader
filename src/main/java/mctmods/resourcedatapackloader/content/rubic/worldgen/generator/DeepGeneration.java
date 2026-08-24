@@ -14,6 +14,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.feature.WorldGenDungeons;
@@ -238,7 +239,7 @@ public class DeepGeneration {
             for (int y = 0; y < 33; y++) {
                 for (int z = 0; z < 5; z++) {
                     int top = tops[(Math.min(z << 2, 15) << 4) | Math.min(x << 2, 15)];
-                    double fade = clamp(0.5D - 0.01D * (top - (y << 3)), 0.0D, 0.5D);
+                    double fade = MathHelper.clamp(0.5D - 0.01D * (top - (y << 3)), 0.0D, 0.5D);
                     lattice[x][y][z] = density(worldX + (x << 2), y << 3, worldZ + (z << 2), fade);
                 }
             }
@@ -263,7 +264,7 @@ public class DeepGeneration {
     private double density(int x, int y, int z, double cheeseFade) {
         int aboveFloor = y - genFloor;
         double layered = layer.sample(x, y, z);
-        double result = 4.0D * layered * layered + clamp(0.27D + cheese.sample(x, y, z), -1.0D, 1.0D) + cheeseFade;
+        double result = 4.0D * layered * layered + MathHelper.clamp(0.27D + cheese.sample(x, y, z), -1.0D, 1.0D) + cheeseFade;
         if (aboveFloor < 24) {
             double regionalDepth = -cheeseWide.sample(x, y, z) - 0.3D;
             if (regionalDepth > 0.0D) { result += (24 - aboveFloor) / 24.0D * regionalDepth * 12.0D; }
@@ -287,7 +288,7 @@ public class DeepGeneration {
         return result;
     }
 
-    private double mouthTerm(int x, int y, int z) { return mouth.sample(x, y, z) + 0.37D + 0.3D * clamp((30.0D - y) / 40.0D, 0.0D, 1.0D); }
+    private double mouthTerm(int x, int y, int z) { return mouth.sample(x, y, z) + 0.37D + 0.3D * MathHelper.clamp((30.0D - y) / 40.0D, 0.0D, 1.0D); }
 
     private IBlockState fluidOrAir(int x, int genY, int z, double density) {
         int lavaLevel = genFloor + 10;
@@ -301,11 +302,11 @@ public class DeepGeneration {
         for (Vein vein : veins) {
             if (genY < vein.minY || genY > vein.maxY) { continue; }
             double veininess = vein.veininess.sample(x, genY, z);
-            double edge = clamp(Math.min(genY - vein.minY, vein.maxY - genY) / 20.0D * 0.2D - 0.2D, -0.2D, 0.0D);
+            double edge = MathHelper.clamp(Math.min(genY - vein.minY, vein.maxY - genY) / 20.0D * 0.2D - 0.2D, -0.2D, 0.0D);
             if (Math.abs(veininess) + edge < 0.4D) { continue; }
             if (hash01(x, genY, z, vein.salt) > 0.7F) { continue; }
             if (Math.max(Math.abs(vein.branchA.sample(x, genY, z)), Math.abs(vein.branchB.sample(x, genY, z))) >= 0.08D) { continue; }
-            float richness = (float) clamp((Math.abs(veininess) - 0.4D) * 5.0D * 0.2D + 0.1D, 0.1D, 0.3D);
+            float richness = (float) MathHelper.clamp((Math.abs(veininess) - 0.4D) * 5.0D * 0.2D + 0.1D, 0.1D, 0.3D);
             if (hash01(x, genY, z, vein.salt + 1) < richness) {
                 return hash01(x, genY, z, vein.salt + 2) < 0.02F && vein.extra != null ? vein.extra : vein.ore;
             }
@@ -327,7 +328,6 @@ public class DeepGeneration {
 
     private static double lerp(double t, double a, double b) { return a + t * (b - a); }
 
-    private static double clamp(double value, double low, double high) { return value < low ? low : Math.min(value, high); }
 
     public static IBlockState parseState(String name, String key) {
         if (name == null || name.trim().isEmpty()) { return null; }
@@ -438,7 +438,7 @@ public class DeepGeneration {
                 fx *= 2.0D;
                 fy *= 2.0D;
             }
-            return clamp(total * scale / reach, -1.0D, 1.0D);
+            return MathHelper.clamp(total * scale / reach, -1.0D, 1.0D);
         }
 
         private double noise(double x, double y, double z) {

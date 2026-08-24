@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeName;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Names;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.util.ResourceLocation;
@@ -54,8 +54,8 @@ public final class ContentBiomeControl {
         BLOCKED.clear();
         dimensions = new HashSet<>();
         for (int dimension : ContentControl.numbers(ContentControl.BIOMES, "blockBiomeDimensions", Config.worldgen.blockBiomeDimensions)) { dimensions.add(dimension); }
-        Set<String> whitelist = Names.lower(ContentControl.list(ContentControl.BIOMES, "biomeWhitelist", Config.worldgen.biomeWhitelist));
-        Set<String> names = Names.lower(ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames));
+        Set<String> whitelist = Settings.lower(ContentControl.list(ContentControl.BIOMES, "biomeWhitelist", Config.worldgen.biomeWhitelist));
+        Set<String> names = Settings.lower(ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames));
         int removed = 0;
         for (BiomeManager.BiomeType type : BiomeManager.BiomeType.values()) {
             List<BiomeManager.BiomeEntry> entries = BiomeManager.getBiomes(type);

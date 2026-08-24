@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.command;
 
+import static mctmods.resourcedatapackloader.command.CommandShared.config;
 import static mctmods.resourcedatapackloader.command.CommandShared.send;
+import static mctmods.resourcedatapackloader.command.CommandShared.unused;
 import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeNames;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
@@ -20,11 +22,11 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.pack.PackManager;
-import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -34,6 +36,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
@@ -77,17 +80,14 @@ public class ServerCommands extends CommandBase {
 
     private static int level(String key, int fallback) { return clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback)); }
 
-    private static int clamp(int level) { return Math.max(0, Math.min(OPERATOR + 1, level)); }
+    private static int clamp(int level) { return MathHelper.clamp(level, 0, OPERATOR + 1); }
 
     private static int placeLevel(String place, int fallback) {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
-            int split = entry.indexOf('=');
-            if (split < 0) {
-                ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' is not written as name=level, ignoring it", entry);
-                continue;
-            }
-            if (!entry.substring(0, split).trim().equalsIgnoreCase(place)) { continue; }
-            try { return clamp(Integer.parseInt(entry.substring(split + 1).trim())); }
+            String[] parts = Settings.pair(entry, "gotoPlaceLevels", "name=level");
+            if (parts == null) { continue; }
+            if (!parts[0].equalsIgnoreCase(place)) { continue; }
+            try { return clamp(Integer.parseInt(parts[1])); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' has no number after the =, ignoring it", entry); }
         }
         return fallback;
@@ -146,7 +146,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
-        else if (args.length == 1 && "unused".equals(args[0])) { unused(sender); }
+        else if (args.length == 1 && "unused".equals(args[0])) { unused(sender, "rdpl.command.serverunusednote"); }
         else if (args.length == 1 && "oregen".equals(args[0])) { oregen(sender); }
         else if (args.length == 1 && "generators".equals(args[0])) { generators(sender); }
         else if (args.length >= 1 && "gate".equals(args[0])) { gate(server, sender, args); }
@@ -157,7 +157,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { biomeFind(sender, args[2]); }
         else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
-        else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1]); }
+        else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.servernote"); }
         else if (args.length == 2 && "goto".equals(args[0])) { goTo(sender, args[1], false); }
         else if (args.length == 3 && "goto".equals(args[0]) && "next".equals(args[2])) { goTo(sender, args[1], true); }
         else if (args.length == 3 && "goto".equals(args[0]) && "back".equals(args[2])) { goBack(sender, args[1]); }
@@ -200,23 +200,6 @@ public class ServerCommands extends CommandBase {
             if (entry.getValue().equals(name)) { return entry.getKey(); }
         }
         return null;
-    }
-
-    private void config(ICommandSender sender, String action) throws CommandException {
-        List<String> stale = PackOptions.orphans();
-        if (stale.isEmpty()) {
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.none"));
-            return;
-        }
-        if ("unused".equals(action)) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.config.unused", stale.size()));
-            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + ".json"); }
-            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.config.servernote"));
-            return;
-        }
-        if (!"prune".equals(action)) { throw new WrongUsageException(getUsage(sender)); }
-        int gone = PackOptions.prune();
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.config.pruned", gone));
     }
 
     private void pregen(ICommandSender sender, String[] args) throws CommandException {
@@ -288,17 +271,6 @@ public class ServerCommands extends CommandBase {
         }
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.genblocked"));
         for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue()); }
-    }
-
-    private void unused(ICommandSender sender) {
-        List<String> unused = PackManager.get().findUnused();
-        if (unused.isEmpty()) {
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.allused"));
-            return;
-        }
-        send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unused", unused.size()));
-        for (String entry : unused) { ContentLog.LOGGER.warn("  {}", entry); }
-        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.serverunusednote"));
     }
 
     private void which(ICommandSender sender, String target) {

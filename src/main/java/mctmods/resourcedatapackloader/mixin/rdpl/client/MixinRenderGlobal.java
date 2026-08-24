@@ -47,10 +47,7 @@ import javax.annotation.Nullable;
                                List<Entity> list, List<Entity> list1, List<Entity> list2,
                                BlockPos.PooledMutableBlockPos pos, Iterator<?> var21,
                                @Coerce Object info) {
-        RenderChunk renderChunk = ((IContainerLocalRenderInformation) info).getRenderChunk();
-        IRubicWorld world = (IRubicWorld) renderChunk.getWorld();
-        if (world.rdpl$isRubicWorld()) { this.rdpl$position = renderChunk.getPosition(); }
-        else { this.rdpl$position = null; }
+        rdpl$noteRenderChunk(info);
     }
 
     @Dynamic @Group(name = "renderEntitiesFix") @Inject(method = "renderEntities",
@@ -63,10 +60,7 @@ import javax.annotation.Nullable;
                                List<Entity> list, boolean forgeEntityPass, boolean forgeTileEntityPass, boolean isShaders, boolean oldFancyGraphics, List<Entity> list1, List<Entity> list2,
                                BlockPos.PooledMutableBlockPos pos, Iterator<?> var22,
                                @Coerce Object info) {
-        RenderChunk renderChunk = ((IContainerLocalRenderInformation) info).getRenderChunk();
-        IRubicWorld world = (IRubicWorld) renderChunk.getWorld();
-        if (world.rdpl$isRubicWorld()) { this.rdpl$position = renderChunk.getPosition(); }
-        else { this.rdpl$position = null; }
+        rdpl$noteRenderChunk(info);
     }
 
     @Dynamic @Group(name = "renderEntitiesFix") @Inject(method = "renderEntities",
@@ -79,6 +73,10 @@ import javax.annotation.Nullable;
                                List<Entity> list, boolean forgeEntityPass, boolean forgeTileEntityPass, boolean isShaders, List<Entity> list1, List<Entity> list2,
                                BlockPos.PooledMutableBlockPos pos, boolean playerShadowPass, Iterator<?> var22,
                                @Coerce Object info) {
+        rdpl$noteRenderChunk(info);
+    }
+
+    @Unique private void rdpl$noteRenderChunk(Object info) {
         RenderChunk renderChunk = ((IContainerLocalRenderInformation) info).getRenderChunk();
         IRubicWorld world = (IRubicWorld) renderChunk.getWorld();
         if (world.rdpl$isRubicWorld()) { this.rdpl$position = renderChunk.getPosition(); }

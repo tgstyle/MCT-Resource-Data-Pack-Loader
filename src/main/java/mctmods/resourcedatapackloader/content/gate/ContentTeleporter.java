@@ -12,6 +12,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ITeleporter;
 import javax.annotation.Nullable;
@@ -86,7 +87,7 @@ public final class ContentTeleporter implements ITeleporter {
         return new BlockPos(from.getX(), clamp(world, from.getY()), from.getZ());
     }
 
-    private static int clamp(World world, int y) { return Math.max(SEARCH_LOW, Math.min(world.getHeight() - 4, y)); }
+    private static int clamp(World world, int y) { return MathHelper.clamp(y, SEARCH_LOW, world.getHeight() - 4); }
 
     private IBlockState arriving() { return portalState; }
 
