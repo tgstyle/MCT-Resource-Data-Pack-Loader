@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.util.compat.CbmpRubicParts;
 import mctmods.resourcedatapackloader.util.compat.CmsRubicSpawns;
 import mctmods.resourcedatapackloader.util.compat.GcRubicWorldgen;
 import mctmods.resourcedatapackloader.util.compat.StreamsRubicValleys;
+import mctmods.resourcedatapackloader.util.compat.ThutRubicLifts;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
@@ -139,6 +140,7 @@ public class ResourceDataPackLoader {
         CbmpRubicParts.register();
         StreamsRubicValleys.register();
         GcRubicWorldgen.register();
+        ThutRubicLifts.register();
         if (ContentPaths.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPaths.class); }
         if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
         if (ContentOreControl.enabled()) { MinecraftForge.ORE_GEN_BUS.register(ContentOreControl.class); }
