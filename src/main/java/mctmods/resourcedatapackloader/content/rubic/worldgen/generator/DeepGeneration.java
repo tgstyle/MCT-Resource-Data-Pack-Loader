@@ -25,6 +25,8 @@ import java.util.Random;
 
 public class DeepGeneration {
     private static final int BLEND_TOP = 8;
+    private static final int SKY_ISLAND_SHAPE = 0;
+    private static final int SKY_CAVES = 1;
     private static final double CAVE_THRESHOLD = 0.0D;
     private final World world;
     private final long seed;
@@ -32,6 +34,7 @@ public class DeepGeneration {
     private final int genFloor;
     private final IBlockState deepStone;
     private final IBlockState skyStone;
+    private final int skyShape;
     private final double skyIslands;
     private final double skyThickness;
     private final int skyLowest;
@@ -63,6 +66,7 @@ public class DeepGeneration {
         this.extensionBottom = extensionBottom;
         this.deepStone = parseState(ContentControl.text(ContentControl.TERRAIN, "deepStone", Config.worldgen.deepStone), "deepStone");
         this.skyStone = parseState(ContentControl.text(ContentControl.TERRAIN, "skyStone", Config.worldgen.skyStone), "skyStone");
+        this.skyShape = parseShape(ContentControl.text(ContentControl.TERRAIN, "skyShape", Config.worldgen.skyShape));
         this.skyIslands = parseIslands(ContentControl.decimal(ContentControl.TERRAIN, "skyIslands", Config.worldgen.skyIslands));
         this.skyThickness = parseThickness(ContentControl.decimal(ContentControl.TERRAIN, "skyThickness", Config.worldgen.skyThickness));
         int[] band = parseHeights(ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights));
@@ -110,6 +114,10 @@ public class DeepGeneration {
         if (worldBase >= worldTop) { return; }
         int genBase = worldBase - offsetBlocks;
         if (genBase + Cube.SIZE - 1 < skyLowest || genBase > skyHighest) { return; }
+        if (skyShape == SKY_CAVES) {
+            fillSkyCaves(primer, cubeX, cubeY, cubeZ, rand, topBedrock, bottomBedrock, worldTop, worldBase, genBase);
+            return;
+        }
         double[][][] regions = sampleRegionLattice(cubeX << 4, genBase, cubeZ << 4);
         double strongest = -1.0D;
         for (double[][] plane : regions) {
@@ -128,6 +136,24 @@ public class DeepGeneration {
                     double strength = (trilerp(regions, x, y, z) - skyIslands) / (1.0D - skyIslands);
                     if (strength <= 0.0D) { continue; }
                     if (trilerp(lattice, x, y, z) > Math.min(strength, 1.0D) * skyThickness) { continue; }
+                    IBlockState state = veinState((cubeX << 4) + x, genBase + y, (cubeZ << 4) + z, skyStone);
+                    primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
+                            Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
+                }
+            }
+        }
+    }
+
+    private void fillSkyCaves(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock,
+            int worldTop, int worldBase, int genBase) {
+        int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
+        double[][][] lattice = sampleLattice(cubeX << 4, genBase, cubeZ << 4);
+        for (int y = 0; y < Cube.SIZE; y++) {
+            if (worldBase + y >= worldTop) { break; }
+            if (genBase + y < skyLowest || genBase + y > skyHighest) { continue; }
+            for (int z = 0; z < Cube.SIZE; z++) {
+                for (int x = 0; x < Cube.SIZE; x++) {
+                    if (trilerp(lattice, x, y, z) <= CAVE_THRESHOLD) { continue; }
                     IBlockState state = veinState((cubeX << 4) + x, genBase + y, (cubeZ << 4) + z, skyStone);
                     primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
                             Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
@@ -406,6 +432,13 @@ public class DeepGeneration {
             return null;
         }
         return meta == 0 ? block.getDefaultState() : Block.getStateById(Block.getIdFromBlock(block) + (meta << 12));
+    }
+
+    private static int parseShape(String value) {
+        if (value == null || value.trim().isEmpty() || value.trim().equalsIgnoreCase("islands")) { return SKY_ISLAND_SHAPE; }
+        if (value.trim().equalsIgnoreCase("caves")) { return SKY_CAVES; }
+        Rubic.LOGGER.error("skyShape is {}, which is not islands or caves, so the sky is made of islands", value);
+        return SKY_ISLAND_SHAPE;
     }
 
     private static double parseIslands(float value) {

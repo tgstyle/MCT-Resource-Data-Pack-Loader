@@ -1797,7 +1797,7 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 
 ## The deep world
 
-Seven more `terrain` keys fill the space a rubic world opens around the vanilla terrain window with modern-style generation. They only do anything on a rubic world:
+Eight more `terrain` keys fill the space a rubic world opens around the vanilla terrain window with modern-style generation. They only do anything on a rubic world:
 
 ```json
 {
@@ -1819,9 +1819,10 @@ Seven more `terrain` keys fill the space a rubic world opens around the vanilla 
 | Key | Value | Default | What it does |
 | --- | --- | --- | --- |
 | `deepStone` | `namespace:block`, meta as `@meta` | none | The block the world below the window is made of, such as a pack's own deepslate. It blends into the window's stone across the window's lowest eight layers, the way modern versions blend deepslate |
-| `skyStone` | `namespace:block`, meta as `@meta` | none | The block the world above the window is made of, shaped into floating land by the same noise that carves the deep world below, so what is cave down there is island up here. Empty leaves the space above the window empty, as it has always been. Nothing decorates it, so no trees, ores or structures unless a pack places its own. Islands gather into archipelagos rather than spreading through every cube, so most of the sky stays empty and costs nothing to hold. Nothing is written at or above `worldMaxHeight` |
-| `skyIslands` | number, `-1` to `1` | `0.2` | How readily the sky gathers into islands. Lower spreads island across more of the sky and deepens the shadow beneath it, higher leaves fewer and smaller pieces. Only read when `skyStone` names a block |
-| `skyThickness` | number, `0` or more | `2.0` | How solid an island is. Higher fills islands out, lower hollows them and thins their edges away to nothing. Only read when `skyStone` names a block |
+| `skyStone` | `namespace:block`, meta as `@meta` | none | The block the world above the window is made of, shaped into floating land by the same noise that carves the deep world below, so what is cave down there is island up here. Empty leaves the space above the window empty, as it has always been. Nothing decorates it, so no trees, ores or structures unless a pack places its own. Islands gather into archipelagos rather than spreading through every cube, so most of the sky stays empty and costs nothing to hold. Nothing is written at or above `worldMaxHeight`. Every rubic dimension has a window of its own, so this fills the space above each: in the nether, whose window is 128 tall, that is the room above the bedrock roof, and a seam that opens the ceiling clears the roof itself |
+| `skyShape` | `islands` or `caves` | `islands` | What the world above the window is shaped into. `islands` is floating land. `caves` is solid rock with caves carved through it, the deep world's own treatment turned upward, which comes out about 86 percent solid, the same rock to cave ratio the deep world has. Nothing floods either way, since no aquifer is consulted above the window. Only read when `skyStone` names a block |
+| `skyIslands` | number, `-1` to `1` | `0.2` | How readily the sky gathers into islands. Lower spreads island across more of the sky and deepens the shadow beneath it, higher leaves fewer and smaller pieces. Only read when `skyStone` names a block and `skyShape` is `islands` |
+| `skyThickness` | number, `0` or more | `2.0` | How solid an island is. Higher fills islands out, lower hollows them and thins their edges away to nothing. Only read when `skyStone` names a block and `skyShape` is `islands` |
 | `skyHeights` | two ints, lowest then highest | none | The lowest and highest block an island may reach, counted from the bottom of the window the way `oreVeins` heights are. Empty fills the whole world above the window, which on a tall world is a great deal of sky. Only read when `skyStone` names a block |
 | `noiseCaves` | `off`, `deep`, `world` | `off` | Modern-style noise caves: cheese caverns, spaghetti tunnels, cave mouths near the surface and pillars in the big rooms. `deep` carves only below the window, `world` carves the whole world |
 | `oreVeins` | list of `ore,extra,filler,lowest,highest` | none | Large banded ore veins, mostly the `filler` block with the `ore` scattered through it and a rare chance of the `extra`, which may be left empty. Heights count from the bottom of the window, so negatives reach the deep world |
