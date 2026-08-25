@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
@@ -224,6 +225,14 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         return cube;
     }
 
+    private void generateSkyAbove(int cubeX, int cubeY, int cubeZ, Chunk column) {
+        int highest = (((IMinMaxHeight) worldServer).rdpl$getMaxHeight() >> 4) - 1;
+        for (int above = highest; above > cubeY; above--) {
+            if (getLoadedCube(cubeX, above, cubeZ) != null) { continue; }
+            generateCube(cubeX, above, cubeZ, column, true);
+        }
+    }
+
     private Optional<Cube> generateCube(int cubeX, int cubeY, int cubeZ, Chunk column, boolean forceGenerate) {
         return cubeGen.tryGenerateCube(cubeX, cubeY, cubeZ, this.cubePrimer, forceGenerate)
                 .map(primer -> {
@@ -271,6 +280,15 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
     }
 
     private void calculateDiffuseSkylight(Cube cube) {
+        generateSkyAbove(cube.getX(), cube.getY(), cube.getZ(), cube.getColumn());
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0) { continue; }
+                Chunk beside = getLoadedColumn(cube.getX() + dx, cube.getZ() + dz);
+                if (beside == null || beside.isEmpty()) { continue; }
+                generateSkyAbove(cube.getX() + dx, cube.getY(), cube.getZ() + dz, beside);
+            }
+        }
         ((IRubicWorldInternal) this.worldServer).rdpl$getLightingManager().doFirstLight(cube);
         cube.setInitialLightingDone(true);
     }

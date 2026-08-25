@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.rubic.lighting;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvider;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.compat.GcRubicSunlight;
@@ -44,12 +45,6 @@ public final class RubicLightEngine implements ICubeLightEngine {
     private int nearbyCubeX = Integer.MIN_VALUE;
     private int nearbyCubeY = Integer.MIN_VALUE;
     private int nearbyCubeZ = Integer.MIN_VALUE;
-    private final Chunk[] topColumns = new Chunk[4];
-    private final int[][] tops = new int[4][256];
-    private final long[][] topsRead = new long[4][256];
-    private final long[] topsStamps = new long[4];
-    private long topsTick;
-    private int topsNext;
     private boolean working;
     private boolean seeding;
 
@@ -67,14 +62,14 @@ public final class RubicLightEngine implements ICubeLightEngine {
     @Override public String getId() { return "rubic"; }
 
     @Override public void cubeStorageMade(ICube cube, ExtendedBlockStorage storage) {
-        if (!world.provider.hasSkyLight()) { return; }
+        if (!world.provider.hasSkyLight() || !cube.isCubeLoaded()) { return; }
         Chunk column = cube.getColumn();
         int floor = storage.getYLocation();
         int ceiling = floor + 15;
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int top = topAt(column, localX, localZ);
-                if (top >= floor) { continue; }
+                if (top >= floor || blockedAbove(column, localX, localZ, ceiling + 1)) { continue; }
                 for (int localY = 0; localY < 16; localY++) { storage.setSkyLight(localX, localY, localZ, MAX_LIGHT); }
                 seedSides(column, localX, localZ, top, floor, ceiling);
             }
@@ -99,6 +94,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
 
     @Override public void cubeLoaded(ICube cube) {
         if (!owed.isEmpty() && owed.remove(cubeKey(cube.getX(), cube.getY(), cube.getZ()))) { ready.add(cubeKey(cube.getX(), cube.getY(), cube.getZ())); }
+        if (world.isRemote) { return; }
         int minX = cube.getCoords().getMinBlockX();
         int minY = cube.getCoords().getMinBlockY();
         int minZ = cube.getCoords().getMinBlockZ();
@@ -122,6 +118,34 @@ public final class RubicLightEngine implements ICubeLightEngine {
         finally { seeding = false; }
     }
 
+    @Override public void reshadeBelow(ICube cube) {
+        IColumn column = cube.getColumn();
+        for (ICube below : column.getLoadedCubes(cube.getY() - 1, Coords.blockToCube(((IMinMaxHeight) world).rdpl$getMinHeight()))) {
+            reshadeStaleSky(below);
+        }
+    }
+
+    private void reshadeStaleSky(ICube cube) {
+        if (!world.provider.hasSkyLight() || cube.getStorage() == null) { return; }
+        Chunk column = cube.getColumn();
+        int minX = cube.getCoords().getMinBlockX();
+        int minY = cube.getCoords().getMinBlockY();
+        int minZ = cube.getCoords().getMinBlockZ();
+        int maxY = minY + 15;
+        for (int localX = 0; localX < 16; localX++) {
+            for (int localZ = 0; localZ < 16; localZ++) {
+                int from = Math.min(maxY, topAt(column, localX, localZ));
+                if (from < minY) { continue; }
+                int x = minX + localX;
+                int z = minZ + localZ;
+                for (int y = from; y >= minY; y--) {
+                    if (lightIn(cube, EnumSkyBlock.SKY, x, y, z) == 0) { continue; }
+                    scheduleLightUpdate(EnumSkyBlock.SKY, at.setPos(x, y, z));
+                }
+            }
+        }
+    }
+
     private void seedFrom(ICube cube) {
         int minY = cube.getCoords().getMinBlockY();
         int maxY = cube.getCoords().getMaxBlockY();
@@ -130,7 +154,6 @@ public final class RubicLightEngine implements ICubeLightEngine {
         Chunk column = cube.getColumn();
         boolean sky = world.provider.hasSkyLight();
         boolean hasStorage = cube.getStorage() != null;
-        Arrays.fill(topColumns, null);
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int x = minX + localX;
@@ -143,6 +166,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
                 if (!sky) { continue; }
                 int top = topAt(column, localX, localZ);
                 if (top < maxY) { fillSkyAbove(cube, x, z, Math.max(minY, top + 1), maxY); }
+                if (top >= minY) { darkenColumn(cube, x, z, minY, Math.min(maxY, top)); }
                 seedSides(column, localX, localZ, top, minY, maxY);
                 if (top > maxY) {
                     seedUnderTop(cube, x, z, minY, maxY);
@@ -155,7 +179,26 @@ public final class RubicLightEngine implements ICubeLightEngine {
         }
     }
 
+    private boolean blockedAbove(Chunk column, int localX, int localZ, int fromY) {
+        int topCube = (((IMinMaxHeight) world).rdpl$getMaxHeight() >> 4) - 1;
+        int x = (column.x << 4) + localX;
+        int z = (column.z << 4) + localZ;
+        for (int cubeY = topCube; cubeY >= Coords.blockToCube(fromY); cubeY--) {
+            ICube above = ((ICubeProvider) world.getChunkProvider()).getLoadedCube(column.x, cubeY, column.z);
+            if (above == null) { continue; }
+            ExtendedBlockStorage held = above.getStorage();
+            if (held == null || held.isEmpty()) { continue; }
+            int lowest = cubeY == Coords.blockToCube(fromY) ? Coords.blockToLocal(fromY) : 0;
+            int base = Coords.cubeToMinBlock(cubeY);
+            for (int localY = 15; localY >= lowest; localY--) {
+                if (held.get(localX, localY, localZ).getLightOpacity(world, at.setPos(x, base + localY, z)) > 0) { return true; }
+            }
+        }
+        return false;
+    }
+
     private void fillSkyAbove(ICube cube, int x, int z, int from, int to) {
+        if (blockedAbove(cube.getColumn(), Coords.blockToLocal(x), Coords.blockToLocal(z), to + 1)) { return; }
         ExtendedBlockStorage storage = cube.getStorage();
         if (storage == null) {
             setLight(cube, EnumSkyBlock.SKY, x, to, z, MAX_LIGHT);
@@ -166,6 +209,14 @@ public final class RubicLightEngine implements ICubeLightEngine {
         int localX = Coords.blockToLocal(x);
         int localZ = Coords.blockToLocal(z);
         for (int y = from; y <= to; y++) { storage.setSkyLight(localX, Coords.blockToLocal(y), localZ, MAX_LIGHT); }
+    }
+
+    private void darkenColumn(ICube cube, int x, int z, int from, int to) {
+        ExtendedBlockStorage storage = cube.getStorage();
+        if (storage == null || !world.provider.hasSkyLight()) { return; }
+        int localX = Coords.blockToLocal(x);
+        int localZ = Coords.blockToLocal(z);
+        for (int y = from; y <= to; y++) { storage.setSkyLight(localX, Coords.blockToLocal(y), localZ, 0); }
     }
 
     private void seedUnderTop(ICube cube, int x, int z, int minY, int maxY) {
@@ -206,7 +257,8 @@ public final class RubicLightEngine implements ICubeLightEngine {
 
     @Override public void processLightUpdates() {
         replayOwed();
-        processFor(EnumSkyBlock.SKY);
+        if (world.isRemote) { scheduled[EnumSkyBlock.SKY.ordinal()].clear(); }
+        else { processFor(EnumSkyBlock.SKY); }
         processFor(EnumSkyBlock.BLOCK);
     }
 
@@ -364,25 +416,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
     }
 
     private int topAt(Chunk column, int localX, int localZ) {
-        int spot = (localZ << 4) | localX;
-        int slot = -1;
-        for (int i = 0; i < 4; i++) {
-            if (topColumns[i] == column) {
-                slot = i;
-                break;
-            }
-        }
-        if (slot < 0) {
-            slot = topsNext;
-            topsNext = topsNext + 1 & 3;
-            topColumns[slot] = column;
-            topsStamps[slot] = ++topsTick;
-        }
-        else if (topsRead[slot][spot] == topsStamps[slot]) { return tops[slot][spot]; }
-        int found = ((IColumnInternal) column).getTopYWithStaging(localX, localZ);
-        tops[slot][spot] = found;
-        topsRead[slot][spot] = topsStamps[slot];
-        return found;
+        return ((IColumnInternal) column).getTopYWithStaging(localX, localZ);
     }
 
     private IBlockState stateAt(ICube cube, int x, int y, int z) {
@@ -408,6 +442,8 @@ public final class RubicLightEngine implements ICubeLightEngine {
 
     private void setLight(ICube cube, EnumSkyBlock lightType, int x, int y, int z, int light) {
         if (lightType == EnumSkyBlock.SKY && !world.provider.hasSkyLight()) { return; }
+        if (lightType == EnumSkyBlock.SKY && light == MAX_LIGHT
+                && blockedAbove(cube.getColumn(), Coords.blockToLocal(x), Coords.blockToLocal(z), y + 1)) { return; }
         cube.setLightFor(lightType, at.setPos(x, y, z), light);
     }
 
@@ -447,6 +483,5 @@ public final class RubicLightEngine implements ICubeLightEngine {
         nearbyCubeX = Integer.MIN_VALUE;
         nearbyCubeY = Integer.MIN_VALUE;
         nearbyCubeZ = Integer.MIN_VALUE;
-        Arrays.fill(topColumns, null);
     }
 }

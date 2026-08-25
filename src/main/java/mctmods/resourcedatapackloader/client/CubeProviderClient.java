@@ -62,7 +62,7 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
         cube = new Cube(column, pos.getY());
         ((IColumn) column).addCube(cube);
         this.cubeMap.put(cube);
-        world.rdpl$getLightingManager().onCubeLoad(cube);
+        world.rdpl$getLightingManager().onCubeLoad(cube, false);
         EVENT_BUS.post(new CubeEvent.Load(cube));
         cube.setCubeLoaded();
         return cube;

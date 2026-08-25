@@ -6,8 +6,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInte
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.Coords;
-import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
-import static mctmods.resourcedatapackloader.util.Coords.localToBlock;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
@@ -32,8 +30,9 @@ public class LightingManager implements ILightingManager {
 
     @Override public void updateLightBetween(Chunk column, int localX, int y1, int y2, int localZ) { lightEngine.updateBetween(column, localX, y1, y2, localZ); }
 
-    @Override public void onCubeLoad(ICube cube) {
+    @Override public void onCubeLoad(ICube cube, boolean raisedColumnTop) {
         lightEngine.cubeLoaded(cube);
+        if (raisedColumnTop) { lightEngine.reshadeBelow(cube); }
         tryScheduleOnLoadHeightChangeRelight(cube);
     }
 
@@ -101,6 +100,8 @@ public class LightingManager implements ILightingManager {
         if(data.lastHeightMap == null || !cube.isSurfaceTracked()) { return; }
         IColumnInternal column = cube.getColumn();
         LightingManager lightManager = (LightingManager) ((IRubicWorldInternal) cube.getWorld()).rdpl$getLightingManager();
+        int minOwn = Coords.cubeToMinBlock(cube.getY());
+        int maxOwn = minOwn + 15;
         for (int i = 0; i < data.lastHeightMap.length; i++) {
             int localX = i & 0xF;
             int localZ = i >> 4;
@@ -109,15 +110,10 @@ public class LightingManager implements ILightingManager {
             if (currentY == lastY) { continue; }
             int minUpdateY = Math.min(currentY, lastY);
             int maxUpdateY = Math.max(currentY, lastY) - 1;
-            int maxCubeY = Coords.blockToCube(maxUpdateY);
-            int minCubeY = Coords.blockToCube(minUpdateY);
-            int cubeY = cube.getY();
-            if (minCubeY > cubeY || maxCubeY < cubeY) { continue; }
-            int minLocal = 0;
-            int maxLocal = 15;
-            if (maxCubeY == cubeY) { maxLocal = blockToLocal(maxUpdateY); }
-            if (minCubeY == cubeY) { minLocal = blockToLocal(minUpdateY); }
-            lightManager.updateLightBetween(cube.getColumn(), localX, localToBlock(cubeY, minLocal), localToBlock(cubeY, maxLocal), localZ);
+            minUpdateY = Math.max(minUpdateY, minOwn);
+            maxUpdateY = Math.min(maxUpdateY, maxOwn);
+            if (minUpdateY > maxUpdateY) { continue; }
+            lightManager.updateLightBetween(cube.getColumn(), localX, minUpdateY, maxUpdateY, localZ);
         }
         data.lastHeightMap = null;
     }

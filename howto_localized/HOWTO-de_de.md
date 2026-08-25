@@ -1780,11 +1780,15 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 **Höhen.** `worldMinHeight` muss unter `worldMaxHeight` liegen, beide Vielfache von 16 und beide innerhalb der Reichweite, die `rubicHeightLimit` in der Config zulässt (standardmäßig `4096` Blöcke in jede Richtung; nur Config, nie ein Pack-Schlüssel). Alles andere wird mit einer Log-Zeile abgelehnt, und die Welt entsteht von `-64` bis `320`. Höhe kostet Platz: Alle 16 Blöcke sind ein weiterer Würfel in jeder Säule, Speicher, Platte und Vorgenerierungszeit wachsen also mit – die Zahlen dazu stehen im Config-Kommentar zu `rubicHeightLimit`.
 
+**Das Terrainfenster.** Der Generator der Dimension behält seine eigene Höhe, in der Oberwelt 256 Blöcke, und dieses Fenster ist es, das `terrainOffset` verschiebt. `worldMinHeight` und `worldMaxHeight` schaffen Raum um das Fenster herum, nie darin. Eine höhere Decke hebt nicht das Land, sie fügt Himmel hinzu; ein tieferer Boden vertieft nicht die Höhlen, die der Generator geschnitten hat, er fügt Tiefenwelt hinzu. Auch der Meeresspiegel liegt im Fenster, er wandert also mit `terrainOffset` mit und stammt vom Welttyp, nicht von einem Rubic-Schlüssel. Um die Oberfläche höher in die Welt zu setzen, erhöhe `terrainOffset`. Um mehr Raum darüber oder darunter zu schaffen, verschiebe die Höhen. Jeder Würfel außerhalb des Fensters wird in jeder Säule trotzdem generiert und beleuchtet, eine höhere Decke kostet also Vorgenerierungszeit, ob sie nun gefüllt wird oder nicht, und obendrein Speicher und Platte, sobald `skyStone` sie füllt.
+
+**Was ein verschobenes Fenster mit anderen Mods macht.** Das Populieren läuft auf der Säule, jeder Generator, den eine Mod anmeldet, läuft also weiterhin einmal je Chunk, ohne dass Koordinaten umgerechnet werden. Was sich ändert, ist der Ort, an dem seine eigene Rechnung landet. Ein Generator, der die Welt fragt, wo der Boden ist, über den obersten festen Block oder die Niederschlagshöhe, folgt dem verschobenen Terrain: Beide sind Rubic-bewusst, das deckt Bäume, Blumen und die meiste Dekoration ab. Ein Generator, der eine absolute Höhe berechnet, darunter das übliche Erzmuster mit einem zufälligen y unter 64, schreibt weiterhin auf dieser Höhe, und die ist nach einer Verschiebung Füllmaterial oder Tiefenwelt weit unter dem Land. Auch der Meeresspiegel wird nicht verschoben, ein Generator, der gegen ihn prüft, liest also den unverschobenen Wert. Diese Schreibvorgänge landen außerdem außerhalb der Würfel, die das Populieren geladen hält, und ziehen sich während des Populierens einer Säule eigene Würfel herein. Ein großer `terrainOffset` passt zu einem Pack, das seine eigene Generierung beschreibt, nicht zu einem, das auf der Weltgenerierung eines anderen Packs aufsitzt. Geht es nur um Platz, ist die Tiefe die günstigere Richtung: Unter dem Fenster liegt ein vollwertiger Generator mit eigenem Stein, Höhlen, Adern, Aquiferen und Verliesen, und er lässt die Oberfläche auf den Höhen, die jeder andere Generator voraussetzt, während der Raum über dem Fenster Kulisse ist, die ein Pack selbst ausstatten muss.
+
 **Pro Spielstand entschieden, einmal.** Ob eine Dimension Rubic ist und welche Höhen sie hat, wird beim ersten Laden in ihren Spielstand geschrieben und gilt von da an: Eine Rubic-Welt bleibt Rubic, auch wenn das Pack verschwindet, und ihre Höhen lassen sich nachträglich nicht ändern. Andere Dimensionen als die Oberwelt übernehmen deren Höhen. Vorhandenes Anvil-Land wird nicht umgewandelt – Rubic hält sein Land in eigenen `region2d`-/`region3d`-Dateien, eine bereits als Anvil generierte Dimension fängt mit ihrem Terrain also von vorn an. Schalte es für neue Welten ein.
 
 **Dimensionen ausnehmen.** Eine Dimension, die in `rubicWorldDimensions` fehlt, behält ihre gewöhnliche Anvil-Welt, im selben Spielstand – Rubic- und Anvil-Dimensionen mischen sich frei. Das ist die richtige Wahl für Dimensionen, deren Generatoren direkt in die Chunk-Interna schreiben, statt den gewöhnlichen Populate-Zyklus zu durchlaufen. Unabhängig von der Liste wird eine Welt, deren Server-Klassen eine andere Mod ersetzt hat, übersprungen, mit einer Log-Zeile, die es sagt.
 
-**Raum außerhalb des Fensters.** Der Bereich des Generators behält seine gewohnte Gestalt, und der Raum, den eine Rubic-Welt darum herum schafft, wird mit dem Block gefüllt, in dem dieser Bereich endet: Stein unter der Oberwelt, Luft darüber. Eine Dimension, deren Obergrenze mit Bedrock versiegelt ist, allen voran der Nether, gilt als geschlossen, der Raum darüber bleibt also leer statt mit dem Netherrack unter ihrem Dach vollgepackt zu werden. Das Dach selbst bleibt unangetastet. `deepStone` benennt den Block für den Raum unter dem Fenster.
+**Raum außerhalb des Fensters.** Der Bereich des Generators behält seine gewohnte Gestalt, und der Raum, den eine Rubic-Welt darum herum schafft, wird mit dem Block gefüllt, in dem dieser Bereich endet: Stein unter der Oberwelt, Luft darüber. Eine Dimension, deren Obergrenze mit Bedrock versiegelt ist, allen voran der Nether, gilt als geschlossen, der Raum darüber bleibt also leer statt mit dem Netherrack unter ihrem Dach vollgepackt zu werden. Das Dach selbst bleibt unangetastet. `deepStone` benennt den Block für den Raum unter dem Fenster, `skyStone` den Block für den Raum darüber.
 
 **CubicChunks.** Beide zusammen laufen nicht. Ist CubicChunks installiert und ein Pack verlangt `rubicWorld`, stoppt das Laden mit einer Meldung: CubicChunks herausnehmen, oder `rubicWorld` aus dem Pack nehmen und CubicChunks die Welten machen lassen.
 
@@ -1792,25 +1796,34 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 ## Die Tiefenwelt
 
-Drei weitere `terrain`-Schlüssel füllen den Raum, den eine Rubic-Welt unter dem Vanilla-Terrainfenster öffnet, mit Generierung modernen Stils. Sie tun nur auf einer Rubic-Welt etwas:
-
-| Schlüssel | Wert | Standard | Was er tut |
-| --- | --- | --- | --- |
-| `deepStone` | `namespace:block`, Meta als `@meta` | keiner | Der Block, aus dem die Welt unter dem Fenster besteht, etwa der eigene Deepslate eines Packs. Er blendet über die untersten acht Schichten des Fensters in dessen Stein über, so wie moderne Versionen Deepslate überblenden |
-| `noiseCaves` | `off`, `deep`, `world` | `off` | Noise-Höhlen modernen Stils: Käsekavernen, Spaghetti-Tunnel, Höhlenmünder nahe der Oberfläche und Säulen in den großen Räumen. `deep` schnitzt nur unter dem Fenster, `world` die ganze Welt |
-| `oreVeins` | Liste aus `ore,extra,filler,lowest,highest` | keine | Große gebänderte Erzadern, überwiegend der `filler`-Block mit dem `ore` darin verstreut und einer seltenen Chance auf das `extra`, das leer bleiben darf. Höhen zählen vom Boden des Fensters, Negative erreichen also die Tiefenwelt |
+Sieben weitere `terrain`-Schlüssel füllen den Raum, den eine Rubic-Welt um das Vanilla-Terrainfenster herum öffnet, mit Generierung modernen Stils. Sie tun nur auf einer Rubic-Welt etwas:
 
 ```json
 {
   "settings": {
     "rubicWorld": true,
     "worldMinHeight": -64,
+    "worldMaxHeight": 1024,
     "deepStone": "mypack:slate",
+    "skyStone": "minecraft:end_stone",
+    "skyIslands": 0.05,
+    "skyThickness": 3.0,
+    "skyHeights": [400, 800],
     "noiseCaves": "world",
     "oreVeins": ["minecraft:iron_ore,,mypack:slate@1,-56,20"]
   }
 }
 ```
+
+| Schlüssel | Wert | Standard | Was er tut |
+| --- | --- | --- | --- |
+| `deepStone` | `namespace:block`, Meta als `@meta` | keiner | Der Block, aus dem die Welt unter dem Fenster besteht, etwa der eigene Deepslate eines Packs. Er blendet über die untersten acht Schichten des Fensters in dessen Stein über, so wie moderne Versionen Deepslate überblenden |
+| `skyStone` | `namespace:block`, Meta als `@meta` | keiner | Der Block, aus dem die Welt über dem Fenster besteht, von demselben Rauschen zu schwebendem Land geformt, das unten die Tiefenwelt aushöhlt: Was dort unten Höhle ist, ist hier oben Insel. Leer lässt den Raum über dem Fenster leer, so wie bisher. Nichts schmückt ihn, es gibt also keine Bäume, Erze oder Bauwerke, außer ein Pack setzt eigene. Die Inseln sammeln sich zu Archipelen, statt sich durch jeden Würfel zu ziehen, der Himmel bleibt also größtenteils leer und kostet nichts. Auf und über `worldMaxHeight` wird nichts geschrieben |
+| `skyIslands` | Zahl, `-1` bis `1` | `0.2` | Wie bereitwillig sich der Himmel zu Inseln sammelt. Niedriger verteilt Insel über mehr Himmel und vertieft den Schatten darunter, höher lässt weniger und kleinere Stücke übrig. Wird nur gelesen, wenn `skyStone` einen Block nennt |
+| `skyThickness` | Zahl, `0` oder mehr | `2.0` | Wie massiv eine Insel ist. Höher füllt die Inseln aus, niedriger höhlt sie aus und lässt ihre Ränder ins Nichts auslaufen. Wird nur gelesen, wenn `skyStone` einen Block nennt |
+| `skyHeights` | zwei Ints, unterster dann oberster | keine | Der unterste und der oberste Block, den eine Insel erreichen darf, gezählt vom Boden des Fensters, so wie die Höhen von `oreVeins`. Leer füllt die ganze Welt über dem Fenster, auf einer hohen Welt also sehr viel Himmel. Wird nur gelesen, wenn `skyStone` einen Block nennt |
+| `noiseCaves` | `off`, `deep`, `world` | `off` | Noise-Höhlen modernen Stils: Käsekavernen, Spaghetti-Tunnel, Höhlenmünder nahe der Oberfläche und Säulen in den großen Räumen. `deep` schnitzt nur unter dem Fenster, `world` die ganze Welt |
+| `oreVeins` | Liste aus `ore,extra,filler,lowest,highest` | keine | Große gebänderte Erzadern, überwiegend der `filler`-Block mit dem `ore` darin verstreut und einer seltenen Chance auf das `extra`, das leer bleiben darf. Höhen zählen vom Boden des Fensters, Negative erreichen also die Tiefenwelt |
 
 Wasser und Lava benehmen sich dort unten. Die untersten Schichten füllt Lava, und die Höhlen darüber tragen lokale Aquifere — dasselbe Schema aus Stützpunkten und Druck, das moderne Versionen verwenden, portiert aus 26.1.2 — Taschen stillen Wassers stehen also auf eigenen Höhen, mit Wänden aus dem Tiefengestein, die das Rauschen formt, wo zwei Höhen aufeinandertreffen oder Wasser auf Lava trifft. Unter Ozeanen fluten die Höhlen zum Meeresspiegel hin, so wie moderne Versionen ihre Aquifere an die Oberfläche binden.
 

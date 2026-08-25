@@ -1781,11 +1781,15 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 
 **Heights.** `worldMinHeight` must be below `worldMaxHeight`, both multiples of 16, and both inside the reach `rubicHeightLimit` in the config allows (`4096` blocks either way by default; config only, never a pack key). Anything else is refused with a log line and the world is made at `-64` to `320`. Height costs room: every 16 blocks is another cube in every column, so memory, disk and pregeneration time scale with it — the config comment on `rubicHeightLimit` carries the numbers.
 
+**The terrain window.** The dimension's own generator keeps its own height, 256 blocks in the overworld, and that window is what `terrainOffset` slides. `worldMinHeight` and `worldMaxHeight` add room around the window, never inside it. Raising the ceiling does not raise the land, it adds sky; lowering the floor does not deepen the caves the generator cut, it adds deep world. Sea level sits inside the window as well, so it rides along with `terrainOffset` and comes from the world type rather than from any rubic key. To put the surface higher in the world, raise `terrainOffset`. To put more room above or below it, move the heights. Every cube outside the window is still generated and lit in every column, so a taller ceiling costs pregeneration time whether or not anything fills it, and costs memory and disk on top of that once `skyStone` does.
+
+**What a shifted window does to other mods.** Population runs on the column, so every generator a mod registers still runs once per chunk, with no coordinates translated. What changes is where its own math lands. A generator that asks the world where the ground is, through the top solid block or the precipitation height, follows the shifted terrain: both are rubic aware, which covers trees, flowers and most decoration. A generator that computes an absolute height, the usual ore pattern of a random y under 64 among them, keeps writing at that height, which after a shift is the filler or the deep world far beneath the land. Sea level is not shifted either, so a generator that tests against it reads the unshifted number. Those writes also land outside the cubes population holds loaded, and pull in cubes of their own while a column populates. A large `terrainOffset` suits a pack that describes its own generation, not one stacked on top of another pack's worldgen. For room alone, depth is the cheaper direction: below the window sits a full generator with its own stone, caves, veins, aquifers and dungeons, and it leaves the surface at the heights every other generator assumes, where the space above the window is scenery a pack has to furnish itself.
+
 **Decided per save, once.** Whether a dimension is rubic and what its heights are is written into its save the first time it loads, and stands from then on: a rubic world stays rubic even with the pack removed, and its heights cannot be changed afterward. Dimensions other than the overworld take the overworld's heights. Existing Anvil land is not converted — rubic keeps its land in `region2d`/`region3d` files of its own, so a dimension that already generated as Anvil starts its terrain over. Turn it on for new worlds.
 
 **Excluding dimensions.** A dimension left out of `rubicWorldDimensions` keeps its ordinary Anvil world, in the same save — rubic and Anvil dimensions mix freely. That is the right call for dimensions whose generators write into chunk internals instead of going through the ordinary populate cycle. Independently of the list, a world whose server classes another mod replaced is skipped, with a log line saying so.
 
-**Space outside the window.** The generator's own range keeps its usual shape, and the room a rubic world adds around it is filled with the block that range ends in: stone under the overworld, air over it. A dimension whose top is sealed with bedrock, the nether above all, counts as closed, so the room above it is left empty rather than packed with the netherrack under its roof. The roof itself is untouched. `deepStone` names the block for the room below the window.
+**Space outside the window.** The generator's own range keeps its usual shape, and the room a rubic world adds around it is filled with the block that range ends in: stone under the overworld, air over it. A dimension whose top is sealed with bedrock, the nether above all, counts as closed, so the room above it is left empty rather than packed with the netherrack under its roof. The roof itself is untouched. `deepStone` names the block for the room below the window, `skyStone` the block for the room above it.
 
 **CubicChunks.** Running both is not supported. With CubicChunks installed and a pack asking for `rubicWorld`, loading stops with a message: remove CubicChunks, or take `rubicWorld` out of the pack and let CubicChunks make the worlds.
 
@@ -1793,25 +1797,34 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 
 ## The deep world
 
-Three more `terrain` keys fill the space a rubic world opens below the vanilla terrain window with modern-style generation. They only do anything on a rubic world:
-
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `deepStone` | `namespace:block`, meta as `@meta` | none | The block the world below the window is made of, such as a pack's own deepslate. It blends into the window's stone across the window's lowest eight layers, the way modern versions blend deepslate |
-| `noiseCaves` | `off`, `deep`, `world` | `off` | Modern-style noise caves: cheese caverns, spaghetti tunnels, cave mouths near the surface and pillars in the big rooms. `deep` carves only below the window, `world` carves the whole world |
-| `oreVeins` | list of `ore,extra,filler,lowest,highest` | none | Large banded ore veins, mostly the `filler` block with the `ore` scattered through it and a rare chance of the `extra`, which may be left empty. Heights count from the bottom of the window, so negatives reach the deep world |
+Seven more `terrain` keys fill the space a rubic world opens around the vanilla terrain window with modern-style generation. They only do anything on a rubic world:
 
 ```json
 {
   "settings": {
     "rubicWorld": true,
     "worldMinHeight": -64,
+    "worldMaxHeight": 1024,
     "deepStone": "mypack:slate",
+    "skyStone": "minecraft:end_stone",
+    "skyIslands": 0.05,
+    "skyThickness": 3.0,
+    "skyHeights": [400, 800],
     "noiseCaves": "world",
     "oreVeins": ["minecraft:iron_ore,,mypack:slate@1,-56,20"]
   }
 }
 ```
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `deepStone` | `namespace:block`, meta as `@meta` | none | The block the world below the window is made of, such as a pack's own deepslate. It blends into the window's stone across the window's lowest eight layers, the way modern versions blend deepslate |
+| `skyStone` | `namespace:block`, meta as `@meta` | none | The block the world above the window is made of, shaped into floating land by the same noise that carves the deep world below, so what is cave down there is island up here. Empty leaves the space above the window empty, as it has always been. Nothing decorates it, so no trees, ores or structures unless a pack places its own. Islands gather into archipelagos rather than spreading through every cube, so most of the sky stays empty and costs nothing to hold. Nothing is written at or above `worldMaxHeight` |
+| `skyIslands` | number, `-1` to `1` | `0.2` | How readily the sky gathers into islands. Lower spreads island across more of the sky and deepens the shadow beneath it, higher leaves fewer and smaller pieces. Only read when `skyStone` names a block |
+| `skyThickness` | number, `0` or more | `2.0` | How solid an island is. Higher fills islands out, lower hollows them and thins their edges away to nothing. Only read when `skyStone` names a block |
+| `skyHeights` | two ints, lowest then highest | none | The lowest and highest block an island may reach, counted from the bottom of the window the way `oreVeins` heights are. Empty fills the whole world above the window, which on a tall world is a great deal of sky. Only read when `skyStone` names a block |
+| `noiseCaves` | `off`, `deep`, `world` | `off` | Modern-style noise caves: cheese caverns, spaghetti tunnels, cave mouths near the surface and pillars in the big rooms. `deep` carves only below the window, `world` carves the whole world |
+| `oreVeins` | list of `ore,extra,filler,lowest,highest` | none | Large banded ore veins, mostly the `filler` block with the `ore` scattered through it and a rare chance of the `extra`, which may be left empty. Heights count from the bottom of the window, so negatives reach the deep world |
 
 Water and lava behave down there. Bulk lava fills the lowest layers, and the caves above carry local aquifers — the same sample-point-and-pressure scheme modern versions use, ported from 26.1.2 — so pockets of still water sit at their own levels, with walls of the deep stone shaped by noise wherever two levels meet or water meets lava. Under oceans the caves flood toward sea level, the way modern versions tie their aquifers to the surface.
 

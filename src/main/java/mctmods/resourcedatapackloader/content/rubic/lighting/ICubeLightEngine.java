@@ -20,5 +20,7 @@ public interface ICubeLightEngine {
 
     void firstLight(ICube cube);
 
+    void reshadeBelow(ICube cube);
+
     String getId();
 }

@@ -1,11 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
-import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
-import mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
-import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.Coords;
 
 import io.netty.buffer.ByteBuf;
@@ -98,24 +94,10 @@ class WorldEncoder {
                 in.readBytes(data);
             }
         }
-        int[] oldHeights = new int[Cube.SIZE * Cube.SIZE];
         for (int i = 0; i < cubes.size(); i++) {
             if (!isEmpty[i]) {
                 Cube cube = cubes.get(i);
-                ILightingManager lm = ((IRubicWorldInternal) cube.getWorld()).rdpl$getLightingManager();
-                IColumnInternal column = cube.getColumn();
-                ClientHeightMap coi = (ClientHeightMap) column.getOpacityIndex();
-                for (int dx = 0; dx < Cube.SIZE; dx++) {
-                    for (int dz = 0; dz < Cube.SIZE; dz++) { oldHeights[AddressTools.getLocalAddress(dx, dz)] = coi.getTopBlockY(dx, dz); }
-                }
-                column.loadClientHeightmapData(in);
-                for (int dx = 0; dx < Cube.SIZE; dx++) {
-                    for (int dz = 0; dz < Cube.SIZE; dz++) {
-                        int oldY = oldHeights[AddressTools.getLocalAddress(dx, dz)];
-                        int newY = coi.getTopBlockY(dx, dz);
-                        if (oldY != newY) { lm.updateLightBetween(cube.getColumn(), dx, oldY, newY, dz); }
-                    }
-                }
+                ((IColumnInternal) cube.getColumn()).loadClientHeightmapData(in);
                 Objects.requireNonNull(cube.getStorage()).recalculateRefCounts();
             }
         }

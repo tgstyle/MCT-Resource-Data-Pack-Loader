@@ -98,7 +98,7 @@ public final class RubicWorldControl {
         int highest = (world.rdpl$getMaxHeight() >> 4) - 1;
         boolean worked = false;
         boolean whole = true;
-        for (int cubeY = lowest; cubeY <= highest; cubeY++) {
+        for (int cubeY = highest; cubeY >= lowest; cubeY--) {
             if (!worked) {
                 ICube had = cubes.getCube(column.x, cubeY, column.z, ICubeProviderServer.Requirement.LOAD);
                 if (had == null || !had.isFullyPopulated() || !had.isInitialLightingDone()) { worked = true; }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.ResourceLocation;
@@ -32,6 +33,7 @@ public final class ContentBiomes3D {
         if (!caves && banded.isEmpty()) { return; }
         Biome[] cells = new Biome[CELLS * CELLS * CELLS];
         boolean any = false;
+        int top = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1;
         int baseX = cube.getX() << 4;
         int baseY = cube.getY() << 4;
         int baseZ = cube.getZ() << 4;
@@ -40,7 +42,7 @@ public final class ContentBiomes3D {
             for (int cellY = 0; cellY < CELLS; cellY++) {
                 for (int cellZ = 0; cellZ < CELLS; cellZ++) {
                     int x = baseX + cellX * CELL_SIZE + 1;
-                    int y = baseY + cellY * CELL_SIZE + 1;
+                    int y = Math.min(baseY + cellY * CELL_SIZE + 1, top);
                     int z = baseZ + cellZ * CELL_SIZE + 1;
                     Biome found = caves ? fromCave(world, x, y, z) : null;
                     if (found == null && !banded.isEmpty()) { found = fromBand(banded, column, world, x, y, z); }

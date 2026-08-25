@@ -283,8 +283,15 @@ public class Cube implements ICube {
         this.world.addTileEntities(this.tileEntityMap.values());
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
-        if (!isSurfaceTracked) { ((IColumnInternal) getColumn()).addToStagingHeightmap(this); }
-        ((IRubicWorldInternal) world).rdpl$getLightingManager().onCubeLoad(this);
+        boolean raised = false;
+        if (!isSurfaceTracked) {
+            IColumnInternal held = (IColumnInternal) getColumn();
+            int[] before = new int[256];
+            for (int i = 0; i < 256; i++) { before[i] = held.getTopYWithStaging(i & 15, i >> 4); }
+            held.addToStagingHeightmap(this);
+            for (int i = 0; i < 256 && !raised; i++) { raised = held.getTopYWithStaging(i & 15, i >> 4) > before[i]; }
+        }
+        ((IRubicWorldInternal) world).rdpl$getLightingManager().onCubeLoad(this, raised);
         CompatHandler.onCubeLoad(new ChunkEvent.Load(getColumn()));
         EVENT_BUS.post(new CubeEvent.Load(this));
     }
@@ -315,6 +322,7 @@ public class Cube implements ICube {
             return;
         }
         this.isCubeLoaded = false;
+        if (!isSurfaceTracked) { trackSurface(); }
         this.world.unloadEntities(this.entities.getEntities());
         for (Entity entity : this.entities.getEntities()) { entity.addedToChunk = false; }
         for (TileEntity blockEntity : this.tileEntityMap.values()) { this.world.markTileEntityForRemoval(blockEntity); }

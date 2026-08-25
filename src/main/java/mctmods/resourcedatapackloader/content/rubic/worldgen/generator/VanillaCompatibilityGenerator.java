@@ -149,6 +149,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             int vanillaY = cubeY - offsetCubes;
             if (vanillaY < 0 || vanillaY >= worldHeightCubes) {
                 if (vanillaY < 0 && deep.wantsDeep()) { deep.fillDeepCube(primer, cubeX, cubeY, cubeZ, rand, hasTopBedrock, hasBottomBedrock); }
+                else if (vanillaY >= worldHeightCubes && deep.wantsSky()) { deep.fillSkyCube(primer, cubeX, cubeY, cubeZ, rand, hasTopBedrock, hasBottomBedrock); }
                 else {
                     for (int y = 0; y < Cube.SIZE; y++) {
                         for (int z = 0; z < Cube.SIZE; z++) {

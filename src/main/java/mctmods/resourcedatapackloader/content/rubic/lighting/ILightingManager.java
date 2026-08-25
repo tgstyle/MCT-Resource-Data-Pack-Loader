@@ -16,7 +16,7 @@ public interface ILightingManager {
 
     default void onSendCubes() { processUpdates(); }
 
-    void onCubeLoad(ICube cube);
+    void onCubeLoad(ICube cube, boolean raisedColumnTop);
 
     default void onCubeUnload() { processUpdatesOnAccess(); }
 

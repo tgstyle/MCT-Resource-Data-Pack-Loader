@@ -129,6 +129,7 @@
     "common.MixinMinecraftServer",
     "common.MixinMineshaftCorridor",
     "common.MixinNetHandlerPlayServer",
+    "common.MixinNetHandlerPlayServerBuild",
     "common.MixinNetherBridgeThrone",
     "common.MixinPacketBufferBlockPosWrite",
     "common.MixinPathNavigate",

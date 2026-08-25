@@ -19,6 +19,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.feature.WorldGenDungeons;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -30,6 +31,11 @@ public class DeepGeneration {
     private final int offsetBlocks;
     private final int genFloor;
     private final IBlockState deepStone;
+    private final IBlockState skyStone;
+    private final double skyIslands;
+    private final double skyThickness;
+    private final int skyLowest;
+    private final int skyHighest;
     private final IBlockState extensionBottom;
     private final int caveScope;
     private final List<Vein> veins = new ArrayList<>();
@@ -56,6 +62,12 @@ public class DeepGeneration {
         this.genFloor = ((IMinMaxHeight) world).rdpl$getMinHeight() - offsetBlocks;
         this.extensionBottom = extensionBottom;
         this.deepStone = parseState(ContentControl.text(ContentControl.TERRAIN, "deepStone", Config.worldgen.deepStone), "deepStone");
+        this.skyStone = parseState(ContentControl.text(ContentControl.TERRAIN, "skyStone", Config.worldgen.skyStone), "skyStone");
+        this.skyIslands = parseIslands(ContentControl.decimal(ContentControl.TERRAIN, "skyIslands", Config.worldgen.skyIslands));
+        this.skyThickness = parseThickness(ContentControl.decimal(ContentControl.TERRAIN, "skyThickness", Config.worldgen.skyThickness));
+        int[] band = parseHeights(ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights));
+        this.skyLowest = band[0];
+        this.skyHighest = band[1];
         this.caveScope = parseScope(ContentControl.text(ContentControl.TERRAIN, "noiseCaves", Config.worldgen.noiseCaves));
         int salt = 100;
         for (String spec : ContentControl.list(ContentControl.TERRAIN, "oreVeins", Config.worldgen.oreVeins)) {
@@ -89,6 +101,51 @@ public class DeepGeneration {
     }
 
     public boolean wantsDeep() { return deepStone != null || caveScope > 0 || !veins.isEmpty(); }
+
+    public boolean wantsSky() { return skyStone != null; }
+
+    public void fillSkyCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {
+        int worldTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1;
+        int worldBase = Coords.cubeToMinBlock(cubeY);
+        if (worldBase >= worldTop) { return; }
+        int genBase = worldBase - offsetBlocks;
+        if (genBase + Cube.SIZE - 1 < skyLowest || genBase > skyHighest) { return; }
+        double[][][] regions = sampleRegionLattice(cubeX << 4, genBase, cubeZ << 4);
+        double strongest = -1.0D;
+        for (double[][] plane : regions) {
+            for (double[] row : plane) {
+                for (double value : row) { strongest = Math.max(strongest, value); }
+            }
+        }
+        if (strongest <= skyIslands) { return; }
+        int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
+        double[][][] lattice = sampleLattice(cubeX << 4, genBase, cubeZ << 4);
+        for (int y = 0; y < Cube.SIZE; y++) {
+            if (worldBase + y >= worldTop) { break; }
+            if (genBase + y < skyLowest || genBase + y > skyHighest) { continue; }
+            for (int z = 0; z < Cube.SIZE; z++) {
+                for (int x = 0; x < Cube.SIZE; x++) {
+                    double strength = (trilerp(regions, x, y, z) - skyIslands) / (1.0D - skyIslands);
+                    if (strength <= 0.0D) { continue; }
+                    if (trilerp(lattice, x, y, z) > Math.min(strength, 1.0D) * skyThickness) { continue; }
+                    IBlockState state = veinState((cubeX << 4) + x, genBase + y, (cubeZ << 4) + z, skyStone);
+                    primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
+                            Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
+                }
+            }
+        }
+    }
+
+    private double[][][] sampleRegionLattice(int worldX, int genY, int worldZ) {
+        int ySteps = Cube.SIZE / 8 + 1;
+        double[][][] lattice = new double[5][ySteps][5];
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < ySteps; y++) {
+                for (int z = 0; z < 5; z++) { lattice[x][y][z] = cheeseWide.sample(worldX + (x << 2), genY + (y << 3), worldZ + (z << 2)); }
+            }
+        }
+        return lattice;
+    }
 
     public void populateDeepCube(int cubeX, int cubeY, int cubeZ) {
         if (caveScope == 0) { return; }
@@ -349,6 +406,28 @@ public class DeepGeneration {
             return null;
         }
         return meta == 0 ? block.getDefaultState() : Block.getStateById(Block.getIdFromBlock(block) + (meta << 12));
+    }
+
+    private static double parseIslands(float value) {
+        if (value >= -1.0F && value <= 1.0F) { return value; }
+        Rubic.LOGGER.error("skyIslands is {}, which is outside -1 to 1, so the islands keep their usual reach", value);
+        return 0.2D;
+    }
+
+    private static double parseThickness(float value) {
+        if (value >= 0.0F) { return value; }
+        Rubic.LOGGER.error("skyThickness is {}, which is below zero, so the islands keep their usual thickness", value);
+        return 2.0D;
+    }
+
+    private static int[] parseHeights(int[] values) {
+        int[] whole = {Integer.MIN_VALUE, Integer.MAX_VALUE};
+        if (values.length == 0) { return whole; }
+        if (values.length != 2 || values[0] >= values[1]) {
+            Rubic.LOGGER.error("skyHeights is {}, which is not a lowest and a highest with the lowest below it, so the islands fill the whole world above the window", Arrays.toString(values));
+            return whole;
+        }
+        return values;
     }
 
     private static int parseScope(String value) {
