@@ -62,7 +62,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
     @Override public String getId() { return "rubic"; }
 
     @Override public void cubeStorageMade(ICube cube, ExtendedBlockStorage storage) {
-        if (!world.provider.hasSkyLight() || !cube.isCubeLoaded()) { return; }
+        if (world.isRemote || !world.provider.hasSkyLight() || !cube.isCubeLoaded()) { return; }
         Chunk column = cube.getColumn();
         int floor = storage.getYLocation();
         int ceiling = floor + 15;
@@ -257,8 +257,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
 
     @Override public void processLightUpdates() {
         replayOwed();
-        if (world.isRemote) { scheduled[EnumSkyBlock.SKY.ordinal()].clear(); }
-        else { processFor(EnumSkyBlock.SKY); }
+        processFor(EnumSkyBlock.SKY);
         processFor(EnumSkyBlock.BLOCK);
     }
 
