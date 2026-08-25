@@ -38,7 +38,12 @@ public final class CaveRegionDef {
     public final List<PickDef> structures;
     public final float structureChance;
     public final String biome;
+    public final String skyStone;
+    public final float skyIslands;
+    public final float skyThickness;
     private boolean resolved;
+    private boolean skyResolved;
+    @Nullable private IBlockState skyState;
     @Nullable private IBlockState floorState;
     @Nullable private IBlockState ceilingState;
     @Nullable private Set<Block> replaceBlocks;
@@ -48,7 +53,8 @@ public final class CaveRegionDef {
     public CaveRegionDef(ResourceLocation key, int weight, int minHeight, int maxHeight, List<Integer> dimensions,
                          String floorCover, float floorChance, String ceilingCover, float ceilingChance,
                          List<String> coverReplace, int waterLevel, List<SpawnEntryDef> spawns, boolean keepDefaultSpawns,
-                         List<PickDef> structures, float structureChance, String biome) {
+                         List<PickDef> structures, float structureChance, String biome,
+                         String skyStone, float skyIslands, float skyThickness) {
         this.key = key;
         this.weight = weight;
         this.minHeight = minHeight;
@@ -65,6 +71,19 @@ public final class CaveRegionDef {
         this.structures = structures;
         this.structureChance = structureChance;
         this.biome = biome;
+        this.skyStone = skyStone;
+        this.skyIslands = skyIslands;
+        this.skyThickness = skyThickness;
+    }
+
+    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness); }
+
+    @Nullable public IBlockState skyState() {
+        if (!skyResolved) {
+            skyResolved = true;
+            skyState = DeepGeneration.parseState(skyStone, key + " skyStone");
+        }
+        return skyState;
     }
 
     public boolean hasWater() { return waterLevel != NO_WATER; }

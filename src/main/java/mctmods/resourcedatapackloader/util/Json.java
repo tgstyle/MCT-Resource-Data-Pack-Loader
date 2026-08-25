@@ -24,6 +24,14 @@ public final class Json {
         return Collections.unmodifiableList(values);
     }
 
+    public static float bounded(JsonObject json, String member, float low, float high, Object owner) {
+        if (!json.has(member)) { return Float.NaN; }
+        float value = JsonUtils.getFloat(json, member, Float.NaN);
+        if (value >= low && value <= high) { return value; }
+        ContentLog.LOGGER.error("{} sets {} to {}, which is outside {} to {}, so the world setting is used instead", owner, member, value, low, high);
+        return Float.NaN;
+    }
+
     public static Map<String, String> map(JsonObject json, String member) {
         if (!json.has(member)) { return Collections.emptyMap(); }
         JsonObject object = JsonUtils.getJsonObject(json, member);

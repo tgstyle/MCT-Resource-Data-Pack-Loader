@@ -19,11 +19,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+
+import java.util.*;
 import javax.annotation.Nullable;
 
 public final class ContentCaveRegions {
@@ -36,6 +33,29 @@ public final class ContentCaveRegions {
     private ContentCaveRegions() {}
 
     public static boolean any() { return !ContentRegistry.caveRegions().isEmpty(); }
+
+    public static boolean anyShapesSky() {
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && def.shapesSky()) { return true; }
+        }
+        return false;
+    }
+
+    public static double lowestSkyIslands(double fallback) {
+        double lowest = fallback;
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && !Float.isNaN(def.skyIslands)) { lowest = Math.min(lowest, def.skyIslands); }
+        }
+        return lowest;
+    }
+
+    public static int highestAsked() {
+        int highest = Integer.MIN_VALUE;
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && (def.hasCovers() || def.hasStructures())) { highest = Math.max(highest, def.maxHeight); }
+        }
+        return highest;
+    }
 
     @Nullable public static CaveRegionDef regionAt(World world, int x, int y, int z) {
         List<CaveRegionDef> defs = forDimension(world.provider.getDimension());
@@ -215,34 +235,48 @@ public final class ContentCaveRegions {
     public static void decorate(World world, int chunkX, int chunkZ, Random random) {
         List<CaveRegionDef> defs = forDimension(world.provider.getDimension());
         if (defs.isEmpty()) { return; }
-        int lowest = Integer.MAX_VALUE;
-        int highest = Integer.MIN_VALUE;
-        boolean covered = false;
-        for (CaveRegionDef def : defs) {
-            if (!def.hasCovers()) { continue; }
-            covered = true;
-            lowest = Math.min(lowest, def.minHeight);
-            highest = Math.max(highest, def.maxHeight);
-        }
-        if (!covered) { return; }
-        int floor = ((IRubicWorld) world).rdpl$isRubicWorld() ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
-        lowest = Math.max(lowest, floor + 1);
-        highest = Math.min(highest, world.getActualHeight() - 2);
-        if (lowest > highest) { return; }
+        boolean rubic = ((IRubicWorld) world).rdpl$isRubicWorld();
+        int floor = rubic ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
+        int ceiling = rubic ? ((IMinMaxHeight) world).rdpl$getMaxHeight() : world.getActualHeight();
+        List<int[]> bands = coverBands(defs, floor + 1, ceiling - 2);
+        if (bands.isEmpty()) { return; }
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int x = chunkX * 16 + OFFSET; x < chunkX * 16 + OFFSET + 16; x++) {
             for (int z = chunkZ * 16 + OFFSET; z < chunkZ * 16 + OFFSET + 16; z++) {
-                IBlockState below = world.getBlockState(pos.setPos(x, lowest - 1, z));
-                for (int y = lowest; y <= highest + 1; y++) {
-                    IBlockState state = world.getBlockState(pos.setPos(x, y, z));
-                    boolean airNow = state.getMaterial() == Material.AIR;
-                    boolean airBelow = below.getMaterial() == Material.AIR;
-                    if (airNow && !airBelow && y <= highest) { coverFloor(world, random, x, y, z, below); }
-                    else if (!airNow && airBelow && y - 1 >= lowest) { coverCeiling(world, random, x, y, z, state); }
-                    below = state;
+                for (int[] band : bands) {
+                    int lowest = band[0];
+                    int highest = band[1];
+                    IBlockState below = world.getBlockState(pos.setPos(x, lowest - 1, z));
+                    for (int y = lowest; y <= highest + 1; y++) {
+                        IBlockState state = world.getBlockState(pos.setPos(x, y, z));
+                        boolean airNow = state.getMaterial() == Material.AIR;
+                        boolean airBelow = below.getMaterial() == Material.AIR;
+                        if (airNow && !airBelow && y <= highest) { coverFloor(world, random, x, y, z, below); }
+                        else if (!airNow && airBelow && y - 1 >= lowest) { coverCeiling(world, random, x, y, z, state); }
+                        below = state;
+                    }
                 }
             }
         }
+    }
+
+    private static List<int[]> coverBands(List<CaveRegionDef> defs, int floor, int ceiling) {
+        List<int[]> bands = new ArrayList<>();
+        for (CaveRegionDef def : defs) {
+            if (!def.hasCovers()) { continue; }
+            int lowest = Math.max(def.minHeight, floor);
+            int highest = Math.min(def.maxHeight, ceiling);
+            if (lowest > highest) { continue; }
+            bands.add(new int[] {lowest, highest});
+        }
+        bands.sort(Comparator.comparingInt(left -> left[0]));
+        List<int[]> merged = new ArrayList<>();
+        for (int[] band : bands) {
+            int[] last = merged.isEmpty() ? null : merged.get(merged.size() - 1);
+            if (last != null && band[0] <= last[1] + 1) { last[1] = Math.max(last[1], band[1]); }
+            else { merged.add(band); }
+        }
+        return merged;
     }
 
     private static void coverFloor(World world, Random random, int x, int y, int z, IBlockState under) {
@@ -252,7 +286,7 @@ public final class ContentCaveRegions {
         if (cover == null || region.rejectsCover(under)) { return; }
         if (random.nextFloat() >= region.floorChance) { return; }
         BlockPos pos = new BlockPos(x, y, z);
-        if (world.canSeeSky(pos)) { return; }
+        if (world.canSeeSky(pos) && y < world.provider.getActualHeight()) { return; }
         world.setBlockState(pos.down(), cover, 2 | 16);
     }
 
@@ -263,7 +297,7 @@ public final class ContentCaveRegions {
         if (cover == null || region.rejectsCover(ceiling)) { return; }
         if (random.nextFloat() >= region.ceilingChance) { return; }
         BlockPos pos = new BlockPos(x, y - 1, z);
-        if (world.canSeeSky(pos)) { return; }
+        if (world.canSeeSky(pos) && y - 1 < world.provider.getActualHeight()) { return; }
         world.setBlockState(pos.up(), cover, 2 | 16);
     }
 

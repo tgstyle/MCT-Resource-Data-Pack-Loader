@@ -1,11 +1,17 @@
 package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.def.BiomeDef;
+import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiome;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes3D;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Coords;
 
@@ -16,17 +22,23 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.feature.WorldGenDungeons;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import javax.annotation.Nullable;
 
 public class DeepGeneration {
     private static final int BLEND_TOP = 8;
     private static final int SKY_ISLAND_SHAPE = 0;
     private static final int SKY_CAVES = 1;
+    private static final int SKY_FILLER = 3;
+    private static final int SKY_HEADROOM = 8;
+    private static final int SKY_TAPER = 24;
+    private static final int SKY_LOOKUP = 8;
     private static final double CAVE_THRESHOLD = 0.0D;
     private final World world;
     private final long seed;
@@ -37,6 +49,12 @@ public class DeepGeneration {
     private final int skyShape;
     private final double skyIslands;
     private final double skyThickness;
+    private final double skyMaskIslands;
+    private final boolean skyRegions;
+    private final boolean skyBands;
+    private final int skyFloorGen;
+    private final int skyCeilGen;
+    private final int skyTaper;
     private final int skyLowest;
     private final int skyHighest;
     private final IBlockState extensionBottom;
@@ -72,6 +90,13 @@ public class DeepGeneration {
         int[] band = parseHeights(ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights));
         this.skyLowest = band[0];
         this.skyHighest = band[1];
+        this.skyMaskIslands = ContentCaveRegions.lowestSkyIslands(ContentBiomes.lowestSkyIslands(skyIslands));
+        this.skyRegions = ContentCaveRegions.anyShapesSky();
+        this.skyBands = ContentBiomes3D.anyShapesSky();
+        this.skyFloorGen = Math.max(skyLowest, ((IRubicWorld) world).rdpl$getMaxGenerationHeight());
+        this.skyCeilGen = Math.min(skyHighest, ((IMinMaxHeight) world).rdpl$getMaxHeight() - 2
+                - (skyShape == SKY_CAVES ? 0 : SKY_HEADROOM) - offsetBlocks);
+        this.skyTaper = Math.max(4, Math.min(SKY_TAPER, (skyCeilGen - skyFloorGen + 1) / 4));
         this.caveScope = parseScope(ContentControl.text(ContentControl.TERRAIN, "noiseCaves", Config.worldgen.noiseCaves));
         int salt = 100;
         for (String spec : ContentControl.list(ContentControl.TERRAIN, "oreVeins", Config.worldgen.oreVeins)) {
@@ -109,61 +134,129 @@ public class DeepGeneration {
     public boolean wantsSky() { return skyStone != null; }
 
     public void fillSkyCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {
-        int worldTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1;
+        int worldTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1 - (skyShape == SKY_CAVES ? 0 : SKY_HEADROOM);
         int worldBase = Coords.cubeToMinBlock(cubeY);
         if (worldBase >= worldTop) { return; }
         int genBase = worldBase - offsetBlocks;
         if (genBase + Cube.SIZE - 1 < skyLowest || genBase > skyHighest) { return; }
-        if (skyShape == SKY_CAVES) {
-            fillSkyCaves(primer, cubeX, cubeY, cubeZ, rand, topBedrock, bottomBedrock, worldTop, worldBase, genBase);
-            return;
+        int steps = (Cube.SIZE + SKY_LOOKUP) / 8 + 1;
+        double[][][] regions = null;
+        if (skyShape != SKY_CAVES) {
+            regions = sampleRegionLattice(cubeX << 4, genBase, cubeZ << 4, steps);
+            if (strongest(regions) <= skyMaskIslands) { return; }
         }
-        double[][][] regions = sampleRegionLattice(cubeX << 4, genBase, cubeZ << 4);
-        double strongest = -1.0D;
+        double[][][] lattice = sampleLattice(cubeX << 4, genBase, cubeZ << 4, steps);
+        int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
+        Biome[] column = world.getBiomeProvider().getBiomes(null, cubeX << 4, cubeZ << 4, Cube.SIZE, Cube.SIZE);
+        for (int z = 0; z < Cube.SIZE; z++) {
+            for (int x = 0; x < Cube.SIZE; x++) {
+                Biome biome = column[(z << 4) | x];
+                CaveRegionDef region = skyRegions ? ContentCaveRegions.regionAt(world, (cubeX << 4) + x, worldBase + 8, (cubeZ << 4) + z) : null;
+                BiomeDef band = skyBands ? ContentBiomes3D.shapesSkyAt(biome, worldBase + 8) : null;
+                IBlockState stone = skyStoneFor(biome, region, band);
+                IBlockState top = skySurfaceFor(biome.topBlock, band, true);
+                IBlockState filler = skySurfaceFor(biome.fillerBlock, band, false);
+                double islands = skyIslandsFor(biome, region, band);
+                double thickness = skyThicknessFor(biome, region, band);
+                int under = solidAbove(regions, lattice, x, z, worldBase, genBase, worldTop, islands, thickness);
+                for (int y = Cube.SIZE - 1; y >= 0; y--) {
+                    if (skyOpen(regions, lattice, x, y, z, worldBase, genBase, worldTop, islands, thickness)) {
+                        under = 0;
+                        continue;
+                    }
+                    IBlockState state = skyState(top, filler, stone, under, (cubeX << 4) + x, genBase + y, (cubeZ << 4) + z);
+                    primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
+                            Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
+                    under++;
+                }
+            }
+        }
+    }
+
+    private IBlockState skyStoneFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
+        if (region != null && !region.skyStone.isEmpty()) {
+            IBlockState named = region.skyState();
+            if (named != null) { return named; }
+        }
+        if (band != null && !band.skyStone.isEmpty()) {
+            IBlockState named = band.skyState();
+            if (named != null) { return named; }
+        }
+        BiomeDef def = defOf(biome);
+        if (def != null && !def.skyStone.isEmpty()) {
+            IBlockState named = def.skyState();
+            if (named != null) { return named; }
+        }
+        return skyStone;
+    }
+
+    private double skyIslandsFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
+        if (region != null && !Float.isNaN(region.skyIslands)) { return region.skyIslands; }
+        if (band != null && !Float.isNaN(band.skyIslands)) { return band.skyIslands; }
+        BiomeDef def = defOf(biome);
+        if (def != null && !Float.isNaN(def.skyIslands)) { return def.skyIslands; }
+        return skyIslands;
+    }
+
+    private double skyThicknessFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
+        if (region != null && !Float.isNaN(region.skyThickness)) { return region.skyThickness; }
+        if (band != null && !Float.isNaN(band.skyThickness)) { return band.skyThickness; }
+        BiomeDef def = defOf(biome);
+        if (def != null && !Float.isNaN(def.skyThickness)) { return def.skyThickness; }
+        return skyThickness;
+    }
+
+    @Nullable private static BiomeDef defOf(Biome biome) { return biome instanceof ContentBiome ? ((ContentBiome) biome).getDef() : null; }
+
+    private IBlockState skyState(IBlockState top, IBlockState filler, IBlockState stone, int under, int worldX, int genY, int worldZ) {
+        if (under == 0) { return top; }
+        if (under <= SKY_FILLER) { return filler; }
+        return veinState(worldX, genY, worldZ, stone);
+    }
+
+    private IBlockState skySurfaceFor(IBlockState fallback, @Nullable BiomeDef band, boolean top) {
+        if (band == null || (top ? band.topBlock : band.fillerBlock).isEmpty()) { return fallback; }
+        Biome made = ContentBiomes3D.registered(band);
+        if (made == null) { return fallback; }
+        return top ? made.topBlock : made.fillerBlock;
+    }
+
+    private int solidAbove(double[][][] regions, double[][][] lattice, int x, int z, int worldBase, int genBase, int worldTop, double islands, double thickness) {
+        int found = 0;
+        for (int y = Cube.SIZE; y < Cube.SIZE + SKY_LOOKUP && found <= SKY_FILLER; y++) {
+            if (skyOpen(regions, lattice, x, y, z, worldBase, genBase, worldTop, islands, thickness)) { break; }
+            found++;
+        }
+        return found;
+    }
+
+    private boolean skyOpen(double[][][] regions, double[][][] lattice, int x, int y, int z, int worldBase, int genBase, int worldTop, double islands, double thickness) {
+        if (worldBase + y >= worldTop) { return true; }
+        if (genBase + y < skyLowest || genBase + y > skyHighest) { return true; }
+        if (regions == null) { return trilerp(lattice, x, y, z) <= CAVE_THRESHOLD; }
+        double strength = (trilerp(regions, x, y, z) - islands) / (1.0D - islands) * skyFade(genBase + y);
+        if (strength <= 0.0D) { return true; }
+        return trilerp(lattice, x, y, z) > Math.min(strength, 1.0D) * thickness;
+    }
+
+    private double skyFade(int genY) {
+        int distance = Math.min(genY - skyFloorGen, skyCeilGen - genY);
+        if (distance >= skyTaper) { return 1.0D; }
+        if (distance <= 0) { return 0.0D; }
+        return distance / (double) skyTaper;
+    }
+
+    private double strongest(double[][][] regions) {
+        double best = -1.0D;
         for (double[][] plane : regions) {
-            for (double[] row : plane) {
-                for (double value : row) { strongest = Math.max(strongest, value); }
+            for (int y = 0; y < Cube.SIZE / 8 + 1; y++) {
+                for (double value : plane[y]) { best = Math.max(best, value); }
             }
         }
-        if (strongest <= skyIslands) { return; }
-        int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
-        double[][][] lattice = sampleLattice(cubeX << 4, genBase, cubeZ << 4);
-        for (int y = 0; y < Cube.SIZE; y++) {
-            if (worldBase + y >= worldTop) { break; }
-            if (genBase + y < skyLowest || genBase + y > skyHighest) { continue; }
-            for (int z = 0; z < Cube.SIZE; z++) {
-                for (int x = 0; x < Cube.SIZE; x++) {
-                    double strength = (trilerp(regions, x, y, z) - skyIslands) / (1.0D - skyIslands);
-                    if (strength <= 0.0D) { continue; }
-                    if (trilerp(lattice, x, y, z) > Math.min(strength, 1.0D) * skyThickness) { continue; }
-                    IBlockState state = veinState((cubeX << 4) + x, genBase + y, (cubeZ << 4) + z, skyStone);
-                    primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
-                            Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
-                }
-            }
-        }
+        return best;
     }
 
-    private void fillSkyCaves(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock,
-            int worldTop, int worldBase, int genBase) {
-        int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
-        double[][][] lattice = sampleLattice(cubeX << 4, genBase, cubeZ << 4);
-        for (int y = 0; y < Cube.SIZE; y++) {
-            if (worldBase + y >= worldTop) { break; }
-            if (genBase + y < skyLowest || genBase + y > skyHighest) { continue; }
-            for (int z = 0; z < Cube.SIZE; z++) {
-                for (int x = 0; x < Cube.SIZE; x++) {
-                    if (trilerp(lattice, x, y, z) <= CAVE_THRESHOLD) { continue; }
-                    IBlockState state = veinState((cubeX << 4) + x, genBase + y, (cubeZ << 4) + z, skyStone);
-                    primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
-                            Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
-                }
-            }
-        }
-    }
-
-    private double[][][] sampleRegionLattice(int worldX, int genY, int worldZ) {
-        int ySteps = Cube.SIZE / 8 + 1;
+    private double[][][] sampleRegionLattice(int worldX, int genY, int worldZ, int ySteps) {
         double[][][] lattice = new double[5][ySteps][5];
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < ySteps; y++) {
@@ -305,8 +398,9 @@ public class DeepGeneration {
         return deepStone != null && block == deepStone.getBlock();
     }
 
-    private double[][][] sampleLattice(int worldX, int genY, int worldZ) {
-        int ySteps = Cube.SIZE / 8 + 1;
+    private double[][][] sampleLattice(int worldX, int genY, int worldZ) { return sampleLattice(worldX, genY, worldZ, Cube.SIZE / 8 + 1); }
+
+    private double[][][] sampleLattice(int worldX, int genY, int worldZ, int ySteps) {
         double[][][] lattice = new double[5][ySteps][5];
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < ySteps; y++) {

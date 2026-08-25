@@ -20,17 +20,25 @@ import javax.annotation.Nullable;
 
 public final class ContentWorldgen implements IWorldGenerator {
     private static int deepestAsked = 0;
+    private static int highestAsked = 0;
     private final List<WorldgenDef> defs;
     private final Map<Integer, List<WorldgenDef>> byDimension = new HashMap<>();
 
     public ContentWorldgen(List<WorldgenDef> defs) {
         this.defs = defs;
         int lowest = 0;
-        for (WorldgenDef def : defs) { lowest = Math.min(lowest, def.minHeight); }
+        int highest = 0;
+        for (WorldgenDef def : defs) {
+            lowest = Math.min(lowest, def.minHeight);
+            highest = Math.max(highest, def.maxHeight);
+        }
         deepestAsked = lowest;
+        highestAsked = highest;
     }
 
     public static int deepestMinHeight() { return deepestAsked; }
+
+    public static int highestMaxHeight() { return Math.max(highestAsked, ContentCaveRegions.highestAsked()); }
 
     @Override public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator generator, IChunkProvider provider) {
         ContentRetrogen.markGenerated(world, chunkX, chunkZ);

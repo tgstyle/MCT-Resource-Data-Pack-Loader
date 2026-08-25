@@ -108,6 +108,33 @@ public final class ContentBiomes3D {
         return found;
     }
 
+    public static boolean anyShapesSky() {
+        for (BiomeDef def : banded()) {
+            if (def.shapesSky()) { return true; }
+        }
+        return false;
+    }
+
+    @Nullable public static BiomeDef shapesSkyAt(Biome column, int y) {
+        String under = null;
+        for (BiomeDef def : banded()) {
+            if (!def.shapesSky() || y < def.minHeight || y > def.maxHeight) { continue; }
+            if (!def.replaces.isEmpty()) {
+                if (under == null) { under = named(column); }
+                if (!matches(def.replaces, under)) { continue; }
+            }
+            return def;
+        }
+        return null;
+    }
+
+    @Nullable public static Biome registered(BiomeDef def) { return biome(def.registryName.toString()); }
+
+    private static String named(Biome biome) {
+        ResourceLocation named = biome.getRegistryName();
+        return named == null ? "" : named.toString().toLowerCase(Locale.ROOT);
+    }
+
     private static List<BiomeDef> banded() {
         List<BiomeDef> held = bands;
         if (held != null) { return held; }

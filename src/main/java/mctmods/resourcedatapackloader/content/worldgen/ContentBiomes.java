@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -70,6 +71,14 @@ public final class ContentBiomes {
     private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
 
     static Collection<BiomeDef> defs() { return DEFS.values(); }
+
+    public static double lowestSkyIslands(double fallback) {
+        double lowest = fallback;
+        for (BiomeDef def : DEFS.values()) {
+            if (!Float.isNaN(def.skyIslands)) { lowest = Math.min(lowest, def.skyIslands); }
+        }
+        return lowest;
+    }
     private static final List<ContentBiome> REGISTERED = new ArrayList<>();
     private static boolean loaded;
 
@@ -160,7 +169,10 @@ public final class ContentBiomes {
                 strings(json, "replaces"),
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
-                strings(json, "requires")));
+                strings(json, "requires"),
+                JsonUtils.getString(json, "skyStone", ""),
+                Json.bounded(json, "skyIslands", -1.0F, 1.0F, key),
+                Json.bounded(json, "skyThickness", 0.0F, 8.0F, key)));
     }
 
     private static int villageKind(String written, ResourceLocation key) {

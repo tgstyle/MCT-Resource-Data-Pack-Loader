@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -69,7 +70,7 @@ public final class ContentSpawning {
     @SubscribeEvent public static void onPotentialSpawns(WorldEvent.PotentialSpawns event) {
         World world = event.getWorld();
         BlockPos pos = event.getPos();
-        if (world.canSeeSky(pos)) { return; }
+        if (world.canSeeSky(pos) && pos.getY() < world.provider.getActualHeight()) { return; }
         CaveRegionDef region = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
         if (region == null || !region.hasSpawns()) { return; }
         if (!region.keepDefaultSpawns) { event.getList().clear(); }
@@ -83,7 +84,10 @@ public final class ContentSpawning {
             event.setResult(Event.Result.DENY);
             return;
         }
-        if (!(event.getEntity() instanceof IMob)) { return; }
+        if (!(event.getEntity() instanceof IMob)) {
+            if (event.getSpawner() == null && deniedAboveWindow(world, event.getY())) { event.setResult(Event.Result.DENY); }
+            return;
+        }
         if (event.getSpawner() == null) {
             int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight);
             if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, new BlockPos(event.getX(), event.getY(), event.getZ())) > lightCap) {
@@ -102,6 +106,11 @@ public final class ContentSpawning {
             return;
         }
         if (world.rand.nextFloat() < rate - 1.0F) { event.setResult(Event.Result.ALLOW); }
+    }
+
+    private static boolean deniedAboveWindow(World world, float y) {
+        if (ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals)) { return false; }
+        return ((IRubicWorld) world).rdpl$isRubicWorld() && y > world.provider.getActualHeight();
     }
 
     private static float rateFor(World world, BlockPos pos) {

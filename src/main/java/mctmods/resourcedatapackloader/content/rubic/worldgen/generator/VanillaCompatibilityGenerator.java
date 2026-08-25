@@ -57,6 +57,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     private boolean hasTopBedrock = false, hasBottomBedrock = true;
     private DeepGeneration deep;
     private boolean deepPopulation;
+    private boolean skyPopulation;
 
     public VanillaCompatibilityGenerator(@Nonnull IChunkGenerator vanilla, @Nonnull World world) {
         this.vanilla = vanilla;
@@ -123,6 +124,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         }
         deep = new DeepGeneration(world, offsetCubes << 4, extensionBlockBottom);
         deepPopulation = ContentWorldgen.deepestMinHeight() < 0;
+        skyPopulation = ContentWorldgen.highestMaxHeight() >= worldHeightBlocks;
     }
 
     @Override public void generateColumn(Chunk column) {
@@ -297,7 +299,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         if (vanillaY >= 0 && vanillaY < worldHeightCubes) {
             return new Box(
                     -1, rdpl$populationFloorOffset(cube), -1,
-                    0, worldHeightCubes - vanillaY - 1, 0
+                    0, rdpl$populationCeilingOffset(cube), 0
             );
         }
         return NO_REQUIREMENT;
@@ -308,10 +310,16 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         if (vanillaY >= 0 && vanillaY < worldHeightCubes) {
             return new Box(
                     0, rdpl$populationFloorOffset(cube), 0,
-                    1, worldHeightCubes - vanillaY - 1, 1
+                    1, rdpl$populationCeilingOffset(cube), 1
             );
         }
         return NO_REQUIREMENT;
+    }
+
+    private int rdpl$populationCeilingOffset(ICube cube) {
+        int vanillaY = cube.getY() - offsetCubes;
+        if (!skyPopulation) { return worldHeightCubes - vanillaY - 1; }
+        return Coords.blockToCube(((IMinMaxHeight) world).rdpl$getMaxHeight() - 1) - cube.getY();
     }
 
     private int rdpl$populationFloorOffset(ICube cube) {
