@@ -98,7 +98,7 @@ public final class BiomeDef {
 
     public boolean isAutoId() { return id == AUTO_ID; }
 
-    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness); }
+    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness) || !topBlock.isEmpty() || !fillerBlock.isEmpty(); }
 
     @Nullable public IBlockState skyState() {
         if (!skyResolved) {

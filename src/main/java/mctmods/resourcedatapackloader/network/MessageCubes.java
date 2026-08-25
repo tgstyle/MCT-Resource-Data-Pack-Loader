@@ -7,17 +7,20 @@ import mctmods.resourcedatapackloader.util.CubePos;
 import mctmods.resourcedatapackloader.util.PacketUtils;
 
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +31,35 @@ public class MessageCubes implements IMessage {
     private byte[] data;
     private List<List<NBTTagCompound>> tileEntityTags;
 
+    private static final int MAX_CUBES = 1024;
+    private static final int MAX_BYTES = 512 * 1024;
+
     public MessageCubes() {}
+
+    public static List<MessageCubes> batched(Collection<Cube> cubes) {
+        List<Cube> ordered = new ArrayList<>(cubes);
+        ordered.sort(Comparator.<Cube>comparingInt(Cube::getX).thenComparingInt(Cube::getZ).thenComparingInt(Cube::getY));
+        List<MessageCubes> packets = new ArrayList<>();
+        List<Cube> batch = new ArrayList<>(MAX_CUBES);
+        LongOpenHashSet columns = new LongOpenHashSet();
+        int bytes = 0;
+        for (Cube cube : ordered) {
+            long column = ChunkPos.asLong(cube.getX(), cube.getZ());
+            int cost = WorldEncoder.getEncodedSize(cube, !cube.isEmpty() && !columns.contains(column));
+            if (!batch.isEmpty() && (batch.size() >= MAX_CUBES || bytes + cost > MAX_BYTES)) {
+                packets.add(new MessageCubes(batch));
+                batch = new ArrayList<>(MAX_CUBES);
+                columns.clear();
+                bytes = 0;
+                cost = WorldEncoder.getEncodedSize(cube, !cube.isEmpty());
+            }
+            batch.add(cube);
+            if (!cube.isEmpty()) { columns.add(column); }
+            bytes += cost;
+        }
+        if (!batch.isEmpty()) { packets.add(new MessageCubes(batch)); }
+        return packets;
+    }
 
     public MessageCubes(List<Cube> cubes) {
         cubes.sort(Comparator.<Cube>comparingInt(c -> c.getCoords().getY())

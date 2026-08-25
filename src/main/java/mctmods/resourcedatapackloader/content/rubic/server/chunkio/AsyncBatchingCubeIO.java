@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQ
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicStorage;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.CubePos;
@@ -97,6 +98,10 @@ public class AsyncBatchingCubeIO implements ICubeIO {
     }
 
     @Override public void saveCube(Cube cube) {
+        if (outsideWorld(cube.getY())) {
+            cube.markSaved();
+            return;
+        }
         ((IRubicWorldInternal) world).rdpl$getLightingManager().processUpdates();
         this.lock.readLock().lock();
         try {
@@ -107,6 +112,12 @@ public class AsyncBatchingCubeIO implements ICubeIO {
         } finally {
             this.lock.readLock().unlock();
         }
+    }
+
+    private boolean outsideWorld(int cubeY) {
+        int base = cubeY * ICube.SIZE;
+        return base + ICube.SIZE <= ((IMinMaxHeight) world).rdpl$getMinHeight()
+                || base >= ((IMinMaxHeight) world).rdpl$getMaxHeight();
     }
 
     @Override public int getPendingColumnCount() {

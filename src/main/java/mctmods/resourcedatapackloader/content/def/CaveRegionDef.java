@@ -76,7 +76,7 @@ public final class CaveRegionDef {
         this.skyThickness = skyThickness;
     }
 
-    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness); }
+    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness) || hasBiome(); }
 
     @Nullable public IBlockState skyState() {
         if (!skyResolved) {

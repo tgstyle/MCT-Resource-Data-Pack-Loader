@@ -50,7 +50,7 @@ public final class ContentControl {
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
             "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels",
-            "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "oreVeins",
+            "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
             "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
             "undergroundNightMonsterRate", "villageBlocks", "villagePieces", "villagePiecesAreBlacklist",
@@ -110,6 +110,19 @@ public final class ContentControl {
         List<String> found = new ArrayList<>();
         for (JsonElement entry : value.getAsJsonArray()) {
             if (!entry.isJsonPrimitive()) { return rejected(key, "a list of text values", fallback); }
+            found.add(entry.getAsString());
+        }
+        return found.toArray(new String[0]);
+    }
+
+    public static String[] lines(String group, String key, String[] fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (value.isJsonPrimitive()) { return new String[] {value.getAsString()}; }
+        if (!value.isJsonArray()) { return rejected(key, "a text value or a list of them", fallback); }
+        List<String> found = new ArrayList<>();
+        for (JsonElement entry : value.getAsJsonArray()) {
+            if (!entry.isJsonPrimitive()) { return rejected(key, "a text value or a list of them", fallback); }
             found.add(entry.getAsString());
         }
         return found.toArray(new String[0]);

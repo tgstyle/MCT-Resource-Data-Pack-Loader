@@ -282,19 +282,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
                     continue;
                 }
                 ((IRubicWorldInternal) getWorldServer()).rdpl$getLightingManager().onSendCubes();
-                ArrayList<Cube> list = new ArrayList<>(1024);
-                for (Cube cube : cubes) {
-                    list.add(cube);
-                    if (list.size() >= 1024) {
-                        MessageCubes packet = new MessageCubes(list);
-                        RDPLNetwork.sendTo(packet, player);
-                        list.clear();
-                    }
-                }
-                if (!list.isEmpty()) {
-                    MessageCubes packet = new MessageCubes(list);
-                    RDPLNetwork.sendTo(packet, player);
-                }
+                for (MessageCubes packet : MessageCubes.batched(cubes)) { RDPLNetwork.sendTo(packet, player); }
                 for (Cube cube : cubes) {
                     ((IRubicEntityTracker) getWorldServer().getEntityTracker()).sendLeashedEntitiesInCube(player, cube);
                     CubeWatcher watcher = getCubeWatcher(cube.getCoords());

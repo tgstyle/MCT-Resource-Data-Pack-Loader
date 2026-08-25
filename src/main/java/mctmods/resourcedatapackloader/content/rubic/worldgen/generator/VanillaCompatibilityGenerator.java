@@ -145,6 +145,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         try {
             WorldgenHangWatchdog.startWorldGen();
             tryInit(vanilla, world);
+            if (rdpl$outsideWorld(cubeY)) { return primer; }
             Random rand = new Random(world.getSeed());
             rand.setSeed(rand.nextInt() ^ cubeX);
             rand.setSeed(rand.nextInt() ^ cubeZ);
@@ -253,6 +254,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             int vanillaY = cube.getY() - offsetCubes;
             if (vanillaY < 0 || vanillaY >= worldHeightCubes) {
                 if (vanillaY < 0 && deep.wantsDeep()) { deep.populateDeepCube(cube.getX(), cube.getY(), cube.getZ()); }
+                else if (vanillaY >= worldHeightCubes && deep.wantsSky()) { SkyDecoration.decorate(world, cube); }
                 return;
             }
             for (int y = worldHeightCubes - 1; y >= 0; y--) { ((IRubicWorldInternal) world).rdpl$getCubeFromCubeCoords(cube.getX(), y + offsetCubes, cube.getZ()).setPopulated(true); }
@@ -292,6 +294,12 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                 CompatHandler.afterGenerate(world);
             }
         }
+    }
+
+    private boolean rdpl$outsideWorld(int cubeY) {
+        int base = Coords.cubeToMinBlock(cubeY);
+        return base + Cube.SIZE <= ((IMinMaxHeight) world).rdpl$getMinHeight()
+                || base >= ((IMinMaxHeight) world).rdpl$getMaxHeight();
     }
 
     @Override public Box getFullPopulationRequirements(ICube cube) {

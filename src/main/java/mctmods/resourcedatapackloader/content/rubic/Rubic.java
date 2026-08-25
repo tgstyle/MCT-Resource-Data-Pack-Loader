@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic;
 
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.client.RubicClientEvents;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.RegionCubeStorage;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicStorage;
@@ -18,9 +19,6 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.ICrashCallable;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Path;
 import javax.annotation.Nonnull;
@@ -30,10 +28,9 @@ import javax.annotation.Nonnull;
     public static final int MIN_SUPPORTED_BLOCK_Y = Integer.MIN_VALUE + 4096;
     public static final int MAX_SUPPORTED_BLOCK_Y = Integer.MAX_VALUE - 4095;
     public static final String MODID = "resourcedatapackloader";
-    @Nonnull public static Logger LOGGER = LogManager.getLogger("EarlyRubic");
+    @Nonnull public static final ContentLog LOGGER = ContentLog.LOGGER;
 
     public static void preInit() {
-        LOGGER = LogManager.getLogger("rdpl.rubic");
         FMLCommonHandler.instance().registerCrashCallable(new ICrashCallable() {
             @Override public String getLabel() { return "Rubic WorldGen Hang Watchdog samples"; }
             @Override public String call() {
@@ -71,13 +68,13 @@ import javax.annotation.Nonnull;
     public static void bigWarning(String format, Object... data)
     {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-        LOGGER.log(Level.WARN, "****************************************");
-        LOGGER.log(Level.WARN, "* {}", String.format(format, data));
+        LOGGER.warn("****************************************");
+        LOGGER.warn("* {}", String.format(format, data));
         for (int i = 2; i < 10 && i < trace.length; i++)
         {
-            LOGGER.log(Level.WARN, "*  at {}{}", trace[i].toString(), i == 9 ? "..." : "");
+            LOGGER.warn("*  at {}{}", trace[i].toString(), i == 9 ? "..." : "");
         }
-        LOGGER.log(Level.WARN, "****************************************");
+        LOGGER.warn("****************************************");
     }
 
     public static boolean hasOptifine() {

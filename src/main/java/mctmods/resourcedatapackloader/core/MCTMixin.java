@@ -101,7 +101,7 @@ import java.util.Map;
                     try (ZipFile zip = new ZipFile(jar)) {
                         if (zip.getEntry("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
                     }
-                    catch (Exception unreadable) { LOGGER.debug("Could not open {} while looking for {}", jar.getName(), "CoFH World"); }
+                    catch (Exception unreadable) { ContentLog.LOGGER.debug("Could not open {} while looking for {}", jar.getName(), "CoFH World"); }
                 }
             }
             return false;

@@ -38,6 +38,10 @@ public final class ContentLog {
 
     public void debug(String message, Object... args) { write(DEBUG, message, args); }
 
+    public void fatal(String message, Object... args) { write("FATAL", message, args); }
+
+    public void catching(Throwable thrown) { write("ERROR", "Caught {}", thrown.toString(), thrown); }
+
     private synchronized void write(String level, String message, Object... args) {
         if (DEBUG.equals(level) && !debug) { return; }
         PrintWriter out = open();

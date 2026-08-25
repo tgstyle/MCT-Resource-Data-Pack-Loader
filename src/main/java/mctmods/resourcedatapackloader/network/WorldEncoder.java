@@ -4,9 +4,12 @@ import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.util.Coords;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import java.util.Collection;
@@ -40,8 +43,11 @@ class WorldEncoder {
             if (storage != null && cube.getWorld().provider.hasSkyLight()) { out.writeBytes(storage.getSkyLight().getData()); }
         });
 
+        LongOpenHashSet written = new LongOpenHashSet();
         cubes.forEach(cube -> {
-            if (!cube.isEmpty()) { ((IColumnInternal) cube.getColumn()).writeHeightmapDataForClient(out); }
+            if (!cube.isEmpty() && written.add(ChunkPos.asLong(cube.getX(), cube.getZ()))) {
+                ((IColumnInternal) cube.getColumn()).writeHeightmapDataForClient(out);
+            }
         });
 
         cubes.forEach(cube -> {
@@ -94,10 +100,11 @@ class WorldEncoder {
                 in.readBytes(data);
             }
         }
+        LongOpenHashSet loaded = new LongOpenHashSet();
         for (int i = 0; i < cubes.size(); i++) {
             if (!isEmpty[i]) {
                 Cube cube = cubes.get(i);
-                ((IColumnInternal) cube.getColumn()).loadClientHeightmapData(in);
+                if (loaded.add(ChunkPos.asLong(cube.getX(), cube.getZ()))) { ((IColumnInternal) cube.getColumn()).loadClientHeightmapData(in); }
                 Objects.requireNonNull(cube.getStorage()).recalculateRefCounts();
             }
         }
@@ -112,24 +119,26 @@ class WorldEncoder {
 
     static int getEncodedSize(Chunk column) { return column.getBiomeArray().length + Cube.SIZE * Cube.SIZE * Integer.BYTES; }
 
+    static int getEncodedSize(Cube cube, boolean countHeightmap) {
+        int size = 1;
+        ExtendedBlockStorage storage = cube.getStorage();
+        if (!cube.isEmpty()) {
+            size += Objects.requireNonNull(storage).getData().getSerializedSize();
+            if (countHeightmap) { size += Cube.SIZE * Cube.SIZE * Integer.BYTES; }
+        }
+        if (storage != null) {
+            size += storage.getBlockLight().getData().length;
+            if (cube.getWorld().provider.hasSkyLight()) { size += storage.getSkyLight().getData().length; }
+        }
+        byte[] biomeArray = cube.getBiomeArray();
+        if (biomeArray != null) { size += biomeArray.length; }
+        return size;
+    }
+
     static int getEncodedSize(Collection<Cube> cubes) {
         int size = 0;
-        size += cubes.size();
-        for (Cube cube : cubes) {
-            ExtendedBlockStorage storage = cube.getStorage();
-            if (!cube.isEmpty()) { size += Objects.requireNonNull(storage).getData().getSerializedSize(); }
-            if (storage != null) {
-                size += storage.getBlockLight().getData().length;
-                if (cube.getWorld().provider.hasSkyLight()) { size += storage.getSkyLight().getData().length; }
-            }
-        }
-        size += 256 * Integer.BYTES * cubes.size();
-        for (Cube cube : cubes) {
-            byte[] biomeArray = cube.getBiomeArray();
-            if (biomeArray == null)
-                continue;
-            size += biomeArray.length;
-        }
+        LongOpenHashSet counted = new LongOpenHashSet();
+        for (Cube cube : cubes) { size += getEncodedSize(cube, !cube.isEmpty() && counted.add(ChunkPos.asLong(cube.getX(), cube.getZ()))); }
         return size;
     }
 

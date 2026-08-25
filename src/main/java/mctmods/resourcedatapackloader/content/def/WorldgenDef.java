@@ -58,6 +58,7 @@ public final class WorldgenDef {
     public final SpreadDef spread;
     public List<ResourceLocation> caveRegions = Collections.emptyList();
     public String snap = "";
+    public int snapDepth;
     private String token;
     @Nullable private IBlockState state;
     @Nullable private IContentShape figure;

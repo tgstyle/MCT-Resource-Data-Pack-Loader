@@ -677,6 +677,12 @@ public final class ContentParser {
             snap = "";
         }
         made.snap = snap;
+        int depth = JsonUtils.getInt(json, "snapDepth", 0);
+        if (depth < 0) {
+            ContentLog.LOGGER.error("Worldgen {} asks for snapDepth {}, which is below zero, so it stays at the surface", key, depth);
+            depth = 0;
+        }
+        made.snapDepth = snap.isEmpty() ? 0 : depth;
         return made;
     }
 

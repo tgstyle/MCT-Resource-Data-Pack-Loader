@@ -130,6 +130,8 @@ public final class ContentBiomes3D {
 
     @Nullable public static Biome registered(BiomeDef def) { return biome(def.registryName.toString()); }
 
+    @Nullable public static Biome named(String registryName) { return registryName.isEmpty() ? null : biome(registryName); }
+
     private static String named(Biome biome) {
         ResourceLocation named = biome.getRegistryName();
         return named == null ? "" : named.toString().toLowerCase(Locale.ROOT);

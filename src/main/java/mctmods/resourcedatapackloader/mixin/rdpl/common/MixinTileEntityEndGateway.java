@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 
 import net.minecraft.tileentity.TileEntityEndGateway;
@@ -11,22 +12,26 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(TileEntityEndGateway.class) public class MixinTileEntityEndGateway {
     @Redirect(method = "findExitPortal", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/chunk/Chunk;getTopFilledSegment()I"))
-    private int getChunkTopFilledSegmentExitFromPortal(Chunk chunk) {
-        int top = chunk.getTopFilledSegment();
-        return Math.max(top, 0);
-    }
+    private int getChunkTopFilledSegmentExitFromPortal(Chunk chunk) { return rdpl$topFilled(chunk); }
 
     @Redirect(method = "findSpawnpointInChunk", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/chunk/Chunk;getTopFilledSegment()I"))
-    private static int getChunkTopFilledSegmentFindSpawnpoint(Chunk chunk) {
+    private static int getChunkTopFilledSegmentFindSpawnpoint(Chunk chunk) { return rdpl$topFilled(chunk); }
+
+    @Unique private static int rdpl$topFilled(Chunk chunk) {
         int top = chunk.getTopFilledSegment();
-        return Math.max(top, 0);
+        if (!((IRubicWorld) chunk.getWorld()).rdpl$isRubicWorld()) { return top; }
+        for (ICube cube : ((IColumn) chunk).getLoadedCubes()) {
+            if (!cube.isEmpty()) { return Math.max(top, 0); }
+        }
+        return 0;
     }
 
     /**

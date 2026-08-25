@@ -86,8 +86,13 @@ public final class ContentWorldgen implements IWorldGenerator {
                     BlockPos pos = ContentSpread.position(def, world, random, region, baseX, baseZ);
                     if (pos == null) { continue; }
                     if (!def.snap.isEmpty()) {
-                        pos = snap(world, pos, "ceiling".equals(def.snap));
+                        boolean ceiling = "ceiling".equals(def.snap);
+                        pos = snap(world, pos, ceiling);
                         if (pos == null) { continue; }
+                        if (def.snapDepth > 0) {
+                            pos = ceiling ? pos.up(def.snapDepth) : pos.down(def.snapDepth);
+                            if (world.isOutsideBuildHeight(pos) || !world.isBlockLoaded(pos)) { continue; }
+                        }
                     }
                     if (!def.caveRegions.isEmpty()) {
                         CaveRegionDef cave = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
