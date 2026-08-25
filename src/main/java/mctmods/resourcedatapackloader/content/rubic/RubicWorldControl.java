@@ -5,12 +5,14 @@ import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer;
 import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.fml.common.StartupQuery;
@@ -85,6 +87,16 @@ public final class RubicWorldControl {
     }
 
     private static final AtomicBoolean OFFSET_WARNED = new AtomicBoolean();
+
+    public static int generatedCeiling(World world) {
+        int actual = world.provider.getActualHeight();
+        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return actual; }
+        if (ContentControl.text(ContentControl.TERRAIN, "skyStone", Config.worldgen.skyStone).trim().isEmpty()) { return actual; }
+        int top = ((IMinMaxHeight) world).rdpl$getMaxHeight();
+        int[] band = ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights);
+        if (band.length == 2 && band[0] < band[1]) { top = Math.min(top, band[1] + (terrainOffsetCubes() << 4) + 1); }
+        return Math.max(actual, top);
+    }
 
     public static boolean rubicWorld(ChunkProviderServer provider) {
         return provider instanceof CubeProviderServer && ((IRubicWorld) provider.world).rdpl$isRubicWorld();

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Config;
@@ -63,7 +64,7 @@ public final class ContentSeams {
         if (below == null && above == null) { return; }
         boolean rubic = ((IRubicWorld) world).rdpl$isRubicWorld();
         int floor = rubic ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
-        int ceiling = world.provider.getActualHeight();
+        int ceiling = RubicWorldControl.generatedCeiling(world);
         boolean carryEntities = ContentControl.flag(ContentControl.TERRAIN, "worldSeamEntities", Config.worldgen.worldSeamEntities);
         List<Entity> falling = null;
         List<Entity> rising = null;
@@ -99,7 +100,7 @@ public final class ContentSeams {
         WorldServer destination = server.getWorld(target);
         boolean rubic = ((IRubicWorld) destination).rdpl$isRubicWorld();
         int floor = rubic ? ((IMinMaxHeight) destination).rdpl$getMinHeight() : 0;
-        int ceiling = destination.provider.getActualHeight();
+        int ceiling = RubicWorldControl.generatedCeiling(destination);
         double arriveY = down ? ceiling - INSET_DOWN : floor + INSET_UP;
         boolean walking = entity instanceof EntityPlayerMP;
         if (walking && down) { SeamMemory.of(world).noteEntry((int) Math.floor(entity.posX), (int) Math.floor(entity.posZ)); }
