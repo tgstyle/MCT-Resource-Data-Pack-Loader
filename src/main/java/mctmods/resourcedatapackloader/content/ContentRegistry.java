@@ -78,7 +78,7 @@ public final class ContentRegistry {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (!Config.content.load) { return; }
+        if (!Config.registersToClients()) { return; }
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             ResourceLocation key = held.getKey();
             if (ContentOwners.reserved(key)) { continue; }

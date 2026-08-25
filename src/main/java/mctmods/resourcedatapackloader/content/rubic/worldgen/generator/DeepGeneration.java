@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes3D;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -48,6 +49,7 @@ public class DeepGeneration {
     private static final int SKY_LOOKUP = 8;
     private static final double SKY_SLOPE_LIMIT = 3.0D;
     private static final double CAVE_THRESHOLD = 0.0D;
+    private static final String[] SCOPES = {"off", "deep", "world"};
     private final World world;
     private final long seed;
     private final int offsetBlocks;
@@ -136,6 +138,9 @@ public class DeepGeneration {
         this.ravines = Boolean.parseBoolean(scoped("deepRavines", String.valueOf(Config.worldgen.deepRavines)))
                 ? new DeepRavines(this, seed, Coords.blockToCube(offsetBlocks) - 1) : null;
         this.aquifer = new RubicAquifer(world, seed, genFloor + 10, offsetBlocks, barrierState(), this);
+        ContentLog.LOGGER.info("Deep and sky settings for dimension {}: deepStone={} noiseCaves={} deepRavines={} oreVeins={} skyStone={} skyShape={}",
+                dimension, deepStone == null ? "none" : deepStone.getBlock().getRegistryName(), SCOPES[caveScope], ravines != null, veins.size(),
+                skyStone == null ? "none" : skyStone.getBlock().getRegistryName(), skyShape == SKY_CAVES ? "caves" : "islands");
     }
 
     private String scoped(String key, String fallback) {

@@ -193,6 +193,8 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 
 Die rechte Spalte ist eine harte Grenze: Ein Vanilla-Client, der in eine unbekannte Dimension geschickt wird, fliegt sofort raus, und unbekannte Blöcke lassen sich ihm nicht beschreiben. Die linke Spalte funktioniert, weil alles darin entweder vollständig serverseitig läuft oder den Client über Pakete erreicht, die Vanilla ohnehin spricht (vom Server gefülltes Ergebnisfeld der Werkbank, gewöhnliche Fortschrittspakete, Statusmeldungen bei abgelehnten Toren, ein Vorgenerierungs-Halt aus Vanilla-Paketen für Spielmodus, Titel und Teleport).
 
+`worldtemplates` liegt mit einer Ausnahme auf der Serverseite: **`rubicWorld` und `vanillaClients` schließen sich aus**. Eine Rubic-Welt besteht aus Würfeln, und einem Client ohne die Mod lassen sie sich nicht schicken – er flöge beim Anmelden raus oder sähe schlicht nichts. Sind beide gesetzt, entsteht eine gewöhnliche Welt statt einer Rubic-Welt, und das Log sagt warum; ein Server, der jeden Spieler abweist, entsteht so gar nicht erst. Nur ein Fall hält das Spiel wirklich an: `vanillaClients` einzuschalten für eine Welt, die bereits als Rubic-Welt angelegt wurde. Ihre Würfel liegen auf der Platte, sie als gewöhnliche Welt zu laden würde sie zerstören, also bleibt sie unangetastet und die Entscheidung bei dir.
+
 Einrichtung:
 
 1. Schalte `vanillaClients` in der Config ein (Kategorie `content`, braucht einen Neustart). Das erzwingt die rechte Spalte: Diese Ordner werden beim Laden übersprungen, jede übersprungene Datei steht namentlich im Log – aus einer durchgerutschten Blockdatei wird eine Logzeile statt einer abgelehnten Verbindung.

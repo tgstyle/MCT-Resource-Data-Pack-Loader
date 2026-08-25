@@ -34,7 +34,7 @@ public final class ContentMaterials {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (!Config.content.load) { return; }
+        if (!Config.registersToClients()) { return; }
         PackManager.get().forEach(PackManager.MATERIALS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try { read(key, contents); }

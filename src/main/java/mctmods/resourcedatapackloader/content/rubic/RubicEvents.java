@@ -42,6 +42,9 @@ public class RubicEvents {
         WorldSavedRubicData savedData =
                 (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData");
         boolean savedRubic = savedData != null && savedData.isRubicWorld;
+        if (savedRubic && mctmods.resourcedatapackloader.util.Config.content.vanillaClients) {
+            mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.standDownForVanillaClients("this world was made as a rubic world");
+        }
         boolean claimed = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.claims(world.provider.getDimension());
         boolean rubicWorldInfo = ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() && claimed && (savedData == null || savedData.isRubicWorld);
         boolean isRubic = savedRubic || rubicWorldInfo;

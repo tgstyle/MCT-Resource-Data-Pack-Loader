@@ -53,7 +53,7 @@ public final class ContentPotions {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (!Config.content.potions) { return false; }
+        if (!Config.registersToClients() || !Config.content.potions) { return false; }
         PackManager.get().forEach(PackManager.POTIONS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }

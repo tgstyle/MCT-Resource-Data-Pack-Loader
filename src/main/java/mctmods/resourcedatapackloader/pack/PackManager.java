@@ -266,15 +266,15 @@ public final class PackManager {
     public void warnAboutDisabledFeatures() {
         if (packs.isEmpty()) { return; }
         List<String[]> off = new ArrayList<>();
-        collect(off, Config.content.load, "content.load", JSON, BLOCKS, ITEMS, FLUIDS, MATERIALS);
-        collect(off, Config.content.sounds, "content.sounds", JSON, SOUNDS);
+        clientSide(off, Config.content.load, "content.load", JSON, BLOCKS, ITEMS, FLUIDS, MATERIALS);
+        clientSide(off, Config.content.sounds, "content.sounds", JSON, SOUNDS);
         collect(off, Config.content.fuels, "content.fuels", JSON, FUELS);
         collect(off, Config.content.oreDictionary, "content.oreDictionary", JSON, OREDICT);
-        collect(off, Config.content.potions, "content.potions", JSON, POTIONS, POTION_TYPES);
+        clientSide(off, Config.content.potions, "content.potions", JSON, POTIONS, POTION_TYPES);
         collect(off, Config.content.brewing, "content.brewing", JSON, BREWING);
-        collect(off, Config.content.villagers, "content.villagers", JSON, VILLAGERS, TRADES);
-        collect(off, Config.content.biomes, "content.biomes", JSON, BIOMES);
-        collect(off, Config.content.dimensions, "content.dimensions", JSON, DIMENSIONS);
+        clientSide(off, Config.content.villagers, "content.villagers", JSON, VILLAGERS, TRADES);
+        clientSide(off, Config.content.biomes, "content.biomes", JSON, BIOMES);
+        clientSide(off, Config.content.dimensions, "content.dimensions", JSON, DIMENSIONS);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
         collect(off, Config.content.entities, "content.entities", JSON, ENTITIES);
         collect(off, Config.content.hardness, "content.hardness", JSON, HARDNESS);
@@ -290,14 +290,27 @@ public final class PackManager {
             for (String[] entry : off) {
                 int count = pack.count(entry[0], entry[1]);
                 if (count == 0) { continue; }
-                ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), but {} is off in the config, so they do nothing", pack.getName(), count, entry[0], entry[2]);
+                ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), but {}, so they do nothing", pack.getName(), count, entry[0], entry[2]);
             }
         }
     }
 
     private static void collect(List<String[]> off, boolean enabled, String setting, String ext, String... types) {
+        because(off, enabled, setting + " is off in the config", ext, types);
+    }
+
+    /** For content a client must also know about, which vanillaClients stops no matter what its own setting says. */
+    private static void clientSide(List<String[]> off, boolean enabled, String setting, String ext, String... types) {
+        if (Config.content.vanillaClients) {
+            because(off, false, "content.vanillaClients is on and they are the sort a client would need too", ext, types);
+            return;
+        }
+        collect(off, enabled, setting, ext, types);
+    }
+
+    private static void because(List<String[]> off, boolean enabled, String reason, String ext, String... types) {
         if (enabled) { return; }
-        for (String type : types) { off.add(new String[] { type, ext, setting }); }
+        for (String type : types) { off.add(new String[] { type, ext, reason }); }
     }
 
     public void report() {

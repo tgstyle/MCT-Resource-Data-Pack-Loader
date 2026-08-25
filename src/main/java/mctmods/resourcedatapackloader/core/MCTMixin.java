@@ -39,13 +39,7 @@ import java.util.Map;
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
         Lang.load();
         if (Config.content.vanillaClients) {
-            Config.content.load = false;
-            Config.content.sounds = false;
-            Config.content.potions = false;
-            Config.content.villagers = false;
-            Config.content.biomes = false;
-            Config.content.dimensions = false;
-            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, villagers and their trades, biomes and dimensions in packs are all skipped and named below; everything that lives on the server alone still applies");
+            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, villagers and their trades, biomes and dimensions in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates and recipes, still applies");
         }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug);
         LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",
@@ -66,7 +60,7 @@ import java.util.Map;
         LOGGER.info("Config tweaks: promptLeafDecay={} lenientPaths={}", Config.tweaks.promptLeafDecay, Config.tweaks.lenientPaths);
         PackManager.get().report();
         PackManager.get().warnAboutDisabledFeatures();
-        if (Config.content.load) {
+        if (Config.registersToClients()) {
             ContentRegistry.registerFluids();
             MinecraftForge.EVENT_BUS.register(ContentRegistry.class);
             MinecraftForge.EVENT_BUS.register(ContentSounds.class);

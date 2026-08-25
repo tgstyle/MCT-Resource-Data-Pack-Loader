@@ -23,9 +23,41 @@ public final class RubicWorldControl {
 
     public static boolean wanted() {
         if (!ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false)) { return false; }
+        if (Config.content.vanillaClients) {
+            if (!VANILLA_CLIENTS_WARNED.getAndSet(true)) {
+                ContentLog.LOGGER.error(vanillaClientsMessage("a pack asks for a rubic world")
+                        + " This world is being made plain instead. Turn content.vanillaClients off if the rubic world is what you want,"
+                        + " or take the rubicWorld setting out of the pack if serving clients without the mod is.");
+            }
+            return false;
+        }
         if (!RDPLMixinPlugin.cubicChunksPresent()) { return true; }
         standDown();
         return false;
+    }
+
+    private static final AtomicBoolean VANILLA_CLIENTS_WARNED = new AtomicBoolean();
+
+    /**
+     * A rubic world is made of cubes, which a client without this mod has no way to be told about, so the two settings
+     * cannot both hold.
+     */
+    private static String vanillaClientsMessage(String because) {
+        return "content.vanillaClients is on, but " + because + "."
+                + " A rubic world is made of cubes, and a client without this mod cannot be sent them: it would be turned away at login, or see nothing at all.";
+    }
+
+    /**
+     * Only for a world already made as a rubic world, where carrying on would load its cubes as a plain world and ruin
+     * the save. Making a new world simply does not turn rubic on, which needs no such stop.
+     */
+    public static void standDownForVanillaClients(String because) {
+        String message = vanillaClientsMessage(because)
+                + " Its cubes are on disk, so loading it as a plain world would ruin it: it is left untouched and nothing has been written."
+                + " Turn content.vanillaClients off to load this world as the rubic world it is, or leave it alone and serve clients without the mod from a different world.";
+        ContentLog.LOGGER.error(message);
+        StartupQuery.notify(message);
+        StartupQuery.abort();
     }
 
     public static boolean claims(int dimension) {

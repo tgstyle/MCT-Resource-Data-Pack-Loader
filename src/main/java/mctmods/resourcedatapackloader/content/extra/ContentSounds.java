@@ -26,7 +26,7 @@ public final class ContentSounds {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (!Config.content.sounds) { return; }
+        if (!Config.registersToClients() || !Config.content.sounds) { return; }
         PackManager.get().forEach(PackManager.SOUNDS, PackManager.JSON, (namespace, path, contents) ->
                 NAMES.add(new ResourceLocation(namespace, path)));
     }

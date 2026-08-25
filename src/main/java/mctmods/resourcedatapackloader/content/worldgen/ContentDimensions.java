@@ -30,7 +30,7 @@ public final class ContentDimensions {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (!Config.content.load || !Config.content.dimensions) { return; }
+        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
         PackManager.get().forEach(PackManager.DIMENSIONS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             try {

@@ -87,7 +87,7 @@ public final class ContentBiomes {
     public static boolean load() {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
-        if (!Config.content.biomes) { return false; }
+        if (!Config.registersToClients() || !Config.content.biomes) { return false; }
         PackManager.get().forEach(PackManager.BIOMES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }

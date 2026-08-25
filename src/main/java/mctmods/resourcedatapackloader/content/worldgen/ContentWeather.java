@@ -26,7 +26,7 @@ public final class ContentWeather {
 
     @Nullable public static Integer ceilingFor(int dimension) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        String[] asked = ContentControl.list(ContentControl.TERRAIN, KEY, Config.worldgen.weatherCeiling);
+        String[] asked = ContentControl.lines(ContentControl.TERRAIN, KEY, Config.worldgen.weatherCeiling);
         if (asked.length == 0) { return null; }
         if (!Arrays.equals(asked, raw)) {
             Integer bare = null;

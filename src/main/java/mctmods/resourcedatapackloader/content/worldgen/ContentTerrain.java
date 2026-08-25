@@ -75,7 +75,7 @@ public final class ContentTerrain {
 
     @Nullable public static EnumDifficulty difficultyFor(int dimension) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        String[] asked = ContentControl.list(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty);
+        String[] asked = ContentControl.lines(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty);
         if (asked.length == 0) { return null; }
         if (!Arrays.equals(asked, difficultyRaw)) {
             EnumDifficulty everywhere = null;

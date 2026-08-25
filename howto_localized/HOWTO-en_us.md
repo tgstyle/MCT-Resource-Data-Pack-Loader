@@ -193,6 +193,8 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 
 The right-hand column is a hard stop: a vanilla client sent to an unknown dimension disconnects, and unknown blocks cannot be described to it. The left-hand column works because everything there either runs entirely server-side or reaches the client through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
 
+`worldtemplates` is server-side with one exception: **`rubicWorld` cannot be used with `vanillaClients`**. A rubic world is made of cubes, and a client without the mod cannot be sent them, so it would be turned away at login or see nothing at all. With both set, new worlds are made plain rather than rubic and the log says why, instead of leaving a server that turns every player away. Switching `vanillaClients` on for a world that was *already* made as a rubic world is the one case that stops the game outright: loading such a save as a plain world would ruin it, so it is left untouched for you to decide.
+
 Setup:
 
 1. Enable `vanillaClients` in the config (`content` category, needs a restart). It enforces the right-hand column: those folders are skipped at load and each skipped file is named in the log, so a slipped block file becomes a log line instead of a refused connection.

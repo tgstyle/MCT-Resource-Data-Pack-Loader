@@ -44,7 +44,7 @@ public final class ContentVillagers {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (!Config.content.villagers) { return false; }
+        if (!Config.registersToClients() || !Config.content.villagers) { return false; }
         PackManager.get().forEach(PackManager.VILLAGERS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             if (ContentOwners.reserved(key)) { return; }

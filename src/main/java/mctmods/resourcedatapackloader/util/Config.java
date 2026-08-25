@@ -19,6 +19,10 @@ import mctmods.resourcedatapackloader.pack.PackManager;
     @net.minecraftforge.common.config.Config.Comment("Chunks held loaded around a world's spawn point") public static Chunks chunks = new Chunks();
     @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that can be opened up") public static Commands commands = new Commands();
 
+    /** Whether pack content that a client must also know about may register. Turning on vanillaClients stops all of it,
+     *  while leaving the parts that live on the server alone, such as ore veins, gates and world templates, running. */
+    public static boolean registersToClients() { return content.load && !content.vanillaClients; }
+
     public static class Control {
         @net.minecraftforge.common.config.Config.Comment("Ore blocking and the ore whitelists [default|global|off]") public String ores = "default";
         @net.minecraftforge.common.config.Config.Comment("Biome blocking, the biome whitelists and the world template [default|global|off]") public String biomes = "default";
@@ -46,7 +50,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
     }
 
     public static class Content {
-        @net.minecraftforge.common.config.Config.Comment("Serve plain vanilla clients: nothing from any pack is registered — no blocks, items, fluids, materials, sounds, potions, villagers or their trades, biomes or dimensions — so a client without the mod can join. Everything that lives on the server alone still applies. See Server-side packs in HOWTO.md. Requires a restart [Default=false]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean vanillaClients = false;
+        @net.minecraftforge.common.config.Config.Comment("Serve plain vanilla clients: nothing from any pack is registered — no blocks, items, fluids, materials, sounds, potions, villagers or their trades, biomes or dimensions — so a client without the mod can join. Everything that lives on the server alone still applies. Cannot be used with rubicWorld, which needs the mod on the client: with both set a new world is made plain rather than rubic, and a world already made as a rubic world is left untouched and the game stops. See Server-side packs in HOWTO.md. Requires a restart [Default=false]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean vanillaClients = false;
         @net.minecraftforge.common.config.Config.Comment("Register the blocks and items described by blocks/*.json and items/*.json in packs. Turning this off leaves worlds containing them with missing blocks. Requires a restart [Default=true]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean load = true;
         @net.minecraftforge.common.config.Config.Comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]") public boolean hardness = true;
         @net.minecraftforge.common.config.Config.Comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]") public boolean overrides = true;
