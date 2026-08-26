@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
+import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -107,7 +108,7 @@ public final class BeardPlaza {
                 if (band < 1) { continue; }
                 at.setPos(x, ground, z);
                 if (!clip.isVecInside(at) || BeardPlots.underBuilding(start, piece, x, z)) { continue; }
-                if (world.getBlockState(world.getTopSolidOrLiquidBlock(at).down()).getMaterial().isLiquid()) { continue; }
+                if (world.getBlockState(GroundLevel.inWindow(world, at).down()).getMaterial().isLiquid()) { continue; }
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, ground + 4);
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);
                 at.setPos(x, ground, z);

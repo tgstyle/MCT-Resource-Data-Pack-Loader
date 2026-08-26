@@ -55,6 +55,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     @Nonnull private IBlockState extensionBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
     @Nonnull private IBlockState fillBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
     private boolean hasTopBedrock = false, hasBottomBedrock = true;
+    private static final int SKY_GROWTH_CUBES = 2;
     private DeepGeneration deep;
     private boolean deepPopulation;
     private boolean skyPopulation;
@@ -310,6 +311,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                     0, rdpl$populationCeilingOffset(cube), 0
             );
         }
+        if (rdpl$decoratesSky(vanillaY)) { return new Box(-1, -SKY_GROWTH_CUBES, -1, 0, 0, 0); }
         return NO_REQUIREMENT;
     }
 
@@ -321,8 +323,11 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                     1, rdpl$populationCeilingOffset(cube), 1
             );
         }
+        if (rdpl$decoratesSky(vanillaY)) { return new Box(0, 0, 0, 1, SKY_GROWTH_CUBES, 1); }
         return NO_REQUIREMENT;
     }
+
+    private boolean rdpl$decoratesSky(int vanillaY) { return vanillaY >= worldHeightCubes && deep != null && deep.wantsSky(); }
 
     private int rdpl$populationCeilingOffset(ICube cube) {
         int vanillaY = cube.getY() - offsetCubes;

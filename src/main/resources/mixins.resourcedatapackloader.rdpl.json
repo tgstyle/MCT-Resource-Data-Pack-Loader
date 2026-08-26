@@ -127,6 +127,7 @@
     "common.MixinMapGenMineshaft",
     "common.MixinMapGenNetherBridge",
     "common.MixinMapGenScatteredFeature",
+    "common.MixinScatteredFeature",
     "common.MixinMapGenStronghold",
     "common.MixinMapGenStructure",
     "common.MixinMapGenStructureData",

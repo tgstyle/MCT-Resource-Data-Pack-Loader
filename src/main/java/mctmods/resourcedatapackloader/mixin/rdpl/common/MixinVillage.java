@@ -5,7 +5,9 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -15,10 +17,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.block.state.IBlockState;
 
 @Mixin(StructureVillagePieces.Village.class) public abstract class MixinVillage extends StructureComponent {
+    @Redirect(method = "getAverageGroundLevel", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"))
+    private BlockPos rdpl$seatInWindow(World world, BlockPos pos) { return GroundLevel.inWindow(world, pos); }
+
     @SuppressWarnings({"ConstantConditions"}) @Inject(method = "getAverageGroundLevel", at = @At("RETURN"), cancellable = true) private void rdpl$leanLow(World worldIn, StructureBoundingBox structurebb, CallbackInfoReturnable<Integer> cir) {
         if (!ContentBeard.wanted()) { return; }
 

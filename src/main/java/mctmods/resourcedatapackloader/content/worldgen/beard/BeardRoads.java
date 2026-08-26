@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
+import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStone;
@@ -271,7 +272,7 @@ public final class BeardRoads {
                     int z = alongX ? across : least + i;
                     BlockPos spot = new BlockPos(x, 64, z);
                     if (!clip.isVecInside(spot)) { continue; }
-                    BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
+                    BlockPos top = GroundLevel.inWindow(world, spot).down();
                     if (top.getY() < world.getSeaLevel() - 1 || world.getBlockState(top).getMaterial().isLiquid()) { continue; }
                     if (top.getY() > found) { found = top.getY(); }
                 }
@@ -320,7 +321,7 @@ public final class BeardRoads {
                     if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because it lies outside the patch of land it was asked for, {}, {} to {}, {}", box.minX, box.minZ, x, z, clip.minX, clip.minZ, clip.maxX, clip.maxZ); }
                     continue;
                 }
-                BlockPos top = world.getTopSolidOrLiquidBlock(spot).down();
+                BlockPos top = GroundLevel.inWindow(world, spot).down();
                 if (top.getY() < world.getSeaLevel()) { top = new BlockPos(x, world.getSeaLevel() - 1, z); }
                 if (profile[i] == Integer.MIN_VALUE) {
                     boolean wet = false;
@@ -772,8 +773,9 @@ public final class BeardRoads {
             int z = alongX ? across : row;
             BlockPos spot = new BlockPos(x, 64, z);
             if (!world.isBlockLoaded(spot)) { continue; }
-            IBlockState held = world.getBlockState(world.getTopSolidOrLiquidBlock(spot).down());
-            if (held == path || held == gravel) { return world.getTopSolidOrLiquidBlock(spot).down().getY(); }
+            BlockPos top = GroundLevel.inWindow(world, spot).down();
+            IBlockState held = world.getBlockState(top);
+            if (held == path || held == gravel) { return top.getY(); }
         }
         return Integer.MIN_VALUE;
     }

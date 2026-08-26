@@ -164,18 +164,30 @@ public class DeepGeneration {
     public void fillSkyCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {
         int worldTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1 - (skyShape == SKY_CAVES ? 0 : SKY_HEADROOM);
         int worldBase = Coords.cubeToMinBlock(cubeY);
-        if (worldBase >= worldTop) { return; }
+        boolean tracing = Rubic.LOGGER.debugEnabled();
+        if (worldBase >= worldTop) {
+            if (tracing) { Rubic.LOGGER.debug("Sky cube {},{},{} left empty: its floor y {} is at or above the sky ceiling y {}", cubeX, cubeY, cubeZ, worldBase, worldTop); }
+            return;
+        }
         int genBase = worldBase - offsetBlocks;
-        if (genBase + Cube.SIZE - 1 < skyLowest || genBase > skyHighest) { return; }
+        if (genBase + Cube.SIZE - 1 < skyLowest || genBase > skyHighest) {
+            if (tracing) { Rubic.LOGGER.debug("Sky cube {},{},{} left empty: gen y {}..{} falls outside skyHeights {}..{}", cubeX, cubeY, cubeZ, genBase, genBase + Cube.SIZE - 1, skyLowest, skyHighest); }
+            return;
+        }
         int steps = (Cube.SIZE + SKY_LOOKUP) / 8 + 1;
         double[][][] regions = null;
         if (skyShape != SKY_CAVES) {
             regions = sampleRegionLattice(cubeX << 4, genBase, cubeZ << 4, steps);
-            if (strongest(regions) <= skyMaskIslands) { return; }
+            double[] ends = span(regions);
+            if (ends[1] <= skyMaskIslands) {
+                if (tracing) { Rubic.LOGGER.debug("Sky cube {},{},{} left empty: mask {} to {} never clears {}, corners {} and {}", cubeX, cubeY, cubeZ, fixed(ends[0]), fixed(ends[1]), fixed(skyMaskIslands), fixed(regions[0][0][0]), fixed(regions[4][0][4])); }
+                return;
+            }
         }
         double[][][] lattice = sampleLattice(cubeX << 4, genBase, cubeZ << 4, steps);
         int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
         Biome[] column = world.getBiomeProvider().getBiomes(null, cubeX << 4, cubeZ << 4, Cube.SIZE, Cube.SIZE);
+        int placed = 0;
         for (int z = 0; z < Cube.SIZE; z++) {
             for (int x = 0; x < Cube.SIZE; x++) {
                 Biome biome = column[(z << 4) | x];
@@ -203,10 +215,20 @@ public class DeepGeneration {
                     primer.setBlockState(x, y, z, WorldGenUtils.getRandomBedrockReplacement(world, rand, state,
                             Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock));
                     under++;
+                    placed++;
                 }
             }
         }
+        if (tracing) {
+            double[] ends = regions == null ? new double[] {Double.NaN, Double.NaN} : span(regions);
+            Rubic.LOGGER.debug("Sky cube {},{},{} laid {} of 4096, mask {} to {}, corners {} and {}, islands {} thickness {}",
+                    cubeX, cubeY, cubeZ, placed, fixed(ends[0]), fixed(ends[1]),
+                    fixed(regions == null ? Double.NaN : regions[0][0][0]), fixed(regions == null ? Double.NaN : regions[4][0][4]),
+                    fixed(skyIslands), fixed(skyThickness));
+        }
     }
+
+    private static String fixed(double value) { return Double.isNaN(value) ? "n/a" : String.format("%.4f", value); }
 
     private Biome skySurfaceBiome(Biome column, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
         if (region != null && region.hasBiome()) {
@@ -343,14 +365,19 @@ public class DeepGeneration {
         return distance / (double) skyTaper;
     }
 
-    private double strongest(double[][][] regions) {
-        double best = -1.0D;
+    private double strongest(double[][][] regions) { return span(regions)[1]; }
+
+    private double[] span(double[][][] regions) {
+        double[] ends = {Double.MAX_VALUE, -1.0D};
         for (double[][] plane : regions) {
             for (int y = 0; y < Cube.SIZE / 8 + 1; y++) {
-                for (double value : plane[y]) { best = Math.max(best, value); }
+                for (double value : plane[y]) {
+                    ends[0] = Math.min(ends[0], value);
+                    ends[1] = Math.max(ends[1], value);
+                }
             }
         }
-        return best;
+        return ends;
     }
 
     private double[][][] sampleRegionLattice(int worldX, int genY, int worldZ, int ySteps) {
@@ -660,7 +687,7 @@ public class DeepGeneration {
     private static double parseIslands(float value) {
         if (value >= -1.0F && value <= 1.0F) { return value; }
         Rubic.LOGGER.error("skyIslands is {}, which is outside -1 to 1, so the islands keep their usual reach", value);
-        return 0.2D;
+        return 0.5D;
     }
 
     private static double parseThickness(float value) {

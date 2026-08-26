@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -184,7 +185,7 @@ public final class BeardSite {
             for (int x = minX; x <= maxX; x++) {
                 at.setPos(x, 64, z);
                 if (!clip.isVecInside(at)) { continue; }
-                lowest = Math.min(lowest, Math.max(worldIn.getTopSolidOrLiquidBlock(at).getY(), floor));
+                lowest = Math.min(lowest, Math.max(GroundLevel.inWindow(worldIn, at).getY(), floor));
             }
         }
         return lowest;
