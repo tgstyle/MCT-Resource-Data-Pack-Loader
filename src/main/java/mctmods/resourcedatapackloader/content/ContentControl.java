@@ -34,6 +34,7 @@ public final class ContentControl {
     private static final Set<String> WARNED = new LinkedHashSet<>();
     private static final Set<String> KNOWN = new LinkedHashSet<>(Arrays.asList(
             "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeWhitelist",
+            "biomeTemperatureCenterY", "biomeTemperatureHeightFactor", "biomeTemperatureScaleMaxY",
             "blockBiomeDimensions", "blockBiomeDimensionsAreBlacklist", "blockBiomes", "blockFurnaceRecipes",
             "blockGeneratorDimensions", "blockGeneratorDimensionsAreBlacklist", "blockOres", "blockRecipes",
             "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist", "blockReplacementKey",
@@ -52,6 +53,7 @@ public final class ContentControl {
             "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels",
             "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
             "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
+            "verticalCubeLoadDistance", "cubesSentPerTick", "cubeGenMillisPerRound", "cubeGCInterval",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
             "undergroundNightMonsterRate", "villageBlocks", "villagePieces", "villagePiecesAreBlacklist",
             "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
