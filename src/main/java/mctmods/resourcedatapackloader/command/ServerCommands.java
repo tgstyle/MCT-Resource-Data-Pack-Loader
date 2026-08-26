@@ -5,6 +5,7 @@ import static mctmods.resourcedatapackloader.command.CommandShared.send;
 import static mctmods.resourcedatapackloader.command.CommandShared.unused;
 import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeNames;
+import static mctmods.resourcedatapackloader.command.CommandShared.biomeAt;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
@@ -33,6 +34,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.rcon.RConConsoleSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -76,7 +78,7 @@ public class ServerCommands extends CommandBase {
 
     @Override public int getRequiredPermissionLevel() { return OPERATOR; }
 
-    @Override public boolean checkPermission(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) { return sender.canUseCommand(lowestOpenLevel(), getName()); }
+    @Override public boolean checkPermission(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) { return true; }
 
     private static int level(String key, int fallback) { return clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback)); }
 
@@ -95,7 +97,7 @@ public class ServerCommands extends CommandBase {
 
     private static int neededFor(String place, String key, int fallback) { return placeLevel(place, level(key, fallback)); }
 
-    private static int lowestOpenLevel() {
+    private static int lowestGotoLevel() {
         int lowest = OPERATOR;
         lowest = Math.min(lowest, level("gotoLevel", Config.commands.gotoLevel));
         lowest = Math.min(lowest, level("gotoNextLevel", Config.commands.gotoNextLevel));
@@ -109,12 +111,19 @@ public class ServerCommands extends CommandBase {
         return lowest;
     }
 
+    private List<String> openTo(ICommandSender sender) {
+        List<String> open = new ArrayList<>();
+        open.add("intro");
+        if (sender.canUseCommand(lowestGotoLevel(), getName())) { open.add("goto"); }
+        return open;
+    }
+
     private void allow(ICommandSender sender, int needed) throws CommandException {
         if (!sender.canUseCommand(needed, getName())) { throw new CommandException(Lang.tr(sender, "rdpl.command.notallowed")); }
     }
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? SUBCOMMANDS : Collections.singletonList("goto")); }
+        if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? SUBCOMMANDS : openTo(sender)); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
@@ -122,6 +131,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_ACTIONS); }
         if (args.length == 3 && "biome".equals(args[0]) && "list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("all")); }
         if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { return getListOfStringsMatchingLastWord(args, biomeNames()); }
+        if (args.length == 3 && "biome".equals(args[0]) && "here".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("relight")); }
         if (args.length == 4 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, names()); }
         if (args.length == 2 && "goto".equals(args[0])) {
@@ -142,7 +152,7 @@ public class ServerCommands extends CommandBase {
             else if (args.length == 3 && "back".equals(args[2])) { allow(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
             else { throw new WrongUsageException(getUsage(sender)); }
         }
-        else { allow(sender, OPERATOR); }
+        else if (args.length != 1 || !"intro".equals(args[0])) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
@@ -153,7 +163,8 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
         else if (args.length >= 2 && "biome".equals(args[0]) && "list".equals(args[1])) { biomeList(sender, args.length > 2 && "all".equals(args[2])); }
-        else if (args.length == 2 && "biome".equals(args[0]) && "here".equals(args[1])) { biomeHere(sender); }
+        else if (args.length == 2 && "biome".equals(args[0]) && "here".equals(args[1])) { here(sender); }
+        else if (args.length == 3 && "biome".equals(args[0]) && "here".equals(args[1])) { hereFor(server, sender, args[2]); }
         else if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { biomeFind(sender, args[2]); }
         else if (args.length >= 1 && "pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
@@ -356,6 +367,16 @@ public class ServerCommands extends CommandBase {
         List<String> names = new ArrayList<>();
         for (GateDef def : ContentGates.all().values()) { names.add(def.registryName.getPath()); }
         return names;
+    }
+
+    private void here(ICommandSender sender) throws CommandException {
+        if (sender instanceof MinecraftServer || sender instanceof RConConsoleSource) { throw new CommandException(Lang.tr(sender, "rdpl.command.hereplayer")); }
+        biomeHere(sender);
+    }
+
+    private void hereFor(MinecraftServer server, ICommandSender sender, String name) throws CommandException {
+        EntityPlayerMP player = getPlayer(server, sender, name);
+        biomeAt(sender, player.world, player.getPosition());
     }
 
     private void intro(ICommandSender sender) throws CommandException {

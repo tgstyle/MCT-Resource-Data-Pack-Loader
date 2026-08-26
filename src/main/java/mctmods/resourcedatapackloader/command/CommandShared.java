@@ -60,9 +60,10 @@ public final class CommandShared {
         return names;
     }
 
-    static void biomeHere(ICommandSender sender) {
-        BlockPos pos = sender.getPosition();
-        Biome biome = sender.getEntityWorld().getBiome(pos);
+    static void biomeHere(ICommandSender sender) { biomeAt(sender, sender.getEntityWorld(), sender.getPosition()); }
+
+    static void biomeAt(ICommandSender sender, World world, BlockPos pos) {
+        Biome biome = world.getBiome(pos);
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.here", biome.getBiomeName(), biome.getRegistryName(), Biome.getIdForBiome(biome)));
     }
 

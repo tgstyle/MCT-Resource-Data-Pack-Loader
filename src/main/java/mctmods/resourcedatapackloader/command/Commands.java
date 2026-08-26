@@ -7,7 +7,6 @@ import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeNames;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
-import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -198,7 +197,7 @@ import javax.annotation.Nullable;
     private void biome(ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 1 || "list".equals(args[1])) { biomeList(sender, args.length > 2 && "all".equals(args[2])); }
         else if ("here".equals(args[1])) { biomeHere(sender); }
-        else if (args.length >= 3 && "find".equals(args[1])) { biomeFind(sender, args[2]); }
+        else if (args.length >= 3 && "find".equals(args[1])) { forward(args); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
