@@ -2,7 +2,7 @@
 
 One folder that changes what Minecraft and your mods provide, adds new content from
 plain JSON, and controls what generates. It applies to every world, in singleplayer
-and on dedicated servers, and there is nothing to switch on.
+and on dedicated servers.
 
 - [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md), the full manual (English, Русский, Deutsch)
 - [Discord](https://discord.gg/ujY2mV9)

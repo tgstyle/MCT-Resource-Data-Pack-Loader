@@ -1559,7 +1559,8 @@ Jedes Pack-Grundstück wird den Dörfern als ein Eintrag angeboten, `weight` ent
 | `keepDefaultSpawns` | nein | boolean | `false` | Vanillas Liste neben deiner behalten |
 | `spawnChance` | nein | float, unter 1 | `0.1` | Wie wahrscheinlich beim ersten Erzeugen des Landes eine weitere Herde gesetzt wird. Das Spiel würfelt weiter, solange es Erfolg hat, `1` hört also nie auf und füllt die Welt, bis kein Platz mehr ist. Alles ab 0.99 wird abgelehnt und durch 0.99 ersetzt |
 | `spawnRates` | nein | Objekt aus `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` zu einem Faktor | keines | Wie oft feindliche Mobs hier spawnen, anstelle der globalen Einstellungen. Siehe unten |
-| `placement` | nein | Objekt |, | Wo es generiert. Siehe unten |
+| `placement` | nein | Objekt | keines | Wo es generiert. Siehe unten |
+| `villageType` | nein | `oak`, `sandstone`, `acacia` oder `spruce` | keiner | Woraus ein Dorf hier gebaut wird. Leer baut mit Eiche, wie auch ohne den Schlüssel |
 | `minHeight` | nein | int | keiner | Unterste y, ab der dieses Biom als 3D-Biom übernimmt. Wird eine der beiden Höhen gesetzt, wird das Biom zu einem Band: außerhalb behält die Säule ihr eigenes Biom, innerhalb meldet jede 4 mal 4 mal 4 große Zelle der Welt dieses. Nur auf Rubic-Welten, und beim Erzeugen des Landes angewandt, vorhandenes Land behält also seines |
 | `maxHeight` | nein | int | keiner | Oberste y dieses Bandes |
 | `replaces` | nein | Liste von Biomnamen | jedes Biom | Beschränkt das Band auf Säulen, deren eigenes Biom hier genannt ist, ein Alpenband kann also über Bergen liegen und sonst nirgends |
@@ -1582,6 +1583,24 @@ Bei `spawnRates` geht es ausschließlich um feindliche Mobs, um sonst nichts. Es
 | `villageSpawn` | nein | boolean | `true` | Dorfbewohner dürfen darin spawnen |
 | `strongholds` | nein | boolean | `false` | Festungen dürfen generieren |
 | `playerSpawn` | nein | boolean | `false` | Der Weltspawn darf hier liegen |
+
+**Temperatur nach Höhe.** Ein Biom kühlt mit der Höhe ab, was den Schnee auf Berggipfel bringt und Regen oberhalb einer Linie beendet. Drei Schlüssel der Gruppe `terrain` verschieben diese Kurve, was auf einer Rubic-Welt zählt, wo der Boden weit über oder unter der Höhe liegen kann, die das Spiel annimmt. Die Standardwerte sind das, was das Spiel tut, ein Pack, das sie in Ruhe lässt, ändert also nichts.
+
+```json
+{
+  "settings": {
+    "biomeTemperatureCenterY": 64,
+    "biomeTemperatureHeightFactor": -0.001667,
+    "biomeTemperatureScaleMaxY": 256
+  }
+}
+```
+
+| Schlüssel | Wert | Standard | Was er macht |
+| --- | --- | --- | --- |
+| `biomeTemperatureCenterY` | int | `64` | Die Höhe, ab der die Kurve gemessen wird. Auf ihr und darunter meldet ein Biom seine eigene `temperature` unverändert |
+| `biomeTemperatureHeightFactor` | float | `-0.001667` | Wie stark sich die Temperatur je Block oberhalb dieser Höhe verschiebt, die spieleigenen 0,05 über 30 Blöcke. Negativ kühlt mit der Höhe ab, positiv wärmt |
+| `biomeTemperatureScaleMaxY` | int | `256` | Die Höhe, bei der die Kurve endet, damit eine Welt, die höher ist als die des Spiels, nicht bis zur Decke weiter abkühlt |
 
 ## Dimensionen
 
@@ -1797,7 +1816,27 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 **CubicChunks.** Beide zusammen laufen nicht. Ist CubicChunks installiert und ein Pack verlangt `rubicWorld`, stoppt das Laden mit einer Meldung: CubicChunks herausnehmen, oder `rubicWorld` aus dem Pack nehmen und CubicChunks die Welten machen lassen.
 
-**Client.** Die Grafikeinstellungen bekommen einen Regler für die vertikale Sichtweite, das vertikale Gegenstück zur Sichtweite (`verticalCubeLoadDistance` in der Config). Alles Übrige in der Gruppe `terrain` – Vorgenerierung, Weltphysik, Spawn, Weltgrenze – gilt auf Rubic-Welten unverändert.
+**Cube-Streaming.** Vier Schlüssel der Gruppe `chunks` entscheiden, wie Cubes zu einem Spieler kommen und wann sie wieder losgelassen werden. Sie wirken nur auf Rubic-Welten, und die Standardwerte sind die Zahlen, mit denen das Subsystem abgestimmt wurde, sodass ein Pack, das sie in Ruhe lässt, nichts zahlt.
+
+```json
+{
+  "settings": {
+    "verticalCubeLoadDistance": 8,
+    "cubesSentPerTick": 649,
+    "cubeGenMillisPerRound": 50,
+    "cubeGCInterval": 200
+  }
+}
+```
+
+| Schlüssel | Wert | Standard | Was er macht |
+| --- | --- | --- | --- |
+| `verticalCubeLoadDistance` | int, Cubes | `8` | Wie viele Cubes über und unter einem Spieler ein Chunkloader-Ticket hält. Der gleichnamige Regler in den Grafikeinstellungen ist die Sichtweite des Klienten und wird von der spielenden Person gesetzt, nicht von einem Pack |
+| `cubesSentPerTick` | int, Cubes | `649` | Wie viele Cubes ein Spieler in einem Tick geschickt bekommen darf. Höher füllt die Sichtblase schneller und macht die Pakete je Tick größer; ein Paket wird weiterhin bei 1024 Cubes oder 512 KB geteilt, je nachdem was zuerst kommt |
+| `cubeGenMillisPerRound` | int, Millisekunden | `50` | Wie lange ein Tick Cubes generieren darf, auf die Spieler warten |
+| `cubeGCInterval` | int, Ticks | `200` | Wie oft Cubes losgelassen werden, die niemand beobachtet |
+
+**Client.** Die Grafikeinstellungen bekommen einen Regler für die vertikale Sichtweite, das vertikale Gegenstück zur Sichtweite (`verticalCubeLoadDistance` in der Config, die der spielenden Person gehört). Alles Übrige in der Gruppe `terrain` – Vorgenerierung, Weltphysik, Spawn, Weltgrenze – gilt auf Rubic-Welten unverändert.
 
 ## Die Tiefenwelt
 
@@ -1845,6 +1884,23 @@ Der Umfang `deep` lässt das Vanilla-Band, wie es ist, samt Lavafenster, und dic
 ## Höhlenregionen
 
 `caveregions/*.json` malt benannte Regionen über den Untergrund, das Pack-Gegenstück zu modernen Höhlenbiomen. Der Untergrund wird in gerundete Zellen geteilt — `caveRegionCells` Blöcke breit und `caveRegionCellsY` hoch, beides `terrain`-Schlüssel — und jede Zelle würfelt nach Gewicht eine Region, oder keine. Alles, was eine Region tut, folgt deterministisch aus dem Seed, Chunks stimmen also überein, ohne je über eine Grenze zu schreiben.
+
+```json
+{
+  "weight": 3,
+  "minHeight": -56,
+  "maxHeight": 16,
+  "biome": "minecraft:mushroom_island",
+  "floorCover": "minecraft:mycelium",
+  "floorChance": 0.8,
+  "keepDefaultSpawns": false,
+  "spawns": [
+    { "entity": "minecraft:mooshroom", "type": "creature", "weight": 12, "min": 2, "max": 4 }
+  ],
+  "structures": ["mypack:cave_shrine"],
+  "structureChance": 0.5
+}
+```
 
 | Schlüssel | Wert | Standard | Was er tut |
 | --- | --- | --- | --- |
@@ -2543,6 +2599,30 @@ Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Ra
 
 `villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
 
+**Kreuzungsmuster.** `villagePathIntersects` nennt Dateien aus dem Ordner `pathintersects/` eines Packs, und jede davon ist ein kleines Bild davon, was dort gemalt wird, wo zwei Straßen sich treffen, gezeichnet als Zeilen aus einzelnen Zeichen, ein Zeichen je Block.
+
+```json
+{
+  "name": "Crosswalk",
+  "weight": 3,
+  "legend": { "w": "minecraft:quartz_block", "y": "minecraft:wool@4" },
+  "mouth": ["wwww", "....", "wwww"],
+  "corner": ["yy.", "y..", "..."]
+}
+```
+
+| Schlüssel | Wert | Standard | Was er macht |
+| --- | --- | --- | --- |
+| `name` | Text | der Dateiname | Der Name, der im Log steht |
+| `weight` | int, ab 1 | `1` | Anteil der Kreuzungen, die dieses Muster gewinnt, wenn mehrere genannt sind |
+| `legend` | Objekt aus einem Zeichen zu einem Block | keines | Die Zeichen, die die Zeilen über die Rollen unten hinaus nutzen dürfen. Ein Zeichen, das bereits eine Rolle ist, wird mit einer Logzeile abgelehnt |
+| `mouth` | Liste aus Text | keine | Zeilen, die auf jeder Zufahrt außerhalb der kreuzenden Straße gemalt werden. Die erste Zeile liegt der Kreuzung am nächsten, die übrigen gehen nach außen. Die Zeichen laufen quer über die Straße und wiederholen sich, wo eine Zeile kürzer ist als die Straße breit |
+| `corner` | Liste aus Text | keine | Zeilen, die in der Kreuzung selbst gemalt werden. Die erste Zeile liegt der Kante der kreuzenden Straße am nächsten, und in einer Zeile liegt das erste Zeichen der eigenen Straßenkante am nächsten, weiter nach innen. Eine Zelle, die das Bild nicht erreicht, bleibt unangetastet |
+
+Fünf Zeichen sind Rollen statt Blöcke und folgen damit dem, womit die Straße ohnehin schon gedeckt ist: `r` ist die Straßenoberfläche, `l` die Randlinie, `s` der Gehweg, `.` lässt den Block genau so, wie er war, und `c` ist reserviert und malt die Straßenoberfläche. Eine Rolle, deren Block das Pack nie gesetzt hat, fällt auf die Straßenoberfläche zurück, und jedes andere Zeichen wird in der `legend` nachgeschlagen und fällt ebenfalls auf die Straßenoberfläche zurück.
+
+Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kreuzung berechnet, dieselbe Welt malt ihre Kreuzungen also immer gleich.
+
 ### Blast Plaster
 
 Was nach einer Explosion geschieht, aus `blastplaster/*.json`. `default` lässt Packs entscheiden, `global` übergeht Pack-Dateien und legt die Vorgaben dieses Mods über Blast Plasters Config, und `off` gibt Blast Plaster ganz an seine eigene Config zurück.
@@ -2898,6 +2978,7 @@ Unter `assets/<namespace>/`:
 | `materials` | Werkzeug- und Rüstungsmaterialien |
 | `biomes` | Biomdefinitionen |
 | `worldgen` | Was generiert, und wo |
+| `caveregions` | Benannte Regionen, über den Untergrund gelegt |
 | `dimensions` | Dimensionsdefinitionen |
 | `worldtemplates` | Die Einstellungen einer ganzen Welt in einer Datei |
 | `worldintro` | Seiten, die beim Betreten der Welt gezeigt werden |
@@ -2905,8 +2986,10 @@ Unter `assets/<namespace>/`:
 | `gamerules` | Spielregeln für neue Welten |
 | `entities` | Entity-Varianten, aufgebaut auf vorhandenen Entities |
 | `hardness` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen |
+| `exposures` | Gefahren, denen Spieler nahe an oder beim Tragen benannter Blöcke und Items ausgesetzt sind |
 | `overrides` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert |
 | `villages` | Grundstücke, die Dörfer bauen können |
+| `pathintersects` | Muster, die an Kreuzungen von Dorfstraßen gemalt werden |
 | `blastplaster` | Was Blast Plaster nach einer Explosion tut, pro Dimension |
 | `structures` | `.nbt`-Vorlagen, für Setzlinge, `imprint` und Mod-Overrides |
 | `recipes` | Handwerksrezepte, hinzugefügt oder ersetzt |

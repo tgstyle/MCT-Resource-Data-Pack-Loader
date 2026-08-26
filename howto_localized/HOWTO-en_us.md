@@ -1560,7 +1560,8 @@ Every pack plot is offered to villages as one entry, so `weight` decides which o
 | `keepDefaultSpawns` | no | boolean | `false` | Keep vanilla's list alongside yours |
 | `spawnChance` | no | float, below 1 | `0.1` | How likely another herd is placed as the land is first made. The game keeps rolling for as long as it succeeds, so 1 never stops and fills the world until it runs out of room. Anything at or above 0.99 is refused and 0.99 used |
 | `spawnRates` | no | object of `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` to a multiplier | none | How often hostile mobs spawn here, in place of the global settings. See below |
-| `placement` | no | object |, | Where it generates. See below |
+| `placement` | no | object | none | Where it generates. See below |
+| `villageType` | no | `oak`, `sandstone`, `acacia` or `spruce` | none | What a village standing here is built from. Empty builds with oak, as it would without the key |
 | `minHeight` | no | int | none | Lowest y this biome takes over as a 3D biome. Setting either height turns the biome into a band: the column keeps its own biome outside it, and inside it every 4 by 4 by 4 cell of the world reports this one. Rubic worlds only, and applied as land is made, so existing land keeps what it had |
 | `maxHeight` | no | int | none | Highest y of that band |
 | `replaces` | no | list of biome names | every biome | Restricts the band to columns whose own biome is named here, so an alpine band can sit over mountains and nothing else |
@@ -1583,6 +1584,24 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of the [creatur
 | `villageSpawn` | no | boolean | `true` | Villagers may spawn in them |
 | `strongholds` | no | boolean | `false` | Strongholds may generate |
 | `playerSpawn` | no | boolean | `false` | The world spawn may be placed here |
+
+**Temperature by height.** A biome cools as it rises, which is what puts snow on mountain tops and stops rain above a line. Three `terrain` keys move that curve, which matters on a rubic world where the ground can sit far above or below the height the game assumes. The defaults are what the game does, so a pack that leaves them alone changes nothing.
+
+```json
+{
+  "settings": {
+    "biomeTemperatureCenterY": 64,
+    "biomeTemperatureHeightFactor": -0.001667,
+    "biomeTemperatureScaleMaxY": 256
+  }
+}
+```
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `biomeTemperatureCenterY` | int | `64` | The height the curve is measured from. At or below it a biome reports its own `temperature` untouched |
+| `biomeTemperatureHeightFactor` | float | `-0.001667` | How much the temperature moves per block above that height, the game's own 0.05 across 30 blocks. Negative cools with altitude, positive warms |
+| `biomeTemperatureScaleMaxY` | int | `256` | The height the curve stops at, so a world taller than the game's own does not keep cooling all the way to its ceiling |
 
 ## Dimensions
 
@@ -1798,7 +1817,27 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 
 **CubicChunks.** Running both is not supported. With CubicChunks installed and a pack asking for `rubicWorld`, loading stops with a message: remove CubicChunks, or take `rubicWorld` out of the pack and let CubicChunks make the worlds.
 
-**Client.** Video settings gain a vertical render distance slider, the vertical analog of render distance (`verticalCubeLoadDistance` in the config). Everything else in the `terrain` group — pregeneration, world physics, spawn, border — applies to rubic worlds unchanged.
+**Cube streaming.** Four `chunks` keys decide how cubes reach a player and when they are let go again. They only do anything on a rubic world, and the defaults are the numbers the subsystem was tuned at, so a pack that leaves them alone pays nothing.
+
+```json
+{
+  "settings": {
+    "verticalCubeLoadDistance": 8,
+    "cubesSentPerTick": 649,
+    "cubeGenMillisPerRound": 50,
+    "cubeGCInterval": 200
+  }
+}
+```
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `verticalCubeLoadDistance` | int, cubes | `8` | How many cubes above and below a player a chunk loading ticket holds. The video settings slider of the same name is the client's own view distance, set by whoever is playing rather than by a pack |
+| `cubesSentPerTick` | int, cubes | `649` | How many cubes a player may be sent in one tick. Raising it fills a view bubble faster and makes each tick's packets larger; a packet is still split at 1024 cubes or 512 KB, whichever comes first |
+| `cubeGenMillisPerRound` | int, milliseconds | `50` | How long a tick may spend generating the cubes players are waiting on |
+| `cubeGCInterval` | int, ticks | `200` | How often cubes nobody is watching are let go |
+
+**Client.** Video settings gain a vertical render distance slider, the vertical analog of render distance (`verticalCubeLoadDistance` in the config, which belongs to whoever is playing). Everything else in the `terrain` group — pregeneration, world physics, spawn, border — applies to rubic worlds unchanged.
 
 ## The deep world
 
@@ -1846,6 +1885,23 @@ The `deep` scope leaves the vanilla band as it is, lava window included, and onl
 ## Cave regions
 
 `caveregions/*.json` paints named regions over the underground, the pack counterpart of modern cave biomes. The underground is divided into rounded cells — `caveRegionCells` blocks wide and `caveRegionCellsY` tall, both `terrain` keys — and each cell rolls one region, or none, by weight. Everything a region does comes deterministically from the seed, so chunks agree with each other without ever writing across a border.
+
+```json
+{
+  "weight": 3,
+  "minHeight": -56,
+  "maxHeight": 16,
+  "biome": "minecraft:mushroom_island",
+  "floorCover": "minecraft:mycelium",
+  "floorChance": 0.8,
+  "keepDefaultSpawns": false,
+  "spawns": [
+    { "entity": "minecraft:mooshroom", "type": "creature", "weight": 12, "min": 2, "max": 4 }
+  ],
+  "structures": ["mypack:cave_shrine"],
+  "structureChance": 0.5
+}
+```
 
 | Key | Value | Default | What it does |
 | --- | --- | --- | --- |
@@ -2544,6 +2600,30 @@ A road is dressed from the middle out: center line, then road, then edge lines, 
 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
 
+**Junction designs.** `villagePathIntersects` names files in a pack's `pathintersects/`, and each one is a small picture of what to paint where two roads meet, drawn as rows of single characters, one character to a block.
+
+```json
+{
+  "name": "Crosswalk",
+  "weight": 3,
+  "legend": { "w": "minecraft:quartz_block", "y": "minecraft:wool@4" },
+  "mouth": ["wwww", "....", "wwww"],
+  "corner": ["yy.", "y..", "..."]
+}
+```
+
+| Key | Value | Default | What it does |
+| --- | --- | --- | --- |
+| `name` | string | the file name | The name used in the log |
+| `weight` | int, 1 and up | `1` | Share of junctions this design wins when several are listed |
+| `legend` | object of one character to a block | none | The characters the rows may use beyond the roles below. A character that is already a role is refused with a log line |
+| `mouth` | list of strings | none | Rows painted on each approach, outside the crossing road. The first row is the one nearest the junction and the rest work outward. Characters run across the road and repeat where a row is shorter than the road is wide |
+| `corner` | list of strings | none | Rows painted inside the junction itself. The first row is the one nearest the crossing road's edge, and within a row the first character is the one nearest the road's own edge, working inward. A cell the picture does not reach is left alone |
+
+Five characters are roles rather than blocks, so they follow whatever the road is already dressed in: `r` is the road surface, `l` the edge line, `s` the sidewalk, `.` leaves the block exactly as it was, and `c` is reserved and paints the road surface. A role whose block the pack never set falls back to the road surface, and any other character is looked up in the `legend`, falling back to the road surface as well.
+
+Which design a junction gets is worked out from the world seed and the junction's own position, so the same world always paints the same junctions.
+
 ### Blast Plaster
 
 What happens after an explosion, from `blastplaster/*.json`. `default` lets packs decide, `global` ignores pack files and leaves this mod's own defaults over Blast Plaster's config, and `off` hands Blast Plaster back to its own config entirely.
@@ -2899,6 +2979,7 @@ Under `assets/<namespace>/`:
 | `materials` | Tool and armor materials |
 | `biomes` | Biome definitions |
 | `worldgen` | What generates, and where |
+| `caveregions` | Named regions painted over the underground |
 | `dimensions` | Dimension definitions |
 | `worldtemplates` | A whole world's settings in one file |
 | `worldintro` | Pages shown when a player enters the world |
@@ -2906,8 +2987,10 @@ Under `assets/<namespace>/`:
 | `gamerules` | Game rules for new worlds |
 | `entities` | Entity variants built on entities that already exist |
 | `hardness` | Mining time and blast multipliers for groups of blocks |
+| `exposures` | Hazards that expose players near or carrying named blocks and items |
 | `overrides` | Properties of existing blocks, items and potion types, changed in place |
 | `villages` | Plots villages can build |
+| `pathintersects` | Designs painted where village roads meet |
 | `blastplaster` | What Blast Plaster does after an explosion, per dimension |
 | `structures` | `.nbt` templates, for saplings, `imprint` and mod overrides |
 | `recipes` | Crafting recipes, added or replaced |
