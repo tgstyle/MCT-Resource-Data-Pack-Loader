@@ -13,6 +13,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 
 **Erste Schritte**
 - [Was es ist](#was-es-ist)
+- [Wo die Dateien liegen](#wo-die-dateien-liegen)
 - [Die Tabellen lesen](#die-tabellen-lesen)
 - [Die eine Regel](#die-eine-regel)
 - [Packs organisieren](#packs-organisieren)
@@ -29,6 +30,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Wie Definitionen funktionieren](#wie-definitionen-funktionieren)
 - [Blöcke](#blöcke)
 - [Modelle, Blockstates und Texturen](#modelle-blockstates-und-texturen)
+- [Blockstates nach Typ](#blockstates-nach-typ)
 - [Damit Vanilla deinen Block richtig behandelt](#damit-vanilla-deinen-block-richtig-behandelt)
 - [Items](#items)
 - [Flüssigkeiten](#flüssigkeiten)
@@ -64,7 +66,7 @@ Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Mo' Villages](#mo-villages)
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
-- [Blast Plaster](#blast-plaster-integration)
+- [Blast Plaster Integration](#blast-plaster-integration)
 - [Grab-Mods](#grab-mods)
 
 **Referenz**
@@ -88,6 +90,53 @@ Der Resource Data Pack Loader (RDPL) liest einen einzigen Ordner, `rdploader`, u
 - **Überschreiben.** Eine Datei im Ordner ersetzt die, die das Spiel oder ein Mod geladen hätte. Kein Schalter, keine Einrichtung pro Welt, nichts, was Spieler aktivieren müssen.
 - **Neuer Inhalt.** JSON-Definitionen registrieren Blöcke, Items, Flüssigkeiten, Biome, Dimensionen, Tränke und Dorfbewohner. Kein Java, kein Jar.
 - **Steuerung.** Erz-, Biom-, Struktur- oder Rezeptgenerierung blockieren, Grundgestein glätten, Spawnraten setzen, die Oberwelt leeren, Weltvorgaben festlegen.
+
+## Wo die Dateien liegen
+
+Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/*.json` ist auf der Platte also `assets/mypack/blocks/ruby_ore.json` für ein Pack mit dem Namespace `mypack`. Jeder Abschnitt wiederholt seinen eigenen Pfad unter der Überschrift, mit einer Notiz dazu, was aus diesem Pfad wird.
+
+| Pfad | Was darin liegt |
+| --- | --- |
+| `<namespace>/blocks/*.json` | Blockdefinitionen. [Blöcke](#blöcke) |
+| `<namespace>/items/*.json` | Itemdefinitionen. [Items](#items) |
+| `<namespace>/fluids/*.json` | Flüssigkeiten, mit Block und Eimer. [Flüssigkeiten](#flüssigkeiten) |
+| `<namespace>/materials/*.json` | Werkzeug- und Rüstungsmaterialien. [Materialien, Tabs, Sounds, Ore Dictionary](#materialien-tabs-sounds-ore-dictionary) |
+| `<namespace>/tabs/*.json` | Kreativtabs. [Materialien, Tabs, Sounds, Ore Dictionary](#materialien-tabs-sounds-ore-dictionary) |
+| `<namespace>/sounds/*.json` | Sound-Events. [Materialien, Tabs, Sounds, Ore Dictionary](#materialien-tabs-sounds-ore-dictionary) |
+| `<namespace>/oredict/*.json` | Ore-Dictionary-Namen. [Materialien, Tabs, Sounds, Ore Dictionary](#materialien-tabs-sounds-ore-dictionary) |
+| `<namespace>/biomes/*.json` | Biomdefinitionen. [Biome](#biome) |
+| `<namespace>/worldgen/*.json` | Was generiert, und wo. [Worldgen-Einträge](#worldgen-einträge) |
+| `<namespace>/caveregions/*.json` | Benannte Regionen, über den Untergrund gelegt. [Höhlenregionen](#höhlenregionen) |
+| `<namespace>/dimensions/*.json` | Dimensionsdefinitionen. [Dimensionen](#dimensionen) |
+| `<namespace>/worldtemplates/*.json` | Die Einstellungen einer ganzen Welt in einer Datei. [Weltvorlagen](#weltvorlagen) |
+| `<namespace>/worldintro/*.json` | Seiten, die beim Betreten der Welt gezeigt werden. [Welt-Intro](#welt-intro) |
+| `<namespace>/gates/*.json` | Bedingungen für Portale und Dimensionen. [Portale und Tore](#portale-und-tore) |
+| `<namespace>/gamerules/*.json` | Spielregeln für neue Welten. [Spielregeln](#spielregeln) |
+| `<namespace>/entities/*.json` | Entity-Varianten, aufgebaut auf vorhandenen Entities. [Entity-Varianten](#entity-varianten) |
+| `<namespace>/hardness/*.json` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen) |
+| `<namespace>/exposures/*.json` | Gefahren, denen Spieler nahe an oder beim Tragen benannter Blöcke und Items ausgesetzt sind. [Expositionen](#expositionen) |
+| `<namespace>/overrides/<target>/<name>.json` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben) |
+| `<namespace>/villages/*.json` | Grundstücke, die Dörfer bauen können. [Dorfgrundstücke](#dorfgrundstücke) |
+| `<namespace>/pathintersects/*.json` | Muster, die an Kreuzungen von Dorfstraßen gemalt werden. [Dorfwege](#dorfwege) |
+| `<namespace>/blastplaster/*.json` | Was Blast Plaster nach einer Explosion tut, pro Dimension. [Blast Plaster Integration](#blast-plaster-integration) |
+| `<namespace>/structures/*.nbt` | Vorlagen, für Setzlinge, `imprint` und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/recipes/*.json` | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/recipe_removals/*.json` | Rezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/furnace/*.json` | Ofenrezepte, hinzugefügt und entfernt. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe) |
+| `<namespace>/fuels/*.json` | Brenndauern. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe) |
+| `<namespace>/brewing/*.json` | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen) |
+| `<namespace>/potions/*.json` | Trankeffekte. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen) |
+| `<namespace>/potion_types/*.json` | Abgefüllte Tränke aus diesen Effekten. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen) |
+| `<namespace>/villagers/*.json` | Berufe der Dorfbewohner. [Dorfbewohner und Handel](#dorfbewohner-und-handel) |
+| `<namespace>/trades/*.json` | Was Laufbahnen kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel) |
+| `<namespace>/loot_tables/*.json` | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/loot_injections/*.json` | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/player_loot/*.json` | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute) |
+| `<namespace>/advancements/*.json` | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/functions/*.mcfunction` | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/registry_remap/*.json` | Alte Namen, auf neue abgebildet. [Registry-Umbenennungen](#registry-umbenennungen) |
+| `<namespace>/texts/*.txt` | Reine Textdateien, genutzt vom Welt-Intro. [Welt-Intro](#welt-intro) |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Die üblichen Asset-Ordner. [Modelle, Blockstates und Texturen](#modelle-blockstates-und-texturen) |
 
 ## Die Tabellen lesen
 
@@ -211,8 +260,8 @@ Einrichtung:
 - **Alles im assets-Ordner eines Mods**: Texturen, Modelle, Blockstates, Sprachdateien, Sounds, Schriftarten, Splash-Texte, Handbücher, Anleitungen
 - **Fortschritte und Beutetabellen**, serverseitig, sie funktionieren also auch auf dedizierten Servern
 - **Rezepte**: das Rezept eines Mods ersetzen oder ein eigenes hinzufügen
-- **Strukturvorlagen**: die `.nbt`-Dateien, die Mods für generierte Gebäude nutzen, unter `structures/`
-- **Funktionen**: die `.mcfunction`-Dateien unter `functions/`
+- **Strukturvorlagen**: die `.nbt`-Dateien, die Mods für generierte Gebäude nutzen, unter `<namespace>/structures/`
+- **Funktionen**: die `.mcfunction`-Dateien unter `<namespace>/functions/`
 - **Registry-Umbenennungen**: alte Welten am Leben halten, wenn ein Mod einen Block oder ein Item umbenennt
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
@@ -223,6 +272,28 @@ Einrichtung:
 RDPL eignet sich gut dafür, ein oder zwei Rezepte zu ersetzen, und Rezepte für eigenen Inhalt gehören mit in dasselbe Pack. Für volle Rezeptkontrolle über ein ganzes Modpack sind CraftTweaker und GroovyScript die besseren Werkzeuge, und eine Datei hier ersetzt das Original weiterhin vollständig – um also eine einzelne Zutat zu ändern oder einen einzelnen Beuteeintrag zu streichen, nimm die beiden.
 
 ### Pack-Optionen
+
+Alle Schlüssel, die eine Optionsdatei annimmt:
+
+```json
+{
+  "hide": false,
+  "enableTestingContent": true,
+  "enableLoserBlocks": {
+    "default": false,
+    "hide": true,
+    "description": "Registers the loser blocks"
+  }
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| ein Optionsname | ja | boolean oder ein Objekt | | `true` oder `false` ist der Standard der Option. Ein Objekt trägt die drei Schlüssel darunter |
+| `hide` auf oberster Ebene | nein | boolean | `false` | Hält die Optionen dieses Packs komplett aus dem Optionsbildschirm und aus der erzeugten Datei heraus, während sie den Inhalt weiterhin mit ihren Standardwerten steuern |
+| `default` | nein | boolean | `false` | Der Wert der Option, bis der Nutzer ihn ändert |
+| `hide` innerhalb einer Option | nein | boolean | `false` | Versteckt nur diese eine Option, sie kann also nicht umgelegt werden und bleibt auf ihrem Standard |
+| `description` | nein | String | keine | Wird im Optionsbildschirm unter dem Namen der Option angezeigt |
 
 Ein Pack kann neben seinem `assets` einen `config`-Ordner tragen, mit JSON-Dateien voller true/false-Optionen und ihren Standardwerten:
 
@@ -310,19 +381,45 @@ Ein `imprint`-Eintrag mit `"locateAs": "Crypt"` registriert jede Struktur, die e
 
 ## Eigenschaften überschreiben
 
-`overrides/<namespace>/<name>.json`
+`<namespace>/overrides/<target>/<name>.json`
+
+Der Pfad benennt das Ziel: Alles nach `overrides/` ist Namespace und Name des Blocks, Items oder Tranktyps, der geändert wird.
 
 Alles andere in diesem Kapitel ersetzt eine Datei oder fügt eine hinzu. Ein Override tut keins von beidem: Es ändert die Eigenschaften eines Blocks, Items oder Tranktyps, den es schon gibt, Vanilla oder Mod, ohne eine seiner Dateien anzufassen. Der Pfad benennt das Ziel: `overrides/minecraft/stone.json` ändert `minecraft:stone`, und `overrides/tconstruct/<name>.json` ändert den Block dieses Mods auf dieselbe Weise.
 
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
+
 ```json
 {
+  "requires": ["tconstruct"],
   "hardness": 0.1,
+  "resistance": 3.0,
+  "slipperiness": 0.98,
   "light": 10,
-  "soundType": "glass"
+  "lightOpacity": 0,
+  "soundType": "glass",
+  "harvestTool": "pickaxe",
+  "harvestToolLevel": 2,
+  "flammability": 5,
+  "fireSpread": 5,
+  "maxStackSize": 16,
+  "maxDamage": 250,
+  "containerItem": "minecraft:bucket",
+  "food": {
+    "heal": 4,
+    "saturation": 0.3,
+    "alwaysEdible": true,
+    "effects": [
+      { "potion": "minecraft:speed", "duration": 200, "amplifier": 1, "ambient": false, "showParticles": true }
+    ]
+  },
+  "effects": [
+    { "potion": "minecraft:levitation", "duration": 200, "amplifier": 0, "ambient": false, "showParticles": true }
+  ]
 }
 ```
 
-Diese Datei, unter `overrides/minecraft/stone.json`, lässt Stein fast sofort abbauen, leuchten und wie Glas klingen. Jeder Schlüssel ist optional; eine Datei ändert nur, was sie benennt. Diese gelten, wenn das Ziel ein Block ist:
+Jeder Schlüssel ist optional und eine Datei ändert nur, was sie benennt: Eine Datei unter `overrides/minecraft/stone.json` mit `hardness`, `light` und `soundType` allein lässt Stein fast sofort abbauen, leuchten und wie Glas klingen. Eine Datei trägt Block-, Item- und Trankschlüssel zusammen. Diese gelten, wenn das Ziel ein Block ist:
 
 | Schlüssel | Wert | Was er tut |
 | --- | --- | --- |
@@ -391,7 +488,11 @@ Overrides brauchen das Pack auf Client und Server, denn Abbaugeschwindigkeit, Li
 
 ## Registry-Umbenennungen
 
-Wenn ein Mod einen seiner Blöcke oder Items umbenennt, verlieren Welten, die vor der Umbenennung gespeichert wurden, sie. Leg eine Datei in `registry_remap/`, die den alten Namen auf den neuen abbildet:
+`<namespace>/registry_remap/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
+Wenn ein Mod einen seiner Blöcke oder Items umbenennt, verlieren Welten, die vor der Umbenennung gespeichert wurden, sie. Leg hier eine Datei ab, die den alten Namen auf den neuen abbildet:
 
 ```json
 {
@@ -404,7 +505,11 @@ Die Registry ist die, zu der der Eintrag gehört, meist `minecraft:items` oder `
 
 ## Spielerbeute
 
-Vanilla 1.12 gibt Spielern keine Beutetabelle – beim Tod fällt nur das Inventar, und es gibt keinen Tabellennamen, den ein Pack überschreiben könnte. RDPL ergänzt eine: Eine Datei in `player_loot/` wird beim Tod eines Spielers ausgewürfelt:
+`<namespace>/player_loot/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
+Vanilla 1.12 gibt Spielern keine Beutetabelle – beim Tod fällt nur das Inventar, und es gibt keinen Tabellennamen, den ein Pack überschreiben könnte. RDPL ergänzt eine, die beim Tod eines Spielers ausgewürfelt wird:
 
 ```json
 {
@@ -482,24 +587,63 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 
 ## Blöcke
 
-`blocks/*.json`
+`<namespace>/blocks/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Blocks, `mypack/blocks/ruby_ore.json` registriert also `mypack:ruby_ore`. Die Schlüssel in `variants` benennen die Metadatenwerte dieses einen Blocks; eigene Blöcke sind sie nicht.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. Ein Schlüssel, der für einen Typ vermerkt ist, wird nur von diesem Typ gelesen.
 
 ```json
 {
+  "inherits": "mypack:ore_template",
   "type": "ore",
   "material": "rock",
   "soundType": "stone",
+  "mapColor": "red",
   "harvestTool": "pickaxe",
   "harvestToolLevel": 2,
-  "creativeTab": "mypack:tab",
+  "silkHarvest": true,
+  "opensWith": "mypack:ruby_key",
+  "openSound": "block.chest.open",
   "expDrop": { "min": 3, "max": 7 },
+  "creativeTab": "mypack:tab",
+  "renderLayer": "solid",
+  "opaque": true,
+  "fullCube": true,
+  "lightOpacity": 255,
+  "slipperiness": 0.6,
+  "flammability": 0,
+  "fireSpread": 0,
+  "explosionResistanceDivisor": 1.0,
+  "modelBlock": "minecraft:stone",
+  "modelMeta": 0,
+  "itemModel": "state",
+  "tint": "biome",
+  "plantTypes": ["Plains", "Crop"],
+  "behavesAs": ["till", "path"],
+  "bounds": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
   "requires": ["mypack"],
+  "particle": "colored",
+  "particleColor": "C0304A",
+  "smoke": true,
+  "leafSapling": "mypack:ruby_sapling",
+  "leafSaplingChance": 5,
+  "seed": "mypack:ruby_seed",
+  "produce": "mypack:ruby_fruit",
+  "maxAge": 7,
+  "growth": { "stages": 8, "growth": 10 },
+  "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
+  "portal": { "dimension": 12 },
   "variants": {
     "ruby_ore": {
       "meta": 0,
       "hardness": 3.0,
       "resistance": 5.0,
+      "light": 0,
       "harvestLevel": 2,
+      "rarity": "rare",
+      "maxSize": 64,
+      "oreDict": ["oreRuby"],
       "drops": [
         { "block": "mypack:ruby", "amount": { "min": 1, "max": 2 }, "bonusChance": [1, 2] }
       ]
@@ -545,7 +689,7 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `variants` | ja | Objekt aus Variantenname zu Variante |, | Ein Eintrag pro Metadatenwert. Der Schlüssel wird zum Registry-Namen |
+| `variants` | ja | Objekt aus Variantenname zu Variante |, | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
 | `type` | nein | einer der Typen oben | `basic` | Welche Form der Block annimmt |
 | `material` | nein | eines der [Blockmaterialien](#wertelisten) | `rock` | Abbauverhalten, Kolben, Feuer und Flüssigkeiten |
 | `soundType` | nein | einer der [Sound-Typen](#wertelisten) | vom Material | Schritte, Abbauen und Setzen |
@@ -596,6 +740,7 @@ Die meisten Definitionen nehmen außerdem `requires` an, eine Liste von Mod-IDs 
 | `harvestLevel` | nein | 0 bis 3 | der Wert der Datei | Überschreibt die Werkzeugstufe für diese Variante |
 | `rarity` | nein | `common`, `uncommon`, `rare`, `epic` | `common` | Farbe des Namens im Tooltip |
 | `maxSize` | nein | 1 bis 64 | `64` | Stapelgröße |
+| `oreDict` | nein | Liste von Ore-Dictionary-Namen | keine | Ore-Dictionary-Namen, unter denen diese Variante eingetragen wird |
 | `drops` | nein | Liste von Drops | droppt sich selbst | Was das Abbauen bringt |
 
 **Metadaten sind endgültig.** Die Zahl, die eine Variante beansprucht, wird in jede gespeicherte Welt geschrieben, die sie enthält. Varianten später umzunummerieren oder umzusortieren macht aus gesetzten Blöcken etwas anderes. Häng neue Varianten hinten an und benutze eine Zahl nie ein zweites Mal.
@@ -607,7 +752,7 @@ Ein `basic`-Block fasst sechzehn Varianten, ein `slab` acht, `log` und `leaves` 
 ```json
 {
   "drops": [
-    { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "bonusChance": [1, 2, 3] },
+    { "block": "mypack:ruby", "meta": 0, "amount": { "min": 1, "max": 3 }, "chance": 100, "guaranteed": true, "bonusChance": [1, 2, 3] },
     { "block": "minecraft:coal", "amount": 1, "chance": 25 },
     { "block": "minecraft:diamond", "weight": 1 },
     { "block": "minecraft:emerald", "weight": 4 },
@@ -642,11 +787,16 @@ Für `crop`, `flower`, `cane` und `vine`.
   "growth": {
     "stages": 8,
     "growth": 10,
+    "spread": 1,
     "maxHeight": 3,
+    "drop": "mypack:reed",
+    "dropCount": 1,
+    "needsSky": false,
     "needsWater": true,
     "waterRange": 2,
-    "drop": "mypack:reed",
-    "dropCount": 1
+    "damage": false,
+    "damageAmount": 1.0,
+    "breaksNeighbors": false
   }
 }
 ```
@@ -668,7 +818,7 @@ Für `crop`, `flower`, `cane` und `vine`.
 
 ### Setzlinge
 
-Entweder ein Baum aus Blöcken:
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
@@ -680,12 +830,13 @@ Entweder ein Baum aus Blöcken:
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false
+    "vines": false,
+    "structure": "mypack:ruby_tree"
   }
 }
 ```
 
-… oder eine deiner Strukturvorlagen, und das ist der Weg, etwas zu bauen, was ein Generator nicht hinbekommt:
+Ein `structure` ersetzt den generierten Baum durch eine deiner Vorlagen, und das ist der Weg, etwas zu bauen, was ein Generator nicht hinbekommt; sonst muss nichts im Block stehen:
 
 ```json
 {
@@ -730,9 +881,102 @@ Jeder Block mit mehr als einer Variante bekommt eine Eigenschaft namens `blocks`
 }
 ```
 
-Auch ein Block mit nur einer Variante behält die `blocks`-Eigenschaft, sein Schlüssel bleibt also `blocks=<name>`. Nur die Typen unten ganz ohne Varianten-Eigenschaft schlüsseln anders.
+Auch ein Block mit nur einer Variante behält die `blocks`-Eigenschaft, sein Schlüssel bleibt also `blocks=<name>`, aber nur bei den Typen, die diese Eigenschaft überhaupt haben. Elf Typen verbrauchen ihre gesamten Metadaten für ihre Form, halten eine Variante und tragen keine `blocks`-Eigenschaft, sie schlüsseln also allein über ihre eigenen Eigenschaften. [Blockstates nach Typ](#blockstates-nach-typ) sagt, welche welche sind.
 
-Hat der Block eigene Eigenschaften, werden sie mit Kommas verbunden, in der Reihenfolge, in der der Zustand sie auflistet: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Zwei bleiben mit Absicht weg: die eigene Varianteneigenschaft einer Mauer sowie `check_decay` und `decayable` eines Blätterblocks – Blätter brauchen also nur `blocks=ruby_leaves`. Ein Banner hat gar keine Varianteneigenschaft und wird stehend über `rotation=0` bis `15` und an der Wand über `facing=north` angesprochen, siehe [Banner](#banner).
+Hat der Block eigene Eigenschaften, werden sie mit Kommas verbunden, in der Reihenfolge, in der der Zustand sie auflistet: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_wall,up=true,north=true`. Eine Treppe hat keine `blocks`-Eigenschaft, sie wird also allein über `facing=east,half=bottom,shape=straight` angesprochen. Zwei Eigenschaften bleiben mit Absicht weg: die eigene Varianteneigenschaft einer Mauer sowie `check_decay` und `decayable` eines Blätterblocks – Blätter brauchen also nur `blocks=ruby_leaves`. Ein Banner hat gar keine Varianteneigenschaft und wird stehend über `rotation=0` bis `15` und an der Wand über `facing=north` angesprochen, siehe [Banner](#banner).
+
+### Blockstates nach Typ
+
+Zwei Dinge entscheiden, was in einer Blockstate-Datei stehen muss: ob der Typ die `blocks`-Eigenschaft trägt und welche Eigenschaften er selbst hat.
+
+| Typ | Registriert | Blockstate-Eigenschaften | Varianten |
+| --- | --- | --- | --- |
+| `basic`, `ore`, `falling` | einen Block | `blocks` | 16 |
+| `flower` | einen Block | `blocks` | 16 |
+| `portal` | einen Block | `blocks` | 16 |
+| `fence`, `pane` | einen Block | `blocks`, `north`, `east`, `south`, `west` | 16 |
+| `wall` | einen Block | `blocks`, `up`, `north`, `east`, `south`, `west` | 16 |
+| `slab` | zwei, `<name>` und `<name>_double` | die halbe Stufe `blocks` und `half`, die doppelte nur `blocks` | 8 |
+| `log` | einen Block | `blocks`, `axis`, also `x`, `y`, `z` oder `none` | 4 |
+| `leaves` | einen Block | `blocks` | 4 |
+| `stairs` | einen Block | `facing`, `half`, `shape` | 1 |
+| `door` | einen Block | `facing`, `half`, `hinge`, `open` | 1 |
+| `trapdoor` | einen Block | `facing`, `half`, `open` | 1 |
+| `fence_gate` | einen Block | `facing`, `in_wall`, `open` | 1 |
+| `banner` | zwei, `<name>` und `<name>_wall` | stehend `rotation`, `0` bis `15`, an der Wand `facing` | 1 |
+| `ladder`, `torch` | einen Block | `facing`, eine Fackel ergänzt `up` zu den vier Wänden | 1 |
+| `crop` | einen Block | `age`, immer `0` bis `7`, egal was `maxAge` sagt | 1 |
+| `cane` | einen Block | `age`, `0` bis `15` | 1 |
+| `sapling` | einen Block | `stage`, `0` bis eins weniger als `stages` | 1 |
+| `vine` | einen Block | `up`, `north`, `east`, `south`, `west`, und nur als Multipart | 1 |
+
+Vier Eigenschaften werden dir abgenommen, schreib die Schlüssel also ohne sie: `powered` bei Türen und Toren, `variant` bei Mauern sowie `check_decay` und `decayable` bei Blättern.
+
+Eine Feldfrucht behält Vanillas acht `age`-Werte, egal welchen `maxAge` sie hat, denn `maxAge` entscheidet nur, wie weit sie wächst; ihr Blockstate schreibt also immer `age=0` bis `age=7`.
+
+Zwei Typen registrieren einen zweiten Block. Das `<name>_double` einer Stufe braucht einen eigenen Blockstate, geschlüsselt über `blocks` ohne `half`, und bekommt nie ein eigenes Item. Das `<name>_wall` eines Banners behandelt [Banner](#banner).
+
+**Vine ist der eine Typ, der das Forge-Format nicht nutzen kann**, weil `forge_marker` kein Multipart unterstützt; sein Blockstate ist also eine gewöhnliche Vanilla-`multipart`-Liste mit der Textur im Modell.
+
+**Das Forge-Format ist kürzer, und das Beispielpack nutzt genau dieses.** Ein Vanilla-Blockstate schreibt jede Kombination als eigenen Schlüssel aus, bei einer Treppe sind das vierzig. Mit `"forge_marker": 1` listet die Datei jede Eigenschaft einmal auf und das Spiel kombiniert sie, dieselben vierzig Zustände sind also elf Einträge:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "stairs",
+    "textures": {
+      "bottom": "mypack:blocks/ruby_brick",
+      "top": "mypack:blocks/ruby_brick",
+      "side": "mypack:blocks/ruby_brick"
+    },
+    "uvlock": true
+  },
+  "variants": {
+    "inventory": [{}],
+    "facing": { "east": { "y": 0 }, "south": { "y": 90 }, "west": { "y": 180 }, "north": { "y": 270 } },
+    "half": { "bottom": {}, "top": { "x": 180 } },
+    "shape": {
+      "straight": {},
+      "inner_left": { "model": "inner_stairs" },
+      "inner_right": { "model": "inner_stairs" },
+      "outer_left": { "model": "outer_stairs" },
+      "outer_right": { "model": "outer_stairs" }
+    }
+  }
+}
+```
+
+`defaults` wird in jeden Eintrag hineingemischt, ein bloßer Modellname wie `stairs` bedeutet `minecraft:block/stairs`, und `inventory` ist das Modell für das Item in der Hand. Die drei Treppenvorlagen `stairs`, `inner_stairs` und `outer_stairs` nehmen die Texturen `bottom`, `top` und `side`.
+
+**Die verbindenden Typen ergänzen pro Seite ein Submodell.** Ein Zaun, eine Scheibe oder eine Mauer hat einen Boolean je Richtung, und ein `true` klebt ein weiteres Modell an den Pfosten, statt ihn zu ersetzen:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "fence_post",
+    "textures": { "texture": "mypack:blocks/ruby_planks" },
+    "uvlock": true
+  },
+  "variants": {
+    "blocks": {
+      "oak": { "textures": { "texture": "mypack:blocks/ruby_planks" } },
+      "birch": { "textures": { "texture": "mypack:blocks/pale_planks" } }
+    },
+    "north": { "true": { "submodel": { "north": { "model": "fence_side", "uvlock": true } } }, "false": {} },
+    "east": { "true": { "submodel": { "east": { "model": "fence_side", "y": 90, "uvlock": true } } }, "false": {} },
+    "south": { "true": { "submodel": { "south": { "model": "fence_side", "y": 180, "uvlock": true } } }, "false": {} },
+    "west": { "true": { "submodel": { "west": { "model": "fence_side", "y": 270, "uvlock": true } } }, "false": {} }
+  }
+}
+```
+
+Die Vorlagen sind `fence_post` und `fence_side` mit einer `texture`; `wall_post` und `wall_side` mit einer `wall`, dazu `block` für den Fall ohne Pfosten; und `pane_post`, `pane_side`, `pane_side_alt`, `pane_noside` und `pane_noside_alt` mit einer `pane` und einer `edge`. Alle wollen `"uvlock": true`.
+
+Der Rest kommt mit einer einzigen Vorlage aus. `cube_all` nimmt ein `all` und ist das, was ein `basic`-, `ore`-, `falling`- oder `leaves`-Block will. `cube_column` nimmt ein `end` und ein `side`, das ist ein `log`, gedreht über `axis`. `cross` nimmt ein `cross` und ist das, was ein `flower`, `cane` oder `sapling` will; ein `crop` nutzt eigene Modelle je Stufe. Eine Stufe braucht zwei eigene Modelle, eine untere und eine obere Hälfte, da sie als Form statt als Würfel gezeichnet wird.
+
+**Das Beispielpack ist die ausgearbeitete Referenz.** [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) bringt für jeden Typ in der Tabelle oben eine Definition, einen Blockstate und Modelle mit, im Vanilla- wie im Forge-Format, eine nicht offensichtliche Form ist also schneller kopiert als hergeleitet.
 
 ### Item-Modelle
 
@@ -824,8 +1068,10 @@ Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die P
 
 ```json
 {
+  "extends": "mypack:textures/blocks/panel_template",
   "size": "16x16",
   "palette": { "s": "#EDE9E2", "d": "#C6C1B5", "e": "#9E988C", "p": "#F6F4EF" },
+  "tint": { "from": "#626669", "to": "#DBDFE2" },
   "notes": {
     "s": "the flat surface",
     "d": "shadow inside the border",
@@ -981,17 +1227,40 @@ Vanilla erkennt seine eigenen Blöcke an einem Dutzend Stellen an ihrer Identit�
 
 ## Items
 
-`items/*.json`
+`<namespace>/items/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Items, `mypack/items/ruby.json` registriert also `mypack:ruby`. Die Schlüssel in `variants` benennen die Metadatenwerte dieses einen Items, und das Modell zu jedem liegt unter `models/item/ruby/<Schlüssel>.json`.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. Ein Schlüssel, der für einen Typ vermerkt ist, wird nur von diesem Typ gelesen.
 
 ```json
 {
+  "inherits": "mypack:food_template",
   "type": "food",
   "creativeTab": "mypack:tab",
+  "material": "mypack:ruby",
+  "toolClass": "pickaxe",
+  "slot": "head",
   "eat": true,
-  "useDuration": 32,
   "alwaysEdible": false,
+  "useDuration": 32,
+  "attackSpeed": -2.4,
+  "cooldown": 40,
+  "container": "minecraft:glass_bottle",
+  "crop": "mypack:ruby_crop",
+  "soil": "minecraft:farmland",
+  "potionTypes": ["mypack:ruby_tonic"],
+  "requires": ["mypack"],
   "variants": {
-    "ruby_apple": { "meta": 0, "healAmount": 6, "saturation": 0.8, "rarity": "rare" },
+    "ruby_apple": {
+      "meta": 0,
+      "maxSize": 64,
+      "rarity": "rare",
+      "healAmount": 6,
+      "saturation": 0.8,
+      "oreDict": ["foodRuby"],
+      "potion": "minecraft:speed,600,1"
+    },
     "dried_ruby_apple": { "meta": 1, "healAmount": 3, "saturation": 0.4 }
   }
 }
@@ -1012,7 +1281,7 @@ Ein `potion_bottle` listet mit `potionTypes` auf, was es fassen kann, als Array 
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `variants` | ja | Objekt aus Variantenname zu Variante |, | Ein Eintrag pro Metadatenwert. Der Schlüssel wird zum Registry-Namen |
+| `variants` | ja | Objekt aus Variantenname zu Variante |, | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
 | `type` | nein | einer der Typen oben | `basic` | Welchen Typ das Item annimmt |
 | `creativeTab` | nein | Tab-Name | keiner | Der Tab, in dem es auftaucht |
 | `material` | tool, armor | Materialname | keiner | Aus welchem deiner Materialien es gemacht ist |
@@ -1037,10 +1306,14 @@ Variantenschlüssel:
 | `rarity` | nein | `common`, `uncommon`, `rare`, `epic` | `common` | Farbe des Namens im Tooltip |
 | `healAmount` | food | int, halbe Hähnchenkeulen | `0` | Wiederhergestellter Hunger |
 | `saturation` | food | float | `0.0` | Wiederhergestellte Sättigung |
+| `oreDict` | nein | Liste von Ore-Dictionary-Namen | keine | Ore-Dictionary-Namen, unter denen diese Variante eingetragen wird |
+| `potion` | food, drink | `potion,duration,amplifier` | keiner | Ein Effekt, der beim Essen oder Trinken der Variante angewandt wird. Ein vierter Teil, `true`, macht ihn umgebend. Ein guter Effekt wird im Tooltip genannt |
 
 ## Flüssigkeiten
 
-`fluids/*.json`
+`<namespace>/fluids/*.json`
+
+Der Pfad der Datei ist der Registry-Name der Flüssigkeit, sofern `name` ihn nicht überschreibt.
 
 ```json
 {
@@ -1048,13 +1321,21 @@ Variantenschlüssel:
   "still": "mypack:blocks/molten_ruby_still",
   "flow": "mypack:blocks/molten_ruby_flow",
   "color": "C0304A",
+  "bucket": true,
   "luminosity": 12,
   "density": 2000,
   "temperature": 1500,
   "viscosity": 4000,
-  "bucket": true,
+  "gaseous": false,
   "creativeTab": "mypack:tab",
-  "block": { "material": "lava", "quantaPerBlock": 8 }
+  "requires": ["mypack"],
+  "block": {
+    "material": "lava",
+    "flammability": 0,
+    "fireSpread": 0,
+    "quantaPerBlock": 8,
+    "potions": ["minecraft:wither,200,0"]
+  }
 }
 ```
 
@@ -1071,12 +1352,14 @@ Variantenschlüssel:
 | `viscosity` | nein | int | `1000` | Wie träge sie fließt. Wasser ist 1000, Lava 6000 |
 | `gaseous` | nein | boolean | `false` | Wird als Gas behandelt |
 | `creativeTab` | nein | Tab-Name | keiner | Der Tab, in dem der Eimer auftaucht |
-| `block` | nein | Objekt |, | Der Flüssigkeitsblock. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`) |
+| `block` | nein | Objekt |, | Der Flüssigkeitsblock. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (keine, eine Liste von Effekten für alles, was darin steht, je geschrieben als `potion,duration,amplifier`, mit einem optionalen vierten Teil `true` für einen umgebenden) |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 
 ## Materialien, Tabs, Sounds, Ore Dictionary
 
-`materials/*.json`
+`<namespace>/materials/*.json`
+
+Der Pfad der Datei ist der Name des Materials, das ein Werkzeug- oder Rüstungsitem dann in `material` nennt.
 
 ```json
 {
@@ -1106,7 +1389,9 @@ Variantenschlüssel:
 | `equipSound` | nein | Soundname | `item.armor.equip_iron` | Sound beim Anlegen der Rüstung |
 | `armorTexture` | nein | Texturpräfix | der Dateiname | Die Textur der getragenen Rüstung |
 
-`tabs/*.json`
+`<namespace>/tabs/*.json`
+
+Der Pfad der Datei ist der Name des Tabs, sofern `label` ihn nicht überschreibt, und Blöcke und Items nennen ihn in `creativeTab`.
 
 ```json
 { "label": "rubypack", "icon": "mypack:ruby" }
@@ -1117,17 +1402,45 @@ Variantenschlüssel:
 | `label` | nein | string | der Dateiname | Die Id des Tabs: Blöcke und Items nennen sie in `creativeTab`, der angezeigte Name kommt aus `itemGroup.<label>` in den Sprachdateien |
 | `icon` | nein | Itemname | keiner | Das Item, das auf dem Tab abgebildet ist |
 
-`sounds/*.json` ist das Vanilla-Format von `sounds.json`, ein Pack kann also eigenes Audio mitbringen. `oredict/*.json` fügt Ore-Dictionary-Namen zu Items hinzu, die es schon gibt.
+`<namespace>/sounds/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
+Das Vanilla-Format von `sounds.json`, ein Pack kann also eigenes Audio mitbringen.
+
+`<namespace>/oredict/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
+Fügt Ore-Dictionary-Namen zu Items hinzu, die es schon gibt. Jeder Schlüssel ist ein Ore-Dictionary-Name und sein Wert die Items, die darunter eingetragen werden, eigene feste Schlüssel hat eine solche Datei also nicht. Eigene Blöcke und Items eines Packs nennen ihre stattdessen im `oreDict` der Variante.
+
+```json
+{
+  "_note": "ruby equivalents",
+  "gemRuby": ["mypack:ruby", "mypack:polished_ruby:1"],
+  "oreRuby": ["mypack:ruby_ore", "minecraft:redstone_ore"]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| ein Ore-Dictionary-Name | ja | Liste von Itemnamen | | Die Items, die darunter eingetragen werden. Metadaten als dritter Teil, `"mypack:ruby:1"` |
+| ein Name, der mit `_` beginnt | nein | beliebig | | Wird übersprungen, eine Datei kann also eine Notiz an sich selbst tragen |
 
 ## Ofenrezepte und Brennstoffe
 
-`furnace/*.json` fügt Schmelzrezepte hinzu und entfernt sie.
+`<namespace>/furnace/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
+Fügt Schmelzrezepte hinzu und entfernt sie.
 
 ```json
 {
   "remove": [
     "minecraft:iron_ingot",
-    { "input": "minecraft:gold_ore" }
+    { "input": "minecraft:gold_ore" },
+    { "input": "minecraft:iron_ore", "result": "minecraft:iron_ingot" }
   ],
   "add": [
     { "input": "mypack:ruby_ore", "output": "mypack:ruby", "count": 2, "experience": 1.0 }
@@ -1146,7 +1459,9 @@ Einträge unter `add`:
 
 Einträge unter `remove` sind entweder ein bloßer Itemname, der jedes Rezept entfernt, das ihn herstellt, oder ein Objekt, das mit `input`, `result` oder beidem eingrenzt. Eine Entfernung, die weder das eine noch das andere nennt, wird übersprungen, und das Log sagt es.
 
-`fuels/*.json`
+`<namespace>/fuels/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
 
 ```json
 {
@@ -1165,12 +1480,15 @@ Einträge unter `remove` sind entweder ein bloßer Itemname, der jedes Rezept en
 
 ## Tränke, Trankarten und Brauen
 
-`potions/*.json`
+`<namespace>/potions/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Effekts, `mypack/potions/ruby_sight.json` registriert also `mypack:ruby_sight`, den ein Tranktyp dann nennt.
 
 ```json
 {
   "name": "effect.mypack.ruby_sight",
   "color": "C0304A",
+  "badEffect": false,
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
@@ -1194,13 +1512,15 @@ Einträge unter `remove` sind entweder ein bloßer Itemname, der jedes Rezept en
 | `iconTexture` | nein | Texturpfad | Vanilla-Blatt | Dein eigenes Symbolblatt |
 | `attributes` | nein | Liste von Objekten | keine | `attribute`, `uuid`, `amount` (`0.0`), `operation` (`0`) |
 
-`potion_types/*.json`
+`<namespace>/potion_types/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Tranktyps, den ein `potion_bottle`-Item dann in `potionTypes` nennt.
 
 ```json
 {
   "baseName": "ruby_sight",
   "effects": [
-    { "potion": "mypack:ruby_sight", "duration": 3600, "amplifier": 0, "showParticles": true }
+    { "potion": "mypack:ruby_sight", "duration": 3600, "amplifier": 0, "ambient": false, "showParticles": true }
   ]
 }
 ```
@@ -1212,31 +1532,43 @@ Einträge unter `remove` sind entweder ein bloßer Itemname, der jedes Rezept en
 
 Jeder Effekt nimmt `potion` (Pflicht), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) und `showParticles` (`true`).
 
-`brewing/*.json`
+`<namespace>/brewing/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
 
 ```json
 {
   "brewing": [
-    { "input": "minecraft:potion", "ingredient": "mypack:ruby", "output": "mypack:ruby_potion" }
+    { "input": "minecraft:potion", "ingredient": "mypack:ruby", "output": "mypack:ruby_potion", "requires": ["mypack"] },
+    { "from": "minecraft:awkward", "ingredient": "mypack:ruby", "to": "mypack:ruby_tonic" }
   ]
 }
 ```
 
-Jeder Eintrag besteht entweder aus `input`, `ingredient` und `output` oder aus `from`, `ingredient` und `to`.
+Jeder Eintrag ist entweder `input`, `ingredient` und `output`, was ein Item zu einem anderen braut, oder `from`, `ingredient` und `to`, was einen Tranktyp in einen anderen verwandelt. `ingredient` ist in beiden Fällen Pflicht, und ein Eintrag nimmt auch `requires`, sodass ein einzelnes Rezept übersprungen werden kann, ohne dass es die Datei wird.
 
 ## Expositionen
 
-Eine vom Pack definierte Gefahr: benannte Blöcke und Items belasten Spieler, die in der Nähe stehen oder sie bei sich tragen, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Datei in `exposures/` definiert eine Gefahr, mehrere laufen nebeneinander. Die Vorgabewerte der Schlüssel entsprechen der Strahlung von Immersive World.
+`<namespace>/exposures/*.json`
+
+Der Pfad der Datei ist der Name der Gefahr, und ihre Todesmeldung kommt aus dem Sprachschlüssel `death.attack.rdpl.<Dateiname>`.
+
+Eine vom Pack definierte Gefahr: benannte Blöcke und Items belasten Spieler, die in der Nähe stehen oder sie bei sich tragen, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Datei definiert eine Gefahr, mehrere laufen nebeneinander. Die Vorgabewerte der Schlüssel entsprechen der Strahlung von Immersive World.
 
 ```json
 {
-  "immunity": "mypack:antirad",
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
+  "immunity": "mypack:antirad",
+  "scanInterval": 20,
+  "range": 10,
+  "sourcesForNextLevel": 4,
+  "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0,
-      "effects": [ { "potion": "minecraft:nausea" }, { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0,
+    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+      "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
+                   { "potion": "minecraft:hunger" } ] },
+    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
@@ -1266,7 +1598,9 @@ Die Stufeneffekte halten etwas über die nächste Prüfung hinaus, Weggehen läs
 
 ## Dorfbewohner und Handel
 
-`villagers/*.json`
+`<namespace>/villagers/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Berufs, `mypack/villagers/jeweller.json` registriert also `mypack:jeweller`, den ein Handel dann in `profession` nennt.
 
 ```json
 {
@@ -1282,7 +1616,9 @@ Die Stufeneffekte halten etwas über die nächste Prüfung hinaus, Weggehen läs
 | `texture` | nein | Texturpfad | der Vanilla-Dorfbewohner | Wie der Dorfbewohner aussieht |
 | `zombieTexture` | nein | Texturpfad | der Vanilla-Zombiedorfbewohner | Wie er als Zombie aussieht |
 
-`trades/*.json`
+`<namespace>/trades/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
 
 ```json
 {
@@ -1310,23 +1646,106 @@ Ein Stapel ist `item` mit `min` (`1`) und `max` (`min`), ein fester Preis ist al
 
 ## Entity-Varianten
 
-Eine Datei in `assets/<modid>/entities/` macht aus einer vorhandenen Entity eine neue. Sie ist eine echte Entity für sich: eigener Registry-Name, eigener Name in der Welt, eigenes Spawn-Ei und eine eigene Beutetabelle, wenn du ihr eine gibst – aufgebaut auf dem Verhalten einer anderen Entity, statt sie zu ersetzen. An der Entity, die sie kopiert, ändert sich nichts.
+`<namespace>/entities/*.json`
+
+Der Pfad der Datei ist der Registry-Name der Variante, `mypack/entities/angry_cow.json` registriert also `mypack:angry_cow`, und genau darauf beziehen sich `becomes`, das Spawn-Ei und der Weltspeicher.
+
+Eine Datei hier macht aus einer vorhandenen Entity eine neue. Sie ist eine echte Entity für sich: eigener Registry-Name, eigener Name in der Welt, eigenes Spawn-Ei und eine eigene Beutetabelle, wenn du ihr eine gibst – aufgebaut auf dem Verhalten einer anderen Entity, statt sie zu ersetzen. An der Entity, die sie kopiert, ändert sich nichts.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
   "entity": "minecraft:cow",
   "name": "Angry Cow",
-  "hostile": true,
-  "targets": ["minecraft:player"],
+  "showName": false,
+  "texture": "mypack:textures/entity/angry_cow.png",
+  "lootTable": "mypack:entities/angry_cow",
+  "profession": "mypack:jeweller",
+  "career": 1,
+  "baby": 0.05,
+  "becomes": [
+    { "variant": "mypack:angry_cow", "weight": 95 },
+    { "variant": "mypack:little_angry_cow", "weight": 5 }
+  ],
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "soundVolume": 1.0,
+  "soundPitch": 1.0,
+  "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "anvil", "inWall"],
+  "jumpMultiplier": 1.0,
+  "fallDamage": 1.0,
+  "maxFallHeight": 3,
+  "breathesUnderwater": false,
+  "swims": false,
+  "amphibious": false,
+  "waterSlowdown": 0.8,
+  "absorption": 0,
+  "experience": 3,
+  "creatureAttribute": "undefined",
+  "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
+  "despawns": true,
+  "despawnAfter": 600,
+  "noAI": false,
+  "leftHanded": false,
+  "fireproof": false,
+  "invulnerable": false,
+  "glowing": false,
+  "invisible": false,
+  "dropChance": 0.085,
+  "scale": 1.0,
+  "angryScale": 1.2,
+  "leashable": true,
+  "steerable": false,
+  "width": 0.9,
+  "height": 1.4,
+  "pathPriorities": { "WATER": 0.0, "LAVA": -1.0, "DANGER_FIRE": 8.0, "DOOR_WOOD_CLOSED": 0.0 },
+  "egg": { "primary": "AABBCC", "secondary": "112233" },
   "attributes": {
     "maxHealth": 20,
     "movementSpeed": 0.32,
-    "attackDamage": 4
+    "attackDamage": 4,
+    "knockbackResistance": 0.0,
+    "followRange": 32,
+    "armor": 4
+  },
+  "hostile": true,
+  "targets": ["minecraft:player"],
+  "passive": false,
+  "persistent": false,
+  "silent": false,
+  "picksUpLoot": false,
+  "hideArmor": false,
+  "hideHeld": false,
+  "tint": "C0304A",
+  "tintParts": ["body", "armor", "held"],
+  "ignoresSpawnRules": false,
+  "throws": true,
+  "throwAmmo": 8,
+  "throwReload": 3,
+  "throwRetreat": 3,
+  "throwPower": 1.0,
+  "throwArc": 0.35,
+  "explodes": false,
+  "explosionPower": 3.0,
+  "explosionFuse": 30,
+  "explosionFire": false,
+  "equipment": {
+    "mainhand": "minecraft:tnt",
+    "offhand": "minecraft:shield",
+    "head": "minecraft:iron_helmet",
+    "chest": "minecraft:iron_chestplate",
+    "legs": "minecraft:iron_leggings",
+    "feet": "minecraft:iron_boots"
   },
   "spawns": [
     { "creatureType": "creature", "weight": 4, "min": 1, "max": 2 }
   ],
-  "biomeTypes": ["PLAINS"]
+  "biomes": ["minecraft:plains"],
+  "biomeTypes": ["PLAINS"],
+  "trackingRange": 80,
+  "trackVelocity": true,
+  "trackingFrequency": 3,
+  "requires": ["mypack"]
 }
 ```
 
@@ -1458,7 +1877,39 @@ Sich selbst zu nennen ist der Weg, so zu bleiben, wie man ist, und die Gewichte 
 
 ## Dorfgrundstücke
 
-Eine Datei in `assets/<modid>/villages/` fügt ein Stück hinzu, das Dörfer bauen können, neben den Vanilla-Stücken. Zwei Sorten, ausgewählt mit `type`.
+`<namespace>/villages/*.json`
+
+Der Pfad der Datei ist der Name des Grundstücks, den `villagePieces` dann nennen kann, um es zu behalten oder wegzulassen.
+
+Eine Datei hier fügt ein Stück hinzu, das Dörfer bauen können, neben den Vanilla-Stücken. Zwei Sorten, ausgewählt mit `type`.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. Ein Schlüssel, der für einen Typ vermerkt ist, wird nur von diesem Typ gelesen.
+
+```json
+{
+  "type": "farm",
+  "weight": 3,
+  "leastCount": 1,
+  "mostCount": 4,
+  "width": 7,
+  "height": 4,
+  "depth": 9,
+  "crops": ["simplecorn:corn", "minecraft:wheat"],
+  "edge": "minecraft:log",
+  "soil": "minecraft:farmland",
+  "water": true,
+  "rowWidth": 2,
+  "structure": "mypack:blacksmith_shed",
+  "integrity": 100,
+  "villagers": 2,
+  "villagerEntity": "mypack:jeweller",
+  "villagerX": 1,
+  "villagerY": 1,
+  "villagerZ": 1,
+  "ground": "minecraft:dirt",
+  "requires": ["mypack"]
+}
+```
 
 Ein `farm` ist Vanillas Feld, beschrieben statt programmiert: ein Grundstück in der Größe, die du willst, mit einem Block eingefasst, gefüllt mit Reihen aus Erde, getrennt durch Wasserrinnen, bepflanzt mit einer Feldfrucht, die pro Block aus deiner Liste gezogen wird.
 
@@ -1516,24 +1967,68 @@ Jedes Pack-Grundstück wird den Dörfern als ein Eintrag angeboten, `weight` ent
 
 ## Biome
 
-`biomes/*.json`
+`<namespace>/biomes/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Bioms, `mypack/biomes/ruby_forest.json` registriert also `mypack:ruby_forest`. `name` ist nur das, was der Spieler sieht.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
   "name": "Ruby Forest",
-  "type": ["FOREST", "DENSE"],
+  "id": 200,
+  "types": ["FOREST", "DENSE", "WET"],
   "temperature": 0.7,
   "rainfall": 0.8,
+  "rain": true,
+  "snow": false,
   "baseHeight": 0.15,
   "heightVariation": 0.25,
   "topBlock": "mypack:ruby_grass",
   "fillerBlock": "minecraft:dirt",
+  "stoneBlock": "mypack:ruby_stone",
+  "baseBiome": "minecraft:forest",
   "waterColor": "8040A0",
-  "placement": { "climate": "warm", "weight": 8, "villages": true },
+  "grassColor": "6BA33C",
+  "foliageColor": "4E8B2A",
+  "decoration": {
+    "trees": 10,
+    "extratreechance": 10,
+    "flowers": 4,
+    "grass": 5,
+    "deadbush": 0,
+    "mushrooms": 1,
+    "bigmushrooms": 0,
+    "reeds": 10,
+    "cacti": 0,
+    "sand": 3,
+    "gravel": 1,
+    "clay": 1,
+    "waterlily": 0,
+    "falls": 1
+  },
   "spawns": [
     { "entity": "minecraft:sheep", "type": "creature", "weight": 12, "min": 2, "max": 4 }
   ],
-  "spawnRates": { "surfaceNight": 0.5, "undergroundDay": 2.0 }
+  "keepDefaultSpawns": false,
+  "spawnChance": 0.1,
+  "spawnRates": { "surfaceDay": 0.0, "surfaceNight": 0.5, "undergroundDay": 2.0, "undergroundNight": 2.0 },
+  "placement": {
+    "climate": "warm",
+    "weight": 8,
+    "villages": true,
+    "villageSpawn": true,
+    "strongholds": false,
+    "playerSpawn": true
+  },
+  "villageType": "oak",
+  "minHeight": 100,
+  "maxHeight": 156,
+  "replaces": ["minecraft:plains", "minecraft:forest"],
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.2,
+  "skyThickness": 2.0,
+  "requires": ["mypack"]
 }
 ```
 
@@ -1541,7 +2036,6 @@ Jedes Pack-Grundstück wird den Dörfern als ein Eintrag angeboten, `weight` ent
 | --- | --- | --- | --- | --- |
 | `name` | nein | string | der Dateiname | Name, den der Spieler sieht |
 | `id` | nein | int | wird vergeben | Feste Biom-ID. Setz sie nur, wenn du sie stabil brauchst |
-| `type` | nein | Liste von Dictionary-Typen | keine | Etwa `FOREST`, `COLD`, `NETHER` |
 | `temperature` | nein | float | `0.5` | Unter 0.15 schneit es, über 1.0 ist es wüstenheiß |
 | `rainfall` | nein | float, 0 bis 1 | `0.5` | Wie feucht es ist |
 | `rain` | nein | boolean | `true` | Ob es überhaupt Wetter gibt |
@@ -1551,10 +2045,12 @@ Jedes Pack-Grundstück wird den Dörfern als ein Eintrag angeboten, `weight` ent
 | `topBlock` | nein | Blockname | Gras | Der Oberflächenblock |
 | `fillerBlock` | nein | Blockname | Erde | Direkt unter der Oberfläche |
 | `stoneBlock` | nein | Blockname | Stein | Die Masse des Untergrunds |
-| `types` | nein | Liste von Dictionary-Typen | keine | Registriert das Biom unter diesen, etwa `FOREST` oder `WET`, damit andere Mods es finden |
+| `types` | nein | Liste von Dictionary-Typen | keine | Registriert das Biom unter diesen, etwa `FOREST`, `COLD`, `WET` oder `NETHER`, damit andere Mods es finden |
 | `waterColor` | nein | Hex-Farbe | `FFFFFF` | Wasserfärbung |
+| `grassColor` | nein | Hex-Farbe | aus dem Klima | Grasfärbung, anstelle der Farbe, die Temperatur und Niederschlag ergäben |
+| `foliageColor` | nein | Hex-Farbe | aus dem Klima | Laubfärbung, auf dieselbe Weise |
 | `baseBiome` | nein | Biomname | keiner | Ein vorhandenes Biom, von dem Einstellungen kopiert werden |
-| `decoration` | nein | Objekt | Vanilla-Anzahlen | Anzahlen pro Chunk für Bäume, Gras, Blumen, Zuckerrohr, Kakteen, Seen, Ton und den Rest |
+| `decoration` | nein | Objekt | Vanilla-Anzahlen | Anzahlen pro Chunk. Gelesen werden `trees`, `flowers`, `grass`, `deadbush`, `mushrooms`, `bigmushrooms`, `reeds`, `cacti`, `sand`, `gravel`, `clay` und `waterlily`, dazu `falls`, wo über null bedeutet, dass Seen und Quellen generieren, und `extratreechance`, eine prozentuale Chance auf einen Baum mehr. Jeder andere Name wird protokolliert und ignoriert |
 | `spawns` | nein | Liste von Objekten | Vanilla-Liste | Siehe unten |
 | `keepDefaultSpawns` | nein | boolean | `false` | Vanillas Liste neben deiner behalten |
 | `spawnChance` | nein | float, unter 1 | `0.1` | Wie wahrscheinlich beim ersten Erzeugen des Landes eine weitere Herde gesetzt wird. Das Spiel würfelt weiter, solange es Erfolg hat, `1` hört also nie auf und füllt die Welt, bis kein Platz mehr ist. Alles ab 0.99 wird abgelehnt und durch 0.99 ersetzt |
@@ -1586,6 +2082,8 @@ Bei `spawnRates` geht es ausschließlich um feindliche Mobs, um sonst nichts. Es
 
 **Temperatur nach Höhe.** Ein Biom kühlt mit der Höhe ab, was den Schnee auf Berggipfel bringt und Regen oberhalb einer Linie beendet. Drei Schlüssel der Gruppe `terrain` verschieben diese Kurve, was auf einer Rubic-Welt zählt, wo der Boden weit über oder unter der Höhe liegen kann, die das Spiel annimmt. Die Standardwerte sind das, was das Spiel tut, ein Pack, das sie in Ruhe lässt, ändert also nichts.
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -1604,22 +2102,50 @@ Bei `spawnRates` geht es ausschließlich um feindliche Mobs, um sonst nichts. Es
 
 ## Dimensionen
 
-`dimensions/*.json`
+`<namespace>/dimensions/*.json`
+
+Der Pfad der Datei benennt die Dimension für `suffix`, dessen Standard `DIM_<name>` ist. Die Dimension selbst wird über ihre `id` gefunden, das ist also die Zahl, auf die sich alles andere bezieht.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
   "id": 12,
   "suffix": "DIM_ruby",
   "keepLoaded": false,
-  "terrain": { "type": "overworld", "structures": false },
-  "biomes": { "source": "single", "biome": "mypack:ruby_forest" },
+  "requires": ["mypack"],
+  "terrain": {
+    "type": "overworld",
+    "generatorOptions": "",
+    "structures": false
+  },
+  "biomes": {
+    "source": "single",
+    "biome": "mypack:ruby_forest"
+  },
   "sky": {
-    "skyColor": "3B1E4A",
-    "fogColor": "20102A",
-    "cloudHeight": 160,
     "hasSkyLight": true,
+    "surfaceWorld": true,
+    "respawn": true,
+    "respawnDimension": 0,
+    "spawning": true,
+    "nether": false,
+    "beds": true,
+    "waterVaporizes": false,
+    "cloudHeight": 160,
+    "cloudColor": "5B3E6A",
+    "groundLevel": 63,
+    "movementFactor": 4.0,
+    "fogColor": "20102A",
+    "showFog": false,
+    "skyColor": "3B1E4A",
+    "fixedTime": 18000,
+    "sunriseColors": true,
     "ambientLight": 0.1,
-    "movementFactor": 4.0
+    "starBrightness": 0.8,
+    "renderSky": true,
+    "renderClouds": true,
+    "renderWeather": true
   },
   "gameRules": { "doMobSpawning": "false" }
 }
@@ -1681,6 +2207,10 @@ Farben und die drei Render-Schalter sind alles, was geboten wird. Etwas Eigenes 
 
 ## Portale und Tore
 
+`<namespace>/blocks/*.json`
+
+Ein Portal ist eine gewöhnliche Blockdefinition, es gilt also dieselbe Pfadregel und der Pfad der Datei ist der Registry-Name des Blocks.
+
 Ein `portal`-Block trägt einen `portal`-Abschnitt:
 
 ```json
@@ -1694,6 +2224,7 @@ Ein `portal`-Block trägt einen `portal`-Abschnitt:
     "cooldown": 60,
     "platform": true,
     "platformBlock": "mypack:ruby_block",
+    "sound": "block.portal.travel",
     "owned": true
   },
   "variants": { "ruby_portal": { "meta": 0, "hardness": -1, "light": 11 } }
@@ -1711,18 +2242,33 @@ Ein `portal`-Block trägt einen `portal`-Abschnitt:
 | `sound` | nein | Soundname | keiner | Wird beim Durchgehen abgespielt |
 | `owned` | nein | boolean | `true` | Nur wer es gebaut hat und wen er zulässt, darf es benutzen. Ein Portal mit Besitzer ist außerdem immun gegen Explosionen |
 
-`gates/*.json`
+`<namespace>/gates/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Tors, das ein Portal dann in `gate` nennt.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
+  "dimension": 12,
   "name": "The Ruby Gate",
   "scope": "player",
-  "dimension": 12,
   "open": false,
-  "unlock": { "consume": "mypack:ruby", "consumeCount": 4, "killed": "minecraft:wither" },
+  "unlock": {
+    "hold": "mypack:ruby_key",
+    "consume": "mypack:ruby",
+    "consumeCount": 4,
+    "craft": "mypack:ruby_pickaxe",
+    "advancement": "mypack:story/ruby",
+    "killed": "minecraft:wither",
+    "killedCount": 2,
+    "killedDrops": "mypack:ruby_key"
+  },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
-  "safeReturn": true
+  "safeReturn": true,
+  "portalBlocks": ["mypack:ruby_portal"],
+  "requires": ["mypack"]
 }
 ```
 
@@ -1736,13 +2282,18 @@ Ein `portal`-Block trägt einen `portal`-Abschnitt:
 | `unlockedMessage` | nein | string | `%dim% is now open` | Wird beim Öffnen angezeigt |
 | `blockedMessage` | nein | string | `You need %item% to enter %dim%` | Wird bei der Abweisung angezeigt |
 | `safeReturn` | nein | boolean | `false` | Ein abgewiesener Rückweg landet trotzdem sicher irgendwo, statt abgelehnt zu werden |
+| `requires` | nein | Liste von Mod-Ids oder Pack-Namensräumen | keine | Das Tor wird übersprungen, wenn nicht alle vorhanden sind |
 | `portalBlocks` | nein | Liste von Blocknamen | jedes Portal | Begrenzt das Tor auf diese Portalblöcke, eine Dimension kann also eine bewachte und eine offene Tür haben |
 
 `unlock` nimmt `hold` (ein Item, das in der Hand sein muss), `consume` mit `consumeCount` (`1`), `craft` (ein Item, das gecraftet worden sein muss), `advancement` und `killed` (ein Entity-Name; das Tor öffnet sich für den, der eine davon erlegt, ein Boss kann also den Schlüssel zu einer Welt tragen) mit `killedCount` (`1`), wenn eine nicht reicht, gezählt pro Spieler oder für die ganze Welt, je nach `scope`. Mit `killedDrops` (ein Itemname) legen die gezählten Abschüsse stattdessen dieses Item dem Erleger vor die Füße, statt das Tor zu öffnen, und die Zählung beginnt von vorn – ein Schlüssel lässt sich also erneut verdienen und an jemanden weitergeben, der nie dafür gekämpft hat; sperr dann über `hold` oder `consume` desselben Items, um es zum Schlüssel zu machen. `%item%`, `%mob%` und `%dim%` werden für dich eingesetzt. Ein Schlüssel, den ein Mob droppt, braucht hier nichts Besonderes: Gib dem Mob den Drop und sperr über `hold` oder `consume`.
 
 ## Weltvorlagen
 
-`worldtemplates/*.json` fasst die Gestalt einer Welt in einer Datei zusammen, ein Pack liefert also eine ganze Welt auf einmal, statt vom Spieler ein Dutzend Config-Optionen zu verlangen.
+`<namespace>/worldtemplates/*.json`
+
+Der Pfad der Datei ist der Name der Vorlage, die die Config-Option `worldTemplate` nennen kann, um sie direkt auszuwählen.
+
+Fasst die Gestalt einer Welt in einer Datei zusammen, ein Pack liefert also eine ganze Welt auf einmal, statt vom Spieler ein Dutzend Config-Optionen zu verlangen.
 
 ```json
 {
@@ -1780,13 +2331,17 @@ Welche Vorlage aktiv ist, entscheidet die Config-Option `worldTemplate`. Steht s
 
 `rubicWorld` in den `terrain`-Einstellungen baut die Welt einer Dimension aus Würfeln von 16×16×16 Blöcken auf statt aus 256 Block hohen Säulen, sodass Boden und Decke sitzen können, wohin das Pack sie legt. Die Terrain-Generierung selbst ändert sich nicht – Vanillas Generator und die Weltgenerierung anderer Mods laufen wie gewohnt und liefern dasselbe Land; es gibt schlicht Welt darüber und darunter.
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
     "rubicWorld": true,
     "worldMinHeight": -1024,
     "worldMaxHeight": 1024,
-    "rubicWorldDimensions": [0, -1]
+    "rubicWorldDimensions": [0, -1],
+    "rubicWorldDimensionsAreBlacklist": false,
+    "terrainOffset": 0
   }
 }
 ```
@@ -1818,6 +2373,8 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 **Cube-Streaming.** Vier Schlüssel der Gruppe `chunks` entscheiden, wie Cubes zu einem Spieler kommen und wann sie wieder losgelassen werden. Sie wirken nur auf Rubic-Welten, und die Standardwerte sind die Zahlen, mit denen das Subsystem abgestimmt wurde, sodass ein Pack, das sie in Ruhe lässt, nichts zahlt.
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -1842,6 +2399,8 @@ Alle Schlüssel gehören zur Gruppe `terrain` und stehen wie die übrigen im `se
 
 Neun weitere `terrain`-Schlüssel füllen den Raum, den eine Rubic-Welt um das Vanilla-Terrainfenster herum öffnet, mit Generierung modernen Stils. Sie tun nur auf einer Rubic-Welt etwas:
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -1850,10 +2409,12 @@ Neun weitere `terrain`-Schlüssel füllen den Raum, den eine Rubic-Welt um das V
     "worldMaxHeight": 1024,
     "deepStone": "mypack:slate",
     "skyStone": "minecraft:end_stone",
+    "skyShape": "islands",
     "skyIslands": 0.05,
     "skyThickness": 3.0,
     "skyHeights": [400, 800],
     "noiseCaves": "world",
+    "deepRavines": true,
     "oreVeins": ["minecraft:iron_ore,,mypack:slate@1,-56,20"]
   }
 }
@@ -1883,22 +2444,39 @@ Der Umfang `deep` lässt das Vanilla-Band, wie es ist, samt Lavafenster, und dic
 
 ## Höhlenregionen
 
-`caveregions/*.json` malt benannte Regionen über den Untergrund, das Pack-Gegenstück zu modernen Höhlenbiomen. Der Untergrund wird in gerundete Zellen geteilt — `caveRegionCells` Blöcke breit und `caveRegionCellsY` hoch, beides `terrain`-Schlüssel — und jede Zelle würfelt nach Gewicht eine Region, oder keine. Alles, was eine Region tut, folgt deterministisch aus dem Seed, Chunks stimmen also überein, ohne je über eine Grenze zu schreiben.
+`<namespace>/caveregions/*.json`
+
+Der Pfad der Datei ist der Name der Region, den ein Worldgen-Eintrag dann in `caveRegions` nennt. Ein bloßer Name dort nimmt den Namespace dieses Eintrags.
+
+Malt benannte Regionen über den Untergrund, das Pack-Gegenstück zu modernen Höhlenbiomen. Der Untergrund wird in gerundete Zellen geteilt — `caveRegionCells` Blöcke breit und `caveRegionCellsY` hoch, beides `terrain`-Schlüssel — und jede Zelle würfelt nach Gewicht eine Region, oder keine. Alles, was eine Region tut, folgt deterministisch aus dem Seed, Chunks stimmen also überein, ohne je über eine Grenze zu schreiben.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
   "weight": 3,
   "minHeight": -56,
   "maxHeight": 16,
+  "dimensions": [0],
   "biome": "minecraft:mushroom_island",
   "floorCover": "minecraft:mycelium",
   "floorChance": 0.8,
+  "ceilingCover": "minecraft:brown_mushroom_block",
+  "ceilingChance": 0.3,
+  "coverReplace": ["minecraft:stone", "mypack:slate"],
+  "waterLevel": -24,
   "keepDefaultSpawns": false,
   "spawns": [
     { "entity": "minecraft:mooshroom", "type": "creature", "weight": 12, "min": 2, "max": 4 }
   ],
-  "structures": ["mypack:cave_shrine"],
-  "structureChance": 0.5
+  "structures": [
+    { "structure": "mypack:cave_shrine", "weight": 3 },
+    "mypack:cave_well"
+  ],
+  "structureChance": 0.5,
+  "skyStone": "minecraft:sandstone",
+  "skyIslands": 0.2,
+  "skyThickness": 2.0
 }
 ```
 
@@ -1923,6 +2501,18 @@ Der Umfang `deep` lässt das Vanilla-Band, wie es ist, samt Lavafenster, und dic
 | `skyIslands` | `-1` bis `1` | die Welteinstellung | Die Inselschwelle innerhalb der Region. Niedriger sammelt mehr Land |
 | `skyThickness` | `0` oder mehr | die Welteinstellung | Wie massiv die Inseln der Region sind |
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "caveRegionCells": 128,
+    "caveRegionCellsY": 64,
+    "caveRegionPlainWeight": 4
+  }
+}
+```
+
 Wie viel vom Untergrund schlicht bleibt, bestimmt der `terrain`-Schlüssel `caveRegionPlainWeight`, Standard `4`: Mit einer einzigen Region vom Gewicht 1 bekommt etwa ein Fünftel der Zellen die Region. Bedeckungen greifen unter einem Dach, eine Region, die über den Boden hinausreicht, zeigt sich an der Oberfläche also nie; über dem Terrainfenster greifen sie auch im Freien, da dort alles Land aus der Himmelsgeneration stammt. Bedeckungen wirken in jeder Höhle, egal welcher Generator sie geschnitzt hat; `waterLevel` ist der eine Schlüssel, der die Noise-Höhlen braucht, weil die Flut beim Schnitzen gesetzt wird.
 
 Features docken über zwei Schlüssel gewöhnlicher [Worldgen-Einträge](#worldgen-einträge) an. `caveRegions` zählt die Regionen auf, in denen ein Eintrag generieren darf, geprüft an der gesetzten Position, sodass Pilze, Kristalle oder was auch immer nur innerhalb ihrer Region erscheinen. `snap` verschiebt jeden Versuch zuerst senkrecht zur nächsten Höhlenfläche: `floor` für Stehendes, `ceiling` für Hängendes. Eine Tropfstein-Region braucht keine neuen Formen:
@@ -1944,12 +2534,17 @@ Das `replace` mit `minecraft:air` ist wichtig: Was eine gesetzte Form überschre
 
 ## Welt-Intro
 
-`worldintro/*.json` zeigt eine Folge von Seiten, wenn ein Spieler die Welt betritt, bevor er die Kontrolle bekommt. Laufender Text über einem Bild, eine Titelkarte, eine Diaschau – oder alles drei hintereinander.
+`<namespace>/worldintro/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner. Jedes Intro, das ein Pack mitbringt, läuft, in Pack-Reihenfolge.
+
+Zeigt eine Folge von Seiten, wenn ein Spieler die Welt betritt, bevor er die Kontrolle bekommt. Laufender Text über einem Bild, eine Titelkarte, eine Diaschau – oder alles drei hintereinander.
 
 ```json
 {
   "once": true,
   "music": "minecraft:music.credits",
+  "requires": ["mypack"],
   "pages": [
     {
       "background": "mypack:textures/gui/sunrise.png",
@@ -1995,7 +2590,7 @@ Jeder Eintrag in `pages`:
 | `textScale` | nein | Zahl | `1.0` | Multipliziert die Schriftgröße |
 | `settle` | nein | boolean | `false` | Endet mit der letzten Zeile in der Mitte, statt ganz aus dem Bild zu laufen |
 
-Textdateien liegen unter `assets/<namespace>/texts/<name>.txt`. Reiner Text, ein Absatz pro Zeile, und Leerzeilen bleiben Leerzeilen. `PLAYERNAME` wird durch den Namen des Spielers ersetzt, dieselbe Ersetzung, die auch das Vanilla-Endgedicht nutzt.
+Textdateien liegen unter `<namespace>/texts/*.txt`. Reiner Text, ein Absatz pro Zeile, und Leerzeilen bleiben Leerzeilen. `PLAYERNAME` wird durch den Namen des Spielers ersetzt, dieselbe Ersetzung, die auch das Vanilla-Endgedicht nutzt.
 
 `time` legt fest, wie lange die Seite dauert, dieselbe Seite braucht also gleich lang, ob eine Zeile darauf steht oder zwanzig. Die Lesegeschwindigkeit stellst du darüber ein, wie viel du auf die Seite packst. Lässt du `time` weg, läuft die Seite so schnell wie der Vanilla-Abspann, wo mehr Text einfach länger dauert.
 
@@ -2011,7 +2606,9 @@ Bringt mehr als ein Pack ein Intro mit, laufen ihre Seiten in Pack-Reihenfolge h
 
 ## Spielregeln
 
-`gamerules/*.json`
+`<namespace>/gamerules/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
 
 ```json
 {
@@ -2028,17 +2625,25 @@ Bringt mehr als ein Pack ein Intro mit, laufen ihre Seiten in Pack-Reihenfolge h
 
 Jeder Schlüssel ist die ID der Welt, zu der die Regeln gehören: `0` für die Oberwelt, `-1` für den Nether, `1` für das Ende und was ein Mod für seine eigene nutzt. Werte sind Strings, so wie im Befehl `/gamerule`, also `"false"` statt `false`. Sie werden auf neue Welten angewendet. Eine Dimensionsdatei trägt dieselben Regeln stattdessen in einem `gameRules`-Block, der immer nur für diese eine Welt gilt.
 
-
 ## Härtegruppen
 
-`hardness/*.json` gibt einer Gruppe von Blöcken einen Faktor für die Abbauzeit, der pro Blockposition gewürfelt wird. Der Block selbst wird nie verändert: Nichts wird registriert, nichts in die Welt geschrieben, und eine Welt ohne das Pack ist ganz gewöhnliches Vanilla.
+`<namespace>/hardness/*.json`
+
+Der Pfad der Datei benennt die Gruppe im Log, sonst liest ihn nichts, mehrere Dateien addieren sich also.
+
+Gibt einer Gruppe von Blöcken einen Faktor für die Abbauzeit, der pro Blockposition gewürfelt wird. Der Block selbst wird nie verändert: Nichts wird registriert, nichts in die Welt geschrieben, und eine Welt ohne das Pack ist ganz gewöhnliches Vanilla.
 
 ```json
 {
   "blocks": ["minecraft:stone:0"],
+  "except": [{ "block": "minecraft:stone", "properties": { "variant": "andesite" } }],
   "miningTime": { "min": 1.0, "max": 20.0 },
+  "blastResistance": { "min": 1.0, "max": 4.0 },
   "buckets": 10,
-  "field": { "type": "speckle", "spread": 0.15 }
+  "minHeight": 0,
+  "maxHeight": 255,
+  "field": { "type": "speckle", "spread": 0.15 },
+  "requires": ["mypack"]
 }
 ```
 
@@ -2060,6 +2665,12 @@ Eine einzelne Zahl gibt jedem Block der Gruppe denselben Faktor, und nichts wird
 
 Der Wurf geschieht nicht für jeden Block ganz allein, sonst wären hart und weich reines Rauschen ohne jede Form. `field` bestimmt, welche Form dabei herauskommt, und `type` wählt zwischen zwei Wegen dorthin.
 
+```json
+{
+  "field": { "type": "speckle" }
+}
+```
+
 | Schlüssel | Pflicht | Wert | Standard | Was er tut |
 | --- | --- | --- | --- | --- |
 | `type` | nein | `speckle` oder `seeded` | `speckle` | Welches der beiden unten genommen wird |
@@ -2067,6 +2678,16 @@ Der Wurf geschieht nicht für jeden Block ganz allein, sonst wären hart und wei
 #### speckle
 
 Jeder Block zieht seine eigene Stufe, und ein Block eine Fläche weiter kann eine schwächere Stufe an ihn weitergeben. Das gibt dichte, feine Sprenkel, meist einzelne Blöcke, mit hier und da einem größeren Nest, wo sie zusammentreffen. Von beiden kommt das dem Gefühl beim Abbauen in der Vorlage am nächsten.
+
+```json
+{
+  "field": {
+    "type": "speckle",
+    "chances": [30, 30, 20, 20, 10, 10, 10, 10, 50],
+    "spread": 0.15
+  }
+}
+```
 
 | Schlüssel | Pflicht | Wert | Standard | Was er tut |
 | --- | --- | --- | --- | --- |
@@ -2078,6 +2699,19 @@ Die Liste wird von hinten als weichste gelesen, der letzte Eintrag ist also die 
 #### seeded
 
 Saatpunkte sitzen auf einem Gitter, das sich aus der Welt und der Position ergibt, und die Stufe eines Blocks kommt daher, wie nah er am nächsten liegt. Das gibt weniger, größere, rundere Nester, die ineinanderlaufen, und es kann Arme treiben.
+
+```json
+{
+  "field": {
+    "type": "seeded",
+    "cell": 8,
+    "seeds": 1,
+    "reach": 3.0,
+    "arms": 0,
+    "armReach": 0.0
+  }
+}
+```
 
 | Schlüssel | Pflicht | Wert | Standard | Was er tut |
 | --- | --- | --- | --- | --- |
@@ -2124,15 +2758,26 @@ Nur das Abbauen durch einen Spieler wird verändert. Maschinen, die Blöcke abba
 
 ## Worldgen-Einträge
 
-`worldgen/*.json` beschreibt etwas, das generiert. Jeder Eintrag ist eine **Form**, gesetzt von einer **Verteilung**, gefiltert danach, wo sie erlaubt ist.
+`<namespace>/worldgen/*.json`
+
+Der Pfad der Datei benennt den Eintrag, und die Formen `belt` und `field` ziehen ihr Rauschen daraus, ein umbenannter Dateiname verschiebt also, was sie erzeugt.
+
+Beschreibt etwas, das generiert. Jeder Eintrag ist eine **Form**, gesetzt von einer **Verteilung**, gefiltert danach, wo sie erlaubt ist.
 
 ```json
 {
   "block": "mypack:ruby_ore",
   "meta": 0,
+  "blocks": [
+    { "block": "mypack:ruby_ore", "meta": 0, "weight": 80 },
+    { "block": "minecraft:wool", "weight": 20, "properties": { "color": "magenta" } }
+  ],
   "size": 8,
   "attempts": 12,
   "replace": ["minecraft:stone"],
+  "adjacent": ["minecraft:air"],
+  "minHeight": 8,
+  "maxHeight": 48,
   "dimensions": [0],
   "dimensionsAreBlacklist": false,
   "biomes": ["minecraft:extreme_hills"],
@@ -2142,12 +2787,13 @@ Nur das Abbauen durch einen Spieler wird verändert. Maschinen, die Blöcke abba
   "maxTemperature": 100.0,
   "minRainfall": -100.0,
   "maxRainfall": 100.0,
-  "minHeight": 8,
-  "maxHeight": 48,
   "minDistanceFromSpawn": 0,
   "sparse": false,
   "retrogen": false,
   "retrogenKey": "ruby_v1",
+  "caveRegions": ["dripstone"],
+  "snap": "floor",
+  "snapDepth": 0,
   "requires": ["quark"],
   "shape": { "type": "cluster" },
   "spread": { "type": "even" }
@@ -2194,7 +2840,7 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 ```json
 {
   "blocks": [
-    { "block": "minecraft:wool", "weight": 80, "properties": { "color": "magenta" } },
+    { "block": "minecraft:wool", "meta": 2, "weight": 80 },
     { "block": "minecraft:wool", "weight": 20, "properties": { "color": "lime" } }
   ]
 }
@@ -2212,6 +2858,17 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 ### Ziele für `replace`
 
 `replace` ist eine Liste, und jeder Eintrag hat eine von drei Formen.
+
+```json
+{
+  "replace": [
+    "minecraft:stone",
+    "minecraft:stone:3",
+    { "block": "minecraft:stone", "properties": { "variant": "andesite" } },
+    { "block": "minecraft:stone", "meta": 5 }
+  ]
+}
+```
 
 | Form | Beispiel | Worauf sie passt |
 | --- | --- | --- |
@@ -2243,9 +2900,47 @@ Ein Eintrag, der nur Blöcke nennt, die nicht registriert sind, wird mit einem F
 
 Ein `shape`-Block mit einem `type`. Schlüssel, die bei einem Typ nicht aufgeführt sind, ignoriert er.
 
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. Ein Schlüssel, der für einen Typ vermerkt ist, wird nur von diesem Typ gelesen.
+
 ```json
 {
-  "shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
+  "shape": {
+    "type": "geode",
+    "radius": 6,
+    "height": 8,
+    "width": 12,
+    "plane": "circle",
+    "slim": false,
+    "hanging": false,
+    "taper": "needle",
+    "outline": "minecraft:obsidian",
+    "fill": "minecraft:glowstone",
+    "surface": ["minecraft:grass"],
+    "seeSky": true,
+    "checkStay": true,
+    "stackHeight": 1,
+    "scatterX": 8,
+    "scatterY": 4,
+    "scatterZ": 8,
+    "log": "mypack:ruby_log",
+    "leaves": "mypack:ruby_leaves",
+    "vines": false,
+    "structure": "mypack:crypt",
+    "structures": [
+      { "structure": "mypack:crypt", "weight": 3 },
+      "mypack:shrine"
+    ],
+    "integrity": 100,
+    "turns": ["none", { "turn": "half", "weight": 2 }],
+    "mirrors": ["none", { "mirror": "leftright", "weight": 2 }],
+    "at": [1000, -500],
+    "locateAs": "Crypt",
+    "field": { "type": "speckle", "spread": 0.15 },
+    "threshold": 0.5,
+    "fade": 0,
+    "rarity": 400,
+    "rarityIsPerChunk": false
+  }
 }
 ```
 
@@ -2300,7 +2995,9 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
 | `integrity` | imprint | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die tatsächlich erscheinen |
 | `structures` | imprint | Liste | keine | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
 | `turns` | imprint | Liste | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich |
-| `mirrors` | imprint | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight` |
+| `mirrors` | imprint | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight`. Ein Eintrag mit eigenem Gewicht wird `{ "mirror": "leftright", "weight": 2 }` geschrieben, ein `turns`-Eintrag genauso mit `turn` |
+| `at` | imprint | zwei Ints, x und z | keine | Genau einmal an diesen Blockkoordinaten an der Oberfläche setzen, wenn dieser Chunk generiert, statt nach Zufall. Siehe [Strukturen an genauen Stellen](#strukturen-an-genauen-stellen) |
+| `locateAs` | imprint | String | keiner | Jede Struktur, die dieser Eintrag setzt, unter diesem Namen eintragen, sodass `/locate <Name>` die nächste findet. Siehe [Gesetzte Strukturen finden](#platzierte-strukturen-finden) |
 | `field` | field | Objekt | `{ "type": "speckle" }` | Wie das Feld errechnet wird. Dieselben Schlüssel wie das `field` einer Härtegruppe, beschrieben unter [Das Feld](#das-feld): `speckle` mit `chances` und `spread`, oder `seeded` mit `cell`, `seeds`, `reach`, `arms` und `armReach` |
 | `threshold` | field | 0,0 bis 1,0 | `0,5` | Wie stark das Feld an einem Block sein muss, bevor dort gesetzt wird. Niedriger füllt mehr |
 | `fade` | field | int | `0` | Lässt das Band oben ausfransen statt glatt zu enden: über die obersten so vielen Blöcke des Höhenbereichs sinkt die Chance jedes Blocks Stufe für Stufe, derselbe Look, den die Engine `deepStone` am Übergang zur Welt darüber gibt |
@@ -2341,9 +3038,23 @@ Der Aufwand wächst mit der dritten Potenz von `radius`, und ein niedriger `rari
 
 Ein `spread`-Block mit einem `type`.
 
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. Ein Schlüssel, der für einen Typ vermerkt ist, wird nur von diesem Typ gelesen.
+
 ```json
 {
-  "spread": { "type": "centered", "center": 32, "range": 12, "smoothness": 3 }
+  "spread": {
+    "type": "centered",
+    "center": 32,
+    "range": 12,
+    "smoothness": 3,
+    "veinHeight": 24,
+    "veinDiameter": 12,
+    "verticalDensity": 16,
+    "horizontalDensity": 32,
+    "offsetMin": 0,
+    "offsetMax": 2,
+    "ceiling": false
+  }
 }
 ```
 
@@ -2371,6 +3082,17 @@ Ein `spread`-Block mit einem `type`.
 | `ceiling` | cavern | boolean | `false` | An die Höhlendecke hängen statt auf den Boden setzen |
 
 ## Retrogen
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "retrogen": true,
+    "adoptExistingChunks": false
+  }
+}
+```
 
 Ein Eintrag mit `"retrogen": true` wird auch in Chunks generiert, die gespeichert wurden, bevor du ihn hinzugefügt hast. Jeder Chunk merkt sich, was er schon bekommen hat, nichts wird also zweimal gemacht.
 
@@ -2404,6 +3126,8 @@ Während ein Durchlauf läuft, wird jeder festgehalten: zum Zuschauer gemacht, a
 
 In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen), wie jeder andere `chunks`-Schlüssel auch. Hier alle zusammen, mit `pregenBorderLimit` als einzigem Fehlenden, weil nur die Config ihn hält:
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -2421,7 +3145,7 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
     "pregenFinishedSays": "Your world is ready",
     "pregenStoppedSays": "World building stopped",
     "pregenSpectatingSays": "Spectating until the world is ready",
-    "pregenWelcomeSays": "Welcome to Ruby World!"
+    "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"]
   }
 }
 ```
@@ -2442,8 +3166,9 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
 | `pregenSpectatingSays` | Die Haltezeile mitten im Bild, während Land gebaut wird. Auf dem Standardwert spricht sie die Sprache jedes Spielers; leer zeigt nichts | Halte sie unter etwa fünfunddreißig Zeichen, sonst schneiden kleine Fenster sie ab |
 | `welcomeSays` | Die grüne Begrüßung, gezeigt bei jedem Login und nach dem Landbau. Ein bloßer Eintrag ist die Zeile für überall; ein Eintrag `dimension=nachricht` überschreibt sie für diese Dimension und begrüßt außerdem jede Ankunft dort, z. B. `"-1=Welcome to the Nether!"`. Eine leere Nachricht nach dem `=` stellt diese Dimension stumm; eine leere Liste zeigt nichts. Auf dem Standardwert spricht sie die Sprache jedes Spielers | Eine bloße Zeile nennt dein Pack; mit Dimensionszeilen gibst du jeder Welt ihr Thema. Halte die Zeilen unter etwa fünfunddreißig Zeichen |
 
-Lass ihn vor der Auslieferung einmal selbst durchlaufen, mit dem Radius, den du ausliefern willst, von Anfang bis Ende. Die Zahl der Chunks wächst mit dem Quadrat des Radius: 63 in jede Richtung sind sechzehntausend Chunks, 500 sind über eine Million, bei rund zehn Kilobyte pro Stück – der Region-Ordner deiner Testwelt und die tatsächlich verstrichene Zeit sind also die ehrlichen Zahlen, die du den Spielern nennen kannst. Liefere keinen Radius aus, der nie durchgelaufen ist.
+Der Landbau hat einen eigenen schnellen Weg für die Beleuchtung, und er tritt beiseite, sobald eine Licht-Engine wie Alfheim oder Phosphor installiert ist, und überlässt ihr die Arbeit. So oder so bekommst du am Ende fertiges, vollständig beleuchtetes Land.
 
+Lass ihn vor der Auslieferung einmal selbst durchlaufen, mit dem Radius, den du ausliefern willst, von Anfang bis Ende. Die Zahl der Chunks wächst mit dem Quadrat des Radius: 63 in jede Richtung sind sechzehntausend Chunks, 500 sind über eine Million, bei rund zehn Kilobyte pro Stück – der Region-Ordner deiner Testwelt und die tatsächlich verstrichene Zeit sind also die ehrlichen Zahlen, die du den Spielern nennen kannst. Liefere keinen Radius aus, der nie durchgelaufen ist.
 
 ### Felder
 
@@ -2472,32 +3197,6 @@ Ein niedriger `threshold` nimmt fast das ganze Feld und gibt breite Bänder, ein
 
 Wie ein Gürtel übergeht ein Feld `attempts` und `spread`, da es je Chunk statt je Versuch gefragt wird, und es schreibt nie in einen Nachbar-Chunk. Es ergibt sich aus dem Welt-Seed und dem eigenen Namen des Eintrags, derselbe Seed gibt also immer dieselben Adern, und zwei Einträge mit verschiedenen Namen decken sich nie. `replace`, `adjacent`, `biomes` und die Klimagrenzen gelten wie sonst auch.
 
-### Wie es schnell bleibt
-
-Alles Folgende ist das Wie, nicht das Was: die Technik, die einen Durchlauf schnell macht, festgehalten, damit sie nicht verloren geht. Ein Pack braucht nichts davon, um die Schlüssel oben zu nutzen.
-
-Der Landbau hat einen eigenen schnellen Weg für die Beleuchtung, und er tritt beiseite, sobald eine Licht-Engine wie Alfheim oder Phosphor installiert ist, und überlässt ihr die Arbeit. So oder so bekommst du am Ende fertiges, vollständig beleuchtetes Land.
-
-Das Spiel weigert sich, einen Chunk zu beleuchten, bevor alle acht ringsum existieren, und während Land gebaut wird, gibt es die vorausliegenden noch nicht – einen Chunk zu beleuchten, während er gebaut wird, klappt also fast nie. Stattdessen werden bei jedem gebauten Chunk die neun um diese Stelle betrachtet, und jeder, dessen eigener Ring jetzt vollständig ist und der noch gehalten wird, wird auf der Stelle beleuchtet.
-
-Jedes Mal, wenn das Spiel beim Ausrechnen von Licht die sechs Seiten eines Blocks ansieht, fragt es nach der Liste der sechs Richtungen, und jede Frage liefert eine frische Kopie derselben sechs zurück. Über den Bau einer Welt sind das zig Millionen Kopien einer Liste, die sich nie ändert, und alle werden sofort weggeworfen. Stattdessen wird die eine Liste benutzt.
-
-Wo der Ring der Chunks gemerkt wird, zählt genauso viel wie das Merken selbst: ihn für jede einzelne Abfrage neu nachzuschlagen, zig Millionen Mal, kostet mehr als manche der Abfragen. Er hängt an der Welt selbst, das ist ein einziger Feldzugriff.
-
-Zu messen, wie lange das Licht braucht, ist selbst langsam genug, um ins Gewicht zu fallen: die Uhr für jede der achtzig Millionen Ausbreitungen zweimal zu fragen kostet mehr als ein Teil der Arbeit, die gemessen wird. Also wird jede Ausbreitung gezählt, aber nur eine von vierundsechzig gestoppt, und die Zeit wird daraus hochgerechnet. Die Zahlen sind exakt, die Zeiten nah dran.
-
-Fast alles Licht, das das Spiel ausrechnet, ist Licht, das es schon kannte. Während ein Chunk gebaut wird, läuft es jede Säule vom Himmel abwärts, setzt volles Tageslicht, bis es auf festen Boden trifft, und darunter gar nichts mehr, und geht dann über jeden offenen Block darunter und fragt, wie hell es dort sein sollte. Unter der Erde und im Fels ist die Antwort immer „keins“, und es war schon „keins“ – von hundert dieser Fragen ändern also knapp zwei überhaupt etwas. Die einzigen, auf die es ankommt, liegen neben einem Höhleneingang oder unter einem Überhang, wo Licht von der Seite hereinkommt.
-
-Also wird die Antwort vor dem Fragen direkt ausgerechnet: was der Block durchlässt und wie viel Tageslicht der hellste der sechs ringsum hält. Das ist genau das, was das Spiel selbst ausgerechnet hätte, und wo es mit dem übereinstimmt, was der Block ohnehin schon hält, gibt es nichts zu tun und die Frage entfällt. Zu dieser Antwort zu kommen kostet eine Handvoll Abfragen aus Chunks, die schon zur Hand sind, gegenüber dem weit längeren Weg, den das Spiel zum selben Ziel nimmt. Lampen und Feuer werden nach wie vor gefragt, und nichts wird am Ende anders beleuchtet.
-
-Licht auszubreiten ist der langsamste Teil des Landbaus, und fast nichts davon kostet das Licht selbst. Jedes Mal, wenn das Spiel ausliest, wie hell ein Block ist, was er ist oder ob er den Himmel sieht, schlägt es den Chunk von vorn nach, und das etwa sechzehnmal für jeden Block, den es betrachtet. Über einen Durchlauf sind das weit über tausend Millionen Nachschläge auf neun Chunks, die sich nie ändern. Vor dem Ausbreiten des Lichts fragt das Spiel außerdem zweimal, ob der Boden um die Stelle herum vollständig da ist – und fragt es für jeden Block erneut.
-
-Also wird der Ring der Chunks um den, der beleuchtet wird, einmal gesucht, wenn der Chunk in die Hand genommen wird, und jede Abfrage während dieses Durchgangs wird daraus bedient. Die Antworten sind dieselben, zu denen das Spiel gekommen wäre, nur ohne jedes Mal nachzufragen. Am Licht selbst ändert sich nichts.
-
-Das heißt auch, dass das Licht nach den Bäumen, dem Erz und den Seen eingesetzt wird statt davor. Sich selbst überlassen beleuchtet das Spiel zuerst den nackten Boden und muss dann das meiste davon noch einmal ausrechnen, während die Ausschmückung dazukommt – doppelt verschwendet, auf Land, in dem noch niemand steht. Der erste Durchgang wird zurückgehalten und nur der spätere gemacht, egal ob Land in großen Mengen gebaut wird oder ein Spieler einfach hineinläuft: Das Spiel versucht es ohnehin jede Runde bei jedem unbeleuchteten Chunk erneut, ein zurückgehaltener Chunk wird also eine Runde später beleuchtet und dabei nur einmal ausgerechnet. Chunks, die der Durchlauf hält, bleiben außerdem von der Gewohnheit des Spiels ausgenommen, das Licht jede Runde bei jedem Chunk erneut zu versuchen, denn der Durchlauf weiß, wann jeder von ihnen so weit ist, und der Versuch kann bis dahin nur scheitern. Ein Chunk, der nie an die Reihe kommt, bleibt dunkel und beleuchtet sich selbst, sobald jemand zu ihm hingeht, und dafür gibt es zwei ganz verschiedene Gründe. Der eine: Er liegt ganz am Rand dessen, was angefordert wurde, sein Ring schließt also Boden ein, den niemand bauen ließ, und kann nie vollständig werden; das ist der äußere Rand des Quadrats, und kein Halten der Welt ändert daran etwas. Der andere: Er ist aus dem Gehaltenen herausgefallen, bevor seine Nachbarn gebaut waren, und mehr gehaltene Chunks beheben das sehr wohl. Die beiden werden getrennt gezählt, damit klar ist, welcher Fall vorliegt.
-
-Eine Zeile sagt, wie oft jede dieser Abkürzungen gescheitert ist und der lange Weg genommen werden musste: ernsthaft nachgeschlagene Chunks, Blöcke, die gefragt wurden, woraus sie bestehen, Blöcke, die fürs Schreiben benannt wurden, und wie oft Quarks Steingenerator das Auslesen der Welt für Boden erspart blieb, der zu weit von der Mitte seines Clusters entfernt liegt, um genutzt zu werden. Gezählt werden nur die Fehlschläge, denn die Erfolge zu zählen würde mehr kosten, als die Erfolge einsparen.
-
 # Steuerung
 
 ## Die Steuerungsebene
@@ -2513,6 +3212,8 @@ Alles, was Generierung unterbindet oder verändert, ist in Gruppen zusammengefas
 Die Gruppen sind `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks` und `commands`.
 
 Einstellungen lösen sich in der Reihenfolge **Biom → Weltvorlage → Config** auf. Der `settings`-Block einer Weltvorlage nutzt dieselben Schlüsselnamen wie die Config, ein Pack setzt sie also genauso, wie du es tun würdest:
+
+`<namespace>/worldtemplates/*.json`
 
 ```json
 {
@@ -2532,13 +3233,61 @@ Steht die Steuerung einer Gruppe auf `default`, gewinnen diese Werte, auf `globa
 
 ### Erze
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockOres": true,
+    "oreWhitelist": ["minecraft", "mypack"],
+    "oreTypes": ["COAL", "IRON"],
+    "oreTypesAreBlacklist": true,
+    "blockOreDimensions": [0, -1],
+    "blockOreDimensionsAreBlacklist": false
+  }
+}
+```
+
 `blockOres` hindert jeden Mod und Minecraft daran, Erz zu generieren, außer den Mods in `oreWhitelist`. `oreTypes` nennt die Erztypen, für die das gilt, und `oreTypesAreBlacklist` entscheidet die Richtung: an werden die genannten Typen blockiert, aus generieren nur die genannten Typen. Erreichbar ist nur Generierung, die über Forges Ore-Generation-Event läuft, also Minecraft und die meisten, aber nicht alle Mods. `blockOreDimensions` beschränkt das Blockieren von Erz auf bestimmte Dimensionen – leer heißt jede –, und `blockOreDimensionsAreBlacklist` macht aus dieser Liste die Dimensionen, die in Ruhe gelassen werden. Eine Dimension außerhalb des Geltungsbereichs wird gar nicht angefasst, die Erze eines anderen Mods generieren dort also unbehelligt, während die Oberwelt blockiert bleibt.
 
 ### Biome
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockBiomes": true,
+    "biomeWhitelist": ["minecraft", "mypack"],
+    "biomeNames": ["minecraft:mesa", "minecraft:mesa_rock"],
+    "biomeNamesAreBlacklist": true,
+    "blockBiomeDimensions": [0],
+    "blockBiomeDimensionsAreBlacklist": false
+  }
+}
+```
+
 `blockBiomes` und `biomeWhitelist` arbeiten nach Mod, `biomeNames` mit `biomeNamesAreBlacklist` nach Namen. Blockierte Biome werden auf der fertigen Biomkarte ersetzt, und nur so kommt man an Ozeane, Pilzinseln, Mesa-Varianten, Dschungel, Hügel und Küsten heran: Die werden außerhalb der Listen ausgewählt, die ein Mod bearbeiten kann. Blockier jedes Biom, und die Oberwelt wird von selbst zur Void-Welt. `blockBiomeDimensions` beschränkt das Ganze auf bestimmte Dimensionen – leer heißt jede –, und `blockBiomeDimensionsAreBlacklist` macht aus dieser Liste einen Ausschluss.
 
 ### Generatoren
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockWorldGenerators": true,
+    "generatorWhitelist": ["minecraft", "mypack"],
+    "blockedGenerators": ["tconstruct"],
+    "blockGeneratorDimensions": [0],
+    "blockGeneratorDimensionsAreBlacklist": false,
+    "generatorTypes": ["ores", "lakes"],
+    "generatorTypesAreBlacklist": true,
+    "generatorTypeMap": ["mrtjpcore=ores", "deworldgenhandler=structures"],
+    "logBlockedGenerators": true
+  }
+}
+```
 
 `blockWorldGenerators` hindert andere Mods daran, über ihre eigenen Weltgeneratoren zu generieren – so fügen Mods das hinzu, was Forges Events nie zu sehen bekommen: Schleiminseln, Höhlenkristalle und dergleichen. `generatorWhitelist` behält die genannten Mods, `blockedGenerators` nennt einzelne, und die Pack-Generierung dieses Mods wird nie blockiert. `blockGeneratorDimensions` beschränkt es auf bestimmte Dimensionen, `blockGeneratorDimensionsAreBlacklist` dreht die Liste um.
 
@@ -2555,6 +3304,24 @@ Zugeordnete Einträge werden vor den eingebauten Wörtern geprüft, sie korrigie
 
 ### Ersetzungen
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockReplacements": [
+      "bigreactors:oreyellorite=minecraft:stone",
+      "mekanism:oreblock:0=minecraft:stone"
+    ],
+    "blockReplacementDimensions": [0],
+    "blockReplacementDimensionsAreBlacklist": false,
+    "blockReplacementMinHeight": 0,
+    "blockReplacementMaxHeight": 255,
+    "blockReplacementKey": "cleanup_v1"
+  }
+}
+```
+
 `blockReplacements` tauscht Blöcke aus Chunks heraus, die es schon gibt, ein `block=block` pro Zeile, mit optionalen Metadaten auf beiden Seiten:
 
 ```
@@ -2567,6 +3334,18 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 
 ### Dörfer
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageBlocks": ["minecraft:cobblestone=mypack:ruby_brick"],
+    "villagePieces": ["field1", "field2"],
+    "villagePiecesAreBlacklist": true
+  }
+}
+```
+
 Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter dem Namen `villages`, `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` und `structureBiomesAreBlacklist` erreichen sie also alle. Eine `structureBiomes`-Liste, die keine Blacklist ist, fügt außerdem jedes genannte Biom hinzu, das die eigene Liste der Struktur nie enthielt – so lassen sich Dörfer ins Gebirge schicken; nenne sie dafür beim Registry-Namen, denn nur Registry-Namen können hinzufügen. Ihr Abstand hat eine Untergrenze von 9, weil Vanilla 8 davon abzieht. `villagePieces` gehört zur selben Gruppe, ein Schalter deckt also alles darüber ab, wo Dörfer hinkommen und woraus sie gebaut sind, während die Gruppe `villages` nur die Grundstücke abdeckt, die ein Pack hinzufügt.
 
 `villageBlocks` ist wie die übrige Dorfarbeit experimentell und greift nur, solange `terrainAdaptation` an ist. Es ersetzt die Blöcke, aus denen ein Dorf gebaut wird, als `original=ersatz`-Paare: `minecraft:cobblestone=meinpack:ruby_brick`. Es greift, nachdem jeder andere Mod sein Wort hatte, ein Pack setzt sich also immer durch, auch gegen Mods, die Dorfmaterialien je Biom austauschen. Beide Seiten akzeptieren einen einfachen Blocknamen oder einen Namen mit Zuständen. Wege werden getrennt über `villagePathBlock` und seine Geschwister benannt.
@@ -2574,6 +3353,30 @@ Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Ein Pack-Grundstück wird über seine eigene Vorlage benannt: entweder mit dem vollen Namen, `meinpack:big_house`, oder einfach `big_house`, oder wahlweise über den Namen des Grundstücks selbst. Ein Pack kann also zehn Grundstücke mitbringen, und eine Weltvorlage lässt eines davon weg, ohne die anderen neun anzurühren. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
 
 #### Dorfwege
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villagePathBlock": "minecraft:stonebrick",
+    "villagePathSupportBlock": "minecraft:gravel",
+    "villagePathBridgeBlock": "minecraft:planks",
+    "villagePathBridgeBarrierBlock": "minecraft:oak_fence",
+    "villagePathBridgeBarrierHeight": 1,
+    "villagePathBridgeSidewalkBlock": "minecraft:planks",
+    "villagePathCenterBlock": "minecraft:quartz_block",
+    "villagePathCenterDash": 2,
+    "villagePathLineBlock": "minecraft:stone_slab",
+    "villagePathSidewalkBlock": "minecraft:stonebrick",
+    "villagePathSidewalkWidth": 2,
+    "villagePathExtraWidth": 1,
+    "villagePathMinimumWidth": 0,
+    "villagePathFlatRun": 6,
+    "villagePathIntersects": ["mypack:crosswalk"]
+  }
+}
+```
 
 Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, solange `terrainAdaptation` an ist. Jede dieser Einstellungen ist standardmäßig leer oder null, was Vanillas Wege genau so lässt, wie sie waren.
 
@@ -2593,13 +3396,17 @@ Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, sola
 | `villagePathExtraWidth` | Zahl | `0` | Zusätzliche Wegblöcke je Seite über Vanillas 3 hinaus. Verbreitert die Wegteile selbst, sodass Häuser von einer breiten Straße zurücktreten |
 | `villagePathMinimumWidth` | Zahl | `0` | Der schmalste Weg, der sich noch lohnt. Ein Stück, das seinen vollen Ausbau nicht unterbringt, fällt auf eine schlichte 3 breite Gasse zurück; unterhalb dieser Breite wird es gar nicht gelegt und das Dorf ordnet sich darum an. `0` lehnt nie ab |
 | `villagePathFlatRun` | Zahl | `6` | Wie viele Blöcke ein Weg eine Höhe hält, bevor er stuft. An Weltkoordinaten verankert, damit benachbarte Stücke übereinstimmen. `0` stuft jeden Block, wie Vanillas Hänge es tun |
-| `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
+| `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `<namespace>/pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
 
 Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Randlinien, dann Gehwege. Breiten, die nicht passen, fallen zurück statt überzulaufen, ein schmales Stück verliert also still seinen Gehweg, bevor es seinen Weg verliert.
 
 `villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
 
-**Kreuzungsmuster.** `villagePathIntersects` nennt Dateien aus dem Ordner `pathintersects/` eines Packs, und jede davon ist ein kleines Bild davon, was dort gemalt wird, wo zwei Straßen sich treffen, gezeichnet als Zeilen aus einzelnen Zeichen, ein Zeichen je Block.
+**Kreuzungsmuster.** `villagePathIntersects` nennt Dateien, die ein Pack mitbringt, jede davon ein kleines Bild davon, was dort gemalt wird, wo zwei Straßen sich treffen, gezeichnet als Zeilen aus einzelnen Zeichen, ein Zeichen je Block.
+
+`<namespace>/pathintersects/*.json`
+
+Der Pfad der Datei ist der Registrierungsschlüssel des Musters, den `villagePathIntersects` dann nennt.
 
 ```json
 {
@@ -2625,9 +3432,26 @@ Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kre
 
 ### Blast Plaster
 
-Was nach einer Explosion geschieht, aus `blastplaster/*.json`. `default` lässt Packs entscheiden, `global` übergeht Pack-Dateien und legt die Vorgaben dieses Mods über Blast Plasters Config, und `off` gibt Blast Plaster ganz an seine eigene Config zurück.
+Was nach einer Explosion geschieht, aus `<namespace>/blastplaster/*.json`. `default` lässt Packs entscheiden, `global` übergeht Pack-Dateien und legt die Vorgaben dieses Mods über Blast Plasters Config, und `off` gibt Blast Plaster ganz an seine eigene Config zurück.
 
 ### Strukturen
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureSpacing": ["temples=24", "monuments=40", "mineshafts=200"],
+    "structureSeparation": ["monuments=12"],
+    "structureMinDistanceFromSpawn": ["strongholds=1000"],
+    "structureBiomes": ["temples=minecraft:desert,SANDY"],
+    "structureBiomesAreBlacklist": false,
+    "structureSpawns": ["temples=minecraft:witch:1:1:1", "monuments="],
+    "structureSpawners": ["dungeons=minecraft:zombie,minecraft:husk"],
+    "structureAt": ["villages=1000,-500"]
+  }
+}
+```
 
 Vanilla-Strukturen, nach Namen und pro Dimension abgeschaltet. Die Platzierung steuern vier Listen in der Form `structure=wert`, eine pro Zeile: `structureSpacing` für den Abstand, in dem sie gesät werden, `structureSeparation` dafür, wie nah zwei einander kommen dürfen, `structureMinDistanceFromSpawn` dafür, wie weit draußen sie anfangen, und `structureBiomes` mit `structureBiomesAreBlacklist` dafür, wo sie erlaubt sind.
 
@@ -2669,23 +3493,105 @@ Der Abstand entscheidet, wo eine Struktur gesät wird, ihn in einer bestehenden 
 
 ### Spawnen
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "surfaceDayMonsterRate": 0.0,
+    "surfaceNightMonsterRate": 1.0,
+    "undergroundDayMonsterRate": 1.0,
+    "undergroundNightMonsterRate": 1.0,
+    "monsterCap": 40,
+    "creatureCap": 10,
+    "ambientCap": 15,
+    "waterCreatureCap": 5,
+    "monsterSpawnLight": 0,
+    "skyAnimals": false
+  }
+}
+```
+
 Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wird über `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` und `undergroundNightMonsterRate` skaliert, jeweils ein Faktor, bei dem `1.0` Vanilla ist – Spawnen bei Tageslicht an der Oberfläche lässt sich also abschalten, ohne die Höhlen anzurühren. Die Obergrenzen sind `monsterCap`, `creatureCap` für friedliche Tiere, `ambientCap` für Fledermäuse und Ähnliches und `waterCreatureCap` für Tintenfische; Vanillas Werte sind 70, 10, 15 und 5, und `-1` lässt eine davon unangetastet. `monsterSpawnLight` begrenzt zusätzlich zu den Vanilla-Prüfungen das Blocklicht, das ein feindlicher Spawn verträgt: `0` ist die moderne Regel, bei der eine Fackel eine Höhle vollständig schützt, und `-1`, der Standard, behält Vanillas Würfeln bei. `skyAnimals` entscheidet, ob sich friedliche Mobs auf dem Land ansiedeln, das eine Rubic-Welt über ihrem Terrainfenster erzeugt, allen voran auf den schwebenden Inseln: `true`, der Standard, lässt Vanillas Herden dort, wo der oberste Block liegt, `false` hält Tiere und Fledermäuse auf dem Boden darunter. Spawner ignorieren beides.
 
 ### Strukturen aufsetzen
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAdaptation": ["villages=beard_thin", "mansions=bury", "monuments=none"]
+  }
+}
+```
 
 `structureAdaptation` entscheidet, an welche Strukturen sich das Gelände anpasst und wie, als `structure=modus`-Einträge, `"mansions=bury"`, `"monuments=none"`, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser, mit den fünf Modi, die moderne Versionen nutzen: `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate`. Dörfer sind `beard_thin`, wenn nichts anderes gesetzt ist, und alles andere ist `none`, solange es nicht genannt wird – genau das, was moderne Versionen für sich selbst wählen. Tempel lassen sich noch nicht nennen, weil sie sich erst beim Bauen selbst platzieren, es gibt also rechtzeitig nichts, woran das Gelände sich anpassen könnte.
 
 ### Dörfer aufsetzen
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true
+  }
+}
+```
+
 **Diese Einstellung ist experimentell und noch in Bewegung.** Die Nutzung erfolgt auf eigene Gefahr. Sie formt das Gelände schon beim Erzeugen der Welt um, alles, was sie legt, ist in diesem Spielstand also endgültig, und ein Fehler darin kann ein halb abgetragenes Dorf oder eine Straße auf einem Damm hinterlassen. Solange daran gearbeitet wird, ändert sich ihr Verhalten von Build zu Build. Zwei Welten aus demselben Seed, aber mit unterschiedlichen Mod-Versionen erzeugt, sehen deshalb nicht gleich aus, und ein Dorf aus einem älteren Build wird von einem neueren weder erneut besucht noch ausgebessert. Wenn dir eine Welt wichtig ist, lass die Einstellung aus oder leg eine Sicherung an und rechne damit, dass die Dörfer darin genau den Stand zeigen, den der Mod an dem Tag hatte, an dem diese Chunks entstanden sind.
 
-`terrainAdaptation` arbeitet um, wie Dörfer ihren Boden wählen und darauf sitzen, dem Geist nach übernommen davon, wie moderne Versionen ihre Strukturen aufsetzen, und dann weitergetrieben. Ein Dorf wird nur auf einem Chunk gegründet, dessen Boden um höchstens zehn Blöcke schwankt, und nie näher als acht Chunks an einem anderen Dorf; Regionen, die keinen solchen Chunk hergeben, gründen gar nichts. Der Brunnen setzt sich auf den tiefsten Boden, den seine eigene Grundfläche berührt, und das ganze Dorf verschiebt sich mit ihm, sodass sich alles Übrige von dort aus einrichtet. Wege werden beim Legen abgezogen: Die Oberfläche folgt über die Wegbreite dem tiefsten natürlichen Boden, Buckel werden abgetragen, Senken gefüllt, das Gefälle überschreitet nie einen Block pro Schritt, und kurze Schluchten werden mit Brettern überbrückt. Die Wegoberfläche richtet sich nach dem Boden, über den sie führt: Trampelpfade auf Erde, Sandstein auf Sand, gebrannter Ton in der Mesa, Kies auf Stein und auf Kies, Bretter über Wasser. Ein Wüstendorf bekommt so Sandsteinstraßen statt eines Feldwegs, und Wege verschwinden nicht mehr dort, wo der Boden kein Gras ist. Wo zwei Wege sich kreuzen, treffen sie sich auf der niedrigeren der beiden Höhen, denn nur eine Höhe, die beide erreichen können, lässt keine Stufe zwischen ihnen. Jedes Gebäude sitzt einen Block über dem Weg, an dem es steht, abgelesen vom gelegten Weg oder vorhergesagt aus der Höhe, auf die der Weg den Boden abziehen wird, wenn er noch nicht gebaut ist – so ruhen seine Türstufen auf der Wegoberfläche und seine Tür sitzt dahinter. Ein Gebäude, unter dem irgendwo mehr als zwei Blöcke aufgeschütteter Boden nötig wären, wird dort nicht gebaut: Es rutscht bis zu zwölf Blöcke am Weg entlang auf der Suche nach dem flachsten Sitz und fällt ganz weg, wenn es keinen findet – Dörfer auf zerklüftetem Boden fallen so lockerer aus, statt auf Sockeln zu stehen. Der Ring um ein Gebäude wird bergab aufgeschüttet und bergauf abgetragen, einen Block flacher noch einen Ring weiter außen. Felder behalten Vanillas eigene Bodenhöhe. Laternenpfähle stehen auf der Höhe des Weges, den sie beleuchten, statt auf der Schulter daneben, mit aufgefülltem Boden darunter, wo der Weg über dem Randstreifen liegt, und Vanillas eigene Fackelpfosten bleiben aus dem Grundriss heraus, weil diese sie ersetzen. Unter jedem Gebäude wird bis zur nächsten tragenden Fläche mit demselben Material aufgefüllt, auf dem es steht, Wände und Türöffnungen werden aus Hängen herausgeschnitten, Erde wird von Dächern gehoben, und jeder Baum, der in einer Struktur steht, wird ganz gefällt, seine Blätter gehen mit seinem Holz, während jedes Blatt, das noch zu einem stehenden Ast gehört, in Ruhe gelassen wird. Herrenhäuser und die verstreuten Bauwerke (Tempel, Hütten, Iglus) müssen dieselbe Anforderung an flachen Boden erfüllen, bevor sie gesetzt werden dürfen. Es formt das Gelände selbst beim Entstehen um, eine Welt, die damit generiert wurde, unterscheidet sich also von einer, die ohne generiert wurde – dieselbe Warnung, die moderne Versionen mitbringen –, und es ist aus, solange ein Pack oder die Config nicht darum bittet.
+`terrainAdaptation` arbeitet um, wie Dörfer ihren Boden wählen und darauf sitzen, dem Geist nach übernommen davon, wie moderne Versionen ihre Strukturen aufsetzen, und dann weitergetrieben. Ein Dorf wird nur auf einem Chunk gegründet, dessen Boden um höchstens zehn Blöcke schwankt, und nie näher als acht Chunks an einem anderen Dorf; Regionen, die keinen solchen Chunk hergeben, gründen gar nichts. Der Brunnen setzt sich auf den tiefsten Boden, den seine eigene Grundfläche berührt, und das ganze Dorf verschiebt sich mit ihm, sodass sich alles Übrige von dort aus einrichtet.
+
+Wege werden beim Legen abgezogen: Die Oberfläche folgt über die Wegbreite dem tiefsten natürlichen Boden, Buckel werden abgetragen, Senken gefüllt, das Gefälle überschreitet nie einen Block pro Schritt, und kurze Schluchten werden mit Brettern überbrückt. Die Wegoberfläche richtet sich nach dem Boden, über den sie führt: Trampelpfade auf Erde, Sandstein auf Sand, gebrannter Ton in der Mesa, Kies auf Stein und auf Kies, Bretter über Wasser. Ein Wüstendorf bekommt so Sandsteinstraßen statt eines Feldwegs, und Wege verschwinden nicht mehr dort, wo der Boden kein Gras ist. Wo zwei Wege sich kreuzen, treffen sie sich auf der niedrigeren der beiden Höhen, denn nur eine Höhe, die beide erreichen können, lässt keine Stufe zwischen ihnen.
+
+Jedes Gebäude sitzt einen Block über dem Weg, an dem es steht, abgelesen vom gelegten Weg oder vorhergesagt aus der Höhe, auf die der Weg den Boden abziehen wird, wenn er noch nicht gebaut ist – so ruhen seine Türstufen auf der Wegoberfläche und seine Tür sitzt dahinter. Ein Gebäude, unter dem irgendwo mehr als zwei Blöcke aufgeschütteter Boden nötig wären, wird dort nicht gebaut: Es rutscht bis zu zwölf Blöcke am Weg entlang auf der Suche nach dem flachsten Sitz und fällt ganz weg, wenn es keinen findet – Dörfer auf zerklüftetem Boden fallen so lockerer aus, statt auf Sockeln zu stehen. Der Ring um ein Gebäude wird bergab aufgeschüttet und bergauf abgetragen, einen Block flacher noch einen Ring weiter außen.
+
+Felder behalten Vanillas eigene Bodenhöhe. Laternenpfähle stehen auf der Höhe des Weges, den sie beleuchten, statt auf der Schulter daneben, mit aufgefülltem Boden darunter, wo der Weg über dem Randstreifen liegt, und Vanillas eigene Fackelpfosten bleiben aus dem Grundriss heraus, weil diese sie ersetzen. Unter jedem Gebäude wird bis zur nächsten tragenden Fläche mit demselben Material aufgefüllt, auf dem es steht, Wände und Türöffnungen werden aus Hängen herausgeschnitten, Erde wird von Dächern gehoben, und jeder Baum, der in einer Struktur steht, wird ganz gefällt, seine Blätter gehen mit seinem Holz, während jedes Blatt, das noch zu einem stehenden Ast gehört, in Ruhe gelassen wird. Herrenhäuser und die verstreuten Bauwerke (Tempel, Hütten, Iglus) müssen dieselbe Anforderung an flachen Boden erfüllen, bevor sie gesetzt werden dürfen.
+
+Es formt das Gelände selbst beim Entstehen um, eine Welt, die damit generiert wurde, unterscheidet sich also von einer, die ohne generiert wurde – dieselbe Warnung, die moderne Versionen mitbringen –, und es ist aus, solange ein Pack oder die Config nicht darum bittet.
 
 ### Grundgestein
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "flatBedrock": true,
+    "flatBedrockRetrogen": false,
+    "bedrockLayers": 1,
+    "flatBedrockRoof": true,
+    "flatBedrockFiller": "minecraft:stone",
+    "flatBedrockFillers": ["-1=minecraft:netherrack", "1=minecraft:end_stone"],
+    "flatBedrockDimensions": [0, -1],
+    "flatBedrockDimensionsAreBlacklist": false,
+    "flatBedrockBiomes": ["minecraft:plains"],
+    "flatBedrockBiomeTypes": ["MOUNTAIN"],
+    "flatBedrockBiomesAreBlacklist": true
+  }
+}
+```
 
 `flatBedrock` ersetzt die zerklüftete Schicht durch flache, pro Dimension und pro Biom, mit einem Füllblock deiner Wahl. `flatBedrockRetrogen` macht das auch mit Chunks, die es schon gibt. Es lässt sich nicht rückgängig machen, das ursprüngliche Muster wird nirgends festgehalten. `bedrockLayers` legt fest, wie viele Schichten bleiben, `flatBedrockRoof` macht auch die Decke, wo eine Dimension eine hat, und `flatBedrockFiller` ist das, was das weggenommene Grundgestein ersetzt, leer gelassen wird pro Dimension gewählt, und `flatBedrockFillers` nennt stattdessen einen pro Dimension. Welche Dimensionen und Biome es erreicht, bestimmen `flatBedrockDimensions`, `flatBedrockBiomes` und `flatBedrockBiomeTypes`, wobei `flatBedrockDimensionsAreBlacklist` und `flatBedrockBiomesAreBlacklist` diese Listen zu Ausschlüssen machen.
 
 ### Langsameres Ticken in der Ferne
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "slowDistantEntities": true,
+    "slowedKinds": ["items", "experience", "projectiles"],
+    "slowDistance": 192,
+    "slowRate": 4,
+    "neverSlowed": ["minecraft:armor_stand"],
+    "slowRecheck": 20
+  }
+}
+```
 
 Entities kosten einen Server mehr als alles andere, und die meisten sind weit von jedem Spieler entfernt. `slowDistantEntities` gibt einem Chunk ohne Spieler innerhalb von `slowDistance` Blöcken nur einen von `slowRate` Ticks, was darin ist, bewegt sich also weiterhin, schwebt, brennt und despawnt, nur langsamer. Nichts bleibt je ungetickt.
 
@@ -2730,6 +3636,16 @@ Bevor ein Chunk geschrieben werden kann, wird er in die Form gebracht, die auf d
 
 ### Chunks hinausschreiben
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "hurryWritesAbove": 100
+  }
+}
+```
+
 Das Spiel schreibt fertige Chunks auf einem eigenen Thread, einen nach dem anderen, und ruht nach jedem eine hundertstel Sekunde. Das hält es bei etwa hundert Chunks pro Sekunde, egal wie schnell die Platte ist, was beim Spielen reichlich und beim Bau von Land in großen Mengen bei Weitem nicht genug ist – die ungeschriebenen Chunks stapeln sich stattdessen im Speicher. `hurryWritesAbove` sagt, wie viele warten dürfen, bevor es aufhört zu ruhen und einfach so schnell schreibt, wie es kann. `100` ist der Standard und trifft den Punkt, an dem das Spiel selbst die Generierung zu bremsen beginnt; `0` lässt es immer ruhen, so wie das Spiel es tut. Solange die Zahl der Wartenden klein ist, ändert sich nichts, und das ist jeder gewöhnliche Moment des Spielens.
 
 Jedes Mal, wenn das Aufräumen läuft, wird dafür eine Zeile geschrieben, während es passiert: welcher Sammler lief, wie lange er brauchte, was vorher und nachher gehalten wurde und wie viel Platz das Spiel zu diesem Zeitpunkt hatte. Ändert sich dieser Platz, wird das gesagt, denn der wachsende Platz ist selbst die Ursache der längsten dieser Pausen: Ein Spiel, das mit weniger Platz startet, als es am Ende braucht, hält an, um ihn zu vergrößern, immer wieder, in Momenten, die nichts mit dem zu tun haben, was es gerade tut. Es mit so viel Platz zu starten, wie es haben darf, vermeidet das vollständig.
@@ -2738,19 +3654,70 @@ Eine letzte Zeile sagt, wie viel Arbeitsabfall seit dem letzten Blick weggeworfe
 
 ### Spawn-Chunks
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "spawnChunkRadius": 128,
+    "spawnChunkRadii": ["0=64", "7=0"]
+  }
+}
+```
+
 Das Spiel hält die Chunks um den Spawnpunkt einer Welt geladen, ob jemand da ist oder nicht, damit Mods irgendwo etwas haben, das immer tickt. Das sind 128 Blöcke in jede Richtung, etwa 289 Chunks, und im Spiel lässt sich das nicht einstellen. `spawnChunkRadius` setzt diese Entfernung. `128` ist das, was das Spiel macht, und der Standard, eine kleinere Zahl hält einen kleineren Anker, und `0` hält gar keine, der Spawnbereich entlädt also wie überall sonst. `spawnChunkRadii` setzt einen Radius für einzelne Dimensionen, geschrieben als `dimension=blöcke`, einer pro Zeile, und überschreibt `spawnChunkRadius` für die genannten Dimensionen.
 
 Nur eine Dimension, die dafür registriert wurde, ihren Spawn zu halten, hält einen, und das ist im Spiel selbst allein die Oberwelt – der Nether und das Ende hielten nie einen, das dafür zu setzen ändert also nichts. Eine Dimension, die ein Mod hinzufügt, hält nur dann einen, wenn dieser Mod darum gebeten hat, und ein Mod, der das getan hat, schleppt oft weitere 289 Chunks mit, die ein Pack nie wollte. Ob eine Welt überhaupt geladen bleibt, ist eine andere Sache, die das hier nicht berührt: Eine Dimension, die ein Mod als dauerhaft geladen markiert hat, bleibt auch bei `0` geladen, sie hält nur keine Chunks mehr. Die meisten Mods, die den Spawn als Anker nutzen, wollen dort irgendetwas haben und keine 289 Chunks davon, eine kleine Zahl hält sie also meist am Laufen, während eine `0` das nicht tut.
 
 ### Void-Welt
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "voidWorld": true,
+    "voidPlatformBlock": "minecraft:stone",
+    "voidPlatformSize": 5,
+    "voidPlatformHeight": 64,
+    "voidWorldDimensions": [0],
+    "voidWorldDimensionsAreBlacklist": false
+  }
+}
+```
+
 `voidWorld` generiert eine leere Welt mit einer Plattform am Spawnpunkt und unterbindet Mobs, Tiere, Strukturen und alles, was ein Mod dort sonst generieren würde. Block, Größe und Höhe der Plattform sind `voidPlatformBlock`, `voidPlatformSize` und `voidPlatformHeight`; die Größe wird auf eine ungerade Blockzahl abgerundet, damit die Plattform mittig auf dem Spawn sitzt. `voidWorldDimensions` wählt, welche Welten geleert werden, standardmäßig allein die Oberwelt, und `voidWorldDimensionsAreBlacklist` macht aus dieser Liste die, die in Ruhe gelassen werden. Der Nether und das Ende werden genauso geleert wie die Oberwelt, ob es die sind, die diese Version baut, oder solche, die ein Mod an ihre Stelle gesetzt hat. Nur die Oberwelt bekommt eine Plattform, einen Weg in einen geleerten Nether oder ein geleertes Ende liefert ein Pack also selbst. Ein geleertes Ende hat außerdem keinen Drachen, keine Kristalle und keinen Grundgestein-Brunnen, weil der Kampf, der sie baut, nie beginnt.
 
 ### Der Drache
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "dragonFight": true
+  }
+}
+```
+
 `dragonFight` gehört zur Gruppe `structures` und entscheidet, ob das Ganze überhaupt stattfindet: der Drache, seine Leiste, die Kristalle, der Brunnen, auf dem er steht, und das Wiederbeleben, das ein Spieler mit Enderkristallen starten würde. Ein geleertes Ende lässt ihn weg, solange ein Pack nicht darum bittet, und ein gewöhnliches Ende hat ihn, solange ein Pack nicht etwas anderes sagt – `dragonFight` lohnt sich also in beide Richtungen.
 
 ### Gelände
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldType": "biomesop",
+    "worldTypeExceptions": ["flat", "debug_all_block_states"],
+    "worldSeed": "Hollow Ridge",
+    "generatorOptions": "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1",
+    "terrainWorldTypes": ["default", "customized"],
+    "terrainWorldTypesAreBlacklist": false
+  }
+}
+```
 
 `worldType` entscheidet, welche Art Welt eine neue Welt ist, ganz gleich, was im Bildschirm beim Erstellen ausgewählt wurde: `default`, `largebiomes`, `amplified`, `customized` oder ein Typ, den ein Mod hinzufügt, etwa `biomesop` oder `realistic`. Ein Pack, das um einen Welttyp herum gebaut ist, nennt ihn hier, und jede neue Welt wird so gebaut. Leer, der Standard, überlässt die Wahl dem, der die Welt erstellt. Eine Welt, die es schon gibt, behält den Typ, mit dem sie gebaut wurde, und ein Name, den niemand bereitstellt, wird protokolliert und ignoriert. `worldTypeExceptions` nennt die Auswahlen, die stehen bleiben, zunächst Superflach und die Debug-Welt, denn ein Pack, das einen Welttyp will, will jemandem beim Testen selten Superflach wegnehmen; und wer eine Welt erstellt, erfährt im Chat, sobald er drin ist, dass das Pack den Typ gewählt hat. Diese Meldung entscheidet die Config-Datei über `tellWorldType`, nicht ein Pack, wer spielt, kann sie also für sich abschalten, und kein Pack kann sie wieder einschalten. Einstellungen, mit denen die Welt erstellt wurde, fallen beim Wechsel des Typs weg, weil sie für den gewählten Typ geschrieben waren.
 
@@ -2772,11 +3739,41 @@ Alles andere, was ein Pack tut – Biome und Erze blockieren, Blöcke ersetzen, 
 
 ### Protokollierung
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "logBlockedOres": true,
+    "logBlockedBiomes": true,
+    "logBlockedGenerators": true,
+    "logBlockedRecipes": true,
+    "logBlockReplacements": true
+  }
+}
+```
+
 `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` und `logBlockReplacements` protokollieren jeweils das erste Mal, dass etwas abgewiesen wird, du siehst also, was eine Sperrregel tatsächlich erwischt hat, statt es aus dem zu erraten, was fehlt. Sie sind das Erste, was man einschaltet, wenn eine Regel nichts oder zu viel zu tun scheint.
 
 ### Rezepte
 
-`blockRecipes` und `blockFurnaceRecipes` entfernen alles außer den Mods in ihren Whitelists. Nichts ist standardmäßig ausgenommen, trag also den Namespace deines eigenen Packs ein, um seine Rezepte zu behalten. Ergänzungen von CraftTweaker und GroovyScript überleben immer, egal was die Whitelist sagt. Die Whitelists sind `recipeWhitelist` und `furnaceWhitelist`; `blockedRecipeMods` und `blockedFurnaceMods` gehen in die andere Richtung und entfernen die Rezepte eines genannten Mods, egal was die Whitelist sagt. `recipeMatch` entscheidet, woher die Mod-ID gelesen wird, wenn Handwerksrezepte blockiert werden: aus dem Namen des Rezepts oder aus dem, was es herstellt.
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockRecipes": true,
+    "recipeWhitelist": ["minecraft", "mypack"],
+    "blockedRecipeMods": ["tconstruct"],
+    "blockFurnaceRecipes": true,
+    "furnaceWhitelist": ["minecraft", "mypack"],
+    "blockedFurnaceMods": ["tconstruct"],
+    "recipeMatch": "recipe"
+  }
+}
+```
+
+`blockRecipes` und `blockFurnaceRecipes` entfernen alles außer den Mods in ihren Whitelists. Nichts ist standardmäßig ausgenommen, trag also den Namespace deines eigenen Packs ein, um seine Rezepte zu behalten. Ergänzungen von CraftTweaker und GroovyScript überleben immer, egal was die Whitelist sagt. Die Whitelists sind `recipeWhitelist` und `furnaceWhitelist`; `blockedRecipeMods` und `blockedFurnaceMods` gehen in die andere Richtung und entfernen die Rezepte eines genannten Mods, egal was die Whitelist sagt. `recipeMatch` entscheidet, woher die Mod-ID gelesen wird, wenn Handwerksrezepte blockiert werden: `recipe`, der Standard, nimmt den Namen des Rezepts, `output` nimmt das Item, das es herstellt, und `both` blockiert, wenn eines von beiden passt, und verschont, wenn eines von beiden auf der Whitelist steht.
 
 ## Universal Tweaks
 
@@ -2836,15 +3833,44 @@ Alles andere lief nie durch den Generator und funktioniert wie überall: Pack-Wo
 
 ## Blast Plaster Integration
 
+`<namespace>/blastplaster/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
 Blast Plaster (eine Abhängigkeit dieses Mods) behandelt, was nach einer Explosion passiert: Krater Block für Block heilen, baumbewusstes Fällen, Drop-Kontrolle. Allein liest es eine globale Config. Aus einem Pack gesteuert antwortet es **pro Dimension**, und das Pack liefert die Entscheidung mit, statt Spieler an die Config zu schicken. Das Fällen von Bäumen in Dörfern nutzt außerdem seine Baumgeometrie, weshalb ein Baum über einer neuen Straße ganz herunterkommt. Ohne Pack-Dateien verhält sich Blast Plaster genau so, als wäre es allein installiert.
 
-Die Dateien liegen unter `assets/<namespace>/blastplaster/*.json`. Was oben in der Datei steht, gilt überall; ein `dimensions`-Block überschreibt es für eine Dimension anhand ihrer Id. Alles, was ein Pack nie nennt, behält das, was Blast Plasters eigene Config sagt, ein Pack setzt also die Handvoll, um die es ihm geht, und lässt den Rest in Ruhe.
+Was oben in der Datei steht, gilt überall; ein `dimensions`-Block überschreibt es für eine Dimension anhand ihrer Id. Alles, was ein Pack nie nennt, behält das, was Blast Plasters eigene Config sagt, ein Pack setzt also die Handvoll, um die es ihm geht, und lässt den Rest in Ruhe.
+
+Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 ```json
 {
   "explosionMode": "EJECT_DROPS",
+  "healCreepers": true,
+  "healNonPlayerTNT": true,
+  "healWither": true,
+  "healAll": false,
+  "processPlayerIgnitedTNT": false,
+  "customEntitiesToHeal": ["icbmclassic:missile"],
   "healFullTrees": true,
   "maxTreeSize": 400,
+  "minimumTicksBeforeHeal": 200,
+  "randomTickVar": 20,
+  "overrideBlocks": false,
+  "enableFakeTossedBlocks": true,
+  "enableExplosionFlash": true,
+  "explosionFlashDuration": 10,
+  "explosionFlashLightLevel": 15,
+  "explosionFlashParticleCount": 40,
+  "explosionFlashPulses": 2,
+  "enableExplosionSmoke": true,
+  "explosionSmokeDuration": 100,
+  "explosionSmokeParticleCount": 30,
+  "playerTNTAlwaysDrops": false,
+  "playerTNTDropFullBlocks": false,
+  "enableDropSuppression": true,
+  "dtSpecialDrops": true,
+  "preventMobDrops": false,
   "dimensions": {
     "-1": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "1": { "enableExplosionSmoke": false }
@@ -2911,6 +3937,24 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 
 **Verhalten** für `behavesAs`. `till`, `path`.
 
+Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldName": "Ruby World",
+    "worldGameMode": "creative",
+    "worldSpawn": "0,72,0",
+    "worldBorder": 4096,
+    "worldTime": 6000,
+    "worldDifficulty": ["normal", "-1=hard"],
+    "weatherCeiling": ["0=128"]
+  }
+}
+```
+
 **`worldName`** (Gruppe `terrain`) füllt das Namensfeld des Erstellungsbildschirms vor; der Speicherordner folgt daraus wie üblich. Es füllt das Feld nur, solange dort noch der Spielstandard steht – ein vom Spieler getippter Name wird nie überschrieben –, und wird anders als Seed und Spielmodus hinterher nicht erneut gesetzt: Was beim Erstellen im Feld steht, ist der Name.
 
 **`worldGameMode`** (Gruppe `terrain`): `survival`, `hardcore`, `creative`, `adventure` oder `spectator`. Gilt nur beim Erstellen der Welt; bestehende Welten bleiben unberührt, spätere Moduswechsel ebenso. `hardcore` ist Überleben plus das Vanilla-Hardcore-Flag für den ganzen Spielstand; `creative` schaltet zusätzlich Befehle frei, wie das Häkchen des Erstellungsbildschirms. Der Bildschirm öffnet mit dem Modus (und dem Seed des Packs) vorausgewählt; der Spieler darf dort ändern, das Pack setzt es beim Erstellen zurück. `adventure` und `spectator` werden dort nicht angeboten und beim Erstellen der Welt angewendet.
@@ -2927,6 +3971,19 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 
 **Weltphysik** – vier `terrain`-Schlüssel, jeder ein Multiplikator des Vanilla-Werts (`1.0` = unverändert), jeder mit einem bloßen Wert für alle Dimensionen oder `Dimension=Wert`-Überschreibungen:
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldGravity": ["0.17", "0=1.0"],
+    "worldFallDamage": ["0.17"],
+    "worldJumpStrength": ["1.0"],
+    "worldTerminalVelocity": ["1.0"]
+  }
+}
+```
+
 | Einstellung | Skaliert | Anmerkungen |
 | --- | --- | --- |
 | `worldGravity` | Fallbeschleunigung von Spielern, Mobs, fallengelassenen Items, fallenden Blöcken, Pfeilen, Geworfenem, TNT und Erfahrungskugeln | `0.17` ist mondartig; Sprungbögen und Wurfweiten ziehen von selbst mit |
@@ -2937,6 +3994,8 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 Alle vier leer (Standard) behalten die Vanilla-Physik. Auf Galacticraft-Dimensionen skaliert der Gravitationsschlüssel Galacticrafts eigene Schwerkraft.
 
 **Weltnähte** — Dimensionen vertikal stapeln: wer eine Welt durch Boden oder Decke verlässt, gelangt bei gleichem x und z in die Dimension darunter oder darüber.
+
+`<namespace>/worldtemplates/*.json`
 
 ```json
 {
@@ -2956,104 +4015,92 @@ Alle vier leer (Standard) behalten die Vanilla-Physik. Auf Galacticraft-Dimensio
 | `worldSeamEntities` | boolean | `true` | Ob Gegenstände, Mobs und andere Entitäten mitreisen oder nur Spieler |
 | `worldSeamBedrock` | boolean | `false` | Bedrock an einer Nahtgrenze behalten. Aus, erzeugt die Grenze keinen, der Weg hindurch lässt sich also graben |
 
-Beide Listen leer (Standard) halten jede Welt geschlossen. Die äußerste Blockschicht einer Welt ist ihre Tür: wer die unterste betritt, fährt hinunter, wer die oberste betritt, kommt zurück herauf. Ankünfte landen davon frei, drei Schichten tief nach unten und eine nach oben, damit niemand sofort zurückgeworfen wird. Nach unten wird zugleich alles über der Ankunft bis zur Tür hin freigeschlagen, der Weg hinein bleibt also von unten sichtbar und dient als Rückweg. Schlägt man einen Block in einer Türschicht heraus, scheint die Welt dahinter hindurch: unter dem Boden der Himmel der Dimension darunter, über der Decke der Himmel der darüber. Das zeichnet allein der Client, innerhalb der Sichtweite, und an der Welt selbst ändert es nichts. Der Schwung bleibt erhalten. Die Übergänge eines Spielers werden gemerkt. Der Weg nach unten markiert das Loch, und wer in dessen Nähe zurückkommt, landet dort, wo ihn dieses Loch beim letzten Mal abgesetzt hat, ein oft benutzter Schacht bringt einen also immer an dieselbe bekannte Stelle statt jedes Mal woandershin. Die erste Rückkehr ermittelt den Platz: diese Stelle, wenn dort fester Boden darunter liegt, sonst der nächste freie Stand, Höhe für Höhe von der Naht nach außen, und sonst eine Nische im Rand direkt neben dem Loch, denn ein glatt hinuntergegrabener Schacht hat noch keine eigene Kante. Wer ohne eigenes Loch in der Nähe nach oben wechselt, bekommt dort einfach einen neuen Platz. Kommt man von unten und ist nirgends fester Stand, bleibt die Oberfläche derselben Säule. Fuß- und Kopfhöhe werden freigehauen, falls die Stelle im Fels liegt, wobei diese Blöcke ordentlich abgebaut werden und fallen, Behälter eingeschlossen. Ketten entstehen, indem jede Dimension eigene Zeilen bekommt; Reiter und Reittiere wechseln getrennt.
+Beide Listen leer (Standard) halten jede Welt geschlossen. Die äußerste Blockschicht einer Welt ist ihre Tür: wer die unterste betritt, fährt hinunter, wer die oberste betritt, kommt zurück herauf. Ankünfte landen davon frei, drei Schichten tief nach unten und eine nach oben, damit niemand sofort zurückgeworfen wird. Nach unten wird zugleich alles über der Ankunft bis zur Tür hin freigeschlagen, der Weg hinein bleibt also von unten sichtbar und dient als Rückweg.
+
+Schlägt man einen Block in einer Türschicht heraus, scheint die Welt dahinter hindurch: unter dem Boden der Himmel der Dimension darunter, über der Decke der Himmel der darüber. Das zeichnet allein der Client, innerhalb der Sichtweite, und an der Welt selbst ändert es nichts. Der Schwung bleibt erhalten.
+
+Die Übergänge eines Spielers werden gemerkt. Der Weg nach unten markiert das Loch, und wer in dessen Nähe zurückkommt, landet dort, wo ihn dieses Loch beim letzten Mal abgesetzt hat, ein oft benutzter Schacht bringt einen also immer an dieselbe bekannte Stelle statt jedes Mal woandershin. Die erste Rückkehr ermittelt den Platz: diese Stelle, wenn dort fester Boden darunter liegt, sonst der nächste freie Stand, Höhe für Höhe von der Naht nach außen, und sonst eine Nische im Rand direkt neben dem Loch, denn ein glatt hinuntergegrabener Schacht hat noch keine eigene Kante. Wer ohne eigenes Loch in der Nähe nach oben wechselt, bekommt dort einfach einen neuen Platz. Kommt man von unten und ist nirgends fester Stand, bleibt die Oberfläche derselben Säule. Fuß- und Kopfhöhe werden freigehauen, falls die Stelle im Fels liegt, wobei diese Blöcke ordentlich abgebaut werden und fallen, Behälter eingeschlossen.
+
+Ketten entstehen, indem jede Dimension eigene Zeilen bekommt; Reiter und Reittiere wechseln getrennt.
 
 Tore gelten für Spieler. Wer das Ziel nicht freigeschaltet hat, bekommt die Meldung des Tors und wird auf den zuletzt betretenen festen Boden gesetzt, sonst auf einen Sims nahe der Naht; Nähte setzen keine Blöcke, ein verriegelter Schacht lässt sich also nicht durch Hineinspringen abfarmen. Gegenstände und Mobs haben kein eigenes Tor: bei eingeschaltetem `worldSeamEntities` reisen sie unabhängig davon, wer sie verloren hat, ausgeschaltet fallen sie bei offenem Boden an ihm vorbei und sind verloren wie in jedem Loch. `worldSeamBedrock` schließt stattdessen den Boden; ein Pack, das den Bedrock behält, stellt den Durchgang selbst bereit, üblicherweise mit einer [Eigenschaftsüberschreibung](#eigenschaften-überschreiben), die `minecraft:bedrock` eine positive `hardness` gibt. Vor der Naht erzeugte Chunks behalten ihren Bedrock.
 
 **Rubic-Welten** – auch `rubicWorld`, `worldMinHeight`, `worldMaxHeight`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist` und `terrainOffset` sind `terrain`-Schlüssel: siehe [Rubic-Welten](#rubic-welten).
 
-**Strukturen** für eine Weltvorlage. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines` und `reccomplex`, das alles abschaltet, was Recurrent Complex von sich aus erzeugt – seine natürlichen Strukturen und seine Dekorations-Stellvertreter –, während das, was schon in der Welt steht, unangetastet bleibt.
+**Strukturen** für eine Weltvorlage und für die Listen der Gruppe `structures` selbst. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines` und `reccomplex`, das alles abschaltet, was Recurrent Complex von sich aus erzeugt – seine natürlichen Strukturen und seine Dekorations-Stellvertreter –, während das, was schon in der Welt steht, unangetastet bleibt. Acht weitere benennen, was der Populate-Schritt setzt, statt eines Strukturgenerators: `dungeons`, `waterlakes`, `lavalakes`, `netherlava`, `fire`, `glowstone`, `ice` und `animals`.
 
 **Kreaturtypen** für Biom-Spawns und -Raten. `creature`, `monster`, `ambient`, `water_creature`.
 
+**Rollen** für `roles` einer Weltvorlage. `ocean`, `river`, `beach`, `mushroom`, `swamp`, `hills`, `mountain`, `jungle`, `forest`, `savanna`, `sandy`, `mesa`, `snowy`, `wasteland`, `plains`, `water`. Jede benennt ein Biom, das diese Rolle füllt, sobald die Blockierung die weggenommen hat, die es sonst getan hätten.
+
+**Erztypen** für `oreTypes`. `COAL`, `IRON`, `GOLD`, `REDSTONE`, `DIAMOND`, `LAPIS`, `EMERALD`, `QUARTZ`, `DIRT`, `GRAVEL`, `DIORITE`, `GRANITE`, `ANDESITE`, `SILVERFISH`, `CUSTOM`.
+
 ## Ordnerliste
 
-Unter `assets/<namespace>/`:
-
-| Ordner | Was er macht |
-| --- | --- |
-| `blocks` | Blockdefinitionen |
-| `items` | Itemdefinitionen |
-| `fluids` | Flüssigkeiten, mit Block und Eimer |
-| `materials` | Werkzeug- und Rüstungsmaterialien |
-| `biomes` | Biomdefinitionen |
-| `worldgen` | Was generiert, und wo |
-| `caveregions` | Benannte Regionen, über den Untergrund gelegt |
-| `dimensions` | Dimensionsdefinitionen |
-| `worldtemplates` | Die Einstellungen einer ganzen Welt in einer Datei |
-| `worldintro` | Seiten, die beim Betreten der Welt gezeigt werden |
-| `gates` | Bedingungen für Portale und Dimensionen |
-| `gamerules` | Spielregeln für neue Welten |
-| `entities` | Entity-Varianten, aufgebaut auf vorhandenen Entities |
-| `hardness` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen |
-| `exposures` | Gefahren, denen Spieler nahe an oder beim Tragen benannter Blöcke und Items ausgesetzt sind |
-| `overrides` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert |
-| `villages` | Grundstücke, die Dörfer bauen können |
-| `pathintersects` | Muster, die an Kreuzungen von Dorfstraßen gemalt werden |
-| `blastplaster` | Was Blast Plaster nach einer Explosion tut, pro Dimension |
-| `structures` | `.nbt`-Vorlagen, für Setzlinge, `imprint` und Mod-Overrides |
-| `recipes` | Handwerksrezepte, hinzugefügt oder ersetzt |
-| `recipe_removals` | Rezepte, gelöscht nach Name, Namespace oder Ergebnis |
-| `furnace` | Ofenrezepte, hinzugefügt und entfernt |
-| `fuels` | Brenndauern |
-| `brewing` | Rezepte für den Braustand |
-| `potions` | Trankeffekte |
-| `potion_types` | Abgefüllte Tränke aus diesen Effekten |
-| `villagers` | Berufe der Dorfbewohner |
-| `trades` | Was Laufbahnen kaufen und verkaufen |
-| `sounds` | Sound-Events |
-| `oredict` | Ore-Dictionary-Namen |
-| `loot_tables` | Beutetabellen, ersetzt |
-| `loot_injections` | Ein Pool, der zu einer bestehenden Tabelle dazukommt |
-| `player_loot` | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird |
-| `advancements` | Fortschritte |
-| `functions` | `.mcfunction`-Dateien |
-| `registry_remap` | Alte Namen, auf neue abgebildet |
-| `tabs` | Kreativtabs |
-| `texts` | Reine Textdateien, genutzt vom Welt-Intro |
-| `models`, `blockstates`, `textures`, `lang` | Die üblichen Asset-Ordner |
+Jeder Ordner, mit vollem Pfad und einem Link zum Abschnitt, der ihn beschreibt, steht unter [Wo die Dateien liegen](#wo-die-dateien-liegen).
 
 ## Befehle
 
-`/rdpl` läuft auf deinem eigenen Rechner und braucht keine Rechte, weil er nur Dateien liest, die du ohnehin hast. Er funktioniert auf jedem Server, ob der Server den Mod hat oder nicht.
+`/rdpl` läuft auf deinem eigenen Rechner und braucht keine Rechte, weil alles, was er anfasst, dir gehört. Ein Reload liest den Ordner neu ein, der dir gehört, wendet deine [Eigenschafts-Overrides](#eigenschaften-überschreiben) erneut auf deine eigene Kopie der Blöcke und Items an und lädt deine eigenen Ressourcen neu; er erreicht keinen Server, die Kopie des Servers wird also stattdessen mit `/rdplserver reload` neu geladen. In einem Einzelspielerspiel sind beide dieselbe Maschine, `/rdpl reload` lädt dort also auch Beutetabellen, Fortschritte und Funktionen des integrierten Servers neu, genau wie Vanillas eigener Reload. Er funktioniert auf jedem Server, ob der Server den Mod hat oder nicht.
 
-| Befehl | Was er macht |
-| --- | --- |
-| `/rdpl list` | Jedes geladene Pack, seine Priorität und was es enthält. Klick ein Pack an, um eine Datei darin nachzuschlagen |
-| `/rdpl which <namespace:path>` | Welches Pack eine bestimmte Datei liefert und welche Packs es dabei verdeckt |
-| `/rdpl reload` | Den Ordner neu einlesen und alles neu laden |
-| `/rdpl reload <group>` | Nur eine Sorte neu laden: `textures`, `models`, `languages`, `sounds` oder `shaders` |
-| `/rdpl unused` | Dateien in deinen Packs, nach denen noch nichts gefragt hat, meist ein Tippfehler im Pfad |
-| `/rdpl biome list` | Jedes Biom, das generieren kann, mit seiner ID |
-| `/rdpl biome here` | Das Biom, in dem du stehst |
-| `/rdpl biome find <name>` | Die nächste Stelle, an der ein Biom generiert, ohne dafür Chunks zu erzeugen |
+| Befehl | Stufe | Was er macht |
+| --- | --- | --- |
+| `/rdpl list` | keine | Jedes geladene Pack, seine Priorität und was es enthält. Klick ein Pack an, um eine Datei darin nachzuschlagen |
+| `/rdpl which <namespace:path>` | keine | Welches Pack eine bestimmte Datei liefert und welche Packs es dabei verdeckt |
+| `/rdpl reload` | keine | Den Ordner neu einlesen und alles neu laden |
+| `/rdpl reload <group>` | keine | Nur eine Sorte neu laden: `textures`, `models`, `languages`, `sounds` oder `shaders` |
+| `/rdpl unused` | keine | Dateien in deinen Packs, nach denen noch nichts gefragt hat, meist ein Tippfehler im Pfad |
+| `/rdpl config unused` | keine | Optionsdateien in `rdploader/config`, die kein installiertes Pack mehr definiert |
+| `/rdpl config prune` | keine | Diese Dateien löschen |
+| `/rdpl pixelmap <namespace:path>` | keine | Was aus einer [Pixelkarte](#texturen-als-pixelkarte) geworden ist, Zeichen für Zeichen |
+| `/rdpl biome list` | keine | Jedes Biom, das generieren kann, mit seiner ID |
+| `/rdpl biome here` | keine | Das Biom, in dem du stehst |
+| `/rdpl biome find <name>` | die des Servers | Verknüpft. Geht an `/rdplserver biome find`, die einzige Seite, die den Seed kennt |
+| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten |
 
-Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ordners auf dem Server und braucht Operator-Rechte.
+**Welche Server-Unterbefehle verknüpft sind und warum die übrigen nicht.** Ein Server-Unterbefehl bekommt genau dann eine Weiterreichung, wenn der Client für diesen Namen keine eigene Bedeutung hat: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` und `goto` können immer nur die des Servers meinen, `/rdpl` gibt sie also weiter. Die sechs, die der Client ebenfalls hat, `reload`, `list`, `which`, `unused`, `config` und `biome`, behalten ihre eigene Bedeutung von deinen Packs und deinem Client, und ein Weiterreichen würde sie ihnen nehmen. `biome find` ist der eine Teil eines geteilten Namens, der ohnehin dem Server gehört, denn nur der Server kennt den Weltseed; diese eine Form wird also weitergereicht, während `biome list` und `biome here` bei dir bleiben. Damit ist auch die Berechtigung geklärt: Die Operator-Prüfung des Servers entscheidet, und ein Client kann sie weder umgehen noch eine erfundene Antwort bekommen.
 
-| Befehl | Was er macht |
-| --- | --- |
-| `/rdplserver reload` | Den Ordner des Servers neu einlesen und alles neu laden |
-| `/rdplserver list` | Jedes Pack, das der Server geladen hat, seine Priorität und was es enthält |
-| `/rdplserver which <namespace:path>` | Welches Pack eine bestimmte Datei liefert und welche Packs es dabei verdeckt |
-| `/rdplserver unused` | Dateien in den Packs des Servers, nach denen nichts gefragt hat |
-| `/rdplserver oregen` | Laufende Summen der blockierten Erzgenerierung, pro Mod und Typ |
-| `/rdplserver biome` | Jedes Biom, das auf dem Server generieren kann |
-| `/rdplserver dimensions` | Jede Dimension, auch die, die Packs hinzugefügt haben |
-| `/rdplserver gate list` | Jedes Tor und ob es offen ist |
-| `/rdplserver gate check <player>` | Welche Tore ein Spieler passiert hat |
-| `/rdplserver gate grant <player> <gate>` | Ein Tor für einen Spieler öffnen |
-| `/rdplserver gate revoke <player> <gate>` | Es wieder schließen |
-| `/rdplserver intro` | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen |
-| `/rdplserver goto <struktur>` | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen |
-| `/rdplserver goto <struktur> next` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht |
-| `/rdplserver goto <struktur> back` | Bringt dich zur vorherigen zurück und geht Schritt für Schritt durch das, wohin diese Sitzung dich geschickt hat |
+Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ordners auf dem Server. Die Spalte Stufe ist die Berechtigungsstufe, die ein Absender braucht: `3` ist ein Operator, `2` lässt auch Befehlsblöcke zu, `0` ist jeder Spieler, und `4` liegt über Operator und erreicht niemanden. Nur `intro` und die drei `goto`-Formen liegen unter Operator, und bewegen kann ein Pack davon `goto`.
 
-**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, und das bleibt so. Die drei `goto`-Formen sind die Ausnahme: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf – getrennt von den beiden anderen und vom Rest des Befehls.
+| Befehl | Stufe | Was er macht |
+| --- | --- | --- |
+| `/rdplserver reload` | 3 | Den Ordner des Servers neu einlesen und alles neu laden |
+| `/rdplserver list` | 3 | Jedes Pack, das der Server geladen hat, seine Priorität und was es enthält |
+| `/rdplserver which <namespace:path>` | 3 | Welches Pack eine bestimmte Datei liefert und welche Packs es dabei verdeckt |
+| `/rdplserver unused` | 3 | Dateien in den Packs des Servers, nach denen nichts gefragt hat |
+| `/rdplserver config unused` | 3 | Optionsdateien in `rdploader/config`, die kein installiertes Pack mehr definiert |
+| `/rdplserver config prune` | 3 | Diese Dateien löschen |
+| `/rdplserver oregen` | 3 | Laufende Summen der blockierten Erzgenerierung, pro Mod und Typ |
+| `/rdplserver generators` | 3 | Laufende Summen der blockierten Weltgeneratoren, pro Mod und Typ |
+| `/rdplserver biome` | 3 | Jedes Biom, das auf dem Server generieren kann |
+| `/rdplserver biome list [all]` | 3 | Dasselbe mit der ID jedes Bioms, und `all` nimmt die dazu, die nichts generieren kann |
+| `/rdplserver biome here` | 3 | Das Biom, in dem du stehst. Die Konsole steht nirgends, von dort verlangt er also stattdessen einen Spieler |
+| `/rdplserver biome here <player>` | 3 | Das Biom, in dem dieser Spieler steht, die Form für Konsole und Skripte |
+| `/rdplserver biome find <name>` | 3 | Die nächste Stelle, an der ein Biom generiert, ohne dafür Chunks zu erzeugen |
+| `/rdplserver dimensions` | 3 | Jede Dimension, auch die, die Packs hinzugefügt haben |
+| `/rdplserver gate list` | 3 | Jedes Tor und ob es offen ist |
+| `/rdplserver gate check <player>` | 3 | Welche Tore ein Spieler passiert hat |
+| `/rdplserver gate grant <player> <gate>` | 3 | Ein Tor für einen Spieler öffnen |
+| `/rdplserver gate revoke <player> <gate>` | 3 | Es wieder schließen |
+| `/rdplserver pregen <radius>` | 3 | Jeden Chunk in so vielen Chunks Umkreis erzeugen. Siehe [Vorgenerierung](#vorgenerierung) |
+| `/rdplserver pregen <radius> relight` | 3 | Nur den Lichtdurchlauf über bereits vorhandenes Land laufen lassen |
+| `/rdplserver pregen status` | 3 | Wie weit ein Lauf ist |
+| `/rdplserver pregen stop` | 3 | Ihn beenden |
+| `/rdplserver intro` | 0 | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen. Jeder Spieler darf ihn ausführen, und er löscht immer nur sein eigenes |
+| `/rdplserver goto <struktur>` | `gotoLevel`, `3` | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen |
+| `/rdplserver goto <struktur> next` | `gotoNextLevel`, `3` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht |
+| `/rdplserver goto <struktur> back` | `gotoBackLevel`, `3` | Bringt dich zur vorherigen zurück und geht Schritt für Schritt durch das, wohin diese Sitzung dich geschickt hat |
+
+**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, außer `intro`, das der eigene Befehl eines Spielers ist und immer auf Stufe 0 liegt. Die drei `goto`-Formen sind das eine, worüber ein Pack entscheidet: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf – getrennt von den beiden anderen und vom Rest des Befehls.
+
+`<namespace>/worldtemplates/*.json`
 
 ```json
 {
   "settings": {
     "gotoLevel": 3,
+    "gotoNextLevel": 2,
+    "gotoBackLevel": 3,
     "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
   }
 }
@@ -3068,7 +4115,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 
 Der Wert ist die Berechtigungsstufe, die der Absender braucht. `3` (Operator) ist der Standard. `2` lässt auch Befehlsblöcke zu, ein Pack kann den Sprung also auf einen Knopf oder eine Druckplatte legen, ohne den Rest von `/rdplserver` freizugeben. `0` öffnet ihn für jeden Spieler. Die drei Einstellungen sind unabhängig: etwa `next` offen für Befehlsblöcke einer Dorf-Rundfahrt, während `back` bei den Operatoren bleibt.
 
-Wird eine gesenkt, kommen Nicht-Operatoren an den Befehl heran, deshalb prüft jeder andere Unterbefehl selbst auf einen Operator und verweigert mit einer Meldung. Die Tab-Vervollständigung zieht mit: Nicht-Operatoren bekommen nur `goto` angeboten.
+Weil `intro` für alle offen ist, kommt jeder Spieler an `/rdplserver` selbst heran, deshalb prüft jeder andere Unterbefehl für sich auf einen Operator und verweigert mit einer Meldung. Die Tab-Vervollständigung zieht mit: Ein Nicht-Operator bekommt `intro` angeboten, und `goto` dazu, sobald eine Stufe es ihm erlaubt.
 
 `gotoPlaceLevels` überschreibt die drei Einstellungen für einzelne Orte, als `name=stufe`-Einträge wie im Beispiel oben. Der Name ist das, was du hinter `goto` tippen würdest: ein Vanilla-Name wie `Village` oder `Mansion`, oder ein mit `locateAs` an einem Imprint-Eintrag angemeldeter Name. Groß-/Kleinschreibung spielt keine Rolle. Stufe `4` liegt über Operator und verschließt den Ort für alle – der Weg, einen einzelnen Ort zu verstecken, während `goto` sonst offen ist.
 
@@ -3078,8 +4125,7 @@ Die Tab-Vervollständigung hält sich an dieselben Regeln: Nach `goto` werden nu
 
 Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der Config, ob ein Pack sie überhaupt setzen darf, und `off` dort hält alles bei Operator, ganz gleich was ein Pack verlangt.
 
-
-**`/rdpl` erreicht auch den Server-Befehl.** Alles, was `/rdpl` nicht selbst erledigt – `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` und `goto` –, wird unverändert an `/rdplserver` weitergereicht und in der Tab-Vervollständigung mit angeboten, im Einzelspieler gibt es also nur einen Befehl zu tippen. Weitergereicht wird Wort für Wort, und der Server entscheidet wie immer, Berechtigungen eingeschlossen; durch den kürzeren Namen wird also nichts geöffnet. Die Unterbefehle, die es doppelt gibt – `reload`, `list`, `which`, `unused`, `biome` und `config` –, bleiben bei `/rdpl` und meinen die Packs des Clients.
+**`/rdpl` erreicht auch den Server-Befehl.** Alles, was `/rdpl` nicht selbst erledigt – `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` und `goto` –, wird unverändert an `/rdplserver` weitergereicht und in der Tab-Vervollständigung mit angeboten, im Einzelspieler gibt es also nur einen Befehl zu tippen. Weitergereicht wird Wort für Wort, und der Server entscheidet wie immer, Berechtigungen eingeschlossen; durch den kürzeren Namen wird also nichts geöffnet. Die Unterbefehle, die es doppelt gibt – `reload`, `list`, `which`, `unused`, `biome` und `config` –, bleiben bei `/rdpl` und meinen die Packs des Clients. `biome find` ist die eine Ausnahme innerhalb eines geteilten Namens: Nur der Server kennt den Weltseed, diese Form wird also weitergereicht, während `biome list` und `biome here` von deinem eigenen Client beantwortet werden.
 
 **Beim täglichen Arbeiten:** `/rdpl reload textures` ist in einem großen Modpack viel schneller als F3+T. F3+T funktioniert weiterhin und lädt alles neu. Nimm das schlichte `/rdpl reload`, wenn du eine Datei *hinzufügst* oder *löschst*, weil sich damit ändert, was der Ordner enthält.
 

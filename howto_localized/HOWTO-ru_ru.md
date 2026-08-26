@@ -13,6 +13,7 @@
 
 **С чего начать**
 - [Что это](#что-это)
+- [Где лежат файлы](#где-лежат-файлы)
 - [Как читать таблицы](#как-читать-таблицы)
 - [Единственное правило](#единственное-правило)
 - [Как раскладывать паки](#как-раскладывать-паки)
@@ -39,13 +40,14 @@
 - [Mo' Villages](#mo-villages)
 - [CoFH World](#cofh-world)
 - [Lost Cities](#lost-cities)
-- [Blast Plaster](#интеграция-с-blast-plaster)
+- [Интеграция с Blast Plaster](#интеграция-с-blast-plaster)
 - [Моды с могилами](#моды-с-могилами)
 
 **Описание нового контента**
 - [Как работают описания](#как-работают-описания)
 - [Блоки](#блоки)
 - [Модели, blockstates и текстуры](#модели-blockstates-и-текстуры)
+- [Blockstate по типам](#blockstate-по-типам)
 - [Как заставить ваниль обращаться с вашим блоком правильно](#как-заставить-ваниль-обращаться-с-вашим-блоком-правильно)
 - [Предметы](#предметы)
 - [Жидкости](#жидкости)
@@ -88,6 +90,53 @@ Resource Data Pack Loader (RDPL) читает одну папку, `rdploader`, 
 - **Переопределение.** Файл в папке заменяет тот, который загрузили бы игра или мод. Без переключателей, без настройки по мирам, без меню для игроков.
 - **Новый контент.** JSON-описания регистрируют блоки, предметы, жидкости, биомы, измерения, зелья и жителей. Без Java, без jar.
 - **Управление.** Запрет генерации руд, биомов, структур и рецептов, ровный бедрок, частота спавна, пустой обычный мир, настройки мира по умолчанию.
+
+## Где лежат файлы
+
+Каждый путь в этом руководстве записан начиная с `assets/`, так что `<namespace>/blocks/*.json` на диске — это `assets/mypack/blocks/ruby_ore.json` для пака с пространством имён `mypack`. Каждый раздел повторяет свой путь под заголовком и добавляет заметку о том, чем этот путь становится.
+
+| Путь | Что в нём |
+| --- | --- |
+| `<namespace>/blocks/*.json` | Описания блоков. [Блоки](#блоки) |
+| `<namespace>/items/*.json` | Описания предметов. [Предметы](#предметы) |
+| `<namespace>/fluids/*.json` | Жидкости, с блоком и ведром. [Жидкости](#жидкости) |
+| `<namespace>/materials/*.json` | Материалы инструментов и брони. [Материалы, вкладки, звуки, словарь руд](#материалы-вкладки-звуки-словарь-руд) |
+| `<namespace>/tabs/*.json` | Творческие вкладки. [Материалы, вкладки, звуки, словарь руд](#материалы-вкладки-звуки-словарь-руд) |
+| `<namespace>/sounds/*.json` | Звуковые события. [Материалы, вкладки, звуки, словарь руд](#материалы-вкладки-звуки-словарь-руд) |
+| `<namespace>/oredict/*.json` | Имена словаря руд. [Материалы, вкладки, звуки, словарь руд](#материалы-вкладки-звуки-словарь-руд) |
+| `<namespace>/biomes/*.json` | Описания биомов. [Биомы](#биомы) |
+| `<namespace>/worldgen/*.json` | Что генерируется и где. [Записи генерации мира](#записи-генерации-мира) |
+| `<namespace>/caveregions/*.json` | Именованные регионы, наложенные на подземелья. [Пещерные регионы](#пещерные-регионы) |
+| `<namespace>/dimensions/*.json` | Описания измерений. [Измерения](#измерения) |
+| `<namespace>/worldtemplates/*.json` | Настройки целого мира одним файлом. [Шаблоны мира](#шаблоны-мира) |
+| `<namespace>/worldintro/*.json` | Страницы, показываемые при входе игрока в мир. [Вступление к миру](#вступление-к-миру) |
+| `<namespace>/gates/*.json` | Условия на порталы и измерения. [Порталы и ворота](#порталы-и-ворота) |
+| `<namespace>/gamerules/*.json` | Игровые правила для новых миров. [Игровые правила](#игровые-правила) |
+| `<namespace>/entities/*.json` | Варианты сущностей на основе уже существующих. [Варианты сущностей](#варианты-сущностей) |
+| `<namespace>/hardness/*.json` | Множители времени добычи и взрывоустойчивости для групп блоков. [Группы твёрдости](#группы-твёрдости) |
+| `<namespace>/exposures/*.json` | Опасности, действующие рядом с названными блоками и при их переноске. [Воздействия](#воздействия) |
+| `<namespace>/overrides/<target>/<name>.json` | Свойства существующих блоков, предметов и типов зелий, изменяемые на месте. [Переопределение свойств](#переопределение-свойств) |
+| `<namespace>/villages/*.json` | Постройки, которые могут возводить деревни. [Участки деревень](#участки-деревень) |
+| `<namespace>/pathintersects/*.json` | Узоры, наносимые на перекрёстках деревенских дорог. [Деревенские дороги](#деревенские-дороги) |
+| `<namespace>/blastplaster/*.json` | Что Blast Plaster делает после взрыва, по измерениям. [Интеграция с Blast Plaster](#интеграция-с-blast-plaster) |
+| `<namespace>/structures/*.nbt` | Шаблоны для саженцев, `imprint` и замены модовых. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/recipes/*.json` | Рецепты крафта, добавленные или заменённые. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/recipe_removals/*.json` | Рецепты, удаляемые по имени, пространству имён или результату. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/furnace/*.json` | Рецепты печи, добавляемые и удаляемые. [Рецепты печи и топливо](#рецепты-печи-и-топливо) |
+| `<namespace>/fuels/*.json` | Время горения. [Рецепты печи и топливо](#рецепты-печи-и-топливо) |
+| `<namespace>/brewing/*.json` | Рецепты варочной стойки. [Зелья, типы зелий и варка](#зелья-типы-зелий-и-варка) |
+| `<namespace>/potions/*.json` | Эффекты зелий. [Зелья, типы зелий и варка](#зелья-типы-зелий-и-варка) |
+| `<namespace>/potion_types/*.json` | Готовые зелья из этих эффектов. [Зелья, типы зелий и варка](#зелья-типы-зелий-и-варка) |
+| `<namespace>/villagers/*.json` | Профессии жителей. [Жители и обмены](#жители-и-обмены) |
+| `<namespace>/trades/*.json` | Что покупают и продают карьеры. [Жители и обмены](#жители-и-обмены) |
+| `<namespace>/loot_tables/*.json` | Таблицы лута, заменяемые целиком. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/loot_injections/*.json` | Пул, добавляемый в уже существующую таблицу. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/player_loot/*.json` | Таблица лута, разыгрываемая при смерти игрока. [Лут игрока](#лут-игрока) |
+| `<namespace>/advancements/*.json` | Достижения. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/functions/*.mcfunction` | Файлы функций. [Что можно переопределить](#что-можно-переопределить) |
+| `<namespace>/registry_remap/*.json` | Старые имена, сопоставленные новым. [Переименования в реестрах](#переименования-в-реестрах) |
+| `<namespace>/texts/*.txt` | Обычные текстовые файлы, используются вступлением к миру. [Вступление к миру](#вступление-к-миру) |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Обычные папки ресурсов. [Модели, blockstates и текстуры](#модели-blockstates-и-текстуры) |
 
 ## Как читать таблицы
 
@@ -213,8 +262,8 @@ rdploader/RDPL1O Seasonal       приоритет и переопределен
 - **Что угодно из папки assets мода** — текстуры, модели, blockstates, языковые файлы, звуки, шрифты, надписи на заставке, справочники, руководства
 - **Достижения и таблицы лута**, на стороне сервера, так что работают и на выделенных серверах
 - **Рецепты** — заменить рецепт мода или добавить свой
-- **Шаблоны структур** — файлы `.nbt` для генерируемых модами построек, в папке `structures/`
-- **Функции**, файлы `.mcfunction` в папке `functions/`
+- **Шаблоны структур** — файлы `.nbt` для генерируемых модами построек, в папке `<namespace>/structures/`
+- **Функции**, файлы `.mcfunction` в папке `<namespace>/functions/`
 - **Переименования в реестрах** — чтобы старые миры продолжали работать после того, как мод переименовал блок или предмет
 - **Удаление рецептов** — убрать рецепт крафта по имени, пространству имён или результату
 - **Добавки в лут** — добавить пул в таблицу лута вместо замены её целиком
@@ -225,6 +274,28 @@ rdploader/RDPL1O Seasonal       приоритет и переопределен
 RDPL хорош, чтобы заменить один-два рецепта, а рецепты для собственного контента и должны лежать в паке рядом с ним. Для полного управления рецептами по всей сборке лучше подойдут CraftTweaker и GroovyScript. Файл здесь всё равно заменяет оригинал целиком. Надо поменять один ингредиент или убрать одну запись лута — берите их.
 
 ### Настройки пака
+
+Все ключи, которые принимает файл настроек:
+
+```json
+{
+  "hide": false,
+  "enableTestingContent": true,
+  "enableLoserBlocks": {
+    "default": false,
+    "hide": true,
+    "description": "Registers the loser blocks"
+  }
+}
+```
+
+| Ключ | Обязателен | Значение | По умолчанию | Что делает |
+| --- | --- | --- | --- | --- |
+| имя настройки | да | boolean либо объект | | `true` или `false` — значение настройки по умолчанию. Объект несёт три ключа ниже |
+| `hide` на верхнем уровне | нет | boolean | `false` | Убирает настройки этого пака и из экрана настроек, и из создаваемого файла целиком, при этом они продолжают управлять контентом со своими значениями по умолчанию |
+| `default` | нет | boolean | `false` | Значение настройки, пока пользователь его не изменит |
+| `hide` внутри настройки | нет | boolean | `false` | Прячет только эту настройку, так что переключить её нельзя и она остаётся со своим значением |
+| `description` | нет | строка | нет | Показывается в экране настроек под именем настройки |
 
 Рядом с `assets` пак может нести папку `config` с JSON-файлами, где перечислены переключатели true/false и их значения по умолчанию:
 
@@ -312,19 +383,45 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 
 ## Переопределение свойств
 
-`overrides/<namespace>/<имя>.json`
+`<namespace>/overrides/<target>/<имя>.json`
+
+Путь называет цель: всё после `overrides/` — это пространство имён и имя блока, предмета или типа зелья, который меняется.
 
 Всё остальное в этом разделе либо заменяет файл, либо добавляет новый. Переопределение не делает ни того, ни другого: оно меняет свойства блока, предмета или типа зелья, которые уже есть в игре, ванильные или модовые, не трогая ни одного их файла. Путь называет цель: `overrides/minecraft/stone.json` меняет `minecraft:stone`, а `overrides/tconstruct/<имя>.json` точно так же меняет блок этого мода.
 
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
+
 ```json
 {
+  "requires": ["tconstruct"],
   "hardness": 0.1,
+  "resistance": 3.0,
+  "slipperiness": 0.98,
   "light": 10,
-  "soundType": "glass"
+  "lightOpacity": 0,
+  "soundType": "glass",
+  "harvestTool": "pickaxe",
+  "harvestToolLevel": 2,
+  "flammability": 5,
+  "fireSpread": 5,
+  "maxStackSize": 16,
+  "maxDamage": 250,
+  "containerItem": "minecraft:bucket",
+  "food": {
+    "heal": 4,
+    "saturation": 0.3,
+    "alwaysEdible": true,
+    "effects": [
+      { "potion": "minecraft:speed", "duration": 200, "amplifier": 1, "ambient": false, "showParticles": true }
+    ]
+  },
+  "effects": [
+    { "potion": "minecraft:levitation", "duration": 200, "amplifier": 0, "ambient": false, "showParticles": true }
+  ]
 }
 ```
 
-Этот файл, лежащий в `overrides/minecraft/stone.json`, делает так, что камень ломается почти мгновенно, светится и звучит как стекло. Все ключи необязательны: файл меняет только то, что называет. Эти ключи действуют, когда цель — блок:
+Все ключи необязательны, и файл меняет только то, что называет: файл `overrides/minecraft/stone.json` с одними лишь `hardness`, `light` и `soundType` заставляет камень ломаться почти мгновенно, светиться и звучать как стекло. Один файл несёт ключи блока, предмета и зелья вместе. Эти ключи действуют, когда цель — блок:
 
 | Ключ | Значение | Что делает |
 | --- | --- | --- |
@@ -393,7 +490,11 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 
 ## Переименования в реестрах
 
-Когда мод переименовывает свой блок или предмет, миры, сохранённые до переименования, их теряют. Положите файл в `registry_remap/`, чтобы сопоставить старое имя новому:
+`<namespace>/registry_remap/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
+
+Когда мод переименовывает свой блок или предмет, миры, сохранённые до переименования, их теряют. Положите сюда файл, чтобы сопоставить старое имя новому:
 
 ```json
 {
@@ -406,7 +507,11 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 
 ## Лут игрока
 
-В ванильной 1.12 у игроков нет своей таблицы лута: при смерти падает только инвентарь, и нет имени таблицы, которое пак мог бы переопределить. RDPL её добавляет — файл в `player_loot/` разыгрывается при смерти игрока:
+`<namespace>/player_loot/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
+
+В ванильной 1.12 у игроков нет своей таблицы лута: при смерти падает только инвентарь, и нет имени таблицы, которое пак мог бы переопределить. RDPL её добавляет, и она разыгрывается при смерти игрока:
 
 ```json
 {
@@ -484,24 +589,63 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 
 ## Блоки
 
-`blocks/*.json`
+`<namespace>/blocks/*.json`
+
+Путь файла — это registry name блока, так что `mypack/blocks/ruby_ore.json` регистрирует `mypack:ruby_ore`. Ключи внутри `variants` называют значения метаданных этого одного блока, а не отдельные блоки.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны. Ключ, помеченный для одного типа, читается только этим типом.
 
 ```json
 {
+  "inherits": "mypack:ore_template",
   "type": "ore",
   "material": "rock",
   "soundType": "stone",
+  "mapColor": "red",
   "harvestTool": "pickaxe",
   "harvestToolLevel": 2,
-  "creativeTab": "mypack:tab",
+  "silkHarvest": true,
+  "opensWith": "mypack:ruby_key",
+  "openSound": "block.chest.open",
   "expDrop": { "min": 3, "max": 7 },
+  "creativeTab": "mypack:tab",
+  "renderLayer": "solid",
+  "opaque": true,
+  "fullCube": true,
+  "lightOpacity": 255,
+  "slipperiness": 0.6,
+  "flammability": 0,
+  "fireSpread": 0,
+  "explosionResistanceDivisor": 1.0,
+  "modelBlock": "minecraft:stone",
+  "modelMeta": 0,
+  "itemModel": "state",
+  "tint": "biome",
+  "plantTypes": ["Plains", "Crop"],
+  "behavesAs": ["till", "path"],
+  "bounds": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
   "requires": ["mypack"],
+  "particle": "colored",
+  "particleColor": "C0304A",
+  "smoke": true,
+  "leafSapling": "mypack:ruby_sapling",
+  "leafSaplingChance": 5,
+  "seed": "mypack:ruby_seed",
+  "produce": "mypack:ruby_fruit",
+  "maxAge": 7,
+  "growth": { "stages": 8, "growth": 10 },
+  "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
+  "portal": { "dimension": 12 },
   "variants": {
     "ruby_ore": {
       "meta": 0,
       "hardness": 3.0,
       "resistance": 5.0,
+      "light": 0,
       "harvestLevel": 2,
+      "rarity": "rare",
+      "maxSize": 64,
+      "oreDict": ["oreRuby"],
       "drops": [
         { "block": "mypack:ruby", "amount": { "min": 1, "max": 2 }, "bonusChance": [1, 2] }
       ]
@@ -547,7 +691,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 
 | Ключ | Обяз. | Значение | По умолчанию | Что делает |
 | --- | --- | --- | --- | --- |
-| `variants` | да | объект «имя варианта → вариант» |, | По записи на каждое значение метаданных. Ключ становится registry name |
+| `variants` | да | объект «имя варианта → вариант» |, | По записи на каждое значение метаданных. Ключ называет это значение в blockstate, в пути модели и в языковом ключе. Registry name берётся из пути самого файла |
 | `type` | нет | один из типов выше | `basic` | Какую форму принимает блок |
 | `material` | нет | один из [материалов блоков](#списки-значений) | `rock` | Поведение при добыче, поршни, огонь и жидкости |
 | `soundType` | нет | один из [типов звука](#списки-значений) | из материала | Шаги, ломание и установка |
@@ -598,6 +742,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 | `harvestLevel` | нет | от 0 до 3 | значение файла | Переопределяет уровень инструмента для этого варианта |
 | `rarity` | нет | `common`, `uncommon`, `rare`, `epic` | `common` | Цвет имени во всплывающей подсказке |
 | `maxSize` | нет | от 1 до 64 | `64` | Размер стопки |
+| `oreDict` | нет | список имён словаря руд | нет | Имена словаря руд, под которыми регистрируется этот вариант |
 | `drops` | нет | список дропа | роняет себя | Что даёт ломание |
 
 **Метаданные постоянны.** Занятое вариантом число записывается в каждый сохранённый мир, где этот вариант есть. Перенумеровать или переставить варианты позже — значит превратить уже поставленные блоки во что-то другое. Добавляйте новые варианты в конец и никогда не переиспользуйте число.
@@ -609,7 +754,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 ```json
 {
   "drops": [
-    { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "bonusChance": [1, 2, 3] },
+    { "block": "mypack:ruby", "meta": 0, "amount": { "min": 1, "max": 3 }, "chance": 100, "guaranteed": true, "bonusChance": [1, 2, 3] },
     { "block": "minecraft:coal", "amount": 1, "chance": 25 },
     { "block": "minecraft:diamond", "weight": 1 },
     { "block": "minecraft:emerald", "weight": 4 },
@@ -644,11 +789,16 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
   "growth": {
     "stages": 8,
     "growth": 10,
+    "spread": 1,
     "maxHeight": 3,
+    "drop": "mypack:reed",
+    "dropCount": 1,
+    "needsSky": false,
     "needsWater": true,
     "waterRange": 2,
-    "drop": "mypack:reed",
-    "dropCount": 1
+    "damage": false,
+    "damageAmount": 1.0,
+    "breaksNeighbors": false
   }
 }
 ```
@@ -670,7 +820,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 
 ### Саженцы
 
-Либо дерево, собранное из блоков:
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
@@ -682,12 +832,13 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false
+    "vines": false,
+    "structure": "mypack:ruby_tree"
   }
 }
 ```
 
-…либо один из ваших шаблонов структур, а это способ построить то, чего генератор не может:
+Ключ `structure` заменяет сгенерированное дерево одним из ваших шаблонов, а это способ построить то, чего генератор не может; больше в блоке ничего писать не нужно:
 
 ```json
 {
@@ -732,9 +883,102 @@ assets/mypack/lang/en_us.lang
 }
 ```
 
-Даже блок с единственным вариантом сохраняет свойство `blocks`, так что его ключ остаётся `blocks=<имя>`. Иначе ключуются только типы ниже, у которых свойства варианта нет вовсе.
+Блок с единственным вариантом тоже сохраняет свойство `blocks`, так что его ключ остаётся `blocks=<имя>`, но только у тех типов, у которых это свойство вообще есть. Одиннадцать типов тратят все свои метаданные на форму, держат один вариант и свойства `blocks` не несут, поэтому ключуются только по собственным свойствам. Что к чему, показывает раздел [Blockstate по типам](#blockstate-по-типам).
 
-Там, где у блока есть собственные свойства, они соединяются запятыми в том порядке, в котором их перечисляет состояние: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_stairs,facing=east,half=bottom,shape=straight`. Два свойства опущены намеренно: собственное свойство варианта у стены и `check_decay` с `decayable` у листвы — листве достаточно `blocks=ruby_leaves`. У знамени свойства варианта нет вовсе: стоящее адресуется через `rotation=0`–`15`, настенное — через `facing=north`, подробности в разделе [Знамёна](#знамёна).
+Там, где у блока есть собственные свойства, они соединяются запятыми в том порядке, в котором их перечисляет состояние: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_wall,up=true,north=true`. У ступеней свойства `blocks` нет, так что они адресуются только через `facing=east,half=bottom,shape=straight`. Два свойства опущены намеренно: собственное свойство варианта у стены и `check_decay` с `decayable` у листвы — листве достаточно `blocks=ruby_leaves`. У знамени свойства варианта нет вовсе: стоящее адресуется через `rotation=0`–`15`, настенное — через `facing=north`, подробности в разделе [Знамёна](#знамёна).
+
+### Blockstate по типам
+
+Что должно лежать в файле blockstate, решают две вещи: несёт ли тип свойство `blocks` и какие свойства есть у него самого.
+
+| Тип | Регистрирует | Свойства blockstate | Вариантов |
+| --- | --- | --- | --- |
+| `basic`, `ore`, `falling` | один блок | `blocks` | 16 |
+| `flower` | один блок | `blocks` | 16 |
+| `portal` | один блок | `blocks` | 16 |
+| `fence`, `pane` | один блок | `blocks`, `north`, `east`, `south`, `west` | 16 |
+| `wall` | один блок | `blocks`, `up`, `north`, `east`, `south`, `west` | 16 |
+| `slab` | два, `<name>` и `<name>_double` | у половинной плиты `blocks` и `half`, у двойной только `blocks` | 8 |
+| `log` | один блок | `blocks`, `axis` — то есть `x`, `y`, `z` или `none` | 4 |
+| `leaves` | один блок | `blocks` | 4 |
+| `stairs` | один блок | `facing`, `half`, `shape` | 1 |
+| `door` | один блок | `facing`, `half`, `hinge`, `open` | 1 |
+| `trapdoor` | один блок | `facing`, `half`, `open` | 1 |
+| `fence_gate` | один блок | `facing`, `in_wall`, `open` | 1 |
+| `banner` | два, `<name>` и `<name>_wall` | стоящее `rotation`, от `0` до `15`, настенное `facing` | 1 |
+| `ladder`, `torch` | один блок | `facing`, у факела к четырём стенам добавляется `up` | 1 |
+| `crop` | один блок | `age`, всегда от `0` до `7`, что бы ни говорил `maxAge` | 1 |
+| `cane` | один блок | `age`, от `0` до `15` | 1 |
+| `sapling` | один блок | `stage`, от `0` до `stages` минус один | 1 |
+| `vine` | один блок | `up`, `north`, `east`, `south`, `west`, и только multipart | 1 |
+
+Четыре свойства снимаются с вас, так что ключи пишите без них: `powered` у дверей и ворот, `variant` у стен, `check_decay` и `decayable` у листвы.
+
+Посев сохраняет ванильные восемь значений `age`, каким бы ни был `maxAge`: `maxAge` решает лишь, до какой стадии он дорастает, — так что его blockstate всегда пишет от `age=0` до `age=7`.
+
+Два типа регистрируют второй блок. Плите нужен собственный blockstate для `<name>_double`, с ключом по `blocks` и без `half`, и своего предмета он не получает. Про `<name>_wall` знамени рассказывает раздел [Знамёна](#знамёна).
+
+**Vine — единственный тип, который не может использовать формат Forge**, потому что `forge_marker` не поддерживает multipart, так что его blockstate — обычный ванильный список `multipart` с текстурой, вшитой в модель.
+
+**Формат Forge короче, и именно его использует пример-пак.** Ванильный blockstate выписывает каждое сочетание отдельным ключом, у ступеней это сорок ключей. С `"forge_marker": 1` файл перечисляет каждое свойство один раз, а игра их сочетает, так что те же сорок состояний — это одиннадцать записей:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "stairs",
+    "textures": {
+      "bottom": "mypack:blocks/ruby_brick",
+      "top": "mypack:blocks/ruby_brick",
+      "side": "mypack:blocks/ruby_brick"
+    },
+    "uvlock": true
+  },
+  "variants": {
+    "inventory": [{}],
+    "facing": { "east": { "y": 0 }, "south": { "y": 90 }, "west": { "y": 180 }, "north": { "y": 270 } },
+    "half": { "bottom": {}, "top": { "x": 180 } },
+    "shape": {
+      "straight": {},
+      "inner_left": { "model": "inner_stairs" },
+      "inner_right": { "model": "inner_stairs" },
+      "outer_left": { "model": "outer_stairs" },
+      "outer_right": { "model": "outer_stairs" }
+    }
+  }
+}
+```
+
+`defaults` подмешивается в каждую запись, голое имя модели вроде `stairs` означает `minecraft:block/stairs`, а `inventory` — модель предмета в руке. Три родителя ступеней, `stairs`, `inner_stairs` и `outer_stairs`, принимают текстуры `bottom`, `top` и `side`.
+
+**Соединяющиеся типы добавляют по подмодели на сторону.** У забора, панели и стены есть по булеву значению на направление, и `true` приклеивает к столбу ещё одну модель, а не заменяет её:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": {
+    "model": "fence_post",
+    "textures": { "texture": "mypack:blocks/ruby_planks" },
+    "uvlock": true
+  },
+  "variants": {
+    "blocks": {
+      "oak": { "textures": { "texture": "mypack:blocks/ruby_planks" } },
+      "birch": { "textures": { "texture": "mypack:blocks/pale_planks" } }
+    },
+    "north": { "true": { "submodel": { "north": { "model": "fence_side", "uvlock": true } } }, "false": {} },
+    "east": { "true": { "submodel": { "east": { "model": "fence_side", "y": 90, "uvlock": true } } }, "false": {} },
+    "south": { "true": { "submodel": { "south": { "model": "fence_side", "y": 180, "uvlock": true } } }, "false": {} },
+    "west": { "true": { "submodel": { "west": { "model": "fence_side", "y": 270, "uvlock": true } } }, "false": {} }
+  }
+}
+```
+
+Родители такие: `fence_post` и `fence_side` с `texture`; `wall_post` и `wall_side` с `wall`, плюс `block` для случая без столба; и `pane_post`, `pane_side`, `pane_side_alt`, `pane_noside`, `pane_noside_alt` с `pane` и `edge`. Всем им нужен `"uvlock": true`.
+
+Остальным хватает одного родителя. `cube_all` принимает `all` и подходит блокам `basic`, `ore`, `falling` и `leaves`. `cube_column` принимает `end` и `side` — это `log`, поворачиваемый через `axis`. `cross` принимает `cross` и подходит для `flower`, `cane` и `sapling`; у `crop` свои модели на каждую стадию. Плите нужны две собственные модели, нижняя и верхняя половина, потому что она рисуется как форма, а не как куб.
+
+**Пример-пак — это разобранный справочник.** [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) несёт описание, blockstate и модели для каждого типа из таблицы выше, и в ванильном формате, и в формате Forge, так что неочевидную форму быстрее скопировать, чем выводить.
 
 ### Модели предметов
 
@@ -826,8 +1070,10 @@ assets/mypack/models/item/ruby/polished_ruby.json
 
 ```json
 {
+  "extends": "mypack:textures/blocks/panel_template",
   "size": "16x16",
   "palette": { "s": "#EDE9E2", "d": "#C6C1B5", "e": "#9E988C", "p": "#F6F4EF" },
+  "tint": { "from": "#626669", "to": "#DBDFE2" },
   "notes": {
     "s": "the flat surface",
     "d": "shadow inside the border",
@@ -983,17 +1229,40 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Предметы
 
-`items/*.json`
+`<namespace>/items/*.json`
+
+Путь файла — это registry name предмета, так что `mypack/items/ruby.json` регистрирует `mypack:ruby`. Ключи внутри `variants` называют значения метаданных этого одного предмета, а модель каждого лежит в `models/item/ruby/<ключ>.json`.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны. Ключ, помеченный для одного типа, читается только этим типом.
 
 ```json
 {
+  "inherits": "mypack:food_template",
   "type": "food",
   "creativeTab": "mypack:tab",
+  "material": "mypack:ruby",
+  "toolClass": "pickaxe",
+  "slot": "head",
   "eat": true,
-  "useDuration": 32,
   "alwaysEdible": false,
+  "useDuration": 32,
+  "attackSpeed": -2.4,
+  "cooldown": 40,
+  "container": "minecraft:glass_bottle",
+  "crop": "mypack:ruby_crop",
+  "soil": "minecraft:farmland",
+  "potionTypes": ["mypack:ruby_tonic"],
+  "requires": ["mypack"],
   "variants": {
-    "ruby_apple": { "meta": 0, "healAmount": 6, "saturation": 0.8, "rarity": "rare" },
+    "ruby_apple": {
+      "meta": 0,
+      "maxSize": 64,
+      "rarity": "rare",
+      "healAmount": 6,
+      "saturation": 0.8,
+      "oreDict": ["foodRuby"],
+      "potion": "minecraft:speed,600,1"
+    },
     "dried_ruby_apple": { "meta": 1, "healAmount": 3, "saturation": 0.4 }
   }
 }
@@ -1014,7 +1283,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 | Ключ | Обяз. | Значение | По умолчанию | Что делает |
 | --- | --- | --- | --- | --- |
-| `variants` | да | объект «имя варианта → вариант» |, | По записи на каждое значение метаданных. Ключ становится registry name |
+| `variants` | да | объект «имя варианта → вариант» |, | По записи на каждое значение метаданных. Ключ называет это значение в blockstate, в пути модели и в языковом ключе. Registry name берётся из пути самого файла |
 | `type` | нет | один из типов выше | `basic` | Какой тип принимает предмет |
 | `creativeTab` | нет | имя вкладки | нет | Вкладка, в которой появляется |
 | `material` | tool, armor | имя материала | нет | Из какого из ваших материалов сделан |
@@ -1039,10 +1308,14 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `rarity` | нет | `common`, `uncommon`, `rare`, `epic` | `common` | Цвет имени во всплывающей подсказке |
 | `healAmount` | food | int, полуокорочки | `0` | Сколько восстанавливает голода |
 | `saturation` | food | float | `0.0` | Сколько восстанавливает насыщения |
+| `oreDict` | нет | список имён словаря руд | нет | Имена словаря руд, под которыми регистрируется этот вариант |
+| `potion` | food, drink | `potion,duration,amplifier` | нет | Эффект, который накладывается, когда вариант съеден или выпит. Четвёртая часть, `true`, делает его фоновым. Полезный эффект называется в подсказке |
 
 ## Жидкости
 
-`fluids/*.json`
+`<namespace>/fluids/*.json`
+
+Путь файла — это registry name жидкости, если только `name` его не переопределяет.
 
 ```json
 {
@@ -1050,13 +1323,21 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
   "still": "mypack:blocks/molten_ruby_still",
   "flow": "mypack:blocks/molten_ruby_flow",
   "color": "C0304A",
+  "bucket": true,
   "luminosity": 12,
   "density": 2000,
   "temperature": 1500,
   "viscosity": 4000,
-  "bucket": true,
+  "gaseous": false,
   "creativeTab": "mypack:tab",
-  "block": { "material": "lava", "quantaPerBlock": 8 }
+  "requires": ["mypack"],
+  "block": {
+    "material": "lava",
+    "flammability": 0,
+    "fireSpread": 0,
+    "quantaPerBlock": 8,
+    "potions": ["minecraft:wither,200,0"]
+  }
 }
 ```
 
@@ -1073,12 +1354,14 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `viscosity` | нет | int | `1000` | Насколько медленно течёт. У воды 1000, у лавы 6000 |
 | `gaseous` | нет | boolean | `false` | Считается газом |
 | `creativeTab` | нет | имя вкладки | нет | Вкладка, в которой появляется ведро |
-| `block` | нет | объект |, | Блок жидкости. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`) |
+| `block` | нет | объект |, | Блок жидкости. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (нет, список эффектов для всех, кто в ней стоит, каждый пишется как `potion,duration,amplifier`, с необязательной четвёртой частью `true` для фонового) |
 | `requires` | нет | список id модов или пространств имён паков | нет | Файл пропускается, если присутствует не всё |
 
 ## Материалы, вкладки, звуки, словарь руд
 
-`materials/*.json`
+`<namespace>/materials/*.json`
+
+Путь файла — это имя материала, которое инструмент или броня затем называют в `material`.
 
 ```json
 {
@@ -1108,7 +1391,9 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `equipSound` | нет | имя звука | `item.armor.equip_iron` | Звук надевания брони |
 | `armorTexture` | нет | префикс текстуры | имя файла | Текстура надетой брони |
 
-`tabs/*.json`
+`<namespace>/tabs/*.json`
+
+Путь файла — это имя вкладки, если только `label` его не переопределяет, и блоки с предметами называют её в `creativeTab`.
 
 ```json
 { "label": "rubypack", "icon": "mypack:ruby" }
@@ -1119,17 +1404,45 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `label` | нет | строка | имя файла | Id вкладки: блоки и предметы называют её в `creativeTab`, а показываемое имя берётся из `itemGroup.<label>` в языковых файлах |
 | `icon` | нет | имя предмета | нет | Предмет, показываемый на вкладке |
 
-`sounds/*.json` — это ванильный формат `sounds.json`, поэтому пак может нести собственное аудио. `oredict/*.json` добавляет имена словаря руд к уже существующим предметам.
+`<namespace>/sounds/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
+
+Ванильный формат `sounds.json`, поэтому пак может нести собственное аудио.
+
+`<namespace>/oredict/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
+
+Добавляет имена словаря руд к уже существующим предметам. Каждый ключ — это имя словаря руд, а его значение — предметы, которые под ним регистрируются, так что собственных фиксированных ключей у такого файла нет. Свои блоки и предметы пак называет через `oreDict` варианта.
+
+```json
+{
+  "_note": "ruby equivalents",
+  "gemRuby": ["mypack:ruby", "mypack:polished_ruby:1"],
+  "oreRuby": ["mypack:ruby_ore", "minecraft:redstone_ore"]
+}
+```
+
+| Ключ | Обязателен | Значение | По умолчанию | Что делает |
+| --- | --- | --- | --- | --- |
+| имя словаря руд | да | список имён предметов | | Предметы, которые под ним регистрируются. Метаданные третьей частью, `"mypack:ruby:1"` |
+| имя, начинающееся с `_` | нет | что угодно | | Пропускается, так что файл может нести заметку для себя |
 
 ## Рецепты печи и топливо
 
-`furnace/*.json` добавляет и удаляет рецепты плавки.
+`<namespace>/furnace/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
+
+Добавляет и удаляет рецепты плавки.
 
 ```json
 {
   "remove": [
     "minecraft:iron_ingot",
-    { "input": "minecraft:gold_ore" }
+    { "input": "minecraft:gold_ore" },
+    { "input": "minecraft:iron_ore", "result": "minecraft:iron_ingot" }
   ],
   "add": [
     { "input": "mypack:ruby_ore", "output": "mypack:ruby", "count": 2, "experience": 1.0 }
@@ -1148,7 +1461,9 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 Записи внутри `remove` — это либо голое имя предмета, что удаляет все рецепты, его производящие, либо объект с `input`, `result` или обоими, чтобы сузить выбор. Удаление, не называющее ни того, ни другого, пропускается, и лог об этом говорит.
 
-`fuels/*.json`
+`<namespace>/fuels/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
 
 ```json
 {
@@ -1167,12 +1482,15 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Зелья, типы зелий и варка
 
-`potions/*.json`
+`<namespace>/potions/*.json`
+
+Путь файла — это registry name эффекта, так что `mypack/potions/ruby_sight.json` регистрирует `mypack:ruby_sight`, который затем называет тип зелья.
 
 ```json
 {
   "name": "effect.mypack.ruby_sight",
   "color": "C0304A",
+  "badEffect": false,
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
@@ -1196,13 +1514,15 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `iconTexture` | нет | путь к текстуре | ванильный лист | Ваш собственный лист значков |
 | `attributes` | нет | список объектов | нет | `attribute`, `uuid`, `amount` (`0.0`), `operation` (`0`) |
 
-`potion_types/*.json`
+`<namespace>/potion_types/*.json`
+
+Путь файла — это registry name типа зелья, который предмет `potion_bottle` затем называет в `potionTypes`.
 
 ```json
 {
   "baseName": "ruby_sight",
   "effects": [
-    { "potion": "mypack:ruby_sight", "duration": 3600, "amplifier": 0, "showParticles": true }
+    { "potion": "mypack:ruby_sight", "duration": 3600, "amplifier": 0, "ambient": false, "showParticles": true }
   ]
 }
 ```
@@ -1214,31 +1534,43 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 Каждый эффект принимает `potion` (обязателен), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) и `showParticles` (`true`).
 
-`brewing/*.json`
+`<namespace>/brewing/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
 
 ```json
 {
   "brewing": [
-    { "input": "minecraft:potion", "ingredient": "mypack:ruby", "output": "mypack:ruby_potion" }
+    { "input": "minecraft:potion", "ingredient": "mypack:ruby", "output": "mypack:ruby_potion", "requires": ["mypack"] },
+    { "from": "minecraft:awkward", "ingredient": "mypack:ruby", "to": "mypack:ruby_tonic" }
   ]
 }
 ```
 
-Каждая запись — это либо `input`, `ingredient` и `output`, либо `from`, `ingredient` и `to`.
+Каждая запись — это либо `input`, `ingredient` и `output`, что варит один предмет в другой, либо `from`, `ingredient` и `to`, что превращает один тип зелья в другой. `ingredient` обязателен в обоих случаях, и запись принимает ещё `requires`, так что можно пропустить один рецепт, не пропуская весь файл.
 
 ## Воздействия
 
-Опасность, заданная паком: перечисленные блоки и предметы облучают игрока, который стоит рядом или несёт их с собой, по уровням; каждый уровень накладывает эффекты и периодический урон. Файл в `exposures/` описывает одну опасность, несколько работают параллельно. Значения ключей по умолчанию совпадают с радиацией Immersive World.
+`<namespace>/exposures/*.json`
+
+Путь файла — это имя опасности, а сообщение о смерти берётся из языкового ключа `death.attack.rdpl.<имя файла>`.
+
+Опасность, заданная паком: перечисленные блоки и предметы облучают игрока, который стоит рядом или несёт их с собой, по уровням; каждый уровень накладывает эффекты и периодический урон. Один файл описывает одну опасность, несколько работают параллельно. Значения ключей по умолчанию совпадают с радиацией Immersive World.
 
 ```json
 {
-  "immunity": "mypack:antirad",
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
+  "immunity": "mypack:antirad",
+  "scanInterval": 20,
+  "range": 10,
+  "sourcesForNextLevel": 4,
+  "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0,
-      "effects": [ { "potion": "minecraft:nausea" }, { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0,
+    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+      "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
+                   { "potion": "minecraft:hunger" } ] },
+    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
@@ -1268,7 +1600,9 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Жители и обмены
 
-`villagers/*.json`
+`<namespace>/villagers/*.json`
+
+Путь файла — это registry name профессии, так что `mypack/villagers/jeweller.json` регистрирует `mypack:jeweller`, которую сделка затем называет в `profession`.
 
 ```json
 {
@@ -1284,7 +1618,9 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `texture` | нет | путь к текстуре | ванильный житель | Как выглядит житель |
 | `zombieTexture` | нет | путь к текстуре | ванильный житель-зомби | Как он выглядит, став зомби |
 
-`trades/*.json`
+`<namespace>/trades/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
 
 ```json
 {
@@ -1312,23 +1648,106 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Варианты сущностей
 
-Файл в `assets/<modid>/entities/` делает новую сущность из уже существующей. Это полноценная сущность сама по себе: собственное registry name, собственное имя в мире, собственное яйцо призыва и собственная таблица лута, если вы её дадите, — построенная на поведении другой сущности, а не заменяющая её. В самой копируемой сущности не меняется ничего.
+`<namespace>/entities/*.json`
+
+Путь файла — это registry name варианта, так что `mypack/entities/angry_cow.json` регистрирует `mypack:angry_cow`, и именно на него ссылаются `becomes`, яйцо призыва и сохранение мира.
+
+Файл здесь делает новую сущность из уже существующей. Это полноценная сущность сама по себе: собственное registry name, собственное имя в мире, собственное яйцо призыва и собственная таблица лута, если вы её дадите, — построенная на поведении другой сущности, а не заменяющая её. В самой копируемой сущности не меняется ничего.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
   "entity": "minecraft:cow",
   "name": "Angry Cow",
-  "hostile": true,
-  "targets": ["minecraft:player"],
+  "showName": false,
+  "texture": "mypack:textures/entity/angry_cow.png",
+  "lootTable": "mypack:entities/angry_cow",
+  "profession": "mypack:jeweller",
+  "career": 1,
+  "baby": 0.05,
+  "becomes": [
+    { "variant": "mypack:angry_cow", "weight": 95 },
+    { "variant": "mypack:little_angry_cow", "weight": 5 }
+  ],
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "soundVolume": 1.0,
+  "soundPitch": 1.0,
+  "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "anvil", "inWall"],
+  "jumpMultiplier": 1.0,
+  "fallDamage": 1.0,
+  "maxFallHeight": 3,
+  "breathesUnderwater": false,
+  "swims": false,
+  "amphibious": false,
+  "waterSlowdown": 0.8,
+  "absorption": 0,
+  "experience": 3,
+  "creatureAttribute": "undefined",
+  "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
+  "despawns": true,
+  "despawnAfter": 600,
+  "noAI": false,
+  "leftHanded": false,
+  "fireproof": false,
+  "invulnerable": false,
+  "glowing": false,
+  "invisible": false,
+  "dropChance": 0.085,
+  "scale": 1.0,
+  "angryScale": 1.2,
+  "leashable": true,
+  "steerable": false,
+  "width": 0.9,
+  "height": 1.4,
+  "pathPriorities": { "WATER": 0.0, "LAVA": -1.0, "DANGER_FIRE": 8.0, "DOOR_WOOD_CLOSED": 0.0 },
+  "egg": { "primary": "AABBCC", "secondary": "112233" },
   "attributes": {
     "maxHealth": 20,
     "movementSpeed": 0.32,
-    "attackDamage": 4
+    "attackDamage": 4,
+    "knockbackResistance": 0.0,
+    "followRange": 32,
+    "armor": 4
+  },
+  "hostile": true,
+  "targets": ["minecraft:player"],
+  "passive": false,
+  "persistent": false,
+  "silent": false,
+  "picksUpLoot": false,
+  "hideArmor": false,
+  "hideHeld": false,
+  "tint": "C0304A",
+  "tintParts": ["body", "armor", "held"],
+  "ignoresSpawnRules": false,
+  "throws": true,
+  "throwAmmo": 8,
+  "throwReload": 3,
+  "throwRetreat": 3,
+  "throwPower": 1.0,
+  "throwArc": 0.35,
+  "explodes": false,
+  "explosionPower": 3.0,
+  "explosionFuse": 30,
+  "explosionFire": false,
+  "equipment": {
+    "mainhand": "minecraft:tnt",
+    "offhand": "minecraft:shield",
+    "head": "minecraft:iron_helmet",
+    "chest": "minecraft:iron_chestplate",
+    "legs": "minecraft:iron_leggings",
+    "feet": "minecraft:iron_boots"
   },
   "spawns": [
     { "creatureType": "creature", "weight": 4, "min": 1, "max": 2 }
   ],
-  "biomeTypes": ["PLAINS"]
+  "biomes": ["minecraft:plains"],
+  "biomeTypes": ["PLAINS"],
+  "trackingRange": 80,
+  "trackVelocity": true,
+  "trackingFrequency": 3,
+  "requires": ["mypack"]
 }
 ```
 
@@ -1460,7 +1879,39 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Участки деревень
 
-Файл в `assets/<modid>/villages/` добавляет постройку, которую деревни могут возводить наряду с ванильными. Два вида, выбираются через `type`.
+`<namespace>/villages/*.json`
+
+Путь файла — это имя постройки, которое `villagePieces` затем может назвать, чтобы её оставить или убрать.
+
+Файл здесь добавляет постройку, которую деревни могут возводить наряду с ванильными. Два вида, выбираются через `type`.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны. Ключ, помеченный для одного типа, читается только этим типом.
+
+```json
+{
+  "type": "farm",
+  "weight": 3,
+  "leastCount": 1,
+  "mostCount": 4,
+  "width": 7,
+  "height": 4,
+  "depth": 9,
+  "crops": ["simplecorn:corn", "minecraft:wheat"],
+  "edge": "minecraft:log",
+  "soil": "minecraft:farmland",
+  "water": true,
+  "rowWidth": 2,
+  "structure": "mypack:blacksmith_shed",
+  "integrity": 100,
+  "villagers": 2,
+  "villagerEntity": "mypack:jeweller",
+  "villagerX": 1,
+  "villagerY": 1,
+  "villagerZ": 1,
+  "ground": "minecraft:dirt",
+  "requires": ["mypack"]
+}
+```
 
 `farm` — это ванильное поле, но описанное, а не запрограммированное. Участок нужного вам размера, обрамлённый блоком. Внутри — ряды почвы, разделённые водными каналами, засаженные культурой из вашего списка, по выбору на каждый блок.
 
@@ -1518,24 +1969,68 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Биомы
 
-`biomes/*.json`
+`<namespace>/biomes/*.json`
+
+Путь файла — это registry name биома, так что `mypack/biomes/ruby_forest.json` регистрирует `mypack:ruby_forest`. `name` — это только то, что видит игрок.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
   "name": "Ruby Forest",
-  "type": ["FOREST", "DENSE"],
+  "id": 200,
+  "types": ["FOREST", "DENSE", "WET"],
   "temperature": 0.7,
   "rainfall": 0.8,
+  "rain": true,
+  "snow": false,
   "baseHeight": 0.15,
   "heightVariation": 0.25,
   "topBlock": "mypack:ruby_grass",
   "fillerBlock": "minecraft:dirt",
+  "stoneBlock": "mypack:ruby_stone",
+  "baseBiome": "minecraft:forest",
   "waterColor": "8040A0",
-  "placement": { "climate": "warm", "weight": 8, "villages": true },
+  "grassColor": "6BA33C",
+  "foliageColor": "4E8B2A",
+  "decoration": {
+    "trees": 10,
+    "extratreechance": 10,
+    "flowers": 4,
+    "grass": 5,
+    "deadbush": 0,
+    "mushrooms": 1,
+    "bigmushrooms": 0,
+    "reeds": 10,
+    "cacti": 0,
+    "sand": 3,
+    "gravel": 1,
+    "clay": 1,
+    "waterlily": 0,
+    "falls": 1
+  },
   "spawns": [
     { "entity": "minecraft:sheep", "type": "creature", "weight": 12, "min": 2, "max": 4 }
   ],
-  "spawnRates": { "surfaceNight": 0.5, "undergroundDay": 2.0 }
+  "keepDefaultSpawns": false,
+  "spawnChance": 0.1,
+  "spawnRates": { "surfaceDay": 0.0, "surfaceNight": 0.5, "undergroundDay": 2.0, "undergroundNight": 2.0 },
+  "placement": {
+    "climate": "warm",
+    "weight": 8,
+    "villages": true,
+    "villageSpawn": true,
+    "strongholds": false,
+    "playerSpawn": true
+  },
+  "villageType": "oak",
+  "minHeight": 100,
+  "maxHeight": 156,
+  "replaces": ["minecraft:plains", "minecraft:forest"],
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.2,
+  "skyThickness": 2.0,
+  "requires": ["mypack"]
 }
 ```
 
@@ -1543,7 +2038,6 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | --- | --- | --- | --- | --- |
 | `name` | нет | строка | имя файла | Имя, показываемое игроку |
 | `id` | нет | int | назначается за вас | Фиксированный id биома. Задавайте, только если нужна стабильность |
-| `type` | нет | список типов словаря | нет | Например `FOREST`, `COLD`, `NETHER` |
 | `temperature` | нет | float | `0.5` | Ниже 0.15 идёт снег, выше 1.0 — жара пустыни |
 | `rainfall` | нет | float, от 0 до 1 | `0.5` | Насколько влажно |
 | `rain` | нет | boolean | `true` | Бывает ли погода вообще |
@@ -1553,10 +2047,12 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `topBlock` | нет | имя блока | трава | Поверхностный блок |
 | `fillerBlock` | нет | имя блока | земля | Сразу под поверхностью |
 | `stoneBlock` | нет | имя блока | камень | Основная толща грунта |
-| `types` | нет | список типов словаря | нет | Регистрирует биом под ними, например `FOREST` или `WET`, чтобы другие моды его находили |
+| `types` | нет | список типов словаря | нет | Регистрирует биом под ними, например `FOREST`, `COLD`, `WET` или `NETHER`, чтобы другие моды его находили |
 | `waterColor` | нет | hex-цвет | `FFFFFF` | Оттенок воды |
+| `grassColor` | нет | hex-цвет | из климата | Оттенок травы вместо цвета, который дали бы температура и влажность |
+| `foliageColor` | нет | hex-цвет | из климата | Оттенок листвы, тем же способом |
 | `baseBiome` | нет | имя биома | нет | Существующий биом, у которого копируются настройки |
-| `decoration` | нет | объект | ванильные значения | Количества на чанк для деревьев, травы, цветов, тростника, кактусов, озёр, глины и прочего |
+| `decoration` | нет | объект | ванильные значения | Количества на чанк. Читаются имена `trees`, `flowers`, `grass`, `deadbush`, `mushrooms`, `bigmushrooms`, `reeds`, `cacti`, `sand`, `gravel`, `clay` и `waterlily`, плюс `falls`, где больше нуля означает, что генерируются озёра и источники, и `extratreechance` — процентная вероятность ещё одного дерева. Любое другое имя пишется в лог и игнорируется |
 | `spawns` | нет | список объектов | ванильный список | См. ниже |
 | `keepDefaultSpawns` | нет | boolean | `false` | Сохранить ванильный список наряду с вашим |
 | `spawnChance` | нет | float, меньше 1 | `0.1` | Насколько вероятно, что при первом создании земли будет поставлено ещё одно стадо. Игра бросает кубик, пока он выпадает удачно, поэтому 1 не останавливается никогда и заполняет мир, пока не кончится место. Всё от 0.99 и выше отвергается, и берётся 0.99 |
@@ -1588,6 +2084,8 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 **Температура по высоте.** С высотой биом становится холоднее: отсюда снег на вершинах гор и прекращение дождя выше некоторой линии. Три ключа группы `terrain` сдвигают эту кривую, что важно в мире Rubic, где земля может лежать намного выше или ниже высоты, на которую рассчитывает игра. Значения по умолчанию совпадают с поведением игры, так что пак, который их не трогает, ничего не меняет.
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -1606,22 +2104,50 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Измерения
 
-`dimensions/*.json`
+`<namespace>/dimensions/*.json`
+
+Путь файла называет измерение для `suffix`, чей стандарт — `DIM_<имя>`. Само измерение находится по своему `id`, так что именно это число указывают везде.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
   "id": 12,
   "suffix": "DIM_ruby",
   "keepLoaded": false,
-  "terrain": { "type": "overworld", "structures": false },
-  "biomes": { "source": "single", "biome": "mypack:ruby_forest" },
+  "requires": ["mypack"],
+  "terrain": {
+    "type": "overworld",
+    "generatorOptions": "",
+    "structures": false
+  },
+  "biomes": {
+    "source": "single",
+    "biome": "mypack:ruby_forest"
+  },
   "sky": {
-    "skyColor": "3B1E4A",
-    "fogColor": "20102A",
-    "cloudHeight": 160,
     "hasSkyLight": true,
+    "surfaceWorld": true,
+    "respawn": true,
+    "respawnDimension": 0,
+    "spawning": true,
+    "nether": false,
+    "beds": true,
+    "waterVaporizes": false,
+    "cloudHeight": 160,
+    "cloudColor": "5B3E6A",
+    "groundLevel": 63,
+    "movementFactor": 4.0,
+    "fogColor": "20102A",
+    "showFog": false,
+    "skyColor": "3B1E4A",
+    "fixedTime": 18000,
+    "sunriseColors": true,
     "ambientLight": 0.1,
-    "movementFactor": 4.0
+    "starBrightness": 0.8,
+    "renderSky": true,
+    "renderClouds": true,
+    "renderWeather": true
   },
   "gameRules": { "doMobSpawning": "false" }
 }
@@ -1683,6 +2209,10 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Порталы и ворота
 
+`<namespace>/blocks/*.json`
+
+Портал — это обычное описание блока, поэтому действует то же правило пути: путь файла — это registry name блока.
+
 Блок `portal` несёт секцию `portal`:
 
 ```json
@@ -1696,6 +2226,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
     "cooldown": 60,
     "platform": true,
     "platformBlock": "mypack:ruby_block",
+    "sound": "block.portal.travel",
     "owned": true
   },
   "variants": { "ruby_portal": { "meta": 0, "hardness": -1, "light": 11 } }
@@ -1713,18 +2244,33 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `sound` | нет | имя звука | нет | Проигрывается при переходе |
 | `owned` | нет | boolean | `true` | Пользоваться могут только тот, кто его построил, и те, кому он позволил. Такой портал ещё и не боится взрывов |
 
-`gates/*.json`
+`<namespace>/gates/*.json`
+
+Путь файла — это registry name врат, которые портал затем называет в `gate`.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
+  "dimension": 12,
   "name": "The Ruby Gate",
   "scope": "player",
-  "dimension": 12,
   "open": false,
-  "unlock": { "consume": "mypack:ruby", "consumeCount": 4, "killed": "minecraft:wither" },
+  "unlock": {
+    "hold": "mypack:ruby_key",
+    "consume": "mypack:ruby",
+    "consumeCount": 4,
+    "craft": "mypack:ruby_pickaxe",
+    "advancement": "mypack:story/ruby",
+    "killed": "minecraft:wither",
+    "killedCount": 2,
+    "killedDrops": "mypack:ruby_key"
+  },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
-  "safeReturn": true
+  "safeReturn": true,
+  "portalBlocks": ["mypack:ruby_portal"],
+  "requires": ["mypack"]
 }
 ```
 
@@ -1738,13 +2284,18 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `unlockedMessage` | нет | строка | `%dim% is now open` | Показывается при открытии |
 | `blockedMessage` | нет | строка | `You need %item% to enter %dim%` | Показывается при отказе |
 | `safeReturn` | нет | boolean | `false` | Заблокированное возвращение всё равно приводит в безопасное место, а не отказывает |
+| `requires` | нет | список id модов или пространств имён паков | нет | Врата пропускаются, если есть не все |
 | `portalBlocks` | нет | список имён блоков | все порталы | Ограничивает ворота этими блоками портала, чтобы у одного измерения могла быть и охраняемая дверь, и открытая |
 
 `unlock` принимает `hold` (предмет, который надо держать), `consume` вместе с `consumeCount` (`1`), `craft` (предмет, который должен быть скрафчен), `advancement` и `killed` (имя сущности: ворота открываются тому, кто её убьёт, поэтому ключом от мира может владеть босс) вместе с `killedCount` (`1`), когда одного мало, — счёт ведётся по игроку или на весь мир, как скажет `scope`. Добавление `killedDrops` (имя предмета) заставляет засчитанные убийства класть этот предмет к ногам победителя вместо открытия ворот и начинает счёт заново, поэтому ключ можно заработать снова и передать тому, кто за него не сражался; поставьте ворота на `hold` или `consume` того же предмета, чтобы сделать его ключом. `%item%`, `%mob%` и `%dim%` подставляются за вас. Ключу, который роняет моб, здесь ничего особенного не нужно: дайте мобу дроп и поставьте ворота на `hold` или `consume`.
 
 ## Шаблоны мира
 
-`worldtemplates/*.json` собирает форму мира в один файл, поэтому пак поставляет целый мир разом, а не просит игрока выставить дюжину настроек конфига.
+`<namespace>/worldtemplates/*.json`
+
+Путь файла — это имя шаблона, которое настройка конфига `worldTemplate` может назвать, чтобы выбрать его напрямую.
+
+Собирает форму мира в один файл, поэтому пак поставляет целый мир разом, а не просит игрока выставить дюжину настроек конфига.
 
 ```json
 {
@@ -1782,13 +2333,17 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 `rubicWorld` в настройках группы `terrain` перестраивает мир измерения из кубов 16×16×16 вместо колонн высотой 256 блоков, так что пол и потолок мира оказываются там, где их поставил пак. Сама генерация рельефа не меняется: ванильный генератор и генерация других модов работают как обычно и дают ту же самую землю — просто над ней и под ней тоже есть мир.
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
     "rubicWorld": true,
     "worldMinHeight": -1024,
     "worldMaxHeight": 1024,
-    "rubicWorldDimensions": [0, -1]
+    "rubicWorldDimensions": [0, -1],
+    "rubicWorldDimensionsAreBlacklist": false,
+    "terrainOffset": 0
   }
 }
 ```
@@ -1820,6 +2375,8 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 **Потоковая передача кубов.** Четыре ключа группы `chunks` определяют, как кубы попадают к игроку и когда освобождаются. Они действуют только в мирах Rubic, а значения по умолчанию те, на которых подсистема настраивалась, так что пак, который их не трогает, ничего не платит.
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -1844,6 +2401,8 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 Ещё девять ключей `terrain` заполняют пространство, которое мир Rubic открывает вокруг ванильного окна рельефа, генерацией в современном стиле. Они работают только в мире Rubic:
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -1852,10 +2411,12 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
     "worldMaxHeight": 1024,
     "deepStone": "mypack:slate",
     "skyStone": "minecraft:end_stone",
+    "skyShape": "islands",
     "skyIslands": 0.05,
     "skyThickness": 3.0,
     "skyHeights": [400, 800],
     "noiseCaves": "world",
+    "deepRavines": true,
     "oreVeins": ["minecraft:iron_ore,,mypack:slate@1,-56,20"]
   }
 }
@@ -1885,22 +2446,39 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Пещерные регионы
 
-`caveregions/*.json` раскрашивает подземелье именованными регионами — паковский аналог современных пещерных биомов. Подземелье делится на округлые ячейки — `caveRegionCells` блоков в ширину и `caveRegionCellsY` в высоту, оба ключа `terrain` — и каждая ячейка по весу разыгрывает один регион или ни одного. Всё, что делает регион, детерминированно следует из зерна мира, поэтому чанки согласуются, никогда не записывая через границу.
+`<namespace>/caveregions/*.json`
+
+Путь файла — это имя региона, которое запись генерации затем называет в `caveRegions`. Голое имя там берёт пространство имён самой этой записи.
+
+Раскрашивает подземелье именованными регионами — паковский аналог современных пещерных биомов. Подземелье делится на округлые ячейки — `caveRegionCells` блоков в ширину и `caveRegionCellsY` в высоту, оба ключа `terrain` — и каждая ячейка по весу разыгрывает один регион или ни одного. Всё, что делает регион, детерминированно следует из зерна мира, поэтому чанки согласуются, никогда не записывая через границу.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
   "weight": 3,
   "minHeight": -56,
   "maxHeight": 16,
+  "dimensions": [0],
   "biome": "minecraft:mushroom_island",
   "floorCover": "minecraft:mycelium",
   "floorChance": 0.8,
+  "ceilingCover": "minecraft:brown_mushroom_block",
+  "ceilingChance": 0.3,
+  "coverReplace": ["minecraft:stone", "mypack:slate"],
+  "waterLevel": -24,
   "keepDefaultSpawns": false,
   "spawns": [
     { "entity": "minecraft:mooshroom", "type": "creature", "weight": 12, "min": 2, "max": 4 }
   ],
-  "structures": ["mypack:cave_shrine"],
-  "structureChance": 0.5
+  "structures": [
+    { "structure": "mypack:cave_shrine", "weight": 3 },
+    "mypack:cave_well"
+  ],
+  "structureChance": 0.5,
+  "skyStone": "minecraft:sandstone",
+  "skyIslands": 0.2,
+  "skyThickness": 2.0
 }
 ```
 
@@ -1925,6 +2503,18 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `skyIslands` | от `-1` до `1` | настройка мира | Порог островов внутри региона. Меньше собирает больше земли |
 | `skyThickness` | `0` и выше | настройка мира | Насколько плотные острова региона |
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "caveRegionCells": 128,
+    "caveRegionCellsY": 64,
+    "caveRegionPlainWeight": 4
+  }
+}
+```
+
 Сколько подземелья остаётся простым, задаёт ключ `terrain` `caveRegionPlainWeight`, по умолчанию `4`: с единственным регионом веса 1 регион достаётся примерно пятой части ячеек. Покрытия действуют под крышей, так что регион, выходящий выше земли, на поверхности никогда не виден; над окном рельефа они действуют и под открытым небом, ведь вся тамошняя земля создана небесной генерацией. Покрытия работают в любой пещере, каким бы генератором она ни была вырезана; `waterLevel` — единственный ключ, которому нужны шумовые пещеры, потому что вода ставится при их вырезании.
 
 Фичи подключаются через два ключа обычных [записей генерации мира](#записи-генерации-мира). `caveRegions` перечисляет регионы, в которых запись может генерироваться, с проверкой в точке размещения, так что грибы, кристаллы и что угодно ещё появляются только внутри своего региона. `snap` сначала сдвигает каждую попытку по вертикали к ближайшей поверхности пещеры: `floor` для стоящего, `ceiling` для висящего. Региону в духе капельника новые формы не нужны:
@@ -1946,12 +2536,17 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Вступление к миру
 
-`worldintro/*.json` показывает набор страниц, когда игрок входит в мир, до того как он получит управление. Бегущий текст поверх картинки, титульная заставка, слайд-шоу или всё это подряд.
+`<namespace>/worldintro/*.json`
+
+Имя файла выбираете вы, читается только папка. Каждое вступление, которое несёт пак, проигрывается, в порядке паков.
+
+Показывает набор страниц, когда игрок входит в мир, до того как он получит управление. Бегущий текст поверх картинки, титульная заставка, слайд-шоу или всё это подряд.
 
 ```json
 {
   "once": true,
   "music": "minecraft:music.credits",
+  "requires": ["mypack"],
   "pages": [
     {
       "background": "mypack:textures/gui/sunrise.png",
@@ -1997,7 +2592,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `textScale` | нет | число | `1.0` | Умножает размер шрифта |
 | `settle` | нет | boolean | `false` | Закончить с последней строкой по центру, а не уводя её за пределы экрана |
 
-Текстовые файлы кладутся в `assets/<namespace>/texts/<name>.txt`. Обычный текст, по абзацу на строку, а пустые строки сохраняются пустыми. `PLAYERNAME` заменяется именем игрока — та же подстановка, что и в ванильной финальной поэме.
+Текстовые файлы кладутся в `<namespace>/texts/*.txt`. Обычный текст, по абзацу на строку, а пустые строки сохраняются пустыми. `PLAYERNAME` заменяется именем игрока — та же подстановка, что и в ванильной финальной поэме.
 
 `time` задаёт, сколько длится страница, поэтому одна и та же страница занимает одно и то же время, держит она одну строку или двадцать. Скорость чтения настраивайте тем, сколько вы на страницу положите. Не пишите `time` — и страница пойдёт с той же скоростью, что ванильные титры, где больше текста просто дольше едет.
 
@@ -2013,7 +2608,9 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Игровые правила
 
-`gamerules/*.json`
+`<namespace>/gamerules/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
 
 ```json
 {
@@ -2032,14 +2629,23 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 ## Группы твёрдости
 
-`hardness/*.json` задаёт группе блоков множитель времени добычи, который разыгрывается для каждой позиции блока. Сам блок при этом не меняется: ничего не регистрируется, ничего не пишется в мир, и мир, открытый без пака, остаётся обычным ванильным.
+`<namespace>/hardness/*.json`
+
+Путь файла называет группу в логе, больше его ничто не читает, так что несколько файлов складываются.
+
+Задаёт группе блоков множитель времени добычи, который разыгрывается для каждой позиции блока. Сам блок при этом не меняется: ничего не регистрируется, ничего не пишется в мир, и мир, открытый без пака, остаётся обычным ванильным.
 
 ```json
 {
   "blocks": ["minecraft:stone:0"],
+  "except": [{ "block": "minecraft:stone", "properties": { "variant": "andesite" } }],
   "miningTime": { "min": 1.0, "max": 20.0 },
+  "blastResistance": { "min": 1.0, "max": 4.0 },
   "buckets": 10,
-  "field": { "type": "speckle", "spread": 0.15 }
+  "minHeight": 0,
+  "maxHeight": 255,
+  "field": { "type": "speckle", "spread": 0.15 },
+  "requires": ["mypack"]
 }
 ```
 
@@ -2061,6 +2667,12 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 Розыгрыш идёт не для каждого блока сам по себе, иначе твёрдое и мягкое были бы чистым шумом без всякой формы. `field` задаёт, какая форма получится, а `type` выбирает между двумя способами.
 
+```json
+{
+  "field": { "type": "speckle" }
+}
+```
+
 | Ключ | Обязателен | Значение | По умолчанию | Что делает |
 | --- | --- | --- | --- | --- |
 | `type` | нет | `speckle` или `seeded` | `speckle` | Какой из двух вариантов ниже используется |
@@ -2068,6 +2680,16 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 #### speckle
 
 Каждый блок тянет свою ступень, а блок через грань может передать ему ступень послабее. Получается частая мелкая крапина, чаще всего в один блок, изредка с более крупным сгустком там, где они сходятся. Из двух вариантов этот ближе к тому, как ощущается добыча в исходном моде.
+
+```json
+{
+  "field": {
+    "type": "speckle",
+    "chances": [30, 30, 20, 20, 10, 10, 10, 10, 50],
+    "spread": 0.15
+  }
+}
+```
 
 | Ключ | Обязателен | Значение | По умолчанию | Что делает |
 | --- | --- | --- | --- | --- |
@@ -2079,6 +2701,19 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 #### seeded
 
 Зёрна стоят на решётке, выведенной из мира и позиции, а ступень блока зависит от того, насколько он близок к ближайшему зерну. Получаются более редкие, крупные и округлые сгустки, перетекающие друг в друга, и они умеют пускать лучи.
+
+```json
+{
+  "field": {
+    "type": "seeded",
+    "cell": 8,
+    "seeds": 1,
+    "reach": 3.0,
+    "arms": 0,
+    "armReach": 0.0
+  }
+}
+```
 
 | Ключ | Обязателен | Значение | По умолчанию | Что делает |
 | --- | --- | --- | --- | --- |
@@ -2127,15 +2762,26 @@ Minecraft и так выбирает вариант по позиции блок
 
 ## Записи генерации мира
 
-`worldgen/*.json` описывает то, что генерируется. Каждая запись — это **форма**, размещённая **распределением** и отфильтрованная по тому, где ей позволено быть.
+`<namespace>/worldgen/*.json`
+
+Путь файла называет запись, а формы `belt` и `field` берут из него зерно шума, так что переименование файла сдвигает то, что он создаёт.
+
+Описывает то, что генерируется. Каждая запись — это **форма**, размещённая **распределением** и отфильтрованная по тому, где ей позволено быть.
 
 ```json
 {
   "block": "mypack:ruby_ore",
   "meta": 0,
+  "blocks": [
+    { "block": "mypack:ruby_ore", "meta": 0, "weight": 80 },
+    { "block": "minecraft:wool", "weight": 20, "properties": { "color": "magenta" } }
+  ],
   "size": 8,
   "attempts": 12,
   "replace": ["minecraft:stone"],
+  "adjacent": ["minecraft:air"],
+  "minHeight": 8,
+  "maxHeight": 48,
   "dimensions": [0],
   "dimensionsAreBlacklist": false,
   "biomes": ["minecraft:extreme_hills"],
@@ -2145,12 +2791,13 @@ Minecraft и так выбирает вариант по позиции блок
   "maxTemperature": 100.0,
   "minRainfall": -100.0,
   "maxRainfall": 100.0,
-  "minHeight": 8,
-  "maxHeight": 48,
   "minDistanceFromSpawn": 0,
   "sparse": false,
   "retrogen": false,
   "retrogenKey": "ruby_v1",
+  "caveRegions": ["dripstone"],
+  "snap": "floor",
+  "snapDepth": 0,
   "requires": ["quark"],
   "shape": { "type": "cluster" },
   "spread": { "type": "even" }
@@ -2197,7 +2844,7 @@ Minecraft и так выбирает вариант по позиции блок
 ```json
 {
   "blocks": [
-    { "block": "minecraft:wool", "weight": 80, "properties": { "color": "magenta" } },
+    { "block": "minecraft:wool", "meta": 2, "weight": 80 },
     { "block": "minecraft:wool", "weight": 20, "properties": { "color": "lime" } }
   ]
 }
@@ -2215,6 +2862,17 @@ Minecraft и так выбирает вариант по позиции блок
 ### Цели замены
 
 `replace` — это список, и каждая запись принимает одну из трёх форм.
+
+```json
+{
+  "replace": [
+    "minecraft:stone",
+    "minecraft:stone:3",
+    { "block": "minecraft:stone", "properties": { "variant": "andesite" } },
+    { "block": "minecraft:stone", "meta": 5 }
+  ]
+}
+```
 
 | Форма | Пример | Чему соответствует |
 | --- | --- | --- |
@@ -2246,9 +2904,47 @@ Minecraft и так выбирает вариант по позиции блок
 
 Блок `shape` с ключом `type`. Ключи, не перечисленные для типа, им игнорируются.
 
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны. Ключ, помеченный для одного типа, читается только этим типом.
+
 ```json
 {
-  "shape": { "type": "geode", "radius": 6, "height": 8, "outline": "minecraft:obsidian", "fill": "minecraft:glowstone" }
+  "shape": {
+    "type": "geode",
+    "radius": 6,
+    "height": 8,
+    "width": 12,
+    "plane": "circle",
+    "slim": false,
+    "hanging": false,
+    "taper": "needle",
+    "outline": "minecraft:obsidian",
+    "fill": "minecraft:glowstone",
+    "surface": ["minecraft:grass"],
+    "seeSky": true,
+    "checkStay": true,
+    "stackHeight": 1,
+    "scatterX": 8,
+    "scatterY": 4,
+    "scatterZ": 8,
+    "log": "mypack:ruby_log",
+    "leaves": "mypack:ruby_leaves",
+    "vines": false,
+    "structure": "mypack:crypt",
+    "structures": [
+      { "structure": "mypack:crypt", "weight": 3 },
+      "mypack:shrine"
+    ],
+    "integrity": 100,
+    "turns": ["none", { "turn": "half", "weight": 2 }],
+    "mirrors": ["none", { "mirror": "leftright", "weight": 2 }],
+    "at": [1000, -500],
+    "locateAs": "Crypt",
+    "field": { "type": "speckle", "spread": 0.15 },
+    "threshold": 0.5,
+    "fade": 0,
+    "rarity": 400,
+    "rarityIsPerChunk": false
+  }
 }
 ```
 
@@ -2303,7 +2999,9 @@ Minecraft и так выбирает вариант по позиции блок
 | `integrity` | imprint | от 1 до 100 | `100` | Доля блоков шаблона, которые действительно появятся, в процентах |
 | `structures` | imprint | список | нет | Несколько шаблонов на выбор, каждый раз ставится один. Каждая запись — `{ "structure": "namespace:name", "weight": 3 }` либо голое имя для равных шансов. Перекрывает `structure` |
 | `turns` | imprint | список | любой | Как может быть повёрнут: `none`, `quarter`, `half`, `threequarter`. Записи могут нести `weight`. Если не задано, все четыре равновероятны |
-| `mirrors` | imprint | список | нет | Ещё и отразить: `none`, `leftright`, `frontback`, с необязательным `weight` |
+| `mirrors` | imprint | список | нет | Ещё и отразить: `none`, `leftright`, `frontback`, с необязательным `weight`. Запись со своим весом пишется как `{ "mirror": "leftright", "weight": 2 }`, а запись `turns` — так же, но с `turn` |
+| `at` | imprint | два целых, x и z | нет | Поставить ровно один раз в этих координатах блока на поверхности, когда генерируется этот чанк, а не по случайности. См. [Структуры в точных местах](#структуры-в-точных-местах) |
+| `locateAs` | imprint | строка | нет | Регистрировать каждую структуру, которую ставит эта запись, под этим именем, чтобы `/locate <имя>` находил ближайшую. См. [Поиск размещённых структур](#как-находить-поставленные-структуры) |
 | `field` | field | объект | `{ "type": "speckle" }` | Как считается поле. Те же ключи, что и у `field` группы твёрдости, описанные в разделе [Поле](#поле): `speckle` с `chances` и `spread` либо `seeded` с `cell`, `seeds`, `reach`, `arms` и `armReach` |
 | `threshold` | field | от 0.0 до 1.0 | `0.5` | Насколько сильным должно быть поле у блока, чтобы там поставить. Ниже — заполняет больше |
 | `fade` | field | int | `0` | Верх полосы рассыпается крапом, а не обрывается ровной линией: на верхних стольких блоках диапазона высот шанс каждого блока убывает шаг за шагом — тот же вид, что движок даёт `deepStone` на переходе к миру выше |
@@ -2344,9 +3042,23 @@ Minecraft и так выбирает вариант по позиции блок
 
 Блок `spread` с ключом `type`.
 
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны. Ключ, помеченный для одного типа, читается только этим типом.
+
 ```json
 {
-  "spread": { "type": "centered", "center": 32, "range": 12, "smoothness": 3 }
+  "spread": {
+    "type": "centered",
+    "center": 32,
+    "range": 12,
+    "smoothness": 3,
+    "veinHeight": 24,
+    "veinDiameter": 12,
+    "verticalDensity": 16,
+    "horizontalDensity": 32,
+    "offsetMin": 0,
+    "offsetMax": 2,
+    "ceiling": false
+  }
 }
 ```
 
@@ -2374,6 +3086,17 @@ Minecraft и так выбирает вариант по позиции блок
 | `ceiling` | cavern | boolean | `false` | Крепиться к потолку пещеры, а не к полу |
 
 ## Retrogen
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "retrogen": true,
+    "adoptExistingChunks": false
+  }
+}
+```
 
 Запись с `"retrogen": true` генерируется и в чанки, сохранённые до того, как вы её добавили. Каждый чанк записывает, что в нём уже было, так что дважды ничего не делается.
 
@@ -2407,6 +3130,8 @@ Minecraft и так выбирает вариант по позиции блок
 
 В паке всё это кладётся в блок `settings` [шаблона мира](#шаблоны-мира), как и любой другой ключ группы `chunks`. Вот они все, кроме `pregenBorderLimit` — он живёт только в конфиге:
 
+`<namespace>/worldtemplates/*.json`
+
 ```json
 {
   "settings": {
@@ -2424,7 +3149,7 @@ Minecraft и так выбирает вариант по позиции блок
     "pregenFinishedSays": "Your world is ready",
     "pregenStoppedSays": "World building stopped",
     "pregenSpectatingSays": "Spectating until the world is ready",
-    "pregenWelcomeSays": "Welcome to Ruby World!"
+    "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"]
   }
 }
 ```
@@ -2445,8 +3170,9 @@ Minecraft и так выбирает вариант по позиции блок
 | `pregenSpectatingSays` | Строка удержания посреди экрана, пока создаётся земля. Со значением по умолчанию говорит на языке каждого игрока; пустая не показывает ничего | Держите примерно до тридцати пяти символов, иначе в маленьких окнах обрежется |
 | `welcomeSays` | Зелёное приветствие, показывается при каждом входе и после создания земли. Голая запись — строка для всех мест; запись `dimension=message` перекрывает её для этого измерения и заодно приветствует каждое прибытие туда, например `"-1=Welcome to the Nether!"`. Пустое сообщение после `=` заглушает это измерение; пустой список не показывает ничего. Со значением по умолчанию говорит на языке каждого игрока | Одна голая строка называет ваш пак; добавьте строки по измерениям, чтобы задать тон каждому миру. Держите строки примерно до тридцати пяти символов |
 
-Прогоните это сами перед выпуском — от начала до конца и на том радиусе, который выпускаете. Число чанков растёт как квадрат радиуса. 63 в каждую сторону — шестнадцать тысяч чанков, 500 — больше миллиона, примерно по десять килобайт каждый. Честные числа для игроков — это папка region вашего тестового мира и часы на стене. Не выпускайте радиус, который ни разу не прогоняли.
+У создания земли свой быстрый путь для освещения, и он отходит в сторону, когда установлен движок света вроде Alfheim или Phosphor, отдавая работу ему. В обоих случаях вы получаете готовую, полностью освещённую землю.
 
+Прогоните это сами перед выпуском — от начала до конца и на том радиусе, который выпускаете. Число чанков растёт как квадрат радиуса. 63 в каждую сторону — шестнадцать тысяч чанков, 500 — больше миллиона, примерно по десять килобайт каждый. Честные числа для игроков — это папка region вашего тестового мира и часы на стене. Не выпускайте радиус, который ни разу не прогоняли.
 
 ### Поля
 
@@ -2475,34 +3201,6 @@ Minecraft и так выбирает вариант по позиции блок
 
 Как и пояс, поле не смотрит на `attempts` и `spread`, потому что его спрашивают по чанку, а не по попытке, и оно никогда не пишет в соседний чанк. Оно выводится из сида мира и собственного имени записи, поэтому один и тот же сид всегда даёт одни и те же жилы, а две записи с разными именами никогда не совпадают. `replace`, `adjacent`, `biomes` и климатические пределы работают как обычно.
 
-### За счёт чего это быстро
-
-Всё ниже — про «как», а не про «что»: инженерия, которая делает прогон быстрым, записанная, чтобы не потеряться. Паку ничего из этого не нужно, чтобы пользоваться ключами выше.
-
-У создания земли свой быстрый путь для освещения, и он отходит в сторону, когда установлен движок света вроде Alfheim или Phosphor, отдавая работу ему. В обоих случаях вы получаете готовую, полностью освещённую землю.
-
-Игра не станет освещать чанк, пока не существуют все восемь вокруг. А пока земля создаётся, те, что впереди, ещё не созданы. Осветить чанк прямо в момент создания почти никогда не выходит. Вместо этого при создании каждого чанка осматриваются девять вокруг этого места, и любой, чьё собственное кольцо теперь полно и всё ещё удерживается, освещается тут же.
-
-Вычисляя свет, игра смотрит на шесть сторон блока и каждый раз просит список из шести направлений. Каждый запрос возвращает свежую копию одних и тех же шести. За создание мира это десятки миллионов копий списка, который никогда не меняется, и все они разом выбрасываются. Вместо этого используется один список.
-
-Где хранится кольцо чанков, важно не меньше, чем то, что оно хранится. Искать его заново на каждое чтение, десятки миллионов раз, дороже части самих чтений. Оно лежит на самом мире, а это одно обращение к полю.
-
-Считать, сколько занимает свет, само по себе заметно медленно. Спрашивать часы дважды на каждое из восьмидесяти миллионов распространений дороже, чем часть измеряемой работы. Поэтому считается каждое распространение, но замеряется одно из шестидесяти четырёх, а время масштабируется от них. Счётчики точные, а времена близкие.
-
-Почти весь свет, который вычисляет игра, — это свет, который она уже знала. При создании чанка она проходит каждый столб от неба вниз и ставит полный дневной свет, пока не встретит твёрдую землю и ничего под ней. Затем обходит каждый открытый блок ниже и спрашивает, каким там должен быть свет. Под землёй и внутри камня ответ всегда «никакого», и он уже был «никакой», так что из каждой сотни таких вопросов едва два что-то меняют. Значение имеют только те, что рядом с входом в пещеру или под нависанием, где свет приходит сбоку.
-
-Поэтому ответ вычисляется напрямую, до вопроса: сколько пропускает блок и сколько дневного света держит самый светлый из шести соседей. Это ровно то, до чего дошла бы сама игра, и там, где это совпадает с тем, что блок уже держит, делать нечего и вопрос пропускается. Дойти до этого ответа — несколько чтений из уже имеющихся под рукой чанков. Игра приходит туда же куда более длинным путём. Про лампы и огонь спрашивают как прежде, и в итоге ничто не оказывается освещённым иначе.
-
-Распространение света — самая медленная часть создания земли, и почти вся стоимость приходится не на свет. Каждый раз, читая яркость блока, его тип или видимость неба, игра заново ищет чанк с нуля. И делает это около шестнадцати раз на каждый рассматриваемый блок. За один прогон это заметно больше миллиарда поисков одних и тех же девяти чанков. Перед распространением света она ещё дважды спрашивает, вся ли земля вокруг на месте. И спрашивает снова на каждый блок.
-
-Кольцо чанков вокруг освещаемого поэтому находят один раз, когда чанк берут в работу. Каждое чтение за этот проход обслуживается уже из него. Ответы те же, к каким пришла бы игра, только без похода за ними каждый раз. В самом свете ничего не меняется.
-
-Это же означает, что свет ставится после деревьев, руды и озёр, а не до них. Сама по себе игра сначала освещает голую землю, а потом пересчитывает почти всё заново, пока наносится убранство. Двойная трата на землю, где ещё никто не стоит. Первый проход придерживают и делают только поздний — что при создании земли пачками, что когда игрок просто в неё заходит. Игра и так каждый раунд пробует снова на любом неосвещённом чанке. Придержанный чанк освещается раундом позже, вычисленный лишь однажды. Удерживаемые прогоном чанки заодно исключены из привычки игры пробовать свет на каждом чанке каждый раунд. Прогон знает, когда каждый из них готов, а попытка до этого может только провалиться. Чанк, до которого очередь так и не дошла, остаётся тёмным и освещает себя сам, когда к нему подойдут, и причин этому две, совсем разные. Первая: он стоит на самом краю запрошенного. В кольце вокруг него есть земля, которую никто не просил создавать и достроить уже нельзя. Это внешняя граница квадрата, и удержанием её не изменить. Другая — что он выпал из удерживаемого раньше, чем создались его соседи, и вот это удержание большего числа чанков как раз исправляет. Их считают отдельно, чтобы было понятно, где что.
-
-Отдельная строка говорит, сколько раз каждое из этих сокращений не сработало и пришлось идти длинным путём. Считаются чанки, найденные всерьёз; блоки, опрошенные на состав; блоки, названные для записи. И отдельно — сколько раз генератору камня из Quark не пришлось читать мир ради земли, слишком далёкой от середины его скопления. Считаются только неудачи: считать удачи стоило бы дороже, чем они экономят.
-
----
-
 # Управление
 
 ## Слой управления
@@ -2518,6 +3216,8 @@ Minecraft и так выбирает вариант по позиции блок
 Группы: `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks` и `commands`.
 
 Настройки разрешаются в порядке **биом → шаблон мира → конфиг**. Блок `settings` шаблона мира использует те же имена ключей, что и конфиг, поэтому пак задаёт их так же, как задали бы вы:
+
+`<namespace>/worldtemplates/*.json`
 
 ```json
 {
@@ -2537,13 +3237,61 @@ Minecraft и так выбирает вариант по позиции блок
 
 ### Ores
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockOres": true,
+    "oreWhitelist": ["minecraft", "mypack"],
+    "oreTypes": ["COAL", "IRON"],
+    "oreTypesAreBlacklist": true,
+    "blockOreDimensions": [0, -1],
+    "blockOreDimensionsAreBlacklist": false
+  }
+}
+```
+
 `blockOres` запрещает генерацию руды всем — и модам, и самому Minecraft, — кроме тех, что перечислены в `oreWhitelist`. `oreTypes` называет затрагиваемые типы руды, а `oreTypesAreBlacklist` задаёт направление: включено — перечисленные типы блокируются; выключено — генерируются только перечисленные. Достать можно только генерацию, идущую через событие генерации руды Forge. Это Minecraft и большинство модов, но не все. `blockOreDimensions` ограничивает блокировку руды определёнными измерениями, пустой список означает все, а `blockOreDimensionsAreBlacklist` превращает список в перечень измерений, оставляемых в покое. Измерение вне области действия не трогают вовсе. Руда другого мода спокойно генерируется там, пока обычный мир остаётся заблокированным.
 
 ### Biomes
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockBiomes": true,
+    "biomeWhitelist": ["minecraft", "mypack"],
+    "biomeNames": ["minecraft:mesa", "minecraft:mesa_rock"],
+    "biomeNamesAreBlacklist": true,
+    "blockBiomeDimensions": [0],
+    "blockBiomeDimensionsAreBlacklist": false
+  }
+}
+```
+
 `blockBiomes` и `biomeWhitelist` работают по модам, а `biomeNames` вместе с `biomeNamesAreBlacklist` — по именам. Заблокированные биомы заменяются на уже готовой карте биомов. Только так и добраться до океанов, грибных островов, разновидностей меза, джунглей, холмов и берегов: их выбирают вне списков, доступных моду. Заблокируйте все биомы — и обычный мир сам собой станет пустым. `blockBiomeDimensions` ограничивает всё это определёнными измерениями, пустой список означает все, а `blockBiomeDimensionsAreBlacklist` превращает его в исключение.
 
 ### Generators
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockWorldGenerators": true,
+    "generatorWhitelist": ["minecraft", "mypack"],
+    "blockedGenerators": ["tconstruct"],
+    "blockGeneratorDimensions": [0],
+    "blockGeneratorDimensionsAreBlacklist": false,
+    "generatorTypes": ["ores", "lakes"],
+    "generatorTypesAreBlacklist": true,
+    "generatorTypeMap": ["mrtjpcore=ores", "deworldgenhandler=structures"],
+    "logBlockedGenerators": true
+  }
+}
+```
 
 `blockWorldGenerators` не даёт другим модам генерировать через их собственные генераторы мира. Именно так моды добавляют то, чего события Forge не видят: слизневые острова, пещерные кристаллы и подобное. `generatorWhitelist` сохраняет названные моды, `blockedGenerators` называет отдельные, а собственная генерация паков этого мода не блокируется никогда. `blockGeneratorDimensions` ограничивает это определёнными измерениями, а `blockGeneratorDimensionsAreBlacklist` инвертирует список.
 
@@ -2560,6 +3308,24 @@ deworldgenhandler=structures
 
 ### Replacements
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockReplacements": [
+      "bigreactors:oreyellorite=minecraft:stone",
+      "mekanism:oreblock:0=minecraft:stone"
+    ],
+    "blockReplacementDimensions": [0],
+    "blockReplacementDimensionsAreBlacklist": false,
+    "blockReplacementMinHeight": 0,
+    "blockReplacementMaxHeight": 255,
+    "blockReplacementKey": "cleanup_v1"
+  }
+}
+```
+
 `blockReplacements` заменяет блоки в уже существующих чанках, по одной записи `block=block` на строку, с необязательными метаданными с любой стороны:
 
 ```
@@ -2572,6 +3338,18 @@ tconstruct:ore:0=minecraft:netherrack
 
 ### Villages
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageBlocks": ["minecraft:cobblestone=mypack:ruby_brick"],
+    "villagePieces": ["field1", "field2"],
+    "villagePiecesAreBlacklist": true
+  }
+}
+```
+
 Деревни используют те же списки `structure=value`, что и любая другая структура, под именем `villages`, так что до них достают `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` и `structureBiomesAreBlacklist`. Список `structureBiomes`, если он не чёрный, ещё и добавляет названные биомы, которых в собственном списке структуры не было. Так деревни можно отправить в горы. Называйте биомы через registry name: добавлять умеют только они. Их шаг имеет нижнюю границу 9, потому что ваниль вычитает из него 8. `villagePieces` принадлежит той же группе, так что один переключатель охватывает и то, где стоят деревни, и то, из чего они построены. Группа `villages` отвечает только за добавленные паком участки.
 
 `villageBlocks` экспериментален, как и вся работа по деревням, и действует только пока включён `terrainAdaptation`. Он заменяет блоки, из которых строится деревня, парами `оригинал=замена`: `minecraft:cobblestone=mypack:ruby_brick`. Он применяется после того, как своё слово сказали все остальные моды, так что пак всегда побеждает, даже против модов, меняющих материалы деревни по биому. Обе стороны принимают простое имя блока или имя с состояниями. Дороги задаются отдельно через `villagePathBlock` и его соседей.
@@ -2579,6 +3357,30 @@ tconstruct:ore:0=minecraft:netherrack
 `villagePieces` называет ванильные части деревни: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` и `field2`. Направление задаёт `villagePiecesAreBlacklist`. Можно убрать ванильные пшеничные поля, оставив дома, или перечислить только нужные части. Участок пака называется по его собственному шаблону: либо полным именем, `mypack:big_house`, либо просто `big_house`, либо, если удобнее, именем самого участка. Пак может нести десять участков, а шаблон мира уберёт один из них, не трогая остальные девять. Части из других модов — тоже, будь то дома Tektopia или участки Recurrent Complex: белый список убирает только ванильные части, так что, перечислив нужные ванильные, вы не удалите заодно чужие. Чтобы убрать часть из мода, возьмите чёрный список и назовите её, например `tekhouse2`.
 
 #### Деревенские дороги
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villagePathBlock": "minecraft:stonebrick",
+    "villagePathSupportBlock": "minecraft:gravel",
+    "villagePathBridgeBlock": "minecraft:planks",
+    "villagePathBridgeBarrierBlock": "minecraft:oak_fence",
+    "villagePathBridgeBarrierHeight": 1,
+    "villagePathBridgeSidewalkBlock": "minecraft:planks",
+    "villagePathCenterBlock": "minecraft:quartz_block",
+    "villagePathCenterDash": 2,
+    "villagePathLineBlock": "minecraft:stone_slab",
+    "villagePathSidewalkBlock": "minecraft:stonebrick",
+    "villagePathSidewalkWidth": 2,
+    "villagePathExtraWidth": 1,
+    "villagePathMinimumWidth": 0,
+    "villagePathFlatRun": 6,
+    "villagePathIntersects": ["mypack:crosswalk"]
+  }
+}
+```
 
 Всё, что ниже, экспериментально наравне с остальной работой по деревням и действует только пока включён `terrainAdaptation`. Каждая из этих настроек по умолчанию пуста или равна нулю, и ванильные дороги остаются ровно такими, какими были.
 
@@ -2598,13 +3400,17 @@ tconstruct:ore:0=minecraft:netherrack
 | `villagePathExtraWidth` | число | `0` | Дополнительные блоки дороги с каждой стороны сверх ванильных 3. Расширяет сами дорожные части, так что дома отступают от широкой улицы |
 | `villagePathMinimumWidth` | число | `0` | Самая узкая дорога, которую стоит класть. Участок, не вмещающий полное обустройство, падает до простого прохода в 3 блока; не дотянув и до этой ширины, он не кладётся вовсе, и деревня выстраивается вокруг. `0` не отказывает никогда |
 | `villagePathFlatRun` | число | `6` | Сколько блоков дорога держит одну высоту, прежде чем шагнуть. Привязано к мировым координатам, чтобы соседние участки сходились. `0` шагает каждый блок, как ванильные склоны |
-| `villagePathIntersects` | список | нет | Узоры, наносимые на перекрёстках, по ключу реестра из `pathintersects/` пака. Одна запись красит все перекрёстки одинаково; несколько выбираются на каждый перекрёсток по весу |
+| `villagePathIntersects` | список | нет | Узоры, наносимые на перекрёстках, по ключу реестра из `<namespace>/pathintersects/` пака. Одна запись красит все перекрёстки одинаково; несколько выбираются на каждый перекрёсток по весу |
 
 Дорога обустраивается от середины наружу: осевая линия, затем дорога, затем краевые линии, затем тротуары. Ширины, которые не помещаются, отступают, а не вылезают: узкий участок тихо теряет тротуар прежде, чем потеряет дорогу.
 
 `villagePathBlock` и его соседи побеждают `villageBlocks`. Названный дорожный блок берётся как есть, а карта трогает лишь то, что дорога выбрала бы сама. Оставьте их пустыми — решает карта, и именно так пак сохраняет поверхность по биому и всё равно её перекрашивает.
 
-**Узоры перекрёстков.** `villagePathIntersects` называет файлы из папки `pathintersects/` пака, и каждый из них — небольшая картинка того, что рисуется там, где встречаются две дороги, записанная строками из одиночных символов, по символу на блок.
+**Узоры перекрёстков.** `villagePathIntersects` называет файлы, которые поставляет пак; каждый из них — небольшая картинка того, что рисуется там, где встречаются две дороги, записанная строками из одиночных символов, по символу на блок.
+
+`<namespace>/pathintersects/*.json`
+
+Путь файла — это ключ реестра узора, который `villagePathIntersects` затем называет.
 
 ```json
 {
@@ -2630,9 +3436,26 @@ tconstruct:ore:0=minecraft:netherrack
 
 ### Blast Plaster
 
-Что происходит после взрыва, из `blastplaster/*.json`. `default` отдаёт решение пакам, `global` не смотрит на файлы пака и оставляет поверх конфига Blast Plaster умолчания этого мода, а `off` полностью возвращает Blast Plaster его собственному конфигу.
+Что происходит после взрыва, из `<namespace>/blastplaster/*.json`. `default` отдаёт решение пакам, `global` не смотрит на файлы пака и оставляет поверх конфига Blast Plaster умолчания этого мода, а `off` полностью возвращает Blast Plaster его собственному конфигу.
 
 ### Structures
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureSpacing": ["temples=24", "monuments=40", "mineshafts=200"],
+    "structureSeparation": ["monuments=12"],
+    "structureMinDistanceFromSpawn": ["strongholds=1000"],
+    "structureBiomes": ["temples=minecraft:desert,SANDY"],
+    "structureBiomesAreBlacklist": false,
+    "structureSpawns": ["temples=minecraft:witch:1:1:1", "monuments="],
+    "structureSpawners": ["dungeons=minecraft:zombie,minecraft:husk"],
+    "structureAt": ["villages=1000,-500"]
+  }
+}
+```
 
 Ванильные структуры выключаются по имени, для каждого измерения. Размещением управляют четыре списка вида `structure=value`, по одному на строку. `structureSpacing` — насколько далеко друг от друга они засеваются. `structureSeparation` — ближайшее допустимое расстояние между двумя. `structureMinDistanceFromSpawn` — с какого удаления они начинаются. `structureBiomes` вместе с `structureBiomesAreBlacklist` — где им разрешено быть.
 
@@ -2674,23 +3497,105 @@ strongholds=minecraft:silverfish
 
 ### Spawning
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "surfaceDayMonsterRate": 0.0,
+    "surfaceNightMonsterRate": 1.0,
+    "undergroundDayMonsterRate": 1.0,
+    "undergroundNightMonsterRate": 1.0,
+    "monsterCap": 40,
+    "creatureCap": 10,
+    "ambientCap": 15,
+    "waterCreatureCap": 5,
+    "monsterSpawnLight": 0,
+    "skyAnimals": false
+  }
+}
+```
+
 Частота и пределы спавна мобов, по биомам. Спавн враждебных масштабируется через `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` и `undergroundNightMonsterRate`. Каждый — множитель, где `1.0` это ваниль. Дневной спавн на поверхности можно выключить, не трогая пещеры. Пределы — это `monsterCap`, `creatureCap` для мирных животных, `ambientCap` для летучих мышей и подобного, `waterCreatureCap` для спрутов. Ванильные значения: 70, 10, 15 и 5. `-1` оставляет предел в покое. `monsterSpawnLight` вдобавок к ванильным проверкам ограничивает освещение от блоков, при котором враждебный моб ещё может заспавниться: `0` — современное правило, когда факел полностью защищает пещеру, а `-1`, по умолчанию, оставляет ванильный бросок. `skyAnimals` решает, селятся ли мирные мобы на земле, которую мир rubic создаёт над своим окном рельефа, прежде всего на парящих островах: `true`, по умолчанию, оставляет ванильные стада там, где лежит верхний блок, а `false` держит животных и летучих мышей на земле под окном. Спавнеры не смотрят ни на то, ни на другое.
 
 ### Посадка структур
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAdaptation": ["villages=beard_thin", "mansions=bury", "monuments=none"]
+  }
+}
+```
 
 `structureAdaptation` решает, к каким структурам подстраивается рельеф и как; записывается как `structure=mode`, например `"mansions=bury"`, `"monuments=none"`, и охватывает деревни, крепости, шахты, монументы и особняки. Режимов пять, те же, что в современных версиях: `none`, `bury`, `beard_thin`, `beard_box` и `encapsulate`. Деревни идут как `beard_thin`, если не переопределено, а всё остальное — как `none`, если не названо, что совпадает с тем, что современные версии выбирают сами. Храмы пока назвать нельзя, потому что они ставят себя только по мере постройки, и рельефу попросту не к чему подстраиваться вовремя.
 
 ### Посадка деревень
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true
+  }
+}
+```
+
 **Настройка экспериментальная и продолжает меняться.** Пользуйтесь на свой страх и риск. Она перекраивает рельеф прямо во время создания мира, поэтому всё, что она уложила, остаётся в этом сохранении навсегда, а ошибка в ней может оставить наполовину выровненную деревню или дорогу на насыпи. Пока над ней идёт работа, поведение меняется от сборки к сборке: два мира на одном сиде, созданные на разных версиях мода, не совпадут, а деревню из старой сборки новая не переделает и не починит. Если мир вам дорог, держите настройку выключенной или делайте резервную копию и помните, что деревни в нём — снимок того, что мод делал в день генерации этих чанков.
 
-`terrainAdaptation` переделывает то, как деревни выбирают землю и садятся на неё; перенесено по духу из того, как современные версии сажают свои структуры, и доведено дальше. Деревня закладывается только в чанке, где земля меняется не больше чем на десять блоков, и никогда ближе восьми чанков к другой деревне; области, где такого чанка нет, не закладывают ничего. Колодец садится на самую низкую землю, которой касается его собственное основание, и вся деревня смещается вместе с ним, так что всё остальное выравнивается уже от него. Дороги планируются по мере укладки. Поверхность следует самой низкой естественной земле по всей ширине дороги: бугры срезаются, ямы засыпаются. Уклон не превышает одного блока на шаг, а короткие провалы перекрываются досками. Покрытие дороги подбирается под землю, по которой она идёт: тропинки по земле, песчаник по песку, обожжённая глина в меса, гравий по камню и по гравию, доски над водой. Деревня в пустыне получает песчаниковые улицы вместо просёлка, и дороги больше не пропадают там, где земля не трава. Там, где две дороги пересекаются, они сходятся на меньшей из двух высот: только высота, до которой дотягиваются обе, не оставляет между ними ступени. Каждая постройка садится на блок выше дороги, к которой обращена. Уровень берут с уже уложенной дороги либо предсказывают, на какую землю она ляжет. Ступени у порога поэтому лежат на поверхности дороги, а дверь стоит за ними. Постройка, под которой где-либо понадобилось бы больше двух блоков подсыпанной земли, здесь не строится: она сдвигается вдоль дороги до двенадцати блоков в поисках самой пологой посадки и снимается совсем, если такой нет. Деревни на изломанной земле выходят реже, зато без построек на постаментах. Кольцо вокруг постройки подсыпается со стороны склона вниз и срезается со стороны вверх, ещё на блок мельче кольцом дальше. Фермы сохраняют ванильный уровень земли. Фонарные столбы стоят на высоте дороги, которую освещают, а не обочины рядом, и под ними досыпается земля там, где дорога идёт выше обочины; ванильные факельные столбы в план не попадают, потому что эти их заменяют. Земля под каждой постройкой досыпается до ближайшей опоры тем же материалом, на котором постройка стоит. Стены и дверные проёмы прорезаются в склонах, земля снимается с крыш. Любое дерево, стоящее в постройке, срубается целиком: листва уходит вместе со стволом, но листва уцелевшей ветки остаётся при ней. Особняки и разбросанные постройки (храмы, хижины, иглу) подчиняются тому же требованию ровной земли, прежде чем им позволят встать. Это переделывает сам рельеф по ходу создания. Мир, сгенерированный с включённой настройкой, отличается от сгенерированного без неё — то же предупреждение несут и современные версии. По умолчанию она выключена, пока пак или конфиг не попросят.
+`terrainAdaptation` переделывает то, как деревни выбирают землю и садятся на неё; перенесено по духу из того, как современные версии сажают свои структуры, и доведено дальше. Деревня закладывается только в чанке, где земля меняется не больше чем на десять блоков, и никогда ближе восьми чанков к другой деревне; области, где такого чанка нет, не закладывают ничего. Колодец садится на самую низкую землю, которой касается его собственное основание, и вся деревня смещается вместе с ним, так что всё остальное выравнивается уже от него.
+
+Дороги планируются по мере укладки. Поверхность следует самой низкой естественной земле по всей ширине дороги: бугры срезаются, ямы засыпаются. Уклон не превышает одного блока на шаг, а короткие провалы перекрываются досками. Покрытие дороги подбирается под землю, по которой она идёт: тропинки по земле, песчаник по песку, обожжённая глина в меса, гравий по камню и по гравию, доски над водой. Деревня в пустыне получает песчаниковые улицы вместо просёлка, и дороги больше не пропадают там, где земля не трава. Там, где две дороги пересекаются, они сходятся на меньшей из двух высот: только высота, до которой дотягиваются обе, не оставляет между ними ступени.
+
+Каждая постройка садится на блок выше дороги, к которой обращена. Уровень берут с уже уложенной дороги либо предсказывают, на какую землю она ляжет. Ступени у порога поэтому лежат на поверхности дороги, а дверь стоит за ними. Постройка, под которой где-либо понадобилось бы больше двух блоков подсыпанной земли, здесь не строится: она сдвигается вдоль дороги до двенадцати блоков в поисках самой пологой посадки и снимается совсем, если такой нет. Деревни на изломанной земле выходят реже, зато без построек на постаментах. Кольцо вокруг постройки подсыпается со стороны склона вниз и срезается со стороны вверх, ещё на блок мельче кольцом дальше.
+
+Фермы сохраняют ванильный уровень земли. Фонарные столбы стоят на высоте дороги, которую освещают, а не обочины рядом, и под ними досыпается земля там, где дорога идёт выше обочины; ванильные факельные столбы в план не попадают, потому что эти их заменяют. Земля под каждой постройкой досыпается до ближайшей опоры тем же материалом, на котором постройка стоит. Стены и дверные проёмы прорезаются в склонах, земля снимается с крыш. Любое дерево, стоящее в постройке, срубается целиком: листва уходит вместе со стволом, но листва уцелевшей ветки остаётся при ней. Особняки и разбросанные постройки (храмы, хижины, иглу) подчиняются тому же требованию ровной земли, прежде чем им позволят встать.
+
+Это переделывает сам рельеф по ходу создания. Мир, сгенерированный с включённой настройкой, отличается от сгенерированного без неё — то же предупреждение несут и современные версии. По умолчанию она выключена, пока пак или конфиг не попросят.
 
 ### Bedrock
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "flatBedrock": true,
+    "flatBedrockRetrogen": false,
+    "bedrockLayers": 1,
+    "flatBedrockRoof": true,
+    "flatBedrockFiller": "minecraft:stone",
+    "flatBedrockFillers": ["-1=minecraft:netherrack", "1=minecraft:end_stone"],
+    "flatBedrockDimensions": [0, -1],
+    "flatBedrockDimensionsAreBlacklist": false,
+    "flatBedrockBiomes": ["minecraft:plains"],
+    "flatBedrockBiomeTypes": ["MOUNTAIN"],
+    "flatBedrockBiomesAreBlacklist": true
+  }
+}
+```
 
 `flatBedrock` заменяет неровный слой ровными, по измерениям и по биомам, с блоком-заполнителем на ваш выбор. `flatBedrockRetrogen` делает то же с уже существующими чанками. Отменить это нельзя: исходный узор нигде не записан. `bedrockLayers` задаёт, сколько слоёв остаётся. `flatBedrockRoof` делает и потолок там, где он у измерения есть. `flatBedrockFiller` — то, чем заменяется убранный бедрок: оставьте пустым, чтобы выбирать по измерению, либо назовите свой для каждого через `flatBedrockFillers`. Каких измерений и биомов это касается, задают `flatBedrockDimensions`, `flatBedrockBiomes` и `flatBedrockBiomeTypes`, а `flatBedrockDimensionsAreBlacklist` и `flatBedrockBiomesAreBlacklist` превращают эти списки в исключения.
 
 ### Замедление вдали
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "slowDistantEntities": true,
+    "slowedKinds": ["items", "experience", "projectiles"],
+    "slowDistance": 192,
+    "slowRate": 4,
+    "neverSlowed": ["minecraft:armor_stand"],
+    "slowRecheck": 20
+  }
+}
+```
 
 Сущности стоят серверу дороже всего остального, и большинство из них далеко от любого игрока. `slowDistantEntities` даёт чанку без игрока в пределах `slowDistance` блоков один тик из `slowRate`. Всё в нём по-прежнему движется, плавает, горит и исчезает — только медленнее. Без тиков не остаётся ничего.
 
@@ -2735,6 +3640,16 @@ strongholds=minecraft:silverfish
 
 ### Запись чанков
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "hurryWritesAbove": 100
+  }
+}
+```
+
 Игра пишет готовые чанки в собственном потоке, по одному, отдыхая сотую долю секунды после каждого. Это держит её примерно на сотне чанков в секунду, каким бы быстрым ни был диск. Пока кто-то играет, этого достаточно. Пока земля создаётся пачками — близко не достаточно, и незаписанные чанки копятся в памяти. `hurryWritesAbove` говорит, сколько может ждать, прежде чем она перестанет отдыхать и начнёт писать так быстро, как может. `100` — значение по умолчанию, совпадающее с точкой, где игра сама начинает придерживать генерацию; `0` оставляет отдых всегда, как делает игра. Пока ждущих немного — а это каждый обычный момент игры, — не меняется ничего.
 
 На каждую уборку мусора пишется своя строка: какой сборщик отработал, сколько занял, сколько было занято до и после и сколько места у игры было на тот момент. Если это место меняется, об этом говорят: рост места сам по себе и вызывает самые долгие из этих пауз. Игра, запущенная с меньшим местом, чем ей в итоге нужно, будет останавливаться ради его наращивания снова и снова — в моменты, никак не связанные с тем, чем она занята. Запуск с максимально разрешённым местом избавляет от этого полностью.
@@ -2743,19 +3658,70 @@ strongholds=minecraft:silverfish
 
 ### Чанки точки появления
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "spawnChunkRadius": 128,
+    "spawnChunkRadii": ["0=64", "7=0"]
+  }
+}
+```
+
 Игра держит чанки вокруг точки появления загруженными независимо от того, есть там кто-то или нет: модам нужно место, которое тикает всегда. Это 128 блоков в каждую сторону, около 289 чанков, и в самой игре это не настраивается. `spawnChunkRadius` задаёт это расстояние. `128` — то, что делает игра, и значение по умолчанию; меньшее число держит меньший якорь, а `0` не держит ничего, так что область появления выгружается как любая другая. `spawnChunkRadii` задаёт радиус для отдельного измерения, записью `dimension=blocks`, по одной на строку, и перекрывает `spawnChunkRadius` для названных измерений.
 
 Держит их только измерение, зарегистрированное как хранящее свою точку появления, а в самой игре это лишь обычный мир: ни Нижний мир, ни Край их никогда не держали, так что задавать им это бессмысленно. Измерение, добавленное модом, держит их, только если мод об этом попросил, а мод, который попросил, часто тащит вторые 289 чанков, которых пак никогда не хотел. Остаётся ли мир загруженным вообще — отдельная вещь, которой это не касается: измерение, помеченное модом как остающееся загруженным, остаётся загруженным и при `0`, оно просто перестаёт держать чанки. Большинству модов, использующих точку появления как якорь, нужно, чтобы там что-то было, а не 289 чанков этого, так что небольшое число обычно оставляет их работать, а `0` нет.
 
 ### Пустой мир
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "voidWorld": true,
+    "voidPlatformBlock": "minecraft:stone",
+    "voidPlatformSize": 5,
+    "voidPlatformHeight": 64,
+    "voidWorldDimensions": [0],
+    "voidWorldDimensionsAreBlacklist": false
+  }
+}
+```
+
 `voidWorld` генерирует пустой мир с площадкой в точке появления. Мобы, животные, структуры и всё, что иначе сгенерировал бы мод, останавливаются. Блок, размер и высота площадки — это `voidPlatformBlock`, `voidPlatformSize` и `voidPlatformHeight`; размер округляется вниз до нечётного числа блоков, чтобы площадка стояла по центру точки появления. `voidWorldDimensions` выбирает, какие миры опустошаются, по умолчанию только обычный, а `voidWorldDimensionsAreBlacklist` превращает список в тот, что надо оставить в покое. Нижний мир и Край опустошаются так же, как обычный. Неважно, те ли это, что строит эта версия, или те, которыми их заменил мод. Площадка даётся только обычному миру — путь в опустошённый Нижний мир или Край пак обеспечивает сам. В опустошённом Крае нет ни дракона, ни кристаллов, ни фонтана из бедрока: бой, который их строит, так и не начинается.
 
 ### Дракон
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "dragonFight": true
+  }
+}
+```
+
 `dragonFight` принадлежит группе `structures` и решает, происходит ли всё это вообще. Дракон, его полоса, кристаллы, фонтан под ним и возрождение, которое игрок запустил бы кристаллами Края. Опустошённый Край обходится без него, пока пак не попросит, а обычный Край его имеет, пока пак не скажет иначе, так что `dragonFight` стоит задавать в обе стороны.
 
 ### Terrain
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldType": "biomesop",
+    "worldTypeExceptions": ["flat", "debug_all_block_states"],
+    "worldSeed": "Hollow Ridge",
+    "generatorOptions": "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1",
+    "terrainWorldTypes": ["default", "customized"],
+    "terrainWorldTypesAreBlacklist": false
+  }
+}
+```
 
 `worldType` решает, каким будет новый мир, что бы ни выбрали на экране создания: `default`, `largebiomes`, `amplified`, `customized` или добавленный модом вроде `biomesop` или `realistic`. Пак, построенный вокруг одного типа мира, называет его здесь, и каждый новый мир создаётся таким. Пусто, значение по умолчанию, оставляет выбор тому, кто создаёт мир. Уже существующий мир сохраняет свой тип, а незнакомое имя попадает в лог и игнорируется. `worldTypeExceptions` называет выборы, которые остаются в силе, — для начала плоский мир и отладочный, — потому что пак, которому нужен один тип мира, редко хочет отнять суперплоский у того, кто что-то тестирует; а тому, кто создаёт мир, в чате, уже внутри, сообщают, что тип выбрал пак. Это сообщение решает конфиг через `tellWorldType`, а не пак, поэтому играющий может выключить его для себя, и никакой пак не включит обратно. При смене типа настройки, с которыми создавался мир, отбрасываются: писались они под прежний тип.
 
@@ -2777,11 +3743,41 @@ strongholds=minecraft:silverfish
 
 ### Логирование
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "logBlockedOres": true,
+    "logBlockedBiomes": true,
+    "logBlockedGenerators": true,
+    "logBlockedRecipes": true,
+    "logBlockReplacements": true
+  }
+}
+```
+
 `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` и `logBlockReplacements` каждый раз записывают в лог первый случай, когда что-то отвергли, чтобы вы видели, что правило блокировки на самом деле поймало, а не гадали по тому, чего не хватает. Это первое, что стоит включить, когда правило вроде бы не делает ничего или делает слишком много.
 
 ### Recipes
 
-`blockRecipes` и `blockFurnaceRecipes` удаляют всё, кроме модов из их белых списков. По умолчанию не освобождён никто, так что впишите пространство имён собственного пака, чтобы сохранить его рецепты. Добавления CraftTweaker и GroovyScript выживают всегда, что бы ни говорил белый список. Белые списки — это `recipeWhitelist` и `furnaceWhitelist`; `blockedRecipeMods` и `blockedFurnaceMods` работают в обратную сторону и удаляют рецепты названного мода, что бы ни говорил белый список. `recipeMatch` решает, откуда читается id мода при блокировке рецептов крафта: из имени самого рецепта или из того, что он производит.
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockRecipes": true,
+    "recipeWhitelist": ["minecraft", "mypack"],
+    "blockedRecipeMods": ["tconstruct"],
+    "blockFurnaceRecipes": true,
+    "furnaceWhitelist": ["minecraft", "mypack"],
+    "blockedFurnaceMods": ["tconstruct"],
+    "recipeMatch": "recipe"
+  }
+}
+```
+
+`blockRecipes` и `blockFurnaceRecipes` удаляют всё, кроме модов из их белых списков. По умолчанию не освобождён никто, так что впишите пространство имён собственного пака, чтобы сохранить его рецепты. Добавления CraftTweaker и GroovyScript выживают всегда, что бы ни говорил белый список. Белые списки — это `recipeWhitelist` и `furnaceWhitelist`; `blockedRecipeMods` и `blockedFurnaceMods` работают в обратную сторону и удаляют рецепты названного мода, что бы ни говорил белый список. `recipeMatch` решает, откуда читается id мода при блокировке рецептов крафта: `recipe`, значение по умолчанию, берёт имя самого рецепта, `output` — предмет, который он делает, а `both` блокирует, если совпало любое, и щадит, если любое есть в белом списке.
 
 ## Universal Tweaks
 
@@ -2841,15 +3837,44 @@ Lost Cities заменяет генератор обычного мира соб
 
 ## Интеграция с Blast Plaster
 
+`<namespace>/blastplaster/*.json`
+
+Имя файла выбираете вы, читается только папка, и несколько файлов складываются.
+
 Blast Plaster (зависимость этого мода) отвечает за поведение после взрыва: починку воронки блок за блоком, вырубку деревьев с пониманием их геометрии, управление дропом. Сам по себе он читает один конфиг на всю игру; под управлением пака отвечает **по измерениям**, и пак привозит это решение с собой, а не отправляет игроков править конфиг. Его геометрию деревьев использует и вырубка в деревнях — поэтому дерево, нависшее над новой дорогой, падает целиком. Без файлов пака Blast Plaster ведёт себя ровно так, как установленный в одиночку.
 
-Файлы лежат в `assets/<namespace>/blastplaster/*.json`. Ключи, написанные наверху файла, действуют везде; блок `dimensions` переопределяет их для одного измерения по его id. Всё, чего пак не назвал, остаётся таким, как сказано в собственном конфиге Blast Plaster, так что пак задаёт ту горстку, которая ему важна, и остального не трогает.
+Ключи, написанные наверху файла, действуют везде; блок `dimensions` переопределяет их для одного измерения по его id. Всё, чего пак не назвал, остаётся таким, как сказано в собственном конфиге Blast Plaster, так что пак задаёт ту горстку, которая ему важна, и остального не трогает.
+
+Все ключи сразу. Настоящий файл пишет только те, которые ему нужны.
 
 ```json
 {
   "explosionMode": "EJECT_DROPS",
+  "healCreepers": true,
+  "healNonPlayerTNT": true,
+  "healWither": true,
+  "healAll": false,
+  "processPlayerIgnitedTNT": false,
+  "customEntitiesToHeal": ["icbmclassic:missile"],
   "healFullTrees": true,
   "maxTreeSize": 400,
+  "minimumTicksBeforeHeal": 200,
+  "randomTickVar": 20,
+  "overrideBlocks": false,
+  "enableFakeTossedBlocks": true,
+  "enableExplosionFlash": true,
+  "explosionFlashDuration": 10,
+  "explosionFlashLightLevel": 15,
+  "explosionFlashParticleCount": 40,
+  "explosionFlashPulses": 2,
+  "enableExplosionSmoke": true,
+  "explosionSmokeDuration": 100,
+  "explosionSmokeParticleCount": 30,
+  "playerTNTAlwaysDrops": false,
+  "playerTNTDropFullBlocks": false,
+  "enableDropSuppression": true,
+  "dtSpecialDrops": true,
+  "preventMobDrops": false,
   "dimensions": {
     "-1": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "1": { "enableExplosionSmoke": false }
@@ -2916,6 +3941,24 @@ Blast Plaster (зависимость этого мода) отвечает за
 
 **Поведение** для `behavesAs`. `till`, `path`.
 
+Ключи группы `terrain` ниже, вместе в блоке `settings` шаблона мира:
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldName": "Ruby World",
+    "worldGameMode": "creative",
+    "worldSpawn": "0,72,0",
+    "worldBorder": 4096,
+    "worldTime": 6000,
+    "worldDifficulty": ["normal", "-1=hard"],
+    "weatherCeiling": ["0=128"]
+  }
+}
+```
+
 **`worldName`** (группа `terrain`) заранее вписывает имя в поле на экране создания мира; папка сохранения следует из него как обычно. Поле заполняется, только пока в нём стоит написанное самой игрой, так что имя, набранное игроком, не перезаписывается, и, в отличие от сида и режима, обратно оно не возвращается: как названо при создании, так и останется.
 
 **`worldGameMode`** (группа `terrain`): `survival`, `hardcore`, `creative`, `adventure` или `spectator`. Применяется только при создании мира; существующие миры не трогаются, как и смена режима потом. `hardcore` — выживание плюс ванильный флаг хардкора на весь сейв; `creative` заодно открывает команды, как галочка на экране создания. Экран создания открывается с уже выставленным режимом (и сидом пака); игрок волен поменять их там, но при создании пак вернёт своё. `adventure` и `spectator` на этом экране не предлагаются и ставятся в момент создания мира.
@@ -2932,6 +3975,19 @@ Blast Plaster (зависимость этого мода) отвечает за
 
 **Физика мира** — четыре ключа группы `terrain`, каждый — множитель к ванильному значению (`1.0` — без изменений), каждый принимает голое число для всех измерений либо строки `измерение=значение`:
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldGravity": ["0.17", "0=1.0"],
+    "worldFallDamage": ["0.17"],
+    "worldJumpStrength": ["1.0"],
+    "worldTerminalVelocity": ["1.0"]
+  }
+}
+```
+
 | Настройка | Что масштабирует | Примечания |
 | --- | --- | --- |
 | `worldGravity` | Ускорение падения игроков, мобов, выброшенных предметов, падающих блоков, стрел, брошенных сущностей, ТНТ и сфер опыта | `0.17` — примерно лунная гравитация; дуги прыжков и дальность бросков подстраиваются сами |
@@ -2942,6 +3998,8 @@ Blast Plaster (зависимость этого мода) отвечает за
 Все четыре пустые (по умолчанию) оставляют физику ванильной. В измерениях Galacticraft ключ гравитации масштабирует собственную гравитацию Galacticraft.
 
 **Швы миров** — вертикальная укладка измерений: покинув мир через дно или потолок, вы попадаете в измерение ниже или выше на тех же x и z.
+
+`<namespace>/worldtemplates/*.json`
 
 ```json
 {
@@ -2961,104 +4019,92 @@ Blast Plaster (зависимость этого мода) отвечает за
 | `worldSeamEntities` | boolean | `true` | Проходят ли предметы, мобы и прочие сущности, или только игроки |
 | `worldSeamBedrock` | boolean | `false` | Оставлять бедрок на границе со швом. Если выключено, граница его не генерирует, и проход можно прокопать |
 
-Оба списка пустые (по умолчанию) держат каждый мир закрытым. Крайний слой блоков мира и есть его дверь: вошли в нижний слой — уходите вниз, вошли в верхний — возвращаетесь наверх. Прибытие приходится в стороне от него, на три слоя вглубь при движении вниз и на один при движении вверх, чтобы никого не отбрасывало сразу обратно. Вниз при этом всё над точкой прибытия прорубается до самой двери, так что вход остаётся виден снизу и служит обратной дорогой. Выбейте блок в слое-двери, и сквозь него проступит мир по ту сторону: под дном небо измерения снизу, над потолком небо того, что сверху. Это рисует только клиент, в пределах дальности прорисовки, и на сам мир никак не влияет. Импульс сохраняется. Переходы игрока запоминаются. Спуск отмечает дыру, а подъём рядом с ней приводит туда же, куда эта дыра вывела в прошлый раз, так что часто используемая шахта всегда возвращает вас на одно и то же знакомое место, а не каждый раз на новое. Место определяется при первом возвращении: эта точка, если под ней есть твёрдая опора, иначе ближайшее свободное место, по одной высоте за раз от шва наружу, иначе ниша, вырубленная в краю прямо возле дыры, ведь у прокопанной вниз шахты своей кромки ещё нет. Подъём там, где своей дыры рядом нет, просто заводит новое место. Если подъём шёл снизу и твёрдой опоры рядом нет вообще, остаётся поверхность того же столба. По высоте ног и головы прорубается, если точка внутри камня; эти блоки ломаются как положено и выпадают, вместе с содержимым контейнеров. Цепочки складываются тем, что каждое измерение получает свои строки; всадник и верховое животное пересекают шов по отдельности.
+Оба списка пустые (по умолчанию) держат каждый мир закрытым. Крайний слой блоков мира и есть его дверь: вошли в нижний слой — уходите вниз, вошли в верхний — возвращаетесь наверх. Прибытие приходится в стороне от него, на три слоя вглубь при движении вниз и на один при движении вверх, чтобы никого не отбрасывало сразу обратно. Вниз при этом всё над точкой прибытия прорубается до самой двери, так что вход остаётся виден снизу и служит обратной дорогой.
+
+Выбейте блок в слое-двери, и сквозь него проступит мир по ту сторону: под дном небо измерения снизу, над потолком небо того, что сверху. Это рисует только клиент, в пределах дальности прорисовки, и на сам мир никак не влияет. Импульс сохраняется.
+
+Переходы игрока запоминаются. Спуск отмечает дыру, а подъём рядом с ней приводит туда же, куда эта дыра вывела в прошлый раз, так что часто используемая шахта всегда возвращает вас на одно и то же знакомое место, а не каждый раз на новое. Место определяется при первом возвращении: эта точка, если под ней есть твёрдая опора, иначе ближайшее свободное место, по одной высоте за раз от шва наружу, иначе ниша, вырубленная в краю прямо возле дыры, ведь у прокопанной вниз шахты своей кромки ещё нет. Подъём там, где своей дыры рядом нет, просто заводит новое место. Если подъём шёл снизу и твёрдой опоры рядом нет вообще, остаётся поверхность того же столба. По высоте ног и головы прорубается, если точка внутри камня; эти блоки ломаются как положено и выпадают, вместе с содержимым контейнеров.
+
+Цепочки складываются тем, что каждое измерение получает свои строки; всадник и верховое животное пересекают шов по отдельности.
 
 Врата действуют на игроков. Не открывший цель получает сообщение врат и возвращается на последнюю твёрдую опору, где стоял, либо на уступ рядом со швом; швы не ставят блоков, так что запертую шахту нельзя фармить, прыгая в неё. У предметов и мобов своих врат нет: при включённом `worldSeamEntities` они проходят независимо от того, кто их потерял, а при выключенном пролетают мимо открытого дна и теряются, как в любой дыре. `worldSeamBedrock` вместо этого закрывает дно, а пак, оставляющий бедрок, обеспечивает проход сам, обычно [переопределением свойств](#переопределение-свойств), дающим `minecraft:bedrock` положительную `hardness`. Чанки, сгенерированные до шва, сохраняют свой бедрок.
 
 **Миры Rubic** — `rubicWorld`, `worldMinHeight`, `worldMaxHeight`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist` и `terrainOffset` — тоже ключи группы `terrain`: см. [Миры Rubic](#миры-rubic).
 
-**Структуры** для шаблона мира. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines` и `reccomplex` — он выключает всё, что Recurrent Complex создаёт сам: его естественные структуры и его декоративные замены. То, что уже стоит в мире, остаётся нетронутым.
+**Структуры** для шаблона мира и для списков самой группы `structures`. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines` и `reccomplex` — он выключает всё, что Recurrent Complex создаёт сам: его естественные структуры и его декоративные замены. То, что уже стоит в мире, остаётся нетронутым. Ещё восемь называют то, что ставит шаг заселения, а не генератор структур: `dungeons`, `waterlakes`, `lavalakes`, `netherlava`, `fire`, `glowstone`, `ice` и `animals`.
 
 **Типы существ** для спавна и частоты в биомах. `creature`, `monster`, `ambient`, `water_creature`.
 
+**Роли** для `roles` шаблона мира. `ocean`, `river`, `beach`, `mushroom`, `swamp`, `hills`, `mountain`, `jungle`, `forest`, `savanna`, `sandy`, `mesa`, `snowy`, `wasteland`, `plains`, `water`. Каждая называет биом, который занимает эту роль, после того как блокировка убрала те, что заняли бы её сами.
+
+**Типы руд** для `oreTypes`. `COAL`, `IRON`, `GOLD`, `REDSTONE`, `DIAMOND`, `LAPIS`, `EMERALD`, `QUARTZ`, `DIRT`, `GRAVEL`, `DIORITE`, `GRANITE`, `ANDESITE`, `SILVERFISH`, `CUSTOM`.
+
 ## Список папок
 
-Внутри `assets/<namespace>/`:
-
-| Папка | Что в ней |
-| --- | --- |
-| `blocks` | Описания блоков |
-| `items` | Описания предметов |
-| `fluids` | Жидкости, с блоком и ведром |
-| `materials` | Материалы инструментов и брони |
-| `biomes` | Описания биомов |
-| `worldgen` | Что генерируется и где |
-| `caveregions` | Именованные регионы, наложенные на подземелья |
-| `dimensions` | Описания измерений |
-| `worldtemplates` | Настройки целого мира одним файлом |
-| `worldintro` | Страницы, показываемые при входе игрока в мир |
-| `gates` | Условия на порталы и измерения |
-| `gamerules` | Игровые правила для новых миров |
-| `entities` | Варианты сущностей на основе уже существующих |
-| `hardness` | Множители времени добычи и взрывоустойчивости для групп блоков |
-| `exposures` | Опасности, действующие рядом с названными блоками и при их переноске |
-| `overrides` | Свойства существующих блоков, предметов и типов зелий, изменяемые на месте |
-| `villages` | Постройки, которые могут возводить деревни |
-| `pathintersects` | Узоры, наносимые на перекрёстках деревенских дорог |
-| `blastplaster` | Что Blast Plaster делает после взрыва, по измерениям |
-| `structures` | Шаблоны `.nbt` для саженцев, `imprint` и замены модовых |
-| `recipes` | Рецепты крафта, добавленные или заменённые |
-| `recipe_removals` | Рецепты, удаляемые по имени, пространству имён или результату |
-| `furnace` | Рецепты печи, добавляемые и удаляемые |
-| `fuels` | Время горения |
-| `brewing` | Рецепты варочной стойки |
-| `potions` | Эффекты зелий |
-| `potion_types` | Готовые зелья из этих эффектов |
-| `villagers` | Профессии жителей |
-| `trades` | Что покупают и продают карьеры |
-| `sounds` | Звуковые события |
-| `oredict` | Имена словаря руд |
-| `loot_tables` | Таблицы лута, заменяемые целиком |
-| `loot_injections` | Пул, добавляемый в уже существующую таблицу |
-| `player_loot` | Таблица лута, разыгрываемая при смерти игрока |
-| `advancements` | Достижения |
-| `functions` | Файлы `.mcfunction` |
-| `registry_remap` | Старые имена, сопоставленные новым |
-| `tabs` | Творческие вкладки |
-| `texts` | Обычные текстовые файлы, используются вступлением к миру |
-| `models`, `blockstates`, `textures`, `lang` | Обычные папки ресурсов |
+Каждая папка, с полным путём и ссылкой на описывающий её раздел, есть в разделе [Где лежат файлы](#где-лежат-файлы).
 
 ## Команды
 
-`/rdpl` выполняется на вашей машине и не требует прав, потому что только читает файлы, которые у вас и так есть. Работает на любом сервере, независимо от того, стоит ли мод на сервере.
+`/rdpl` выполняется на вашей машине и не требует прав, потому что всё, чего он касается, — ваше. Перезагрузка пересканирует вашу же папку, заново применяет ваши [переопределения свойств](#переопределение-свойств) к вашей же копии блоков и предметов и обновляет ваши же ресурсы; до сервера она не дотягивается, так что серверная копия перезагружается командой `/rdplserver reload`. В одиночной игре это одна и та же машина, поэтому `/rdpl reload` перезагружает ещё и таблицы лута, достижения и функции встроенного сервера — ровно как ванильная перезагрузка. Работает на любом сервере, независимо от того, стоит ли мод на сервере.
 
-| Команда | Что делает |
-| --- | --- |
-| `/rdpl list` | Все загруженные паки, их приоритет и содержимое. Щелчок по паку ищет в нём файл |
-| `/rdpl which <namespace:path>` | Какой пак даёт этот файл и какие паки он перекрывает |
-| `/rdpl reload` | Пересканировать папку и перезагрузить всё |
-| `/rdpl reload <group>` | Перезагрузить только один вид: `textures`, `models`, `languages`, `sounds` или `shaders` |
-| `/rdpl unused` | Файлы в ваших паках, которые пока никто не запрашивал, обычно опечатка в пути |
-| `/rdpl biome list` | Все биомы, способные генерироваться, и их id |
-| `/rdpl biome here` | Биом, в котором вы стоите |
-| `/rdpl biome find <name>` | Ближайшее место, где генерируется биом, без генерации чанков для поиска |
+| Команда | Уровень | Что делает |
+| --- | --- | --- |
+| `/rdpl list` | не нужен | Все загруженные паки, их приоритет и содержимое. Щелчок по паку ищет в нём файл |
+| `/rdpl which <namespace:path>` | не нужен | Какой пак даёт этот файл и какие паки он перекрывает |
+| `/rdpl reload` | не нужен | Пересканировать папку и перезагрузить всё |
+| `/rdpl reload <group>` | не нужен | Перезагрузить только один вид: `textures`, `models`, `languages`, `sounds` или `shaders` |
+| `/rdpl unused` | не нужен | Файлы в ваших паках, которые пока никто не запрашивал, обычно опечатка в пути |
+| `/rdpl config unused` | не нужен | Файлы настроек в `rdploader/config`, которых больше не описывает ни один установленный пак |
+| `/rdpl config prune` | не нужен | Удалить эти файлы |
+| `/rdpl pixelmap <namespace:path>` | не нужен | Что получилось из [карты пикселей](#текстуры-как-карта-пикселей), символ за символом |
+| `/rdpl biome list` | не нужен | Все биомы, способные генерироваться, и их id |
+| `/rdpl biome here` | не нужен | Биом, в котором вы стоите |
+| `/rdpl biome find <name>` | серверный | Связанная. Уходит в `/rdplserver biome find` — только эта сторона знает зерно |
+| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto` | серверный | Связанные. Передаются в `/rdplserver` слово в слово, решает он, см. таблицу ниже |
 
-На выделенном сервере `/rdplserver` делает то же самое для серверной копии папки и требует прав оператора.
+**Какие серверные подкоманды связаны и почему остальные — нет.** Серверная подкоманда получает передачу ровно тогда, когда у клиента нет собственного значения для этого имени: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` и `goto` могут означать только серверное, поэтому `/rdpl` их отдаёт. Шесть, которые есть и у клиента, — `reload`, `list`, `which`, `unused`, `config` и `biome` — сохраняют собственное значение «ваши паки, ваш клиент», и передача его бы отняла. `biome find` — единственная часть общего имени, которая и так принадлежит серверу, потому что зерно мира знает только он; поэтому именно эта форма уходит на сервер, а `biome list` и `biome here` остаются у вас. Тем самым решается и вопрос прав: решает собственная проверка оператора на сервере, и клиент не может ни обойти её, ни получить выдуманный ответ.
 
-| Команда | Что делает |
-| --- | --- |
-| `/rdplserver reload` | Пересканировать серверную папку и перезагрузить всё |
-| `/rdplserver list` | Все паки, загруженные сервером, их приоритет и содержимое |
-| `/rdplserver which <namespace:path>` | Какой пак даёт этот файл и какие паки он перекрывает |
-| `/rdplserver unused` | Файлы в паках сервера, которые никто не запрашивал |
-| `/rdplserver oregen` | Текущие счётчики заблокированной генерации руды, по модам и типам |
-| `/rdplserver biome` | Все биомы, способные генерироваться на сервере |
-| `/rdplserver dimensions` | Все измерения, включая добавленные паками |
-| `/rdplserver gate list` | Все ворота и открыты ли они |
-| `/rdplserver gate check <player>` | Какие ворота игрок прошёл |
-| `/rdplserver gate grant <player> <gate>` | Открыть ворота игроку |
-| `/rdplserver gate revoke <player> <gate>` | Закрыть обратно |
-| `/rdplserver intro` | Дать вступлению к миру сыграть снова при следующем входе |
-| `/rdplserver goto <структура>` | Отправляет к ближайшей, где ещё никто не был, и ищет, не создавая землю по дороге |
-| `/rdplserver goto <структура> next` | Отправляет дальше, к ближайшей из тех, куда вас за эту сессию ещё не отправляли, — посещали её раньше или нет |
-| `/rdplserver goto <структура> back` | Возвращает к предыдущей, шаг за шагом по тем местам, куда вас отправила эта сессия |
+На выделенном сервере `/rdplserver` делает то же самое для серверной копии папки. Столбец «Уровень» — это уровень прав, который нужен отправителю: `3` — оператор, `2` допускает ещё и командные блоки, `0` — любой игрок, а `4` выше оператора и не достаётся никому. Ниже оператора открыты только `intro` и три формы `goto`, и двигать пак может именно `goto`.
 
-**Как открыть `goto`.** Любая часть `/rdplserver` требует оператора, уровень 3, и так и остаётся. Три формы `goto` — исключение: у каждой свой уровень доступа, который пак или конфиг вправе понизить, отдельно от двух других и от остальной команды.
+| Команда | Уровень | Что делает |
+| --- | --- | --- |
+| `/rdplserver reload` | 3 | Пересканировать серверную папку и перезагрузить всё |
+| `/rdplserver list` | 3 | Все паки, загруженные сервером, их приоритет и содержимое |
+| `/rdplserver which <namespace:path>` | 3 | Какой пак даёт этот файл и какие паки он перекрывает |
+| `/rdplserver unused` | 3 | Файлы в паках сервера, которые никто не запрашивал |
+| `/rdplserver config unused` | 3 | Файлы настроек в `rdploader/config`, которых больше не описывает ни один установленный пак |
+| `/rdplserver config prune` | 3 | Удалить эти файлы |
+| `/rdplserver oregen` | 3 | Текущие счётчики заблокированной генерации руды, по модам и типам |
+| `/rdplserver generators` | 3 | Текущие счётчики заблокированных генераторов мира, по модам и типам |
+| `/rdplserver biome` | 3 | Все биомы, способные генерироваться на сервере |
+| `/rdplserver biome list [all]` | 3 | То же самое с id каждого биома, а `all` добавляет те, что сгенерироваться не могут |
+| `/rdplserver biome here` | 3 | Биом, в котором вы стоите. Консоль не стоит нигде, поэтому оттуда команда просит назвать игрока |
+| `/rdplserver biome here <player>` | 3 | Биом, в котором стоит этот игрок; эта форма и нужна консоли и скриптам |
+| `/rdplserver biome find <name>` | 3 | Ближайшее место, где генерируется биом, без генерации чанков для поиска |
+| `/rdplserver dimensions` | 3 | Все измерения, включая добавленные паками |
+| `/rdplserver gate list` | 3 | Все ворота и открыты ли они |
+| `/rdplserver gate check <player>` | 3 | Какие ворота игрок прошёл |
+| `/rdplserver gate grant <player> <gate>` | 3 | Открыть ворота игроку |
+| `/rdplserver gate revoke <player> <gate>` | 3 | Закрыть обратно |
+| `/rdplserver pregen <radius>` | 3 | Создать все чанки в таком радиусе от места запуска. См. [Предгенерация](#предгенерация) |
+| `/rdplserver pregen <radius> relight` | 3 | Прогнать только проход освещения по уже существующей земле |
+| `/rdplserver pregen status` | 3 | Насколько продвинулся запуск |
+| `/rdplserver pregen stop` | 3 | Остановить его |
+| `/rdplserver intro` | 0 | Дать вступлению к миру сыграть снова при следующем входе. Запустить может любой игрок, и сбрасывает он только своё |
+| `/rdplserver goto <структура>` | `gotoLevel`, `3` | Отправляет к ближайшей, где ещё никто не был, и ищет, не создавая землю по дороге |
+| `/rdplserver goto <структура> next` | `gotoNextLevel`, `3` | Отправляет дальше, к ближайшей из тех, куда вас за эту сессию ещё не отправляли, — посещали её раньше или нет |
+| `/rdplserver goto <структура> back` | `gotoBackLevel`, `3` | Возвращает к предыдущей, шаг за шагом по тем местам, куда вас отправила эта сессия |
+
+**Как открыть `goto`.** Любая часть `/rdplserver` требует оператора, уровень 3, кроме `intro`: это собственная команда игрока, и у неё всегда уровень 0. Три формы `goto` — единственное, что решает пак: у каждой свой уровень доступа, который пак или конфиг вправе понизить, отдельно от двух других и от остальной команды.
+
+`<namespace>/worldtemplates/*.json`
 
 ```json
 {
   "settings": {
     "gotoLevel": 3,
+    "gotoNextLevel": 2,
+    "gotoBackLevel": 3,
     "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
   }
 }
@@ -3073,7 +4119,7 @@ Blast Plaster (зависимость этого мода) отвечает за
 
 Значение — уровень доступа, нужный отправителю. `3` (оператор) — значение по умолчанию. `2` допускает и командный блок, так что пак может повесить прыжок на кнопку или нажимную пластину, не открывая остальную `/rdplserver`. `0` открывает команду любому игроку. Три настройки независимы: например, `next` открыт командным блокам для экскурсии по деревням, а `back` остаётся операторам.
 
-Если понизить хотя бы одну, до команды дотянется и не-оператор, поэтому каждая другая подкоманда проверяет оператора сама и отказывает с сообщением. Автодополнение ведёт себя так же: не-оператору предлагается только `goto`.
+Поскольку `intro` открыт всем, до самой `/rdplserver` дотягивается любой игрок, поэтому каждая другая подкоманда проверяет оператора сама и отказывает с сообщением. Автодополнение ведёт себя так же: не-оператору предлагается `intro`, а `goto` — как только уровень это позволит.
 
 `gotoPlaceLevels` перекрывает три настройки для отдельных мест записями `имя=уровень`, как в примере выше. Имя — то, что вы набрали бы после `goto`: ванильное вроде `Village` или `Mansion` либо зарегистрированное через `locateAs` у записи imprint. Регистр при сравнении не важен. Уровень `4` выше оператора и закрывает место для всех — так прячут одно место, когда весь остальной `goto` открыт.
 
@@ -3083,8 +4129,7 @@ Blast Plaster (зависимость этого мода) отвечает за
 
 Живут они в группе `commands`, так что `control.commands` в конфиге решает, вправе ли пак их задавать вообще, а `off` там удерживает всё на уровне оператора, что бы пак ни просил.
 
-
-**`/rdpl` дотягивается и до серверной команды.** Всё, чем `/rdpl` не занимается сам — `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` и `goto`, — передаётся прямиком в `/rdplserver` и предлагается в автодополнении, так что в одиночной игре набирать нужно одну команду. Передаётся слово в слово, и решает всё сервер, как и всегда, включая права: короткое имя ничего не открывает. Подкоманды, которые есть у обоих, — `reload`, `list`, `which`, `unused`, `biome` и `config` — остаются за `/rdpl` и означают паки клиента.
+**`/rdpl` дотягивается и до серверной команды.** Всё, чем `/rdpl` не занимается сам — `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` и `goto`, — передаётся прямиком в `/rdplserver` и предлагается в автодополнении, так что в одиночной игре набирать нужно одну команду. Передаётся слово в слово, и решает всё сервер, как и всегда, включая права: короткое имя ничего не открывает. Подкоманды, которые есть у обоих, — `reload`, `list`, `which`, `unused`, `biome` и `config` — остаются за `/rdpl` и означают паки клиента. `biome find` — единственное исключение внутри общего имени: зерно мира знает только сервер, поэтому эта форма уходит к нему, а `biome list` и `biome here` отвечает ваш собственный клиент.
 
 **Повседневная работа:** `/rdpl reload textures` заметно быстрее, чем F3+T в большой сборке. F3+T по-прежнему работает и перезагружает всё. Обычный `/rdpl reload` нужен, когда вы *добавляете* или *удаляете* файл, потому что это меняет состав папки.
 
