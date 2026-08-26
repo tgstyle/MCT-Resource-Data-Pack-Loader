@@ -2,10 +2,11 @@
 
 **Одна папка. Переопределяет всё, что даёт Minecraft или мод, описывает новый контент в JSON и управляет генерацией мира.**
 
-Два готовых примера. Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл.
+Три готовых примера. Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) покрывает большинство возможностей: блоки, предметы, биомы, измерение, шаблон мира и все формы генерации.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) превращает обычный мир в пустоту, где генерация висит в воздухе по одной форме на полосу высоты — так каждую видно отдельно.
+- [RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip) превращает обычный мир в мир Rubic, где под ванильным лежит ещё 256 блоков сгенерированного мира, а над ним 128: переход к глубинному камню, современные шумовые пещеры, ущелья, полосчатые рудные жилы, три пещерных региона, сквозь которые спускаешься, и парящие острова наверху, вырезанные тем же шумом.
 
 ---
 

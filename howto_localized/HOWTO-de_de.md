@@ -2,10 +2,11 @@
 
 **Ein Ordner, der alles überschreibt, was Minecraft oder ein Mod mitbringt, neuen Inhalt aus JSON beschreibt und steuert, was generiert wird – in jeder Welt, auf Clients und Servern, ohne dass Spieler irgendetwas einschalten müssen.**
 
-Zwei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
+Drei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) deckt die meisten Möglichkeiten ab: Blöcke, Items, Biome, eine Dimension, eine Weltvorlage und jede Worldgen-Form.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) verwandelt die Oberwelt in eine leere Void-Welt, in der die Generierung frei in der Luft hängt, eine Form pro Höhenband, sodass jede einzeln gut zu sehen ist.
+- [RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip) macht die Oberwelt zu einer Rubic-Welt mit 256 Blöcken generierter Welt unter der von Vanilla und 128 darüber: der Übergang zum Tiefenstein, moderne Rausch-Höhlen, Schluchten, gebänderte Erzadern, drei Höhlenregionen, durch die man absteigt, und schwebende Inseln darüber, die dasselbe Rauschen schneidet.
 
 ---
 

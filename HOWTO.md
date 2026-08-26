@@ -30,9 +30,9 @@ Diese Seite ist nur ein Wegweiser. In jeder Sprachdatei steht das ganze Handbuch
 
 ---
 
-## Two working examples · Два готовых примера · Zwei fertige Beispiele
+## Three working examples · Три готовых примера · Drei fertige Beispiele
 
-Drop either straight into `rdploader` and look at how each file is written.
+Drop any of them straight into `rdploader` and look at how each file is written.
 
 Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл.
 
@@ -44,6 +44,9 @@ Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieb
 - **[RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip)** makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
   Превращает обычный мир в пустоту, где генерация висит в воздухе по одной форме на полосу высоты — так каждую видно отдельно.
   Verwandelt die Oberwelt in eine leere Void-Welt, in der die Generierung frei in der Luft hängt, eine Form pro Höhenband – so ist jede einzeln gut zu sehen.
+- **[RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip)** makes the overworld a rubic world with 256 blocks of generated world below the vanilla one and 128 above it: the deep stone blend, modern noise caves, ravines, banded ore veins, three cave regions to descend through, and floating islands overhead cut by the same noise.
+  Превращает обычный мир в мир Rubic, где под ванильным лежит ещё 256 блоков сгенерированного мира, а над ним 128: переход к глубинному камню, современные шумовые пещеры, ущелья, полосчатые рудные жилы, три пещерных региона, сквозь которые спускаешься, и парящие острова наверху, вырезанные тем же шумом.
+  Macht die Oberwelt zu einer Rubic-Welt mit 256 Blöcken generierter Welt unter der von Vanilla und 128 darüber: der Übergang zum Tiefenstein, moderne Rausch-Höhlen, Schluchten, gebänderte Erzadern, drei Höhlenregionen, durch die man absteigt, und schwebende Inseln darüber, die dasselbe Rauschen schneidet.
 
 ---
 
