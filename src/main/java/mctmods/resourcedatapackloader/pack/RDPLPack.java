@@ -25,17 +25,25 @@ public final class RDPLPack {
     private final boolean overriding;
     private final Path root;
     @Nullable private final FileSystem owned;
+    @Nullable private final Set<String> ownedNamespaces;
     private final Map<String, Set<String>> index = new HashMap<>();
     private int fileCount;
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
+        this(name, priority, overriding, root, owned, null);
+    }
+
+    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Set<String> ownedNamespaces) {
         this.name = name;
         this.priority = priority;
         this.overriding = overriding;
         this.root = root;
         this.owned = owned;
+        this.ownedNamespaces = ownedNamespaces;
         buildIndex();
     }
+
+    public boolean isFromMod() { return ownedNamespaces != null; }
 
     public String getName() { return name; }
 
@@ -52,24 +60,35 @@ public final class RDPLPack {
     private void buildIndex() {
         Path assets = root.resolve(ASSETS);
         if (!Files.isDirectory(assets)) { return; }
-        try (Stream<Path> stream = Files.list(assets)) { stream.filter(Files::isDirectory).forEach(this::indexNamespace); }
+        try (Stream<Path> stream = Files.list(assets)) { stream.filter(Files::isDirectory).filter(this::ownsNamespace).forEach(this::indexNamespace); }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
         }
     }
 
+    private boolean ownsNamespace(Path dir) {
+        if (ownedNamespaces == null) { return true; }
+        String namespace = trimSeparator(dir.getFileName().toString());
+        if (ownedNamespaces.contains(namespace)) { return true; }
+        ContentLog.LOGGER.warn("Mod pack '{}' ships files under the namespace '{}', which it does not declare in its mcmod.info, so they are ignored. A mod may only supply content for its own namespace; anything else belongs in a pack under the pack folder", name, namespace);
+        return false;
+    }
+
     private void indexNamespace(Path dir) {
         String namespace = trimSeparator(dir.getFileName().toString());
         Set<String> paths = new LinkedHashSet<>();
+        int nested = 0;
         try (Stream<Path> stream = Files.walk(dir)) {
-            stream.filter(Files::isRegularFile)
-                    .map(p -> relative(dir, p))
-                    .forEach(paths::add);
+            for (String path : (Iterable<String>) stream.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
+                if (path.startsWith(PackManager.ROOT_DIRECTORY + "/")) { nested++; }
+                else { paths.add(path); }
+            }
         }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not index namespace {}", name, namespace, ex);
             return;
         }
+        if (nested > 0) { ContentLog.LOGGER.warn("Pack '{}': {} file(s) under '{}/{}/' are ignored. Nothing reads a '{}' folder inside a namespace; content folders sit directly under the namespace", name, nested, namespace, PackManager.ROOT_DIRECTORY, PackManager.ROOT_DIRECTORY); }
         if (paths.isEmpty()) { return; }
         index.put(namespace, paths);
         fileCount += paths.size();

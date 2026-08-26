@@ -19,6 +19,7 @@ Drei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Die eine Regel](#die-eine-regel)
 - [Packs organisieren](#packs-organisieren)
 - [Ressourcenpakete: wer gewinnt](#ressourcenpakete-wer-gewinnt)
+- [Mod-API](#mod-api)
 - [Packs nur auf dem Server](#packs-nur-auf-dem-server)
 
 **Überschreiben**
@@ -228,6 +229,36 @@ rdploader/RDPL1O Seasonal       Priorität und Override kombiniert
 ```
 
 Packs ohne Buchstaben folgen der Config-Option `overrideResourcePacks`. `/rdpl list` markiert die überschreibenden Packs. Der Buchstabe muss das Präfix abschließen (gefolgt von Leerzeichen, Bindestrich, Unterstrich oder nichts) – `RDPLOverhaul` ist also ein Pack namens `Overhaul`, kein `O`-Flag.
+
+## Mod-API
+
+Eine Mod kann RDPL-Inhalte in ihrer eigenen Jar mitbringen und braucht dafür kein eigenes Pack. Leg einen Ordner namens `rdploader` in die Wurzel der Jar und bau ihn genau wie ein Pack auf:
+
+```
+diemod.jar
+  mcmod.info
+  rdploader/assets/diemod/blocks/rubinerz.json
+```
+
+Was eine Mod mitbringt, ist eine Vorgabe, keine Überschreibung. Es lädt unter jedem Pack im Pack-Ordner, alles von einem Pack-Autor gewinnt also dagegen, und eine Mod darf nur Dateien unter einem Namensraum liefern, den sie in ihrer eigenen `mcmod.info` nennt. Dateien unter jedem anderen Namensraum werden mit einer Warnung übergangen, ebenso ein verschachtelter `rdploader`-Ordner innerhalb eines Namensraums, damit keine Mod stillschweigend die Inhalte einer anderen Mod oder eines Pack-Autors umschreibt.
+
+Jede Mod, die so etwas mitbringt, bekommt beim ersten Erkennen einen Eintrag in `rdploader/config/mods.json`:
+
+```json
+{
+  "thatmod": {
+    "enabled": true,
+    "priority": -1
+  }
+}
+```
+
+| Feld | Werte | Vorgabe | Was es tut |
+| --- | --- | --- | --- |
+| `enabled` | `true` oder `false` | `true` | Schaltet die Inhalte dieser Mod ab, so wie `.disabled` ein Pack abschaltet |
+| `priority` | `-1` oder eine Zahl | `-1` | `-1` hält die Mod unter jedem Pack; jede andere Zahl setzt sie in die gewöhnliche [Vorrang](#packs-organisieren)-Reihenfolge neben die nummerierten Packs |
+
+Ein Mod-Pack kommt nie in die Überschreibungsstufe der Ressourcenpakete, egal was `overrideResourcePacks` sagt, denn darum kann nur ein Pack-Autor mit dem Buchstaben `O` bitten. Das Log kennzeichnet Mod-Packs und listet Packs mit dem niedrigsten zuerst, es lädt also nichts ungesehen.
 
 ## Packs nur auf dem Server
 

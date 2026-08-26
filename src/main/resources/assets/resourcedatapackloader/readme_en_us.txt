@@ -67,6 +67,38 @@ is optional. The prefix is stripped from the pack's name in the log and in
 /rdpl list, so RDPL1 SeasonalTextures shows up as SeasonalTextures.
 
 
+MOD API
+-------
+
+A mod can carry RDPL content inside its own jar, in a folder named rdploader
+laid out exactly like a pack:
+
+    thatmod.jar
+      mcmod.info
+      rdploader/assets/thatmod/blocks/ruby_ore.json
+
+Those are defaults, not overrides. A mod pack loads below every pack in this
+folder, so anything you put here wins over it, and a mod may only supply files
+under a namespace it declares in its own mcmod.info. Anything else is ignored
+with a warning, so no mod can quietly redefine another one's content or yours.
+
+Every mod that ships one is listed in config/mods.json the first time it is
+seen:
+
+    {
+      "thatmod": {
+        "enabled": true,
+        "priority": -1
+      }
+    }
+
+Set enabled to false to turn that mod's content off. Leave priority at -1 to
+keep it underneath everything, or give it a number and it takes its place in
+the ordering above, alongside the numbered packs. Packs are listed lowest
+first in the log and a mod's own is marked there, so nothing loads that you
+cannot see.
+
+
 RESOURCE PACKS
 --------------
 

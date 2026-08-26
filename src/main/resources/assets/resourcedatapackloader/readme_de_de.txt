@@ -71,6 +71,39 @@ oder Unterstrich nach der Zahl ist optional. Das Präfix wird im Log und in
 dort also als SeasonalTextures.
 
 
+MOD-API
+-------
+
+Eine Mod kann RDPL-Inhalte in ihrer eigenen Jar mitbringen, in einem Ordner
+namens rdploader, aufgebaut genau wie ein Pack:
+
+    diemod.jar
+      mcmod.info
+      rdploader/assets/diemod/blocks/rubinerz.json
+
+Das sind Vorgaben, keine Überschreibungen. Ein Mod-Pack lädt unter jedem Pack
+in diesem Ordner, alles hier gewinnt also dagegen, und eine Mod darf nur
+Dateien unter einem Namensraum liefern, den sie in ihrer eigenen mcmod.info
+nennt. Alles andere wird mit einer Warnung übergangen, damit keine Mod
+stillschweigend die Inhalte einer anderen oder deine umschreibt.
+
+Jede Mod, die so etwas mitbringt, steht beim ersten Erkennen in
+config/mods.json:
+
+    {
+      "diemod": {
+        "enabled": true,
+        "priority": -1
+      }
+    }
+
+Setz enabled auf false, um die Inhalte dieser Mod abzuschalten. Lass priority
+auf -1, damit sie unter allem bleibt, oder gib eine Zahl an, dann reiht sie
+sich oben bei den nummerierten Packs ein. Im Log stehen die Packs mit dem
+niedrigsten zuerst, und die einer Mod sind dort gekennzeichnet, es lädt also
+nichts, was du nicht sehen kannst.
+
+
 RESSOURCENPAKETE
 ----------------
 

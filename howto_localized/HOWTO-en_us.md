@@ -19,6 +19,7 @@ Three working examples. Drop any of them straight into `rdploader` and look at h
 - [The one rule](#the-one-rule)
 - [Organizing packs](#organizing-packs)
 - [Resource packs: who wins](#resource-packs-who-wins)
+- [Mod API](#mod-api)
 - [Server-side packs](#server-side-packs)
 
 **Overriding**
@@ -228,6 +229,36 @@ rdploader/RDPL1O Seasonal       priority and override combined
 ```
 
 Packs without a letter follow the `overrideResourcePacks` config option. `/rdpl list` marks the packs that override. The letter must end the prefix (followed by a space, dash, underscore, or nothing), so `RDPLOverhaul` is a pack named `Overhaul`, not an `O` flag.
+
+## Mod API
+
+A mod can ship RDPL content inside its own jar, so it needs no separate pack. Put a folder named `rdploader` at the root of the jar and lay it out exactly like a pack:
+
+```
+thatmod.jar
+  mcmod.info
+  rdploader/assets/thatmod/blocks/ruby_ore.json
+```
+
+What a mod ships is a default, not an override. It loads below every pack in the pack folder, so anything a pack author writes wins over it, and a mod may only supply files under a namespace it declares in its own `mcmod.info`. Files under any other namespace are ignored with a warning, and so is a nested `rdploader` folder inside a namespace, so a mod cannot quietly redefine another mod's content or a pack author's.
+
+Every mod that ships one gets an entry in `rdploader/config/mods.json` the first time it is seen:
+
+```json
+{
+  "thatmod": {
+    "enabled": true,
+    "priority": -1
+  }
+}
+```
+
+| Field | Values | Default | What it does |
+| --- | --- | --- | --- |
+| `enabled` | `true` or `false` | `true` | Turns that mod's content off, the way `.disabled` turns off a pack |
+| `priority` | `-1` or a number | `-1` | `-1` holds the mod under every pack; any other number puts it in the ordinary [priority](#organizing-packs) order beside the numbered packs |
+
+A mod pack never joins the resource pack override tier whatever `overrideResourcePacks` says, since only a pack author can ask for that with the `O` letter. The log marks mod packs and lists packs lowest first, so nothing loads unseen.
 
 ## Server-side packs
 

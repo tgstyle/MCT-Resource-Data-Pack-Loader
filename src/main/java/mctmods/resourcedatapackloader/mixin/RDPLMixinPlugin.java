@@ -53,17 +53,11 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     private static boolean inModJars() {
         try {
-            File home = (File) net.minecraftforge.fml.relauncher.FMLInjectionData.data()[6];
-            File[] roots = {new File(home, "mods"), new File(new File(home, "mods"), "1.12.2")};
-            for (File root : roots) {
-                File[] jars = root.listFiles((dir, name) -> name.endsWith(".jar"));
-                if (jars == null) { continue; }
-                for (File jar : jars) {
-                    try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(jar)) {
-                        if (zip.getEntry(CUBIC_CHUNKS_MARKER) != null) { return true; }
-                    }
-                    catch (Exception unreadable) { LogManager.getLogger("RDPL").debug("Could not open {} while looking for CubicChunks", jar.getName()); }
+            for (File jar : mctmods.resourcedatapackloader.util.ModJars.list()) {
+                try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(jar)) {
+                    if (zip.getEntry(CUBIC_CHUNKS_MARKER) != null) { return true; }
                 }
+                catch (Exception unreadable) { LogManager.getLogger("RDPL").debug("Could not open {} while looking for CubicChunks", jar.getName()); }
             }
             return false;
         }

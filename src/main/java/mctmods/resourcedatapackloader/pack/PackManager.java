@@ -129,9 +129,13 @@ public final class PackManager {
         close();
         prepare(packRoot);
         if (!Files.isDirectory(packRoot)) { return; }
+        List<RDPLPack> named = new ArrayList<>();
+        for (RDPLPack mod : ModPacks.load(packRoot)) {
+            if (mod.getPriority() < 0) { packs.add(mod); }
+            else { named.add(mod); }
+        }
         RDPLPack loose = loadRoot(packRoot);
         if (loose != null) { packs.add(loose); }
-        List<RDPLPack> named = new ArrayList<>();
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(packRoot)) {
             for (Path entry : entries) {
                 String fileName = entry.getFileName().toString();
@@ -139,6 +143,10 @@ public final class PackManager {
                     case RDPLPack.ASSETS:
                     case README:
                     case "config": continue;
+                }
+                if (ROOT_DIRECTORY.equalsIgnoreCase(fileName)) {
+                    ContentLog.LOGGER.warn("Skipping '{}': a folder named '{}' inside the pack folder is never loaded, since that is the pack folder's own name. Put its contents straight into {} or rename the pack", fileName, ROOT_DIRECTORY, packRoot);
+                    continue;
                 }
                 if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED)) {
                     ContentLog.LOGGER.info("Skipping disabled pack '{}'", fileName);
@@ -318,11 +326,16 @@ public final class PackManager {
             ContentLog.LOGGER.info("No packs found in {}", root);
             return;
         }
-        ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first", packs.size(), root);
+        int fromMods = 0;
+        for (RDPLPack pack : packs) {
+            if (pack.isFromMod()) { fromMods++; }
+        }
+        ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first{}", packs.size(), root,
+                fromMods == 0 ? "" : ", " + fromMods + " of them shipped inside a mod jar and listed in config/mods.json");
         if (!Config.packs.logContents) { return; }
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
-            String tier = pack.isOverriding() ? " overriding" : "";
+            String tier = (pack.isOverriding() ? " overriding" : "") + (pack.isFromMod() ? " from a mod jar" : "");
             ContentLog.LOGGER.debug("  '{}'{}{}: files={} namespaces={} advancements={} loot_tables={} recipes={} functions={} remaps={} blocks={} items={} fluids={} furnace={} worldgen={} fuels={} oredict={} sounds={} recipe_removals={} materials={} loot_injections={} player_loot={} tabs={} potions={} potion_types={} brewing={} villagers={} trades={} biomes={} villages={} entities={} hardness={}",
                     pack.getName(), priority, tier, pack.getFileCount(), pack.getNamespaces(), pack.count(ADVANCEMENTS, JSON), pack.count(LOOT_TABLES, JSON), pack.count(RECIPES, JSON), pack.count(FUNCTIONS, MCFUNCTION), pack.count(REGISTRY_REMAP, JSON), pack.count(BLOCKS, JSON), pack.count(ITEMS, JSON), pack.count(FLUIDS, JSON), pack.count(FURNACE, JSON), pack.count(WORLDGEN, JSON), pack.count(FUELS, JSON), pack.count(OREDICT, JSON), pack.count(SOUNDS, JSON), pack.count(RECIPE_REMOVALS, JSON), pack.count(MATERIALS, JSON), pack.count(LOOT_INJECTIONS, JSON), pack.count(PLAYER_LOOT, JSON), pack.count(TABS, JSON), pack.count(POTIONS, JSON), pack.count(POTION_TYPES, JSON), pack.count(BREWING, JSON), pack.count(VILLAGERS, JSON), pack.count(TRADES, JSON), pack.count(BIOMES, JSON), pack.count(VILLAGES, JSON), pack.count(ENTITIES, JSON), pack.count(HARDNESS, JSON));
         }
