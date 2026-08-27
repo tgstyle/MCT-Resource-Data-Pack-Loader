@@ -39,7 +39,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
             at = @At(value = "NEW", target = "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos rdpl$whereItStands(Entity source) {
         if (rdpl$standing == null) { rdpl$standing = new BlockPos.MutableBlockPos(); }
-        return rdpl$standing.setPos(source);
+        return rdpl$standing.setPos(source.posX, source.posY, source.posZ);
     }
 
     @Redirect(method = "getPathNodeType(Lnet/minecraft/world/IBlockAccess;III)Lnet/minecraft/pathfinding/PathNodeType;",

@@ -120,6 +120,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/overrides/<target>/<name>.json` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben) |
 | `<namespace>/villages/*.json` | Grundstücke, die Dörfer bauen können. [Dorfgrundstücke](#dorfgrundstücke) |
 | `<namespace>/pathintersects/*.json` | Muster, die an Kreuzungen von Dorfstraßen gemalt werden. [Dorfwege](#dorfwege) |
+| `<namespace>/portalframes/*.json` | Rahmen, die ein Spieler bauen und anzünden kann. [Portalrahmen](#portalrahmen) |
 | `<namespace>/blastplaster/*.json` | Was Blast Plaster nach einer Explosion tut, pro Dimension. [Blast Plaster Integration](#blast-plaster-integration) |
 | `<namespace>/structures/*.nbt` | Vorlagen, für Setzlinge, `imprint` und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/recipes/*.json` | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
@@ -2273,6 +2274,93 @@ Ein `portal`-Block trägt einen `portal`-Abschnitt:
 | `platformBlock` | nein | Blockname | der eigene Rahmen des Portals | Woraus diese Plattform besteht |
 | `sound` | nein | Soundname | keiner | Wird beim Durchgehen abgespielt |
 | `owned` | nein | boolean | `true` | Nur wer es gebaut hat und wen er zulässt, darf es benutzen. Ein Portal mit Besitzer ist außerdem immun gegen Explosionen |
+| `walkIn` | nein | boolean | `false` | Wer hineinläuft, reist, so wie bei einem Netherportal. Aus, wird es von Hand benutzt |
+
+### Portalrahmen
+
+`<namespace>/portalframes/*.json`
+
+Der Pfad der Datei ist der Registry-Name des Rahmens, den eine Dimension dann in `frames` nennt.
+
+Ein Rahmen ist ein Bild dessen, was ein Spieler bauen muss, und sonst nichts: Er sagt, welche Blöcke den Rand bilden und wo das Loch sitzt, und sagt nichts darüber, wohin das Portal führt. Das ist Absicht, denn eine Dimension beansprucht einen Rahmen, statt ihn zu besitzen, und zwei Dimensionen dürfen denselben beanspruchen.
+
+```json
+{
+  "name": "Stehendes Tor",
+  "axis": "vertical",
+  "legend": { "q": "minecraft:quartz_block", "r": "meinpack:ruby_block" },
+  "rows": [
+    "rqqqqr",
+    "q....q",
+    "*",
+    "rqqqqr"
+  ],
+  "maxWidth": 6,
+  "maxHeight": 9
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er bewirkt |
+| --- | --- | --- | --- | --- |
+| `name` | nein | Zeichenkette | der Dateiname | Der Name, der im Log erscheint |
+| `axis` | nein | `vertical`, `horizontal` oder `both` | `vertical` | Ob er steht wie ein Netherportal, flach liegt wie ein Endportal oder beides darf |
+| `legend` | ja | Objekt aus je einem Zeichen zu einem Block | keine | Die Blöcke, die die Zeilen verwenden dürfen. Ein Blockname mit Zuständen wird gelesen wie überall sonst |
+| `rows` | ja | Liste von Zeichenketten | keine | Das Bild, oberste Zeile zuerst |
+| `maxWidth` | nein | Ganzzahl | `21` | Breitestes Loch, bis zu dem ein `*` sich streckt |
+| `maxHeight` | nein | Ganzzahl | `21` | Höchstes Loch, bis zu dem ein `*` sich streckt |
+
+Drei Zeichen sind keine Blöcke. `.` ist das Loch, in dem das Portal steht, und ein Rahmen ohne eines wird abgelehnt. Ein Leerzeichen ist eine Zelle, die den Rahmen nicht kümmert, ein L-förmiger Rand entsteht also, indem man die Ecken leer lässt. `*` wiederholt: Eine Zeile, die nur aus `*` besteht, wiederholt die Zeile darüber so oft, wie der Spieler gebaut hat, und ein `*` mitten in einer Zeile wiederholt ebenso das Zeichen davor. Es darf auch gar nicht wiederholen: Das Bild mit jedem `*` gestrichen ist also das Kleinste, was zündet, und die Höchstwerte unten sind das Größte. Ein Bild ohne `*` ist genau, und der Spieler muss es so und nicht anders bauen.
+
+Ein stehender Rahmen wird auf beiden waagerechten Achsen und in beiden Richtungen gefunden, es kommt also nicht darauf an, wie der Erbauer stand. Ein liegender wird in allen vier Drehungen gefunden.
+
+**Wie groß er werden darf, sagt das Pack.** `maxWidth` und `maxHeight` sind das größte Loch, bis zu dem ein `*` sich streckt, und alles Kleinere bis zur Untergrenze wird angenommen – ein Pack entscheidet also selbst, ob sein Tor bei Vanillas 21 endet oder schon bei 4. Die Untergrenze ist ein Spieler: Ein stehender Rahmen wird abgelehnt, wenn sein Loch nicht mindestens 1 breit und 2 hoch werden kann, ein liegender, wenn nicht mindestens 1 mal 1, und ein Bild, das das nie erreicht, wird beim Laden mit einer Zeile im Log abgelehnt, statt ein Rahmen zu sein, durch den niemand geht.
+
+**Ein Rahmen kostet umso mehr Suche, je mehr er sich strecken kann.** Ein Zeilen-`*` und ein Spalten-`*` zusammen heißt, dass jede Kombination bis zu beiden Höchstwerten versucht wird, ein Rahmen, der sich in beide Richtungen bis 21 streckt, sind also 441 Bilder. Die Suche gibt lieber auf, als hängen zu bleiben, und schreibt das ins Log – das Zeichen, einen Höchstwert zu senken oder eine der Streckungen zu streichen.
+
+**Nichts verbietet einen Rahmen aus Obsidian mit Feuerzeug, doch er hat Vorrang.** Der Rahmen wird gesucht, bevor das Item selbst wirkt, ein solcher Rahmen öffnet also die Dimension des Packs dort, wo ein Netherportal gestanden hätte. Wähle einen anderen Block oder ein anderes Zündmittel, um Vanillas Portal in Ruhe zu lassen.
+
+### Eine Dimension über einen Rahmen öffnen
+
+`<namespace>/dimensions/*.json`
+
+Eine Dimension öffnet sich über einen Rahmen, indem sie einen `portal`-Abschnitt trägt. Der Rahmen und das, womit er angezündet wird, wählen zusammen die Dimension – eine Rahmenform kann also je nach Zündmittel an mehrere Orte führen.
+
+```json
+{
+  "id": 12,
+  "portal": {
+    "frames": ["meinpack:stehendes_tor"],
+    "ignitedBy": "minecraft:flint_and_steel",
+    "color": "#C77DFF",
+    "return": "built",
+    "gate": "meinpack:ruby_gate",
+    "cooldown": 60,
+    "platform": true,
+    "sound": "block.portal.travel"
+  }
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er bewirkt |
+| --- | --- | --- | --- | --- |
+| `frames` | ja | Liste von Rahmennamen | keine | Die Rahmen, die diese Dimension öffnen |
+| `ignitedBy` | nein | Itemname | `minecraft:flint_and_steel` | Was ein Spieler in der Hand hält, um einen anzuzünden |
+| `color` | nein | Hexfarbe | weiß | Die Farbe, in der das Portal gezeichnet wird |
+| `return` | nein | `built`, `player` oder `none` | `built` | Ob ein Rückweg gestellt, vom Spieler gebaut oder gar nicht gewährt wird |
+| `gate` | nein | Torname | keiner | Ein Tor, das offen sein muss, um durchzugehen |
+| `cooldown` | nein | Ganzzahl, Ticks | `60` | Bevor derselbe Spieler wieder durchgehen darf |
+| `platform` | nein | boolean | `true` | Bei der Ankunft eine Landeplattform bauen |
+| `platformBlock` | nein | Blockname | Stein | Woraus diese Plattform besteht |
+| `sound` | nein | Soundname | keiner | Wird beim Durchgehen gespielt |
+| `owned` | nein | boolean | `false` | Nur wer es angezündet hat und wen er zulässt, darf es benutzen |
+
+Den Block, der im Loch steht, schreibt das Pack nicht. Eine Dimension mit einem `portal`-Abschnitt bekommt einen eigenen, benannt `<namespace>:portal_<dimension>`, in der Portaltextur des Spiels unter `color` gezeichnet, hineinzulaufen statt von Hand zu benutzen, und unzerstörbar. Die Farbe multipliziert die Textur, so wie ein `tintindex` es tut: `#C77DFF` behält das Violett des Nethers, `#4CFFB0` macht es giftig. Wer ein Portal will, das gar nicht die Vanilla-Textur ist, schreibt einen gewöhnlichen eigenen `portal`-Block mit eigenem Modell und einer Textur als [Pixelkarte](#texturen-als-pixelkarte), wo `tint` zwischen zwei Farben rampen kann.
+
+`return` entscheidet, was auf der anderen Seite geschieht. `built` stellt denselben Rahmen auf, in der Größe, die der Spieler gebaut hat, und zündet ihn an, so wie Vanilla es macht. `player` baut nichts, lässt denselben Rahmen aber drüben anzünden, der Heimweg will also gefunden und gebaut werden. `none` lässt den Rahmen in jener Dimension gar nicht erst zünden, und die Reise geht nur hin.
+
+**Ein Rahmen, mehrere Dimensionen.** Das Paar aus Rahmen und Zündmittel wählt die Dimension, dasselbe `stehendes_tor` mit Feuerzeug und mit dem eigenen Zünder eines Packs öffnet also zwei verschiedene Orte, jeden in seiner eigenen Farbe. Beanspruchen zwei Dimensionen denselben Rahmen *und* dasselbe Item, ist das ein Fehler im Pack: Die zweite wird abgelehnt und sagt es im Log, statt dass eine von beiden stillschweigend gewinnt.
+
+Bricht ein Block des Rahmens weg, geht das Portal aus, wie in Vanilla.
 
 `<namespace>/gates/*.json`
 

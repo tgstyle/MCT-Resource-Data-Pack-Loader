@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
+import mctmods.resourcedatapackloader.content.portal.PortalEvents;
 import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
@@ -72,6 +73,7 @@ import java.util.Map;
         }
         MinecraftForge.EVENT_BUS.register(ContentBeard.class);
         MinecraftForge.EVENT_BUS.register(ContentVillageDecor.class);
+        MinecraftForge.EVENT_BUS.register(PortalEvents.class);
     }
 
     @Override public String[] getASMTransformerClass() { return new String[]{

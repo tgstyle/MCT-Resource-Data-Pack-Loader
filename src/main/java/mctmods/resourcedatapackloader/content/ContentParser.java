@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.*;
+import mctmods.resourcedatapackloader.content.portal.PortalShapes;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
@@ -145,7 +146,83 @@ public final class ContentParser {
                 JsonUtils.getBoolean(entry, "platform", true),
                 JsonUtils.getString(entry, "platformBlock", ""),
                 JsonUtils.getString(entry, "sound", ""),
-                JsonUtils.getBoolean(entry, "owned", true));
+                JsonUtils.getBoolean(entry, "owned", true),
+                JsonUtils.getBoolean(entry, "walkIn", false));
+    }
+
+    @Nullable public static PortalFrameDef portalFrame(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+        Map<Character, IBlockState> legend = new LinkedHashMap<>();
+        if (json.has("legend")) {
+            JsonObject entry = JsonUtils.getJsonObject(json, "legend");
+            for (Map.Entry<String, JsonElement> mark : entry.entrySet()) {
+                String symbol = mark.getKey().trim();
+                if (symbol.length() != 1 || symbol.charAt(0) == PortalFrameDef.HOLE || symbol.charAt(0) == PortalFrameDef.REPEAT) {
+                    ContentLog.LOGGER.error("Portal frame {} legend symbol '{}' must be a single character and neither {} nor {}", key, mark.getKey(), PortalFrameDef.HOLE, PortalFrameDef.REPEAT);
+                    continue;
+                }
+                IBlockState state = ContentStates.parse(mark.getValue().getAsString(), key + " legend " + symbol);
+                if (state != null) { legend.put(symbol.charAt(0), state); }
+            }
+        }
+        List<String> rows = strings(json, "rows");
+        if (rows.isEmpty()) {
+            ContentLog.LOGGER.error("Portal frame {} draws no rows, so there is no frame to find", key);
+            return null;
+        }
+        boolean holed = false;
+        for (String row : rows) {
+            for (char held : row.toCharArray()) {
+                if (held == PortalFrameDef.HOLE) { holed = true; }
+                if (held == PortalFrameDef.HOLE || held == PortalFrameDef.SKIP || held == PortalFrameDef.REPEAT || legend.containsKey(held)) { continue; }
+                ContentLog.LOGGER.error("Portal frame {} uses '{}', which is neither a hole, a gap, a repeat nor in the legend", key, held);
+                return null;
+            }
+        }
+        if (!holed) {
+            ContentLog.LOGGER.error("Portal frame {} has no '{}' in it, so nothing would ever stand inside it", key, PortalFrameDef.HOLE);
+            return null;
+        }
+        String axis = JsonUtils.getString(json, "axis", PortalFrameDef.VERTICAL).trim().toLowerCase(Locale.ROOT);
+        if (!PortalFrameDef.VERTICAL.equals(axis) && !PortalFrameDef.HORIZONTAL.equals(axis) && !PortalFrameDef.BOTH.equals(axis)) {
+            ContentLog.LOGGER.error("Portal frame {} asks for axis '{}', which is none of {}, {} or {}, standing it up instead", key, axis, PortalFrameDef.VERTICAL, PortalFrameDef.HORIZONTAL, PortalFrameDef.BOTH);
+            axis = PortalFrameDef.VERTICAL;
+        }
+        PortalFrameDef frame = new PortalFrameDef(key, JsonUtils.getString(json, "name", key.getPath()), axis, legend, rows,
+                Math.max(PortalFrameDef.LEAST_WIDE, JsonUtils.getInt(json, "maxWidth", 21)),
+                Math.max(PortalFrameDef.LEAST_TALL, JsonUtils.getInt(json, "maxHeight", 21)));
+        if (PortalShapes.spread(frame).isEmpty()) {
+            ContentLog.LOGGER.error("Portal frame {} never leaves room for a player, who needs a hole {} across and {} up, so nothing could walk through it", key, PortalFrameDef.LEAST_WIDE, frame.leastTall());
+            return null;
+        }
+        return frame;
+    }
+
+    @Nullable private static DimensionPortalDef dimensionPortal(ResourceLocation key, JsonObject json) {
+        if (!json.has("portal")) { return null; }
+        JsonObject entry = JsonUtils.getJsonObject(json, "portal");
+        List<String> frames = strings(entry, "frames");
+        if (frames.isEmpty()) {
+            ContentLog.LOGGER.error("Dimension {} has a portal section naming no frames, so nothing could ever open it", key);
+            return null;
+        }
+        int color = ContentTypes.color(JsonUtils.getString(entry, "color", "#FFFFFF"), key + " portal color");
+        String back = JsonUtils.getString(entry, "return", DimensionPortalDef.BUILT).trim().toLowerCase(Locale.ROOT);
+        if (!DimensionPortalDef.BUILT.equals(back) && !DimensionPortalDef.PLAYER.equals(back) && !DimensionPortalDef.NONE.equals(back)) {
+            ContentLog.LOGGER.error("Dimension {} asks for a return of '{}', which is none of {}, {} or {}, building one instead", key, back, DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE);
+            back = DimensionPortalDef.BUILT;
+        }
+        PortalDef travel = new PortalDef(JsonUtils.getInt(json, "id"),
+                JsonUtils.getInt(entry, "returnDimension", 0),
+                JsonUtils.getString(entry, "gate", ""),
+                Math.max(0, JsonUtils.getInt(entry, "cooldown", 60)),
+                JsonUtils.getBoolean(entry, "platform", true),
+                JsonUtils.getString(entry, "platformBlock", ""),
+                JsonUtils.getString(entry, "sound", ""),
+                JsonUtils.getBoolean(entry, "owned", false),
+                JsonUtils.getBoolean(entry, "walkIn", true));
+        return new DimensionPortalDef(frames, JsonUtils.getString(entry, "ignitedBy", "minecraft:flint_and_steel"), color, back, travel);
     }
 
     @Nullable public static PathIntersectDef pathIntersect(ResourceLocation key, String contents) {
@@ -350,7 +427,8 @@ public final class ContentParser {
                 JsonUtils.getBoolean(sky, "renderClouds", true),
                 JsonUtils.getBoolean(sky, "renderWeather", true),
                 gameRules(key, json),
-                strings(json, "requires"));
+                strings(json, "requires"),
+                dimensionPortal(key, json));
     }
 
     private static List<String> behaviors(ResourceLocation key, JsonObject json) {

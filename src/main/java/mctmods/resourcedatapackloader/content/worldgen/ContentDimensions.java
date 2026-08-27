@@ -24,12 +24,13 @@ public final class ContentDimensions {
     private static final Map<Integer, DimensionDef> BY_ID = new LinkedHashMap<>();
     private static final Map<Integer, DimensionType> TYPES = new LinkedHashMap<>();
     private static boolean loaded;
+    private static boolean parsed;
 
     private ContentDimensions() {}
 
-    public static void load() {
-        if (loaded) { return; }
-        loaded = true;
+    public static void parse() {
+        if (parsed) { return; }
+        parsed = true;
         if (!Config.registersToClients() || !Config.content.dimensions) { return; }
         PackManager.get().forEach(PackManager.DIMENSIONS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
@@ -39,6 +40,13 @@ public final class ContentDimensions {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in dimension definition {}, ignoring it: {}", key, ex.getMessage()); }
         });
+    }
+
+    public static void load() {
+        if (loaded) { return; }
+        loaded = true;
+        parse();
+        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
         List<String> registered = new ArrayList<>();
         for (Map.Entry<ResourceLocation, DimensionDef> entry : DEFS.entrySet()) {
             DimensionDef def = entry.getValue();
@@ -63,5 +71,8 @@ public final class ContentDimensions {
         return type == null ? DimensionType.OVERWORLD : type;
     }
 
-    public static Map<ResourceLocation, DimensionDef> all() { return Collections.unmodifiableMap(DEFS); }
+    public static Map<ResourceLocation, DimensionDef> all() {
+        parse();
+        return Collections.unmodifiableMap(DEFS);
+    }
 }

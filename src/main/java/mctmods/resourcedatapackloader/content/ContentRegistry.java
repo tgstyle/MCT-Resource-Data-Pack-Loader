@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockSapling;
 import mctmods.resourcedatapackloader.content.block.ContentFluid;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.types.*;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
@@ -87,6 +88,15 @@ public final class ContentRegistry {
                 if (def != null) { BLOCK_DEFS.put(key, def); }
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", key, ex.getMessage()); }
+        }
+        for (Map.Entry<ResourceLocation, DimensionDef> opened : ContentPortals.opening().entrySet()) {
+            ResourceLocation key = ContentPortals.blockName(opened.getKey());
+            if (BLOCK_DEFS.containsKey(key)) { continue; }
+            BlockDef made = ContentParser.block(key, ContentPortals.blockJson(opened.getKey(), opened.getValue()));
+            if (made == null) { continue; }
+            BLOCK_DEFS.put(key, made);
+            ContentPortals.made(key);
+            ContentLog.LOGGER.debug("Dimension {} opens through a frame, so {} is registered to stand inside it", opened.getKey(), key);
         }
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
             ResourceLocation key = held.getKey();

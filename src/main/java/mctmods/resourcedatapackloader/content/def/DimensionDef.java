@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.util.ResourceLocation;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class DimensionDef {
     public static final String OVERWORLD = "overworld";
@@ -45,8 +46,9 @@ public final class DimensionDef {
     public final int respawnDimension;
     public final Map<String, String> gameRules;
     public final List<String> requires;
+    @Nullable public final DimensionPortalDef portal;
 
-    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires) {
+    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal) {
         this.registryName = registryName;
         this.id = id;
         this.suffix = suffix;
@@ -80,6 +82,7 @@ public final class DimensionDef {
         this.respawnDimension = respawnDimension;
         this.gameRules = gameRules;
         this.requires = requires;
+        this.portal = portal;
     }
 
     public String getName() { return registryName.getNamespace() + "_" + registryName.getPath(); }

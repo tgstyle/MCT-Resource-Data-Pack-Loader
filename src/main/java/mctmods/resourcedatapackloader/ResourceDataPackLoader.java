@@ -38,6 +38,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
+import mctmods.resourcedatapackloader.content.portal.ContentPortalFrames;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
@@ -115,6 +116,7 @@ public class ResourceDataPackLoader {
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
         ContentPathIntersects.load();
+        ContentPortalFrames.load();
         ContentWorldIntro.load();
         RDPLNetwork.register();
         if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }

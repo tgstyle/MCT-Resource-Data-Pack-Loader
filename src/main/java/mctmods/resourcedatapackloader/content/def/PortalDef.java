@@ -10,8 +10,9 @@ public final class PortalDef {
     public final String platformBlock;
     public final String sound;
     public final boolean owned;
+    public final boolean walkIn;
 
-    public PortalDef(int dimension, int returnDimension, String gate, int cooldown, boolean platform, String platformBlock, String sound, boolean owned) {
+    public PortalDef(int dimension, int returnDimension, String gate, int cooldown, boolean platform, String platformBlock, String sound, boolean owned, boolean walkIn) {
         this.dimension = dimension;
         this.returnDimension = returnDimension;
         this.gate = gate;
@@ -20,5 +21,6 @@ public final class PortalDef {
         this.platformBlock = platformBlock;
         this.sound = sound;
         this.owned = owned;
+        this.walkIn = walkIn;
     }
 }

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=x": { "model": "resourcedatapackloader:portal_tinted_x" },
+    "axis=z": { "model": "resourcedatapackloader:portal_tinted_z" },
+    "axis=flat": { "model": "resourcedatapackloader:portal_tinted_flat" }
+  }
+}

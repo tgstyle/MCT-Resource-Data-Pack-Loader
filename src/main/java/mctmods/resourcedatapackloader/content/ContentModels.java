@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockPane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockSlab;
 import mctmods.resourcedatapackloader.content.block.ContentBlockWall;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
@@ -52,6 +53,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT) public final class ContentModels {
+    private static final String PORTAL_MODEL = "resourcedatapackloader:portal_tinted";
+    private static final ModelResourceLocation PORTAL_ITEM = new ModelResourceLocation(PORTAL_MODEL, "axis=x");
     private static final String INVENTORY = "inventory";
     private static final String FLUID = "fluid";
 
@@ -71,6 +74,17 @@ import javax.annotation.Nullable;
                 continue;
             }
             if (block instanceof ContentBlockFenceGate) { ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockFenceGate.POWERED).build()); }
+            if (ContentPortals.isMade(entry.getKey())) {
+                ModelLoader.setCustomStateMapper(block, new StateMapperBase() {
+                    @Override @Nonnull protected ModelResourceLocation getModelResourceLocation(@Nonnull IBlockState state) {
+                        int meta = state.getBlock().getMetaFromState(state);
+                        String axis = meta == ContentPortals.FLAT ? "flat" : meta == ContentPortals.ALONG_Z ? "z" : "x";
+                        return new ModelResourceLocation(PORTAL_MODEL, "axis=" + axis);
+                    }
+                });
+                if (item != Items.AIR) { ModelLoader.setCustomModelResourceLocation(item, 0, PORTAL_ITEM); }
+                continue;
+            }
             if (property == null) {
                 if (item != Items.AIR) { ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(entry.getKey(), INVENTORY)); }
                 continue;

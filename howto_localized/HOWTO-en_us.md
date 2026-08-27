@@ -120,6 +120,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides) |
 | `<namespace>/villages/*.json` | Plots villages can build. [Village plots](#village-plots) |
 | `<namespace>/pathintersects/*.json` | Designs painted where village roads meet. [Village roads](#village-roads) |
+| `<namespace>/portalframes/*.json` | Frames a player can build and light. [Portal frames](#portal-frames) |
 | `<namespace>/blastplaster/*.json` | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration) |
 | `<namespace>/structures/*.nbt` | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override) |
 | `<namespace>/recipes/*.json` | Crafting recipes, added or replaced. [What you can override](#what-you-can-override) |
@@ -2273,6 +2274,93 @@ A `portal` block carries a `portal` section:
 | `platformBlock` | no | block name | the portal's own frame | What that platform is made of |
 | `sound` | no | sound name | none | Played on passing |
 | `owned` | no | boolean | `true` | Only whoever built it, and those they allow, may use it. An owned portal is also immune to explosions |
+| `walkIn` | no | boolean | `false` | Walking into the block travels, the way a nether portal does. Off, it is used by hand |
+
+### Portal frames
+
+`<namespace>/portalframes/*.json`
+
+The file's path is the frame's registry name, which a dimension then names in `frames`.
+
+A frame is a picture of what a player has to build, and nothing else: it says which blocks make the edge and where the hole is, and says nothing about where the portal leads. That is deliberate, because a dimension claims a frame rather than owning it, and two dimensions may claim the same one.
+
+```json
+{
+  "name": "Standing Gate",
+  "axis": "vertical",
+  "legend": { "q": "minecraft:quartz_block", "r": "mypack:ruby_block" },
+  "rows": [
+    "rqqqqr",
+    "q....q",
+    "*",
+    "rqqqqr"
+  ],
+  "maxWidth": 6,
+  "maxHeight": 9
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `name` | no | string | the file name | The name used in the log |
+| `axis` | no | `vertical`, `horizontal` or `both` | `vertical` | Whether it stands up like a nether portal, lies flat like an end portal, or may do either |
+| `legend` | yes | object of one character to a block | none | The blocks the rows may use. A block name with states is read the same way as anywhere else |
+| `rows` | yes | list of strings | none | The picture, drawn top row first |
+| `maxWidth` | no | int | `21` | Widest hole a `*` may stretch to |
+| `maxHeight` | no | int | `21` | Tallest hole a `*` may stretch to |
+
+Three characters are not blocks. `.` is the hole the portal stands in, and a frame without one is refused. A space is a cell the frame does not care about, so an L shaped surround is drawn by leaving the corners blank. `*` repeats: a row that is nothing but `*` repeats the row above it as many times as the player built, and a `*` inside a row repeats the character before it the same way. It may repeat no times at all, so the picture read with every `*` struck out is the smallest thing that will light, and the maxima below are the largest. A picture with no `*` in it is exact, and the player must build that and nothing else.
+
+A vertical frame is found on either horizontal axis and either way round, so it does not matter which way the builder faced. A horizontal one is found in all four turns.
+
+**How big it may be is the pack's to say.** `maxWidth` and `maxHeight` are the largest hole a `*` will stretch to, and anything smaller down to the floor is accepted, so a pack decides whether its gate tops out at vanilla's 21 or at 4. The floor is a player: a standing frame is refused unless its hole can be at least 1 across and 2 up, a flat one at least 1 by 1, and a picture that can never reach that is refused at load with a line in the log rather than being a frame nobody can walk through.
+
+**A frame costs more to look for the more it can stretch.** Both a row `*` and a column `*` means every combination up to the two maxima is tried, so a frame that stretches both ways to 21 is 441 pictures. The search gives up rather than hanging, and says so in the log, which is the sign to lower a maximum or drop one of the stretches.
+
+**Nothing stops a frame being obsidian lit by flint and steel, but it takes precedence.** A frame is looked for before the item does its own work, so such a frame opens the pack's dimension where a nether portal would have stood. Pick another block or another igniter to leave vanilla's portal alone.
+
+### Opening a dimension with a frame
+
+`<namespace>/dimensions/*.json`
+
+A dimension opens through a frame by carrying a `portal` section. The frame and what lights it, together, are what choose the dimension, so one frame shape can lead to several places depending on what it was lit with.
+
+```json
+{
+  "id": 12,
+  "portal": {
+    "frames": ["mypack:standing_gate"],
+    "ignitedBy": "minecraft:flint_and_steel",
+    "color": "#C77DFF",
+    "return": "built",
+    "gate": "mypack:ruby_gate",
+    "cooldown": 60,
+    "platform": true,
+    "sound": "block.portal.travel"
+  }
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `frames` | yes | list of frame names | none | The frames that open this dimension |
+| `ignitedBy` | no | item name | `minecraft:flint_and_steel` | What a player holds to light one |
+| `color` | no | hex color | white | The color the portal is drawn in |
+| `return` | no | `built`, `player` or `none` | `built` | Whether a way back is provided, built by the player, or not at all |
+| `gate` | no | gate name | none | A gate that must be open to pass |
+| `cooldown` | no | int, ticks | `60` | Before the same player can pass again |
+| `platform` | no | boolean | `true` | Build a landing platform on arrival |
+| `platformBlock` | no | block name | stone | What that platform is made of |
+| `sound` | no | sound name | none | Played on passing |
+| `owned` | no | boolean | `false` | Only whoever lit it, and those they allow, may use it |
+
+The block that stands in the hole is not written by the pack. A dimension with a `portal` section is given one of its own, named `<namespace>:portal_<dimension>`, drawn in the game's own portal texture under `color`, walked into rather than used by hand, and unbreakable. The color multiplies the texture, the way a `tintindex` does, so `#C77DFF` keeps the nether's violet and `#4CFFB0` turns it poisonous. For a portal that is not the vanilla texture at all, write an ordinary `portal` block of your own with its own model and a texture drawn as a [pixel map](#textures-written-as-pixel-maps), where `tint` can ramp between two colors.
+
+`return` decides what happens on the other side. `built` puts up the same frame, at the size the player built, and lights it, which is the way vanilla behaves. `player` builds nothing but lets the same frame be lit over there, so the way home has to be found and made. `none` refuses to light the frame in that dimension at all, and the trip is one way.
+
+**One frame, several dimensions.** The pair of a frame and the item that lights it is what picks the dimension, so the same `standing_gate` lit with flint and steel and lit with a pack's own igniter opens two different places, each with its own color. Two dimensions claiming the same frame *and* the same item is a mistake in the pack: the second one is refused and says so in the log rather than one of them quietly winning.
+
+Breaking any block of the frame puts the portal out, as it does in vanilla.
 
 `<namespace>/gates/*.json`
 

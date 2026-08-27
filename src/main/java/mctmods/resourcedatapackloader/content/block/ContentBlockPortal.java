@@ -7,8 +7,11 @@ import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.ContentTeleporter;
 import mctmods.resourcedatapackloader.content.gate.PortalStorage;
+import mctmods.resourcedatapackloader.content.portal.ContentPortals;
+import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -20,9 +23,11 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.Explosion;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.HashMap;
@@ -31,7 +36,7 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentBlockPortal extends ContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockPortal extends ContentBlock {
     public static final int MAX_VARIANTS = 16;
     private static final Map<UUID, Long> RECENT = new HashMap<>();
     private final PortalDef portal;
@@ -99,6 +104,26 @@ public class ContentBlockPortal extends ContentBlock {
         return variant.portal == null ? portal : variant.portal;
     }
 
+    @Override public void onEntityCollision(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Entity entity) {
+        if (world.isRemote || !(entity instanceof EntityPlayer)) { return; }
+        PortalDef held = portalFor(state);
+        if (!held.walkIn) { return; }
+        travel(world, (EntityPlayer) entity, held, state, pos);
+    }
+
+    @Nullable @Override public AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
+        return portalFor(state).walkIn ? NULL_AABB : super.getCollisionBoundingBox(state, world, pos);
+    }
+
+    @Override public void neighborChanged(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos from) {
+        super.neighborChanged(state, world, pos, block, from);
+        if (world.isRemote) { return; }
+        ContentPortals.Binding binding = ContentPortals.forBlock(state.getBlock());
+        if (binding == null || ContentPortals.standing(world, pos, binding)) { return; }
+        ContentLog.LOGGER.debug("The frame around the portal at {} no longer holds, so it goes out", pos);
+        world.setBlockToAir(pos);
+    }
+
     @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (world.isRemote) { return true; }
         travel(world, player, portalFor(state), state, pos);
@@ -118,7 +143,13 @@ public class ContentBlockPortal extends ContentBlock {
         sound(world, player, portal);
         RECENT.put(player.getUniqueID(), world.getTotalWorldTime());
         ContentTeleporter.remember(player, player.dimension, pos);
-        player.changeDimension(target, new ContentTeleporter(portal, state));
+        player.changeDimension(target, new ContentTeleporter(portal, state, returning(world, state, pos)));
+    }
+
+    @Nullable private PortalFit returning(World world, IBlockState state, BlockPos pos) {
+        ContentPortals.Binding binding = ContentPortals.forBlock(state.getBlock());
+        if (binding == null || !binding.portal.buildsReturn()) { return null; }
+        return ContentPortals.fitAt(world, pos, binding);
     }
 
     private boolean recently(EntityPlayer player, PortalDef portal) {
