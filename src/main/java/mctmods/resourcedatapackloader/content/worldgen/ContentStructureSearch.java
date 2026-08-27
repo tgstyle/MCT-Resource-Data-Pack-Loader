@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorEnd;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorHell;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorStructures;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -32,6 +33,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -333,6 +336,17 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             if (open(world, ground.up()) && open(world, ground.up(2))) { return ground.up(); }
         }
         return null;
+    }
+
+    public static Collection<StructureStart> villageStarts(World world) {
+        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return Collections.emptyList(); }
+        IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        if (!(maker instanceof ChunkGeneratorOverworld)) { return Collections.emptyList(); }
+        MapGenVillage shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages();
+        if (shell == null) { return Collections.emptyList(); }
+        MapGenStructure found = theRealOne(shell);
+        if (!(found instanceof MapGenVillage)) { return Collections.emptyList(); }
+        return ((IMapGenStructure) found).rdpl$getStructureMap().values();
     }
 
     public static MapGenStructure theRealOne(MapGenStructure wrapper) {

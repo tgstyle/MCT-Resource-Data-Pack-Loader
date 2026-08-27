@@ -43,7 +43,6 @@ import net.minecraft.world.gen.structure.ComponentScatteredFeaturePieces;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
-import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.WoodlandMansionPieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
@@ -51,6 +50,7 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
@@ -145,19 +145,13 @@ public final class ContentBeard {
 
     @SubscribeEvent public static void onDressed(PopulateChunkEvent.Post event) {
         if (event.getWorld().isRemote || !wanted()) { return; }
-        if (!(event.getWorld().getChunkProvider() instanceof ChunkProviderServer)) { return; }
-        IChunkGenerator maker = ((ChunkProviderServer) event.getWorld().getChunkProvider()).chunkGenerator;
-        if (!(maker instanceof ChunkGeneratorOverworld)) { return; }
-        MapGenVillage shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages();
-        if (shell == null) { return; }
-        MapGenStructure found = ContentStructureSearch.theRealOne(shell);
-        if (!(found instanceof MapGenVillage)) { return; }
-        MapGenVillage villages = (MapGenVillage) found;
+        Collection<StructureStart> starts = ContentStructureSearch.villageStarts(event.getWorld());
+        if (starts.isEmpty()) { return; }
         int blockX = (event.getChunkX() << 4) + 8;
         int blockZ = (event.getChunkZ() << 4) + 8;
         StructureBoundingBox clip = new StructureBoundingBox(blockX, 0, blockZ, blockX + 15, 255, blockZ + 15);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (StructureStart start : ((IMapGenStructure) villages).rdpl$getStructureMap().values()) {
+        for (StructureStart start : starts) {
             if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(clip)) { continue; }
             BeardRoads.repairRoads(event.getWorld(), start);
             int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
@@ -291,7 +285,7 @@ public final class ContentBeard {
         if (raised > 0) { ContentLog.LOGGER.debug("Raised {} lamp post(s) along the road at {}, {}", raised, box.minX, box.minZ); }
     }
 
-    private static boolean beforeADoor(World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int bed, int z) {
+    public static boolean beforeADoor(World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int bed, int z) {
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int y = bed; y <= bed + 3; y++) {

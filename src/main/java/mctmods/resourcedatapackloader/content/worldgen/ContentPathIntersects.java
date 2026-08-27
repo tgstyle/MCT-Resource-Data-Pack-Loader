@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
@@ -37,7 +38,7 @@ public class ContentPathIntersects {
             if (def != null) { total += def.weight; }
         }
         if (total == 0) { return null; }
-        Random random = new Random(world.getSeed() ^ (x * 341873128712L + z * 132897987541L));
+        Random random = SeededRandom.at(world, x, z);
         int roll = random.nextInt(total);
         for (String key : wanted) {
             PathIntersectDef def = DEFS.get(key);

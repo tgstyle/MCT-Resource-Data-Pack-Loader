@@ -3371,7 +3371,11 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 ```json
 {
   "settings": {
-    "villageBlocks": ["minecraft:cobblestone=mypack:ruby_brick"],
+    "villageBlocks": [
+      "minecraft:cobblestone=mypack:ruby_brick",
+      "minecraft:cobblestone=minecraft:mossy_cobblestone,20",
+      "minecraft:planks=minecraft:sandstone,100,under=minecraft:sand"
+    ],
     "villagePieces": ["field1", "field2"],
     "villagePiecesAreBlacklist": true
   }
@@ -3380,7 +3384,19 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 
 Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter dem Namen `villages`, `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` und `structureBiomesAreBlacklist` erreichen sie also alle. Eine `structureBiomes`-Liste, die keine Blacklist ist, fügt außerdem jedes genannte Biom hinzu, das die eigene Liste der Struktur nie enthielt – so lassen sich Dörfer ins Gebirge schicken; nenne sie dafür beim Registry-Namen, denn nur Registry-Namen können hinzufügen. Ihr Abstand hat eine Untergrenze von 9, weil Vanilla 8 davon abzieht. `villagePieces` gehört zur selben Gruppe, ein Schalter deckt also alles darüber ab, wo Dörfer hinkommen und woraus sie gebaut sind, während die Gruppe `villages` nur die Grundstücke abdeckt, die ein Pack hinzufügt.
 
-`villageBlocks` ist wie die übrige Dorfarbeit experimentell und greift nur, solange `terrainAdaptation` an ist. Es ersetzt die Blöcke, aus denen ein Dorf gebaut wird, als `original=ersatz`-Paare: `minecraft:cobblestone=meinpack:ruby_brick`. Es greift, nachdem jeder andere Mod sein Wort hatte, ein Pack setzt sich also immer durch, auch gegen Mods, die Dorfmaterialien je Biom austauschen. Beide Seiten akzeptieren einen einfachen Blocknamen oder einen Namen mit Zuständen. Wege werden getrennt über `villagePathBlock` und seine Geschwister benannt.
+`villageBlocks` ersetzt die Blöcke, aus denen ein Dorf gebaut wird, als `original=ersatz`-Paare: `minecraft:cobblestone=meinpack:ruby_brick`. Es greift, nachdem jeder andere Mod sein Wort hatte, ein Pack setzt sich also immer durch, auch gegen Mods, die Dorfmaterialien je Biom austauschen. Beide Seiten akzeptieren einen einfachen Blocknamen oder einen Namen mit Zuständen. Wege werden getrennt über `villagePathBlock` und seine Geschwister benannt.
+
+Ein Paar darf eine Chance und eine Bedingung hinter sich tragen, als durch Kommas getrennte Felder, und ist dann eine Regel statt eines schlichten Tauschs. `minecraft:cobblestone=minecraft:mossy_cobblestone,20` verwittert ein Fünftel des Bruchsteins, den ein Dorf verlegt; `minecraft:planks=minecraft:sandstone,100,under=minecraft:sand` ändert den Boden nur dort, wo ein Haus auf Sand steht. Die Felder hinter dem Paar dürfen in beliebiger Reihenfolge stehen, und ein Eintrag, der ein Feld nennt, das sich nicht lesen lässt, wird ganz verworfen statt halb angewandt.
+
+| Feld | Wert | Standard | Was es bewirkt |
+| --- | --- | --- | --- |
+| Chance | Ganzzahl, 1 bis 100 | `100` | Wie oft die Regel greift, von hundert |
+| `at=` | Blockname | keiner | Nur dort, wo dieser Block bereits an der bebauten Stelle steht |
+| `under=` | Blockname | keiner | Nur dort, wo dieser Block unmittelbar darunter liegt |
+
+Ein schlichtes Paar wird dort beantwortet, wo ein Teil das Spiel fragt, woraus es bauen soll, es ändert also jede Wand aus diesem Block auf einmal. Eine Regel wird dort gewogen, wo der Block tatsächlich gesetzt wird, Stelle für Stelle – erst das gibt einer Chance und einer Bedingung überhaupt Sinn –, und sie sieht den Block so, wie er gleich gesetzt wird, also nachdem ein schlichtes Paar sein Wort hatte. Auf welche Stellen eine Chance fällt, ergibt sich aus dem Weltseed und der Stelle selbst; dieselbe Welt verwittert also immer dieselben Blöcke, so oft sie auch erzeugt wird.
+
+Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterhin den Weg lesen, den sie verlegt haben. Ein Vorlagen-Grundstück setzt seine eigene `.nbt`-Datei, statt auf die Art des Spiels zu bauen; Regeln reichen also nicht in eines hinein, seine Blöcke sind die der Datei. Schlichte Paare wie Regeln wirken, ob `terrainAdaptation` an ist oder nicht.
 
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Ein Pack-Grundstück wird über seine eigene Vorlage benannt: entweder mit dem vollen Namen, `meinpack:big_house`, oder einfach `big_house`, oder wahlweise über den Namen des Grundstücks selbst. Ein Pack kann also zehn Grundstücke mitbringen, und eine Weltvorlage lässt eines davon weg, ohne die anderen neun anzurühren. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
 
@@ -3461,6 +3477,26 @@ Der Pfad der Datei ist der Registrierungsschlüssel des Musters, den `villagePat
 Fünf Zeichen sind Rollen statt Blöcke und folgen damit dem, womit die Straße ohnehin schon gedeckt ist: `r` ist die Straßenoberfläche, `l` die Randlinie, `s` der Gehweg, `.` lässt den Block genau so, wie er war, und `c` ist reserviert und malt die Straßenoberfläche. Eine Rolle, deren Block das Pack nie gesetzt hat, fällt auf die Straßenoberfläche zurück, und jedes andere Zeichen wird in der `legend` nachgeschlagen und fällt ebenfalls auf die Straßenoberfläche zurück.
 
 Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kreuzung berechnet, dieselbe Welt malt ihre Kreuzungen also immer gleich.
+
+#### Dorfschmuck
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+  }
+}
+```
+
+`villageDecor` streut die eigene Weltgenerierung eines Packs an die Ränder der Dorfwege, und genau das nimmt einem Dorf den Eindruck, seine Häuser stünden in blankem Gras. Jeder Eintrag lautet `name=gewicht`: Der Name ist ein Registry-Schlüssel aus der Weltgenerierung, `meinpack:street_flowers`, das Gewicht ist der Anteil dieses Eintrags an den Plätzen. Der Name `empty` ist der Anteil der Plätze, die leer bleiben, und auf ihn kommt es an, denn eine Liste ohne ihn füllt jeden Platz an jedem Wegrand, und das Dorf gerät zur Gärtnerei statt zur Straße.
+
+Jeder dritte Block entlang beider Wegseiten ist ein Platz, gezählt nach Weltkoordinaten, damit der Abstand von einem Wegstück ins nächste durchläuft. Ein Platz wird übergangen, wo er in ein Teil des Dorfes fällt, auf den Weg selbst, vor eine Tür, oder wo der Boden nicht offene Luft über etwas Festem ist. Was auf einem Platz wächst, ergibt sich aus dem Weltseed und dem Platz selbst, dieselbe Welt streut also immer gleich.
+
+Der Name zeigt auf einen gewöhnlichen Weltgenerierungs-Eintrag aus `<namespace>/worldgen/*.json`, eine `decoration`, ein `tree` oder ein `imprint` taugen also alle und behalten ihre eigenen Blöcke, Größen und Streuung. Genutzt wird hier allein die Form dieses Eintrags: Seine Biome, Dimensionen, Höhen und Seltenheit sind der Weg, auf dem er sich von selbst über die Welt sät, und das Dorf zieht sie nicht zu Rate – ein Eintrag für den Wegrand schreibt sich daher am besten für nichts anderes. Ein Wegrand ist offene Luft über Boden, ein solcher Eintrag will `replace` also auf `minecraft:air` gesetzt haben; einer, der `replace` nie nennt, bekommt den üblichen Standard `minecraft:stone` und stellt hier stillschweigend nichts hin.
+
+Solange `terrainAdaptation` an ist, wird gehalten, was auf einem Platz wächst, damit ein Baum am Wegrand nicht wieder fällt, sobald der nächste Chunk hergerichtet wird. Ist es aus, gibt es kein Herrichten, wogegen zu halten wäre, und gestreut wird genauso.
 
 ### Blast Plaster
 

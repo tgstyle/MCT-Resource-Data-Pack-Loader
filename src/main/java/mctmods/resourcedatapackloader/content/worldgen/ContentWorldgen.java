@@ -19,6 +19,7 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class ContentWorldgen implements IWorldGenerator {
+    private static final Map<String, WorldgenDef> BY_NAME = new HashMap<>();
     private static int deepestAsked = 0;
     private static int highestAsked = 0;
     private final List<WorldgenDef> defs;
@@ -34,6 +35,13 @@ public final class ContentWorldgen implements IWorldGenerator {
         }
         deepestAsked = lowest;
         highestAsked = highest;
+        BY_NAME.clear();
+        for (WorldgenDef def : defs) { BY_NAME.put(def.registryName.toString(), def); }
+    }
+
+    @Nullable public static IContentShape shapeFor(String name) {
+        WorldgenDef def = BY_NAME.get(name);
+        return def == null ? null : def.getShape();
     }
 
     public static int deepestMinHeight() { return deepestAsked; }

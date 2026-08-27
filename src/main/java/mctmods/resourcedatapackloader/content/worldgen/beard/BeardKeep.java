@@ -16,12 +16,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class BeardKeep {
     private static final int REACH = 3;
     private static final int CROWDED = 400000;
     private static final Set<Long> HELD = new LinkedHashSet<>();
-    private static StructureComponent watching = null;
+    @Nullable private static StructureBoundingBox watched = null;
+    @Nullable private static String watchedName = null;
     private static IBlockState[] before = null;
     private static int fromX;
     private static int fromZ;
@@ -53,8 +55,7 @@ public final class BeardKeep {
     }
 
     public static void watch(World world, StructureComponent piece, StructureBoundingBox clip) {
-        watching = null;
-        before = null;
+        forget();
         if (!(world instanceof WorldServer)) { return; }
         StructureBoundingBox box = piece.getBoundingBox();
         boolean vanilla = settles(piece);
@@ -75,6 +76,25 @@ public final class BeardKeep {
             floor = Math.max(0, Math.min(box.minY, ground) - 16);
             roof = Math.min(world.getActualHeight() - 1, Math.max(box.maxY, ground) + 48);
         }
+        snapshot(world, leastX, mostX, leastZ, mostZ, floor, roof, box, piece.getClass().getSimpleName());
+    }
+
+    public static void watchArea(World world, StructureBoundingBox area, String name) {
+        forget();
+        if (!(world instanceof WorldServer)) { return; }
+        int floor = Math.max(0, area.minY);
+        int roof = Math.min(world.getActualHeight() - 1, area.maxY);
+        if (area.minX > area.maxX || area.minZ > area.maxZ || floor > roof) { return; }
+        snapshot(world, area.minX, area.maxX, area.minZ, area.maxZ, floor, roof, area, name);
+    }
+
+    private static void forget() {
+        watched = null;
+        watchedName = null;
+        before = null;
+    }
+
+    private static void snapshot(World world, int leastX, int mostX, int leastZ, int mostZ, int floor, int roof, StructureBoundingBox box, String name) {
         int wide = mostX - leastX + 1;
         int deep = mostZ - leastZ + 1;
         int tall = roof - floor + 1;
@@ -89,7 +109,8 @@ public final class BeardKeep {
                 }
             }
         }
-        watching = piece;
+        watched = box;
+        watchedName = name;
         before = seen;
         fromX = leastX;
         fromZ = leastZ;
@@ -115,11 +136,11 @@ public final class BeardKeep {
     }
 
     public static void learn(World world) {
-        StructureComponent piece = watching;
+        StructureBoundingBox box = watched;
+        String name = watchedName;
         IBlockState[] seen = before;
-        watching = null;
-        before = null;
-        if (piece == null || seen == null) { return; }
+        forget();
+        if (box == null || seen == null) { return; }
         Set<Long> mine = new HashSet<>();
         int found = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -139,7 +160,6 @@ public final class BeardKeep {
         if (mine.isEmpty()) { return; }
         hold(mine);
         if (found > 0 && ContentLog.LOGGER.debugEnabled()) {
-            StructureBoundingBox box = piece.getBoundingBox();
             int outside = 0;
             int leastY = Integer.MAX_VALUE;
             int mostY = Integer.MIN_VALUE;
@@ -155,7 +175,7 @@ public final class BeardKeep {
                 leastZ = Math.min(leastZ, z);
                 mostZ = Math.max(mostZ, z);
             }
-            ContentLog.LOGGER.debug("Holding {} block(s) that {} at {}, {} laid down against any clearing, {} of them outside its box, reaching z {}..{} and y {}..{}", found, piece.getClass().getSimpleName(), box.minX, box.minZ, outside, leastZ, mostZ, leastY, mostY);
+            ContentLog.LOGGER.debug("Holding {} block(s) that {} at {}, {} laid down against any clearing, {} of them outside its box, reaching z {}..{} and y {}..{}", found, name, box.minX, box.minZ, outside, leastZ, mostZ, leastY, mostY);
         }
     }
 
@@ -163,7 +183,7 @@ public final class BeardKeep {
 
     public static boolean holds(int x, int y, int z) { return HELD.contains(packed(x, y, z)); }
 
-    public static StructureBoundingBox watchingBox() { return watching == null ? null : watching.getBoundingBox(); }
+    @Nullable public static StructureBoundingBox watchingBox() { return watched; }
 
-    public static String watchingName() { return watching == null ? null : watching.getClass().getSimpleName(); }
+    @Nullable public static String watchingName() { return watchedName; }
 }

@@ -3371,7 +3371,11 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 ```json
 {
   "settings": {
-    "villageBlocks": ["minecraft:cobblestone=mypack:ruby_brick"],
+    "villageBlocks": [
+      "minecraft:cobblestone=mypack:ruby_brick",
+      "minecraft:cobblestone=minecraft:mossy_cobblestone,20",
+      "minecraft:planks=minecraft:sandstone,100,under=minecraft:sand"
+    ],
     "villagePieces": ["field1", "field2"],
     "villagePiecesAreBlacklist": true
   }
@@ -3380,7 +3384,19 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 
 Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
-`villageBlocks` is experimental like the rest of the village work, and only does anything while `terrainAdaptation` is on. It replaces the blocks a village is built from, as `original=replacement` pairs: `minecraft:cobblestone=mypack:ruby_brick`. It is applied after every other mod has had its say, so a pack always wins, even against mods that swap village materials per biome. Both sides accept a plain block name or a name with states. Roads are named separately by `villagePathBlock` and its siblings.
+`villageBlocks` replaces the blocks a village is built from, as `original=replacement` pairs: `minecraft:cobblestone=mypack:ruby_brick`. It is applied after every other mod has had its say, so a pack always wins, even against mods that swap village materials per biome. Both sides accept a plain block name or a name with states. Roads are named separately by `villagePathBlock` and its siblings.
+
+A pair may carry a chance and a condition after it, written as fields separated by commas, and then it is a rule rather than a plain swap. `minecraft:cobblestone=minecraft:mossy_cobblestone,20` weathers a fifth of the cobble a village lays; `minecraft:planks=minecraft:sandstone,100,under=minecraft:sand` changes the floor only where a house stands on sand. The fields after the pair may be given in any order, and an entry naming a field it cannot read is refused whole rather than half applied.
+
+| Field | Value | Default | What it does |
+| --- | --- | --- | --- |
+| chance | int, 1 to 100 | `100` | How often the rule takes, out of a hundred |
+| `at=` | block name | none | Only where this block already stands in the spot being built on |
+| `under=` | block name | none | Only where this block lies directly beneath the spot |
+
+A plain pair is answered where a piece asks the game what it should build from, so it changes every wall of that block at once. A rule is weighed where the block is actually laid, one spot at a time, which is what lets a chance and a condition mean anything, and it sees the block as it is about to be placed, after any plain pair has had its say. Which spots a chance falls on is worked out from the world seed and the spot itself, so the same world always weathers the same blocks, however many times it is generated.
+
+Roads are never ruled, so the grades, bridges and junction designs still read the road they laid. A template plot lays its own `.nbt` file rather than building the game's way, so rules do not reach inside one; its blocks are the file's own. Plain pairs and rules both work whether or not `terrainAdaptation` is on.
 
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. A pack plot is named by its own template: either the full name, `mypack:big_house`, or just `big_house`, or the plot's own name if you prefer. So a pack can ship ten plots and a world template can drop one of them without touching the other nine. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
 
@@ -3461,6 +3477,26 @@ The file's path is the design's registry key, which `villagePathIntersects` then
 Five characters are roles rather than blocks, so they follow whatever the road is already dressed in: `r` is the road surface, `l` the edge line, `s` the sidewalk, `.` leaves the block exactly as it was, and `c` is reserved and paints the road surface. A role whose block the pack never set falls back to the road surface, and any other character is looked up in the `legend`, falling back to the road surface as well.
 
 Which design a junction gets is worked out from the world seed and the junction's own position, so the same world always paints the same junctions.
+
+#### Village decoration
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+  }
+}
+```
+
+`villageDecor` scatters a pack's own worldgen along the verges of village roads, which is what stops a village reading as houses standing in bare grass. Each entry is `name=weight`: the name is a worldgen registry key, `mypack:street_flowers`, and the weight is that entry's share of the spots. The name `empty` is the share of spots left bare, and it is the one to get right, because a list without it fills every spot on every verge and the village comes out a nursery rather than a street.
+
+Every third block along each side of a road is a spot, counted from world coordinates so the spacing carries from one road piece into the next. A spot is passed over where it falls inside any piece of the village, on the road itself, in front of a door, or where the ground is not open air standing on something solid. What grows at a spot is worked out from the world seed and the spot itself, so the same world always scatters the same way.
+
+The name points at an ordinary worldgen entry from `<namespace>/worldgen/*.json`, so a `decoration`, a `tree` or an `imprint` all serve, and each keeps its own blocks, sizes and scatter. Only the shape of that entry is used here: its biomes, dimensions, heights and rarity are how it sows itself across the world at large, and the village does not consult them, so an entry meant for the verge is best written for nothing else. A verge is open air standing on ground, so such an entry wants `replace` set to `minecraft:air`; one that never names `replace` is given the usual default of `minecraft:stone` and quietly stands nothing here.
+
+While `terrainAdaptation` is on, whatever a spot grows is held against the village's own tidying, so a tree standing on a verge is not felled again as the next chunk is dressed. With it off there is no tidying to hold it against, and the scatter is the same.
 
 ### Blast Plaster
 

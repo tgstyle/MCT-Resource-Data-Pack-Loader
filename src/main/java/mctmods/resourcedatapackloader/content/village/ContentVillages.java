@@ -28,6 +28,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -40,9 +41,12 @@ import javax.annotation.Nullable;
 
 public final class ContentVillages {
     private static final String COMPONENT = "RDPL:Plot";
+    private static final String AT = "at=";
+    private static final String UNDER = "under=";
     private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> GROWN = new HashSet<>();
     @Nullable private static Map<IBlockState, IBlockState> BLOCKS;
+    @Nullable private static List<VillageRule> RULES;
     @Nullable private static WorldTemplateDef blocksFrom;
     @Nullable private static WorldTemplateDef namedFrom;
     private static Set<String> named;
@@ -124,17 +128,71 @@ public final class ContentVillages {
         return BLOCKS.get(original.getBlock().getDefaultState());
     }
 
+    @Nullable public static IBlockState ruled(World world, BlockPos pos, IBlockState laid) {
+        WorldTemplateDef active = ContentWorldTemplates.active();
+        if (RULES == null || active != blocksFrom) {
+            loadBlocks();
+            blocksFrom = active;
+        }
+        for (VillageRule rule : RULES) {
+            IBlockState wanted = rule.apply(world, pos, laid);
+            if (wanted != null) { return wanted; }
+        }
+        return null;
+    }
+
     private static void loadBlocks() {
         BLOCKS = new HashMap<>();
+        RULES = new ArrayList<>();
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
-            String[] parts = Settings.pair(entry, "villageBlocks", "original=replacement");
-            if (parts == null) { continue; }
-            IBlockState from = ContentStates.parse(parts[0], "villageBlocks");
-            IBlockState to = ContentStates.parse(parts[1], "villageBlocks");
-            if (from == null || to == null) { continue; }
-            BLOCKS.put(from, to);
+            VillageRule rule = rule(entry);
+            if (rule == null) { continue; }
+            if (rule.plain()) { BLOCKS.put(rule.original(), rule.replacement()); }
+            else { RULES.add(rule); }
         }
         if (!BLOCKS.isEmpty()) { ContentLog.LOGGER.info("Villages build with {} replaced block(s), whatever any other mod asks for", BLOCKS.size()); }
+        if (!RULES.isEmpty()) { ContentLog.LOGGER.info("Villages weather {} block(s) by rule as their pieces lay them", RULES.size()); }
+    }
+
+    @Nullable private static VillageRule rule(String entry) {
+        String[] fields = entry.split(",");
+        String[] parts = Settings.pair(fields[0], "villageBlocks", "original=replacement");
+        if (parts == null) { return null; }
+        IBlockState from = ContentStates.parse(parts[0], "villageBlocks");
+        IBlockState to = ContentStates.parse(parts[1], "villageBlocks");
+        if (from == null || to == null) { return null; }
+        int chance = VillageRule.ALWAYS;
+        IBlockState at = null;
+        IBlockState under = null;
+        for (int field = 1; field < fields.length; field++) {
+            String said = fields[field].trim();
+            if (said.isEmpty()) { continue; }
+            if (said.startsWith(AT)) {
+                at = ContentStates.parse(said.substring(AT.length()), "villageBlocks");
+                if (at == null) { return null; }
+            }
+            else if (said.startsWith(UNDER)) {
+                under = ContentStates.parse(said.substring(UNDER.length()), "villageBlocks");
+                if (under == null) { return null; }
+            }
+            else {
+                chance = chanceOf(said, entry);
+                if (chance < 0) { return null; }
+            }
+        }
+        return new VillageRule(from, to, chance, at, under);
+    }
+
+    private static int chanceOf(String said, String entry) {
+        int asked;
+        try { asked = Integer.parseInt(said); }
+        catch (NumberFormatException wrong) {
+            ContentLog.LOGGER.error("villageBlocks entry '{}' says '{}', which is neither a chance out of 100 nor an at= or under= block, ignoring the entry", entry, said);
+            return -1;
+        }
+        if (asked >= 1 && asked <= VillageRule.ALWAYS) { return asked; }
+        ContentLog.LOGGER.error("villageBlocks entry '{}' asks for a chance of {}, which is not between 1 and 100, ignoring the entry", entry, asked);
+        return -1;
     }
 
     public static boolean blockedTemplate(ResourceLocation template) {
