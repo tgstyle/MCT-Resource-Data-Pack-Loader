@@ -155,8 +155,10 @@ written for that shape. Vanilla's assumption that a world is 256 blocks tall is
 patched out wherever it is load bearing: build limits, kill planes, commands,
 pathing, portals, beacons, maps, the renderer and the client's own view distance
 gain a vertical half. Foreign generators keep running against a normal looking
-256 block window, which is why other mods' terrain still works. HOWTO.md covers
-the settings, the heights a world may take and the mods it will not run beside.
+256 block window, which is why other mods' terrain still works.
+[HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md)
+covers the settings, the heights a world may take and the mods it will not run
+beside.
 
 # World intro
 
@@ -201,7 +203,9 @@ before any of them looks.
 
 A pack can stay on the server alone, with every player on a plain vanilla client,
 as long as it registers nothing. The `vanillaClients` config switch enforces
-exactly that. HOWTO.md's Server-side packs section has the steps.
+exactly that.
+[HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md)'s
+Server-side packs section has the steps.
 
 The mod's own report goes to `logs/rdpl.log` rather than the main log.
 
