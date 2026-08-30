@@ -3465,7 +3465,9 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
       "minecraft:planks=minecraft:sandstone,100,under=minecraft:sand"
     ],
     "villagePieces": ["field1", "field2"],
-    "villagePiecesAreBlacklist": true
+    "villagePiecesAreBlacklist": true,
+    "villagePlotsLeast": 12,
+    "villagePlotsMost": 30
   }
 }
 ```
@@ -3487,6 +3489,8 @@ A plain pair is answered where a piece asks the game what it should build from, 
 Roads are never ruled, so the grades, bridges and junction designs still read the road they laid. A template plot lays its own `.nbt` file rather than building the game's way, so rules do not reach inside one; its blocks are the file's own. Plain pairs and rules both work whether or not `terrainAdaptation` is on.
 
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. A pack plot is named by its own template: either the full name, `mypack:big_house`, or just `big_house`, or the plot's own name if you prefer. So a pack can ship ten plots and a world template can drop one of them without touching the other nine. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
+
+`villagePlotsLeast` and `villagePlotsMost` bound how many plots a village is built with, counting houses, farms and pack plots, never roads, torches or the well. A village that lays out under the minimum is regrown at a larger size, a few tries, and the largest layout wins, so cramped terrain can still fall short of the ask. At the maximum the village stops growing outright: no more buildings and no more roads. `0` on either end keeps vanilla behavior there.
 
 #### Village roads
 

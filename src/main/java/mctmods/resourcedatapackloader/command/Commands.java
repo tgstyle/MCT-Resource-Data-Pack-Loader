@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.server.MinecraftServer;
@@ -79,6 +80,10 @@ import javax.annotation.Nullable;
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_SUBCOMMANDS); }
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_SUBCOMMANDS); }
         if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { return getListOfStringsMatchingLastWord(args, biomeNames()); }
+        if (args.length >= 2 && FORWARDED.contains(args[0]) && server != null) {
+            ICommand target = server.getCommandManager().getCommands().get("rdplserver");
+            if (target != null) { return target.getTabCompletions(server, sender, args, targetPos); }
+        }
         return Collections.emptyList();
     }
 

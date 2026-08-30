@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 
@@ -18,19 +19,33 @@ import java.util.List;
 
 @Mixin(StructureComponent.class) public abstract class MixinStructureComponent {
     @Inject(method = "findIntersecting", at = @At("HEAD"), cancellable = true) private static void rdpl$betweenBuildings(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn, CallbackInfoReturnable<StructureComponent> cir) {
-        if (!ContentBeard.spacedLayout()) { return; }
+        if (!ContentBeard.spacedLayout()) {
+            if (!CityGrowth.laying()) { return; }
+            for (StructureComponent piece : listIn) {
+                StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
+                if (held != null && rdpl$flatHit(held, boundingboxIn, 0)) {
+                    cir.setReturnValue(piece);
+                    return;
+                }
+            }
+            cir.setReturnValue(null);
+            return;
+        }
 
-        StructureBoundingBox grown = new StructureBoundingBox(boundingboxIn.minX - 1, 0, boundingboxIn.minZ - 1, boundingboxIn.maxX + 1, 255, boundingboxIn.maxZ + 1);
         for (StructureComponent piece : listIn) {
             StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
             if (held == null) { continue; }
             boolean flush = piece instanceof StructureVillagePieces.Path || piece instanceof StructureVillagePieces.Well;
-            if (held.intersectsWith(flush ? boundingboxIn : grown)) {
+            if (rdpl$flatHit(held, boundingboxIn, flush ? 0 : 1)) {
                 cir.setReturnValue(piece);
                 return;
             }
         }
         cir.setReturnValue(null);
+    }
+
+    private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) {
+        return held.maxX >= box.minX - gap && held.minX <= box.maxX + gap && held.maxZ >= box.minZ - gap && held.minZ <= box.maxZ + gap;
     }
 
     @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z"))

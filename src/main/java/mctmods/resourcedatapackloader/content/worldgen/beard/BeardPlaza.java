@@ -115,6 +115,7 @@ public final class BeardPlaza {
                 IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()), true);
                 IBlockState held = band > reach - walk ? sidewalk : lines > 0 && band == reach - walk ? line : natural;
                 if (held != natural && BeardPlots.roadCore(start, piece, x, z)) { held = natural; }
+                else if (held != natural && lines > 0 && BeardPlots.roadLine(start, piece, x, z)) { held = line; }
                 if (!chosen) { held = natural; }
                 world.setBlockState(at, held, 2);
                 paved++;

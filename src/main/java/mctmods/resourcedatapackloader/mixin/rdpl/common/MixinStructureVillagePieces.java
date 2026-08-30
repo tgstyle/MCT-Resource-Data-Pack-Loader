@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.gen.structure.StructureVillagePieces;
@@ -28,6 +29,16 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         });
     }
 
+    @Inject(method = "generateAndAddComponent", at = @At("HEAD"), cancellable = true) private static void rdpl$plotCap(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        int most = ContentVillages.plotsMost();
+        if (most > 0 && ContentVillages.plots(structureComponents) >= most) { cir.setReturnValue(null); }
+    }
+
+    @Inject(method = "generateAndAddRoadPiece", at = @At("HEAD"), cancellable = true) private static void rdpl$roadCap(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        int most = ContentVillages.plotsMost();
+        if (most > 0 && ContentVillages.plots(structureComponents) >= most) { cir.setReturnValue(null); }
+    }
+
     @ModifyVariable(method = "generateAndAddComponent", at = @At("HEAD"), ordinal = 0, argsOnly = true) private static int rdpl$standBackX(int placed, StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType) { return ContentBeard.wanted() && facing != null ? placed + facing.getXOffset() : placed; }
 
     @ModifyVariable(method = "generateAndAddComponent", at = @At("HEAD"), ordinal = 2, argsOnly = true) private static int rdpl$standBackZ(int placed, StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType) { return ContentBeard.wanted() && facing != null ? placed + facing.getZOffset() : placed; }
@@ -41,13 +52,17 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         StructureComponent placed = cir.getReturnValue();
         if (placed == null || placed instanceof StructureVillagePieces.Path) { return; }
         if (!ContentBeard.wanted() || start == null) { return; }
-        StructureBoundingBox well = start.getBoundingBox();
         StructureBoundingBox box = placed.getBoundingBox();
         int reach = ContentBeard.plazaReach() + 1;
-        if (box.minX > well.maxX + reach || box.maxX < well.minX - reach || box.minZ > well.maxZ + reach || box.maxZ < well.minZ - reach) { return; }
-        ContentLog.LOGGER.debug("{} at {}, {} stands within {} of the well, closer than the plaza paving plus its verge, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, reach);
-        structureComponents.remove(placed);
-        cir.setReturnValue(null);
+        List<StructureBoundingBox> wells = BeardPlots.wellBoxes(structureComponents);
+        if (wells.isEmpty()) { wells.add(start.getBoundingBox()); }
+        for (StructureBoundingBox well : wells) {
+            if (box.minX > well.maxX + reach || box.maxX < well.minX - reach || box.minZ > well.maxZ + reach || box.maxZ < well.minZ - reach) { continue; }
+            ContentLog.LOGGER.debug("{} at {}, {} stands within {} of the well at {}, {}, closer than the plaza paving plus its verge, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, reach, well.minX, well.minZ);
+            structureComponents.remove(placed);
+            cir.setReturnValue(null);
+            return;
+        }
     }
 
     @SuppressWarnings("ConstantConditions") @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$flatterFooting(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {

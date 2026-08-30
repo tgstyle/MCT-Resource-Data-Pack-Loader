@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
-import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
@@ -79,6 +81,11 @@ import javax.annotation.Nullable;
             cir.setReturnValue(null);
             return;
         }
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        if (!rdpl$lineUp(p_175848_1_, found, alongX)) {
+            cir.setReturnValue(null);
+            return;
+        }
         int half = (BeardRoads.pathFullWidth() - 3) / 2;
         if (half > 0) {
             StructureBoundingBox wide = new StructureBoundingBox(found);
@@ -90,22 +97,138 @@ import javax.annotation.Nullable;
                 wide.minZ -= half;
                 wide.maxZ += half;
             }
-            if (StructureComponent.findIntersecting(p_175848_1_, wide) == null) {
-                cir.setReturnValue(wide);
+            if (!rdpl$tooNear(p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing)) {
+                if (ContentBeard.claimCorners(p_175848_1_, wide, alongX)) {
+                    cir.setReturnValue(wide);
+                    return;
+                }
+                ContentLog.LOGGER.debug("A road attempt {} facing {} needs a junction corner that is already taken, so it may only be an alley", wide, facing);
+            }
+            if (!rdpl$joinsRoads(p_175848_1_, found, facing)) {
+                ContentLog.LOGGER.debug("A road attempt {} facing {} could not widen and would be an alley to nowhere, so it is refused", found, facing);
+                cir.setReturnValue(null);
                 return;
             }
         }
-        if (3 < BeardRoads.pathMinimumWidth()) { cir.setReturnValue(null); }
+        if (3 < BeardRoads.pathMinimumWidth()) {
+            cir.setReturnValue(null);
+            return;
+        }
+        if (!ContentBeard.claimCorners(p_175848_1_, found, alongX)) {
+            ContentLog.LOGGER.debug("A road attempt {} facing {} needs a junction corner that is already taken, so it is refused", found, facing);
+            cir.setReturnValue(null);
+        }
+    }
+
+    @Unique private static boolean rdpl$lineUp(List<StructureComponent> pieces, StructureBoundingBox found, boolean alongX) {
+        int center = alongX ? (found.minZ + found.maxZ) / 2 : (found.minX + found.maxX) / 2;
+        int reach = 2 * BeardRoads.pathFullWidth() + 2;
+        for (StructureComponent other : pieces) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox held = other.getBoundingBox();
+            if (BeardPlots.roadAlongX(held) != alongX) { continue; }
+            boolean acrossed = alongX ? held.maxZ >= found.minZ && held.minZ <= found.maxZ : held.maxX >= found.minX && held.minX <= found.maxX;
+            if (!acrossed) { continue; }
+            int gap = alongX ? Math.max(held.minX - found.maxX, found.minX - held.maxX) : Math.max(held.minZ - found.maxZ, found.minZ - held.maxZ);
+            if (gap < 2 || gap > reach) { continue; }
+            int delta = (alongX ? (held.minZ + held.maxZ) / 2 : (held.minX + held.maxX) / 2) - center;
+            if (delta == 0) { continue; }
+            StructureBoundingBox slid = new StructureBoundingBox(found);
+            if (alongX) {
+                slid.minZ += delta;
+                slid.maxZ += delta;
+            }
+            else {
+                slid.minX += delta;
+                slid.maxX += delta;
+            }
+            for (StructureComponent taken : pieces) {
+                if (taken.getBoundingBox().intersectsWith(slid.minX, slid.minZ, slid.maxX, slid.maxZ)) {
+                    ContentLog.LOGGER.debug("A road attempt {} cannot slide {} to line up with the road at {}, {} across the junction, so it is refused", found, delta, held.minX, held.minZ);
+                    return false;
+                }
+            }
+            ContentLog.LOGGER.debug("A road attempt {} slides {} to line up with the road at {}, {} across the junction", found, delta, held.minX, held.minZ);
+            if (alongX) {
+                found.minZ = slid.minZ;
+                found.maxZ = slid.maxZ;
+            }
+            else {
+                found.minX = slid.minX;
+                found.maxX = slid.maxX;
+            }
+            return true;
+        }
+        return true;
+    }
+
+    @Unique private static boolean rdpl$tooNear(List<StructureComponent> pieces, StructureBoundingBox wide, EnumFacing facing) {
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        int minGap = 2 * ContentVillages.largestPlot();
+        for (StructureComponent other : pieces) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox held = other.getBoundingBox();
+            if (BeardPlots.roadAlongX(held) != alongX) { continue; }
+            if (Math.min(held.maxX - held.minX, held.maxZ - held.minZ) + 1 <= 3) { continue; }
+            int alongOverlap = Math.min(alongX ? wide.maxX : wide.maxZ, alongX ? held.maxX : held.maxZ) - Math.max(alongX ? wide.minX : wide.minZ, alongX ? held.minX : held.minZ);
+            if (alongOverlap < 0) { continue; }
+            int acrossGap = Math.max((alongX ? held.minZ : held.minX) - (alongX ? wide.maxZ : wide.maxX), (alongX ? wide.minZ : wide.minX) - (alongX ? held.maxZ : held.maxX));
+            if (acrossGap > 0 && acrossGap < minGap) {
+                ContentLog.LOGGER.debug("A road attempt {} facing {} would run {} blocks beside the road at {}, {}, under the {} block spacing two plots need, so it may only be an alley", wide, facing, acrossGap, held.minX, held.minZ, minGap);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Unique private static boolean rdpl$widensPast(List<StructureComponent> pieces, StructureBoundingBox wide, EnumFacing facing) {
+        List<StructureBoundingBox> plazas = BeardPlots.plazaSquares(pieces);
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        for (StructureComponent other : pieces) {
+            StructureBoundingBox held = other.getBoundingBox();
+            if (!held.intersectsWith(wide.minX, wide.minZ, wide.maxX, wide.maxZ)) { continue; }
+            if (plazas.isEmpty() || !(other instanceof StructureVillagePieces.Path)) { return false; }
+            if (BeardPlots.roadAlongX(held) == alongX) { return false; }
+            boolean covered = false;
+            for (StructureBoundingBox plaza : plazas) {
+                if (Math.max(wide.minX, held.minX) < plaza.minX || Math.min(wide.maxX, held.maxX) > plaza.maxX) { continue; }
+                if (Math.max(wide.minZ, held.minZ) < plaza.minZ || Math.min(wide.maxZ, held.maxZ) > plaza.maxZ) { continue; }
+                covered = true;
+                break;
+            }
+            if (!covered) { return false; }
+        }
+        return true;
+    }
+
+    @Unique private static boolean rdpl$joinsRoads(List<StructureComponent> pieces, StructureBoundingBox alley, EnumFacing facing) {
+        int minX = alley.minX;
+        int maxX = alley.maxX;
+        int minZ = alley.minZ;
+        int maxZ = alley.maxZ;
+        switch (facing) {
+            case NORTH: minZ = maxZ = alley.minZ - 1; break;
+            case SOUTH: minZ = maxZ = alley.maxZ + 1; break;
+            case WEST: minX = maxX = alley.minX - 1; break;
+            default: minX = maxX = alley.maxX + 1;
+        }
+        for (StructureComponent other : pieces) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            if (other.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return true; }
+        }
+        return false;
     }
 
     @Unique private static boolean rdpl$acrossPlaza(List<StructureComponent> components, StructureBoundingBox road) {
-        if (!BeardRoads.pathChosen() || components.isEmpty()) { return false; }
-        StructureBoundingBox well = components.get(0).getBoundingBox();
+        if (!BeardRoads.pathChosen()) { return false; }
         int reach = BeardRoads.pathFullWidth();
-        if (road.maxX < well.minX - reach || road.minX > well.maxX + reach || road.maxZ < well.minZ - reach || road.minZ > well.maxZ + reach) { return false; }
-        boolean alongX = road.maxX - road.minX >= road.maxZ - road.minZ;
-        boolean radial = alongX ? road.maxZ >= well.minZ && road.minZ <= well.maxZ : road.maxX >= well.minX && road.minX <= well.maxX;
-        return !radial;
+        for (StructureBoundingBox well : BeardPlots.wellBoxes(components)) {
+            if (road.maxX < well.minX - reach || road.minX > well.maxX + reach || road.maxZ < well.minZ - reach || road.minZ > well.maxZ + reach) { continue; }
+            boolean alongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+            boolean radial = alongX ? road.maxZ >= well.minZ && road.minZ <= well.maxZ : road.maxX >= well.minX && road.minX <= well.maxX;
+            if (!radial) { return true; }
+        }
+        return false;
     }
 
     @Redirect(method = "addComponentParts", at = @At(value = "INVOKE",

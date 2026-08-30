@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 
 import net.minecraft.util.EnumFacing;
@@ -118,6 +119,47 @@ public final class BeardPlots {
         }
         return false;
     }
+    public static List<StructureBoundingBox> wellBoxes(@Nullable List<StructureComponent> pieces) {
+        List<StructureBoundingBox> wells = new ArrayList<>();
+        if (pieces == null || pieces.isEmpty() || !(pieces.get(0) instanceof StructureVillagePieces.Start)) { return wells; }
+        for (StructureComponent piece : pieces) {
+            if (piece instanceof StructureVillagePieces.Well) { wells.add(piece.getBoundingBox()); }
+        }
+        return wells;
+    }
+
+    public static List<StructureBoundingBox> plazaSquares(@Nullable List<StructureComponent> pieces) {
+        List<StructureBoundingBox> squares = wellBoxes(pieces);
+        int reach = ContentBeard.plazaReach();
+        for (int i = 0; i < squares.size(); i++) {
+            StructureBoundingBox well = squares.get(i);
+            squares.set(i, new StructureBoundingBox(well.minX - reach, well.minY, well.minZ - reach, well.maxX + reach, well.maxY, well.maxZ + reach));
+        }
+        return squares;
+    }
+
+    public static boolean insidePlaza(@Nullable List<StructureComponent> pieces, int x, int z) {
+        for (StructureBoundingBox plaza : plazaSquares(pieces)) {
+            if (x >= plaza.minX && x <= plaza.maxX && z >= plaza.minZ && z <= plaza.maxZ) { return true; }
+        }
+        return false;
+    }
+
+    public static boolean roadLine(StructureStart start, StructureComponent piece, int x, int z) {
+        for (StructureComponent other : start.getComponents()) {
+            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox box = other.getBoundingBox();
+            if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
+            boolean alongX = roadAlongX(other);
+            int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+            int offset = Math.abs((alongX ? z : x) - center);
+            int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
+            int core = Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2);
+            if (offset > core && offset <= core + BeardRoads.pathLineColumns() && offset <= (span - 1) / 2) { return true; }
+        }
+        return false;
+    }
+
     public static boolean roadCore(StructureStart start, StructureComponent piece, int x, int z) {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }

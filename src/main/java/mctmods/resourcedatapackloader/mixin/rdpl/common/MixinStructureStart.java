@@ -48,10 +48,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "generateStructure", at = @At("RETURN")) private void rdpl$plaza(World worldIn, Random rand, StructureBoundingBox structurebb, CallbackInfo ci) {
         StructureStart self = StructureStart.class.cast(this);
         if (!ContentBeard.wanted() || self.getComponents().isEmpty()) { return; }
-        StructureComponent well = self.getComponents().get(0);
-        if (!(well instanceof StructureVillagePieces.Start)) { return; }
+        if (!(self.getComponents().get(0) instanceof StructureVillagePieces.Start)) { return; }
         ContentBeard.building(self);
-        try { ContentBeard.wellPlaza(self, well, worldIn, structurebb); }
+        try {
+            for (StructureComponent well : self.getComponents()) {
+                if (well instanceof StructureVillagePieces.Well) { ContentBeard.wellPlaza(self, well, worldIn, structurebb); }
+            }
+        }
         finally { ContentBeard.building(null); }
     }
 

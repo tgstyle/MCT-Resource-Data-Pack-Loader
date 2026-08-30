@@ -3465,7 +3465,9 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
       "minecraft:planks=minecraft:sandstone,100,under=minecraft:sand"
     ],
     "villagePieces": ["field1", "field2"],
-    "villagePiecesAreBlacklist": true
+    "villagePiecesAreBlacklist": true,
+    "villagePlotsLeast": 12,
+    "villagePlotsMost": 30
   }
 }
 ```
@@ -3487,6 +3489,8 @@ Ein schlichtes Paar wird dort beantwortet, wo ein Teil das Spiel fragt, woraus e
 Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterhin den Weg lesen, den sie verlegt haben. Ein Vorlagen-Grundstück setzt seine eigene `.nbt`-Datei, statt auf die Art des Spiels zu bauen; Regeln reichen also nicht in eines hinein, seine Blöcke sind die der Datei. Schlichte Paare wie Regeln wirken, ob `terrainAdaptation` an ist oder nicht.
 
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Ein Pack-Grundstück wird über seine eigene Vorlage benannt: entweder mit dem vollen Namen, `meinpack:big_house`, oder einfach `big_house`, oder wahlweise über den Namen des Grundstücks selbst. Ein Pack kann also zehn Grundstücke mitbringen, und eine Weltvorlage lässt eines davon weg, ohne die anderen neun anzurühren. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
+
+`villagePlotsLeast` und `villagePlotsMost` begrenzen, mit wie vielen Grundstücken ein Dorf gebaut wird. Gezählt werden Häuser, Felder und Pack-Grundstücke, nie Straßen, Fackeln oder der Brunnen. Ein Dorf, das unter dem Minimum bleibt, wird in größerem Zuschnitt neu angelegt, einige Versuche lang, und der größte Entwurf gewinnt, auf engem Gelände kann es also trotzdem darunter bleiben. Beim Maximum hört das Dorf ganz auf zu wachsen: keine weiteren Gebäude und keine weiteren Straßen. `0` lässt das jeweilige Ende bei Vanilla.
 
 #### Dorfwege
 

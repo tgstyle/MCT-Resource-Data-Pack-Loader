@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSites;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;

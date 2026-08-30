@@ -141,13 +141,15 @@ public final class BeardGround {
         int courses = ContentBeard.groundCourse(piece);
         int yardTop = courses > 0 ? box.minY + courses - 1 : Integer.MIN_VALUE;
         int ceiling = Math.max(box.minY + 12, box.maxY + 1);
+        int lid = roadway ? Math.max(ceiling, box.maxY + 13) : ceiling;
+        int floor = roadway ? box.minY - 12 : box.minY + 1;
         int sunk = ContentBeard.footingSink(piece);
         for (int x = box.minX - 2; x <= box.maxX + 2; x++) {
             for (int z = box.minZ - 2; z <= box.maxZ + 2; z++) {
                 if (!roadway && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { continue; }
                 if (BeardPlots.underRoad(start, piece, x, z)) { continue; }
-                int bed = BeardGround.roadTop(world, start, at, x, z, box.minY + 1, ceiling);
-                for (int y = bed == Integer.MIN_VALUE ? box.minY + 1 + sunk : bed + 1; y <= ceiling; y++) {
+                int bed = BeardGround.roadTop(world, start, at, x, z, floor, lid);
+                for (int y = bed == Integer.MIN_VALUE ? box.minY + 1 + sunk : bed + 1; y <= lid; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at)) { continue; }
                     if (BeardPlots.insideAnother(start, piece, at)) {
@@ -161,6 +163,7 @@ public final class BeardGround {
                         opened += BeardBlocks.clearAt(world, at);
                     }
                     else if (roadway && material == Material.VINE) { opened += BeardBlocks.clearAt(world, at); }
+                    else if (roadway && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && BeardBlocks.overhang(held)) { opened += BeardBlocks.clearAt(world, at); }
                     else if (BeardBlocks.overhang(held)) { overhangs.add(at.toImmutable()); }
                     else if (material != Material.AIR) { notGround++; }
                 }

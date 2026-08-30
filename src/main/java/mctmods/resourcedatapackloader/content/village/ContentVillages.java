@@ -116,6 +116,33 @@ public final class ContentVillages {
 
     private static boolean present(VillageDef def) { return ContentRegistry.available(def.requires, def.registryName); }
 
+    public static int plotsLeast() {
+        int least = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsLeast", Config.worldgen.villagePlotsLeast));
+        int most = plotsMost();
+        return most > 0 ? Math.min(least, most) : least;
+    }
+
+    public static int plotsMost() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsMost", Config.worldgen.villagePlotsMost)); }
+
+    public static int plots(List<StructureComponent> components) {
+        int count = 0;
+        for (StructureComponent piece : components) {
+            if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
+            if (piece instanceof StructureVillagePieces.Road || piece instanceof StructureVillagePieces.Torch || piece instanceof StructureVillagePieces.Well) { continue; }
+            count++;
+        }
+        return count;
+    }
+
+    public static int largestPlot() {
+        int largest = 13;
+        for (VillageDef def : DEFS.values()) {
+            if (!present(def) || blocked(def)) { continue; }
+            largest = Math.max(largest, Math.max(def.width, def.depth));
+        }
+        return largest;
+    }
+
     @Nullable public static IBlockState swap(IBlockState original) {
         WorldTemplateDef active = ContentWorldTemplates.active();
         if (BLOCKS == null || active != blocksFrom) {

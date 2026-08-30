@@ -14,7 +14,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.content.worldgen.beard.RecurrentPlots;
-import mctmods.resourcedatapackloader.content.worldgen.beard.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillage;
@@ -153,29 +153,31 @@ public final class ContentBeard {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (StructureStart start : starts) {
             if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(clip)) { continue; }
-            BeardRoads.repairRoads(event.getWorld(), start);
-            int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
-            if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
-            int swept = BeardGround.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
-            if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
-            for (StructureComponent piece : start.getComponents()) {
-                if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
-                StructureBoundingBox box = piece.getBoundingBox();
-                if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { continue; }
-                int felled = fellAround(event.getWorld(), start, piece, box, clip, at, false);
-                if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) crowding {} at {}, {}", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
-                if (piece instanceof StructureVillagePieces.Path) {
-                    int[] ring = BeardGround.openOver(start, piece, event.getWorld(), box, clip, at);
-                    if (ring[0] > 0) { ContentLog.LOGGER.debug("Opened {} block(s) over the roadway of Path at {}, {}", ring[0], box.minX, box.minZ); }
-                    lampPosts(start, piece, event.getWorld(), box, clip, at);
-                }
-                else if (!box.intersectsWith(clip)) {
-                    if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {} reaches into chunk {}, {} that its own box misses, so its ring is opened there now", piece.getClass().getSimpleName(), box.minX, box.minZ, event.getChunkX(), event.getChunkZ()); }
-                    building(start);
-                    try { openAround(start, piece, event.getWorld(), clip); }
-                    finally { building(null); }
+            building(start);
+            try {
+                BeardRoads.repairRoads(event.getWorld(), start);
+                int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
+                if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                int swept = BeardGround.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
+                if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                for (StructureComponent piece : start.getComponents()) {
+                    if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
+                    StructureBoundingBox box = piece.getBoundingBox();
+                    if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { continue; }
+                    int felled = fellAround(event.getWorld(), start, piece, box, clip, at, false);
+                    if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) crowding {} at {}, {}", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
+                    if (piece instanceof StructureVillagePieces.Path) {
+                        int[] ring = BeardGround.openOver(start, piece, event.getWorld(), box, clip, at);
+                        if (ring[0] > 0) { ContentLog.LOGGER.debug("Opened {} block(s) over the roadway of Path at {}, {}", ring[0], box.minX, box.minZ); }
+                        lampPosts(start, piece, event.getWorld(), box, clip, at);
+                    }
+                    else if (!box.intersectsWith(clip)) {
+                        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {} reaches into chunk {}, {} that its own box misses, so its ring is opened there now", piece.getClass().getSimpleName(), box.minX, box.minZ, event.getChunkX(), event.getChunkZ()); }
+                        openAround(start, piece, event.getWorld(), clip);
+                    }
                 }
             }
+            finally { building(null); }
         }
     }
 
@@ -265,8 +267,8 @@ public final class ContentBeard {
             int meeting = alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ);
             if (meeting >= from && meeting <= to && !along.contains(meeting)) { along.add(meeting); }
         }
-        int reach = (BeardRoads.pathFullWidth() - 3) / 2;
-        int off = BeardRoads.pathSidewalkWidth() > 0 ? reach : reach + 1;
+        int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
+        int off = BeardRoads.pathSidewalkWidth() > 0 && span == BeardRoads.pathFullWidth() ? 0 : 1;
         BeardRoads.Grade grade = piece instanceof RoadLayout ? ((RoadLayout) piece).rdpl$layout() : null;
         if (grade == null) { grade = BeardRoads.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true); }
         int raised = 0;
@@ -298,12 +300,7 @@ public final class ContentBeard {
         return false;
     }
 
-    private static boolean inPlaza(StructureStart start, int x, int z) {
-        if (start.getComponents().isEmpty()) { return false; }
-        StructureBoundingBox well = start.getComponents().get(0).getBoundingBox();
-        int reach = plazaReach();
-        return x >= well.minX - reach && x <= well.maxX + reach && z >= well.minZ - reach && z <= well.maxZ + reach;
-    }
+    private static boolean inPlaza(StructureStart start, int x, int z) { return BeardPlots.insidePlaza(start.getComponents(), x, z); }
 
     private static boolean onPaving(StructureStart start, StructureComponent piece, int x, int z) {
         int reach = (BeardRoads.pathFullWidth() - 3) / 2;
@@ -312,7 +309,12 @@ public final class ContentBeard {
             StructureBoundingBox held = ((IStructureComponentBox) other).rdpl$box();
             if (held == null) { continue; }
             if (other == piece) {
-                if (x >= held.minX && x <= held.maxX && z >= held.minZ && z <= held.maxZ) { return true; }
+                if (x < held.minX || x > held.maxX || z < held.minZ || z > held.maxZ) { continue; }
+                boolean alongX = BeardPlots.roadAlongX(held);
+                int center = alongX ? (held.minZ + held.maxZ) / 2 : (held.minX + held.maxX) / 2;
+                int span = (alongX ? held.maxZ - held.minZ : held.maxX - held.minX) + 1;
+                int roadway = Math.min((span - 1) / 2, 1 + BeardRoads.pathExtraWidth() + BeardRoads.pathLineColumns());
+                if (Math.abs((alongX ? z : x) - center) <= roadway) { return true; }
                 continue;
             }
             if (x >= held.minX - reach && x <= held.maxX + reach && z >= held.minZ - reach && z <= held.maxZ + reach) { return true; }
@@ -339,7 +341,21 @@ public final class ContentBeard {
             if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
         }
         int stood = bed;
-        if (roadTop > bed) { bed = roadTop; }
+        at.setPos(x, stood, z);
+        if (roadTop != Integer.MIN_VALUE && roadTop != bed && BeardBlocks.terrainBlock(world.getBlockState(at).getBlock())) { bed = roadTop; }
+        if (bed < stood) {
+            for (int y = stood; y > bed; y--) {
+                at.setPos(x, y, z);
+                if (!clip.isVecInside(at) || BeardKeep.holds(x, y, z)) { return false; }
+                if (!BeardBlocks.terrainBlock(world.getBlockState(at).getBlock())) { return false; }
+                BeardBlocks.clearAt(world, at);
+            }
+        }
+        while (bed > box.minY - 3 && world.getBlockState(at.setPos(x, bed, z)).getBlock() == Blocks.AIR) {
+            IBlockState under = world.getBlockState(at.setPos(x, bed - 1, z));
+            if (!under.getMaterial().isSolid() || BeardBlocks.terrainBlock(under.getBlock())) { break; }
+            bed--;
+        }
         for (int y = bed + 1; y <= bed + 4; y++) {
             at.setPos(x, y, z);
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
@@ -347,10 +363,8 @@ public final class ContentBeard {
             if (!world.getBlockState(at).getMaterial().isReplaceable() && world.getBlockState(at).getMaterial() != Material.AIR) { return false; }
         }
         if (beforeADoor(world, clip, at, x, bed, z)) { return false; }
-        if (bed > stood) { BeardBlocks.fillBank(world, at, x, z, bed, stood + 1, false); }
         at.setPos(x, bed, z);
-        if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
-        for (int y = stood; y <= bed; y++) { BeardKeep.holdSpot(x, y, z); }
+        if (bed == stood && !world.getBlockState(at).getMaterial().isSolid()) { return false; }
         for (int y = bed + 1; y <= bed + 3; y++) {
             at.setPos(x, y, z);
             world.setBlockState(at, Blocks.OAK_FENCE.getDefaultState(), 2);
@@ -469,13 +483,20 @@ public final class ContentBeard {
             if (met == null) { continue; }
             boolean lined = alongX ? met.maxZ >= box.minZ && met.minZ <= box.maxZ : met.maxX >= box.minX && met.minX <= box.maxX;
             if (!lined) { continue; }
+            if (BeardPlots.roadAlongX(other) == alongX) {
+                int ownCenter = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+                int metCenter = alongX ? (met.minZ + met.maxZ) / 2 : (met.minX + met.maxX) / 2;
+                if (ownCenter != metCenter) { continue; }
+            }
             int ahead = alongX ? met.minX - box.maxX : met.minZ - box.maxZ;
             int behind = alongX ? box.minX - met.maxX : box.minZ - met.maxZ;
-            if (ahead > 1 && ahead <= ATTACH_GAP && free(start, piece, box, alongX, met)) {
+            int from = alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ);
+            int to = alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ);
+            if (ahead > 1 && ahead <= ATTACH_GAP && free(start.getComponents(), piece, box, alongX, from, to)) {
                 if (alongX) { box.maxX = met.minX - 1; }
                 else { box.maxZ = met.minZ - 1; }
             }
-            else if (behind > 1 && behind <= ATTACH_GAP && free(start, piece, box, alongX, met)) {
+            else if (behind > 1 && behind <= ATTACH_GAP && free(start.getComponents(), piece, box, alongX, from, to)) {
                 if (alongX) { box.minX = met.maxX + 1; }
                 else { box.minZ = met.maxZ + 1; }
             }
@@ -483,40 +504,86 @@ public final class ContentBeard {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
-            if (met == null) { continue; }
-            boolean otherAlongX = BeardPlots.roadAlongX(other);
-            if (otherAlongX == alongX) { continue; }
-            int acrossLeast = alongX ? box.minZ : box.minX;
-            int acrossMost = alongX ? box.maxZ : box.maxX;
-            int metAlongLeast = otherAlongX ? met.minX : met.minZ;
-            int metAlongMost = otherAlongX ? met.maxX : met.maxZ;
-            if (metAlongMost < acrossLeast - 1 || metAlongLeast > acrossMost + 1) { continue; }
-            int metAcrossLeast = otherAlongX ? met.minZ : met.minX;
-            int metAcrossMost = otherAlongX ? met.maxZ : met.maxX;
-            int least = alongX ? box.minX : box.minZ;
-            int most = alongX ? box.maxX : box.maxZ;
-            if (least > metAcrossLeast && least <= metAcrossMost) {
-                if (alongX) { box.minX = metAcrossLeast; }
-                else { box.minZ = metAcrossLeast; }
-                ContentLog.LOGGER.debug("The road at {}, {} squares its corner back from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, least, metAcrossLeast, met.minX, met.minZ);
-            }
-            if (most < metAcrossMost && most >= metAcrossLeast) {
-                if (alongX) { box.maxX = metAcrossMost; }
-                else { box.maxZ = metAcrossMost; }
-                ContentLog.LOGGER.debug("The road at {}, {} squares its corner out from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, most, metAcrossMost, met.minX, met.minZ);
-            }
+            if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
+            square(start.getComponents(), piece, box, alongX, met);
         }
     }
 
-    private static boolean free(StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean alongX, StructureBoundingBox met) {
-        int least = alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ);
-        int most = alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ);
-        for (StructureComponent other : start.getComponents()) {
-            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
+    @Nullable private static int[] cornerRows(StructureBoundingBox box, boolean alongX, StructureBoundingBox met, boolean back) {
+        int acrossLeast = alongX ? box.minZ : box.minX;
+        int acrossMost = alongX ? box.maxZ : box.maxX;
+        int metAlongLeast = alongX ? met.minZ : met.minX;
+        int metAlongMost = alongX ? met.maxZ : met.maxX;
+        if (metAlongMost < acrossLeast - 1 || metAlongLeast > acrossMost + 1) { return null; }
+        int metAcrossLeast = alongX ? met.minX : met.minZ;
+        int metAcrossMost = alongX ? met.maxX : met.maxZ;
+        if (back) {
+            int least = alongX ? box.minX : box.minZ;
+            return least > metAcrossLeast && least <= metAcrossMost ? new int[] { metAcrossLeast, least - 1 } : null;
+        }
+        int most = alongX ? box.maxX : box.maxZ;
+        return most < metAcrossMost && most >= metAcrossLeast ? new int[] { most + 1, metAcrossMost } : null;
+    }
+
+    private static boolean square(List<StructureComponent> pieces, @Nullable StructureComponent piece, StructureBoundingBox box, boolean alongX, StructureBoundingBox met) {
+        boolean grew = false;
+        int[] backRows = cornerRows(box, alongX, met, true);
+        if (backRows != null) {
+            if (free(pieces, piece, box, alongX, backRows[0], backRows[1])) {
+                if (alongX) { box.minX = backRows[0]; }
+                else { box.minZ = backRows[0]; }
+                grew = true;
+                ContentLog.LOGGER.debug("The road at {}, {} squares its corner back from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, backRows[1] + 1, backRows[0], met.minX, met.minZ);
+            }
+            else { ContentLog.LOGGER.debug("The road at {}, {} keeps its corner at {} rather than squaring to {}, those rows being taken", box.minX, box.minZ, backRows[1] + 1, backRows[0]); }
+        }
+        int[] outRows = cornerRows(box, alongX, met, false);
+        if (outRows != null) {
+            if (free(pieces, piece, box, alongX, outRows[0], outRows[1])) {
+                if (alongX) { box.maxX = outRows[1]; }
+                else { box.maxZ = outRows[1]; }
+                grew = true;
+                ContentLog.LOGGER.debug("The road at {}, {} squares its corner out from {} to {} to line up with the road at {}, {}", box.minX, box.minZ, outRows[0] - 1, outRows[1], met.minX, met.minZ);
+            }
+            else { ContentLog.LOGGER.debug("The road at {}, {} keeps its corner at {} rather than squaring to {}, those rows being taken", box.minX, box.minZ, outRows[0] - 1, outRows[1]); }
+        }
+        return grew;
+    }
+
+    public static boolean claimCorners(List<StructureComponent> pieces, StructureBoundingBox box, boolean alongX) {
+        for (StructureComponent other : pieces) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
+            int[] back = cornerRows(box, alongX, met, true);
+            if (back != null && !free(pieces, null, box, alongX, back[0], back[1])) { return false; }
+            int[] out = cornerRows(box, alongX, met, false);
+            if (out != null && !free(pieces, null, box, alongX, out[0], out[1])) { return false; }
+            int[] metBack = cornerRows(met, !alongX, box, true);
+            if (metBack != null && !free(pieces, other, met, !alongX, metBack[0], metBack[1])) { return false; }
+            int[] metOut = cornerRows(met, !alongX, box, false);
+            if (metOut != null && !free(pieces, other, met, !alongX, metOut[0], metOut[1])) { return false; }
+        }
+        for (StructureComponent other : pieces) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
+            square(pieces, null, box, alongX, met);
+            if (square(pieces, other, met, !alongX, box) && other instanceof RoadLayout) { ((RoadLayout) other).rdpl$layout(null); }
+        }
+        return true;
+    }
+
+    private static boolean free(List<StructureComponent> pieces, @Nullable StructureComponent piece, StructureBoundingBox box, boolean alongX, int least, int most) {
+        for (StructureComponent other : pieces) {
+            if (other == piece) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
             boolean acrossed = alongX ? held.maxZ >= box.minZ && held.minZ <= box.maxZ : held.maxX >= box.minX && held.minX <= box.maxX;
             boolean along = alongX ? held.maxX >= least && held.minX <= most : held.maxZ >= least && held.minZ <= most;
-            if (acrossed && along) { return false; }
+            if (!acrossed || !along) { continue; }
+            if (!(other instanceof StructureVillagePieces.Path)) { return false; }
+            if (BeardPlots.roadAlongX(other) != alongX) { continue; }
+            return false;
         }
         return true;
     }
