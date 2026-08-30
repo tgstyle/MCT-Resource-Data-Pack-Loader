@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
@@ -393,7 +394,7 @@ public final class ContentBeard {
 
     public static int lowestIn(World worldIn, int minX, int minZ, int maxX, int maxZ, StructureBoundingBox clip) { return BeardSite.lowestIn(worldIn, minX, minZ, maxX, maxZ, clip); }
 
-    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink) { return BeardSite.footingMisfit(box, pieces, sink); }
+    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink) { return BeardSite.footingMisfit(box, pieces, sink, CityGrowth.give()); }
 
     public static int footingSink(StructureComponent piece) {
         if (piece instanceof RecurrentVillagePiece) { return ((RecurrentVillagePiece) piece).footingSink(); }

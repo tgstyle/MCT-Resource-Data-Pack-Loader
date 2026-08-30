@@ -206,7 +206,7 @@ public final class BeardSite {
         }
         return highest - lowest;
     }
-    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink) {
+    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink, int give) {
         int spread = footingSpread(box);
         if (spread == Integer.MAX_VALUE) { return spread; }
         World world = ContentBeard.samplerWorld;
@@ -224,7 +224,7 @@ public final class BeardSite {
                     int ground = BeardSurface.surfaceAt(world, Math.min(x, box.maxX), Math.min(z, box.maxZ));
                     if (ground < 0) { return Integer.MAX_VALUE; }
                     int gap = stand - ground;
-                    if (gap > 2 + sink || -gap > 2 || spread > 2) { return Integer.MAX_VALUE; }
+                    if (gap > 2 + sink + give || -gap > 2 + give || spread > 2 + give) { return Integer.MAX_VALUE; }
                     total += Math.abs(gap);
                 }
             }
