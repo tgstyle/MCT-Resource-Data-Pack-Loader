@@ -3513,7 +3513,8 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathExtraWidth": 1,
     "villagePathMinimumWidth": 0,
     "villagePathFlatRun": 6,
-    "villagePathIntersects": ["mypack:crosswalk"]
+    "villagePathIntersects": ["mypack:crosswalk"],
+    "villagePathPiers": ["railed", "pilings", "boardwalk"]
   }
 }
 ```
@@ -3537,10 +3538,13 @@ Everything below is experimental with the rest of the village work, and only doe
 | `villagePathMinimumWidth` | number | `0` | The narrowest road worth laying. A segment that cannot fit its full dress drops to a bare 3 wide alley; below this width it is not laid at all and the village lays out around it. `0` never refuses |
 | `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighbouring pieces agree. `0` steps every block, as vanilla slopes do |
 | `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
+| `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, from `railed`, `pilings` and `boardwalk`. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
 
 A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
+
+**Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. `railed` keeps the full deck, plain with no lines or sidewalk band, and closes the far end with the barrier block. `pilings` opens the side barriers into posts every fourth row and stands each post row on pilings of the support block driven to the bed below. `boardwalk` narrows the deck to the road's core width and walks out on pilings the same way. The style is rolled from the world seed and the pier's end, so the same world always builds the same pier; the deck is the bridge block, rails and posts the barrier block, and pilings the support block.
 
 **Junction designs.** `villagePathIntersects` names files a pack ships, each one a small picture of what to paint where two roads meet, drawn as rows of single characters, one character to a block.
 

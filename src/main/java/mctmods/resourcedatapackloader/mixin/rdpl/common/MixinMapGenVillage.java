@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.BlockPos;
@@ -29,6 +30,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         World world = ((IMapGenBase) this).rdpl$getWorld();
         if (world == null) { return; }
         CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size);
+        BeardRoads.pierOut(world, cir.getReturnValue());
+        CityGrowth.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
+        ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
     }
 
     @Inject(method = "<init>()V", at = @At("RETURN"))

@@ -161,11 +161,16 @@ public final class ContentVillages {
             loadBlocks();
             blocksFrom = active;
         }
+        IBlockState held = laid;
+        if (!BLOCKS.containsValue(held)) {
+            IBlockState swapped = swap(held);
+            if (swapped != null) { held = swapped; }
+        }
         for (VillageRule rule : RULES) {
-            IBlockState wanted = rule.apply(world, pos, laid);
+            IBlockState wanted = rule.apply(world, pos, held);
             if (wanted != null) { return wanted; }
         }
-        return null;
+        return held == laid ? null : held;
     }
 
     private static void loadBlocks() {

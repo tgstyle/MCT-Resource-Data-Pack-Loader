@@ -164,7 +164,8 @@ public final class ContentBeard {
                 for (StructureComponent piece : start.getComponents()) {
                     if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
                     StructureBoundingBox box = piece.getBoundingBox();
-                    if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { continue; }
+                    int near = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece) ? 6 : 2;
+                    if (box.minX - near > clip.maxX || box.maxX + near < clip.minX || box.minZ - near > clip.maxZ || box.maxZ + near < clip.minZ) { continue; }
                     int felled = fellAround(event.getWorld(), start, piece, box, clip, at, false);
                     if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) crowding {} at {}, {}", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
                     if (piece instanceof StructureVillagePieces.Path) {
@@ -185,7 +186,8 @@ public final class ContentBeard {
     public static void fellFor(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         if (!(piece instanceof StructureVillagePieces.Village)) { return; }
         StructureBoundingBox box = piece.getBoundingBox();
-        if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { return; }
+        int near = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece) ? 6 : 2;
+        if (box.minX - near > clip.maxX || box.maxX + near < clip.minX || box.minZ - near > clip.maxZ || box.maxZ + near < clip.minZ) { return; }
         int felled = fellAround(world, start, piece, box, clip, new BlockPos.MutableBlockPos(), true);
         if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) before {} at {}, {} was built", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
     }
@@ -195,10 +197,13 @@ public final class ContentBeard {
         List<BlockPos> canopy = new ArrayList<>();
         int felled = 0;
         int top = piece instanceof StructureVillagePieces.Well ? box.maxY + 1 : box.maxY;
-        for (int x = box.minX - 2; x <= box.maxX + 2; x++) {
-            for (int z = box.minZ - 2; z <= box.maxZ + 2; z++) {
-                for (int y = box.minY + 1; y <= box.maxY + 16; y++) {
-                    if (!bare && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && y <= top) { continue; }
+        boolean bulb = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece);
+        int reach = bulb ? 6 : 2;
+        int floor = bulb ? box.minY - 8 : box.minY + 1;
+        for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
+            for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
+                for (int y = floor; y <= box.maxY + 16; y++) {
+                    if (!bare && !bulb && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && y <= top) { continue; }
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                     IBlockState held = world.getBlockState(at);
@@ -208,7 +213,7 @@ public final class ContentBeard {
                 }
             }
         }
-        Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, !bare, top);
+        Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, !bare && !bulb, top);
         Set<BlockPos> felledLogs = new HashSet<>();
         for (BlockPos seed : seeds) {
             if (felledLogs.contains(seed)) { continue; }
@@ -252,6 +257,10 @@ public final class ContentBeard {
     private static boolean sustained(World world, BlockPos leaf, Predicate<BlockPos> within) { return BeardGround.sustainer(world, leaf, within) != null; }
 
     private static void lampPosts(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+        if (CityGrowth.bulbWide(piece)) {
+            bulbLamps(start, piece, world, box, clip, at);
+            return;
+        }
         boolean alongX = BeardPlots.roadAlongX(box);
         int from = alongX ? box.minX : box.minZ;
         int to = alongX ? box.maxX : box.maxZ;
@@ -278,7 +287,7 @@ public final class ContentBeard {
             for (int side = 0; side < 2; side++) {
                 int x = alongX ? spot : (side == 0 ? box.minX - off : box.maxX + off);
                 int z = alongX ? (side == 0 ? box.minZ - off : box.maxZ + off) : spot;
-                if (inPlaza(start, x, z) || onPaving(start, piece, x, z)) { continue; }
+                if (lampBlocked(world, start, piece, x, z)) { continue; }
                 if (raise(start, piece, world, clip, at, x, z, box, roadTop)) {
                     raised++;
                     break;
@@ -286,6 +295,32 @@ public final class ContentBeard {
             }
         }
         if (raised > 0) { ContentLog.LOGGER.debug("Raised {} lamp post(s) along the road at {}, {}", raised, box.minX, box.minZ); }
+    }
+
+    private static void bulbLamps(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+        BeardRoads.Bulb bulb = BeardRoads.bulbAt(world, piece);
+        if (bulb == null) { return; }
+        int walk = BeardRoads.pathSidewalkWidth();
+        int ring = walk > 0 ? bulb.r : bulb.r + 1;
+        int spots = Math.max(1, (int) Math.round(2.0D * Math.PI * ring));
+        Random rand = new Random(world.getSeed() ^ ((long) box.minX << 32) ^ box.minZ);
+        int raised = 0;
+        for (int step = 0; step + 4 < spots; step += 7 + rand.nextInt(6)) {
+            double angle = 2.0D * Math.PI * step / spots;
+            int x = Integer.MIN_VALUE;
+            int z = Integer.MIN_VALUE;
+            for (int back = 0; back <= 2 && x == Integer.MIN_VALUE; back++) {
+                int tryX = bulb.cx + (int) Math.round((ring - back) * Math.cos(angle));
+                int tryZ = bulb.cz + (int) Math.round((ring - back) * Math.sin(angle));
+                if (walk > 0 && !bulb.pavedAt(tryX, tryZ)) { continue; }
+                x = tryX;
+                z = tryZ;
+            }
+            if (x == Integer.MIN_VALUE || bulb.throatAt(x, z)) { continue; }
+            if (lampBlocked(world, start, piece, x, z)) { continue; }
+            if (raise(start, piece, world, clip, at, x, z, box, bulb.level)) { raised++; }
+        }
+        if (raised > 0) { ContentLog.LOGGER.debug("Raised {} lamp post(s) around the cul-de-sac at {}, {}", raised, box.minX, box.minZ); }
     }
 
     public static boolean beforeADoor(World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int bed, int z) {
@@ -301,6 +336,15 @@ public final class ContentBeard {
         return false;
     }
 
+    private static boolean lampBlocked(World world, StructureStart start, StructureComponent piece, int x, int z) {
+        if (inPlaza(start, x, z) || onPaving(start, piece, x, z)) { return true; }
+        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
+            if (other == start) { continue; }
+            if (inPlaza(other, x, z) || onPaving(other, piece, x, z)) { return true; }
+        }
+        return false;
+    }
+
     private static boolean inPlaza(StructureStart start, int x, int z) { return BeardPlots.insidePlaza(start.getComponents(), x, z); }
 
     private static boolean onPaving(StructureStart start, StructureComponent piece, int x, int z) {
@@ -310,6 +354,7 @@ public final class ContentBeard {
             StructureBoundingBox held = ((IStructureComponentBox) other).rdpl$box();
             if (held == null) { continue; }
             if (other == piece) {
+                if (CityGrowth.bulbWide(other)) { continue; }
                 if (x < held.minX || x > held.maxX || z < held.minZ || z > held.maxZ) { continue; }
                 boolean alongX = BeardPlots.roadAlongX(held);
                 int center = alongX ? (held.minZ + held.maxZ) / 2 : (held.minX + held.maxX) / 2;
@@ -365,7 +410,7 @@ public final class ContentBeard {
         }
         if (beforeADoor(world, clip, at, x, bed, z)) { return false; }
         at.setPos(x, bed, z);
-        if (bed == stood && !world.getBlockState(at).getMaterial().isSolid()) { return false; }
+        if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
         for (int y = bed + 1; y <= bed + 3; y++) {
             at.setPos(x, y, z);
             world.setBlockState(at, Blocks.OAK_FENCE.getDefaultState(), 2);
@@ -473,6 +518,8 @@ public final class ContentBeard {
 
     private static boolean facing(int gap, int mostGap) { return gap >= FACING_GAP && gap <= mostGap; }
 
+    public static int attachGap() { return Math.max(ATTACH_GAP, BeardRoads.pathFullWidth() + 2); }
+
     public static void attach(StructureStart start, StructureComponent piece) {
         if (!(piece instanceof StructureVillagePieces.Path)) { return; }
         StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
@@ -491,13 +538,13 @@ public final class ContentBeard {
             }
             int ahead = alongX ? met.minX - box.maxX : met.minZ - box.maxZ;
             int behind = alongX ? box.minX - met.maxX : box.minZ - met.maxZ;
-            int from = alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ);
-            int to = alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ);
-            if (ahead > 1 && ahead <= ATTACH_GAP && free(start.getComponents(), piece, box, alongX, from, to)) {
+            int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
+            int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
+            if (ahead > 1 && ahead <= attachGap() && free(start.getComponents(), piece, box, alongX, from, to) && !crossingIn(start.getComponents(), piece, other, alongX, from, to, box)) {
                 if (alongX) { box.maxX = met.minX - 1; }
                 else { box.maxZ = met.minZ - 1; }
             }
-            else if (behind > 1 && behind <= ATTACH_GAP && free(start.getComponents(), piece, box, alongX, from, to)) {
+            else if (behind > 1 && behind <= attachGap() && free(start.getComponents(), piece, box, alongX, from, to) && !crossingIn(start.getComponents(), piece, other, alongX, from, to, box)) {
                 if (alongX) { box.minX = met.maxX + 1; }
                 else { box.minZ = met.maxZ + 1; }
             }
@@ -508,6 +555,39 @@ public final class ContentBeard {
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             square(start.getComponents(), piece, box, alongX, met);
         }
+    }
+
+    public static boolean joins(List<StructureComponent> pieces, StructureComponent piece, StructureComponent other) {
+        if (!(piece instanceof StructureVillagePieces.Path) || !(other instanceof StructureVillagePieces.Path)) { return false; }
+        StructureBoundingBox box = piece.getBoundingBox();
+        StructureBoundingBox met = other.getBoundingBox();
+        boolean alongX = BeardPlots.roadAlongX(piece);
+        boolean lined = alongX ? met.maxZ >= box.minZ && met.minZ <= box.maxZ : met.maxX >= box.minX && met.minX <= box.maxX;
+        if (!lined) { return false; }
+        if (BeardPlots.roadAlongX(other) == alongX) {
+            int ownCenter = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+            int metCenter = alongX ? (met.minZ + met.maxZ) / 2 : (met.minX + met.maxX) / 2;
+            if (ownCenter != metCenter) { return false; }
+        }
+        int gap = alongX ? Math.max(met.minX - box.maxX, box.minX - met.maxX) : Math.max(met.minZ - box.maxZ, box.minZ - met.maxZ);
+        if (gap <= 1) { return true; }
+        if (gap > attachGap()) { return false; }
+        int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
+        int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
+        return free(pieces, piece, box, alongX, from, to) && !crossingIn(pieces, piece, other, alongX, from, to, box);
+    }
+
+    private static boolean crossingIn(List<StructureComponent> pieces, StructureComponent piece, StructureComponent met, boolean alongX, int from, int to, StructureBoundingBox box) {
+        int minX = alongX ? from : box.minX;
+        int maxX = alongX ? to : box.maxX;
+        int minZ = alongX ? box.minZ : from;
+        int maxZ = alongX ? box.maxZ : to;
+        for (StructureComponent other : pieces) {
+            if (other == piece || other == met || !(other instanceof StructureVillagePieces.Path)) { continue; }
+            if (BeardPlots.roadAlongX(other) == alongX) { continue; }
+            if (other.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return true; }
+        }
+        return false;
     }
 
     @Nullable private static int[] cornerRows(StructureBoundingBox box, boolean alongX, StructureBoundingBox met, boolean back) {
@@ -526,9 +606,23 @@ public final class ContentBeard {
         return most < metAcrossMost && most >= metAcrossLeast ? new int[] { most + 1, metAcrossMost } : null;
     }
 
+    private static boolean plazaHeld(List<StructureComponent> pieces, StructureBoundingBox box, boolean alongX, int least, int most) {
+        int acrossLeast = alongX ? box.minZ : box.minX;
+        int acrossMost = alongX ? box.maxZ : box.maxX;
+        for (StructureBoundingBox square : BeardPlots.plazaSquares(pieces)) {
+            int alongLo = alongX ? square.minX : square.minZ;
+            int alongHi = alongX ? square.maxX : square.maxZ;
+            int acrossLo = alongX ? square.minZ : square.minX;
+            int acrossHi = alongX ? square.maxZ : square.maxX;
+            if (least >= alongLo && most <= alongHi && acrossLeast >= acrossLo && acrossMost <= acrossHi) { return true; }
+        }
+        return false;
+    }
+
     private static boolean square(List<StructureComponent> pieces, @Nullable StructureComponent piece, StructureBoundingBox box, boolean alongX, StructureBoundingBox met) {
         boolean grew = false;
         int[] backRows = cornerRows(box, alongX, met, true);
+        if (backRows != null && plazaHeld(pieces, box, alongX, backRows[0], backRows[1])) { backRows = null; }
         if (backRows != null) {
             if (free(pieces, piece, box, alongX, backRows[0], backRows[1])) {
                 if (alongX) { box.minX = backRows[0]; }
@@ -539,6 +633,7 @@ public final class ContentBeard {
             else { ContentLog.LOGGER.debug("The road at {}, {} keeps its corner at {} rather than squaring to {}, those rows being taken", box.minX, box.minZ, backRows[1] + 1, backRows[0]); }
         }
         int[] outRows = cornerRows(box, alongX, met, false);
+        if (outRows != null && plazaHeld(pieces, box, alongX, outRows[0], outRows[1])) { outRows = null; }
         if (outRows != null) {
             if (free(pieces, piece, box, alongX, outRows[0], outRows[1])) {
                 if (alongX) { box.maxX = outRows[1]; }
@@ -557,13 +652,13 @@ public final class ContentBeard {
             StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             int[] back = cornerRows(box, alongX, met, true);
-            if (back != null && !free(pieces, null, box, alongX, back[0], back[1])) { return false; }
+            if (back != null && !plazaHeld(pieces, box, alongX, back[0], back[1]) && !free(pieces, null, box, alongX, back[0], back[1])) { return false; }
             int[] out = cornerRows(box, alongX, met, false);
-            if (out != null && !free(pieces, null, box, alongX, out[0], out[1])) { return false; }
+            if (out != null && !plazaHeld(pieces, box, alongX, out[0], out[1]) && !free(pieces, null, box, alongX, out[0], out[1])) { return false; }
             int[] metBack = cornerRows(met, !alongX, box, true);
-            if (metBack != null && !free(pieces, other, met, !alongX, metBack[0], metBack[1])) { return false; }
+            if (metBack != null && !plazaHeld(pieces, met, !alongX, metBack[0], metBack[1]) && !free(pieces, other, met, !alongX, metBack[0], metBack[1])) { return false; }
             int[] metOut = cornerRows(met, !alongX, box, false);
-            if (metOut != null && !free(pieces, other, met, !alongX, metOut[0], metOut[1])) { return false; }
+            if (metOut != null && !plazaHeld(pieces, met, !alongX, metOut[0], metOut[1]) && !free(pieces, other, met, !alongX, metOut[0], metOut[1])) { return false; }
         }
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }

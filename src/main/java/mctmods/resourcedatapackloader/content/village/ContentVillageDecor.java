@@ -78,8 +78,10 @@ public final class ContentVillageDecor {
 
     private static void place(World world, StructureStart start, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int z) {
         if (x < clip.minX || x > clip.maxX || z < clip.minZ || z > clip.maxZ) { return; }
-        if (BeardPlots.underAnother(start, null, x, z) || BeardPlots.overRoad(start, x, z)) { return; }
-        if (ContentBeard.wanted() && BeardPlots.insidePlaza(start.getComponents(), x, z)) { return; }
+        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
+            if (BeardPlots.underAnother(village, null, x, z) || BeardPlots.overRoad(village, x, z)) { return; }
+            if (ContentBeard.wanted() && BeardPlots.insidePlaza(village.getComponents(), x, z)) { return; }
+        }
         BlockPos origin = GroundLevel.inWindow(world, new BlockPos(x, 0, z));
         int bed = origin.getY();
         if (bed <= 1 || BeardKeep.holds(x, bed, z)) { return; }

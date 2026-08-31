@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
@@ -35,6 +36,10 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
     }
 
     @Inject(method = "generateAndAddRoadPiece", at = @At("HEAD"), cancellable = true) private static void rdpl$roadCap(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        if (CityGrowth.bulbLaying()) {
+            cir.setReturnValue(null);
+            return;
+        }
         int most = ContentVillages.plotsMost();
         if (most > 0 && ContentVillages.plots(structureComponents) >= most) { cir.setReturnValue(null); }
     }
