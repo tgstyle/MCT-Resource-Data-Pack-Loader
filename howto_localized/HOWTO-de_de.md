@@ -3514,7 +3514,9 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathMinimumWidth": 0,
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
-    "villagePathPiers": ["railed", "pilings", "boardwalk"]
+    "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
+    "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
 }
 ```
@@ -3538,13 +3540,31 @@ Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, sola
 | `villagePathMinimumWidth` | Zahl | `0` | Der schmalste Weg, der sich noch lohnt. Ein Stück, das seinen vollen Ausbau nicht unterbringt, fällt auf eine schlichte 3 breite Gasse zurück; unterhalb dieser Breite wird es gar nicht gelegt und das Dorf ordnet sich darum an. `0` lehnt nie ab |
 | `villagePathFlatRun` | Zahl | `6` | Wie viele Blöcke ein Weg eine Höhe hält, bevor er stuft. An Weltkoordinaten verankert, damit benachbarte Stücke übereinstimmen. `0` stuft jeden Block, wie Vanillas Hänge es tun |
 | `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `<namespace>/pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
-| `villagePathPiers` | Liste | keine | Stegformen für eine Straße, die über dem Wasser ins Leere endet, aus `railed`, `pilings` und `boardwalk`. Der überbrückte Auslauf wird zum Steg; mehrere Einträge losen je Steg eine Form aus. Leer bleibt eine solche Brücke eine schlichte Brücke |
+| `villagePathPiers` | Liste | keine | Stegformen für eine Straße, die über dem Wasser ins Leere endet, unten aufgeführt. Der überbrückte Auslauf wird zum Steg; mehrere Einträge losen je Steg eine Form aus. Leer bleibt eine solche Brücke eine schlichte Brücke |
+| `villagePathPierCargo` | Liste | keine | Fracht, die innen an den Geländern eines Stegs steht, als gewichtete Einträge, unten aufgeführt. Jede zweite Reihe jedes Stegs lost die Liste auf beiden Seiten aus, die Gewichte entscheiden also, wie voll ein Steg wirkt. Leer bleibt ein Steg leer |
+| `villagePathPierLoot` | Text | `resourcedatapackloader:chests/pier_cargo` | Die Beutetabelle, aus der Fracht mit Inventar gefüllt wird, ausgelost beim ersten Öffnen. Leer bleibt solche Fracht leer |
 
 Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Randlinien, dann Gehwege. Breiten, die nicht passen, fallen zurück statt überzulaufen, ein schmales Stück verliert also still seinen Gehweg, bevor es seinen Weg verliert.
 
 `villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
 
-**Stege.** Eine Straße, die aufs Wasser hinausläuft und auf nichts endet, wird zum Steg statt zur Brücke ins Nirgendwo, sobald `villagePathPiers` mindestens eine Form nennt. `railed` behält das volle Deck, schlicht ohne Linien und Gehwegband, und schließt das ferne Ende mit dem Geländerblock. `pilings` löst die seitlichen Geländer in Pfosten in jeder vierten Reihe auf und stellt jede Pfostenreihe auf Pfähle aus dem Unterbaublock bis hinab zum Grund. `boardwalk` verschmälert das Deck auf die Kernbreite der Straße und läuft genauso auf Pfählen hinaus. Die Form wird aus dem Weltseed und dem Stegende gelost, dieselbe Welt baut also immer denselben Steg; das Deck ist der Brückenblock, Geländer und Pfosten der Geländerblock, die Pfähle der Unterbaublock.
+**Stege.** Eine Straße, die aufs Wasser hinausläuft und auf nichts endet, wird zum Steg statt zur Brücke ins Nirgendwo, sobald `villagePathPiers` mindestens eine Form nennt. Mehrere Einträge losen je Steg eine Form aus, aus dem Weltseed und dem Stegende, dieselbe Welt baut also immer denselben Steg. Jeder Steg steht auf Pfählen aus dem Unterbaublock, an beiden Deckkanten in jeder vierten Reihe bis hinab zum Grund gerammt, ganz gleich welcher Form. Das Deck ist der Brückenblock, Geländer und Pfosten der Geländerblock, die Pfähle der Unterbaublock.
+
+| Wert | Was er bewirkt |
+| --- | --- |
+| `railed` | Behält das volle Deck, schlicht ohne Linien und Gehwegband, und schließt das ferne Ende mit dem Geländerblock |
+| `pilings` | Löst die seitlichen Geländer in Pfosten in jeder vierten Reihe auf, die genau über diesen Pfählen stehen |
+| `boardwalk` | Verschmälert das Deck auf die Kernbreite der Straße |
+
+**Stegfracht.** `villagePathPierCargo` stellt Fracht auf einen Steg. Jede zweite Reihe lost die Liste einmal je Seite aus, eine Spalte innerhalb der Geländer, damit die Mitte des Decks begehbar bleibt, die abgeschlossene Endreihe frei und nie zwei Frachtstücke nebeneinander stehen, denn zwei Truhen Seite an Seite würden zu einer Doppeltruhe zusammenfallen. Ein Stapel wird nur gesetzt, wo jeder seiner Blöcke Platz hat, und denselben Block zweimal mit verschiedenen Höhen zu nennen ist der Weg zu Stapeln unterschiedlicher Größe.
+
+| Wert | Was er bewirkt |
+| --- | --- |
+| `<block>=<gewicht>` | Ein Block und sein Anteil an den Plätzen, einen Block hoch gestellt |
+| `<block>=<gewicht>,<höhe>` | Derselbe, so viele Blöcke hoch gestapelt, von 1 bis 8 |
+| `empty=<gewicht>` | Der Anteil des Decks, der frei bleibt |
+
+Ein Block mit Beuteinventar, eine Truhe zum Beispiel, wird aus `villagePathPierLoot` gefüllt, ausgelost beim ersten Öffnen, wie es eine Vanilla-Truhe tut. Die eingebaute Tabelle ist leicht zu findendes Strandgut. Ein Pack ersetzt sie, indem es eine eigene `loot_tables/chests/pier_cargo.json` im Namensraum `resourcedatapackloader` mitliefert oder eine eigene Tabelle benennt.
 
 **Kreuzungsmuster.** `villagePathIntersects` nennt Dateien, die ein Pack mitbringt, jede davon ein kleines Bild davon, was dort gemalt wird, wo zwei Straßen sich treffen, gezeichnet als Zeilen aus einzelnen Zeichen, ein Zeichen je Block.
 

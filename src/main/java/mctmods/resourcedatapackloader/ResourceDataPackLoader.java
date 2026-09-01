@@ -27,6 +27,7 @@ import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
 import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
@@ -65,6 +66,7 @@ import mctmods.resourcedatapackloader.registry.RegistryRemaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraft.world.storage.loot.functions.LootFunctionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
@@ -105,6 +107,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
+        LootTableList.register(ContentPierCargo.LOOT_TABLE);
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }

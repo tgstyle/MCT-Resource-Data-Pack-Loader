@@ -94,7 +94,7 @@ public final class ContentEntities {
             try {
                 EntityVariantDef def = ContentParser.entityVariant(key, contents);
                 if (def == null) { return; }
-                if (!present(def)) {
+                if (missing(def)) {
                     ContentLog.LOGGER.debug("Entity variant {} needs {}, which is not here, so it is left out", key, def.requires);
                     return;
                 }
@@ -662,5 +662,5 @@ public final class ContentEntities {
         return entry.getEntityClass().asSubclass(EntityLivingBase.class);
     }
 
-    private static boolean present(EntityVariantDef def) { return ContentRegistry.available(def.requires, def.registryName); }
+    private static boolean missing(EntityVariantDef def) { return !ContentRegistry.available(def.requires, def.registryName); }
 }

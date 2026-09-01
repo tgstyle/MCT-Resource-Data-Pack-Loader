@@ -3514,7 +3514,9 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathMinimumWidth": 0,
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
-    "villagePathPiers": ["railed", "pilings", "boardwalk"]
+    "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
+    "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
 }
 ```
@@ -3538,13 +3540,31 @@ Everything below is experimental with the rest of the village work, and only doe
 | `villagePathMinimumWidth` | number | `0` | The narrowest road worth laying. A segment that cannot fit its full dress drops to a bare 3 wide alley; below this width it is not laid at all and the village lays out around it. `0` never refuses |
 | `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighbouring pieces agree. `0` steps every block, as vanilla slopes do |
 | `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
-| `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, from `railed`, `pilings` and `boardwalk`. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
+| `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, listed below. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
+| `villagePathPierCargo` | list | none | Cargo stood along the inside of a pier's rails, as weighted entries listed below. Every other row of every pier rolls the list on each side, so the weights decide how crowded a pier reads. Empty leaves piers bare |
+| `villagePathPierLoot` | text | `resourcedatapackloader:chests/pier_cargo` | The loot table cargo with an inventory is filled from, rolled the first time it is opened. Empty leaves such cargo empty |
 
 A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
 
-**Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. `railed` keeps the full deck, plain with no lines or sidewalk band, and closes the far end with the barrier block. `pilings` opens the side barriers into posts every fourth row and stands each post row on pilings of the support block driven to the bed below. `boardwalk` narrows the deck to the road's core width and walks out on pilings the same way. The style is rolled from the world seed and the pier's end, so the same world always builds the same pier; the deck is the bridge block, rails and posts the barrier block, and pilings the support block.
+**Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. Several entries roll one style per pier, from the world seed and the pier's end, so the same world always builds the same pier. Every pier stands on pilings of the support block, driven to the bed below at both edges of the deck every fourth row, whatever its style. The deck is the bridge block, rails and posts the barrier block, and pilings the support block.
+
+| Value | What it does |
+| --- | --- |
+| `railed` | Keeps the full deck, plain with no lines or sidewalk band, and closes the far end with the barrier block |
+| `pilings` | Opens the side barriers into posts every fourth row, standing over those same supports |
+| `boardwalk` | Narrows the deck to the road's core width |
+
+**Pier cargo.** `villagePathPierCargo` stands cargo on a pier. Every other row rolls the list once on each side, one column in from the rails, which leaves the middle of the deck clear to walk, never crowds the railed end row, and keeps two pieces of cargo from ever standing side by side, since two chests set touching would pair into one double chest. A stack is laid only where every block of it fits, and naming the same block twice at different heights is how a pier gets piles of mixed size.
+
+| Value | What it does |
+| --- | --- |
+| `<block>=<weight>` | A block and its share of the spots, stood one high |
+| `<block>=<weight>,<height>` | The same, stacked that many blocks high, from 1 to 8 |
+| `empty=<weight>` | The share of deck left clear |
+
+A block that carries a loot inventory, a chest among them, is filled from `villagePathPierLoot`, rolled the first time a player opens it the way a vanilla chest is. The built-in table is easily gathered sea salvage. A pack replaces it by shipping its own `loot_tables/chests/pier_cargo.json` under the `resourcedatapackloader` namespace, or by naming a table of its own.
 
 **Junction designs.** `villagePathIntersects` names files a pack ships, each one a small picture of what to paint where two roads meet, drawn as rows of single characters, one character to a block.
 

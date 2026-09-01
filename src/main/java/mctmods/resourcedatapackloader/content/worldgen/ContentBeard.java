@@ -540,11 +540,11 @@ public final class ContentBeard {
             int behind = alongX ? box.minX - met.maxX : box.minZ - met.maxZ;
             int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
             int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
-            if (ahead > 1 && ahead <= attachGap() && free(start.getComponents(), piece, box, alongX, from, to) && !crossingIn(start.getComponents(), piece, other, alongX, from, to, box)) {
+            if (ahead > 1 && ahead <= attachGap() && free(start.getComponents(), piece, box, alongX, from, to) && uncrossed(start.getComponents(), piece, other, alongX, from, to, box)) {
                 if (alongX) { box.maxX = met.minX - 1; }
                 else { box.maxZ = met.minZ - 1; }
             }
-            else if (behind > 1 && behind <= attachGap() && free(start.getComponents(), piece, box, alongX, from, to) && !crossingIn(start.getComponents(), piece, other, alongX, from, to, box)) {
+            else if (behind > 1 && behind <= attachGap() && free(start.getComponents(), piece, box, alongX, from, to) && uncrossed(start.getComponents(), piece, other, alongX, from, to, box)) {
                 if (alongX) { box.minX = met.maxX + 1; }
                 else { box.minZ = met.maxZ + 1; }
             }
@@ -574,10 +574,10 @@ public final class ContentBeard {
         if (gap > attachGap()) { return false; }
         int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
         int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
-        return free(pieces, piece, box, alongX, from, to) && !crossingIn(pieces, piece, other, alongX, from, to, box);
+        return free(pieces, piece, box, alongX, from, to) && uncrossed(pieces, piece, other, alongX, from, to, box);
     }
 
-    private static boolean crossingIn(List<StructureComponent> pieces, StructureComponent piece, StructureComponent met, boolean alongX, int from, int to, StructureBoundingBox box) {
+    private static boolean uncrossed(List<StructureComponent> pieces, StructureComponent piece, StructureComponent met, boolean alongX, int from, int to, StructureBoundingBox box) {
         int minX = alongX ? from : box.minX;
         int maxX = alongX ? to : box.maxX;
         int minZ = alongX ? box.minZ : from;
@@ -585,9 +585,9 @@ public final class ContentBeard {
         for (StructureComponent other : pieces) {
             if (other == piece || other == met || !(other instanceof StructureVillagePieces.Path)) { continue; }
             if (BeardPlots.roadAlongX(other) == alongX) { continue; }
-            if (other.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return true; }
+            if (other.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return false; }
         }
-        return false;
+        return true;
     }
 
     @Nullable private static int[] cornerRows(StructureBoundingBox box, boolean alongX, StructureBoundingBox met, boolean back) {
@@ -704,6 +704,15 @@ public final class ContentBeard {
             if ("axis".equals(property.getName()) && property.getValueClass() == net.minecraft.util.EnumFacing.Axis.class) {
                 return state.withProperty((net.minecraft.block.properties.IProperty<net.minecraft.util.EnumFacing.Axis>) property, alongX ? net.minecraft.util.EnumFacing.Axis.X : net.minecraft.util.EnumFacing.Axis.Z);
             }
+        }
+        return state;
+    }
+
+    @SuppressWarnings("unchecked") public static IBlockState faced(IBlockState state, EnumFacing facing) {
+        for (net.minecraft.block.properties.IProperty<?> property : state.getPropertyKeys()) {
+            if (!"facing".equals(property.getName()) || property.getValueClass() != EnumFacing.class) { continue; }
+            net.minecraft.block.properties.IProperty<EnumFacing> which = (net.minecraft.block.properties.IProperty<EnumFacing>) property;
+            if (which.getAllowedValues().contains(facing)) { return state.withProperty(which, facing); }
         }
         return state;
     }

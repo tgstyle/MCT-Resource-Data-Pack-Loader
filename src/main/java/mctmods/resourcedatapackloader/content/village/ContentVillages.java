@@ -45,9 +45,10 @@ public final class ContentVillages {
     private static final String UNDER = "under=";
     private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> GROWN = new HashSet<>();
-    @Nullable private static Map<IBlockState, IBlockState> BLOCKS;
-    @Nullable private static List<VillageRule> RULES;
+    private static final Map<IBlockState, IBlockState> BLOCKS = new HashMap<>();
+    private static final List<VillageRule> RULES = new ArrayList<>();
     @Nullable private static WorldTemplateDef blocksFrom;
+    private static boolean blocksLoaded;
     @Nullable private static WorldTemplateDef namedFrom;
     private static Set<String> named;
     private static boolean loaded;
@@ -64,7 +65,7 @@ public final class ContentVillages {
             try {
                 VillageDef def = ContentParser.village(key, contents);
                 if (def == null) { return; }
-                if (!present(def)) {
+                if (missing(def)) {
                     ContentLog.LOGGER.debug("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);
                     return;
                 }
@@ -100,7 +101,9 @@ public final class ContentVillages {
 
     public static void reload() {
         DEFS.clear();
-        BLOCKS = null;
+        BLOCKS.clear();
+        RULES.clear();
+        blocksLoaded = false;
         named = null;
         loaded = false;
     }
@@ -114,7 +117,7 @@ public final class ContentVillages {
         return named;
     }
 
-    private static boolean present(VillageDef def) { return ContentRegistry.available(def.requires, def.registryName); }
+    private static boolean missing(VillageDef def) { return !ContentRegistry.available(def.requires, def.registryName); }
 
     public static int plotsLeast() {
         int least = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsLeast", Config.worldgen.villagePlotsLeast));
@@ -137,7 +140,7 @@ public final class ContentVillages {
     public static int largestPlot() {
         int largest = 13;
         for (VillageDef def : DEFS.values()) {
-            if (!present(def) || blocked(def)) { continue; }
+            if (missing(def) || blocked(def)) { continue; }
             largest = Math.max(largest, Math.max(def.width, def.depth));
         }
         return largest;
@@ -145,7 +148,7 @@ public final class ContentVillages {
 
     @Nullable public static IBlockState swap(IBlockState original) {
         WorldTemplateDef active = ContentWorldTemplates.active();
-        if (BLOCKS == null || active != blocksFrom) {
+        if (!blocksLoaded || active != blocksFrom) {
             loadBlocks();
             blocksFrom = active;
         }
@@ -157,7 +160,7 @@ public final class ContentVillages {
 
     @Nullable public static IBlockState ruled(World world, BlockPos pos, IBlockState laid) {
         WorldTemplateDef active = ContentWorldTemplates.active();
-        if (RULES == null || active != blocksFrom) {
+        if (!blocksLoaded || active != blocksFrom) {
             loadBlocks();
             blocksFrom = active;
         }
@@ -174,8 +177,9 @@ public final class ContentVillages {
     }
 
     private static void loadBlocks() {
-        BLOCKS = new HashMap<>();
-        RULES = new ArrayList<>();
+        BLOCKS.clear();
+        RULES.clear();
+        blocksLoaded = true;
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
             VillageRule rule = rule(entry);
             if (rule == null) { continue; }
