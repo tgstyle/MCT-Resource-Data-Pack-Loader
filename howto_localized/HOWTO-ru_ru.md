@@ -3519,6 +3519,10 @@ tconstruct:ore:0=minecraft:netherrack
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathLampBlock": "minecraft:iron_bars",
+    "villagePathLampHeight": 3,
+    "villagePathLampTopBlock": "minecraft:glowstone",
+    "villagePathLampSideBlock": "",
     "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
     "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
@@ -3545,6 +3549,10 @@ tconstruct:ore:0=minecraft:netherrack
 | `villagePathFlatRun` | число | `6` | Сколько блоков дорога держит одну высоту, прежде чем шагнуть. Привязано к мировым координатам, чтобы соседние участки сходились. `0` шагает каждый блок, как ванильные склоны |
 | `villagePathIntersects` | список | нет | Узоры, наносимые на перекрёстках, по ключу реестра из `<namespace>/pathintersects/` пака. Одна запись красит все перекрёстки одинаково; несколько выбираются на каждый перекрёсток по весу |
 | `villagePathPiers` | список | нет | Виды причалов для дороги, обрывающейся над водой, перечислены ниже. Мостовой хвост становится причалом; из нескольких записей на каждый причал разыгрывается один вид. Пусто оставляет такой мост обычным мостом |
+| `villagePathLampBlock` | блок | `minecraft:oak_fence` | Блок, из которого складывается фонарный столб у дороги, на бордюре. Пусто не ставит фонарей |
+| `villagePathLampHeight` | число | `3` | Сколько блоков в высоту стоит столб до своей головы |
+| `villagePathLampTopBlock` | блок | `minecraft:wool:15` | Голова на вершине столба. Пусто оставляет его голым |
+| `villagePathLampSideBlock` | блок | `minecraft:torch` | Светильник, висящий с каждой стороны головы наружу. Пусто не вешает ничего |
 | `villagePathPierCargo` | список | нет | Груз, стоящий с внутренней стороны перил причала, взвешенными записями, перечисленными ниже. Каждый второй ряд причала разыгрывает список с обеих сторон, так что веса решают, насколько плотно заставлен причал. Пусто оставляет причалы пустыми |
 | `villagePathPierLoot` | текст | `resourcedatapackloader:chests/pier_cargo` | Таблица добычи, из которой наполняется груз с инвентарём, разыгрываемая при первом открытии. Пусто оставляет такой груз пустым |
 

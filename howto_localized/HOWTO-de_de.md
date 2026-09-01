@@ -3515,6 +3515,10 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathLampBlock": "minecraft:iron_bars",
+    "villagePathLampHeight": 3,
+    "villagePathLampTopBlock": "minecraft:glowstone",
+    "villagePathLampSideBlock": "",
     "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
     "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
@@ -3541,6 +3545,10 @@ Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, sola
 | `villagePathFlatRun` | Zahl | `6` | Wie viele Blöcke ein Weg eine Höhe hält, bevor er stuft. An Weltkoordinaten verankert, damit benachbarte Stücke übereinstimmen. `0` stuft jeden Block, wie Vanillas Hänge es tun |
 | `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `<namespace>/pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
 | `villagePathPiers` | Liste | keine | Stegformen für eine Straße, die über dem Wasser ins Leere endet, unten aufgeführt. Der überbrückte Auslauf wird zum Steg; mehrere Einträge losen je Steg eine Form aus. Leer bleibt eine solche Brücke eine schlichte Brücke |
+| `villagePathLampBlock` | Block | `minecraft:oak_fence` | Der Block, aus dem eine Laterne an der Straße gebaut wird, am Bordstein gestapelt. Leer stellt keine Laternen |
+| `villagePathLampHeight` | Zahl | `3` | Wie viele Blöcke hoch der Mast bis zu seinem Kopf steht |
+| `villagePathLampTopBlock` | Block | `minecraft:wool:15` | Der Kopf oben auf dem Mast. Leer lässt ihn kahl |
+| `villagePathLampSideBlock` | Block | `minecraft:torch` | Das Licht, das an jeder Seite des Kopfes nach außen hängt. Leer hängt keines |
 | `villagePathPierCargo` | Liste | keine | Fracht, die innen an den Geländern eines Stegs steht, als gewichtete Einträge, unten aufgeführt. Jede zweite Reihe jedes Stegs lost die Liste auf beiden Seiten aus, die Gewichte entscheiden also, wie voll ein Steg wirkt. Leer bleibt ein Steg leer |
 | `villagePathPierLoot` | Text | `resourcedatapackloader:chests/pier_cargo` | Die Beutetabelle, aus der Fracht mit Inventar gefüllt wird, ausgelost beim ersten Öffnen. Leer bleibt solche Fracht leer |
 

@@ -154,18 +154,19 @@ public final class BeardOpen {
 
     private static int doorways(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         int doorways = 0;
+        StructureBoundingBox reach = new StructureBoundingBox(clip.minX - 1, clip.minY, clip.minZ - 1, clip.maxX + 1, clip.maxY, clip.maxZ + 1);
         for (int x = box.minX; x <= box.maxX; x++) {
             for (int z = box.minZ; z <= box.maxZ; z++) {
                 if (x != box.minX && x != box.maxX && z != box.minZ && z != box.maxZ) { continue; }
                 for (int y = box.minY; y <= box.maxY - 1; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at)) { break; }
-                    if (!(world.getBlockState(at).getBlock() instanceof BlockDoor)) { continue; }
+                    if (!(world.getBlockState(at).getBlock() instanceof BlockDoor) && !ContentBeard.doorwayAt(world, at, x, y, z)) { continue; }
                     int outX = x == box.minX ? -1 : x == box.maxX ? 1 : 0;
                     int outZ = outX != 0 ? 0 : z == box.minZ ? -1 : 1;
                     at.setPos(x + outX, y - 1, z + outZ);
                     boolean floored = false;
-                    if (clip.isVecInside(at) && !BeardPlots.underRoad(start, piece, x + outX, z + outZ) && !BeardPlots.insideAnother(start, piece, at) && !world.getBlockState(at).getMaterial().isSolid() && !world.getBlockState(at).getMaterial().isLiquid()) {
+                    if (reach.isVecInside(at) && !BeardPlots.underRoad(start, piece, x + outX, z + outZ) && !BeardPlots.insideAnother(start, piece, at) && !world.getBlockState(at).getMaterial().isSolid() && !world.getBlockState(at).getMaterial().isLiquid()) {
                         if (BeardKeep.holds(x + outX, y - 1, z + outZ)) { continue; }
                         IBlockState floor = BeardBlocks.fillGround(world, x + outX, z + outZ);
                         if (floor.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { floor = Blocks.GRASS.getDefaultState(); }
@@ -178,9 +179,11 @@ public final class BeardOpen {
                         if (BeardPlots.underRoad(start, piece, x + outX * step, z + outZ * step)) { break; }
                         for (int up = 0; up <= 3; up++) {
                             at.setPos(x + outX * step, y + up, z + outZ * step);
-                            if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                            if (!reach.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                             Block held = world.getBlockState(at).getBlock();
-                            if (BeardRoads.clearable(world.getBlockState(at)) || held == Blocks.GRASS_PATH) { doorways += BeardBlocks.clearAt(world, at); }
+                            if (!BeardRoads.clearable(world.getBlockState(at)) && held != Blocks.GRASS_PATH) { continue; }
+                            BeardKeep.letGo(at.getX(), at.getY(), at.getZ());
+                            doorways += BeardBlocks.clearAt(world, at);
                         }
                     }
                     break;
@@ -217,7 +220,11 @@ public final class BeardOpen {
     private static int bridges(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         int bridged = 0;
         for (StructureComponent other : start.getComponents()) {
-            if (other == piece || other instanceof StructureVillagePieces.Path || !(other instanceof StructureVillagePieces.Village)) { continue; }
+            if (other == piece || !(other instanceof StructureVillagePieces.Village)) { continue; }
+            if (other instanceof StructureVillagePieces.Path) {
+                bridged += BeardRoads.deckToPlot(world, start, piece, box, other, clip, at);
+                continue;
+            }
             bridged += BeardRoads.bridge(world, start, piece, box, ((IStructureComponentBox) other).rdpl$box(), clip, at);
         }
         return bridged;

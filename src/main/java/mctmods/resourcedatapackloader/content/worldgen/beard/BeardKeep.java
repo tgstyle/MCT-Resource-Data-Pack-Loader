@@ -183,6 +183,8 @@ public final class BeardKeep {
 
     public static boolean holds(int x, int y, int z) { return HELD.contains(packed(x, y, z)); }
 
+    public static void letGo(int x, int y, int z) { HELD.remove(packed(x, y, z)); }
+
     @Nullable public static StructureBoundingBox watchingBox() { return watched; }
 
     @Nullable public static String watchingName() { return watchedName; }

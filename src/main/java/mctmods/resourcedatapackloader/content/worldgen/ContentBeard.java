@@ -22,14 +22,12 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillage;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
-import net.minecraft.block.BlockColored;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockTorch;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.item.EnumDyeColor;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -159,6 +157,8 @@ public final class ContentBeard {
                 BeardRoads.repairRoads(event.getWorld(), start);
                 int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
                 if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+                int freed = BeardGround.freeDoors(start, event.getWorld(), clip, at);
+                if (freed > 0) { ContentLog.LOGGER.debug("Freed {} block(s) that had closed a doorway of the village at {}, {} after the roads were repaired", freed, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
                 int swept = BeardGround.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
                 if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
                 for (StructureComponent piece : start.getComponents()) {
@@ -323,13 +323,58 @@ public final class ContentBeard {
         if (raised > 0) { ContentLog.LOGGER.debug("Raised {} lamp post(s) around the cul-de-sac at {}, {}", raised, box.minX, box.minZ); }
     }
 
+    public static boolean doorwayAt(World world, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        if (world.getBlockState(at.setPos(x, y, z)).getMaterial().isSolid()) { return false; }
+        if (world.getBlockState(at.setPos(x, y + 1, z)).getMaterial().isSolid()) { return false; }
+        if (!world.getBlockState(at.setPos(x, y + 2, z)).getMaterial().isSolid()) { return false; }
+        if (!world.getBlockState(at.setPos(x, y - 1, z)).getMaterial().isSolid()) { return false; }
+        boolean alongX = world.getBlockState(at.setPos(x - 1, y, z)).getMaterial().isSolid() && world.getBlockState(at.setPos(x + 1, y, z)).getMaterial().isSolid();
+        if (alongX) { return true; }
+        return world.getBlockState(at.setPos(x, y, z - 1)).getMaterial().isSolid() && world.getBlockState(at.setPos(x, y, z + 1)).getMaterial().isSolid();
+    }
+
+    private static boolean lampPost(World world, int x, int y, int z, StructureStart start, StructureComponent piece, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+        IBlockState post = BeardRoads.pathBlock("villagePathLampBlock", Config.worldgen.villagePathLampBlock, Blocks.AIR.getDefaultState());
+        if (post.getBlock() == Blocks.AIR) { return false; }
+        int high = lampHeight();
+        for (int step = 0; step < high; step++) {
+            at.setPos(x, y + step, z);
+            world.setBlockState(at, post, 2);
+            BeardKeep.holdSpot(x, y + step, z);
+        }
+        IBlockState head = BeardRoads.pathBlock("villagePathLampTopBlock", Config.worldgen.villagePathLampTopBlock, Blocks.AIR.getDefaultState());
+        if (head.getBlock() != Blocks.AIR) {
+            at.setPos(x, y + high, z);
+            world.setBlockState(at, head, 2);
+            BeardKeep.holdSpot(x, y + high, z);
+        }
+        IBlockState side = BeardRoads.pathBlock("villagePathLampSideBlock", Config.worldgen.villagePathLampSideBlock, Blocks.AIR.getDefaultState());
+        if (side.getBlock() == Blocks.AIR) { return true; }
+        for (EnumFacing facing : EnumFacing.HORIZONTALS) {
+            at.setPos(x + facing.getXOffset(), y + high, z + facing.getZOffset());
+            if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+            if (world.getBlockState(at).getMaterial() != Material.AIR) { continue; }
+            world.setBlockState(at, faced(side, facing), 2);
+            BeardKeep.holdSpot(at.getX(), at.getY(), at.getZ());
+        }
+        return true;
+    }
+
+    public static IBlockState lampBlock() { return BeardRoads.pathBlock("villagePathLampBlock", Config.worldgen.villagePathLampBlock, Blocks.AIR.getDefaultState()); }
+
+    public static IBlockState lampTop() { return BeardRoads.pathBlock("villagePathLampTopBlock", Config.worldgen.villagePathLampTopBlock, Blocks.AIR.getDefaultState()); }
+
+    public static int lampHeight() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathLampHeight", Config.worldgen.villagePathLampHeight)); }
+
     public static boolean beforeADoor(World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int bed, int z) {
+        StructureBoundingBox reach = new StructureBoundingBox(clip.minX - 2, clip.minY, clip.minZ - 2, clip.maxX + 2, clip.maxY, clip.maxZ + 2);
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 for (int y = bed; y <= bed + 3; y++) {
                     at.setPos(x + dx, y, z + dz);
-                    if (!clip.isVecInside(at)) { continue; }
+                    if (!reach.isVecInside(at)) { continue; }
                     if (world.getBlockState(at).getBlock() instanceof BlockDoor) { return true; }
+                    if (doorwayAt(world, at, x + dx, y, z + dz)) { return true; }
                 }
             }
         }
@@ -402,7 +447,7 @@ public final class ContentBeard {
             if (!under.getMaterial().isSolid() || BeardBlocks.terrainBlock(under.getBlock())) { break; }
             bed--;
         }
-        for (int y = bed + 1; y <= bed + 4; y++) {
+        for (int y = bed + 1; y <= bed + lampHeight() + 1; y++) {
             at.setPos(x, y, z);
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
             if (BeardKeep.holds(x, y, z)) { return false; }
@@ -411,22 +456,7 @@ public final class ContentBeard {
         if (beforeADoor(world, clip, at, x, bed, z)) { return false; }
         at.setPos(x, bed, z);
         if (!world.getBlockState(at).getMaterial().isSolid()) { return false; }
-        for (int y = bed + 1; y <= bed + 3; y++) {
-            at.setPos(x, y, z);
-            world.setBlockState(at, Blocks.OAK_FENCE.getDefaultState(), 2);
-            BeardKeep.holdSpot(x, y, z);
-        }
-        at.setPos(x, bed + 4, z);
-        world.setBlockState(at, Blocks.WOOL.getDefaultState().withProperty(BlockColored.COLOR, EnumDyeColor.BLACK), 2);
-        BeardKeep.holdSpot(x, bed + 4, z);
-        for (EnumFacing facing : EnumFacing.HORIZONTALS) {
-            at.setPos(x + facing.getXOffset(), bed + 4, z + facing.getZOffset());
-            if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-            if (world.getBlockState(at).getMaterial() != Material.AIR) { continue; }
-            world.setBlockState(at, Blocks.TORCH.getDefaultState().withProperty(BlockTorch.FACING, facing), 2);
-            BeardKeep.holdSpot(x + facing.getXOffset(), bed + 4, z + facing.getZOffset());
-        }
-        return true;
+        return lampPost(world, x, bed + 1, z, start, piece, clip, at);
     }
 
     public static void wellPlaza(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) { BeardPlaza.wellPlaza(start, piece, world, clip); }

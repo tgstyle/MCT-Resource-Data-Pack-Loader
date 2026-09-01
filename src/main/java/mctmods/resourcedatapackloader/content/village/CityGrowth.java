@@ -16,6 +16,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
@@ -144,6 +145,22 @@ public final class CityGrowth {
             }
         }
         if (bulbs > 0) { ((IStructureStartGrow) held).rdpl$updateBoundingBox(); }
+    }
+
+    public static void roadsFirst(StructureStart held) {
+        List<StructureComponent> components = held.getComponents();
+        if (components.size() < 3 || !(components.get(0) instanceof StructureVillagePieces.Start)) { return; }
+        List<StructureComponent> sorted = new ArrayList<>(components.size());
+        sorted.add(components.get(0));
+        for (StructureComponent piece : components) {
+            if (piece != components.get(0) && piece instanceof StructureVillagePieces.Path) { sorted.add(piece); }
+        }
+        for (StructureComponent piece : components) {
+            if (piece != components.get(0) && !(piece instanceof StructureVillagePieces.Path)) { sorted.add(piece); }
+        }
+        components.clear();
+        components.addAll(sorted);
+        ContentLog.LOGGER.debug("The village at chunk {}, {} builds its {} road(s) before its plots, so a plot settles onto ground the roads have already laid", held.getChunkPosX(), held.getChunkPosZ(), sorted.size());
     }
 
     private static boolean metAtEnd(World world, StructureStart held, StructureComponent piece, boolean alongX, int end, int acrossLeast, int acrossMost) {

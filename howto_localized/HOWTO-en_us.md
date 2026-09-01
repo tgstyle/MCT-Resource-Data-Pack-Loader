@@ -3515,6 +3515,10 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathLampBlock": "minecraft:iron_bars",
+    "villagePathLampHeight": 3,
+    "villagePathLampTopBlock": "minecraft:glowstone",
+    "villagePathLampSideBlock": "",
     "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
     "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
@@ -3541,6 +3545,10 @@ Everything below is experimental with the rest of the village work, and only doe
 | `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighbouring pieces agree. `0` steps every block, as vanilla slopes do |
 | `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
 | `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, listed below. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
+| `villagePathLampBlock` | block | `minecraft:oak_fence` | The block a lamp post along a road is built from, stacked on the kerb. Empty stands no lamp posts |
+| `villagePathLampHeight` | number | `3` | How many blocks tall the post stands before its head |
+| `villagePathLampTopBlock` | block | `minecraft:wool:15` | The head on top of the post. Empty leaves it bare |
+| `villagePathLampSideBlock` | block | `minecraft:torch` | The light hung on each side of the head, facing outward. Empty hangs none |
 | `villagePathPierCargo` | list | none | Cargo stood along the inside of a pier's rails, as weighted entries listed below. Every other row of every pier rolls the list on each side, so the weights decide how crowded a pier reads. Empty leaves piers bare |
 | `villagePathPierLoot` | text | `resourcedatapackloader:chests/pier_cargo` | The loot table cargo with an inventory is filled from, rolled the first time it is opened. Empty leaves such cargo empty |
 

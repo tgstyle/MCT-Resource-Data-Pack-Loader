@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.util.world.GroundLevel;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockStairs;
 import net.minecraft.block.BlockStone;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -77,6 +78,8 @@ public final class BeardRoads {
         public int rows() { return profile.length; }
 
         public int deckAt(int row) { return deck[Math.max(0, Math.min(deck.length - 1, row - start))]; }
+
+        public boolean bridgedAt(int row) { return row >= start && row < start + bridged.length && bridged[row - start]; }
 
         public void write(NBTTagCompound tag) {
             tag.setInteger("RdplStart", start);
@@ -859,6 +862,78 @@ public final class BeardRoads {
             laid++;
         }
         return laid;
+    }
+
+    private static int groundToPlot(World world, BlockPos.MutableBlockPos at, int x, int z, int level) {
+        int laid = 0;
+        for (int y = level; y >= level - 8 && y >= 1; y--) {
+            at.setPos(x, y, z);
+            IBlockState held = world.getBlockState(at);
+            if (held.getMaterial().isSolid() && !held.getMaterial().isLiquid()) { break; }
+            if (BeardKeep.holds(x, y, z)) { break; }
+            IBlockState laying = BeardBlocks.fillGround(world, x, z);
+            if (laying.getBlock() == Blocks.DIRT && y == level) { laying = Blocks.GRASS.getDefaultState(); }
+            world.setBlockState(at, laying, 2);
+            laid++;
+        }
+        at.setPos(x, level, z);
+        return laid;
+    }
+
+    private static void openRail(World world, boolean alongX, StructureBoundingBox roadBox, StructureBoundingBox plotBox, int x, int z, int level, BlockPos.MutableBlockPos at) {
+        IBlockState barrier = pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, Blocks.AIR.getDefaultState());
+        if (barrier.getBlock() == Blocks.AIR) { return; }
+        int edge = alongX ? (roadBox.maxZ < plotBox.minZ ? roadBox.maxZ : roadBox.minZ) : (roadBox.maxX < plotBox.minX ? roadBox.maxX : roadBox.minX);
+        int height = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeBarrierHeight", Config.worldgen.villagePathBridgeBarrierHeight));
+        for (int up = 1; up <= height; up++) {
+            at.setPos(alongX ? x : edge, level + up, alongX ? edge : z);
+            if (world.getBlockState(at) != barrier) { continue; }
+            BeardKeep.letGo(at.getX(), at.getY(), at.getZ());
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+        }
+    }
+
+    public static int deckToPlot(World world, StructureStart start, StructureComponent plot, StructureBoundingBox plotBox, StructureComponent road, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+        StructureBoundingBox roadBox = road.getBoundingBox();
+        int[] strip = ContentBeard.facingStrip(plotBox, roadBox, 6);
+        if (strip == null) { return 0; }
+        boolean alongX = BeardPlots.roadAlongX(roadBox);
+        Grade grade = road instanceof RoadLayout ? ((RoadLayout) road).rdpl$layout() : null;
+        if (grade == null) { grade = chainGrade(world, road, alongX); }
+        if (grade == null) { return 0; }
+        IBlockState planks = pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, Blocks.PLANKS.getDefaultState());
+        int decked = 0;
+        for (int x = strip[0]; x <= strip[1]; x++) {
+            for (int z = strip[2]; z <= strip[3]; z++) {
+                int row = alongX ? x : z;
+                boolean bridged = grade.bridgedAt(row);
+                int level = grade.at(row);
+                if (level == Integer.MIN_VALUE) { level = grade.deckAt(row); }
+                if (level == Integer.MIN_VALUE) { continue; }
+                at.setPos(x, level, z);
+                if (!clip.isVecInside(at) || BeardKeep.holds(x, level, z)) { continue; }
+                if (BeardPlots.underRoad(start, plot, x, z) || BeardPlots.insideAnother(start, plot, at)) { continue; }
+                IBlockState held = world.getBlockState(at);
+                boolean doorstep = held.getBlock() instanceof BlockStairs;
+                if (held.getMaterial().isSolid() && !held.getMaterial().isLiquid() && !doorstep) { continue; }
+                if (doorstep) { BeardKeep.letGo(x, level, z); }
+                if (!bridged) {
+                    decked += groundToPlot(world, at, x, z, level);
+                    continue;
+                }
+                world.setBlockState(at, planks, 2);
+                BeardKeep.holdSpot(x, level, z);
+                decked++;
+                openRail(world, alongX, roadBox, plotBox, x, z, level, at);
+                for (int up = 1; up <= 2; up++) {
+                    at.setPos(x, level + up, z);
+                    if (!clip.isVecInside(at) || BeardKeep.holds(x, level + up, z)) { break; }
+                    if (!world.getBlockState(at).getMaterial().isLiquid()) { break; }
+                    world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                }
+            }
+        }
+        return decked;
     }
 
     public static int bridge(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, StructureBoundingBox near, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {

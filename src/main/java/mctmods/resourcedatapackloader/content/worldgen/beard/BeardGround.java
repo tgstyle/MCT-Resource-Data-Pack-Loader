@@ -4,6 +4,7 @@ import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.block.BlockDoor;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockStairs;
@@ -250,6 +251,71 @@ public final class BeardGround {
         return swept;
     }
 
+    public static int freeDoors(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+        int freed = 0;
+        StructureBoundingBox village = start.getBoundingBox();
+        StructureBoundingBox reach = new StructureBoundingBox(village.minX - 2, 0, village.minZ - 2, village.maxX + 2, 255, village.maxZ + 2);
+        for (StructureComponent piece : start.getComponents()) {
+            if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Road) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            for (int x = box.minX; x <= box.maxX; x++) {
+                for (int z = box.minZ; z <= box.maxZ; z++) {
+                    if (x != box.minX && x != box.maxX && z != box.minZ && z != box.maxZ) { continue; }
+                    for (int y = box.minY; y <= box.maxY - 1; y++) {
+                        at.setPos(x, y, z);
+                        boolean door = world.getBlockState(at).getBlock() instanceof BlockDoor;
+                        if (!door && !ContentBeard.doorwayAt(world, at, x, y, z)) { continue; }
+                        int outX = x == box.minX ? -1 : x == box.maxX ? 1 : 0;
+                        int outZ = outX != 0 ? 0 : z == box.minZ ? -1 : 1;
+                        for (int up = 0; up <= 1; up++) {
+                            at.setPos(x + outX, y + up, z + outZ);
+                            if (!reach.isVecInside(at) || !world.isBlockLoaded(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                            IBlockState held = world.getBlockState(at);
+                            if (!held.getMaterial().isSolid() || !BeardBlocks.terrainBlock(held.getBlock())) { continue; }
+                            BeardKeep.letGo(at.getX(), at.getY(), at.getZ());
+                            freed += BeardBlocks.clearAt(world, at);
+                        }
+                        for (int step = 1; step <= 2; step++) { freed += takeDownLamp(world, reach, at, x + outX * step, y, z + outZ * step); }
+                        break;
+                    }
+                }
+            }
+        }
+        return freed;
+    }
+
+    private static int takeDownLamp(World world, StructureBoundingBox reach, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        IBlockState post = ContentBeard.lampBlock();
+        if (post.getBlock() == Blocks.AIR) { return 0; }
+        IBlockState head = ContentBeard.lampTop();
+        int foot = y;
+        while (foot > 1 && world.getBlockState(at.setPos(x, foot - 1, z)).getBlock() == post.getBlock()) { foot--; }
+        if (world.getBlockState(at.setPos(x, foot, z)).getBlock() != post.getBlock()) { return 0; }
+        int taken = 0;
+        for (int up = 0; up <= ContentBeard.lampHeight(); up++) {
+            at.setPos(x, foot + up, z);
+            if (!reach.isVecInside(at) || !world.isBlockLoaded(at)) { break; }
+            Block held = world.getBlockState(at).getBlock();
+            if (held != post.getBlock() && held != head.getBlock()) { break; }
+            BeardKeep.letGo(x, foot + up, z);
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            taken++;
+        }
+        return taken;
+    }
+
+    public static boolean doorBeside(World world, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        for (EnumFacing facing : EnumFacing.HORIZONTALS) {
+            at.setPos(x + facing.getXOffset(), y, z + facing.getZOffset());
+            if (world.getBlockState(at).getBlock() instanceof BlockDoor) {
+                at.setPos(x, y, z);
+                return true;
+            }
+        }
+        at.setPos(x, y, z);
+        return false;
+    }
+
     public static int levelSeams(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         StructureBoundingBox village = start.getBoundingBox();
         int filled = 0;
@@ -269,6 +335,7 @@ public final class BeardGround {
                 for (int y = here + 1; y <= upTo; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardKeep.holds(x, y, z)) { break; }
+                    if (doorBeside(world, at, x, y, z)) { break; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getMaterial().isSolid()) { break; }
                     IBlockState laid = BeardBlocks.fillGround(world, x, z);

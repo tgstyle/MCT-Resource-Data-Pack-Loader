@@ -59,7 +59,7 @@ public final class ContentControl {
             "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
             "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
             "villagePathSidewalkWidth", "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
-            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathPiers", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
+            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathPiers", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
             "villagePlotsMost", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "structureAt", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));

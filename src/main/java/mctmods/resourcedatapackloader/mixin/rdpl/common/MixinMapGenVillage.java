@@ -32,6 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size);
         BeardRoads.pierOut(world, cir.getReturnValue());
         CityGrowth.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
+        CityGrowth.roadsFirst(cir.getReturnValue());
         ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
     }
 
