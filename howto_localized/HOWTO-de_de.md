@@ -3512,6 +3512,8 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathSidewalkWidth": 2,
     "villagePathExtraWidth": 1,
     "villagePathMinimumWidth": 0,
+    "villagePathAlleyBlock": "minecraft:gravel",
+    "villagePathAlleyChance": 25,
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
@@ -3542,6 +3544,8 @@ Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, sola
 | `villagePathSidewalkWidth` | Zahl | `2` | Wie breit jeder Gehweg ist, sobald `villagePathSidewalkBlock` gesetzt ist |
 | `villagePathExtraWidth` | Zahl | `0` | Zusätzliche Wegblöcke je Seite über Vanillas 3 hinaus. Verbreitert die Wegteile selbst, sodass Häuser von einer breiten Straße zurücktreten |
 | `villagePathMinimumWidth` | Zahl | `0` | Der schmalste Weg, der sich noch lohnt. Ein Stück, das seinen vollen Ausbau nicht unterbringt, fällt auf eine schlichte 3 breite Gasse zurück; unterhalb dieser Breite wird es gar nicht gelegt und das Dorf ordnet sich darum an. `0` lehnt nie ab |
+| `villagePathAlleyBlock` | Block | leer | Der Belag einer Gasse, eines Weges, der für Linien und Gehwege zu schmal ist. Eine Gasse läuft zwischen den Gehwegen der Straßen, auf die sie trifft, und hat selbst keine; wo sie auf eine Straße trifft, wird kein Übergang gemalt. Leer legt Gassen mit dem Wegblock |
+| `villagePathAlleyChance` | Zahl | `0` | Die Wahrscheinlichkeit in Prozent, dass ein Weg als Gasse gelegt wird, statt sich zur vollen Straße zu verbreitern. `0` legt eine Gasse nur dort, wo eine volle Straße nicht passt, in der Praxis also nur im gedrängten ersten Bezirk. Ein höherer Wert ändert, welche Wege gelegt werden, und formt damit das ganze Straßennetz um; bei 50 gemessen kostete er sieben weitere geteilte Kreuzungen, also erhöhen und das Ergebnis prüfen |
 | `villagePathFlatRun` | Zahl | `6` | Wie viele Blöcke ein Weg eine Höhe hält, bevor er stuft. An Weltkoordinaten verankert, damit benachbarte Stücke übereinstimmen. `0` stuft jeden Block, wie Vanillas Hänge es tun |
 | `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `<namespace>/pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
 | `villagePathPiers` | Liste | keine | Stegformen für eine Straße, die über dem Wasser ins Leere endet, unten aufgeführt. Der überbrückte Auslauf wird zum Steg; mehrere Einträge losen je Steg eine Form aus. Leer bleibt eine solche Brücke eine schlichte Brücke |
