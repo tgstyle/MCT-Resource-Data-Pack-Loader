@@ -97,7 +97,9 @@ import javax.annotation.Nullable;
                 wide.minZ -= half;
                 wide.maxZ += half;
             }
-            if (!rdpl$tooNear(p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing)) {
+            boolean rolled = BeardRoads.alleyChance() > 0 && rand.nextInt(100) < BeardRoads.alleyChance() && rdpl$joinsRoads(p_175848_1_, found, facing);
+            if (rolled) { ContentLog.LOGGER.debug("A road attempt {} facing {} rolls an alley rather than a full street", found, facing); }
+            if (!rolled && !rdpl$tooNear(p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing)) {
                 if (ContentBeard.claimCorners(p_175848_1_, wide, alongX)) {
                     cir.setReturnValue(wide);
                     return;

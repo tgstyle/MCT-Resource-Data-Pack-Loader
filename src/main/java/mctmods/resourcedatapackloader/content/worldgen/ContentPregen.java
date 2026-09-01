@@ -460,10 +460,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         worker.finish(DimensionManager.getWorld(worker.dimension));
     }
 
-    public static void tell(String said, TextFormatting colour) {
+    public static void tell(String said, TextFormatting color) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || said.isEmpty()) { return; }
-        server.getPlayerList().sendMessage(new TextComponentString(said).setStyle(new Style().setColor(colour)));
+        server.getPlayerList().sendMessage(new TextComponentString(said).setStyle(new Style().setColor(color)));
     }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {

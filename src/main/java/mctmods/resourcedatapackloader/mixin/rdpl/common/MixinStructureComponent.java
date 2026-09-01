@@ -23,10 +23,10 @@ import java.util.List;
             if (!CityGrowth.laying()) { return; }
             for (StructureComponent piece : listIn) {
                 StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
-                if (held != null && rdpl$flatHit(held, boundingboxIn, 0)) {
-                    cir.setReturnValue(piece);
-                    return;
-                }
+                if (held == null || !rdpl$flatHit(held, boundingboxIn, 0)) { continue; }
+                if (piece instanceof StructureVillagePieces.Path && rdpl$crosses(held, boundingboxIn)) { continue; }
+                cir.setReturnValue(piece);
+                return;
             }
             cir.setReturnValue(null);
             return;
@@ -42,6 +42,16 @@ import java.util.List;
             }
         }
         cir.setReturnValue(null);
+    }
+
+    private static boolean rdpl$crosses(StructureBoundingBox road, StructureBoundingBox box) {
+        boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+        if (roadAlongX == (box.maxX - box.minX >= box.maxZ - box.minZ)) { return false; }
+        StructureBoundingBox ew = roadAlongX ? road : box;
+        StructureBoundingBox ns = roadAlongX ? box : road;
+        int ewCenter = (ew.minZ + ew.maxZ) / 2;
+        int nsCenter = (ns.minX + ns.maxX) / 2;
+        return (ewCenter >= ns.minZ && ewCenter <= ns.maxZ) || (nsCenter >= ew.minX && nsCenter <= ew.maxX);
     }
 
     private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) {

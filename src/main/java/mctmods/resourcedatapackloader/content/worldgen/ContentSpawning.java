@@ -136,7 +136,7 @@ public final class ContentSpawning {
 
     public static String describe() { return String.join(", ", BEHAVIORS); }
 
-    public static String normalise(String behavior) { return behavior.trim().toLowerCase(Locale.ROOT); }
+    public static String normalize(String behavior) { return behavior.trim().toLowerCase(Locale.ROOT); }
 
     private static void add(String behavior, Block block) { BY_BEHAVIOR.computeIfAbsent(behavior, key -> new HashSet<>()).add(block); }
 }

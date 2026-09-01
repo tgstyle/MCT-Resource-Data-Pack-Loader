@@ -308,7 +308,7 @@ public final class ContentStructurePlacement {
     private static String[] split(String entry, String setting) {
         String[] parts = Settings.pair(entry, setting, "structure=value");
         if (parts == null) { return null; }
-        String key = ContentStructures.normalise(parts[0]);
+        String key = ContentStructures.normalize(parts[0]);
         if (!ContentStructures.known(key)) {
             ContentLog.LOGGER.error("{} entry '{}' names '{}', which is not one of {}, ignoring it", setting, entry, key, ContentStructures.describe());
             return null;

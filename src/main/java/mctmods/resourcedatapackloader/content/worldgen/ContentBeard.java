@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
@@ -33,6 +34,10 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
@@ -334,28 +339,49 @@ public final class ContentBeard {
     }
 
     private static boolean lampPost(World world, int x, int y, int z, StructureStart start, StructureComponent piece, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
-        IBlockState post = BeardRoads.pathBlock("villagePathLampBlock", Config.worldgen.villagePathLampBlock, Blocks.AIR.getDefaultState());
-        if (post.getBlock() == Blocks.AIR) { return false; }
+        if (lampStructure(world, x, y, z)) { return true; }
+        ContentStates.Spec post = BeardRoads.pathSpec("villagePathLampBlock", Config.worldgen.villagePathLampBlock);
+        if (post == null || post.state.getBlock() == Blocks.AIR) { return false; }
         int high = lampHeight();
         for (int step = 0; step < high; step++) {
             at.setPos(x, y + step, z);
-            world.setBlockState(at, post, 2);
+            ContentStates.place(world, at.toImmutable(), post.state, post.tag);
             BeardKeep.holdSpot(x, y + step, z);
         }
-        IBlockState head = BeardRoads.pathBlock("villagePathLampTopBlock", Config.worldgen.villagePathLampTopBlock, Blocks.AIR.getDefaultState());
-        if (head.getBlock() != Blocks.AIR) {
+        ContentStates.Spec head = BeardRoads.pathSpec("villagePathLampTopBlock", Config.worldgen.villagePathLampTopBlock);
+        if (head != null && head.state.getBlock() != Blocks.AIR) {
             at.setPos(x, y + high, z);
-            world.setBlockState(at, head, 2);
+            ContentStates.place(world, at.toImmutable(), head.state, head.tag);
             BeardKeep.holdSpot(x, y + high, z);
         }
-        IBlockState side = BeardRoads.pathBlock("villagePathLampSideBlock", Config.worldgen.villagePathLampSideBlock, Blocks.AIR.getDefaultState());
-        if (side.getBlock() == Blocks.AIR) { return true; }
+        ContentStates.Spec side = BeardRoads.pathSpec("villagePathLampSideBlock", Config.worldgen.villagePathLampSideBlock);
+        if (side == null || side.state.getBlock() == Blocks.AIR) { return true; }
         for (EnumFacing facing : EnumFacing.HORIZONTALS) {
             at.setPos(x + facing.getXOffset(), y + high, z + facing.getZOffset());
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
             if (world.getBlockState(at).getMaterial() != Material.AIR) { continue; }
-            world.setBlockState(at, faced(side, facing), 2);
+            ContentStates.place(world, at.toImmutable(), faced(side.state, facing), side.tag);
             BeardKeep.holdSpot(at.getX(), at.getY(), at.getZ());
+        }
+        return true;
+    }
+
+    private static boolean lampStructure(World world, int x, int y, int z) {
+        String named = ContentControl.text(ContentControl.VILLAGES, "villagePathLampStructure", Config.worldgen.villagePathLampStructure);
+        if (named.isEmpty() || !(world instanceof WorldServer)) { return false; }
+        WorldServer server = (WorldServer) world;
+        Template loaded = server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(named));
+        if (loaded == null) {
+            ContentLog.LOGGER.error("villagePathLampStructure names '{}', which could not be loaded, so no lamp is placed", named);
+            return false;
+        }
+        BlockPos span = loaded.getSize();
+        BlockPos origin = new BlockPos(x - span.getX() / 2, y, z - span.getZ() / 2);
+        loaded.addBlocksToWorld(world, origin, new PlacementSettings().setIgnoreEntities(true), 2);
+        for (int stepX = 0; stepX < span.getX(); stepX++) {
+            for (int stepY = 0; stepY < span.getY(); stepY++) {
+                for (int stepZ = 0; stepZ < span.getZ(); stepZ++) { BeardKeep.holdSpot(origin.getX() + stepX, origin.getY() + stepY, origin.getZ() + stepZ); }
+            }
         }
         return true;
     }

@@ -6,7 +6,13 @@ import com.google.common.base.Optional;
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTException;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -25,6 +31,44 @@ public final class ContentStates {
             return null;
         }
         return ForgeRegistries.BLOCKS.getValue(location);
+    }
+
+    public static final class Spec {
+        public final IBlockState state;
+        @Nullable public final NBTTagCompound tag;
+        Spec(IBlockState state, @Nullable NBTTagCompound tag) {
+            this.state = state;
+            this.tag = tag;
+        }
+    }
+
+    @Nullable public static Spec spec(String name, Object context) {
+        if (name.isEmpty()) { return null; }
+        String named = name;
+        NBTTagCompound tag = null;
+        int brace = named.indexOf('{');
+        if (brace >= 0 && named.trim().endsWith("}")) {
+            String written = named.substring(brace).trim();
+            try { tag = JsonToNBT.getTagFromJson(written); }
+            catch (NBTException ex) { ContentLog.LOGGER.error("Block data {} in {} is not readable NBT, it is ignored: {}", written, context, ex.getMessage()); }
+            named = named.substring(0, brace).trim();
+        }
+        IBlockState state = parse(named, context);
+        return state == null ? null : new Spec(state, tag);
+    }
+
+    public static void place(World world, BlockPos pos, IBlockState state, @Nullable NBTTagCompound tag) {
+        world.setBlockState(pos, state, 2);
+        if (tag == null) { return; }
+        TileEntity held = world.getTileEntity(pos);
+        if (held == null) { return; }
+        NBTTagCompound data = held.writeToNBT(new NBTTagCompound());
+        data.merge(tag);
+        data.setInteger("x", pos.getX());
+        data.setInteger("y", pos.getY());
+        data.setInteger("z", pos.getZ());
+        held.readFromNBT(data);
+        held.markDirty();
     }
 
     @Nullable public static IBlockState parse(String name, Object context) {

@@ -53,7 +53,7 @@ public final class BeardOpen {
         doorways += approaches(start, piece, world, box, clip, at);
         int bridged = bridges(start, piece, world, box, clip, at);
         if (piece instanceof StructureVillagePieces.Field1 || piece instanceof StructureVillagePieces.Field2) { BeardGround.soilField(piece, world, box, clip, at); }
-        if (opened + eaves + spared + notGround + hangingOver + grounded + overhead + bridged + doorways + banked > 0) { ContentLog.LOGGER.debug("Opened {} block(s) around {} at {}, {}, spared {} inside neighbouring pieces, left {} that were not ground, stood {} block(s) of ground under it, banked {} up to its grade, lifted {} off its roof, bridged {} between it and a neighbour, freed {} in front of its doors, and the hillside still hangs over {} column(s)", opened + eaves, piece.getClass().getSimpleName(), box.minX, box.minZ, spared, notGround, grounded, banked, overhead, bridged, doorways, hangingOver); }
+        if (opened + eaves + spared + notGround + hangingOver + grounded + overhead + bridged + doorways + banked > 0) { ContentLog.LOGGER.debug("Opened {} block(s) around {} at {}, {}, spared {} inside neighboring pieces, left {} that were not ground, stood {} block(s) of ground under it, banked {} up to its grade, lifted {} off its roof, bridged {} between it and a neighbor, freed {} in front of its doors, and the hillside still hangs over {} column(s)", opened + eaves, piece.getClass().getSimpleName(), box.minX, box.minZ, spared, notGround, grounded, banked, overhead, bridged, doorways, hangingOver); }
     }
 
     private static int[] footings(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int[] footings, int depth) {

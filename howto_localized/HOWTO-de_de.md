@@ -3519,15 +3519,16 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
     "villagePathLampBlock": "minecraft:iron_bars",
     "villagePathLampHeight": 3,
-    "villagePathLampTopBlock": "minecraft:glowstone",
+    "villagePathLampTopBlock": "minecraft:skull:1{SkullType:3}",
     "villagePathLampSideBlock": "",
+    "villagePathLampStructure": "",
     "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
     "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
 }
 ```
 
-Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, solange `terrainAdaptation` an ist. Jede dieser Einstellungen ist standardmäßig leer oder null, was Vanillas Wege genau so lässt, wie sie waren.
+Alles Folgende greift nur, solange `terrainAdaptation` an ist. Jede dieser Einstellungen ist standardmäßig leer oder null, was Vanillas Wege genau so lässt, wie sie waren.
 
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
@@ -3549,16 +3550,19 @@ Alles Folgende ist wie die übrige Dorfarbeit experimentell und greift nur, sola
 | `villagePathFlatRun` | Zahl | `6` | Wie viele Blöcke ein Weg eine Höhe hält, bevor er stuft. An Weltkoordinaten verankert, damit benachbarte Stücke übereinstimmen. `0` stuft jeden Block, wie Vanillas Hänge es tun |
 | `villagePathIntersects` | Liste | keine | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `<namespace>/pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
 | `villagePathPiers` | Liste | keine | Stegformen für eine Straße, die über dem Wasser ins Leere endet, unten aufgeführt. Der überbrückte Auslauf wird zum Steg; mehrere Einträge losen je Steg eine Form aus. Leer bleibt eine solche Brücke eine schlichte Brücke |
-| `villagePathLampBlock` | Block | `minecraft:oak_fence` | Der Block, aus dem eine Laterne an der Straße gebaut wird, am Bordstein gestapelt. Leer stellt keine Laternen |
+| `villagePathLampBlock` | Block oder Block mit Daten | `minecraft:oak_fence` | Der Block, aus dem eine Laterne an der Straße gebaut wird, am Bordstein gestapelt. Leer stellt keine Laternen |
 | `villagePathLampHeight` | Zahl | `3` | Wie viele Blöcke hoch der Mast bis zu seinem Kopf steht |
-| `villagePathLampTopBlock` | Block | `minecraft:wool:15` | Der Kopf oben auf dem Mast. Leer lässt ihn kahl |
-| `villagePathLampSideBlock` | Block | `minecraft:torch` | Das Licht, das an jeder Seite des Kopfes nach außen hängt. Leer hängt keines |
+| `villagePathLampTopBlock` | Block oder Block mit Daten | `minecraft:wool:15` | Der Kopf oben auf dem Mast. Leer lässt ihn kahl |
+| `villagePathLampSideBlock` | Block oder Block mit Daten | `minecraft:torch` | Das Licht, das an jeder Seite des Kopfes nach außen hängt. Leer hängt keines |
+| `villagePathLampStructure` | Text | leer | Eine Strukturdatei, die als ganze Laterne gesetzt wird, statt die drei Laternenblöcke zu stapeln, benannt `mypack:street_lamp` und aus dem `structures`-Ordner dieses Packs gelesen. Sie wird auf den Laternenplatz zentriert, ihre unterste Lage auf dem Bordstein, und die gesetzten Blöcke werden gehalten, damit nichts sie überschreibt. Leer stapelt die Blöcke |
 | `villagePathPierCargo` | Liste | keine | Fracht, die innen an den Geländern eines Stegs steht, als gewichtete Einträge, unten aufgeführt. Jede zweite Reihe jedes Stegs lost die Liste auf beiden Seiten aus, die Gewichte entscheiden also, wie voll ein Steg wirkt. Leer bleibt ein Steg leer |
 | `villagePathPierLoot` | Text | `resourcedatapackloader:chests/pier_cargo` | Die Beutetabelle, aus der Fracht mit Inventar gefüllt wird, ausgelost beim ersten Öffnen. Leer bleibt solche Fracht leer |
 
 Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Randlinien, dann Gehwege. Breiten, die nicht passen, fallen zurück statt überzulaufen, ein schmales Stück verliert also still seinen Gehweg, bevor es seinen Weg verliert.
 
 `villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
+
+**Laternenblöcke tragen Daten.** Die drei Laternenblöcke nehmen einen einfachen Namen, einen Namen mit Metadaten oder einen Namen mit Blockobjektdaten in geschweiften Klammern, `minecraft:skull:1{SkullType:3}`. Die Klammern werden als NBT gelesen und nach dem Setzen auf das Blockobjekt angewandt, womit eine Laterne aus einem anderen Mod die Einstellungen behält, die sie braucht. Fehlerhaftes NBT wird gemeldet und übergangen, statt den Bau der Laterne zu verhindern.
 
 **Stege.** Eine Straße, die aufs Wasser hinausläuft und auf nichts endet, wird zum Steg statt zur Brücke ins Nirgendwo, sobald `villagePathPiers` mindestens eine Form nennt. Mehrere Einträge losen je Steg eine Form aus, aus dem Weltseed und dem Stegende, dieselbe Welt baut also immer denselben Steg. Jeder Steg steht auf Pfählen aus dem Unterbaublock, an beiden Deckkanten in jeder vierten Reihe bis hinab zum Grund gerammt, ganz gleich welcher Form. Das Deck ist der Brückenblock, Geländer und Pfosten der Geländerblock, die Pfähle der Unterbaublock.
 
@@ -3736,7 +3740,7 @@ Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wir
 }
 ```
 
-**Diese Einstellung ist experimentell und noch in Bewegung.** Die Nutzung erfolgt auf eigene Gefahr. Sie formt das Gelände schon beim Erzeugen der Welt um, alles, was sie legt, ist in diesem Spielstand also endgültig, und ein Fehler darin kann ein halb abgetragenes Dorf oder eine Straße auf einem Damm hinterlassen. Solange daran gearbeitet wird, ändert sich ihr Verhalten von Build zu Build. Zwei Welten aus demselben Seed, aber mit unterschiedlichen Mod-Versionen erzeugt, sehen deshalb nicht gleich aus, und ein Dorf aus einem älteren Build wird von einem neueren weder erneut besucht noch ausgebessert. Wenn dir eine Welt wichtig ist, lass die Einstellung aus oder leg eine Sicherung an und rechne damit, dass die Dörfer darin genau den Stand zeigen, den der Mod an dem Tag hatte, an dem diese Chunks entstanden sind.
+**Was sie legt, ist endgültig.** Sie formt das Gelände schon beim Erzeugen der Welt um, alles, was sie in einen Spielstand setzt, bleibt dort. Ein Dorf aus einem älteren Build wird von einem neueren weder erneut besucht noch ausgebessert. Zwei Welten aus demselben Seed, aber mit unterschiedlichen Mod-Versionen erzeugt, sehen deshalb nicht gleich aus, und die Dörfer einer Welt zeigen den Stand des Tages, an dem diese Chunks entstanden sind.
 
 `terrainAdaptation` arbeitet um, wie Dörfer ihren Boden wählen und darauf sitzen, dem Geist nach übernommen davon, wie moderne Versionen ihre Strukturen aufsetzen, und dann weitergetrieben. Ein Dorf wird nur auf einem Chunk gegründet, dessen Boden um höchstens zehn Blöcke schwankt, und nie näher als acht Chunks an einem anderen Dorf; Regionen, die keinen solchen Chunk hergeben, gründen gar nichts. Der Brunnen setzt sich auf den tiefsten Boden, den seine eigene Grundfläche berührt, und das ganze Dorf verschiebt sich mit ihm, sodass sich alles Übrige von dort aus einrichtet.
 

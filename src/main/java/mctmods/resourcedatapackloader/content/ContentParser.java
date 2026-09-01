@@ -434,7 +434,7 @@ public final class ContentParser {
     private static List<String> behaviors(ResourceLocation key, JsonObject json) {
         List<String> found = new ArrayList<>();
         for (String raw : strings(json, "behavesAs")) {
-            String name = ContentSpawning.normalise(raw);
+            String name = ContentSpawning.normalize(raw);
             if (!ContentSpawning.known(name)) {
                 ContentLog.LOGGER.error("Block {} says it behaves as '{}', which is not one of {}, ignoring it", key, raw, ContentSpawning.describe());
                 continue;
@@ -449,7 +449,7 @@ public final class ContentParser {
         if (!json.has("structures")) { return Collections.unmodifiableMap(settings); }
         JsonObject entry = JsonUtils.getJsonObject(json, "structures");
         for (Map.Entry<String, JsonElement> value : entry.entrySet()) {
-            String name = ContentStructures.normalise(value.getKey());
+            String name = ContentStructures.normalize(value.getKey());
             if (!ContentStructures.known(name)) {
                 ContentLog.LOGGER.error("World template {} names structure '{}', which is not one of {}, ignoring it", key, value.getKey(), ContentStructures.describe());
                 continue;

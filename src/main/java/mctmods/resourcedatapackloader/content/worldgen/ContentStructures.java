@@ -117,7 +117,7 @@ public final class ContentStructures {
         return text.toString();
     }
 
-    public static String normalise(String key) { return key.trim().toLowerCase(Locale.ROOT); }
+    public static String normalize(String key) { return key.trim().toLowerCase(Locale.ROOT); }
 
     private static Map<String, String> structureNames() {
         Map<String, String> map = new LinkedHashMap<>();

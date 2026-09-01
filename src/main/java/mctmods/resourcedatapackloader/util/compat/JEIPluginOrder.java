@@ -41,7 +41,7 @@ public final class JEIPluginOrder {
         List<IModPlugin> ordered = new ArrayList<>(providers);
         ordered.addAll(consumers);
         if (!ordered.equals(plugins)) {
-            ContentLog.LOGGER.info("Reordered JEI runtime notification so recipe registry providers initialise before plugins that query them: {}", names(providers));
+            ContentLog.LOGGER.info("Reordered JEI runtime notification so recipe registry providers initialize before plugins that query them: {}", names(providers));
         }
         return ordered;
     }

@@ -3512,20 +3512,23 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathSidewalkWidth": 2,
     "villagePathExtraWidth": 1,
     "villagePathMinimumWidth": 0,
+    "villagePathAlleyBlock": "minecraft:gravel",
+    "villagePathAlleyChance": 25,
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
     "villagePathLampBlock": "minecraft:iron_bars",
     "villagePathLampHeight": 3,
-    "villagePathLampTopBlock": "minecraft:glowstone",
+    "villagePathLampTopBlock": "minecraft:skull:1{SkullType:3}",
     "villagePathLampSideBlock": "",
+    "villagePathLampStructure": "",
     "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
     "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
 }
 ```
 
-Everything below is experimental with the rest of the village work, and only does anything while `terrainAdaptation` is on. Every one of them is empty or zero by default, which leaves vanilla's roads exactly as they were.
+Everything below only does anything while `terrainAdaptation` is on. Every one of them is empty or zero by default, which leaves vanilla's roads exactly as they were.
 
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
@@ -3542,19 +3545,24 @@ Everything below is experimental with the rest of the village work, and only doe
 | `villagePathSidewalkWidth` | number | `2` | How wide each sidewalk is, once `villagePathSidewalkBlock` is set |
 | `villagePathExtraWidth` | number | `0` | Extra blocks of road on each side beyond vanilla's 3. Widens the road pieces themselves, so houses stand back from a wide street |
 | `villagePathMinimumWidth` | number | `0` | The narrowest road worth laying. A segment that cannot fit its full dress drops to a bare 3 wide alley; below this width it is not laid at all and the village lays out around it. `0` never refuses |
-| `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighbouring pieces agree. `0` steps every block, as vanilla slopes do |
+| `villagePathAlleyBlock` | block | empty | The surface of an alley, a road too narrow to carry lines and sidewalks. An alley runs between the sidewalks of the streets it meets and carries none of its own, and no crossing is painted where it meets a street. Empty lays alleys with the road block |
+| `villagePathAlleyChance` | number | `0` | The percent chance a road is laid as an alley instead of widening to a full street. `0` lays an alley only where a full street will not fit, which in practice is only the crowded first district. Raising it changes which roads are laid and so reshapes the whole street graph; measured at 50 it cost seven more split junctions, so raise it and check the result |
+| `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighboring pieces agree. `0` steps every block, as vanilla slopes do |
 | `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
 | `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, listed below. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
-| `villagePathLampBlock` | block | `minecraft:oak_fence` | The block a lamp post along a road is built from, stacked on the kerb. Empty stands no lamp posts |
+| `villagePathLampBlock` | block or block with data | `minecraft:oak_fence` | The block a lamp post along a road is built from, stacked on the curb. Empty stands no lamp posts |
 | `villagePathLampHeight` | number | `3` | How many blocks tall the post stands before its head |
-| `villagePathLampTopBlock` | block | `minecraft:wool:15` | The head on top of the post. Empty leaves it bare |
-| `villagePathLampSideBlock` | block | `minecraft:torch` | The light hung on each side of the head, facing outward. Empty hangs none |
+| `villagePathLampTopBlock` | block or block with data | `minecraft:wool:15` | The head on top of the post. Empty leaves it bare |
+| `villagePathLampSideBlock` | block or block with data | `minecraft:torch` | The light hung on each side of the head, facing outward. Empty hangs none |
+| `villagePathLampStructure` | text | empty | A structure file placed as the whole lamp instead of stacking the three lamp blocks, named `mypack:street_lamp` and read from that pack's `structures` folder. It is centered on the lamp spot with its lowest layer on the curb, and the blocks it lays are held so nothing else overwrites them. Empty stacks the blocks |
 | `villagePathPierCargo` | list | none | Cargo stood along the inside of a pier's rails, as weighted entries listed below. Every other row of every pier rolls the list on each side, so the weights decide how crowded a pier reads. Empty leaves piers bare |
 | `villagePathPierLoot` | text | `resourcedatapackloader:chests/pier_cargo` | The loot table cargo with an inventory is filled from, rolled the first time it is opened. Empty leaves such cargo empty |
 
 A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
+
+**Lamp blocks carry data.** The three lamp blocks take a plain name, a name with metadata, or a name with block entity data in braces, `minecraft:skull:1{SkullType:3}`. The braces are read as NBT and applied to the block entity after the block is placed, which is how a lamp from another mod keeps the settings it needs. Bad NBT is reported and ignored rather than stopping the lamp being built.
 
 **Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. Several entries roll one style per pier, from the world seed and the pier's end, so the same world always builds the same pier. Every pier stands on pilings of the support block, driven to the bed below at both edges of the deck every fourth row, whatever its style. The deck is the bridge block, rails and posts the barrier block, and pilings the support block.
 
@@ -3732,7 +3740,7 @@ Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMo
 }
 ```
 
-**This one is experimental and still moving.** Use it at your own risk. It reshapes the terrain as the world is made, so whatever it lays down is permanent in that save, and a bug in it can leave you with a village that is half graded or a road standing on an embankment. Its behavior changes from build to build while it is being worked on, so two worlds made from the same seed on two different versions of the mod will not match, and a village laid down by an older build is never revisited or repaired by a newer one. If you care about a world, either leave this off or keep a backup, and expect the villages in it to be a snapshot of whatever the mod was doing the day those chunks generated.
+**What it lays down is permanent.** It reshapes the terrain as the world is made, so whatever it puts in a save stays there. A village laid down by an older build is never revisited or repaired by a newer one, so two worlds made from the same seed on two different versions of the mod will not match, and the villages in a world are a snapshot of the day those chunks generated.
 
 `terrainAdaptation` reworks how villages choose their ground and sit on it, ported in spirit from how modern versions seat their structures, then taken further. A village only founds on a chunk whose ground varies by no more than ten blocks, and never within eight chunks of another village; regions offering no such chunk found nothing at all. The well seats to the lowest ground its own footprint touches, and the whole village shifts with it, so everything else levels from there.
 
@@ -4207,7 +4215,7 @@ All four empty (default) keep vanilla physics. On Galacticraft dimensions the gr
 | `worldSeamEntities` | boolean | `true` | Whether items, mobs and other entities cross, or players alone |
 | `worldSeamBedrock` | boolean | `false` | Keep bedrock at a seam boundary. Off, the boundary generates none, so the way through can be dug |
 
-Both lists empty (the default) keep every world closed. A world's outermost block layer is its doorway: entering the bottom layer carries you down, entering the top layer carries you back up. Arrivals land clear of it, three layers inside when travelling down and one when travelling up, so nothing bounces straight back. Coming down also cuts the layers above the arrival open all the way to the doorway, so the way in stays visible from below and serves as the way back.
+Both lists empty (the default) keep every world closed. A world's outermost block layer is its doorway: entering the bottom layer carries you down, entering the top layer carries you back up. Arrivals land clear of it, three layers inside when traveling down and one when traveling up, so nothing bounces straight back. Coming down also cuts the layers above the arrival open all the way to the doorway, so the way in stays visible from below and serves as the way back.
 
 Break a block in a doorway layer and the world on the other side shows through it: the sky of the dimension below appears under the floor, and the sky of the one above appears over the ceiling. That is drawn on the client alone, within render distance, and changes nothing about the world itself. Momentum carries across.
 

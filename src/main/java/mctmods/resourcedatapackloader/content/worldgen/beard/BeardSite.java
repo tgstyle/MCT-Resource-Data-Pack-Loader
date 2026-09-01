@@ -37,7 +37,7 @@ public final class BeardSite {
         if (world.getMinecraftServer() != null) { ((IMinecraftServerMessage) world.getMinecraftServer()).rdpl$setUserMessage("menu.generatingTerrain"); }
         long chosen = chooseSite(world, cellX, cellZ, spacing);
         known.put(cell, chosen);
-        if (chosen == ContentBeard.NO_SITE) { ContentLog.LOGGER.debug("Village cell {}, {} has no chunk both flat within {} block(s) and {} chunk(s) clear of its neighbours, so nothing is founded there", cellX, cellZ, ContentBeard.SITE_TOLERANCE, ContentBeard.SITE_SEPARATION); }
+        if (chosen == ContentBeard.NO_SITE) { ContentLog.LOGGER.debug("Village cell {}, {} has no chunk both flat within {} block(s) and {} chunk(s) clear of its neighbors, so nothing is founded there", cellX, cellZ, ContentBeard.SITE_TOLERANCE, ContentBeard.SITE_SEPARATION); }
         else { ContentLog.LOGGER.debug("Village cell {}, {} founds on chunk {}, {}, the flattest ground it has", cellX, cellZ, (int) (chosen >> 32), (int) chosen); }
         return chosen;
     }
