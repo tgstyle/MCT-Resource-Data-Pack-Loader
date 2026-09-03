@@ -42,6 +42,7 @@ public final class PackManager {
     public static final String PACK_META = "pack.mcmeta";
     public static final String PACK_ICON = "pack.png";
     public static final String ROOT_PACK = "<loose files>";
+    private static final Set<String> EXTRA_DATA = ConcurrentHashMap.newKeySet();
     private static final String README = "readme.txt";
     private static final String README_BASE = "/assets/resourcedatapackloader/readme";
     private static final String README_FALLBACK = README_BASE + "_en_us.txt";
@@ -420,8 +421,17 @@ public final class PackManager {
         return unused;
     }
 
+    public static void registerDataFolders(String... folders) { Collections.addAll(EXTRA_DATA, folders); }
+
+    private static boolean extraData(String path) {
+        for (String folder : EXTRA_DATA) {
+            if (path.startsWith(folder + "/")) { return true; }
+        }
+        return false;
+    }
+
     private static boolean isData(String path) {
-        return path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
+        return extraData(path) || path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
                 || path.startsWith(GATES + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
                 || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(GAMERULES + "/")
