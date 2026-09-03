@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.rubic.server.RubicAnvilChunkLoader;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
-import mctmods.resourcedatapackloader.content.rubic.world.provider.IRubicWorldProvider;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
 
 import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.world.WorldProvider;

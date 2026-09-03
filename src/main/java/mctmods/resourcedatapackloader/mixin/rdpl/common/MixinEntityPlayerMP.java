@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(EntityPlayerMP.class) public abstract class MixinEntityPlayerMP {
-    @ModifyConstant(method = "<init>", constant = @Constant(doubleValue = 255)) private double rdpl$unstuckCeiling(double orig, MinecraftServer server, WorldServer worldIn, GameProfile profile, PlayerInteractionManager interactionManager) {
+    @ModifyConstant(method = "<init>", constant = @Constant(doubleValue = 255)) private double rdpl$unstuckCeiling(double orig, MinecraftServer server, WorldServer worldIn, GameProfile profile, PlayerInteractionManager interactionManagerIn) {
         if (!((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return orig; }
         EntityPlayerMP self = (EntityPlayerMP) (Object) this;
         if (!worldIn.isBlockLoaded(new BlockPos(self))) { return Double.NEGATIVE_INFINITY; }

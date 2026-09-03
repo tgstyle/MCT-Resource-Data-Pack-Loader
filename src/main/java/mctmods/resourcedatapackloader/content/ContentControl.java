@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,8 +61,8 @@ public final class ContentControl {
             "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
             "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
             "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
-            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathPiers", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
-            "villagePlotsMost", "voidPlatformBlock",
+            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathPiers", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
+            "villagePlotsMost", "villageLayout", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "structureAt", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
@@ -151,12 +152,24 @@ public final class ContentControl {
         return fallback;
     }
 
+    private static WorldTemplateDef settingsFrom;
+    private static final Map<String, JsonElement> SETTINGS = new HashMap<>();
+
     @Nullable private static JsonElement setting(String group, String key) {
         if (!packDecides(group)) { return null; }
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || template.settings == null) { return null; }
-        JsonObject settings = template.settings;
-        return settings.has(key) ? settings.get(key) : null;
+        if (template != settingsFrom) {
+            SETTINGS.clear();
+            settingsFrom = template;
+        }
+        JsonElement held = SETTINGS.get(key);
+        if (held == null) {
+            JsonObject settings = template.settings;
+            held = settings.has(key) ? settings.get(key) : JsonNull.INSTANCE;
+            SETTINGS.put(key, held);
+        }
+        return held.isJsonNull() ? null : held;
     }
 
     private static String mode(String group) {

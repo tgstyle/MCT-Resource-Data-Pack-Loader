@@ -81,7 +81,10 @@ import java.util.List;
     @Inject(method = "checkLightFor", at = @At("HEAD"), cancellable = true) private void rdpl$lightAfterwards(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         World world = (World) (Object) this;
         if (world.isRemote) { return; }
-        if (ContentPregen.quenches(world, pos.getX() >> 4, pos.getZ() >> 4)) { cir.setReturnValue(true); }
+        if (ContentPregen.quenches(world, pos.getX() >> 4, pos.getZ() >> 4)) {
+            if (world.isBlockLoaded(pos)) { world.getChunk(pos).setLightPopulated(false); }
+            cir.setReturnValue(true);
+        }
     }
 
     @Redirect(method = "checkLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isAreaLoaded(Lnet/minecraft/util/math/BlockPos;IZ)Z"))

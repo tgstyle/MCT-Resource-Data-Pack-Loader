@@ -23,7 +23,6 @@ import static mctmods.resourcedatapackloader.util.Coords.localToBlock;
 
 import static net.minecraftforge.common.MinecraftForge.EVENT_BUS;
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Biomes;
@@ -285,7 +284,7 @@ public class Cube implements ICube {
         this.isCubeLoaded = true;
         boolean raised = false;
         if (!isSurfaceTracked) {
-            IColumnInternal held = (IColumnInternal) getColumn();
+            IColumnInternal held = getColumn();
             int[] before = new int[256];
             for (int i = 0; i < 256; i++) { before[i] = held.getTopYWithStaging(i & 15, i >> 4); }
             held.addToStagingHeightmap(this);

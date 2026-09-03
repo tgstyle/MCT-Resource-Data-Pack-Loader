@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 
 import net.minecraft.world.World;
@@ -16,9 +17,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.List;
 
 @Mixin(MapGenVillage.Start.class) public abstract class MixinVillageStart {
+    @Inject(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At("HEAD"))
+    private static void rdpl$holdTheRoads(World worldIn, Random rand, int x, int z, int size, CallbackInfo ci) {
+        if (ContentBeard.wanted() && CityLayout.wanted()) { CityLayout.laying(true); }
+    }
+
     @Inject(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At("TAIL"))
     private void rdpl$foundAtBirth(World worldIn, Random rand, int x, int z, int size, CallbackInfo ci) {
-        if (ContentBeard.wanted()) { ContentBeard.foundAtBirth((StructureStart) (Object) this); }
+        CityLayout.laying(false);
+        if (ContentBeard.wanted()) { ContentBeard.foundAtBirth(worldIn, (StructureStart) (Object) this); }
     }
 
     @Redirect(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At(value = "INVOKE", target = "Ljava/util/List;remove(I)Ljava/lang/Object;"))

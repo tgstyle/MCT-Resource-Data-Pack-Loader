@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -30,9 +31,12 @@ public final class ContentIntroPlay {
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { PLAYING.remove(event.player.getUniqueID()); }
 
+    public static boolean reading(UUID player) { return PLAYING.contains(player); }
+
     public static void finished(EntityPlayerMP player) {
         if (!PLAYING.remove(player.getUniqueID())) { return; }
         if (ContentWorldIntro.once()) { persisted(player).setBoolean(SEEN, true); }
+        ContentPregen.releaseAfterIntro(player);
     }
 
     public static void replay(EntityPlayerMP player) { persisted(player).removeTag(SEEN); }

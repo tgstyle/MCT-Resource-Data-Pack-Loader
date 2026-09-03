@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -9,22 +8,112 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
-import javax.annotation.Nullable;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 public final class BeardPlots {
-    private static StructureStart plotsStart;
-    private static StructureComponent plotsPiece;
-    private static int plotsCount;
-    private static StructureBoundingBox[] plotsBoxes = new StructureBoundingBox[0];
-    private static boolean[] plotsWells = new boolean[0];
-    private static StructureBoundingBox plotsUnion;
+    private static final StructureComponent[] NONE = new StructureComponent[0];
+    private static final Map<StructureStart, Index> INDEXES = new WeakHashMap<>();
+    @Nullable private static List<StructureComponent> layingOut;
+    @Nullable private static Index layout;
+    @Nullable private static List<StructureComponent> wellsFrom;
+    private static int wellsCount;
+    private static final List<StructureBoundingBox> WELLS = new ArrayList<>();
 
     private BeardPlots() {}
+
+    private static final class Index {
+        private final int count;
+        private final int cellX;
+        private final int cellZ;
+        private final int wide;
+        private final int deep;
+        private final StructureComponent[][] cells;
+
+        private Index(List<StructureComponent> components) {
+            count = components.size();
+            int minX = Integer.MAX_VALUE;
+            int minZ = Integer.MAX_VALUE;
+            int maxX = Integer.MIN_VALUE;
+            int maxZ = Integer.MIN_VALUE;
+            for (StructureComponent piece : components) {
+                StructureBoundingBox box = piece.getBoundingBox();
+                minX = Math.min(minX, box.minX);
+                minZ = Math.min(minZ, box.minZ);
+                maxX = Math.max(maxX, box.maxX);
+                maxZ = Math.max(maxZ, box.maxZ);
+            }
+            if (minX > maxX) {
+                cellX = cellZ = wide = deep = 0;
+                cells = new StructureComponent[0][];
+                return;
+            }
+            cellX = minX >> 4;
+            cellZ = minZ >> 4;
+            wide = (maxX >> 4) - cellX + 1;
+            deep = (maxZ >> 4) - cellZ + 1;
+            int[] counts = new int[wide * deep];
+            for (StructureComponent piece : components) {
+                StructureBoundingBox box = piece.getBoundingBox();
+                for (int cx = (box.minX >> 4) - cellX; cx <= (box.maxX >> 4) - cellX; cx++) {
+                    for (int cz = (box.minZ >> 4) - cellZ; cz <= (box.maxZ >> 4) - cellZ; cz++) { counts[cx * deep + cz]++; }
+                }
+            }
+            cells = new StructureComponent[wide * deep][];
+            for (int i = 0; i < cells.length; i++) { cells[i] = counts[i] == 0 ? NONE : new StructureComponent[counts[i]]; }
+            int[] filled = new int[wide * deep];
+            for (StructureComponent piece : components) {
+                StructureBoundingBox box = piece.getBoundingBox();
+                for (int cx = (box.minX >> 4) - cellX; cx <= (box.maxX >> 4) - cellX; cx++) {
+                    for (int cz = (box.minZ >> 4) - cellZ; cz <= (box.maxZ >> 4) - cellZ; cz++) {
+                        int cell = cx * deep + cz;
+                        cells[cell][filled[cell]++] = piece;
+                    }
+                }
+            }
+        }
+
+        private StructureComponent[] at(int x, int z) {
+            int cx = (x >> 4) - cellX;
+            int cz = (z >> 4) - cellZ;
+            if (cx < 0 || cx >= wide || cz < 0 || cz >= deep) { return NONE; }
+            return cells[cx * deep + cz];
+        }
+    }
+
+    private static Index index(StructureStart start) {
+        List<StructureComponent> components = start.getComponents();
+        Index held = INDEXES.get(start);
+        if (held != null && held.count == components.size()) { return held; }
+        held = new Index(components);
+        INDEXES.put(start, held);
+        return held;
+    }
+
+    private static StructureComponent[] around(StructureStart start, int x, int z) { return index(start).at(x, z); }
+
+    public static boolean collides(List<StructureComponent> placed, StructureBoundingBox box) {
+        Index held = layout;
+        if (held == null || layingOut != placed || held.count != placed.size()) {
+            held = new Index(placed);
+            layout = held;
+            layingOut = placed;
+        }
+        for (int cx = box.minX >> 4; cx <= box.maxX >> 4; cx++) {
+            for (int cz = box.minZ >> 4; cz <= box.maxZ >> 4; cz++) {
+                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
+                    if (other.getBoundingBox().intersectsWith(box)) { return true; }
+                }
+            }
+        }
+        return false;
+    }
 
     public static boolean roadAlongX(StructureComponent piece) {
         EnumFacing facing = piece.getCoordBaseMode();
@@ -42,90 +131,86 @@ public final class BeardPlots {
     }
 
     public static boolean waystone(StructureComponent piece) { return piece.getClass().getName().toLowerCase(Locale.ROOT).contains("waystone"); }
+
     public static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {
-        if (start != plotsStart || piece != plotsPiece || start.getComponents().size() != plotsCount) { snapshotPlots(start, piece); }
-        if (plotsUnion == null || !plotsUnion.isVecInside(at)) { return false; }
-        for (int i = 0; i < plotsBoxes.length; i++) {
-            StructureBoundingBox box = plotsBoxes[i];
+        for (StructureComponent other : around(start, at.getX(), at.getZ())) {
+            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
+            StructureBoundingBox box = other.getBoundingBox();
             if (box.isVecInside(at)) { return true; }
-            if (plotsWells[i] && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
+            if (other instanceof StructureVillagePieces.Well && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
         }
         return false;
     }
 
-    private static void snapshotPlots(StructureStart start, StructureComponent piece) {
-        List<StructureComponent> components = start.getComponents();
-        List<StructureBoundingBox> boxes = new ArrayList<>(components.size());
-        List<StructureComponent> owners = new ArrayList<>(components.size());
-        StructureBoundingBox union = null;
-        for (StructureComponent other : components) {
-            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
-            boxes.add(box);
-            owners.add(other);
-            StructureBoundingBox padded = new StructureBoundingBox(box);
-            if (other instanceof StructureVillagePieces.Well) { padded.maxY++; }
-            if (union == null) { union = padded; }
-            else { union.expandTo(padded); }
-        }
-        plotsBoxes = boxes.toArray(new StructureBoundingBox[0]);
-        plotsWells = new boolean[plotsBoxes.length];
-        for (int i = 0; i < plotsWells.length; i++) { plotsWells[i] = owners.get(i) instanceof StructureVillagePieces.Well; }
-        plotsUnion = union;
-        plotsStart = start;
-        plotsPiece = piece;
-        plotsCount = components.size();
-    }
     public static boolean underAnother(StructureStart start, @Nullable StructureComponent piece, int x, int z) {
-        for (StructureComponent other : start.getComponents()) {
+        for (StructureComponent other : around(start, x, z)) {
             if (other == piece) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
         return false;
     }
+
     public static boolean besideRoad(StructureStart start, StructureComponent piece, int x, int z) { return nearRoad(start, piece, x, z, 1); }
 
     public static boolean nearRoad(StructureStart start, StructureComponent piece, int x, int z, int reach) {
-        for (StructureComponent other : start.getComponents()) {
-            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
-            if (x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach) { return true; }
+        Index held = index(start);
+        for (int cx = (x - reach) >> 4; cx <= (x + reach) >> 4; cx++) {
+            for (int cz = (z - reach) >> 4; cz <= (z + reach) >> 4; cz++) {
+                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
+                    if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+                    StructureBoundingBox box = other.getBoundingBox();
+                    if (x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach) { return true; }
+                }
+            }
         }
         return false;
     }
 
     public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) {
-        for (StructureComponent other : start.getComponents()) {
+        for (StructureComponent other : around(start, x, z)) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
         return false;
     }
+
     public static boolean underBuilding(StructureStart start, StructureComponent piece, int x, int z) {
-        for (StructureComponent other : start.getComponents()) {
+        for (StructureComponent other : around(start, x, z)) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
         return false;
     }
+
     public static boolean overRoad(StructureStart start, int x, int z) {
-        for (StructureComponent other : start.getComponents()) {
+        for (StructureComponent other : around(start, x, z)) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox held = ((IStructureComponentBox) other).rdpl$box();
-            if (held != null && x >= held.minX && x <= held.maxX && z >= held.minZ && z <= held.maxZ) { return true; }
+            StructureBoundingBox box = other.getBoundingBox();
+            if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
         return false;
     }
+
     public static List<StructureBoundingBox> wellBoxes(@Nullable List<StructureComponent> pieces) {
-        List<StructureBoundingBox> wells = new ArrayList<>();
-        if (pieces == null || pieces.isEmpty() || !(pieces.get(0) instanceof StructureVillagePieces.Start)) { return wells; }
-        for (StructureComponent piece : pieces) {
-            if (piece instanceof StructureVillagePieces.Well) { wells.add(piece.getBoundingBox()); }
+        if (pieces == null) { return new ArrayList<>(); }
+        return new ArrayList<>(wells(pieces));
+    }
+
+    private static List<StructureBoundingBox> wells(List<StructureComponent> pieces) {
+        if (pieces != wellsFrom || pieces.size() != wellsCount) {
+            WELLS.clear();
+            if (!pieces.isEmpty() && pieces.get(0) instanceof StructureVillagePieces.Start) {
+                for (StructureComponent piece : pieces) {
+                    if (piece instanceof StructureVillagePieces.Well) { WELLS.add(piece.getBoundingBox()); }
+                }
+            }
+            wellsFrom = pieces;
+            wellsCount = pieces.size();
         }
-        return wells;
+        return WELLS;
     }
 
     public static List<StructureBoundingBox> plazaSquares(@Nullable List<StructureComponent> pieces) {
@@ -139,14 +224,16 @@ public final class BeardPlots {
     }
 
     public static boolean insidePlaza(@Nullable List<StructureComponent> pieces, int x, int z) {
-        for (StructureBoundingBox plaza : plazaSquares(pieces)) {
-            if (x >= plaza.minX && x <= plaza.maxX && z >= plaza.minZ && z <= plaza.maxZ) { return true; }
+        if (pieces == null) { return false; }
+        int reach = ContentBeard.plazaReach();
+        for (StructureBoundingBox well : wells(pieces)) {
+            if (x >= well.minX - reach && x <= well.maxX + reach && z >= well.minZ - reach && z <= well.maxZ + reach) { return true; }
         }
         return false;
     }
 
     public static boolean roadLine(StructureStart start, StructureComponent piece, int x, int z) {
-        for (StructureComponent other : start.getComponents()) {
+        for (StructureComponent other : around(start, x, z)) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
             if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
@@ -161,7 +248,7 @@ public final class BeardPlots {
     }
 
     public static boolean roadCore(StructureStart start, StructureComponent piece, int x, int z) {
-        for (StructureComponent other : start.getComponents()) {
+        for (StructureComponent other : around(start, x, z)) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
             if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
@@ -173,6 +260,7 @@ public final class BeardPlots {
         }
         return false;
     }
+
     public static int restingFloor(int[] tops, int depth, int spot, int from) {
         int own = tops[spot];
         int floor = own == Integer.MIN_VALUE ? from : own + 1;

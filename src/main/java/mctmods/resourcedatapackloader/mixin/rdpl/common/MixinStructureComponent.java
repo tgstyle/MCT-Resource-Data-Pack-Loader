@@ -11,6 +11,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -44,7 +45,7 @@ import java.util.List;
         cir.setReturnValue(null);
     }
 
-    private static boolean rdpl$crosses(StructureBoundingBox road, StructureBoundingBox box) {
+    @Unique private static boolean rdpl$crosses(StructureBoundingBox road, StructureBoundingBox box) {
         boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
         if (roadAlongX == (box.maxX - box.minX >= box.maxZ - box.minZ)) { return false; }
         StructureBoundingBox ew = roadAlongX ? road : box;
@@ -54,7 +55,7 @@ import java.util.List;
         return (ewCenter >= ns.minZ && ewCenter <= ns.maxZ) || (nsCenter >= ew.minX && nsCenter <= ew.maxX);
     }
 
-    private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) {
+    @Unique private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) {
         return held.maxX >= box.minX - gap && held.minX <= box.maxX + gap && held.maxZ >= box.minZ - gap && held.minZ <= box.maxZ + gap;
     }
 

@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.MathHelper;
 import java.util.Locale;
 
-@Mixin(targets = "com.worador.f3hud.RegionModule", remap = false) public abstract class MixinRegionModule {
+@SuppressWarnings("public-target") @Mixin(targets = "com.worador.f3hud.RegionModule", remap = false) public abstract class MixinRegionModule {
     @Redirect(method = "getLines", at = @At(value = "INVOKE", target = "Ljava/lang/String;format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;"), remap = false)
     private String rdpl$cubeRegion(Locale locale, String pattern, Object[] parts) {
         Minecraft mc = Minecraft.getMinecraft();

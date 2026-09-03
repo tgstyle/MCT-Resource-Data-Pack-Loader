@@ -52,6 +52,7 @@ public final class ContentWorldgen implements IWorldGenerator {
         ContentRetrogen.markGenerated(world, chunkX, chunkZ);
         ContentCaveRegions.decorate(world, chunkX, chunkZ, random);
         ContentCaveRegions.placeStructures(world, chunkX, chunkZ);
+        ContentStructureMaps.place(world, chunkX, chunkZ);
         List<WorldgenDef> active = forDimension(world.provider.getDimension());
         if (active.isEmpty()) { return; }
         generate(random, chunkX, chunkZ, world, active);

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorFlatFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorEnd;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorHell;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorStructures;
@@ -18,6 +19,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.ChunkGeneratorEnd;
+import net.minecraft.world.gen.ChunkGeneratorFlat;
 import net.minecraft.world.gen.ChunkGeneratorHell;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkProviderServer;
@@ -341,8 +343,12 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     public static Collection<StructureStart> villageStarts(World world) {
         if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return Collections.emptyList(); }
         IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
-        if (!(maker instanceof ChunkGeneratorOverworld)) { return Collections.emptyList(); }
-        MapGenVillage shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages();
+        MapGenVillage shell = null;
+        if (maker instanceof ChunkGeneratorOverworld) { shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages(); }
+        else if (maker instanceof ChunkGeneratorFlat) {
+            MapGenStructure flat = ((IChunkGeneratorFlatFields) maker).rdpl$structures().get("Village");
+            if (flat instanceof MapGenVillage) { shell = (MapGenVillage) flat; }
+        }
         if (shell == null) { return Collections.emptyList(); }
         MapGenStructure found = theRealOne(shell);
         if (!(found instanceof MapGenVillage)) { return Collections.emptyList(); }

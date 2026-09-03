@@ -41,6 +41,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.portal.ContentPortalFrames;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
@@ -119,6 +121,8 @@ public class ResourceDataPackLoader {
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
         ContentPathIntersects.load();
+        ContentStructureMaps.load();
+        ContentCityMaps.load();
         ContentPortalFrames.load();
         ContentWorldIntro.load();
         RDPLNetwork.register();
@@ -154,7 +158,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
         if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
         List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
-        if (veins.isEmpty()) { ContentRetrogen.setup(veins, null); }
+        if (veins.isEmpty() && !ContentStructureMaps.any()) { ContentRetrogen.setup(veins, null); }
         else {
             ContentWorldgen worldgen = new ContentWorldgen(veins);
             GameRegistry.registerWorldGenerator(worldgen, 3);
@@ -205,6 +209,7 @@ public class ResourceDataPackLoader {
         ContentStructurePlacement.reload();
         ContentEntityTicks.reload();
         ContentVillages.reload();
+        if (ContentVillages.load()) { ContentVillages.register(); }
     }
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }

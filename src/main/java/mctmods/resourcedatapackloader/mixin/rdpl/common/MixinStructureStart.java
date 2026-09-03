@@ -32,7 +32,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         boolean built;
         try {
             if (ContentBeard.wanted()) {
-                ContentBeard.attach(self, piece);
                 ContentBeard.fellFor(self, piece, world, clip);
                 BeardKeep.watch(world, piece, clip);
             }

@@ -13,7 +13,7 @@ public final class BeardGrade {
     private BeardGrade() {}
 
     @Nullable public static int[] noiseProfile(World world, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost) {
-        if (BeardSurface.samplerFor(world) == null) { return null; }
+        if (BeardSurface.unreadable(world)) { return null; }
         int[] profile = new int[rowMost - rowLeast + 1];
         int[] across = new int[acrossMost - acrossLeast + 1];
         for (int i = 0; i < profile.length; i++) {
@@ -133,6 +133,75 @@ public final class BeardGrade {
         }
         return lifted;
     }
+    public static int ramp(int[] profile, boolean[] pinned, boolean[] keep) {
+        int rows = profile.length;
+        int freed = 0;
+        for (int i = 1; i < rows; i++) {
+            if (!pinned[i] || !pinned[i - 1] || !joined(profile, i) || Math.abs(profile[i] - profile[i - 1]) <= 1) { continue; }
+            int lo = i;
+            int hi = i - 1;
+            boolean leftTurn = true;
+            while (true) {
+                int a = profile[lo - 1];
+                int b = profile[hi + 1];
+                if (Math.abs(b - a) <= hi - lo + 2) { break; }
+                boolean leftOpen = lo - 2 >= 0 && !keep[lo - 1] && profile[lo - 2] != Integer.MIN_VALUE;
+                boolean rightOpen = hi + 2 < rows && !keep[hi + 1] && profile[hi + 2] != Integer.MIN_VALUE;
+                if (!leftOpen && !rightOpen) { break; }
+                if ((leftTurn && leftOpen) || !rightOpen) { lo--; }
+                else { hi++; }
+                leftTurn = !leftTurn;
+            }
+            int a = profile[lo - 1];
+            int b = profile[hi + 1];
+            if (Math.abs(b - a) > hi - lo + 2) { continue; }
+            int step = b > a ? 1 : -1;
+            for (int k = lo; k <= hi; k++) {
+                profile[k] = a + step * Math.min(k - lo + 1, Math.abs(b - a));
+                pinned[k] = false;
+                freed++;
+            }
+            i = hi + 1;
+        }
+        return freed;
+    }
+
+    public static int fillDips(int[] profile, boolean[] keep) {
+        int rows = profile.length;
+        int lifted = 0;
+        int i = 0;
+        while (i < rows) {
+            if (profile[i] == Integer.MIN_VALUE) {
+                i++;
+                continue;
+            }
+            int end = i;
+            while (end + 1 < rows && profile[end + 1] != Integer.MIN_VALUE) { end++; }
+            int[] leftMax = new int[end - i + 1];
+            int running = Integer.MIN_VALUE;
+            for (int k = i; k <= end; k++) {
+                running = keep[k] ? profile[k] : Math.max(running, profile[k]);
+                leftMax[k - i] = running;
+            }
+            int[] rightMax = new int[end - i + 1];
+            running = Integer.MIN_VALUE;
+            for (int k = end; k >= i; k--) {
+                running = keep[k] ? profile[k] : Math.max(running, profile[k]);
+                rightMax[k - i] = running;
+            }
+            for (int k = i; k <= end; k++) {
+                if (keep[k]) { continue; }
+                int fill = Math.min(leftMax[k - i], rightMax[k - i]);
+                if (fill > profile[k]) {
+                    profile[k] = fill;
+                    lifted++;
+                }
+            }
+            i = end + 1;
+        }
+        return lifted;
+    }
+
     public static void settle(int[] profile, boolean[] held) {
         int rows = profile.length;
         for (int i = 1; i < rows - 1; i++) {

@@ -365,8 +365,6 @@ public class DeepGeneration {
         return distance / (double) skyTaper;
     }
 
-    private double strongest(double[][][] regions) { return span(regions)[1]; }
-
     private double[] span(double[][][] regions) {
         double[] ends = {Double.MAX_VALUE, -1.0D};
         for (double[][] plane : regions) {

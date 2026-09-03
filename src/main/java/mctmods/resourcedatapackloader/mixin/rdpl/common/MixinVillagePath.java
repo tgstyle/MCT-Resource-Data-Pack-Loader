@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -61,7 +63,8 @@ import javax.annotation.Nullable;
 
     @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I"))
     private static int rdpl$longerRuns(Random random, int minimum, int maximum) {
-        int rolled = MathHelper.getInt(random, ContentBeard.wanted() ? 5 : minimum, ContentBeard.wanted() ? 7 : maximum);
+        int least = ContentBeard.wanted() ? Math.max(5, (ContentVillages.largestPlot() + 9) / 7) : minimum;
+        int rolled = MathHelper.getInt(random, least, ContentBeard.wanted() ? least + 2 : maximum);
         ContentLog.LOGGER.debug("A road rolls {} segments of 7, {} blocks", rolled, rolled * 7);
         return rolled;
     }
@@ -82,11 +85,11 @@ import javax.annotation.Nullable;
             return;
         }
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
-        if (!rdpl$lineUp(p_175848_1_, found, alongX)) {
+        int half = (BeardRoads.pathFullWidth() - 3) / 2;
+        if (!rdpl$lineUp(p_175848_1_, found, alongX, half)) {
             cir.setReturnValue(null);
             return;
         }
-        int half = (BeardRoads.pathFullWidth() - 3) / 2;
         if (half > 0) {
             StructureBoundingBox wide = new StructureBoundingBox(found);
             if (facing == EnumFacing.NORTH || facing == EnumFacing.SOUTH) {
@@ -97,20 +100,20 @@ import javax.annotation.Nullable;
                 wide.minZ -= half;
                 wide.maxZ += half;
             }
-            boolean rolled = BeardRoads.alleyChance() > 0 && rand.nextInt(100) < BeardRoads.alleyChance() && rdpl$joinsRoads(p_175848_1_, found, facing);
-            if (rolled) { ContentLog.LOGGER.debug("A road attempt {} facing {} rolls an alley rather than a full street", found, facing); }
-            if (!rolled && !rdpl$tooNear(p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing)) {
+            boolean rolled = BeardRoads.alleyChance() > 0 && rand.nextInt(100) < BeardRoads.alleyChance();
+            if (!rdpl$tooNear(p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing)) {
                 if (ContentBeard.claimCorners(p_175848_1_, wide, alongX)) {
                     cir.setReturnValue(wide);
                     return;
                 }
                 ContentLog.LOGGER.debug("A road attempt {} facing {} needs a junction corner that is already taken, so it may only be an alley", wide, facing);
             }
-            if (!rdpl$joinsRoads(p_175848_1_, found, facing)) {
-                ContentLog.LOGGER.debug("A road attempt {} facing {} could not widen and would be an alley to nowhere, so it is refused", found, facing);
+            if (!rolled || rdpl$joinsRoads(p_175848_1_, found, facing) || rdpl$roadWithinReach(p_175848_1_, found, facing)) {
+                ContentLog.LOGGER.debug("A road attempt {} facing {} could not widen and {} an alley here, so it is refused", found, facing, rolled ? "may not be" : "did not roll");
                 cir.setReturnValue(null);
                 return;
             }
+            ContentLog.LOGGER.debug("A road attempt {} facing {} rolls an alley rather than being refused", found, facing);
         }
         if (3 < BeardRoads.pathMinimumWidth()) {
             cir.setReturnValue(null);
@@ -122,7 +125,13 @@ import javax.annotation.Nullable;
         }
     }
 
-    @Unique private static boolean rdpl$lineUp(List<StructureComponent> pieces, StructureBoundingBox found, boolean alongX) {
+    @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$alleyStops(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
+        CityGrowth.alleyLaying(BeardRoads.roadNarrow(getBoundingBox(), BeardPlots.roadAlongX(this)));
+    }
+
+    @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) { CityGrowth.alleyLaying(false); }
+
+    @Unique private static boolean rdpl$lineUp(List<StructureComponent> pieces, StructureBoundingBox found, boolean alongX, int half) {
         int center = alongX ? (found.minZ + found.maxZ) / 2 : (found.minX + found.maxX) / 2;
         StructureBoundingBox held = null;
         int nearest = Integer.MAX_VALUE;
@@ -130,7 +139,8 @@ import javax.annotation.Nullable;
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
             if (BeardPlots.roadAlongX(met) != alongX) { continue; }
-            boolean acrossed = alongX ? met.maxZ >= found.minZ && met.minZ <= found.maxZ : met.maxX >= found.minX && met.minX <= found.maxX;
+            if (BeardRoads.roadNarrow(met, alongX)) { continue; }
+            boolean acrossed = alongX ? met.maxZ >= found.minZ - half && met.minZ <= found.maxZ + half : met.maxX >= found.minX - half && met.minX <= found.maxX + half;
             if (!acrossed) { continue; }
             int gap = alongX ? Math.max(met.minX - found.maxX, found.minX - met.maxX) : Math.max(met.minZ - found.maxZ, found.minZ - met.maxZ);
             if (gap < 2 || gap >= nearest) { continue; }
@@ -150,6 +160,7 @@ import javax.annotation.Nullable;
             slid.maxX += delta;
         }
         for (StructureComponent taken : pieces) {
+            if (taken instanceof StructureVillagePieces.Path && BeardRoads.roadNarrow(taken.getBoundingBox(), BeardPlots.roadAlongX(taken))) { continue; }
             if (taken.getBoundingBox().intersectsWith(slid.minX, slid.minZ, slid.maxX, slid.maxZ)) {
                 ContentLog.LOGGER.debug("A road attempt {} cannot slide {} to line up with the road at {}, {} along its corridor, so it is refused", found, delta, held.minX, held.minZ);
                 return false;
@@ -192,6 +203,7 @@ import javax.annotation.Nullable;
         for (StructureComponent other : pieces) {
             StructureBoundingBox held = other.getBoundingBox();
             if (!held.intersectsWith(wide.minX, wide.minZ, wide.maxX, wide.maxZ)) { continue; }
+            if (other instanceof StructureVillagePieces.Path && BeardRoads.roadNarrow(held, BeardPlots.roadAlongX(held))) { continue; }
             if (plazas.isEmpty() || !(other instanceof StructureVillagePieces.Path)) { return false; }
             if (BeardPlots.roadAlongX(held) == alongX) { return false; }
             boolean covered = false;
@@ -204,6 +216,22 @@ import javax.annotation.Nullable;
             if (!covered) { return false; }
         }
         return true;
+    }
+
+    @Unique private static boolean rdpl$roadWithinReach(List<StructureComponent> pieces, StructureBoundingBox alley, EnumFacing facing) {
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        boolean onward = facing == EnumFacing.EAST || facing == EnumFacing.SOUTH;
+        int end = alongX ? (onward ? alley.maxX : alley.minX) : (onward ? alley.maxZ : alley.minZ);
+        int reach = ContentBeard.attachGap();
+        for (StructureComponent other : pieces) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox met = other.getBoundingBox();
+            boolean lined = alongX ? met.maxZ >= alley.minZ && met.minZ <= alley.maxZ : met.maxX >= alley.minX && met.minX <= alley.maxX;
+            if (!lined) { continue; }
+            int away = onward ? (alongX ? met.minX : met.minZ) - end : end - (alongX ? met.maxX : met.maxZ);
+            if (away > 0 && away <= reach) { return true; }
+        }
+        return false;
     }
 
     @Unique private static boolean rdpl$joinsRoads(List<StructureComponent> pieces, StructureBoundingBox alley, EnumFacing facing) {
@@ -247,12 +275,12 @@ import javax.annotation.Nullable;
         cir.setReturnValue(true);
     }
 
-    @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
-        IBlockState deck = getBiomeSpecificBlockState(Blocks.PLANKS.getDefaultState());
-        if (deck.getMaterial() != Material.WOOD) { deck = Blocks.PLANKS.getDefaultState(); }
+    @SuppressWarnings({"ConstantConditions"}) @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
+        IBlockState deck = getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.PLANKS).getDefaultState());
+        if (deck.getMaterial() != Material.WOOD) { deck = Objects.requireNonNull(Blocks.PLANKS).getDefaultState(); }
         BeardRoads.pave(this, world, clip,
-                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState())),
-                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState())),
+                BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRASS_PATH).getDefaultState())),
+                BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRAVEL).getDefaultState())),
                 BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, deck),
                 BeardRoads.pathChosen());
     }

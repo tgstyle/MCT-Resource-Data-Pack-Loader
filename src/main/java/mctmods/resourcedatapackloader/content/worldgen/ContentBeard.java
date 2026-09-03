@@ -23,7 +23,6 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillage;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockLeaves;
@@ -159,10 +158,10 @@ public final class ContentBeard {
             if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(clip)) { continue; }
             building(start);
             try {
-                BeardRoads.repairRoads(event.getWorld(), start);
+                List<StructureBoundingBox> repaved = BeardRoads.repairRoads(event.getWorld(), start);
                 int seams = BeardGround.levelSeams(start, event.getWorld(), clip, at);
                 if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
-                int freed = BeardGround.freeDoors(start, event.getWorld(), clip, at);
+                int freed = BeardGround.freeDoors(start, event.getWorld(), clip, at, repaved);
                 if (freed > 0) { ContentLog.LOGGER.debug("Freed {} block(s) that had closed a doorway of the village at {}, {} after the roads were repaired", freed, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
                 int swept = BeardGround.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
                 if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
@@ -205,13 +204,18 @@ public final class ContentBeard {
         boolean bulb = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece);
         int reach = bulb ? 6 : 2;
         int floor = bulb ? box.minY - 8 : box.minY + 1;
-        for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
-            for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
-                for (int y = floor; y <= box.maxY + 16; y++) {
-                    if (!bare && !bulb && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && y <= top) { continue; }
+        int leastX = Math.max(box.minX - reach, clip.minX);
+        int mostX = Math.min(box.maxX + reach, clip.maxX);
+        int leastZ = Math.max(box.minZ - reach, clip.minZ);
+        int mostZ = Math.min(box.maxZ + reach, clip.maxZ);
+        for (int x = leastX; x <= mostX; x++) {
+            for (int z = leastZ; z <= mostZ; z++) {
+                int from = !bare && !bulb && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ ? Math.max(floor, top + 1) : floor;
+                for (int y = from; y <= box.maxY + 16; y++) {
                     at.setPos(x, y, z);
-                    if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                    if (!clip.isVecInside(at)) { continue; }
                     IBlockState held = world.getBlockState(at);
+                    if (held.getBlock() == Blocks.AIR || BeardPlots.insideAnother(start, piece, at)) { continue; }
                     if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { seeds.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.LEAVES) { canopy.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.VINE) { felled += BeardBlocks.clearAt(world, at); }
@@ -514,7 +518,7 @@ public final class ContentBeard {
         return recurrent ? RecurrentPlots.seat(piece) : -1;
     }
 
-    public static void foundAtBirth(StructureStart start) { BeardSite.foundAtBirth(start); }
+    public static void foundAtBirth(World world, StructureStart start) { BeardSite.foundAtBirth(world, start); }
 
     public static void openAround(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         if (piece.getClass().getEnclosingClass() == ComponentScatteredFeaturePieces.class) {
@@ -576,15 +580,248 @@ public final class ContentBeard {
 
     public static int attachGap() { return Math.max(ATTACH_GAP, BeardRoads.pathFullWidth() + 2); }
 
+    public static void attachAll(StructureStart start, World world, Random rand) {
+        if (!wanted()) { return; }
+        List<StructureComponent> pieces = start.getComponents();
+        List<StructureComponent> everyone = new ArrayList<>(pieces);
+        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
+            if (village == start || village.getComponents() == pieces) { continue; }
+            everyone.addAll(village.getComponents());
+        }
+        for (StructureComponent piece : pieces.toArray(new StructureComponent[0])) { elbows(start, piece, everyone, rand); }
+        for (StructureComponent piece : pieces.toArray(new StructureComponent[0])) { attach(start, piece); }
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The village at {}, {} settled every road box before any chunk was built, so no road is extended into ground that is already made", start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+    }
+
+    private static void elbows(StructureStart start, StructureComponent piece, List<StructureComponent> everyone, Random rand) {
+        if (!(piece instanceof StructureVillagePieces.Path)) { return; }
+        StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
+        if (box == null) { return; }
+        boolean alongX = BeardPlots.roadAlongX(piece);
+        if (BeardRoads.roadNarrow(box, alongX) || CityGrowth.bulbWide(piece)) { return; }
+        for (int side = 0; side < 2; side++) { closeEnd(start, piece, box, alongX, side == 1, everyone, rand); }
+    }
+
+    private static void closeEnd(StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean alongX, boolean outward, List<StructureComponent> everyone, Random rand) {
+        int end = alongX ? (outward ? box.maxX : box.minX) : (outward ? box.maxZ : box.minZ);
+        int acrossLo = alongX ? box.minZ : box.minX;
+        int acrossHi = alongX ? box.maxZ : box.maxX;
+        int endX = alongX ? end : (acrossLo + acrossHi) / 2;
+        int endZ = alongX ? (acrossLo + acrossHi) / 2 : end;
+        List<StructureComponent> pieces = start.getComponents();
+        if (metBeyond(everyone, piece, alongX, end + (outward ? 1 : -1), acrossLo, acrossHi)) {
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The end at {}, {} of the road at {}, {} already meets something", endX, endZ, box.minX, box.minZ); }
+            return;
+        }
+        StructureComponent bestOther = null;
+        StructureBoundingBox bestMet = null;
+        boolean bestCollinear = false;
+        int bestScore = Integer.MAX_VALUE;
+        for (StructureComponent other : everyone) {
+            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            if (met == null) { continue; }
+            boolean otherAlongX = BeardPlots.roadAlongX(other);
+            if (BeardRoads.roadNarrow(met, otherAlongX) || CityGrowth.bulbWide(other)) { continue; }
+            if (otherAlongX == alongX) {
+                int metAcrossLo = alongX ? met.minZ : met.minX;
+                int metAcrossHi = alongX ? met.maxZ : met.maxX;
+                if (metAcrossHi < acrossLo || metAcrossLo > acrossHi) { continue; }
+                int gap = outward ? (alongX ? met.minX : met.minZ) - end : end - (alongX ? met.maxX : met.maxZ);
+                if (gap < 2 || gap > attachGap() * 2 || gap >= bestScore) { continue; }
+                bestScore = gap;
+                bestOther = other;
+                bestMet = met;
+                bestCollinear = true;
+                continue;
+            }
+            int metAcrossLo = alongX ? met.minX : met.minZ;
+            int metAcrossHi = alongX ? met.maxX : met.maxZ;
+            int ahead = outward ? metAcrossLo - end : end - metAcrossHi;
+            if (ahead < 2 || ahead > attachGap() * 2) { continue; }
+            int metAlongLo = alongX ? met.minZ : met.minX;
+            int metAlongHi = alongX ? met.maxZ : met.maxX;
+            boolean overlaps = metAlongHi >= acrossLo && metAlongLo <= acrossHi;
+            int sideGap = overlaps ? 0 : metAlongLo > acrossHi ? metAlongLo - acrossHi - 1 : acrossLo - metAlongHi - 1;
+            if (sideGap > attachGap()) { continue; }
+            if (ahead + sideGap >= bestScore) { continue; }
+            bestScore = ahead + sideGap;
+            bestOther = other;
+            bestMet = met;
+        }
+        if (bestMet == null) { return; }
+        if (bestCollinear) {
+            int metNear = outward ? (alongX ? bestMet.minX : bestMet.minZ) : (alongX ? bestMet.maxX : bestMet.maxZ);
+            int cFrom = outward ? end + 1 : metNear + 1;
+            int cTo = outward ? metNear - 1 : end - 1;
+            int metSideLo = alongX ? bestMet.minZ : bestMet.minX;
+            int metSideHi = alongX ? bestMet.maxZ : bestMet.maxX;
+            if ((metSideLo + metSideHi) / 2 != (acrossLo + acrossHi) / 2) {
+                crossStreet(start, piece, box, alongX, outward, everyone, rand, bestOther, end, acrossLo, acrossHi, metSideLo, metSideHi, cFrom, cTo);
+                return;
+            }
+            List<StructureComponent> joining = standing(everyone, pieces, piece, bestOther, alongX ? cFrom : acrossLo, alongX ? acrossLo : cFrom, alongX ? cTo : acrossHi, alongX ? acrossHi : cTo);
+            if (joining == null) {
+                ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the facing street at {}, {}: the strip is held", endX, endZ, bestMet.minX, bestMet.minZ);
+                return;
+            }
+            for (StructureComponent plot : joining) {
+                ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
+                pieces.remove(plot);
+            }
+            if (alongX) {
+                if (outward) { box.maxX = metNear - 1; }
+                else { box.minX = metNear + 1; }
+            }
+            else {
+                if (outward) { box.maxZ = metNear - 1; }
+                else { box.minZ = metNear + 1; }
+            }
+            if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); }
+            ContentLog.LOGGER.debug("The dead end at {}, {} reaches the facing street at {}, {} and joins it, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, joining.size());
+            return;
+        }
+        int metAcrossLo = alongX ? bestMet.minX : bestMet.minZ;
+        int metAcrossHi = alongX ? bestMet.maxX : bestMet.maxZ;
+        int metAlongLo = alongX ? bestMet.minZ : bestMet.minX;
+        int metAlongHi = alongX ? bestMet.maxZ : bestMet.maxX;
+        boolean overlaps = metAlongHi >= acrossLo && metAlongLo <= acrossHi;
+        int from = outward ? end + 1 : overlaps ? metAcrossHi + 1 : metAcrossLo;
+        int to = outward ? (overlaps ? metAcrossLo - 1 : metAcrossHi) : end - 1;
+        List<StructureComponent> making = standing(everyone, pieces, piece, bestOther, alongX ? from : acrossLo, alongX ? acrossLo : from, alongX ? to : acrossHi, alongX ? acrossHi : to);
+        if (making == null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the road at {}, {}: a well or road holds the strip", endX, endZ, bestMet.minX, bestMet.minZ);
+            return;
+        }
+        if (!overlaps) {
+            int metFrom = metAlongLo > acrossHi ? acrossHi + 1 : metAlongHi + 1;
+            int metTo = metAlongLo > acrossHi ? metAlongLo - 1 : acrossLo - 1;
+            if (metFrom <= metTo) {
+                List<StructureComponent> metMaking = standing(everyone, pieces, piece, bestOther, alongX ? metAcrossLo : metFrom, alongX ? metFrom : metAcrossLo, alongX ? metAcrossHi : metTo, alongX ? metTo : metAcrossHi);
+                if (metMaking == null) { return; }
+                for (StructureComponent plot : metMaking) { if (!making.contains(plot)) { making.add(plot); } }
+            }
+        }
+        for (StructureComponent plot : making) {
+            ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
+            pieces.remove(plot);
+        }
+        if (alongX) {
+            if (outward) { box.maxX = overlaps ? metAcrossLo - 1 : metAcrossHi; }
+            else { box.minX = overlaps ? metAcrossHi + 1 : metAcrossLo; }
+            if (!overlaps) {
+                if (metAlongLo > acrossHi) { bestMet.minZ = box.maxZ + 1; }
+                else { bestMet.maxZ = box.minZ - 1; }
+            }
+        }
+        else {
+            if (outward) { box.maxZ = overlaps ? metAcrossLo - 1 : metAcrossHi; }
+            else { box.minZ = overlaps ? metAcrossHi + 1 : metAcrossLo; }
+            if (!overlaps) {
+                if (metAlongLo > acrossHi) { bestMet.minX = box.maxX + 1; }
+                else { bestMet.maxX = box.minX - 1; }
+            }
+        }
+        if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); }
+        if (bestOther instanceof RoadLayout) { ((RoadLayout) bestOther).rdpl$layout(null); }
+        ContentLog.LOGGER.debug("The dead end at {}, {} reaches the road at {}, {} and closes into a {}, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, overlaps ? "junction" : "corner", making.size());
+    }
+
+    private static void crossStreet(StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean alongX, boolean outward, List<StructureComponent> everyone, Random rand, StructureComponent other, int end, int acrossLo, int acrossHi, int metSideLo, int metSideHi, int cFrom, int cTo) {
+        List<StructureComponent> pieces = start.getComponents();
+        if (pieces.isEmpty() || !(pieces.get(0) instanceof StructureVillagePieces.Start)) { return; }
+        int endX = alongX ? end : (acrossLo + acrossHi) / 2;
+        int endZ = alongX ? (acrossLo + acrossHi) / 2 : end;
+        int full = BeardRoads.pathFullWidth();
+        int open = cTo - cFrom + 1;
+        if (open < full) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} faces the offset street at {}, {} too closely for a cross street to tie them, so both stay closed", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ);
+            return;
+        }
+        int conLo = outward ? cTo - full + 1 : cFrom;
+        int conHi = outward ? cTo : cFrom + full - 1;
+        int unionLo = Math.min(acrossLo, metSideLo);
+        int unionHi = Math.max(acrossHi, metSideHi);
+        StructureBoundingBox avenue = alongX
+                ? new StructureBoundingBox(conLo, box.minY, unionLo, conHi, box.maxY, unionHi)
+                : new StructureBoundingBox(unionLo, box.minY, conLo, unionHi, box.maxY, conHi);
+        List<StructureComponent> making = standing(everyone, pieces, piece, other, avenue.minX, avenue.minZ, avenue.maxX, avenue.maxZ);
+        if (making == null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street's ground is held", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ);
+            return;
+        }
+        int exFrom = outward ? end + 1 : conHi + 1;
+        int exTo = outward ? conLo - 1 : end - 1;
+        List<StructureComponent> more = standing(everyone, pieces, piece, other, alongX ? exFrom : acrossLo, alongX ? acrossLo : exFrom, alongX ? exTo : acrossHi, alongX ? acrossHi : exTo);
+        if (more == null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the cross street that would tie it: its own strip is held", endX, endZ);
+            return;
+        }
+        for (StructureComponent plot : more) { if (!making.contains(plot)) { making.add(plot); } }
+        for (StructureComponent plot : making) {
+            ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
+            pieces.remove(plot);
+        }
+        StructureVillagePieces.Path lane = new StructureVillagePieces.Path((StructureVillagePieces.Start) pieces.get(0), 0, rand, avenue, alongX ? EnumFacing.SOUTH : EnumFacing.EAST);
+        pieces.add(lane);
+        everyone.add(lane);
+        if (alongX) {
+            if (outward) { box.maxX = conLo - 1; }
+            else { box.minX = conHi + 1; }
+        }
+        else {
+            if (outward) { box.maxZ = conLo - 1; }
+            else { box.minZ = conHi + 1; }
+        }
+        if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); }
+        ContentLog.LOGGER.debug("The dead end at {}, {} and the offset street at {}, {} tie through a cross street at {}, {}, {} plot(s) making way", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ, avenue.minX, avenue.minZ, making.size());
+    }
+
+    private static boolean metBeyond(List<StructureComponent> pieces, StructureComponent piece, boolean alongX, int beyond, int acrossLo, int acrossHi) {
+        for (StructureComponent other : pieces) {
+            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox met = other.getBoundingBox();
+            if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(other))) { continue; }
+            int lo = alongX ? met.minX : met.minZ;
+            int hi = alongX ? met.maxX : met.maxZ;
+            if (beyond < lo - 1 || beyond > hi + 1) { continue; }
+            int oLo = alongX ? met.minZ : met.minX;
+            int oHi = alongX ? met.maxZ : met.maxX;
+            if (oHi < acrossLo || oLo > acrossHi) { continue; }
+            return true;
+        }
+        return false;
+    }
+
+    @Nullable private static List<StructureComponent> standing(List<StructureComponent> everyone, List<StructureComponent> own, StructureComponent piece, StructureComponent other, int minX, int minZ, int maxX, int maxZ) {
+        if (maxX < minX || maxZ < minZ) { return new ArrayList<>(); }
+        List<StructureComponent> plots = new ArrayList<>();
+        for (StructureComponent held : everyone) {
+            if (held == piece || held == other) { continue; }
+            StructureBoundingBox met = held.getBoundingBox();
+            if (!met.intersectsWith(minX, minZ, maxX, maxZ)) { continue; }
+            if (held instanceof StructureVillagePieces.Well) { return null; }
+            if (held instanceof StructureVillagePieces.Path) {
+                if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(held))) { continue; }
+                return null;
+            }
+            if (!own.contains(held)) { return null; }
+            plots.add(held);
+        }
+        return plots;
+    }
+
     public static void attach(StructureStart start, StructureComponent piece) {
         if (!(piece instanceof StructureVillagePieces.Path)) { return; }
         StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
         if (box == null) { return; }
         boolean alongX = BeardPlots.roadAlongX(piece);
+        if (BeardRoads.roadNarrow(box, alongX)) { return; }
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
             if (met == null) { continue; }
+            if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(other))) { continue; }
             boolean lined = alongX ? met.maxZ >= box.minZ && met.minZ <= box.maxZ : met.maxX >= box.minX && met.minX <= box.maxX;
             if (!lined) { continue; }
             if (BeardPlots.roadAlongX(other) == alongX) {
@@ -618,19 +855,37 @@ public final class ContentBeard {
         StructureBoundingBox box = piece.getBoundingBox();
         StructureBoundingBox met = other.getBoundingBox();
         boolean alongX = BeardPlots.roadAlongX(piece);
+        if (BeardRoads.roadNarrow(box, alongX) || BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(other))) { return false; }
         boolean lined = alongX ? met.maxZ >= box.minZ && met.minZ <= box.maxZ : met.maxX >= box.minX && met.minX <= box.maxX;
         if (!lined) { return false; }
+        int gap = alongX ? Math.max(met.minX - box.maxX, box.minX - met.maxX) : Math.max(met.minZ - box.maxZ, box.minZ - met.maxZ);
+        int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
+        int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
         if (BeardPlots.roadAlongX(other) == alongX) {
             int ownCenter = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
             int metCenter = alongX ? (met.minZ + met.maxZ) / 2 : (met.minX + met.maxX) / 2;
-            if (ownCenter != metCenter) { return false; }
+            if (gap <= 1) { return ownCenter == metCenter; }
+            if (ownCenter == metCenter) { return gap <= attachGap() * 2 && closable(pieces, piece, other, box, alongX, from, to); }
+            return gap >= BeardRoads.pathFullWidth() && gap <= attachGap() * 2 && closable(pieces, piece, other, box, alongX, from, to);
         }
-        int gap = alongX ? Math.max(met.minX - box.maxX, box.minX - met.maxX) : Math.max(met.minZ - box.maxZ, box.minZ - met.maxZ);
         if (gap <= 1) { return true; }
         if (gap > attachGap()) { return false; }
-        int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
-        int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
         return free(pieces, piece, box, alongX, from, to) && uncrossed(pieces, piece, other, alongX, from, to, box);
+    }
+
+    private static boolean closable(List<StructureComponent> pieces, StructureComponent piece, StructureComponent other, StructureBoundingBox box, boolean alongX, int from, int to) {
+        int minX = alongX ? from : box.minX;
+        int maxX = alongX ? to : box.maxX;
+        int minZ = alongX ? box.minZ : from;
+        int maxZ = alongX ? box.maxZ : to;
+        for (StructureComponent held : pieces) {
+            if (held == piece || held == other) { continue; }
+            StructureBoundingBox spot = held.getBoundingBox();
+            if (!spot.intersectsWith(minX, minZ, maxX, maxZ)) { continue; }
+            if (held instanceof StructureVillagePieces.Well) { return false; }
+            if (held instanceof StructureVillagePieces.Path && !BeardRoads.roadNarrow(spot, BeardPlots.roadAlongX(held))) { return false; }
+        }
+        return true;
     }
 
     private static boolean uncrossed(List<StructureComponent> pieces, StructureComponent piece, StructureComponent met, boolean alongX, int from, int to, StructureBoundingBox box) {
@@ -641,6 +896,7 @@ public final class ContentBeard {
         for (StructureComponent other : pieces) {
             if (other == piece || other == met || !(other instanceof StructureVillagePieces.Path)) { continue; }
             if (BeardPlots.roadAlongX(other) == alongX) { continue; }
+            if (BeardRoads.roadNarrow(other.getBoundingBox(), BeardPlots.roadAlongX(other))) { continue; }
             if (other.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return false; }
         }
         return true;
@@ -734,6 +990,7 @@ public final class ContentBeard {
             boolean along = alongX ? held.maxX >= least && held.minX <= most : held.maxZ >= least && held.minZ <= most;
             if (!acrossed || !along) { continue; }
             if (!(other instanceof StructureVillagePieces.Path)) { return false; }
+            if (BeardRoads.roadNarrow(held, BeardPlots.roadAlongX(other))) { continue; }
             if (BeardPlots.roadAlongX(other) != alongX) { continue; }
             return false;
         }
@@ -741,7 +998,7 @@ public final class ContentBeard {
     }
 
     public static int noiseAverage(World world, StructureBoundingBox box) {
-        if (samplerFor(world) == null) { return Integer.MIN_VALUE; }
+        if (BeardSurface.unreadable(world)) { return Integer.MIN_VALUE; }
         long total = 0;
         int count = 0;
         for (int z = box.minZ; z <= box.maxZ; z++) {

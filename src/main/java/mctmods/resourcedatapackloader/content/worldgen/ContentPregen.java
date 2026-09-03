@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
@@ -53,6 +54,7 @@ import java.util.IllegalFormatException;
 import java.util.Deque;
 import java.util.List;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -71,6 +73,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static final String HELD_MODE = "rdplPregenHeldMode";
     private static ScheduledExecutorService flasher;
     private static volatile String progress = "";
+    private static final Set<Long> DRESS_LATER = new LinkedHashSet<>();
     private static long watchedDone = -1L;
     private static long watchedAt;
     private static long chainBegun;
@@ -377,17 +380,29 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
 
     private static void releaseEveryone(boolean welcomed) {
         if (HELD.isEmpty()) { return; }
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server != null) {
-            for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-                Held held = HELD.get(player.getUniqueID());
-                if (held == null) { continue; }
-                release(player, held);
-                if (welcomed) { welcome(player); }
-            }
-        }
-        HELD.clear();
         stopFlashing();
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server == null) {
+            HELD.clear();
+            return;
+        }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            Held held = HELD.get(player.getUniqueID());
+            if (held == null) { continue; }
+            if (ContentIntroPlay.reading(player.getUniqueID())) { continue; }
+            HELD.remove(player.getUniqueID());
+            release(player, held);
+            if (welcomed) { welcome(player); }
+        }
+        HELD.keySet().removeIf(id -> server.getPlayerList().getPlayerByUUID(id) == null);
+    }
+
+    public static void releaseAfterIntro(EntityPlayerMP player) {
+        if (busy()) { return; }
+        Held held = HELD.remove(player.getUniqueID());
+        if (held == null) { return; }
+        release(player, held);
+        welcome(player);
     }
 
     private static void welcome(EntityPlayerMP player) {
@@ -580,6 +595,27 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     public static boolean lightingOnly() {
         ContentPregen worker = running;
         return worker != null && worker.lightOnly;
+    }
+
+    public static boolean dressLater(Chunk chunk) {
+        ContentPregen worker = running;
+        if (worker == null || !worker.lightOnly || chunk.getWorld().provider.getDimension() != worker.dimension) { return false; }
+        DRESS_LATER.add(ChunkPos.asLong(chunk.x, chunk.z));
+        return true;
+    }
+
+    private static void dressHeld(WorldServer world) {
+        if (DRESS_LATER.isEmpty()) { return; }
+        ChunkProviderServer provider = world.getChunkProvider();
+        int dressed = 0;
+        for (long key : DRESS_LATER) {
+            Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
+            if (chunk == null || chunk.isTerrainPopulated()) { continue; }
+            chunk.populate(provider, provider.chunkGenerator);
+            dressed++;
+        }
+        ContentLog.LOGGER.info("Dressed {} of the {} chunk(s) that were loaded while the light was being seen to, the rest having been let go in the meantime", dressed, DRESS_LATER.size());
+        DRESS_LATER.clear();
     }
 
     public static boolean holds(int chunkX, int chunkZ) {
@@ -809,12 +845,13 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     private void release(ChunkProviderServer provider, long key) {
-        Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
+        int x = (int) key;
+        int z = (int) (key >> 32);
+        if (provider.world.getPlayerChunkMap().contains(x, z)) { return; }
+        Chunk chunk = provider.getLoadedChunk(x, z);
         if (chunk == null) { return; }
         if (RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.unloadColumnCubes(provider, chunk); }
         else if (!chunk.isLightPopulated()) {
-            int x = (int) key;
-            int z = (int) (key >> 32);
             if (x <= lowX || x >= highX || z <= lowZ || z >= highZ) { darkAtEdge++; }
             else { dark++; }
         }
@@ -966,6 +1003,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         resident.clear();
         held.clear();
         ContentLog.LOGGER.info("Finished. " + report());
+        if (lightOnly && world != null) { dressHeld(world); }
+        else { DRESS_LATER.clear(); }
         if (stopping) { PENDING.clear(); }
         if (whole && !lightOnly && !rubicRun) {
             ContentLog.LOGGER.info("Going back over dimension {} to light what the making of it could not reach", dimension);

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.network;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -49,7 +50,7 @@ public final class RDPLNetwork {
 
     public static void playIntro(EntityPlayerMP player) {
         if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageIntroPlay(), player);
+        channel.sendTo(new MessageIntroPlay(ContentPregen.busy()), player);
     }
 
     public static void sendHardnessSalt(EntityPlayerMP player, long salt) {

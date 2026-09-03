@@ -60,6 +60,8 @@ public final class PackManager {
     public static final String GATES = "gates";
     public static final String WORLDTEMPLATES = "worldtemplates";
     public static final String PATHINTERSECTS = "pathintersects";
+    public static final String STRUCTUREMAPS = "structuremaps";
+    public static final String CITYMAPS = "citymaps";
     public static final String PORTALFRAMES = "portalframes";
     public static final String BLASTPLASTER = "blastplaster";
     public static final String WORLDINTRO = "worldintro";
@@ -275,15 +277,15 @@ public final class PackManager {
     public void warnAboutDisabledFeatures() {
         if (packs.isEmpty()) { return; }
         List<String[]> off = new ArrayList<>();
-        clientSide(off, Config.content.load, "content.load", JSON, BLOCKS, ITEMS, FLUIDS, MATERIALS);
-        clientSide(off, Config.content.sounds, "content.sounds", JSON, SOUNDS);
+        clientSide(off, Config.content.load, "content.load", BLOCKS, ITEMS, FLUIDS, MATERIALS);
+        clientSide(off, Config.content.sounds, "content.sounds", SOUNDS);
         collect(off, Config.content.fuels, "content.fuels", JSON, FUELS);
         collect(off, Config.content.oreDictionary, "content.oreDictionary", JSON, OREDICT);
-        clientSide(off, Config.content.potions, "content.potions", JSON, POTIONS, POTION_TYPES);
+        clientSide(off, Config.content.potions, "content.potions", POTIONS, POTION_TYPES);
         collect(off, Config.content.brewing, "content.brewing", JSON, BREWING);
-        clientSide(off, Config.content.villagers, "content.villagers", JSON, VILLAGERS, TRADES);
-        clientSide(off, Config.content.biomes, "content.biomes", JSON, BIOMES);
-        clientSide(off, Config.content.dimensions, "content.dimensions", JSON, DIMENSIONS);
+        clientSide(off, Config.content.villagers, "content.villagers", VILLAGERS, TRADES);
+        clientSide(off, Config.content.biomes, "content.biomes", BIOMES);
+        clientSide(off, Config.content.dimensions, "content.dimensions", DIMENSIONS);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
         collect(off, Config.content.entities, "content.entities", JSON, ENTITIES);
         collect(off, Config.content.hardness, "content.hardness", JSON, HARDNESS);
@@ -308,13 +310,12 @@ public final class PackManager {
         because(off, enabled, setting + " is off in the config", ext, types);
     }
 
-    /** For content a client must also know about, which vanillaClients stops no matter what its own setting says. */
-    private static void clientSide(List<String[]> off, boolean enabled, String setting, String ext, String... types) {
+    private static void clientSide(List<String[]> off, boolean enabled, String setting, String... types) {
         if (Config.content.vanillaClients) {
-            because(off, false, "content.vanillaClients is on and they are the sort a client would need too", ext, types);
+            because(off, false, "content.vanillaClients is on and they are the sort a client would need too", PackManager.JSON, types);
             return;
         }
-        collect(off, enabled, setting, ext, types);
+        collect(off, enabled, setting, PackManager.JSON, types);
     }
 
     private static void because(List<String[]> off, boolean enabled, String reason, String ext, String... types) {
@@ -422,7 +423,7 @@ public final class PackManager {
     private static boolean isData(String path) {
         return path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
-                || path.startsWith(GATES + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(PORTALFRAMES + "/")
+                || path.startsWith(GATES + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
                 || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(GAMERULES + "/")
                 || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
     }

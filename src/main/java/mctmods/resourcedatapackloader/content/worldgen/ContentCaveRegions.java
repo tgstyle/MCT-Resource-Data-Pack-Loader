@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Config;
@@ -97,7 +98,7 @@ public final class ContentCaveRegions {
                     int cx = cellX + dx;
                     int cy = cellY + dy;
                     int cz = cellZ + dz;
-                    long cellHash = mix(seed, cx, cy, cz);
+                    long cellHash = MathUtil.mix(seed, cx, cy, cz);
                     long jx = cx * (long) spanXZ + Math.floorMod(cellHash, spanXZ);
                     long jy = cy * (long) spanY + Math.floorMod(cellHash >>> 20, spanY);
                     long jz = cz * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ);
@@ -161,7 +162,7 @@ public final class ContentCaveRegions {
         for (int cellX = Math.floorDiv(qx0 + 3 - (spanXZ - 1), spanXZ); cellX <= Math.floorDiv(qx0 + 3, spanXZ); cellX++) {
             for (int cellZ = Math.floorDiv(qz0 + 3 - (spanXZ - 1), spanXZ); cellZ <= Math.floorDiv(qz0 + 3, spanXZ); cellZ++) {
                 for (int cellY = cellY0; cellY <= cellY1; cellY++) {
-                    long cellHash = mix(world.getSeed(), cellX, cellY, cellZ);
+                    long cellHash = MathUtil.mix(world.getSeed(), cellX, cellY, cellZ);
                     int wx = (int) ((cellX * (long) spanXZ + Math.floorMod(cellHash, spanXZ)) << 2);
                     int wz = (int) ((cellZ * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ)) << 2);
                     if (wx < blockX0 || wx > blockX0 + 15 || wz < blockZ0 || wz > blockZ0 + 15) { continue; }
@@ -219,17 +220,6 @@ public final class ContentCaveRegions {
             if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return; }
         }
         loaded.addBlocksToWorld(world, fitted, settings, 2);
-    }
-
-    private static long mix(long seed, int x, int y, int z) {
-        long h = seed ^ 0x28B7BD766A05068BL;
-        h ^= x * 0x2545F4914F6CDD1DL;
-        h ^= (long) y * 0x6C62272E07BB0142L;
-        h ^= (long) z * 0xCBF29CE484222325L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        return h;
     }
 
     public static void decorate(World world, int chunkX, int chunkZ, Random random) {

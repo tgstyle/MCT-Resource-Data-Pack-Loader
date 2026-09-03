@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content.rubic.world.provider;
+package mctmods.resourcedatapackloader.content.rubic.world.interfaces;
 
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
 

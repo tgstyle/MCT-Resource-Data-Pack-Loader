@@ -49,7 +49,7 @@ minecraft {
     mcVersion = common.mcversion
     mcpMappingChannel = 'stable'
     mcpMappingVersion = common.mcp_mappings.toString().split('-')[0]
-    username = 'tgstyle'
+    username = 'TGstyle'
     extraRunJvmArguments.addAll(
             '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin',
             '-Dforge.logging.console.level=debug',
@@ -57,7 +57,7 @@ minecraft {
             '-XX:+UseG1GC',
             '-Xmx6G',
             '-XX:+FlightRecorder',
-            '-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/pregen.jfr,settings=profile'
+            '-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile'
     )
 }
 

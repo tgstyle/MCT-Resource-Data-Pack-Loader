@@ -5,10 +5,13 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldSavedData;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class SeamMemory extends WorldSavedData {
@@ -72,7 +75,7 @@ public final class SeamMemory extends WorldSavedData {
         }
     }
 
-    @Override public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+    @Override @Nonnull public NBTTagCompound writeToNBT(@NotNull NBTTagCompound nbt) {
         NBTTagList holes = new NBTTagList();
         for (long key : entries) {
             NBTTagCompound entry = new NBTTagCompound();

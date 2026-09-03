@@ -179,7 +179,7 @@ public final class BeardGround {
                     int reach = roadside == Integer.MIN_VALUE ? box.minY + 1 : roadside + 1;
                     for (int y = box.minY - 2; y <= reach; y++) {
                         at.setPos(x, y, z);
-                        if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
+                        if (!clip.isVecInside(at)) { continue; }
                         if (!(world.getBlockState(at).getBlock() instanceof BlockStairs)) { continue; }
                         IBlockState step = world.getBlockState(at);
                         if (step.getMaterial() == Material.ROCK && world.getBlockState(at.down()).getMaterial().isLiquid()) {
@@ -251,13 +251,19 @@ public final class BeardGround {
         return swept;
     }
 
-    public static int freeDoors(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+    public static int freeDoors(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, List<StructureBoundingBox> repaved) {
         int freed = 0;
         StructureBoundingBox village = start.getBoundingBox();
         StructureBoundingBox reach = new StructureBoundingBox(village.minX - 2, 0, village.minZ - 2, village.maxX + 2, 255, village.maxZ + 2);
         for (StructureComponent piece : start.getComponents()) {
             if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Road) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
+            boolean near = clip.intersectsWith(box.minX - 3, box.minZ - 3, box.maxX + 3, box.maxZ + 3);
+            for (int i = 0; !near && i < repaved.size(); i++) {
+                StructureBoundingBox patch = repaved.get(i);
+                near = patch.intersectsWith(box.minX - 3, box.minZ - 3, box.maxX + 3, box.maxZ + 3);
+            }
+            if (!near) { continue; }
             for (int x = box.minX; x <= box.maxX; x++) {
                 for (int z = box.minZ; z <= box.maxZ; z++) {
                     if (x != box.minX && x != box.maxX && z != box.minZ && z != box.maxZ) { continue; }

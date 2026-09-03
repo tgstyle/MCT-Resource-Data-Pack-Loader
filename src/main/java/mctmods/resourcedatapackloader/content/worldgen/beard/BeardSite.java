@@ -148,7 +148,7 @@ public final class BeardSite {
         return best;
     }
     public static Boolean flatSite(World world, int chunkX, int chunkZ, int spacing) {
-        if (BeardSurface.samplerFor(world) == null) { return null; }
+        if (BeardSurface.unreadable(world)) { return null; }
         ContentSites known = ContentSites.of(world, spacing);
         int grid = known.spacing();
         long chosen = siteFor(world, known, Math.floorDiv(chunkX, grid), Math.floorDiv(chunkZ, grid), grid);
@@ -210,6 +210,7 @@ public final class BeardSite {
         int spread = footingSpread(box);
         if (spread == Integer.MAX_VALUE) { return spread; }
         World world = ContentBeard.samplerWorld;
+        if (world == null) { return 0; }
         for (StructureComponent piece : pieces) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = piece.getBoundingBox();
@@ -377,10 +378,8 @@ public final class BeardSite {
         return lowest;
     }
 
-    public static void foundAtBirth(StructureStart start) {
-        ChunkGeneratorOverworld generator = ContentBeard.sampler;
-        World world = ContentBeard.samplerWorld;
-        if (generator == null || world == null || start.getComponents().isEmpty()) { return; }
+    public static void foundAtBirth(World world, StructureStart start) {
+        if (BeardSurface.unreadable(world) || start.getComponents().isEmpty()) { return; }
         StructureBoundingBox well = start.getComponents().get(0).getBoundingBox();
         int nominal = wellNominal(well);
         int level = wellGround(world, well);

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.village;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
@@ -28,9 +29,13 @@ public final class CityGrowth {
     public static final int MARCH = 112;
     private static final int TRIES = 32;
     private static final int RELIEF = 6;
+    private static final int DIG = 4;
+    private static final int VERGE = 6;
     private static final int JOIN = 4;
+    private static final int PER_MARCH = 96;
     private static boolean laying;
     private static boolean bulbLaying;
+    private static boolean alleyLaying;
     private static int give;
 
     private CityGrowth() {}
@@ -39,9 +44,21 @@ public final class CityGrowth {
 
     public static boolean bulbLaying() { return bulbLaying; }
 
+    public static void alleyLaying(boolean narrow) { alleyLaying = narrow; }
+
+    public static boolean alleyLaying() { return alleyLaying; }
+
     public static int give() { return give; }
 
-    public static int chunkRange() { return (MARCH + 112 + 16) >> 4; }
+    public static int march() {
+        int least = ContentVillages.plotsLeast();
+        int wide = Math.max(13, ContentVillages.largestPlot());
+        double filled = (double) least / PER_MARCH * ((double) (wide * wide) / (13 * 13));
+        if (filled <= 1.0) { return MARCH; }
+        return (int) (MARCH * Math.sqrt(filled));
+    }
+
+    public static int chunkRange() { return (march() + 112 + 16) >> 4; }
 
     public static void grow(StructureStart held, World world, Random rand, int size) {
         int least = ContentVillages.plotsLeast();
@@ -50,11 +67,12 @@ public final class CityGrowth {
         if (components.isEmpty()) { return; }
         int built = ContentVillages.plots(components);
         if (built >= least) { return; }
-        int sizeFor = size + Math.max(1, least / 32);
+        int sizeFor = size + Math.max(16, least / 32);
         Set<Long> tried = new HashSet<>();
         int districts = 0;
         int attempts = 0;
-        while (built < least && attempts < 8 * TRIES) {
+        int allowed = Math.max(8 * TRIES, least + least / 2);
+        while (built < least && attempts < allowed) {
             long site = site(components, tried);
             if (site == Long.MIN_VALUE) { break; }
             attempts++;
@@ -65,13 +83,15 @@ public final class CityGrowth {
                 tried.clear();
             }
         }
+        if (built < least && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("District growth drained after {} attempt(s): {} sites too near a well, {} on unreadable ground, {} on built ground, {} beside another village", attempts, settledCrowded, settledUngrounded, settledTaken, settledNeighbored); }
+        settledCrowded = settledUngrounded = settledTaken = settledNeighbored = 0;
         if (built < least) { built = infill(rand, components, least, sizeFor); }
         ((IStructureStartGrow) held).rdpl$updateBoundingBox();
         ContentLog.LOGGER.debug("The village at chunk {}, {} grew {} district(s) to {} plot(s) against the asked minimum of {}", held.getChunkPosX(), held.getChunkPosZ(), districts, built, least);
     }
 
     public static void culDeSacs(StructureStart held, World world, Random rand) {
-        if (!ContentBeard.wanted() || BeardSurface.samplerFor(world) == null) { return; }
+        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
         List<StructureComponent> components = held.getComponents();
         if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return; }
         StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
@@ -82,6 +102,7 @@ public final class CityGrowth {
             if (!(piece instanceof StructureVillagePieces.Path) || bulbWide(piece)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
+            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
             int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
             for (int side = 0; side < 2; side++) {
                 boolean outward = side == 1;
@@ -90,22 +111,30 @@ public final class CityGrowth {
                 int endX = alongX ? end : center;
                 int endZ = alongX ? center : end;
                 if (metAtEnd(world, held, piece, alongX, end, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX)) { continue; }
-                if (SeededRandom.at(world, endX + dir, endZ + dir).nextInt(4) >= 3) { continue; }
+                if (SeededRandom.at(world, endX + dir, endZ + dir).nextInt(4) == 3) { continue; }
                 int least = (BeardRoads.pathFullWidth() + 1) / 2 + 1;
                 int found = 0;
                 int stem = 0;
+                boolean steep = false;
                 for (int r = (wide - 1) / 2; r >= least && found == 0; r--) {
                     for (int out = 1; out <= 7; out += 3) {
-                        int discX = alongX ? end + dir * (out + r + 1) : center;
-                        int discZ = alongX ? center : end + dir * (out + r + 1);
-                        if (clearFor(world, held, piece, discX, discZ, r)) {
-                            found = r;
-                            stem = out;
-                            break;
+                        int spot = end + dir * (out + r + 1);
+                        int discX = alongX ? spot : center;
+                        int discZ = alongX ? center : spot;
+                        if (!clearFor(world, held, piece, discX, discZ, r)) { continue; }
+                        if (!seated(world, piece, alongX, end, discX, discZ, r)) {
+                            steep = true;
+                            continue;
                         }
+                        found = r;
+                        stem = out;
+                        break;
                     }
                 }
-                if (found == 0) { continue; }
+                if (found == 0) {
+                    if (steep && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, but every court it could seat would cut the ground beside it, so it stays a plain end", endX, endZ); }
+                    continue;
+                }
                 int half = found;
                 int span = stem + 2 * half + 1;
                 int lo = end + dir * (outward ? 1 : span);
@@ -113,8 +142,9 @@ public final class CityGrowth {
                 StructureBoundingBox bulb = new StructureBoundingBox(
                         alongX ? Math.min(lo, hi) : center - half, box.minY, alongX ? center - half : Math.min(lo, hi),
                         alongX ? Math.max(lo, hi) : center + half, box.maxY, alongX ? center + half : Math.max(lo, hi));
-                int discX = alongX ? end + dir * (stem + half + 1) : center;
-                int discZ = alongX ? center : end + dir * (stem + half + 1);
+                int heart = end + dir * (stem + half + 1);
+                int discX = alongX ? heart : center;
+                int discZ = alongX ? center : heart;
                 boolean dry = true;
                 for (int z = bulb.minZ; z <= bulb.maxZ && dry; z += 2) {
                     for (int x = bulb.minX; x <= bulb.maxX; x += 2) {
@@ -133,8 +163,10 @@ public final class CityGrowth {
                 laying = true;
                 bulbLaying = true;
                 try {
-                    bulbPiece.buildComponent(startPiece, components, rand);
-                    drain(startPiece, components, rand);
+                    if (!CityLayout.drawn()) {
+                        bulbPiece.buildComponent(startPiece, components, rand);
+                        drain(startPiece, components, rand);
+                    }
                 }
                 finally {
                     laying = false;
@@ -145,6 +177,108 @@ public final class CityGrowth {
             }
         }
         if (bulbs > 0) { ((IStructureStartGrow) held).rdpl$updateBoundingBox(); }
+    }
+
+    public static void alleyFill(StructureStart held, Random rand) {
+        if (!ContentBeard.wanted() || BeardRoads.alleyChance() <= 0 || CityLayout.drawn()) { return; }
+        List<StructureComponent> components = held.getComponents();
+        if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return; }
+        StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
+        int shortest = 14;
+        int longest = 42;
+        int spacing = 2 * ContentVillages.largestPlot();
+        int laid = 0;
+        for (StructureComponent piece : components.toArray(new StructureComponent[0])) {
+            if (!(piece instanceof StructureVillagePieces.Path) || bulbWide(piece)) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            boolean alongX = BeardPlots.roadAlongX(piece);
+            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
+            int lo = (alongX ? box.minX : box.minZ) + 2;
+            int hi = (alongX ? box.maxX : box.maxZ) - 2;
+            for (int side = 0; side < 2; side++) {
+                boolean outward = side == 1;
+                int edge = alongX ? (outward ? box.maxZ : box.minZ) : (outward ? box.maxX : box.minX);
+                int dir = outward ? 1 : -1;
+                for (int row = lo; row <= hi; ) {
+                    int length = alleyRun(components, alongX, row, edge, dir, longest);
+                    if (length >= shortest && crowdedLane(components, alongX, row, edge, dir, length, spacing)) { length = 0; }
+                    if (length < shortest) {
+                        row += 7;
+                        continue;
+                    }
+                    int from = edge + dir;
+                    int to = edge + dir * length;
+                    StructureBoundingBox alley = new StructureBoundingBox(
+                            alongX ? row - 1 : Math.min(from, to), box.minY, alongX ? Math.min(from, to) : row - 1,
+                            alongX ? row + 1 : Math.max(from, to), box.maxY, alongX ? Math.max(from, to) : row + 1);
+                    boolean onPlaza = false;
+                    for (StructureBoundingBox square : BeardPlots.plazaSquares(components)) {
+                        if (square.intersectsWith(alley.minX, alley.minZ, alley.maxX, alley.maxZ)) {
+                            onPlaza = true;
+                            break;
+                        }
+                    }
+                    if (onPlaza) {
+                        row += 7;
+                        continue;
+                    }
+                    EnumFacing facing = alongX ? (outward ? EnumFacing.SOUTH : EnumFacing.NORTH) : (outward ? EnumFacing.EAST : EnumFacing.WEST);
+                    StructureVillagePieces.Path lane = new StructureVillagePieces.Path(startPiece, 0, rand, alley, facing);
+                    components.add(lane);
+                    laying = true;
+                    try {
+                        lane.buildComponent(startPiece, components, rand);
+                        drain(startPiece, components, rand);
+                    }
+                    finally { laying = false; }
+                    laid++;
+                    ContentLog.LOGGER.debug("An alley {} long fills the block beside the road at {}, {}, running from {}, {}", length, box.minX, box.minZ, alley.minX, alley.minZ);
+                    row += spacing;
+                }
+            }
+        }
+        if (laid > 0) { ((IStructureStartGrow) held).rdpl$updateBoundingBox(); }
+    }
+
+    private static int alleyRun(List<StructureComponent> components, boolean alongX, int row, int edge, int dir, int longest) {
+        int nearAny = Integer.MAX_VALUE;
+        int nearPath = Integer.MAX_VALUE;
+        for (StructureComponent other : components) {
+            StructureBoundingBox met = other.getBoundingBox();
+            int acrossLo = alongX ? met.minX : met.minZ;
+            int acrossHi = alongX ? met.maxX : met.maxZ;
+            if (acrossHi < row - 2 || acrossLo > row + 2) { continue; }
+            int alongLo = alongX ? met.minZ : met.minX;
+            int alongHi = alongX ? met.maxZ : met.maxX;
+            int away = dir > 0 ? alongLo - edge : edge - alongHi;
+            if (away < 1) {
+                if (dir > 0 ? alongHi >= edge + 1 : alongLo <= edge - 1) { return 0; }
+                continue;
+            }
+            nearAny = Math.min(nearAny, away);
+            if (other instanceof StructureVillagePieces.Path) { nearPath = Math.min(nearPath, away); }
+        }
+        if (nearAny > longest + 14) { return 0; }
+        int length = Math.min(longest, nearAny - 2);
+        if (nearPath != Integer.MAX_VALUE) { length = Math.min(length, nearPath - ContentBeard.attachGap() - 1); }
+        return length;
+    }
+
+    private static boolean crowdedLane(List<StructureComponent> components, boolean alongX, int row, int edge, int dir, int length, int spacing) {
+        int from = Math.min(edge + dir, edge + dir * length);
+        int to = Math.max(edge + dir, edge + dir * length);
+        for (StructureComponent other : components) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox met = other.getBoundingBox();
+            if (!BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(met)) || bulbWide(other)) { continue; }
+            if (BeardPlots.roadAlongX(met) == alongX) { continue; }
+            int center = alongX ? (met.minX + met.maxX) / 2 : (met.minZ + met.maxZ) / 2;
+            if (Math.abs(center - row) >= spacing) { continue; }
+            int alongLo = alongX ? met.minZ : met.minX;
+            int alongHi = alongX ? met.maxZ : met.maxX;
+            if (alongHi >= from && alongLo <= to) { return true; }
+        }
+        return false;
     }
 
     public static void roadsFirst(StructureStart held) {
@@ -192,6 +326,21 @@ public final class CityGrowth {
         return Math.min(box.maxX - box.minX, box.maxZ - box.minZ) + 1 > BeardRoads.pathFullWidth();
     }
 
+    private static boolean seated(World world, StructureComponent road, boolean alongX, int end, int discX, int discZ, int radius) {
+        BeardRoads.Grade grade = BeardRoads.chainGrade(world, road, alongX);
+        int level = grade == null ? Integer.MIN_VALUE : grade.at(end);
+        if (level == Integer.MIN_VALUE) { level = BeardSurface.surfaceAt(world, discX, discZ); }
+        int reach = radius + VERGE;
+        for (int z = discZ - reach; z <= discZ + reach; z += 2) {
+            for (int x = discX - reach; x <= discX + reach; x += 2) {
+                if ((x - discX) * (x - discX) + (z - discZ) * (z - discZ) > reach * reach + reach) { continue; }
+                int ground = BeardSurface.surfaceAt(world, x, z);
+                if (level - ground > BeardGrade.CAP || ground - level > DIG) { return false; }
+            }
+        }
+        return true;
+    }
+
     private static boolean clearFor(World world, StructureStart held, StructureComponent piece, int discX, int discZ, int radius) {
         if (nearDisc(held, piece, discX, discZ, radius)) { return false; }
         for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
@@ -221,6 +370,7 @@ public final class CityGrowth {
         int cz = (first.minZ + first.maxZ) / 2;
         long best = Long.MIN_VALUE;
         long bestAway = Long.MAX_VALUE;
+        int reach = march();
         for (StructureComponent piece : components) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = piece.getBoundingBox();
@@ -228,15 +378,15 @@ public final class CityGrowth {
             int line = alongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
             for (int sign = -1; sign <= 1; sign += 2) {
                 int edge = alongX ? (sign < 0 ? road.minX : road.maxX) : (sign < 0 ? road.minZ : road.maxZ);
-                for (int away = ContentBeard.plazaReach() + 4; away <= 48; away += 8) {
+                for (int away = ContentBeard.plazaReach() + 4; away <= Math.max(48, spacing() + 16); away += 8) {
                     int siteX = alongX ? edge + sign * away : line;
                     int siteZ = alongX ? line : edge + sign * away;
                     long dx = siteX - cx;
                     long dz = siteZ - cz;
                     long far = dx * dx + dz * dz;
-                    if (far > (long) MARCH * MARCH || far >= bestAway) { continue; }
+                    if (far > (long) reach * reach || far >= bestAway) { continue; }
                     long packed = ((long) siteX << 32) ^ (siteZ & 0xFFFFFFFFL);
-                    if (tried.contains(packed)) { continue; }
+                    if (tried.contains(packed) || crowdedAt(components, siteX, siteZ, spacing())) { continue; }
                     bestAway = far;
                     best = packed;
                 }
@@ -244,13 +394,13 @@ public final class CityGrowth {
         }
         if (best != Long.MIN_VALUE) { return best; }
         int step = Math.max(8, spacing() / 2);
-        for (int dx = -MARCH; dx <= MARCH; dx += step) {
-            for (int dz = -MARCH; dz <= MARCH; dz += step) {
+        for (int dx = -reach; dx <= reach; dx += step) {
+            for (int dz = -reach; dz <= reach; dz += step) {
                 if (dx == 0 && dz == 0) { continue; }
                 long away = (long) dx * dx + (long) dz * dz;
-                if (away > (long) MARCH * MARCH || away >= bestAway) { continue; }
+                if (away > (long) reach * reach || away >= bestAway) { continue; }
                 long packed = ((long) (cx + dx) << 32) ^ ((cz + dz) & 0xFFFFFFFFL);
-                if (tried.contains(packed)) { continue; }
+                if (tried.contains(packed) || crowdedAt(components, cx + dx, cz + dz, spacing())) { continue; }
                 bestAway = away;
                 best = packed;
             }
@@ -258,20 +408,37 @@ public final class CityGrowth {
         return best;
     }
 
+    private static int settledCrowded;
+    private static int settledUngrounded;
+    private static int settledTaken;
+    private static int settledNeighbored;
+
     private static boolean settle(World world, Random rand, List<StructureComponent> components, int cx, int cz, int sizeFor) {
         int reach = ContentBeard.plazaReach();
-        if (crowdedAt(components, cx, cz, spacing())) { return false; }
+        if (crowdedAt(components, cx, cz, spacing())) {
+            settledCrowded++;
+            return false;
+        }
         int wellX = cx - 2;
         int wellZ = cz - 2;
-        if (!grounded(world, wellX, wellZ, reach)) { return false; }
+        if (!grounded(world, wellX, wellZ, reach)) {
+            settledUngrounded++;
+            return false;
+        }
         StructureBoundingBox square = new StructureBoundingBox(wellX - reach, 0, wellZ - reach, wellX + 5 + reach, 255, wellZ + 5 + reach);
         for (StructureComponent other : components) {
-            if (other.getBoundingBox().intersectsWith(square)) { return false; }
+            if (other.getBoundingBox().intersectsWith(square)) {
+                settledTaken++;
+                return false;
+            }
         }
         int margin = 2 * ContentVillages.largestPlot();
         StructureBoundingBox held = new StructureBoundingBox(square.minX - margin, 0, square.minZ - margin, square.maxX + margin, 255, square.maxZ + margin);
         for (StructureStart neighbor : ContentStructureSearch.villageStarts(world)) {
-            if (neighbor.getBoundingBox().intersectsWith(held)) { return false; }
+            if (neighbor.getBoundingBox().intersectsWith(held)) {
+                settledNeighbored++;
+                return false;
+            }
         }
         List<StructureVillagePieces.PieceWeight> weights = StructureVillagePieces.getStructureVillageWeightedPieceList(rand, sizeFor);
         StructureVillagePieces.Start district = new StructureVillagePieces.Start(world.getBiomeProvider(), 0, rand, wellX, wellZ, weights, sizeFor);
@@ -368,7 +535,10 @@ public final class CityGrowth {
                 StructureBoundingBox well = piece.getBoundingBox();
                 boxes[i] = new StructureBoundingBox(well.minX - reach, well.minY, well.minZ - reach, well.maxX + reach, well.maxY, well.maxZ + reach);
             }
-            else if (piece instanceof StructureVillagePieces.Path) { boxes[i] = piece.getBoundingBox(); }
+            else if (piece instanceof StructureVillagePieces.Path) {
+                StructureBoundingBox road = piece.getBoundingBox();
+                if (!BeardRoads.roadNarrow(road, BeardPlots.roadAlongX(road))) { boxes[i] = road; }
+            }
         }
         boolean[] seen = new boolean[count];
         ArrayDeque<Integer> queue = new ArrayDeque<>();
@@ -417,7 +587,7 @@ public final class CityGrowth {
     }
 
     private static boolean grounded(World world, int wellX, int wellZ, int reach) {
-        if (BeardSurface.samplerFor(world) == null) { return true; }
+        if (BeardSurface.unreadable(world)) { return true; }
         int sea = world.getSeaLevel();
         int lowest = Integer.MAX_VALUE;
         int highest = Integer.MIN_VALUE;

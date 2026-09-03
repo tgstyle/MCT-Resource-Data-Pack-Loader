@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.portal.PortalShapes;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
@@ -254,6 +255,142 @@ public final class ContentParser {
             }
         }
         return new PathIntersectDef(JsonUtils.getString(json, "name", key.getPath()), Math.max(1, JsonUtils.getInt(json, "weight", 1)), legend, mouth.toArray(new String[0]), corner.toArray(new String[0]));
+    }
+
+    @Nullable public static StructureMapDef structureMap(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+        if (!json.has("layers")) {
+            ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);
+            return null;
+        }
+        JsonArray held = JsonUtils.getJsonArray(json, "layers");
+        if (held.size() < 1 || held.size() > StructureMapDef.LIMIT) {
+            ContentLog.LOGGER.error("Structure map {} has {} layer(s), the most being {}, so it is dropped", key, held.size(), StructureMapDef.LIMIT);
+            return null;
+        }
+        StructureMapDef.Layer[] layers = new StructureMapDef.Layer[held.size()];
+        for (int at = 0; at < held.size(); at++) {
+            JsonObject entry = held.get(at).getAsJsonObject();
+            Map<Character, List<PickDef>> palette = new LinkedHashMap<>();
+            if (entry.has("palette")) {
+                for (Map.Entry<String, JsonElement> mark : JsonUtils.getJsonObject(entry, "palette").entrySet()) {
+                    String symbol = mark.getKey().trim();
+                    if (symbol.length() != 1 || symbol.charAt(0) == '.') {
+                        ContentLog.LOGGER.error("Structure map {} layer {} palette symbol '{}' must be a single character other than '.', so the map is dropped", key, at, mark.getKey());
+                        return null;
+                    }
+                    List<PickDef> picks = new ArrayList<>();
+                    if (mark.getValue().isJsonArray()) {
+                        for (JsonElement choice : mark.getValue().getAsJsonArray()) { picks.add(weighted(choice.getAsString())); }
+                    }
+                    else { picks.add(weighted(mark.getValue().getAsString())); }
+                    palette.put(symbol.charAt(0), Collections.unmodifiableList(picks));
+                }
+            }
+            List<String> rows = strings(entry, "map");
+            if (rows.isEmpty() || rows.size() > StructureMapDef.LIMIT) {
+                ContentLog.LOGGER.error("Structure map {} layer {} holds {} map row(s), the most being {}, so the map is dropped", key, at, rows.size(), StructureMapDef.LIMIT);
+                return null;
+            }
+            for (String row : rows) {
+                if (row.length() > StructureMapDef.LIMIT) {
+                    ContentLog.LOGGER.error("Structure map {} layer {} row '{}' is {} cell(s) long, the most being {}, so the map is dropped", key, at, row, row.length(), StructureMapDef.LIMIT);
+                    return null;
+                }
+                for (char cell : row.toCharArray()) {
+                    if (cell != '.' && !palette.containsKey(cell)) {
+                        ContentLog.LOGGER.error("Structure map {} layer {} uses '{}', which is not in that layer's palette, so the map is dropped", key, at, cell);
+                        return null;
+                    }
+                }
+            }
+            layers[at] = new StructureMapDef.Layer(palette, rows.toArray(new String[0]));
+        }
+        int ground = Math.max(0, Math.min(layers.length - 1, JsonUtils.getInt(json, "ground", 0)));
+        int cell = Math.max(1, Math.min(48, JsonUtils.getInt(json, "cell", 32)));
+        int spacing = Math.max(0, JsonUtils.getInt(json, "spacing", 0));
+        int chance = Math.max(1, Math.min(100, JsonUtils.getInt(json, "chance", 100)));
+        int[] pinned = null;
+        if (json.has("at")) {
+            JsonArray spot = JsonUtils.getJsonArray(json, "at");
+            if (spot.size() == 2) { pinned = new int[] { spot.get(0).getAsInt(), spot.get(1).getAsInt() }; }
+            else { ContentLog.LOGGER.error("Structure map {} pins 'at' with {} number(s) instead of x and z, so the pin is ignored", key, spot.size()); }
+        }
+        Set<Integer> dimensions = new LinkedHashSet<>();
+        if (json.has("dimensions")) {
+            for (JsonElement dim : JsonUtils.getJsonArray(json, "dimensions")) { dimensions.add(dim.getAsInt()); }
+        }
+        StructureMapDef def = new StructureMapDef(key, JsonUtils.getString(json, "name", key.getPath()), cell, ground, spacing, chance, pinned, dimensions, layers);
+        if (spacing > 0 && spacing * 16 < def.widest) {
+            ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest);
+            return null;
+        }
+        return def;
+    }
+
+    @Nullable public static CityMapDef cityMap(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+        List<String> rows = strings(json, "map");
+        if (rows.isEmpty() || rows.size() > CityMapDef.LIMIT) {
+            ContentLog.LOGGER.error("City map {} holds {} map row(s), the most being {}, so it is dropped", key, rows.size(), CityMapDef.LIMIT);
+            return null;
+        }
+        Map<Character, CityMapDef.Cell> palette = new LinkedHashMap<>();
+        if (json.has("palette")) {
+            for (Map.Entry<String, JsonElement> mark : JsonUtils.getJsonObject(json, "palette").entrySet()) {
+                String symbol = mark.getKey().trim();
+                if (symbol.length() != 1 || symbol.charAt(0) == '.') {
+                    ContentLog.LOGGER.error("City map {} palette symbol '{}' must be a single character other than '.', so the map is dropped", key, mark.getKey());
+                    return null;
+                }
+                List<String> names = new ArrayList<>();
+                if (mark.getValue().isJsonArray()) {
+                    for (JsonElement choice : mark.getValue().getAsJsonArray()) { names.add(choice.getAsString().trim()); }
+                }
+                else { names.add(mark.getValue().getAsString().trim()); }
+                CityMapDef.Kind kind = CityMapDef.Kind.PLOT;
+                List<PickDef> picks = new ArrayList<>();
+                if (names.size() == 1) {
+                    switch (names.get(0).toLowerCase(Locale.ROOT)) {
+                        case "street": kind = CityMapDef.Kind.STREET; break;
+                        case "plaza": kind = CityMapDef.Kind.PLAZA; break;
+                        case "alley": kind = CityMapDef.Kind.ALLEY; break;
+                        case "open": kind = CityMapDef.Kind.OPEN; break;
+                        case "grow": kind = CityMapDef.Kind.GROW; break;
+                        default: break;
+                    }
+                }
+                if (kind == CityMapDef.Kind.PLOT) {
+                    for (String name : names) { picks.add(weighted(name)); }
+                }
+                palette.put(symbol.charAt(0), new CityMapDef.Cell(kind, picks));
+            }
+        }
+        for (String row : rows) {
+            if (row.length() > CityMapDef.LIMIT) {
+                ContentLog.LOGGER.error("City map {} row '{}' is {} cell(s) long, the most being {}, so the map is dropped", key, row, row.length(), CityMapDef.LIMIT);
+                return null;
+            }
+            for (char cell : row.toCharArray()) {
+                if (cell != '.' && !palette.containsKey(cell)) {
+                    ContentLog.LOGGER.error("City map {} uses '{}', which is not in its palette, so the map is dropped", key, cell);
+                    return null;
+                }
+            }
+        }
+        int cell = Math.max(8, Math.min(128, JsonUtils.getInt(json, "cell", 48)));
+        return new CityMapDef(key, JsonUtils.getString(json, "name", key.getPath()), cell, palette, rows.toArray(new String[0]));
+    }
+
+    private static PickDef weighted(String entry) {
+        int split = entry.lastIndexOf('=');
+        if (split < 0) { return new PickDef(entry.trim().toLowerCase(Locale.ROOT), 1); }
+        int weight;
+        try { weight = Integer.parseInt(entry.substring(split + 1).trim()); }
+        catch (NumberFormatException held) { weight = 1; }
+        return new PickDef(entry.substring(0, split).trim().toLowerCase(Locale.ROOT), weight);
     }
 
     @Nullable public static WorldTemplateDef worldTemplate(ResourceLocation key, String contents) {

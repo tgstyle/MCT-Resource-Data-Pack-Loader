@@ -57,6 +57,7 @@ Three working examples. Drop any of them straight into `rdploader` and look at h
 **Generating it**
 - [Worldgen entries](#worldgen-entries)
 - [Shapes](#shapes)
+- [Structure maps](#structure-maps)
 - [Spreads](#spreads)
 - [Retrogen](#retrogen)
 - [Pregeneration](#pregeneration)
@@ -120,6 +121,8 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides) |
 | `<namespace>/villages/*.json` | Plots villages can build. [Village plots](#village-plots) |
 | `<namespace>/pathintersects/*.json` | Designs painted where village roads meet. [Village roads](#village-roads) |
+| `<namespace>/structuremaps/*.json` | Templates composed into one large building on a grid. [Structure maps](#structure-maps) |
+| `<namespace>/citymaps/*.json` | A drawn street plan a village is laid out from instead of growing. [City layout maps](#city-layout-maps) |
 | `<namespace>/portalframes/*.json` | Frames a player can build and light. [Portal frames](#portal-frames) |
 | `<namespace>/blastplaster/*.json` | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration) |
 | `<namespace>/structures/*.nbt` | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override) |
@@ -1972,6 +1975,17 @@ A `template` places one of your `.nbt` structures instead, turned to face the vi
 }
 ```
 
+A `template` whose `structure` names one of your [structure maps](#structure-maps) places the whole composite as the plot. The plot's size then comes from the map, its footprint and stacked layers times the cell, so `width`, `height`, `depth` and `integrity` are not read. Layers before the map's `ground` dig down as basements, and weighted palette cells still roll per building, so two towers from the same map can differ.
+
+```json
+{
+  "type": "template",
+  "weight": 2,
+  "structure": "mypack:castle",
+  "villagers": 4
+}
+```
+
 | Key | Used by | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `type` | all | `farm` or `template` | `farm` | Which kind of plot |
@@ -1986,7 +2000,7 @@ A `template` places one of your `.nbt` structures instead, turned to face the vi
 | `soil` | farm | block name | `minecraft:farmland` | What the rows are made of |
 | `water` | farm | boolean | `true` | Put a water channel between the rows |
 | `rowWidth` | farm | int | `2` | How wide each row of soil is |
-| `structure` | template | `namespace:name` | none | The template to place |
+| `structure` | template | `namespace:name` | none | The template to place, or one of your structure maps, which then sets the plot's size |
 | `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
 | `villagers` | all | int | `0` | How many people the plot spawns |
 | `villagerEntity` | all | `namespace:name` | a villager | Who lives there, such as an entity variant of your own |
@@ -2716,7 +2730,7 @@ Text files go in `<namespace>/texts/*.txt`. Plain text, one paragraph to a line,
 
 A scrolling page moves to the next one when its time is up. The last page never advances on its own, it waits. Along the bottom are **Next Page** and **Skip All**, or a single **Continue to World** on the last page. Escape does the same as Skip All. Static pages center every line. Scrolling pages keep to a fixed column, the way the credits do.
 
-In singleplayer the world pauses behind the intro, so nothing creeps up on the player while they read. On a server the world keeps running, and a vanilla client never sees the intro at all and joins as normal.
+In singleplayer the world pauses behind the intro, so nothing creeps up on the player while they read. The one exception is land still being made when the intro opens: then the making carries on behind the pages, and the player stays held as a spectator until they continue to the world, even if the run finishes first. On a server the world keeps running, and a vanilla client never sees the intro at all and joins as normal.
 
 `once` is remembered in the player's saved data and survives death. `/rdplserver intro` clears it for whoever runs it, so the intro plays again the next time they join. It does not replay on the spot, which keeps it from being a way back into the entry sequence in the middle of a game.
 
@@ -3154,6 +3168,107 @@ A belt ignores `attempts` and `spread`, since it is placed per chunk rather than
 
 Cost grows with the cube of `radius`, and a low `rarity` multiplies it, so start at the defaults and raise the radius slowly.
 
+## Structure maps
+
+A structure map composes templates into one named building on a grid, far past the 32 block limit of a single `.nbt` file. Each layer is drawn as rows of single characters, one character to a cell, and stacks one cell height above the layer before it. At most 8 layers of 8 by 8 cells, which at the default cell of 32 is 256 blocks a side, the vanilla build height.
+
+`<namespace>/structuremaps/*.json`
+
+```json
+{
+  "name": "Castle",
+  "cell": 32,
+  "ground": 0,
+  "spacing": 64,
+  "chance": 25,
+  "layers": [
+    {
+      "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
+      "map": ["aba",
+              "b.b",
+              "aba"]
+    },
+    {
+      "palette": { "a": "mypack:keep_top" },
+      "map": [".a.",
+              "...",
+              ".a."]
+    }
+  ]
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `name` | text | the file name | What the map is called in logs |
+| `cell` | number | `32` | The grid pitch in blocks, up to 48. A template smaller than the cell sits at the cell's corner, so full-size pieces butt together seamlessly |
+| `ground` | number | `0` | Which layer floors at the terrain surface. Layers before it dig down, which is how a building gets basements |
+| `at` | two numbers | none | Pins one copy at exact block coordinates, the way `structureAt` pins a village |
+| `spacing` | number | `0` | Scatters copies on a grid this many chunks apart, jittered from the world seed. `0` scatters none, so a map with only `at` builds exactly once |
+| `chance` | number | `100` | The percent of grid spots that build a copy |
+| `dimensions` | list | all | Dimension ids the map may build in |
+| `layers` | list | none | The layers, bottom up, each a `palette` and a `map` |
+
+A palette names templates by registry key from a pack's `<namespace>/structures/`.
+
+| Value | What it does |
+| --- | --- |
+| `"a": "mypack:keep"` | Every `a` cell of that layer places this template |
+| `"a": ["mypack:wall=3", "mypack:broken=1"]` | Each `a` cell rolls the list by weight, from the world seed and the cell's spot, so two copies of the building differ but the same world always builds the same one |
+| `.` | An empty cell, nothing placed |
+
+Every copy rolls one of the four facings from the world seed and the whole building turns together, templates included, so walls that meet across cells still meet. The ground layer floors at the sampled terrain surface under the building's middle. Each chunk builds only its own slice of the grid, so a building spanning many chunks arrives without cascading generation, whatever order the chunks load in. A [village plot](#village-plots) of type `template` may also name a map as its `structure`, which makes the composite a village building.
+
+## City layout maps
+
+A city map draws a village's street plan on a grid, one character to a cell, and the village is laid out from the drawing instead of growing. Streets, plazas and plots come out as the same pieces a grown village uses, so every road option, bridge, pier, dead end, lamp post, cul-de-sac and plaza centerpiece applies unchanged. The world template names the map in `villageLayout`.
+
+`<namespace>/citymaps/*.json`
+
+```json
+{
+  "name": "Downtown",
+  "cell": 48,
+  "palette": {
+    "#": "street",
+    "+": "plaza",
+    "a": "alley",
+    "T": ["mypack:tower_blue=1", "mypack:tower_gray=1"],
+    "B": "mypack:block",
+    "s": ["mypack:shop_blue=2", "mypack:shop_gray=1"],
+    "g": "grow"
+  },
+  "map": [
+    "sss#BBB#sss",
+    "sgs#BgB#sgs",
+    "###+###+###",
+    "BBB#TTT#BBB",
+    "BgB#TgT#BgB",
+    "###+###+###",
+    "sss#BBB#sss"
+  ]
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `name` | text | the file name | What the map is called in logs |
+| `cell` | number | `48` | The grid pitch in blocks, 8 to 128. Roads run down the middle of their cells at the pack's road width and plots are centered in theirs, so a cell wants the widest plot plus room to front the street |
+| `palette` | object | none | What each character lays, listed below |
+| `map` | list | none | The rows, up to 64 by 64 cells. A row shorter than the widest is open past its end |
+
+| Value | What it does |
+| --- | --- |
+| `"#": "street"` | A run of street cells along a row or column becomes one road box at the pack's road width. Where a row run crosses a column run the junction is painted like any other. A lone street cell with no run in either axis is laid as a short stub along the row |
+| `"+": "plaza"` | A well with its plaza ring. Runs pass through plaza cells, so streets meet at the well, and a plaza on a crossing stands its well, or its `villageWellStructure` centerpiece, in the middle of the crossroads like a roundabout. The first plaza in the file is the village's own well, which pins the map to where the village founds; a map without one is centered there |
+| `"a": "alley"` | A narrow run. Buildings front it, but it connects nothing, the alley rule as usual |
+| `"T": "mypack:tower"` | A plot cell, laid from that plot definition, centered in the cell and facing the nearest street |
+| `"T": ["mypack:a=3", "mypack:b=1"]` | The same, rolled by weight from the world seed and the cell's spot, so the same world always lays the same plot there |
+| `"g": "grow"` | Left to the growth. With `villagePlotsLeast` set, the grown districts and the street infill fill such cells and spread outward from the map; without it the cell stays open |
+| `.` | Open ground, nothing laid |
+
+Every map rolls one of the four facings from the world seed and turns whole, so a plan reads the same from any side. Roads are laid first, so a plot that would overlap a road or another plot is left open with a line in the log, and a plot name no pack provides leaves its cell open the same way. The map does not change how the pieces dress: the road keys, `villageBlocks`, the lamps and the well replacement all read as they do for a grown village. Nothing grows out of a drawn map: no alleys are filled in beside its streets, and its road ends get their bulbs, three in four as usual, but no houses along them.
+
 ## Spreads
 
 A `spread` block with a `type`.
@@ -3467,7 +3582,8 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
     "villagePieces": ["field1", "field2"],
     "villagePiecesAreBlacklist": true,
     "villagePlotsLeast": 12,
-    "villagePlotsMost": 30
+    "villagePlotsMost": 30,
+    "villageLayout": "mypack:downtown"
   }
 }
 ```
@@ -3491,6 +3607,8 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. A pack plot is named by its own template: either the full name, `mypack:big_house`, or just `big_house`, or the plot's own name if you prefer. So a pack can ship ten plots and a world template can drop one of them without touching the other nine. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
 
 `villagePlotsLeast` and `villagePlotsMost` bound how many plots a village is built with, counting houses, farms and pack plots, never roads, torches or the well. A village that lays out under the minimum is regrown at a larger size, a few tries, and the largest layout wins, so cramped terrain can still fall short of the ask. At the maximum the village stops growing outright: no more buildings and no more roads. `0` on either end keeps vanilla behavior there.
+
+`villageLayout` names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it; empty grows as usual.
 
 #### Village roads
 
@@ -3517,11 +3635,13 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathFlatRun": 6,
     "villagePathIntersects": ["mypack:crosswalk"],
     "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathDeadEnds": ["barrier", "sidewalk"],
     "villagePathLampBlock": "minecraft:iron_bars",
     "villagePathLampHeight": 3,
     "villagePathLampTopBlock": "minecraft:skull:1{SkullType:3}",
     "villagePathLampSideBlock": "",
     "villagePathLampStructure": "",
+    "villageWellStructure": ["mypack:plaza_spire=3", "mypack:fountain=1", "empty=1"],
     "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
     "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
   }
@@ -3550,11 +3670,13 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 | `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighboring pieces agree. `0` steps every block, as vanilla slopes do |
 | `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
 | `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, listed below. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
+| `villagePathDeadEnds` | list | none | How a road that dead ends is closed off, when it did not grow a cul-de-sac, listed below. One entry closes every dead end alike; several roll one per end from the world seed. Empty leaves dead ends open |
 | `villagePathLampBlock` | block or block with data | `minecraft:oak_fence` | The block a lamp post along a road is built from, stacked on the curb. Empty stands no lamp posts |
 | `villagePathLampHeight` | number | `3` | How many blocks tall the post stands before its head |
 | `villagePathLampTopBlock` | block or block with data | `minecraft:wool:15` | The head on top of the post. Empty leaves it bare |
 | `villagePathLampSideBlock` | block or block with data | `minecraft:torch` | The light hung on each side of the head, facing outward. Empty hangs none |
 | `villagePathLampStructure` | text | empty | A structure file placed as the whole lamp instead of stacking the three lamp blocks, named `mypack:street_lamp` and read from that pack's `structures` folder. It is centered on the lamp spot with its lowest layer on the curb, and the blocks it lays are held so nothing else overwrites them. Empty stacks the blocks |
+| `villageWellStructure` | list | none | Structure files placed as the plaza centerpiece instead of the well, as weighted `name=weight` entries like `mypack:plaza_spire=3`, read from that pack's `structures` folder and rolled once per well from its position, so the same well always gets the same one. An `empty=weight` entry keeps the well for that share. The chosen one is centered on the well's six by six footprint with its lowest layer on the plaza floor, that floor is paved under it, and the blocks it lays are held so the plaza dress leaves them alone. A wider structure spreads out over the plaza ring. No entries builds the well |
 | `villagePathPierCargo` | list | none | Cargo stood along the inside of a pier's rails, as weighted entries listed below. Every other row of every pier rolls the list on each side, so the weights decide how crowded a pier reads. Empty leaves piers bare |
 | `villagePathPierLoot` | text | `resourcedatapackloader:chests/pier_cargo` | The loot table cargo with an inventory is filled from, rolled the first time it is opened. Empty leaves such cargo empty |
 
@@ -3563,6 +3685,13 @@ A road is dressed from the middle out: center line, then road, then edge lines, 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
 
 **Lamp blocks carry data.** The three lamp blocks take a plain name, a name with metadata, or a name with block entity data in braces, `minecraft:skull:1{SkullType:3}`. The braces are read as NBT and applied to the block entity after the block is placed, which is how a lamp from another mod keeps the settings it needs. Bad NBT is reported and ignored rather than stopping the lamp being built.
+
+**Dead ends.** A road that dead ends without growing a cul-de-sac is closed off by `villagePathDeadEnds`, one style rolled per end from the world seed. A style whose block is not set drops out of the roll, so `barrier` closes nothing until `villagePathBridgeBarrierBlock` names a block, and an alley end never takes `sidewalk`.
+
+| Value | What it does |
+| --- | --- |
+| `sidewalk` | Paves the end row with the sidewalk block |
+| `barrier` | Stands the barrier block along the end row, `villagePathBridgeBarrierHeight` tall |
 
 **Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. Several entries roll one style per pier, from the world seed and the pier's end, so the same world always builds the same pier. Every pier stands on pilings of the support block, driven to the bed below at both edges of the deck every fourth row, whatever its style. The deck is the bridge block, rails and posts the barrier block, and pilings the support block.
 

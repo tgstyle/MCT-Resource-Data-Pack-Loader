@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.*;
 import mctmods.resourcedatapackloader.content.rubic.world.column.ColumnTileEntityMap;
 import mctmods.resourcedatapackloader.content.rubic.world.column.CubeMap;
@@ -10,6 +9,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.*;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCascade;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.CubePos;
@@ -20,6 +20,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
 import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
@@ -94,11 +95,24 @@ public abstract class MixinChunk {
 
     @Shadow private boolean isTerrainPopulated;
 
-    @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD"), cancellable = true)
+    @SuppressWarnings("ConstantValue") @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD"), cancellable = true)
     private void rdpl$dressNothingWhileLighting(IChunkProvider chunkProvider, IChunkGenerator chunkGenrator, CallbackInfo ci) {
-        if (isTerrainPopulated || !ContentPregen.lightingOnly()) { return; }
+        if (isTerrainPopulated || !ContentPregen.dressLater((Chunk) (Object) this)) { return; }
         ContentChunkWatch.dressingHeldOff();
         ci.cancel();
+    }
+
+    @Inject(method = "onTick", at = @At("HEAD"))
+    private void rdpl$dressWhenStranded(boolean skipRecheckGaps, CallbackInfo ci) {
+        if (isTerrainPopulated || world.isRemote || ContentPregen.lightingOnly()) { return; }
+        if (((x + z) & 15) != (int) (world.getTotalWorldTime() & 15L)) { return; }
+        IChunkProvider provider = world.getChunkProvider();
+        if (!(provider instanceof ChunkProviderServer)) { return; }
+        ChunkProviderServer server = (ChunkProviderServer) provider;
+        Chunk self = (Chunk) (Object) this;
+        if (RubicWorldControl.rubicWorld(server) || server.getLoadedChunk(x, z) != self) { return; }
+        self.populate(server, server.chunkGenerator);
+        if (isTerrainPopulated) { ContentLog.LOGGER.debug("Chunk {}, {} sat undressed in a player's view and is dressed on its tick", x, z); }
     }
 
     @Redirect(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V"))
@@ -138,6 +152,8 @@ public abstract class MixinChunk {
     @Unique private boolean rdpl$pregenDone;
     @Unique private ChunkPrimer rdpl$compatGenerationPrimer;
     @Unique private boolean rdpl$compatArraysFilled;
+    @Unique private int rdpl$floorCube = Integer.MIN_VALUE;
+    @Unique private int rdpl$ceilingCube;
 
     @Shadow public abstract byte[] getBiomeArray();
 
@@ -167,8 +183,12 @@ public abstract class MixinChunk {
             if (!rdpl$compatArraysFilled) { rdpl$fillCompatArrays(); }
             return index >= 0 && index < 16 ? storageArrays[index] : NULL_BLOCK_STORAGE;
         }
-        if (index < blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()) || index >= blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight())) { return NULL_BLOCK_STORAGE; }
-        if (!rdpl$isColumn) { return storageArrays[index - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())]; }
+        if (rdpl$floorCube == Integer.MIN_VALUE) {
+            rdpl$floorCube = blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight());
+            rdpl$ceilingCube = blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight());
+        }
+        if (index < rdpl$floorCube || index >= rdpl$ceilingCube) { return NULL_BLOCK_STORAGE; }
+        if (!rdpl$isColumn) { return storageArrays[index - rdpl$floorCube]; }
         if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == index) { return rdpl$cachedCube.getStorage(); }
         Cube cube = rdpl$getRubicWorld().rdpl$getCubeCache().getCube(this.x, index, this.z);
         if (!(cube instanceof BlankCube)) { rdpl$cachedCube = cube; }

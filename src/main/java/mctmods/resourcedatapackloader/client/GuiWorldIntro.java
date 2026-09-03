@@ -36,22 +36,26 @@ import javax.annotation.Nullable;
     private final List<IntroPageDef> pages;
     private final List<String> lines = new ArrayList<>();
     @Nullable private final ISound music;
+    private final boolean landBeingMade;
     private int page;
     private boolean sounding;
     private int wrapWidth = TEXT_WIDTH;
     private float totalScrollLength;
     private float ticks;
 
-    private GuiWorldIntro(List<IntroPageDef> pages, @Nullable ISound music) {
+    private GuiWorldIntro(List<IntroPageDef> pages, @Nullable ISound music, boolean landBeingMade) {
         this.pages = pages;
         this.music = music;
+        this.landBeingMade = landBeingMade;
     }
 
-    public static void open() {
+    public static void open(boolean landBeingMade) {
         List<IntroPageDef> pages = ContentWorldIntro.pages();
         if (pages.isEmpty()) { return; }
-        Minecraft.getMinecraft().displayGuiScreen(new GuiWorldIntro(pages, track()));
+        Minecraft.getMinecraft().displayGuiScreen(new GuiWorldIntro(pages, track(), landBeingMade));
     }
+
+    @Override public boolean doesGuiPauseGame() { return !landBeingMade; }
 
     @Nullable private static ISound track() {
         ResourceLocation key = ContentWorldIntro.music();

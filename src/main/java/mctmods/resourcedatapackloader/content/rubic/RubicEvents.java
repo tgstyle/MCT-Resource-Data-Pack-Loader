@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvid
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings;
-import mctmods.resourcedatapackloader.content.rubic.world.provider.IRubicWorldProvider;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
 import mctmods.resourcedatapackloader.network.MessageRubicWorldData;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.IntRange;

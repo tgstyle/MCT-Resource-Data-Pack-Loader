@@ -79,7 +79,7 @@ public final class ContentBiomes3D {
             if (y < def.minHeight || y > def.maxHeight) { continue; }
             if (!def.replaces.isEmpty()) {
                 if (under == null) { under = name(column, world, x, z); }
-                if (!matches(def.replaces, under)) { continue; }
+                if (unlisted(def.replaces, under)) { continue; }
             }
             Biome made = biome(def.registryName.toString());
             if (made != null) { return made; }
@@ -92,11 +92,11 @@ public final class ContentBiomes3D {
         return named == null ? "" : named.toString().toLowerCase(Locale.ROOT);
     }
 
-    private static boolean matches(List<String> wanted, String under) {
+    private static boolean unlisted(List<String> wanted, String under) {
         for (String one : wanted) {
-            if (one.trim().toLowerCase(Locale.ROOT).equals(under)) { return true; }
+            if (one.trim().toLowerCase(Locale.ROOT).equals(under)) { return false; }
         }
-        return false;
+        return true;
     }
 
     @Nullable private static Biome biome(String named) {
@@ -121,7 +121,7 @@ public final class ContentBiomes3D {
             if (!def.shapesSky() || y < def.minHeight || y > def.maxHeight) { continue; }
             if (!def.replaces.isEmpty()) {
                 if (under == null) { under = named(column); }
-                if (!matches(def.replaces, under)) { continue; }
+                if (unlisted(def.replaces, under)) { continue; }
             }
             return def;
         }

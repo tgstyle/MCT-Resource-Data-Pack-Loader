@@ -38,7 +38,7 @@ public class MessageCubes implements IMessage {
 
     public static List<MessageCubes> batched(Collection<Cube> cubes) {
         List<Cube> ordered = new ArrayList<>(cubes);
-        ordered.sort(Comparator.<Cube>comparingInt(Cube::getX).thenComparingInt(Cube::getZ).thenComparingInt(Cube::getY));
+        ordered.sort(Comparator.comparingInt(Cube::getX).thenComparingInt(Cube::getZ).thenComparingInt(Cube::getY));
         List<MessageCubes> packets = new ArrayList<>();
         List<Cube> batch = new ArrayList<>(MAX_CUBES);
         LongOpenHashSet columns = new LongOpenHashSet();

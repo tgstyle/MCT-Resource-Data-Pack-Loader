@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentFirstLight;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLightArea;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 
@@ -21,8 +23,25 @@ import net.minecraft.util.math.ChunkPos;
 
 @Mixin(Chunk.class) public abstract class MixinChunkLight {
     @Shadow private boolean isLightPopulated;
+    @Shadow private boolean isTerrainPopulated;
+    @Shadow private boolean isGapLightingUpdated;
     @Unique private static final ThreadLocal<Long> rdpl$litStart = ThreadLocal.withInitial(() -> 0L);
     @Unique private static final ThreadLocal<Long> rdpl$relitStart = ThreadLocal.withInitial(() -> 0L);
+
+    @Inject(method = "checkLight()V", at = @At("HEAD"), cancellable = true)
+    private void rdpl$wholeChunkLight(CallbackInfo ci) {
+        Chunk chunk = (Chunk) (Object) this;
+        World world = chunk.getWorld();
+        if (world.isRemote || ((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
+        ci.cancel();
+        isTerrainPopulated = true;
+        long start = ContentChunkWatch.watching() ? System.nanoTime() : 0L;
+        ContentLightArea.enter(world, chunk.x, chunk.z);
+        try { isLightPopulated = ContentFirstLight.relight(chunk); }
+        finally { ContentLightArea.leave(world); }
+        if (isLightPopulated) { isGapLightingUpdated = true; }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - start, isLightPopulated); }
+    }
 
     @Inject(method = "checkLight()V", at = @At("HEAD"))
     private void rdpl$startLight(CallbackInfo ci) {
@@ -79,6 +98,11 @@ import net.minecraft.util.math.ChunkPos;
     @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V"))
     private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
         if (rdpl$dressingThis(x, z)) { return; }
+        World world = chunk.getWorld();
+        if (ContentPregen.quenches(world, chunk.x, chunk.z) || !world.isAreaLoaded(new BlockPos(x, 0, z), 16)) {
+            isLightPopulated = false;
+            return;
+        }
         updateSkylightNeighborHeight(x, z, startY, endY);
     }
 

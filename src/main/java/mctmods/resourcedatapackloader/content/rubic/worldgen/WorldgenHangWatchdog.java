@@ -54,7 +54,7 @@ public class WorldgenHangWatchdog {
         t.start();
     }
 
-    @SuppressWarnings({"deprecation", "BusyWait"}) private void run() {
+    @SuppressWarnings("BusyWait") private void run() {
         if (!ENABLED) { return; }
         while (true) {
             try {
@@ -67,7 +67,7 @@ public class WorldgenHangWatchdog {
         }
     }
 
-    private void watch() {
+    @SuppressWarnings("deprecation") private void watch() {
             synchronized (entries) {
                 for (Iterator<Map.Entry<Thread, Entry>> iterator = entries.entrySet().iterator(); iterator.hasNext(); ) {
                     Map.Entry<Thread, Entry> entry = iterator.next();

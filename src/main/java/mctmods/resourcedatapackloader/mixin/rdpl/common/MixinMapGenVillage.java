@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.interfaces.IMapGenVillageHold;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
+import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
@@ -19,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(MapGenVillage.class) public abstract class MixinMapGenVillage {
+@Mixin(MapGenVillage.class) public abstract class MixinMapGenVillage implements IMapGenVillageHold {
     @Shadow private int distance;
     @Shadow private int size;
     @Unique private int rdpl$asked;
@@ -29,9 +31,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "getStructureStart", at = @At("RETURN")) private void rdpl$grownVillage(int chunkX, int chunkZ, CallbackInfoReturnable<StructureStart> cir) {
         World world = ((IMapGenBase) this).rdpl$getWorld();
         if (world == null) { return; }
-        CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size);
+        if (!CityLayout.lay(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand())) { CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size); }
         BeardRoads.pierOut(world, cir.getReturnValue());
+        ContentBeard.attachAll(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
         CityGrowth.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
+        CityGrowth.alleyFill(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand());
         CityGrowth.roadsFirst(cir.getReturnValue());
         ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
     }
@@ -45,6 +49,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, MapGenVillage.VILLAGE_SPAWN_BIOMES);
         if (ContentVillages.plotsLeast() > 0) { ((IMapGenBase) this).rdpl$setRange(CityGrowth.chunkRange()); }
     }
+
+    @Override public void rdpl$holdDistance() { rdpl$hold(); }
 
     @Unique private void rdpl$hold() {
         if (!rdpl$stated || distance == rdpl$asked) { return; }

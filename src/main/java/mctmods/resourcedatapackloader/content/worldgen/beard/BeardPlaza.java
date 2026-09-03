@@ -94,6 +94,7 @@ public final class BeardPlaza {
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int reach = ContentBeard.plazaReach();
+        if (!clip.intersectsWith(box.minX - reach - 3, box.minZ - reach - 3, box.maxX + reach + 3, box.maxZ + reach + 3)) { return; }
         int ground = BeardSite.wellNominal(box);
         int walk = BeardRoads.pathSidewalkWidth();
         int lines = BeardRoads.pathLineColumns();
@@ -108,6 +109,7 @@ public final class BeardPlaza {
                 if (band < 1) { continue; }
                 at.setPos(x, ground, z);
                 if (!clip.isVecInside(at) || BeardPlots.underBuilding(start, piece, x, z)) { continue; }
+                if (BeardKeep.holds(x, ground, z)) { continue; }
                 if (world.getBlockState(GroundLevel.inWindow(world, at).down()).getMaterial().isLiquid()) { continue; }
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, ground + 4);
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);

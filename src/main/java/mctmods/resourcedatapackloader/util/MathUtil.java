@@ -8,7 +8,17 @@ public class MathUtil {
 
     public static int max(int a, int b, int c) { return Math.max(Math.max(a, b), c); }
 
+    public static long mix(long seed, int x, int y, int z) {
+        long h = seed ^ 0x28B7BD766A05068BL;
+        h ^= x * 0x2545F4914F6CDD1DL;
+        h ^= (long) y * 0x6C62272E07BB0142L;
+        h ^= (long) z * 0xCBF29CE484222325L;
+        h ^= h >>> 33;
+        h *= 0xFF51AFD7ED558CCDL;
+        h ^= h >>> 33;
+        return h;
+    }
+
     public static int max(int a, int b, int c, int d) { return Math.max(Math.max(a, b), Math.max(c, d)); }
 
-    public static boolean rangesIntersect(int min1, int max1, int min2, int max2) { return min1 <= max2 && min2 <= max1; }
 }

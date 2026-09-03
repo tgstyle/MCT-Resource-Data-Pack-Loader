@@ -11,7 +11,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT) public class IntroPlayHandler implements IMessageHandler<MessageIntroPlay, IMessage> {
     @Override public IMessage onMessage(MessageIntroPlay message, MessageContext ctx) {
-        Minecraft.getMinecraft().addScheduledTask(GuiWorldIntro::open);
+        boolean held = message.held;
+        Minecraft.getMinecraft().addScheduledTask(() -> GuiWorldIntro.open(held));
         return null;
     }
 }

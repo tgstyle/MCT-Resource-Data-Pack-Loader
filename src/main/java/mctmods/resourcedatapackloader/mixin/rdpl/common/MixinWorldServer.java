@@ -14,7 +14,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvid
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IWorldEntitySpawner;
-import mctmods.resourcedatapackloader.content.rubic.world.provider.IRubicWorldProvider;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.util.Config;

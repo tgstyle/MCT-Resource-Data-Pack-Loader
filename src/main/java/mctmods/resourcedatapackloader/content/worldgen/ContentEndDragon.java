@@ -11,7 +11,7 @@ public final class ContentEndDragon {
 
     public static boolean wanted(@Nullable World world) {
         if (world == null) { return true; }
-        boolean unasked = ContentVoidWorld.appliesTo(world) ? false : Config.worldgen.dragonFight;
+        boolean unasked = !ContentVoidWorld.appliesTo(world) && Config.worldgen.dragonFight;
         return ContentControl.flag(ContentControl.STRUCTURES, "dragonFight", unasked);
     }
 }

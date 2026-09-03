@@ -10,8 +10,11 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.ChunkGeneratorFlat;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.ChunkGeneratorSettings;
+import net.minecraft.world.gen.FlatGeneratorInfo;
+import net.minecraft.world.gen.FlatLayerInfo;
 import net.minecraft.world.gen.IChunkGenerator;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +26,7 @@ import javax.annotation.Nullable;
 public final class BeardSurface {
     private static final Map<World, ChunkGeneratorOverworld> SAMPLERS = new WeakHashMap<>();
     private static final Set<World> UNSAMPLED = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Map<World, Integer> FLATS = new WeakHashMap<>();
     private static final Map<World, Map<Long, Integer>> TOPS = new WeakHashMap<>();
     private static final ThreadLocal<Scratch> SCRATCH = ThreadLocal.withInitial(Scratch::new);
     private static World lastWorld = null;
@@ -60,7 +64,10 @@ public final class BeardSurface {
 
     public static int surfaceAt(World world, int blockX, int blockZ) {
         ChunkGeneratorOverworld sampled = samplerFor(world);
-        if (sampled == null) { return -1; }
+        if (sampled == null) {
+            Integer flat = FLATS.get(world);
+            return flat != null ? flat : -1;
+        }
         Integer known = knownTop(world, blockX, blockZ);
         return known != null ? known : keepTop(world, blockX, blockZ, surface(sampled, world, blockX, blockZ));
     }
@@ -79,13 +86,35 @@ public final class BeardSurface {
         for (int dz = 0; dz < 5; dz++) { System.arraycopy(region, nx - 2 - originX + (nz - 2 + dz - originZ) * size, window, dz * 5, 5); }
         return keepTop(world, blockX, blockZ, surface(sampled, window, blockX, blockZ));
     }
-    public static ChunkGeneratorOverworld samplerFor(World world) {
+    public static boolean unreadable(@Nullable World world) { return world == null || (samplerFor(world) == null && flatTop(world) == null); }
+
+    @Nullable public static Integer flatTop(@Nullable World world) {
+        if (world == null) { return null; }
+        samplerFor(world);
+        return FLATS.get(world);
+    }
+
+    private static int flatSurface(World world) {
+        FlatGeneratorInfo shape = FlatGeneratorInfo.createFlatGeneratorFromString(world.getWorldInfo().getGeneratorOptions());
+        int layers = 0;
+        for (FlatLayerInfo layer : shape.getFlatLayers()) { layers += layer.getLayerCount(); }
+        return Math.max(0, layers - 1);
+    }
+
+    @Nullable public static ChunkGeneratorOverworld samplerFor(@Nullable World world) {
+        if (world == null) { return null; }
         ChunkGeneratorOverworld sampled = SAMPLERS.get(world);
         if (sampled != null) { return sampled; }
         if (UNSAMPLED.contains(world)) { return null; }
         IChunkGenerator made = world.provider.createChunkGenerator();
         if (!(made instanceof ChunkGeneratorOverworld)) {
             UNSAMPLED.add(world);
+            if (made instanceof ChunkGeneratorFlat) {
+                int top = flatSurface(world);
+                FLATS.put(world, top);
+                ContentLog.LOGGER.info("The land in dimension {} is flat, so its surface is read as y {} everywhere", world.provider.getDimension(), top);
+                return null;
+            }
             ContentLog.LOGGER.info("The land in dimension {} is made by {}, which is not the shape this mod can read ahead, so it is asked once and not again", world.provider.getDimension(), made.getClass().getName());
             return null;
         }

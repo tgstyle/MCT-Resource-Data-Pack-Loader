@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
+import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
@@ -35,13 +36,13 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         if (most > 0 && ContentVillages.plots(structureComponents) >= most) { cir.setReturnValue(null); }
     }
 
-    @Inject(method = "generateAndAddRoadPiece", at = @At("HEAD"), cancellable = true) private static void rdpl$roadCap(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
-        if (CityGrowth.bulbLaying()) {
+    @Inject(method = "generateAndAddRoadPiece", at = @At("HEAD"), cancellable = true) private static void rdpl$roadCap(StructureVillagePieces.Start start, List<StructureComponent> p_176069_1_, Random rand, int p_176069_3_, int p_176069_4_, int p_176069_5_, EnumFacing facing, int p_176069_7_, CallbackInfoReturnable<StructureComponent> cir) {
+        if (CityGrowth.bulbLaying() || CityGrowth.alleyLaying() || CityLayout.laying()) {
             cir.setReturnValue(null);
             return;
         }
         int most = ContentVillages.plotsMost();
-        if (most > 0 && ContentVillages.plots(structureComponents) >= most) { cir.setReturnValue(null); }
+        if (most > 0 && ContentVillages.plots(p_176069_1_) >= most) { cir.setReturnValue(null); }
     }
 
     @ModifyVariable(method = "generateAndAddComponent", at = @At("HEAD"), ordinal = 0, argsOnly = true) private static int rdpl$standBackX(int placed, StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType) { return ContentBeard.wanted() && facing != null ? placed + facing.getXOffset() : placed; }

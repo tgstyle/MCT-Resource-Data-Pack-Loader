@@ -68,9 +68,9 @@ import javax.annotation.Nullable;
 
     @Override public int getRequiredPermissionLevel() { return 0; }
 
-    @Override public boolean checkPermission(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender) { return true; }
+    @Override public boolean checkPermission(@Nullable MinecraftServer server, @Nonnull ICommandSender sender) { return true; }
 
-    @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+    @Override @Nonnull public List<String> getTabCompletions(@Nullable MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) {
             List<String> offered = new ArrayList<>(SUBCOMMANDS);
             offered.addAll(FORWARDED);
@@ -87,7 +87,7 @@ import javax.annotation.Nullable;
         return Collections.emptyList();
     }
 
-    @Override public void execute(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
+    @Override public void execute(@Nullable MinecraftServer server, @Nonnull ICommandSender sender, @Nonnull String[] args) throws CommandException {
         ContentLog.LOGGER.debug("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
         if (args.length == 1 && "reload".equals(args[0])) { reloadAll(sender); }
         else if (args.length == 2 && "reload".equals(args[0])) { reloadGroup(sender, args[1]); }

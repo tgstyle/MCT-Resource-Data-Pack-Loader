@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.content.village;
 
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.def.StructureMapDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
+import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -118,16 +121,23 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
 
     private void template(World world, VillageDef def, StructureBoundingBox box) {
         if (!(world instanceof WorldServer)) { return; }
-        ResourceLocation name = new ResourceLocation(def.structure);
-        TemplateManager templates = ((WorldServer) world).getStructureTemplateManager();
-        Template template = templates.get(world.getMinecraftServer(), name);
-        if (template == null) {
-            ContentLog.LOGGER.error("Village plot {} asks for template {}, which no pack provides, leaving the ground as it is", def.registryName, name);
-            return;
+        StructureMapDef map = ContentStructureMaps.byName(def.structure);
+        if (map != null) {
+            long seed = MathUtil.mix(world.getSeed(), boundingBox.minX, 2, boundingBox.minZ);
+            ContentStructureMaps.cells(world, map, seed, rotation(), boundingBox.minX, boundingBox.minY - map.ground * map.cell, boundingBox.minZ, box);
         }
-        Rotation rotation = rotation();
-        PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
-        template.addBlocksToWorld(world, corner(rotation), settings);
+        else {
+            ResourceLocation name = new ResourceLocation(def.structure);
+            TemplateManager templates = ((WorldServer) world).getStructureTemplateManager();
+            Template template = templates.get(world.getMinecraftServer(), name);
+            if (template == null) {
+                ContentLog.LOGGER.error("Village plot {} asks for template {}, which no pack provides, leaving the ground as it is", def.registryName, name);
+                return;
+            }
+            Rotation rotation = rotation();
+            PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
+            template.addBlocksToWorld(world, corner(rotation), settings);
+        }
         boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
         int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;
         int depth = (turned ? boundingBox.maxX - boundingBox.minX : boundingBox.maxZ - boundingBox.minZ) + 1;

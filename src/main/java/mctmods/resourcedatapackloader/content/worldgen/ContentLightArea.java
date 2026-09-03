@@ -14,7 +14,7 @@ public final class ContentLightArea {
     public static final int UNKNOWN = -1;
     public static final int NO = 0;
     public static final int YES = 1;
-    private final Chunk[] nearby = new Chunk[9];
+    private final Chunk[] nearby = new Chunk[25];
     private World inside;
     private int chunkX;
     private int chunkZ;
@@ -40,8 +40,10 @@ public final class ContentLightArea {
         area.chunkZ = z;
         area.ringLoaded = square(world, x, z, 1);
         area.wideLoaded = area.ringLoaded && square(world, x, z, 2);
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) { area.nearby[(dx + 1) * 3 + dz + 1] = area.ringLoaded ? world.getChunk(x + dx, z + dz) : null; }
+        int reach = area.wideLoaded ? 2 : area.ringLoaded ? 1 : 0;
+        Arrays.fill(area.nearby, null);
+        for (int dx = -reach; dx <= reach; dx++) {
+            for (int dz = -reach; dz <= reach; dz++) { area.nearby[(dx + 2) * 5 + dz + 2] = world.getChunk(x + dx, z + dz); }
         }
     }
 
@@ -71,8 +73,8 @@ public final class ContentLightArea {
         if (area == null || area.inside != world || !area.ringLoaded) { return null; }
         int dx = (pos.getX() >> 4) - area.chunkX;
         int dz = (pos.getZ() >> 4) - area.chunkZ;
-        if (dx < -1 || dx > 1 || dz < -1 || dz > 1) { return null; }
-        return area.nearby[(dx + 1) * 3 + dz + 1];
+        if (dx < -2 || dx > 2 || dz < -2 || dz > 2) { return null; }
+        return area.nearby[(dx + 2) * 5 + dz + 2];
     }
 
     public static boolean skySettled(World world, BlockPos pos) {
