@@ -3,7 +3,9 @@
     "minVersion": "0.8.5",
     "package": "mctmods.resourcedatapackloader.mixin",
     "compatibilityLevel": "JAVA_21",
-    "mixins": [],
+    "mixins": [
+        "MixinPackRepository"
+    ],
     "client": [],
     "server": [],
     "injectors": {
