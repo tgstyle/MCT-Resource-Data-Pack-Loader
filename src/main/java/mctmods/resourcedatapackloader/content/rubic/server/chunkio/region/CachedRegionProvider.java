@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfa
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IRegionProvider;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKey;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key.RegionKey;
-import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedBiConsumer;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedConsumer;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedFunction;
 
@@ -43,11 +42,6 @@ public class CachedRegionProvider<K extends IKey> implements IRegionProvider<K> 
         return Optional.ofNullable(region);
     }
 
-    @Override public void forAllRegions(ICheckedBiConsumer<RegionKey, ? super IRegion<K>, IOException> work) throws IOException {
-        awake();
-        RegionCache.flushAll();
-        reader.forAllRegions(work);
-    }
 
     @Override public void flush() throws IOException {
         awake();

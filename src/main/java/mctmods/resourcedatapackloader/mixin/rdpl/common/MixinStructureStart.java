@@ -62,7 +62,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow public abstract int getChunkPosZ();
 
     @Unique private int rdpl$cubeY;
-    @Unique private boolean rdpl$isRubic = false;
 
     @Unique private int rdpl$getChunkPosY() { return this.rdpl$cubeY; }
 
@@ -72,10 +71,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private void writeYToNbt(int chunkX, int chunkZ, CallbackInfoReturnable<NBTTagCompound> cir, @Local(name = "nbttagcompound") NBTTagCompound nbttagcompound) { nbttagcompound.setInteger("ChunkY", this.rdpl$cubeY); }
 
     @Inject(method = "readStructureComponentsFromNBT", at = @At("HEAD")) private void readYFromNBT(World worldIn, NBTTagCompound tagCompound, CallbackInfo cbi) {
-        if (tagCompound.hasKey("ChunkY")) {
-            this.rdpl$isRubic = true;
-            this.rdpl$cubeY = tagCompound.getInteger("ChunkY");
-        }
+        if (tagCompound.hasKey("ChunkY")) { this.rdpl$cubeY = tagCompound.getInteger("ChunkY"); }
     }
 
     public int start$getX() { return getChunkPosX(); }
@@ -84,5 +80,4 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     public int start$getZ() { return getChunkPosZ(); }
 
-    public boolean start$isRubic() { return this.rdpl$isRubic; }
 }

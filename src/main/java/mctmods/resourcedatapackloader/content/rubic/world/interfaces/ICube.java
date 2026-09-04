@@ -13,7 +13,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
-import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -24,21 +23,9 @@ public interface ICube extends IXYZAddressable, ICapabilityProvider {
 
     IBlockState getBlockState(BlockPos pos);
 
-    @Nullable IBlockState setBlockState(BlockPos pos, IBlockState newstate);
-
-    IBlockState getBlockState(int blockX, int localOrBlockY, int blockZ);
-
-    int getLightFor(EnumSkyBlock lightType, BlockPos pos);
-
     void setLightFor(EnumSkyBlock lightType, BlockPos pos, int light);
 
-    @Nullable TileEntity getTileEntity(BlockPos pos, Chunk.EnumCreateEntityType createType);
-
-    void addTileEntity(TileEntity tileEntity);
-
     boolean isEmpty();
-
-    BlockPos localAddressToBlockPos(int localAddress);
 
     <T extends World & IRubicWorld> T getWorld();
 
@@ -58,10 +45,6 @@ public interface ICube extends IXYZAddressable, ICapabilityProvider {
 
     ClassInheritanceMultiMap<Entity> getEntitySet();
 
-    boolean needsSaving();
-
-    boolean isPopulated();
-
     boolean isFullyPopulated();
 
     boolean isSurfaceTracked();
@@ -78,5 +61,4 @@ public interface ICube extends IXYZAddressable, ICapabilityProvider {
         for (int biomeY = 0; biomeY < 4; biomeY++) { setBiome(localBiomeX >> 1, biomeY, localBiomeZ >> 1, biome); }
     }
 
-    @Nullable CapabilityDispatcher getCapabilities();
 }

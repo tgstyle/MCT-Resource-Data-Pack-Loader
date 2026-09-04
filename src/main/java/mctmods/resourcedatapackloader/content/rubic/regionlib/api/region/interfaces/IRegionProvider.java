@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces;
 
-import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key.RegionKey;
-import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedBiConsumer;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedConsumer;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedFunction;
 
@@ -21,5 +19,4 @@ public interface IRegionProvider<K extends IKey> extends Flushable, Closeable {
 
     Optional<IRegion<K>> getExistingRegion(K key) throws IOException;
 
-    void forAllRegions(ICheckedBiConsumer<RegionKey, ? super IRegion<K>, IOException> consumer) throws IOException;
 }

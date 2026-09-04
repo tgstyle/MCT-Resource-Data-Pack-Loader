@@ -29,9 +29,9 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
         this.blankCube = new BlankCube(super.provideChunk(Integer.MAX_VALUE, 0));
     }
 
-    @Nullable @Override public Chunk getLoadedColumn(int x, int z) { return getLoadedChunk(x, z); }
+    @Nullable public Chunk getLoadedColumn(int x, int z) { return getLoadedChunk(x, z); }
 
-    @Override public Chunk provideColumn(int x, int z) { return provideChunk(x, z); }
+    public Chunk provideColumn(int x, int z) { return provideChunk(x, z); }
 
     @Override @Nonnull public Chunk provideChunk(int x, int z) { return super.provideChunk(x, z); }
 

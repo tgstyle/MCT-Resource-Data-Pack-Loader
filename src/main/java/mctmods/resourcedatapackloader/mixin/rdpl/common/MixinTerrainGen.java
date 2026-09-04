@@ -2,24 +2,18 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
 import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import net.minecraftforge.event.terraingen.TerrainGen;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import java.util.Random;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(TerrainGen.class) public class MixinTerrainGen {
-    /**
-     * @author tgstyle
-     * @reason Route the decorate event through the per-mod fake world height poster.
-     */
-    @Overwrite(remap = false) public static boolean decorate(World world, Random rand, ChunkPos chunkPos, DecorateBiomeEvent.Decorate.EventType type)
-    {
-        DecorateBiomeEvent.Decorate event = new DecorateBiomeEvent.Decorate(world, rand, chunkPos, null, type);
-        CompatHandler.postBiomeDecorateWithFakeWorldHeight(event);
-        return event.getResult() != Event.Result.DENY;
+    @Redirect(method = "decorate(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/util/math/ChunkPos;Lnet/minecraftforge/event/terraingen/DecorateBiomeEvent$Decorate$EventType;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = false)
+    private static boolean rdpl$postWithFakeWorldHeight(EventBus bus, Event event) {
+        CompatHandler.postBiomeDecorateWithFakeWorldHeight((DecorateBiomeEvent.Decorate) event);
+        return false;
     }
 }

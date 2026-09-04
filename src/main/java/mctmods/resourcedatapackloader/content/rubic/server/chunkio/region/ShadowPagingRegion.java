@@ -326,10 +326,10 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
 
 	private static class SectorTracker<K extends IKey> {
 		private final BitSet usedSectors;
-		private final IKeyIdToSectorMap<?, ?, K> sectorMap;
+		private final IKeyIdToSectorMap<K> sectorMap;
 		private final BitSet sectorsPendingErasure = new BitSet();
 
-		private SectorTracker(BitSet usedSectors, IKeyIdToSectorMap<?, ?, K> sectorMap) {
+		private SectorTracker(BitSet usedSectors, IKeyIdToSectorMap<K> sectorMap) {
 			this.usedSectors = usedSectors;
 			this.sectorMap = sectorMap;
 		}
@@ -385,7 +385,7 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
 		public int getSectorsLength() { return this.usedSectors.length(); }
 
 		public static <L extends IKey> SectorTracker<L> fromFile(
-				SeekableByteChannel file, IKeyIdToSectorMap<?, ?, L> sectorMap, int reservedSectors, int sectorSize) throws IOException {
+				SeekableByteChannel file, IKeyIdToSectorMap<L> sectorMap, int reservedSectors, int sectorSize) throws IOException {
 			BitSet usedSectors = new BitSet(Math.max((int) (file.size()/sectorSize), reservedSectors));
 			for (int i = 0; i < reservedSectors; i++) { usedSectors.set(i, true); }
 			for (RegionEntryLocation loc : sectorMap) {

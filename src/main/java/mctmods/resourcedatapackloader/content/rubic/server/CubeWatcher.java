@@ -143,7 +143,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
         return this.cube != null;
     }
 
-    @Override public boolean isSentToPlayers() { return sentToPlayers; }
+    public boolean isSentToPlayers() { return sentToPlayers; }
 
     boolean isWaitingForCube() { return this.cube == null || !this.cube.isFullyPopulated() || !this.cube.isInitialLightingDone() || !this.cube.isSurfaceTracked(); }
 
@@ -248,7 +248,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
         return true;
     }
 
-    @Override @Nullable public Cube getCube() { return this.cube; }
+    @Nullable public Cube getCube() { return this.cube; }
 
     private long getWorldTime() { return playerCubeMap.getWorldServer().getWorldTime(); }
 

@@ -2,12 +2,10 @@ package mctmods.resourcedatapackloader.content.rubic.world.interfaces;
 
 import mctmods.resourcedatapackloader.util.interfaces.IXZAddressable;
 
-import net.minecraft.util.math.BlockPos;
 import javax.annotation.Nullable;
 import java.util.Collection;
 
 public interface IColumn extends IXZAddressable {
-    int getHeight(BlockPos pos);
 
     @Deprecated int getHeightValue(int localX, int localZ);
 

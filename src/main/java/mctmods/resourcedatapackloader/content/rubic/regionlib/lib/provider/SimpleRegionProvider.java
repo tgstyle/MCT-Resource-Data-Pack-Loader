@@ -5,16 +5,12 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfa
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKey;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKeyProvider;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key.RegionKey;
-import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedBiConsumer;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedConsumer;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedFunction;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public class SimpleRegionProvider<K extends IKey> implements IRegionProvider<K> {
 	private final IKeyProvider keyProvider;
@@ -53,19 +49,6 @@ public class SimpleRegionProvider<K extends IKey> implements IRegionProvider<K> 
 		return Optional.of(reg);
 	}
 
-	@Override public void forAllRegions(ICheckedBiConsumer<RegionKey, ? super IRegion<K>, IOException> consumer) throws IOException {
-		try (Stream<Path> stream = Files.list(directory)) {
-			Iterator<RegionKey> it = stream.map(Path::getFileName)
-				.map(Path::toString)
-				.map(RegionKey::new)
-				.filter(keyProvider::isValid)
-				.iterator();
-			while (it.hasNext()) {
-				RegionKey key = it.next();
-				consumer.accept(key, regionBuilder.create(keyProvider, key));
-			}
-		}
-	}
 
 	@Override public void flush() throws IOException {
 	}

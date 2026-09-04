@@ -324,7 +324,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 
     @Override public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos) { return rdpl$isBlockColumnLoaded(pos, true); }
 
-    @Override public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos, boolean allowEmpty) {
+    @Unique public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos, boolean allowEmpty) {
         return this.isChunkLoaded(blockToCube(pos.getX()), blockToCube(pos.getZ()), allowEmpty);
     }
 

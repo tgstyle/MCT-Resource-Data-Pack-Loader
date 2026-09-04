@@ -14,7 +14,7 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public class IntPackedSectorMap<K extends IKey>
-	implements IKeyIdToSectorMap<IntHeaderEntry, EntryLocationHeaderEntryProvider<K>, K> {
+	implements IKeyIdToSectorMap<K> {
 	private static final int SIZE_BITS = 8;
 	private static final int OFFSET_BITS = Integer.SIZE - SIZE_BITS;
 	private static final int SIZE_MASK = (1 << SIZE_BITS) - 1;
@@ -55,7 +55,7 @@ public class IntPackedSectorMap<K extends IKey>
 		};
 	}
 
-	@Override public EntryLocationHeaderEntryProvider<K> headerEntryProvider() { return new EntryLocationHeaderEntryProvider<>(this, IntPackedSectorMap::packed); }
+	public EntryLocationHeaderEntryProvider<K> headerEntryProvider() { return new EntryLocationHeaderEntryProvider<>(this, IntPackedSectorMap::packed); }
 
 	private static int unpackOffset(int sectorLocation) { return sectorLocation >>> SIZE_BITS; }
 

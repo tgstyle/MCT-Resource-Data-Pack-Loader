@@ -26,7 +26,5 @@ public interface IRubicWorld extends IMinMaxHeight {
 
     boolean rdpl$isBlockColumnLoaded(BlockPos pos);
 
-    boolean rdpl$isBlockColumnLoaded(BlockPos pos, boolean allowEmpty);
-
     int rdpl$getMaxGenerationHeight();
 }

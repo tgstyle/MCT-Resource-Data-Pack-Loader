@@ -9,11 +9,11 @@ import java.util.function.ToIntFunction;
 
 public class EntryLocationHeaderEntryProvider<K extends IKey>
 	implements IHeaderDataEntryProvider<IntHeaderEntry, K> {
-	private final IKeyIdToSectorMap<IntHeaderEntry, EntryLocationHeaderEntryProvider<K>, K> sectorMap;
+	private final IKeyIdToSectorMap<K> sectorMap;
 	private final ToIntFunction<RegionEntryLocation> pack;
 
 	public EntryLocationHeaderEntryProvider(
-		IKeyIdToSectorMap<IntHeaderEntry, EntryLocationHeaderEntryProvider<K>, K> sectorMap, ToIntFunction<RegionEntryLocation> pack) {
+		IKeyIdToSectorMap<K> sectorMap, ToIntFunction<RegionEntryLocation> pack) {
 		this.sectorMap = sectorMap;
 		this.pack = pack;
 	}

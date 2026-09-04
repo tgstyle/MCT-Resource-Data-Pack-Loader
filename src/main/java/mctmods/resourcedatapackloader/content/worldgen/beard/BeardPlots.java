@@ -145,6 +145,8 @@ public final class BeardPlots {
                 && !(inOwn && spot.getX() >= box.minX && spot.getX() <= box.maxX && spot.getZ() >= box.minZ && spot.getZ() <= box.maxZ && spot.getY() <= top);
     }
 
+    public static boolean nearWell(StructureBoundingBox box, StructureBoundingBox well, int reach) { return !(box.minX > well.maxX + reach || box.maxX < well.minX - reach || box.minZ > well.maxZ + reach || box.maxZ < well.minZ - reach); }
+
     public static boolean waystone(StructureComponent piece) { return piece.getClass().getName().toLowerCase(Locale.ROOT).contains("waystone"); }
 
     public static boolean insideAnother(StructureStart start, StructureComponent piece, BlockPos at) {

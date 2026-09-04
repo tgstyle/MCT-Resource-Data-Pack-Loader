@@ -38,8 +38,6 @@ public class BlankCube extends Cube {
     @Override public void markSaved() {
     }
 
-    @Override public int getLightFor(EnumSkyBlock lightType, BlockPos pos) { return lightType.defaultLightValue; }
-
     @Override public void setLightFor(EnumSkyBlock lightType, BlockPos pos, int light) {
     }
 

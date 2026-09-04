@@ -129,17 +129,11 @@ public class Cube implements ICube {
 
     @Override public IBlockState getBlockState(BlockPos pos) { return this.getBlockState(pos.getX(), pos.getY(), pos.getZ()); }
 
-    @Override @Nullable public IBlockState setBlockState(BlockPos pos, IBlockState newstate) { return column.setBlockState(pos, newstate); }
-
-    @Override public IBlockState getBlockState(int blockX, int localOrBlockY, int blockZ) {
+    public IBlockState getBlockState(int blockX, int localOrBlockY, int blockZ) {
         if (storage == NULL_STORAGE) { return Blocks.AIR.getDefaultState(); }
         return storage.get(blockToLocal(blockX), blockToLocal(localOrBlockY), blockToLocal(blockZ));
     }
 
-    @Override public int getLightFor(EnumSkyBlock type, BlockPos pos) {
-        ((IRubicWorldInternal) world).rdpl$getLightingManager().onGetLight();
-        return getCachedLightFor(type, pos);
-    }
 
     public int getCachedLightFor(EnumSkyBlock type, BlockPos pos) {
         int x = blockToLocal(pos.getX());
@@ -160,9 +154,9 @@ public class Cube implements ICube {
         return null;
     }
 
-    @Override @Nullable public TileEntity getTileEntity(BlockPos pos, Chunk.EnumCreateEntityType createType) { return column.getTileEntity(pos, createType); }
+    @Nullable public TileEntity getTileEntity(BlockPos pos, Chunk.EnumCreateEntityType createType) { return column.getTileEntity(pos, createType); }
 
-    @Override public void addTileEntity(TileEntity tileEntityIn) {
+    public void addTileEntity(TileEntity tileEntityIn) {
         this.addTileEntity(tileEntityIn.getPos(), tileEntityIn);
         if (this.isCubeLoaded) { this.world.addTileEntity(tileEntityIn); }
     }
@@ -229,7 +223,7 @@ public class Cube implements ICube {
 
     @Override public boolean isEmpty() { return storage == null || this.storage.isEmpty(); }
 
-    @Override public BlockPos localAddressToBlockPos(int localAddress) {
+    public BlockPos localAddressToBlockPos(int localAddress) {
         int x = localToBlock(this.coords.getX(), AddressTools.getLocalX(localAddress));
         int y = localToBlock(this.coords.getY(), AddressTools.getLocalY(localAddress));
         int z = localToBlock(this.coords.getZ(), AddressTools.getLocalZ(localAddress));
@@ -327,7 +321,7 @@ public class Cube implements ICube {
         ((IColumnInternal) getColumn()).removeFromStagingHeightmap(this);
     }
 
-    @Override public boolean needsSaving() { return this.entities.needsSaving(true, this.world.getTotalWorldTime(), this.isModified) || cubeLightData.needsSaving(this); }
+    public boolean needsSaving() { return this.entities.needsSaving(true, this.world.getTotalWorldTime(), this.isModified) || cubeLightData.needsSaving(this); }
 
     public void markSaved() {
         this.entities.markSaved(this.world.getTotalWorldTime());
@@ -355,7 +349,7 @@ public class Cube implements ICube {
         this.isSurfaceTracked = true;
     }
 
-    @Override public boolean isPopulated() { return isPopulated; }
+    public boolean isPopulated() { return isPopulated; }
 
     public void setPopulated(boolean populated) {
         this.isPopulated = populated;
@@ -384,7 +378,7 @@ public class Cube implements ICube {
 
     @Override public boolean isCubeLoaded() { return this.isCubeLoaded; }
 
-    @Override @Nullable public CapabilityDispatcher getCapabilities() { return this.capabilities; }
+    @Nullable public CapabilityDispatcher getCapabilities() { return this.capabilities; }
 
     @Override public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
         return this.capabilities != null && this.capabilities.hasCapability(capability, facing);

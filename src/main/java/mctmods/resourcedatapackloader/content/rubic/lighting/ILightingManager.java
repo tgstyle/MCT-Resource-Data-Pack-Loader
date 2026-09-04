@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
@@ -27,8 +26,6 @@ public interface ILightingManager {
     void onCreateCubeStorage(ICube cube, ExtendedBlockStorage storage);
 
     default void onTick() { processUpdates(); }
-
-    boolean checkLightFor(EnumSkyBlock lightType, BlockPos pos);
 
     void processUpdates();
 
