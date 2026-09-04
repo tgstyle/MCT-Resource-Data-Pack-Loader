@@ -190,7 +190,8 @@ public abstract class MixinChunk {
         if (index < rdpl$floorCube || index >= rdpl$ceilingCube) { return NULL_BLOCK_STORAGE; }
         if (!rdpl$isColumn) { return storageArrays[index - rdpl$floorCube]; }
         if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == index) { return rdpl$cachedCube.getStorage(); }
-        Cube cube = rdpl$getRubicWorld().rdpl$getCubeCache().getCube(this.x, index, this.z);
+        Cube cube = rdpl$cubeMap.get(index);
+        if (cube == null) { cube = rdpl$getRubicWorld().rdpl$getCubeCache().getCube(this.x, index, this.z); }
         if (!(cube instanceof BlankCube)) { rdpl$cachedCube = cube; }
         return cube.getStorage();
     }

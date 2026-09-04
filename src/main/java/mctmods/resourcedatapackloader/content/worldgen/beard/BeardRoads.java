@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
+import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
@@ -1747,22 +1749,61 @@ public final class BeardRoads {
         return wanted != null ? wanted : picked;
     }
 
-    public static boolean pathChosen() { return !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock).isEmpty(); }
+    @Nullable private static WorldTemplateDef widthsFrom;
+    private static boolean widthsRead;
+    private static boolean chosen;
+    private static int extraWidth;
+    private static int lineColumns;
+    private static int sidewalkWidth;
+    private static int fullWidth;
+    private static int alley;
+    private static int minimumWidth;
 
-    public static int pathExtraWidth() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathExtraWidth", Config.worldgen.villagePathExtraWidth)); }
-
-    public static int pathLineColumns() { return ContentControl.text(ContentControl.VILLAGES, "villagePathLineBlock", Config.worldgen.villagePathLineBlock).isEmpty() ? 0 : 1; }
-
-    public static int pathSidewalkWidth() {
-        if (ContentControl.text(ContentControl.VILLAGES, "villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock).isEmpty()) { return 0; }
-        return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathSidewalkWidth", Config.worldgen.villagePathSidewalkWidth));
+    private static void widths() {
+        WorldTemplateDef active = ContentWorldTemplates.active();
+        if (widthsRead && active == widthsFrom) { return; }
+        chosen = !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock).isEmpty();
+        extraWidth = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathExtraWidth", Config.worldgen.villagePathExtraWidth));
+        lineColumns = ContentControl.text(ContentControl.VILLAGES, "villagePathLineBlock", Config.worldgen.villagePathLineBlock).isEmpty() ? 0 : 1;
+        sidewalkWidth = ContentControl.text(ContentControl.VILLAGES, "villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock).isEmpty() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathSidewalkWidth", Config.worldgen.villagePathSidewalkWidth));
+        fullWidth = 3 + 2 * (extraWidth + lineColumns + sidewalkWidth);
+        alley = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathAlleyChance", Config.worldgen.villagePathAlleyChance));
+        minimumWidth = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathMinimumWidth", Config.worldgen.villagePathMinimumWidth));
+        widthsFrom = active;
+        widthsRead = true;
     }
 
-    public static int pathFullWidth() { return 3 + 2 * (pathExtraWidth() + pathLineColumns() + pathSidewalkWidth()); }
+    public static boolean pathChosen() {
+        widths();
+        return chosen;
+    }
+
+    public static int pathExtraWidth() {
+        widths();
+        return extraWidth;
+    }
+
+    public static int pathLineColumns() {
+        widths();
+        return lineColumns;
+    }
+
+    public static int pathSidewalkWidth() {
+        widths();
+        return sidewalkWidth;
+    }
+
+    public static int pathFullWidth() {
+        widths();
+        return fullWidth;
+    }
 
     public static IBlockState alleyBlock(IBlockState path) { return pathBlock("villagePathAlleyBlock", Config.worldgen.villagePathAlleyBlock, path); }
 
-    public static int alleyChance() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathAlleyChance", Config.worldgen.villagePathAlleyChance)); }
+    public static int alleyChance() {
+        widths();
+        return alley;
+    }
 
     public static boolean deadEnd(World world, StructureComponent piece, boolean alongX, int row) {
         StructureBoundingBox box = piece.getBoundingBox();
@@ -1835,7 +1876,10 @@ public final class BeardRoads {
         return Math.min(1 + pathExtraWidth(), Math.max(0, (span - 1) / 2));
     }
 
-    public static int pathMinimumWidth() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathMinimumWidth", Config.worldgen.villagePathMinimumWidth)); }
+    public static int pathMinimumWidth() {
+        widths();
+        return minimumWidth;
+    }
 
     @Nullable public static ContentStates.Spec pathSpec(String key, String fromConfig) {
         String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig);

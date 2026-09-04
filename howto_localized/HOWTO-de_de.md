@@ -4282,7 +4282,8 @@ Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
     "worldBorder": 4096,
     "worldTime": 6000,
     "worldDifficulty": ["normal", "-1=hard"],
-    "weatherCeiling": ["0=128"]
+    "weatherCeiling": ["0=128"],
+    "cloudHeight": ["0=384"]
   }
 }
 ```
@@ -4298,6 +4299,8 @@ Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
 **`worldTime`** (Gruppe `terrain`): ein Tick-Wert wie bei `/time set` (`18000` Mitternacht, `6000` Mittag). Hält die Uhr der Oberwelt an; alles, was die Tageszeit liest (Mobspawn, Schlafen), sieht den festgehaltenen Wert. `-1` (Standard) lässt die Zeit laufen. Das Oberwelt-Gegenstück zum `fixedTime` einer eigenen Dimension, unabhängig von `doDaylightCycle`.
 
 **`worldDifficulty`** (Gruppe `terrain`): `peaceful`, `easy`, `normal` oder `hard`. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=Schwierigkeitsgrad` (`-1=hard`) überschreiben pro Dimension. Die Sperre hält dem Pausenmenü stand. Leer (Standard) überlässt den Schwierigkeitsgrad dem Spieler.
+
+**`cloudHeight`** (Gruppe `terrain`): die y, auf der die Wolken gezeichnet werden. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=y` (`0=384`) überschreiben pro Dimension. Ein Pack mit hohen Gebäuden setzt das, damit die Skyline unter den Wolken steht statt durch sie hindurch, und in einer Rubic-Welt ist es eine absolute y, eine angehobene Decke ist also der Platz, die Wolken darüber zu legen. Leer (Standard) behält die Höhe des Spiels, 128 in der Oberwelt, in einer Rubic-Welt um `terrainOffset` angehoben.
 
 **`weatherCeiling`** (Gruppe `terrain`): die höchste y, die Regen und Schnee erreichen. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=y` (`0=128`) überschreiben pro Dimension. Darüber fällt kein Regen, setzt sich kein Schnee ab, füllen sich keine Kessel, schlägt kein Blitz ein und wird kein Niederschlag gezeichnet; darunter bleibt das Wetter unverändert. Leer (Standard) heißt keine Grenze. Eis ist Temperatur und kein Niederschlag, bildet sich also weiterhin über der Linie.
 

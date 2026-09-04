@@ -36,16 +36,18 @@ public interface IRubicWorldInternal extends IRubicWorld {
         int floor = MathHelper.clamp(RubicWorldControl.terrainOffsetCubes() << 4, rdpl$getMinHeight(), rdpl$getMaxHeight());
         int ceiling = MathHelper.clamp(world.provider.getActualHeight(), floor, rdpl$getMaxHeight() - 1);
         Chunk chunk = world.getChunk(pos);
-        BlockPos current = new BlockPos(pos.getX(), ceiling, pos.getZ());
+        int top = Math.max(floor, Math.min(ceiling, chunk.getHeightValue(pos.getX() & 15, pos.getZ() & 15)));
+        BlockPos.MutableBlockPos current = new BlockPos.MutableBlockPos(pos.getX(), top, pos.getZ());
+        BlockPos.MutableBlockPos next = new BlockPos.MutableBlockPos();
         while (current.getY() > floor) {
-            BlockPos next = current.down();
+            next.setPos(current.getX(), current.getY() - 1, current.getZ());
             IBlockState state = chunk.getBlockState(next);
             if (state.getMaterial().blocksMovement() && !state.getBlock().isLeaves(state, world, next) && !state.getBlock().isFoliage(world, next)) {
                 break;
             }
-            current = next;
+            current.setY(next.getY());
         }
-        return current;
+        return current.toImmutable();
     }
 
     default BlockPos getTopSolidOrLiquidBlockVanilla(BlockPos pos) {

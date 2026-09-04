@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
+import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.VanillaCompatibilityGenerator;
+import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorFlatFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorEnd;
@@ -340,9 +343,18 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return null;
     }
 
+    @Nullable public static IChunkGenerator makerOf(World world) {
+        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return null; }
+        if (world.getChunkProvider() instanceof CubeProviderServer) {
+            ICubeGenerator cubes = ((CubeProviderServer) world.getChunkProvider()).getCubeGenerator();
+            if (cubes instanceof VanillaCompatibilityGenerator) { return ((VanillaCompatibilityGenerator) cubes).vanilla(); }
+        }
+        return ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+    }
+
     public static Collection<StructureStart> villageStarts(World world) {
-        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return Collections.emptyList(); }
-        IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        IChunkGenerator maker = makerOf(world);
+        if (maker == null) { return Collections.emptyList(); }
         MapGenVillage shell = null;
         if (maker instanceof ChunkGeneratorOverworld) { shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages(); }
         else if (maker instanceof ChunkGeneratorFlat) {
@@ -382,8 +394,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     private static MapGenStructure generatorFor(World world, String name) {
-        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return null; }
-        IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        IChunkGenerator maker = makerOf(world);
+        if (maker == null) { return null; }
         if (maker instanceof ChunkGeneratorOverworld) {
             if ("Village".equals(name)) { return ((IChunkGeneratorBeardFields) maker).rdpl$villages(); }
             if ("Mansion".equals(name)) { return ((IChunkGeneratorBeardFields) maker).rdpl$mansions(); }

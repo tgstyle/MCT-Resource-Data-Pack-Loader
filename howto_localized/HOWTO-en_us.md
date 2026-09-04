@@ -4282,7 +4282,8 @@ The `terrain` keys below, together in a world template's `settings` block:
     "worldBorder": 4096,
     "worldTime": 6000,
     "worldDifficulty": ["normal", "-1=hard"],
-    "weatherCeiling": ["0=128"]
+    "weatherCeiling": ["0=128"],
+    "cloudHeight": ["0=384"]
   }
 }
 ```
@@ -4298,6 +4299,8 @@ The `terrain` keys below, together in a world template's `settings` block:
 **`worldTime`** (`terrain` group): a tick value as `/time set` takes (`18000` midnight, `6000` noon). Locks the overworld clock; everything that reads the time of day (mob spawning, sleeping) sees the locked value. `-1` (default) leaves time running. The overworld analog of a custom dimension's `fixedTime`, and independent of `doDaylightCycle`.
 
 **`worldDifficulty`** (`terrain` group): `peaceful`, `easy`, `normal` or `hard`. A bare value covers every dimension; `dimension=difficulty` lines (`-1=hard`) override per dimension. The lock holds against the pause menu. Empty (default) leaves difficulty to the player.
+
+**`cloudHeight`** (`terrain` group): the y the clouds are drawn at. A bare number covers every dimension; `dimension=y` lines (`0=384`) override per dimension. It is what a pack with tall buildings sets so the skyline stands under the clouds rather than through them, and on a rubic world it is an absolute y, so a raised ceiling is the place to put the clouds above. Empty (default) keeps the game's own height, 128 in the overworld, shifted up with `terrainOffset` on a rubic world.
 
 **`weatherCeiling`** (`terrain` group): the highest y rain and snow reach. A bare number covers every dimension; `dimension=y` lines (`0=128`) override per dimension. Above it rain does not fall, snow does not settle, cauldrons do not fill, lightning does not strike and no precipitation is drawn; below it weather is unchanged. Empty (default) means no ceiling. Ice is temperature rather than precipitation, so it still forms above the line.
 

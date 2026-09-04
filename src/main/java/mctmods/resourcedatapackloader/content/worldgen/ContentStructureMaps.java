@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
@@ -50,7 +51,7 @@ public class ContentStructureMaps {
     public static void place(World world, int chunkX, int chunkZ) {
         if (DEFS.isEmpty() || !(world instanceof WorldServer)) { return; }
         int dimension = world.provider.getDimension();
-        StructureBoundingBox window = new StructureBoundingBox(chunkX * 16 + OFFSET, 0, chunkZ * 16 + OFFSET, chunkX * 16 + OFFSET + 15, 255, chunkZ * 16 + OFFSET + 15);
+        StructureBoundingBox window = new StructureBoundingBox(chunkX * 16 + OFFSET, ((IMinMaxHeight) world).rdpl$getMinHeight(), chunkZ * 16 + OFFSET, chunkX * 16 + OFFSET + 15, ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1, chunkZ * 16 + OFFSET + 15);
         for (StructureMapDef def : DEFS.values()) {
             if (!def.allowsDimension(dimension)) { continue; }
             if (def.at != null) {
@@ -95,10 +96,12 @@ public class ContentStructureMaps {
         WorldServer server = (WorldServer) world;
         MinecraftServer host = server.getMinecraftServer();
         int placedCells = 0;
+        int floor = ((IMinMaxHeight) world).rdpl$getMinHeight();
+        int ceiling = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1;
         for (int layer = 0; layer < def.layers.length; layer++) {
             StructureMapDef.Layer held = def.layers[layer];
             int layerY = base + layer * def.cell;
-            if (layerY > 255 || layerY + def.cell - 1 < 0) { continue; }
+            if (layerY > ceiling || layerY + def.cell - 1 < floor) { continue; }
             for (int row = 0; row < held.rows.length; row++) {
                 String cells = held.rows[row];
                 for (int column = 0; column < cells.length(); column++) {

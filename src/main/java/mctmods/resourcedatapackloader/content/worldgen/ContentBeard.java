@@ -141,8 +141,7 @@ public final class ContentBeard {
     public static boolean adapts(World world) { return samplerFor(world) != null; }
 
     public static int villageSpacing(World world) {
-        if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return 32; }
-        IChunkGenerator maker = ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        IChunkGenerator maker = ContentStructureSearch.makerOf(world);
         if (!(maker instanceof ChunkGeneratorOverworld)) { return 32; }
         return ((IMapGenVillage) ((IChunkGeneratorBeardFields) maker).rdpl$villages()).rdpl$distance();
     }

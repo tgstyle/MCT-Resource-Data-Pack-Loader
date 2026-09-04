@@ -15,6 +15,11 @@ import javax.annotation.Nullable;
 public class CubeMap implements Iterable<Cube> {
     @Nonnull private final List<Cube> cubes = new ArrayList<>();
 
+    @Nullable public Cube get(int cubeY) {
+        int index = binarySearch(cubeY);
+        return index < cubes.size() && cubes.get(index).getY() == cubeY ? cubes.get(index) : null;
+    }
+
     @Nullable public Cube remove(int cubeY) {
         int index = binarySearch(cubeY);
         return index < cubes.size() && cubes.get(index).getY() == cubeY ? cubes.remove(index) : null;

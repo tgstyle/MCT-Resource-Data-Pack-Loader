@@ -20,7 +20,6 @@ import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
-import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -42,6 +41,11 @@ public final class RubicLightEngine implements ICubeLightEngine {
     private final LongArrayList ready = new LongArrayList();
     private final ICube[] nearby = new ICube[27];
     private int probedSlots;
+    private static final int REMEMBERED = 64;
+    private final ICube[] remembered = new ICube[REMEMBERED];
+    private final long[] rememberedKeys = new long[REMEMBERED];
+    private final int[] rememberedPass = new int[REMEMBERED];
+    private int pass = 1;
     private int nearbyCubeX = Integer.MIN_VALUE;
     private int nearbyCubeY = Integer.MIN_VALUE;
     private int nearbyCubeZ = Integer.MIN_VALUE;
@@ -183,12 +187,12 @@ public final class RubicLightEngine implements ICubeLightEngine {
         int topCube = (((IMinMaxHeight) world).rdpl$getMaxHeight() >> 4) - 1;
         int x = (column.x << 4) + localX;
         int z = (column.z << 4) + localZ;
-        for (int cubeY = topCube; cubeY >= Coords.blockToCube(fromY); cubeY--) {
-            ICube above = ((ICubeProvider) world.getChunkProvider()).getLoadedCube(column.x, cubeY, column.z);
-            if (above == null) { continue; }
+        int fromCube = Coords.blockToCube(fromY);
+        for (ICube above : ((IColumn) column).getLoadedCubes(topCube, fromCube)) {
             ExtendedBlockStorage held = above.getStorage();
             if (held == null || held.isEmpty()) { continue; }
-            int lowest = cubeY == Coords.blockToCube(fromY) ? Coords.blockToLocal(fromY) : 0;
+            int cubeY = above.getY();
+            int lowest = cubeY == fromCube ? Coords.blockToLocal(fromY) : 0;
             int base = Coords.cubeToMinBlock(cubeY);
             for (int localY = 15; localY >= lowest; localY--) {
                 if (held.get(localX, localY, localZ).getLightOpacity(world, at.setPos(x, base + localY, z)) > 0) { return true; }
@@ -289,6 +293,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
         working = true;
         try {
             forget();
+            pass++;
             sortIntoBuckets(lightType, queue);
             for (int light = MAX_LIGHT; light >= 0; light--) { darkenFrom(lightType, light); }
             do {
@@ -453,7 +458,16 @@ public final class RubicLightEngine implements ICubeLightEngine {
         if (cubeY < lowestCube || cubeY > highestCube) { return null; }
         int slot = slotFor(cubeX - nearbyCubeX, cubeY - nearbyCubeY, cubeZ - nearbyCubeZ);
         if (slot >= 0 && (probedSlots & 1 << slot) != 0) { return nearby[slot]; }
-        ICube found = ((ICubeProvider) world.getChunkProvider()).getLoadedCube(cubeX, cubeY, cubeZ);
+        long key = cubeKey(cubeX, cubeY, cubeZ);
+        int kept = (cubeX & 3) | (cubeY & 3) << 2 | (cubeZ & 3) << 4;
+        ICube found;
+        if (rememberedPass[kept] == pass && rememberedKeys[kept] == key) { found = remembered[kept]; }
+        else {
+            found = ((ICubeProvider) world.getChunkProvider()).getLoadedCube(cubeX, cubeY, cubeZ);
+            rememberedKeys[kept] = key;
+            remembered[kept] = found;
+            rememberedPass[kept] = pass;
+        }
         if (slot >= 0) {
             nearby[slot] = found;
             probedSlots |= 1 << slot;
@@ -477,7 +491,6 @@ public final class RubicLightEngine implements ICubeLightEngine {
     }
 
     private void forget() {
-        Arrays.fill(nearby, null);
         probedSlots = 0;
         nearbyCubeX = Integer.MIN_VALUE;
         nearbyCubeY = Integer.MIN_VALUE;

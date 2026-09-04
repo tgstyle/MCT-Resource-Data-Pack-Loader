@@ -386,6 +386,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             HELD.clear();
             return;
         }
+        int released = 0;
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUniqueID());
             if (held == null) { continue; }
@@ -393,8 +394,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             HELD.remove(player.getUniqueID());
             release(player, held);
             if (welcomed) { welcome(player); }
+            released++;
         }
         HELD.keySet().removeIf(id -> server.getPlayerList().getPlayerByUUID(id) == null);
+        if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentTerrain.worldGameMode().isEmpty() ? "the mode they had" : ContentTerrain.worldGameMode()); }
     }
 
     public static void releaseAfterIntro(EntityPlayerMP player) {
@@ -452,6 +455,15 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (HELD.isEmpty()) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
+        if (!busy()) {
+            int stranded = 0;
+            for (UUID id : HELD.keySet()) { if (!ContentIntroPlay.reading(id) && server.getPlayerList().getPlayerByUUID(id) != null) { stranded++; } }
+            if (stranded > 0) {
+                ContentLog.LOGGER.warn("{} player(s) were still held as spectators with no land being made, so they are released now; the release at the end of the run was missed", stranded);
+                releaseEveryone(true);
+                return;
+            }
+        }
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUniqueID());
             if (held == null) { continue; }

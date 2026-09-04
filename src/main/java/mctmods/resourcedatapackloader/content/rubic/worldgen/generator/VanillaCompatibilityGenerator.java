@@ -60,6 +60,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     private boolean deepPopulation;
     private boolean skyPopulation;
 
+    @Nonnull public IChunkGenerator vanilla() { return vanilla; }
+
     public VanillaCompatibilityGenerator(@Nonnull IChunkGenerator vanilla, @Nonnull World world) {
         this.vanilla = vanilla;
         this.world = world;

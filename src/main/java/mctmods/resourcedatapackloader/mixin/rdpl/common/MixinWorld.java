@@ -74,6 +74,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Unique private static boolean rdpl$told;
     @Unique private static ChunkPos rdpl$during;
     @Unique private static int rdpl$lastX = Integer.MIN_VALUE;
+    @Unique @Nullable private static Chunk rdpl$lastChunk;
     @Unique private static int rdpl$lastZ = Integer.MIN_VALUE;
     @Unique private static final int rdpl$NOTIFY_NEIGHBORS = 1;
     @Unique private static final int rdpl$SUPPRESS_OBSERVERS = 16;
@@ -107,28 +108,30 @@ import net.minecraft.util.math.AxisAlignedBB;
         else { entity.onUpdate(); }
     }
 
-    @WrapOperation(method = "getBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getChunk(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;"))
-    private Chunk rdpl$leaveLandAlone(World self, BlockPos pos, Operation<Chunk> original) {
+    @Redirect(method = "getBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getChunk(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;"))
+    private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
         ChunkPos populating = IChunk.rdpl$getPopulating();
-        if (populating == null) { return original.call(self, pos); }
-        if (pos.getX() >> 4 == populating.x && pos.getZ() >> 4 == populating.z) { return original.call(self, pos); }
-        return rdpl$predictInstead(self, pos, populating, original);
+        if (populating == null) { return self.getChunk(pos); }
+        if (pos.getX() >> 4 == populating.x && pos.getZ() >> 4 == populating.z) { return self.getChunk(pos); }
+        return rdpl$predictInstead(self, pos, populating);
     }
 
-    @Unique private Chunk rdpl$predictInstead(World self, BlockPos pos, ChunkPos populating, Operation<Chunk> original) {
+    @Unique private Chunk rdpl$predictInstead(World self, BlockPos pos, ChunkPos populating) {
         if (populating != rdpl$during) {
             rdpl$during = populating;
             rdpl$lastX = Integer.MIN_VALUE;
             rdpl$lastZ = Integer.MIN_VALUE;
+            rdpl$lastChunk = null;
         }
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
-        if (chunkX == populating.x && chunkZ == populating.z) { return original.call(self, pos); }
-        if (chunkX == rdpl$lastX && chunkZ == rdpl$lastZ) { return original.call(self, pos); }
+        if (chunkX == populating.x && chunkZ == populating.z) { return self.getChunk(pos); }
+        if (chunkX == rdpl$lastX && chunkZ == rdpl$lastZ && rdpl$lastChunk != null) { return rdpl$lastChunk; }
         Chunk loaded = self.getChunkProvider().getLoadedChunk(chunkX, chunkZ);
         if (loaded != null) {
             rdpl$lastX = chunkX;
             rdpl$lastZ = chunkZ;
+            rdpl$lastChunk = loaded;
             return loaded;
         }
         if (!rdpl$told) {
