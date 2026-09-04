@@ -3583,6 +3583,7 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
     "villagePiecesAreBlacklist": true,
     "villagePlotsLeast": 12,
     "villagePlotsMost": 30,
+    "villageBlockSizes": ["32=3", "64=1"],
     "villageLayout": "mypack:downtown"
   }
 }
@@ -3607,6 +3608,8 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
 `villagePieces` names vanilla village pieces, `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` and `field2`, and `villagePiecesAreBlacklist` decides the direction, so you can drop vanilla's wheat fields and leave the houses, or list the only pieces you want. A pack plot is named by its own template: either the full name, `mypack:big_house`, or just `big_house`, or the plot's own name if you prefer. So a pack can ship ten plots and a world template can drop one of them without touching the other nine. So are pieces other mods add, Tektopia's houses or Recurrent Complex's plots among them: a whitelist only ever removes vanilla's own pieces, so listing the vanilla ones you want will not quietly delete somebody else's. To drop a modded piece, use a blacklist and name it, `tekhouse2` and the like.
 
 `villagePlotsLeast` and `villagePlotsMost` bound how many plots a village is built with, counting houses, farms and pack plots, never roads, torches or the well. A village that lays out under the minimum is regrown at a larger size, a few tries, and the largest layout wins, so cramped terrain can still fall short of the ask. At the maximum the village stops growing outright: no more buildings and no more roads. `0` on either end keeps vanilla behavior there.
+
+`villageBlockSizes` sets how deep the blocks between a city's parallel streets are, as weighted `size=weight` entries: `32=3` and `64=1` lay three districts in four with 32 deep blocks and the rest with 64. Each district rolls its size once from its plaza position, so the same world always gets the same mix. Its streets branch side streets along their length at every two blocks plus a road width, so a 16 district is a fine grid and a 64 district a coarse one, and two parallel streets keep that many blocks plus the neighboring district's between them, so a 32 district beside a 64 district leaves 96 between them. Only plots that fit the depth are built along a district's streets, and among those that fit, a plot's chance is its weight times its width, so deep blocks favor the buildings that fill them and a 64 wide plot never fronts a 32 deep block. Street length and plaza spacing still follow the largest plot the pack ships, which is what lets every district reach the city. Empty sizes every block to that largest plot and branches streets only at their ends, as before.
 
 `villageLayout` names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it; empty grows as usual.
 

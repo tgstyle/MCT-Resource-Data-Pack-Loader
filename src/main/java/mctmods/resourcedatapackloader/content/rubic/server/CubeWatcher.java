@@ -48,7 +48,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
     CubeWatcher(PlayerCubeMap playerCubeMap, CubePos cubePos) {
         this.cubePos = cubePos;
         this.playerCubeMap = playerCubeMap;
-        this.cubeCache = ((IRubicWorldInternal.Server) playerCubeMap.getWorldServer()).rdpl$getCubeCache();
+        this.cubeCache = ((IRubicWorldInternal.IServer) playerCubeMap.getWorldServer()).rdpl$getCubeCache();
         Consumer<Cube> consumer = (c) -> {
             if (this.invalid) { return; }
             this.cube = c;

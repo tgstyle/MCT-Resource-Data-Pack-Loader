@@ -34,13 +34,13 @@ public class RubicAnvilChunkLoader extends AnvilChunkLoader {
     }
 
     @Override @Nullable public Chunk loadChunk(World worldIn, int x, int z) throws IOException {
-        ICubeIO.PartialData<Chunk> data = ((ICubeProviderInternal.Server) worldIn.getChunkProvider()).getCubeIO().loadColumnAsyncPart(x, z);
-        ((ICubeProviderInternal.Server) worldIn.getChunkProvider()).getCubeIO().loadColumnSyncPart(data);
+        ICubeIO.PartialData<Chunk> data = ((ICubeProviderInternal.IServer) worldIn.getChunkProvider()).getCubeIO().loadColumnAsyncPart(x, z);
+        ((ICubeProviderInternal.IServer) worldIn.getChunkProvider()).getCubeIO().loadColumnSyncPart(data);
         return data.getObject();
     }
 
     @Override @Nullable public Object[] loadChunk__Async(World worldIn, int x, int z) throws IOException {
-        ICubeIO.PartialData<Chunk> data = ((ICubeProviderInternal.Server) worldIn.getChunkProvider()).getCubeIO().loadColumnAsyncPart(x, z);
+        ICubeIO.PartialData<Chunk> data = ((ICubeProviderInternal.IServer) worldIn.getChunkProvider()).getCubeIO().loadColumnAsyncPart(x, z);
         return new Object[]{data.getObject(), data.getNbt()};
     }
 

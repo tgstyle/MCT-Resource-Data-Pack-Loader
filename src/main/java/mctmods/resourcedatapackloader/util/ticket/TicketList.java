@@ -22,7 +22,7 @@ public class TicketList {
         if (tickets.remove(ticket) && ticket.shouldTick()) {
             tickRefs--;
             assert tickRefs >= 0;
-            if (tickRefs == 0) { ((IRubicWorldInternal.Server) cube.getWorld()).rdpl$removeForcedCube(cube); }
+            if (tickRefs == 0) { ((IRubicWorldInternal.IServer) cube.getWorld()).rdpl$removeForcedCube(cube); }
         }
     }
 
@@ -33,7 +33,7 @@ public class TicketList {
         tickRefs += ticket.shouldTick() ? 1 : 0;
         if (ticket.shouldTick()) {
             assert tickRefs > 0;
-            if (tickRefs == 1) { ((IRubicWorldInternal.Server) cube.getWorld()).rdpl$addForcedCube(cube); }
+            if (tickRefs == 1) { ((IRubicWorldInternal.IServer) cube.getWorld()).rdpl$addForcedCube(cube); }
         }
     }
 

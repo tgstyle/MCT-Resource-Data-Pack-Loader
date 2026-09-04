@@ -170,8 +170,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             }
             else {
                 if (lastChunk.x != cubeX || lastChunk.z != cubeZ) {
-                    try (IRubicWorldInternal.CompatGenerationScope ignored =
-                                 ((IRubicWorldInternal.Server) world).rdpl$doCompatibilityGeneration()) {
+                    try (IRubicWorldInternal.ICompatGenerationScope ignored =
+                                 ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration()) {
                         lastChunk = vanilla.generateChunk(cubeX, cubeZ);
                         ChunkPrimer chunkPrimer = ((IColumnInternal) lastChunk).getCompatGenerationPrimer();
                         if (chunkPrimer == null) { Rubic.LOGGER.error("Optimized compatibility generation failed for chunk at {}, {}", cubeX, cubeZ); }

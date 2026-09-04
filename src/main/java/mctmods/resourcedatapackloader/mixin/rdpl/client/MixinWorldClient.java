@@ -13,7 +13,7 @@ import javax.annotation.Nonnull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(WorldClient.class) public abstract class MixinWorldClient extends MixinWorld implements IRubicWorldInternal.Client {
+@Mixin(WorldClient.class) public abstract class MixinWorldClient extends MixinWorld implements IRubicWorldInternal.IClient {
     @Shadow private ChunkProviderClient clientChunkProvider;
 
     @Override public void rdpl$initRubicWorldClient(IntRange heightRange, IntRange generationRange) {

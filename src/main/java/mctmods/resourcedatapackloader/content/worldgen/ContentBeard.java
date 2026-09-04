@@ -18,7 +18,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.content.worldgen.beard.RecurrentPlots;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillage;
@@ -291,7 +291,7 @@ public final class ContentBeard {
         }
         int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
         int off = BeardRoads.pathSidewalkWidth() > 0 && span == BeardRoads.pathFullWidth() ? 0 : 1;
-        BeardRoads.Grade grade = piece instanceof RoadLayout ? ((RoadLayout) piece).rdpl$layout() : null;
+        BeardRoads.Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
         if (grade == null) { grade = BeardRoads.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true); }
         int raised = 0;
         for (int spot : along) {
@@ -587,8 +587,8 @@ public final class ContentBeard {
         return alongX ? new StructureBoundingBox(from, box.minY, box.minZ, to, box.maxY, box.maxZ) : new StructureBoundingBox(box.minX, box.minY, from, box.maxX, box.maxY, to);
     }
 
-    @Nullable public static StructureBoundingBox beside(List<StructureComponent> own, StructureBoundingBox strip, boolean alongX) {
-        int minGap = 2 * ContentVillages.largestPlot();
+    @Nullable public static StructureBoundingBox beside(List<StructureComponent> own, StructureBoundingBox strip, boolean alongX, @Nullable StructureComponent laying) {
+        int side = ContentVillages.blockOf(laying);
         for (StructureComponent other : everyone(own)) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
@@ -596,7 +596,14 @@ public final class ContentBeard {
             int alongOverlap = Math.min(alongX ? strip.maxX : strip.maxZ, alongX ? held.maxX : held.maxZ) - Math.max(alongX ? strip.minX : strip.minZ, alongX ? held.minX : held.minZ);
             if (alongOverlap < 0) { continue; }
             int acrossGap = Math.max((alongX ? held.minZ : held.minX) - (alongX ? strip.maxZ : strip.maxX), (alongX ? strip.minZ : strip.minX) - (alongX ? held.maxZ : held.maxX));
-            if (acrossGap > 0 && acrossGap < minGap) { return held; }
+            if (acrossGap > 0 && acrossGap - 1 < side + ContentVillages.blockOf(other)) { return held; }
+        }
+        return null;
+    }
+
+    @Nullable public static StructureComponent roadAt(List<StructureComponent> own, StructureBoundingBox box) {
+        for (StructureComponent other : everyone(own)) {
+            if (other instanceof StructureVillagePieces.Path && other.getBoundingBox() == box) { return other; }
         }
         return null;
     }
@@ -766,7 +773,7 @@ public final class ContentBeard {
                 ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the facing street at {}, {}: the strip is held", endX, endZ, bestMet.minX, bestMet.minZ);
                 return;
             }
-            StructureBoundingBox beside = beside(pieces, strip(box, alongX, cFrom, cTo), alongX);
+            StructureBoundingBox beside = beside(pieces, strip(box, alongX, cFrom, cTo), alongX, piece);
             if (beside != null) {
                 ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the facing street at {}, {}: it would run beside the road at {}, {}", endX, endZ, bestMet.minX, bestMet.minZ, beside.minX, beside.minZ);
                 return;
@@ -783,7 +790,7 @@ public final class ContentBeard {
                 if (outward) { box.maxZ = metNear - 1; }
                 else { box.minZ = metNear + 1; }
             }
-            if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); }
+            if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
             ContentLog.LOGGER.debug("The dead end at {}, {} reaches the facing street at {}, {} and joins it, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, joining.size());
             return;
         }
@@ -799,7 +806,7 @@ public final class ContentBeard {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the road at {}, {}: a well or road holds the strip", endX, endZ, bestMet.minX, bestMet.minZ);
             return;
         }
-        StructureBoundingBox beside = beside(pieces, strip(box, alongX, from, to), alongX);
+        StructureBoundingBox beside = beside(pieces, strip(box, alongX, from, to), alongX, piece);
         if (beside != null) {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the road at {}, {}: it would run beside the road at {}, {}", endX, endZ, bestMet.minX, bestMet.minZ, beside.minX, beside.minZ);
             return;
@@ -810,7 +817,7 @@ public final class ContentBeard {
             if (metFrom <= metTo) {
                 List<StructureComponent> metMaking = standing(everyone, pieces, piece, bestOther, alongX ? metAcrossLo : metFrom, alongX ? metFrom : metAcrossLo, alongX ? metAcrossHi : metTo, alongX ? metTo : metAcrossHi);
                 if (metMaking == null) { return; }
-                StructureBoundingBox metBeside = beside(pieces, strip(bestMet, !alongX, metFrom, metTo), !alongX);
+                StructureBoundingBox metBeside = beside(pieces, strip(bestMet, !alongX, metFrom, metTo), !alongX, bestOther);
                 if (metBeside != null) {
                     ContentLog.LOGGER.debug("The dead end at {}, {} cannot close into a corner with the road at {}, {}: that road would run beside the road at {}, {}", endX, endZ, bestMet.minX, bestMet.minZ, metBeside.minX, metBeside.minZ);
                     return;
@@ -838,8 +845,8 @@ public final class ContentBeard {
                 else { bestMet.maxX = box.minX - 1; }
             }
         }
-        if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); }
-        if (bestOther instanceof RoadLayout) { ((RoadLayout) bestOther).rdpl$layout(null); }
+        if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
+        if (bestOther instanceof IRoadLayout) { ((IRoadLayout) bestOther).rdpl$layout(null); }
         ContentLog.LOGGER.debug("The dead end at {}, {} reaches the road at {}, {} and closes into a {}, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, overlaps ? "junction" : "corner", making.size());
     }
 
@@ -866,7 +873,7 @@ public final class ContentBeard {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street's ground is held", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ);
             return;
         }
-        StructureBoundingBox beside = beside(pieces, avenue, !alongX);
+        StructureBoundingBox beside = beside(pieces, avenue, !alongX, piece);
         if (beside != null) {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would run beside the road at {}, {}", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ, beside.minX, beside.minZ);
             return;
@@ -878,7 +885,7 @@ public final class ContentBeard {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the cross street that would tie it: its own strip is held", endX, endZ);
             return;
         }
-        if (beside(pieces, strip(box, alongX, exFrom, exTo), alongX) != null) {
+        if (beside(pieces, strip(box, alongX, exFrom, exTo), alongX, piece) != null) {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the cross street that would tie it: its own strip would run beside another road", endX, endZ);
             return;
         }
@@ -898,7 +905,7 @@ public final class ContentBeard {
             if (outward) { box.maxZ = conLo - 1; }
             else { box.minZ = conHi + 1; }
         }
-        if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); }
+        if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
         ContentLog.LOGGER.debug("The dead end at {}, {} and the offset street at {}, {} tie through a cross street at {}, {}, {} plot(s) making way", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ, avenue.minX, avenue.minZ, making.size());
     }
 
@@ -961,11 +968,11 @@ public final class ContentBeard {
             int behind = alongX ? box.minX - met.maxX : box.minZ - met.maxZ;
             int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
             int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
-            if (ahead > 1 && ahead <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX) == null) {
+            if (ahead > 1 && ahead <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX, piece) == null) {
                 if (alongX) { box.maxX = met.minX - 1; }
                 else { box.maxZ = met.minZ - 1; }
             }
-            else if (behind > 1 && behind <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX) == null) {
+            else if (behind > 1 && behind <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX, piece) == null) {
                 if (alongX) { box.minX = met.maxX + 1; }
                 else { box.minZ = met.maxZ + 1; }
             }
@@ -1069,7 +1076,7 @@ public final class ContentBeard {
         int[] backRows = cornerRows(box, alongX, met, true, abutting);
         if (backRows != null && plazaHeld(pieces, box, alongX, backRows[0], backRows[1])) { backRows = null; }
         if (backRows != null) {
-            if (free(pieces, piece, box, alongX, backRows[0], backRows[1]) && beside(pieces, strip(box, alongX, backRows[0], backRows[1]), alongX) == null) {
+            if (free(pieces, piece, box, alongX, backRows[0], backRows[1]) && beside(pieces, strip(box, alongX, backRows[0], backRows[1]), alongX, piece) == null) {
                 if (alongX) { box.minX = backRows[0]; }
                 else { box.minZ = backRows[0]; }
                 grew = true;
@@ -1080,7 +1087,7 @@ public final class ContentBeard {
         int[] outRows = cornerRows(box, alongX, met, false, abutting);
         if (outRows != null && plazaHeld(pieces, box, alongX, outRows[0], outRows[1])) { outRows = null; }
         if (outRows != null) {
-            if (free(pieces, piece, box, alongX, outRows[0], outRows[1]) && beside(pieces, strip(box, alongX, outRows[0], outRows[1]), alongX) == null) {
+            if (free(pieces, piece, box, alongX, outRows[0], outRows[1]) && beside(pieces, strip(box, alongX, outRows[0], outRows[1]), alongX, piece) == null) {
                 if (alongX) { box.maxX = outRows[1]; }
                 else { box.maxZ = outRows[1]; }
                 grew = true;
@@ -1110,7 +1117,7 @@ public final class ContentBeard {
             StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             square(pieces, null, box, alongX, met);
-            if (square(pieces, other, met, !alongX, box) && other instanceof RoadLayout) { ((RoadLayout) other).rdpl$layout(null); }
+            if (square(pieces, other, met, !alongX, box) && other instanceof IRoadLayout) { ((IRoadLayout) other).rdpl$layout(null); }
         }
         return true;
     }

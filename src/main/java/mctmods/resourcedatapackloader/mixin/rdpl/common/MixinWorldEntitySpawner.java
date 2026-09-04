@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nullable;
 
-@Mixin(WorldEntitySpawner.class) public class MixinWorldEntitySpawner implements IWorldEntitySpawner.Handler {
+@Mixin(WorldEntitySpawner.class) public class MixinWorldEntitySpawner implements IWorldEntitySpawner.IHandler {
     @Unique @Nullable private IWorldEntitySpawner rdpl$customSpawner;
 
     @Override public void rdpl$setEntitySpawner(@Nullable IWorldEntitySpawner spawner) { this.rdpl$customSpawner = spawner; }

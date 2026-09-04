@@ -215,8 +215,8 @@ class IONbtWriter {
         ArrayList<NextTickListEntry> out = new ArrayList<>();
         if (!(cube.getWorld() instanceof WorldServer)) { return out; }
         WorldServer worldServer = cube.getWorld();
-        out.addAll(((IRubicWorldInternal.Server) worldServer).rdpl$getScheduledTicks().getForCube(cube.getCoords()));
-        out.addAll(((IRubicWorldInternal.Server) worldServer).rdpl$getThisTickScheduledTicks().getForCube(cube.getCoords()));
+        out.addAll(((IRubicWorldInternal.IServer) worldServer).rdpl$getScheduledTicks().getForCube(cube.getCoords()));
+        out.addAll(((IRubicWorldInternal.IServer) worldServer).rdpl$getThisTickScheduledTicks().getForCube(cube.getCoords()));
         return out;
     }
 }

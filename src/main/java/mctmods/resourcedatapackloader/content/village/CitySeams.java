@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
@@ -73,7 +73,7 @@ public final class CitySeams {
             List<StructureComponent> found = crossable(world, everyone, own, street, alongX, reached);
             if (found == null) { return false; }
             int d = onward ? 1 : -1;
-            StructureBoundingBox beside = ContentBeard.beside(own, ContentBeard.strip(box, alongX, Math.min(end + d, at), Math.max(end + d, at)), alongX);
+            StructureBoundingBox beside = ContentBeard.beside(own, ContentBeard.strip(box, alongX, Math.min(end + d, at), Math.max(end + d, at)), alongX, street);
             if (beside != null) {
                 ContentLog.LOGGER.debug("The street at {}, {} cannot run to {}: it would run beside the road at {}, {}", box.minX, box.minZ, at, beside.minX, beside.minZ);
                 return false;
@@ -196,17 +196,17 @@ public final class CitySeams {
         return false;
     }
 
-    private static boolean street(StructureComponent piece) {
-        if (!(piece instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(piece)) { return false; }
-        return !BeardRoads.roadNarrow(piece.getBoundingBox(), BeardPlots.roadAlongX(piece));
+    private static boolean notStreet(StructureComponent piece) {
+        if (!(piece instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(piece)) { return true; }
+        return BeardRoads.roadNarrow(piece.getBoundingBox(), BeardPlots.roadAlongX(piece));
     }
 
     private static boolean meets(List<StructureComponent> own, List<StructureComponent> theirs) {
         for (StructureComponent mine : own) {
-            if (!street(mine)) { continue; }
+            if (notStreet(mine)) { continue; }
             StructureBoundingBox a = mine.getBoundingBox();
             for (StructureComponent other : theirs) {
-                if (!street(other)) { continue; }
+                if (notStreet(other)) { continue; }
                 StructureBoundingBox b = other.getBoundingBox();
                 boolean overX = b.maxX >= a.minX && b.minX <= a.maxX;
                 boolean overZ = b.maxZ >= a.minZ && b.minZ <= a.maxZ;
@@ -222,7 +222,7 @@ public final class CitySeams {
         int best = Integer.MIN_VALUE;
         int reach = CityGrowth.march();
         for (StructureComponent other : everyone) {
-            if (own.contains(other) || !street(other) || BeardPlots.roadAlongX(other) == alongX) { continue; }
+            if (own.contains(other) || notStreet(other) || BeardPlots.roadAlongX(other) == alongX) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
             int center = alongX ? (met.minX + met.maxX) / 2 : (met.minZ + met.maxZ) / 2;
             if (center < low || center > high) { continue; }
@@ -237,7 +237,7 @@ public final class CitySeams {
     private static List<Arrival> candidates(StructureStart start, boolean alongX, boolean onward, int wellAt, int limit) {
         List<Arrival> found = new ArrayList<>();
         for (StructureComponent piece : start.getComponents()) {
-            if (!street(piece) || BeardPlots.roadAlongX(piece) != alongX) { continue; }
+            if (notStreet(piece) || BeardPlots.roadAlongX(piece) != alongX) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             int end = alongX ? (onward ? box.maxX : box.minX) : (onward ? box.maxZ : box.minZ);
             if (onward ? (end <= wellAt || end >= limit) : (end >= wellAt || end <= limit)) { continue; }
@@ -296,8 +296,8 @@ public final class CitySeams {
         int near = seam - d * (half + 1);
         for (Arrival m : ordered(mine, near, siteRow, onward)) {
             int snapped = snap(m, seam, d, half, low, high);
-            if (snapped != seam && lay(start, startPiece, world, rand, everyone, neighbor, components, m, theirs, wx, wz, bx, bz, alongX, onward, half, snapped, false, low, high)) { return true; }
-            if (lay(start, startPiece, world, rand, everyone, neighbor, components, m, theirs, wx, wz, bx, bz, alongX, onward, half, seam, snapped == seam, low, high)) { return true; }
+            if (snapped != seam && lay(startPiece, world, rand, everyone, components, m, theirs, wx, wz, bx, bz, alongX, onward, half, snapped, false, low, high)) { return true; }
+            if (lay(startPiece, world, rand, everyone, components, m, theirs, wx, wz, bx, bz, alongX, onward, half, seam, snapped == seam, low, high)) { return true; }
         }
         ContentLog.LOGGER.debug("The village at {}, {} has no street that can reach the seam at {} {} toward the village site at {}, {}", wx, wz, axis, seam, bx, bz);
         return false;
@@ -313,7 +313,7 @@ public final class CitySeams {
         return at < low || at > high ? seam : at;
     }
 
-    private static boolean lay(StructureStart start, StructureVillagePieces.Start startPiece, World world, Random rand, List<StructureComponent> everyone, @Nullable StructureStart neighbor, List<StructureComponent> components, Arrival m, List<Arrival> theirs, int wx, int wz, int bx, int bz, boolean alongX, boolean onward, int half, int seam, boolean snapToTheirs, int low, int high) {
+    private static boolean lay(StructureVillagePieces.Start startPiece, World world, Random rand, List<StructureComponent> everyone, List<StructureComponent> components, Arrival m, List<Arrival> theirs, int wx, int wz, int bx, int bz, boolean alongX, boolean onward, int half, int seam, boolean snapToTheirs, int low, int high) {
         String axis = alongX ? "x" : "z";
         int d = onward ? 1 : -1;
         int siteRow = alongX ? bz : bx;
@@ -331,8 +331,6 @@ public final class CitySeams {
             int snapped = snap(t, seam, -d, half, low, high);
             if (snapped != seam && m.reach(world, everyone, alongX, snapped - d * (half + 1)) && t.reach(world, everyone, alongX, snapped + d * (half + 1))) {
                 seam = snapped;
-                near = seam - d * (half + 1);
-                far = seam + d * (half + 1);
             }
             else {
                 m.reach(world, everyone, alongX, near);
@@ -344,7 +342,7 @@ public final class CitySeams {
         List<StructureComponent> making = new ArrayList<>();
         for (StructureBoundingBox tie : ties) {
             List<StructureComponent> found = crossable(world, everyone, components, m.street, !alongX, tie);
-            if (found == null || ContentBeard.beside(components, tie, !alongX) != null) {
+            if (found == null || ContentBeard.beside(components, tie, !alongX, m.street) != null) {
                 ContentLog.LOGGER.debug("The tie road at {} {} between the village at {}, {} and the site at {}, {} has no room", axis, seam, wx, wz, bx, bz);
                 return false;
             }
@@ -352,8 +350,7 @@ public final class CitySeams {
         }
         arrive(world, m, alongX, "the seam");
         for (StructureComponent plot : making) {
-            if (!dismiss(world, components, plot)) { continue; }
-            ContentLog.LOGGER.debug("{} at {}, {} makes way for the tie road", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
+            if (dismiss(world, components, plot)) { ContentLog.LOGGER.debug("{} at {}, {} makes way for the tie road", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ); }
         }
         for (StructureBoundingBox tie : ties) {
             StructureVillagePieces.Path lane = new StructureVillagePieces.Path(startPiece, 0, rand, tie, alongX ? EnumFacing.SOUTH : EnumFacing.EAST);
@@ -364,7 +361,7 @@ public final class CitySeams {
         if (ties.isEmpty()) { ContentLog.LOGGER.debug("The street at {}, {} of the village at {}, {} reaches the seam at {} {} toward the site at {}, {} and ends on the tie road already standing there", m.box.minX, m.box.minZ, wx, wz, axis, seam, bx, bz); }
         if (t != null) {
             arrive(world, t, alongX, "the tie road");
-            ((IStructureStartGrow) neighbor).rdpl$updateBoundingBox();
+            ((IStructureStartGrow) t.start).rdpl$updateBoundingBox();
             ContentLog.LOGGER.debug("The street at {}, {} of the neighboring village at {}, {} is brought to the tie road as well, so the two villages join at {} {}", t.box.minX, t.box.minZ, bx, bz, axis, seam);
         }
         return true;
@@ -372,13 +369,12 @@ public final class CitySeams {
 
     private static void arrive(World world, Arrival at, boolean alongX, String what) {
         for (StructureComponent plot : at.making) {
-            if (!dismiss(world, at.start.getComponents(), plot)) { continue; }
-            ContentLog.LOGGER.debug("{} at {}, {} makes way for the street reaching {}", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ, what);
+            if (dismiss(world, at.start.getComponents(), plot)) { ContentLog.LOGGER.debug("{} at {}, {} makes way for the street reaching {}", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ, what); }
         }
         if (at.there(at.target)) { return; }
         if (alongX) { if (at.onward) { at.box.maxX = at.target; } else { at.box.minX = at.target; } }
         else { if (at.onward) { at.box.maxZ = at.target; } else { at.box.minZ = at.target; } }
-        if (at.street instanceof RoadLayout) { ((RoadLayout) at.street).rdpl$layout(null); }
+        if (at.street instanceof IRoadLayout) { ((IRoadLayout) at.street).rdpl$layout(null); }
     }
 
     @Nullable private static List<StructureComponent> crossable(World world, List<StructureComponent> everyone, List<StructureComponent> own, StructureComponent piece, boolean alongX, StructureBoundingBox strip) {
@@ -436,7 +432,7 @@ public final class CitySeams {
         List<StructureComponent> everyone = ContentBeard.everyone(components);
         int reach = ContentBeard.attachGap() * 2;
         for (StructureComponent piece : neighbor.getComponents().toArray(new StructureComponent[0])) {
-            if (!street(piece)) { continue; }
+            if (notStreet(piece)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
             int acrossLo = alongX ? box.minZ : box.minX;
@@ -444,11 +440,13 @@ public final class CitySeams {
             for (int side = 0; side < 2; side++) {
                 int dir = side == 1 ? 1 : -1;
                 int end = alongX ? (dir > 0 ? box.maxX : box.minX) : (dir > 0 ? box.maxZ : box.minZ);
+                int endX = alongX ? end : (acrossLo + acrossHi) / 2;
+                int endZ = alongX ? (acrossLo + acrossHi) / 2 : end;
                 if (metBeyond(everyone, piece, alongX, end + dir, acrossLo, acrossHi)) { continue; }
                 StructureBoundingBox best = null;
                 int bestAhead = Integer.MAX_VALUE;
                 for (StructureComponent mine : components) {
-                    if (!street(mine) || BeardPlots.roadAlongX(mine) == alongX) { continue; }
+                    if (notStreet(mine) || BeardPlots.roadAlongX(mine) == alongX) { continue; }
                     StructureBoundingBox met = mine.getBoundingBox();
                     int ahead = dir > 0 ? (alongX ? met.minX : met.minZ) - end : end - (alongX ? met.maxX : met.maxZ);
                     if (ahead < 2 || ahead > reach || ahead >= bestAhead) { continue; }
@@ -461,18 +459,17 @@ public final class CitySeams {
                 int to = dir > 0 ? (alongX ? best.minX : best.minZ) - 1 : end - 1;
                 StructureBoundingBox stub = alongX ? new StructureBoundingBox(from, box.minY, acrossLo, to, box.maxY, acrossHi) : new StructureBoundingBox(acrossLo, box.minY, from, acrossHi, box.maxY, to);
                 List<StructureComponent> making = crossable(world, everyone, components, piece, alongX, stub);
-                if (making == null || ContentBeard.beside(components, stub, alongX) != null) {
-                    ContentLog.LOGGER.debug("The dead end at {}, {} of the neighboring village cannot be reached from the street at {}, {}: the strip is held", alongX ? end : (acrossLo + acrossHi) / 2, alongX ? (acrossLo + acrossHi) / 2 : end, best.minX, best.minZ);
+                if (making == null || ContentBeard.beside(components, stub, alongX, piece) != null) {
+                    ContentLog.LOGGER.debug("The dead end at {}, {} of the neighboring village cannot be reached from the street at {}, {}: the strip is held", endX, endZ, best.minX, best.minZ);
                     continue;
                 }
                 for (StructureComponent plot : making) {
-                    if (!dismiss(world, components, plot)) { continue; }
-                    ContentLog.LOGGER.debug("{} at {}, {} makes way for the stub reaching a neighboring village's dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
+                    if (dismiss(world, components, plot)) { ContentLog.LOGGER.debug("{} at {}, {} makes way for the stub reaching a neighboring village's dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ); }
                 }
                 StructureVillagePieces.Path lane = new StructureVillagePieces.Path(startPiece, 0, rand, stub, alongX ? EnumFacing.EAST : EnumFacing.SOUTH);
                 components.add(lane);
                 RESERVED.add(lane);
-                ContentLog.LOGGER.debug("The dead end at {}, {} of the neighboring village at {}, {} is reached by the stub {} from the street at {}, {}, so the two villages join there", alongX ? end : (acrossLo + acrossHi) / 2, alongX ? (acrossLo + acrossHi) / 2 : end, neighbor.getBoundingBox().minX, neighbor.getBoundingBox().minZ, stub, best.minX, best.minZ);
+                ContentLog.LOGGER.debug("The dead end at {}, {} of the neighboring village at {}, {} is reached by the stub {} from the street at {}, {}, so the two villages join there", endX, endZ, neighbor.getBoundingBox().minX, neighbor.getBoundingBox().minZ, stub, best.minX, best.minZ);
                 break;
             }
         }
@@ -541,7 +538,7 @@ public final class CitySeams {
         List<int[]> open = new ArrayList<>();
         open.add(new int[] { Math.min(ownRow, farRow) - half, Math.max(ownRow, farRow) + half });
         for (StructureComponent other : everyone) {
-            if (!street(other) || BeardPlots.roadAlongX(other) == alongX) { continue; }
+            if (notStreet(other) || BeardPlots.roadAlongX(other) == alongX) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
             int center = alongX ? (met.minX + met.maxX) / 2 : (met.minZ + met.maxZ) / 2;
             if (Math.abs(center - seam) > 1) { continue; }

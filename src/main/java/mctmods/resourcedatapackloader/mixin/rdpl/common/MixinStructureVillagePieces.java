@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.gen.structure.StructureVillagePieces;
@@ -117,5 +118,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
     @Inject(method = "generateAndAddComponent", at = @At("RETURN")) private static void rdpl$endBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         ContentBeard.layingBuilding(false);
         ContentBeard.laying(null);
+        StructureComponent placed = cir.getReturnValue();
+        if (placed instanceof IVillageBlock && start instanceof IVillageBlock) { ((IVillageBlock) placed).rdpl$block(((IVillageBlock) start).rdpl$block()); }
     }
 }

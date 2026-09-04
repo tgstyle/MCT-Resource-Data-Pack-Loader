@@ -72,7 +72,7 @@ public class MessageHeightMapUpdate implements IMessage {
 
     public static class Handler extends AbstractClientMessageHandler<MessageHeightMapUpdate> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageHeightMapUpdate message, MessageContext ctx) {
-            IRubicWorldInternal.Client worldClient = (IRubicWorldInternal.Client) world;
+            IRubicWorldInternal.IClient worldClient = (IRubicWorldInternal.IClient) world;
             CubeProviderClient cubeCache = worldClient.rdpl$getCubeCache();
             int columnX = message.getColumnPos().x;
             int columnZ = message.getColumnPos().z;

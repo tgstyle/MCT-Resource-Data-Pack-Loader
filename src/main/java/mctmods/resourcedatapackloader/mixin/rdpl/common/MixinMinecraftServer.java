@@ -33,8 +33,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "initialWorldChunkLoad", at = @At("HEAD")) private void onInitialSpawnLoad(CallbackInfo ci) {
         World world = DimensionManager.getWorld(0);
         if (((IRubicWorld) world).rdpl$isRubicWorld()) {
-            ((IRubicWorldInternal.Server) world).rdpl$setSpawnArea(new SpawnCubes());
-            ((IRubicWorldInternal.Server) world).rdpl$getSpawnArea().update(world);
+            ((IRubicWorldInternal.IServer) world).rdpl$setSpawnArea(new SpawnCubes());
+            ((IRubicWorldInternal.IServer) world).rdpl$getSpawnArea().update(world);
         }
     }
 

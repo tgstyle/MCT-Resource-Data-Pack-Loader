@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(EntityTrackerEntry.class) @Implements(@Interface(iface = IRubicEntityTracker.Entry.class, prefix = "entry$")) public class MixinEntityTrackerEntry {
+@Mixin(EntityTrackerEntry.class) @Implements(@Interface(iface = IRubicEntityTracker.IEntry.class, prefix = "entry$")) public class MixinEntityTrackerEntry {
     @Shadow @Final private int range;
     @Shadow private long encodedPosY;
     @Shadow @Final private Entity trackedEntity;

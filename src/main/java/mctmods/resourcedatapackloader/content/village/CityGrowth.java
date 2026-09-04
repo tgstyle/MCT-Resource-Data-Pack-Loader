@@ -185,13 +185,13 @@ public final class CityGrowth {
         StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
         int shortest = 14;
         int longest = 42;
-        int spacing = 2 * ContentVillages.largestPlot();
         int laid = 0;
         for (StructureComponent piece : components.toArray(new StructureComponent[0])) {
             if (!(piece instanceof StructureVillagePieces.Path) || bulbWide(piece)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
             if (BeardRoads.roadNarrow(box, alongX)) { continue; }
+            int spacing = 2 * ContentVillages.blockOf(piece);
             int lo = (alongX ? box.minX : box.minZ) + 2;
             int hi = (alongX ? box.maxX : box.maxZ) - 2;
             for (int side = 0; side < 2; side++) {
@@ -513,6 +513,7 @@ public final class CityGrowth {
         }
         List<StructureVillagePieces.PieceWeight> weights = StructureVillagePieces.getStructureVillageWeightedPieceList(rand, sizeFor);
         StructureVillagePieces.Start district = new StructureVillagePieces.Start(world.getBiomeProvider(), 0, rand, wellX, wellZ, weights, sizeFor);
+        ContentVillages.sizeBlock(world, district);
         int mark = components.size();
         components.add(district);
         laying = true;

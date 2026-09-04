@@ -95,10 +95,10 @@ public class PlayerCubeMap extends PlayerChunkMap {
 
     public PlayerCubeMap(WorldServer worldServer) {
         super(worldServer);
-        this.cubeCache = ((IRubicWorldInternal.Server) worldServer).rdpl$getCubeCache();
+        this.cubeCache = ((IRubicWorldInternal.IServer) worldServer).rdpl$getCubeCache();
         PlayerList playerList = Objects.requireNonNull(worldServer.getMinecraftServer(), "server").getPlayerList();
         this.setPlayerViewDistance(playerList.getViewDistance(), ((IRubicPlayerList) playerList).getVerticalViewDistance());
-        this.chunkGc = new CubeGC(((IRubicWorldInternal.Server) worldServer).rdpl$getCubeCache());
+        this.chunkGc = new CubeGC(((IRubicWorldInternal.IServer) worldServer).rdpl$getCubeCache());
     }
 
     @Override @Deprecated @Nonnull public Iterator<Chunk> getChunkIterator() {
@@ -125,11 +125,11 @@ public class PlayerCubeMap extends PlayerChunkMap {
     }
 
     private void addForcedColumns(TickableChunkContainer tickableChunksCubes) {
-        for(IColumn columns : ((IRubicWorldInternal.Server) getWorldServer()).rdpl$getForcedColumns()) { tickableChunksCubes.addColumn((Chunk) columns); }
+        for(IColumn columns : ((IRubicWorldInternal.IServer) getWorldServer()).rdpl$getForcedColumns()) { tickableChunksCubes.addColumn((Chunk) columns); }
     }
 
     private void addForcedCubes(TickableChunkContainer tickableChunksCubes) {
-        tickableChunksCubes.forcedCubes = ((IRubicWorldInternal.Server) getWorldServer()).rdpl$getForcedCubes();
+        tickableChunksCubes.forcedCubes = ((IRubicWorldInternal.IServer) getWorldServer()).rdpl$getForcedCubes();
     }
 
     private void addTickableCubes(TickableChunkContainer tickableChunksCubes) {

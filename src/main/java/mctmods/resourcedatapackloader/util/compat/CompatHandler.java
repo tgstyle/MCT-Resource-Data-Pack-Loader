@@ -71,13 +71,13 @@ public class CompatHandler {
         return "(no mod)";
     }
 
-    public static void beforePopulate(World world) { ((IRubicWorldInternal.Server) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
+    public static void beforePopulate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
 
-    public static void afterPopulate(World world) { ((IRubicWorldInternal.Server) world).rdpl$fakeWorldHeight(0); }
+    public static void afterPopulate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(0); }
 
-    public static void beforeGenerate(World world) { ((IRubicWorldInternal.Server) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
+    public static void beforeGenerate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(VANILLA_HEIGHT); }
 
-    public static void afterGenerate(World world) { ((IRubicWorldInternal.Server) world).rdpl$fakeWorldHeight(0); }
+    public static void afterGenerate(World world) { ((IRubicWorldInternal.IServer) world).rdpl$fakeWorldHeight(0); }
 
     public static void postChunkPopulatePreWithFakeWorldHeight(PopulateChunkEvent.Pre event) {
         if (!(MinecraftForge.EVENT_BUS instanceof IEventBus)) { MinecraftForge.EVENT_BUS.post(event); }
@@ -96,7 +96,7 @@ public class CompatHandler {
 
     private static boolean postEventPerModFakeHeight(World world, Event event) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return MinecraftForge.EVENT_BUS.post(event); }
-        return postEvent((IRubicWorldInternal.Server) world, event, w -> w.rdpl$fakeWorldHeight(VANILLA_HEIGHT), w -> w.rdpl$fakeWorldHeight(0));
+        return postEvent((IRubicWorldInternal.IServer) world, event, w -> w.rdpl$fakeWorldHeight(VANILLA_HEIGHT), w -> w.rdpl$fakeWorldHeight(0));
     }
 
     public static void onCubeLoad(ChunkEvent.Load load) {

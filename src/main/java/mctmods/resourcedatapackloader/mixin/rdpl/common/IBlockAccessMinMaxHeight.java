@@ -5,4 +5,4 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeig
 import net.minecraft.world.IBlockAccess;
 import org.spongepowered.asm.mixin.Mixin;
 
-@Mixin(IBlockAccess.class) public interface MixinIBlockAccess extends IMinMaxHeight {}
+@Mixin(IBlockAccess.class) public interface IBlockAccessMinMaxHeight extends IMinMaxHeight {}

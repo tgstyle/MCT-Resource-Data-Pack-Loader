@@ -63,7 +63,7 @@ public class MessageRubicWorldData implements IMessage {
     public static class Handler extends AbstractClientMessageHandler<MessageRubicWorldData> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageRubicWorldData message, MessageContext ctx) {
             if (message.rdpl$isRubicWorld() && !((IRubicWorld) world).rdpl$isRubicWorld()) {
-                ((IRubicWorldInternal.Client) world).rdpl$initRubicWorldClient(
+                ((IRubicWorldInternal.IClient) world).rdpl$initRubicWorldClient(
                         new IntRange(message.rdpl$getMinHeight(), message.rdpl$getMaxHeight()),
                         new IntRange(message.getMinGenerationHeight(), message.rdpl$getMaxGenerationHeight())
                 );

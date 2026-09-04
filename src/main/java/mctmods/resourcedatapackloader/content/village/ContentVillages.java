@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -16,6 +17,8 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import com.google.gson.JsonParseException;
 import net.minecraft.block.state.IBlockState;
@@ -64,6 +67,7 @@ public final class ContentVillages {
     private static int largest;
     @Nullable private static WorldTemplateDef largestFrom;
     private static boolean largestLoaded;
+    private static final WeightedPicks BLOCK_SIZES = new WeightedPicks("villageBlockSizes");
     private static boolean loaded;
     private static boolean registered;
 
@@ -161,6 +165,29 @@ public final class ContentVillages {
         }
         return count;
     }
+
+    public static void sizeBlock(World world, StructureVillagePieces.Start start) {
+        if (BLOCK_SIZES.stale()) { BLOCK_SIZES.load(ContentControl.list(ContentControl.VILLAGES, "villageBlockSizes", Config.worldgen.villageBlockSizes)); }
+        if (BLOCK_SIZES.isEmpty() || !(start instanceof IVillageBlock)) { return; }
+        StructureBoundingBox well = start.getBoundingBox();
+        WeightedPicks.Pick chosen = BLOCK_SIZES.pick(SeededRandom.at(world, well.minX, well.minZ));
+        if (chosen == null) { return; }
+        int size;
+        try { size = Integer.parseInt(chosen.name); }
+        catch (NumberFormatException wrong) {
+            ContentLog.LOGGER.error("villageBlockSizes entry '{}' is not a whole number of blocks, so the district at {}, {} keeps the largest plot as its block", chosen.name, well.minX, well.minZ);
+            return;
+        }
+        ((IVillageBlock) start).rdpl$block(Math.max(13, size));
+        ContentLog.LOGGER.debug("The district at {}, {} lays its blocks {} deep", well.minX, well.minZ, Math.max(13, size));
+    }
+
+    public static int blockOf(@Nullable StructureComponent piece) {
+        int held = piece instanceof IVillageBlock ? ((IVillageBlock) piece).rdpl$block() : 0;
+        return held > 0 ? held : largestPlot();
+    }
+
+    private static boolean exceeds(VillageDef def, int block) { return span(def) > block; }
 
     public static int largestPlot() {
         WorldTemplateDef active = ContentWorldTemplates.active();
@@ -293,18 +320,23 @@ public final class ContentVillages {
         return barred;
     }
 
-    @Nullable private static VillageDef pick(Random random) {
+    private static int span(VillageDef def) {
+        BlockPos size = plotSize(def);
+        return Math.max(size.getX(), size.getZ());
+    }
+
+    @Nullable private static VillageDef pick(Random random, int block) {
         boolean filtering = filtering();
         int total = 0;
         for (VillageDef def : defs().values()) {
-            if (filtering && blocked(def)) { continue; }
-            total += Math.max(1, def.weight);
+            if ((filtering && blocked(def)) || exceeds(def, block)) { continue; }
+            total += Math.max(1, def.weight) * span(def);
         }
         if (total <= 0) { return null; }
         int roll = random.nextInt(total);
         for (VillageDef def : defs().values()) {
-            if (filtering && blocked(def)) { continue; }
-            roll -= Math.max(1, def.weight);
+            if ((filtering && blocked(def)) || exceeds(def, block)) { continue; }
+            roll -= Math.max(1, def.weight) * span(def);
             if (roll < 0) { return def; }
         }
         return null;
@@ -338,7 +370,7 @@ public final class ContentVillages {
         private static List<VillageDef> bySize() {
             if (bySize != null) { return bySize; }
             List<VillageDef> sorted = new ArrayList<>(defs().values());
-            sorted.sort(Comparator.comparingInt(held -> Math.max(plotSize(held).getX(), plotSize(held).getZ())));
+            sorted.sort(Comparator.comparingInt(ContentVillages::span).reversed());
             bySize = sorted;
             return sorted;
         }
@@ -361,12 +393,13 @@ public final class ContentVillages {
         }
 
         @Override public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
-            VillageDef def = pick(random);
+            int block = blockOf(start);
+            VillageDef def = pick(random, block);
             if (def == null) { return null; }
             StructureVillagePieces.Village seated = seat(start, placed, x, y, z, facing, type, def);
             if (seated != null) { return seated; }
             for (VillageDef held : bySize()) {
-                if (held == def || (filtering() && blocked(held))) { continue; }
+                if (held == def || (filtering() && blocked(held)) || exceeds(held, block)) { continue; }
                 seated = seat(start, placed, x, y, z, facing, type, held);
                 if (seated != null) { return seated; }
             }

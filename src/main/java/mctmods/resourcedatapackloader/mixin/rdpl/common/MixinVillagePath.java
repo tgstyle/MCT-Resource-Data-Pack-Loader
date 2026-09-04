@@ -1,11 +1,13 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
+import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
@@ -34,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import javax.annotation.Nullable;
 
-@Mixin(StructureVillagePieces.Path.class) public abstract class MixinVillagePath extends StructureVillagePieces.Road implements RoadLayout {
+@Mixin(StructureVillagePieces.Path.class) public abstract class MixinVillagePath extends StructureVillagePieces.Road implements IRoadLayout {
     @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$backOff(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
         StructureBoundingBox box = cir.getReturnValue();
         if (box == null || facing == null || !ContentBeard.wanted()) { return; }
@@ -66,12 +68,29 @@ import javax.annotation.Nullable;
 
     @Unique private BeardRoads.Grade rdpl$stored;
 
+    @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILjava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("TAIL"))
+    private void rdpl$inheritBlock(StructureVillagePieces.Start start, int p_i45562_2_, Random rand, StructureBoundingBox p_i45562_4_, EnumFacing facing, CallbackInfo ci) {
+        if (start instanceof IVillageBlock) { ((IVillageBlock) this).rdpl$block(((IVillageBlock) start).rdpl$block()); }
+    }
+
     @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I"))
-    private static int rdpl$longerRuns(Random random, int minimum, int maximum) {
-        int least = ContentBeard.wanted() ? Math.max(5, (ContentVillages.largestPlot() + 9) / 7) : minimum;
-        int rolled = MathHelper.getInt(random, least, ContentBeard.wanted() ? least + 2 : maximum);
+    private static int rdpl$longerRuns(Random random, int minimum, int maximum, StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing) {
+        if (!ContentBeard.wanted()) { return MathHelper.getInt(random, minimum, maximum); }
+        int least = Math.max(5, (ContentVillages.largestPlot() + 9) / 7);
+        int block = start instanceof IVillageBlock ? ((IVillageBlock) start).rdpl$block() : 0;
+        if (block > 0 && !rdpl$fromWell(p_175848_1_, p_175848_3_ - facing.getXOffset(), p_175848_5_ - facing.getZOffset())) { least = Math.max(5, Math.min(least, (2 * block + BeardRoads.pathFullWidth() + 6) / 7)); }
+        int rolled = MathHelper.getInt(random, least, least + 2);
         ContentLog.LOGGER.debug("A road rolls {} segments of 7, {} blocks", rolled, rolled * 7);
         return rolled;
+    }
+
+    @Unique private static boolean rdpl$fromWell(List<StructureComponent> own, int backX, int backZ) {
+        for (StructureComponent other : own) {
+            if (!(other instanceof StructureVillagePieces.Well)) { continue; }
+            StructureBoundingBox well = other.getBoundingBox();
+            if (backX >= well.minX && backX <= well.maxX && backZ >= well.minZ && backZ <= well.maxZ) { return true; }
+        }
+        return false;
     }
 
     @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;findIntersecting(Ljava/util/List;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Lnet/minecraft/world/gen/structure/StructureComponent;"))
@@ -118,7 +137,7 @@ import javax.annotation.Nullable;
                 }
                 ContentLog.LOGGER.debug("A road attempt {} facing {} widened would run into another village's piece after {} row(s), so it stops short of it", wide, facing, room);
             }
-            if (!rdpl$tooNear(p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing) && !ContentBeard.taken(p_175848_1_, wide)) {
+            if (!rdpl$tooNear(start, p_175848_1_, wide, facing) && rdpl$widensPast(p_175848_1_, wide, facing) && !ContentBeard.taken(p_175848_1_, wide)) {
                 if (ContentBeard.claimCorners(p_175848_1_, wide, alongX)) {
                     cir.setReturnValue(wide);
                     return;
@@ -147,6 +166,31 @@ import javax.annotation.Nullable;
     }
 
     @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) { CityGrowth.alleyLaying(false); }
+
+    @SuppressWarnings("ConstantConditions") @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$branchAtBlocks(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
+        if (!ContentBeard.wanted() || !(componentIn instanceof StructureVillagePieces.Start) || !(this instanceof IVillageBlock) || CityLayout.drawn()) { return; }
+        int block = ((IVillageBlock) this).rdpl$block();
+        if (block <= 0) { return; }
+        StructureBoundingBox box = getBoundingBox();
+        boolean alongX = BeardPlots.roadAlongX(this);
+        if (BeardRoads.roadNarrow(box, alongX) || CityGrowth.bulbWide(this)) { return; }
+        int full = BeardRoads.pathFullWidth();
+        int interval = 2 * block + full;
+        int least = alongX ? box.minX : box.minZ;
+        int most = alongX ? box.maxX : box.maxZ;
+        int branched = 0;
+        for (int at = least + interval; at + 2 + full <= most; at += interval) {
+            for (int side = 0; side < 2; side++) {
+                if (rand.nextInt(3) == 0) { continue; }
+                boolean outward = side == 1;
+                int x = alongX ? at : (outward ? box.maxX + 1 : box.minX - 1);
+                int z = alongX ? (outward ? box.maxZ + 1 : box.minZ - 1) : at;
+                EnumFacing facing = alongX ? (outward ? EnumFacing.SOUTH : EnumFacing.NORTH) : (outward ? EnumFacing.EAST : EnumFacing.WEST);
+                if (IVillagePieces.rdpl$roadPiece((StructureVillagePieces.Start) componentIn, listIn, rand, x, box.minY, z, facing, getComponentType()) != null) { branched++; }
+            }
+        }
+        if (branched > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} branches {} street(s) along its length at every {} blocks, the depth of two of its {} deep blocks and a road", box.minX, box.minZ, branched, interval, block); }
+    }
 
     @Unique private static boolean rdpl$lineUp(List<StructureComponent> own, StructureBoundingBox found, boolean alongX, int half) {
         List<StructureComponent> pieces = ContentBeard.everyone(own);
@@ -196,15 +240,15 @@ import javax.annotation.Nullable;
         return true;
     }
 
-    @Unique private static boolean rdpl$tooNear(List<StructureComponent> own, StructureBoundingBox wide, EnumFacing facing) {
+    @Unique private static boolean rdpl$tooNear(StructureVillagePieces.Start start, List<StructureComponent> own, StructureBoundingBox wide, EnumFacing facing) {
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         StructureBoundingBox ahead = new StructureBoundingBox(wide);
         int reach = rdpl$fromWell(own, wide, facing) ? ContentBeard.attachGap() * 2 : 0;
         if (alongX) { if (facing.getXOffset() > 0) { ahead.maxX += reach; } else { ahead.minX -= reach; } }
         else { if (facing.getZOffset() > 0) { ahead.maxZ += reach; } else { ahead.minZ -= reach; } }
-        StructureBoundingBox held = ContentBeard.beside(own, ahead, alongX);
+        StructureBoundingBox held = ContentBeard.beside(own, ahead, alongX, start);
         if (held == null) { return false; }
-        ContentLog.LOGGER.debug("A road attempt {} facing {} would run beside the road at {}, {}, under the {} block spacing two plots need, so it may only be an alley", wide, facing, held.minX, held.minZ, 2 * ContentVillages.largestPlot());
+        ContentLog.LOGGER.debug("A road attempt {} facing {} would run beside the road at {}, {}, under the {} block spacing the plots on both sides need, so it may only be an alley", wide, facing, held.minX, held.minZ, ContentVillages.blockOf(start) + ContentVillages.blockOf(ContentBeard.roadAt(own, held)));
         return true;
     }
 

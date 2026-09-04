@@ -3583,6 +3583,7 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
     "villagePiecesAreBlacklist": true,
     "villagePlotsLeast": 12,
     "villagePlotsMost": 30,
+    "villageBlockSizes": ["32=3", "64=1"],
     "villageLayout": "mypack:downtown"
   }
 }
@@ -3607,6 +3608,8 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
 `villagePieces` nennt Vanilla-Dorfteile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1` und `field2`, und `villagePiecesAreBlacklist` entscheidet die Richtung – du kannst also Vanillas Weizenfelder streichen und die Häuser lassen oder nur die Teile auflisten, die du willst. Ein Pack-Grundstück wird über seine eigene Vorlage benannt: entweder mit dem vollen Namen, `meinpack:big_house`, oder einfach `big_house`, oder wahlweise über den Namen des Grundstücks selbst. Ein Pack kann also zehn Grundstücke mitbringen, und eine Weltvorlage lässt eines davon weg, ohne die anderen neun anzurühren. Teile aus anderen Mods ebenso wenig, etwa die Häuser von Tektopia oder die Grundstücke von Recurrent Complex: Eine Whitelist entfernt immer nur Vanillas eigene Teile, wer also die gewünschten Vanilla-Teile auflistet, löscht damit nicht stillschweigend fremde. Um einen Mod-Teil loszuwerden, nimm eine Blacklist und nenne ihn beim Namen, etwa `tekhouse2`.
 
 `villagePlotsLeast` und `villagePlotsMost` begrenzen, mit wie vielen Grundstücken ein Dorf gebaut wird. Gezählt werden Häuser, Felder und Pack-Grundstücke, nie Straßen, Fackeln oder der Brunnen. Ein Dorf, das unter dem Minimum bleibt, wird in größerem Zuschnitt neu angelegt, einige Versuche lang, und der größte Entwurf gewinnt, auf engem Gelände kann es also trotzdem darunter bleiben. Beim Maximum hört das Dorf ganz auf zu wachsen: keine weiteren Gebäude und keine weiteren Straßen. `0` lässt das jeweilige Ende bei Vanilla.
+
+`villageBlockSizes` legt fest, wie tief die Blöcke zwischen den parallelen Straßen einer Stadt sind, als gewichtete `größe=gewicht`-Einträge: `32=3` und `64=1` legen drei von vier Vierteln mit 32 tiefen Blöcken an und den Rest mit 64. Jedes Viertel würfelt seine Größe einmal aus der Lage seines Platzes, dieselbe Welt bekommt also immer dieselbe Mischung. Seine Straßen zweigen entlang ihrer Länge alle zwei Blöcke plus eine Straßenbreite Seitenstraßen ab, ein 16er Viertel ist also ein feines Raster und ein 64er ein grobes, und zwei parallele Straßen halten so viele Blöcke plus die des Nachbarviertels zueinander Abstand, ein 32er Viertel neben einem 64er lässt also 96 dazwischen. An den Straßen eines Viertels werden nur Grundstücke gebaut, die in die Tiefe passen, und unter denen, die passen, ist die Chance eines Grundstücks sein Gewicht mal seine Breite, tiefe Blöcke bevorzugen also die Gebäude, die sie ausfüllen, und ein 64 breites Grundstück steht nie an einem 32 tiefen Block. Straßenlänge und Platzabstand richten sich weiterhin nach dem größten Grundstück des Packs, denn das lässt jedes Viertel die Stadt erreichen. Leer bemisst jeden Block nach diesem größten Grundstück und zweigt Straßen wie bisher nur an ihren Enden ab.
 
 `villageLayout` nennt einen [Stadtplan](#stadtpläne), nach dem das Dorf aus einem gezeichneten Straßenplan angelegt wird, statt zu wachsen; leer wächst es wie gewohnt.
 

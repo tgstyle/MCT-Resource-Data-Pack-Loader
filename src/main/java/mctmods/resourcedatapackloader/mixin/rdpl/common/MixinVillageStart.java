@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.village.CityLayout;
+import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 
 import net.minecraft.world.World;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Random;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.List;
 
@@ -26,6 +28,12 @@ import java.util.List;
     private void rdpl$foundAtBirth(World worldIn, Random rand, int x, int z, int size, CallbackInfo ci) {
         CityLayout.laying(false);
         if (ContentBeard.wanted()) { ContentBeard.foundAtBirth(worldIn, (StructureStart) (Object) this); }
+    }
+
+    @Redirect(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;buildComponent(Lnet/minecraft/world/gen/structure/StructureComponent;Ljava/util/List;Ljava/util/Random;)V"))
+    private void rdpl$sizeThenBuild(StructureVillagePieces.Start start, StructureComponent componentIn, List<StructureComponent> listIn, Random building, World worldIn, Random rand, int x, int z, int size) {
+        if (ContentBeard.wanted()) { ContentVillages.sizeBlock(worldIn, start); }
+        start.buildComponent(componentIn, listIn, building);
     }
 
     @Redirect(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At(value = "INVOKE", target = "Ljava/util/List;remove(I)Ljava/lang/Object;"))

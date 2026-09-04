@@ -21,11 +21,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class CubeProviderClient extends ChunkProviderClient implements ICubeProviderInternal {
-    @Nonnull private final IRubicWorldInternal.Client world;
+    @Nonnull private final IRubicWorldInternal.IClient world;
     @Nonnull private final Cube blankCube;
     @Nonnull private final XYZMap<Cube> cubeMap = new XYZMap<>(0.7f, 8000);
 
-    public CubeProviderClient(@Nonnull IRubicWorldInternal.Client world) {
+    public CubeProviderClient(@Nonnull IRubicWorldInternal.IClient world) {
         super((World) world);
         this.world = world;
         this.blankCube = new BlankCube(super.provideChunk(Integer.MAX_VALUE, 0));

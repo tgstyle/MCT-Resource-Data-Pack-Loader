@@ -62,7 +62,7 @@ public interface IRubicWorldInternal extends IRubicWorld {
         return current;
     }
 
-    interface Server extends IRubicWorldInternal, IRubicWorldServer {
+    interface IServer extends IRubicWorldInternal, IRubicWorldServer {
         void rdpl$initRubicWorldServer(IntRange heightRange, IntRange generationRange);
 
         @Override CubeProviderServer rdpl$getCubeCache();
@@ -83,16 +83,16 @@ public interface IRubicWorldInternal extends IRubicWorld {
 
         void rdpl$setSpawnArea(SpawnCubes spawn);
 
-        CompatGenerationScope rdpl$doCompatibilityGeneration();
+        ICompatGenerationScope rdpl$doCompatibilityGeneration();
 
         boolean rdpl$isCompatGenerationScope();
     }
 
-    interface Client extends IRubicWorldInternal {
+    interface IClient extends IRubicWorldInternal {
         void rdpl$initRubicWorldClient(IntRange heightRange, IntRange generationRange);
 
         CubeProviderClient rdpl$getCubeCache();
     }
 
-    interface CompatGenerationScope extends AutoCloseable { void close(); }
+    interface ICompatGenerationScope extends AutoCloseable { void close(); }
 }

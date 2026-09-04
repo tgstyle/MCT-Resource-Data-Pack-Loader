@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSites;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
@@ -296,21 +296,21 @@ public final class BeardSite {
         int stored = 0;
         int passes = 0;
         try {
-            for (StructureComponent piece : pieces) { if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); } }
+            for (StructureComponent piece : pieces) { if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); } }
             boolean settled = false;
             while (!settled && passes < GRADE_PASSES) {
                 passes++;
                 settled = true;
                 stored = 0;
                 for (StructureComponent piece : pieces) {
-                    if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
+                    if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout)) { continue; }
                     StructureBoundingBox box = piece.getBoundingBox();
                     boolean alongX = BeardPlots.roadAlongX(piece);
                     BeardRoads.Grade grade = BeardRoads.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
                     if (grade == null) { continue; }
-                    BeardRoads.Grade before = ((RoadLayout) piece).rdpl$layout();
+                    BeardRoads.Grade before = ((IRoadLayout) piece).rdpl$layout();
                     if (before == null || !before.sameAs(grade)) { settled = false; }
-                    ((RoadLayout) piece).rdpl$layout(grade);
+                    ((IRoadLayout) piece).rdpl$layout(grade);
                     stored++;
                 }
             }

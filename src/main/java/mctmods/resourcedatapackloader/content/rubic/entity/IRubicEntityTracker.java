@@ -9,5 +9,5 @@ public interface IRubicEntityTracker {
 
     void setVertViewDistance(int viewDistance);
 
-    interface Entry { void setMaxVertRange(int maxVertTrackingDistanceThreshold); }
+    interface IEntry { void setMaxVertRange(int maxVertTrackingDistanceThreshold); }
 }

@@ -15,5 +15,5 @@ public interface ICubeProviderInternal extends ICubeProvider {
 
     @Override default Cube getCube(CubePos coords) { return getCube(coords.getX(), coords.getY(), coords.getZ()); }
 
-    interface Server extends ICubeProviderInternal { ICubeIO getCubeIO(); }
+    interface IServer extends ICubeProviderInternal { ICubeIO getCubeIO(); }
 }

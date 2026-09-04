@@ -62,7 +62,7 @@ public final class ContentControl {
             "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
             "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathPiers", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
-            "villagePlotsMost", "villageLayout", "voidPlatformBlock",
+            "villagePlotsMost", "villageBlockSizes", "villageLayout", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "structureAt", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 

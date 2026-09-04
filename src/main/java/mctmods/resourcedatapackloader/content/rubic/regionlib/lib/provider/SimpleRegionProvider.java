@@ -20,11 +20,11 @@ import java.util.stream.Stream;
 public class SimpleRegionProvider<K extends IKey> implements IRegionProvider<K> {
 	private final IKeyProvider keyProvider;
 	private final Path directory;
-	private final RegionFactory<K> regionBuilder;
-	private final SimpleRegionProvider.RegionExistsPredicate<K> regionExists;
+	private final IRegionFactory<K> regionBuilder;
+	private final SimpleRegionProvider.IRegionExistsPredicate<K> regionExists;
 
 	public SimpleRegionProvider(IKeyProvider keyProvider, Path directory,
-	                            RegionFactory<K> regionBuilder, RegionExistsPredicate<K> regionExists) {
+	                            IRegionFactory<K> regionBuilder, IRegionExistsPredicate<K> regionExists) {
 		this.keyProvider = keyProvider;
 		this.directory = directory;
 		this.regionBuilder = regionBuilder;
@@ -96,7 +96,7 @@ public class SimpleRegionProvider<K extends IKey> implements IRegionProvider<K> 
 		);
 	}
 
-	@FunctionalInterface public interface RegionFactory<K extends IKey> { IRegion<K> create(IKeyProvider keyProvider, RegionKey key) throws IOException; }
+	@FunctionalInterface public interface IRegionFactory<K extends IKey> { IRegion<K> create(IKeyProvider keyProvider, RegionKey key) throws IOException; }
 
-	@FunctionalInterface public interface RegionExistsPredicate<K extends IKey> { boolean test(Path directory, K key) throws IOException; }
+	@FunctionalInterface public interface IRegionExistsPredicate<K extends IKey> { boolean test(Path directory, K key) throws IOException; }
 }

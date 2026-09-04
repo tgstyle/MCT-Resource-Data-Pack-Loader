@@ -77,7 +77,7 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import net.minecraft.world.GameRules;
 
-@SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(WorldServer.class) public abstract class MixinWorldServer extends MixinWorld implements IRubicWorldInternal.Server, IRubicWorldServer {
+@SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(WorldServer.class) public abstract class MixinWorldServer extends MixinWorld implements IRubicWorldInternal.IServer, IRubicWorldServer {
     @Inject(method = "createSpawnPosition", at = @At("RETURN")) private void rdpl$spawnWhereAsked(WorldSettings settings, CallbackInfo ci) {
         String wanted = ContentTerrain.worldSpawn();
         if (wanted.isEmpty()) { return; }
@@ -216,7 +216,7 @@ import net.minecraft.world.GameRules;
         super.rdpl$initRubicWorld(heightRange, generationRange);
         this.rdpl$isRubicWorld = true;
         IWorldEntitySpawner spawner = new CubeWorldEntitySpawner();
-        IWorldEntitySpawner.Handler spawnHandler = cast(entitySpawner);
+        IWorldEntitySpawner.IHandler spawnHandler = cast(entitySpawner);
         spawnHandler.rdpl$setEntitySpawner(spawner);
         this.chunkProvider = new CubeProviderServer((WorldServer) (Object) this,
                 Objects.requireNonNull(((IRubicWorldProvider) this.provider).rdpl$createCubeGenerator(), "cube generator for rubic world"));
@@ -273,7 +273,7 @@ import net.minecraft.world.GameRules;
 
     @Override public void rdpl$unloadOldCubes() { rdpl$worldChunkGc.chunkGc(); }
 
-    @Override @Nonnull public CompatGenerationScope rdpl$doCompatibilityGeneration() {
+    @Override @Nonnull public ICompatGenerationScope rdpl$doCompatibilityGeneration() {
         rdpl$runningCompatibilityGenerator = true;
         return () -> rdpl$runningCompatibilityGenerator = false;
     }

@@ -79,7 +79,7 @@ public class RubicEvents {
 
         int minHeight = savedData.minHeight;
         int maxHeight = savedData.maxHeight;
-        ((IRubicWorldInternal.Server) world).rdpl$initRubicWorldServer(new IntRange(minHeight, maxHeight), generationRange);
+        ((IRubicWorldInternal.IServer) world).rdpl$initRubicWorldServer(new IntRange(minHeight, maxHeight), generationRange);
     }
 
     @SubscribeEvent public void onWorldServerTick(TickEvent.WorldTickEvent evt) {
@@ -133,7 +133,7 @@ public class RubicEvents {
         if (event.getWorld().isRemote || !((IRubicWorld) event.getWorld()).rdpl$isRubicWorld()) { return; }
         IRubicWorld world = (IRubicWorld) event.getWorld();
         if (!world.rdpl$isRubicWorld()) { return; }
-        ICubeIO io = ((ICubeProviderInternal.Server) world.rdpl$getCubeCache()).getCubeIO();
+        ICubeIO io = ((ICubeProviderInternal.IServer) world.rdpl$getCubeCache()).getCubeIO();
         try {
             io.close();
         } catch (IOException e) {

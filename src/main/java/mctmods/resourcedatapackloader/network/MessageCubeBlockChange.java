@@ -111,7 +111,7 @@ public class MessageCubeBlockChange implements IMessage {
             }
 
             ClientHeightMap index = (ClientHeightMap) cube.getColumn().getOpacityIndex();
-            ILightingManager lm = ((IRubicWorldInternal.Client) world).rdpl$getLightingManager();
+            ILightingManager lm = ((IRubicWorldInternal.IClient) world).rdpl$getLightingManager();
             for (int hmapUpdate : packet.heightValues) {
                 int x = hmapUpdate & 0xF;
                 int z = (hmapUpdate >> 4) & 0xF;

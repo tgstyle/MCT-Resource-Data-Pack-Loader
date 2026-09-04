@@ -18,7 +18,7 @@ import java.io.File;
     @Redirect(method = "getChunkLoader", at = @At(value = "NEW", target = "net/minecraft/world/chunk/storage/AnvilChunkLoader")) private AnvilChunkLoader getChunkLoader(File chunkSaveLocationIn, DataFixer dataFixerIn, WorldProvider provider) {
         IRubicWorld world = ((IRubicWorld) ((IRubicWorldProvider) provider).rdpl$getWorld());
         if (world.rdpl$isRubicWorld()) {
-            return new RubicAnvilChunkLoader(chunkSaveLocationIn, dataFixerIn, () -> ((ICubeProviderInternal.Server) world.rdpl$getCubeCache()).getCubeIO());
+            return new RubicAnvilChunkLoader(chunkSaveLocationIn, dataFixerIn, () -> ((ICubeProviderInternal.IServer) world.rdpl$getCubeCache()).getCubeIO());
         }
         else { return new AnvilChunkLoader(chunkSaveLocationIn, dataFixerIn); }
     }

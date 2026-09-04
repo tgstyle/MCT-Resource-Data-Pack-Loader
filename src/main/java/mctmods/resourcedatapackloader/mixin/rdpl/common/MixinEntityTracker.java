@@ -37,7 +37,7 @@ import java.util.Set;
             target = "net/minecraft/entity/EntityTrackerEntry"))
     @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) private EntityTrackerEntry onCreateEntry(Entity entityIn, int rangeIn, int maxRangeIn, int updateFrequencyIn, boolean sendVelocityUpdatesIn) {
         EntityTrackerEntry e = new EntityTrackerEntry(entityIn, rangeIn, maxRangeIn, updateFrequencyIn, sendVelocityUpdatesIn);
-        ((IRubicEntityTracker.Entry) e).setMaxVertRange(rdpl$maxVertTrackingDistanceThreshold);
+        ((IRubicEntityTracker.IEntry) e).setMaxVertRange(rdpl$maxVertTrackingDistanceThreshold);
         return e;
     }
 
@@ -60,6 +60,6 @@ import java.util.Set;
 
     @SuppressWarnings("ConstantConditions") public void tracker$setVertViewDistance(int viewDistance) {
         this.rdpl$maxVertTrackingDistanceThreshold = (viewDistance - 1) * 16;
-        for (EntityTrackerEntry e : this.entries) { ((IRubicEntityTracker.Entry) e).setMaxVertRange(this.rdpl$maxVertTrackingDistanceThreshold); }
+        for (EntityTrackerEntry e : this.entries) { ((IRubicEntityTracker.IEntry) e).setMaxVertRange(this.rdpl$maxVertTrackingDistanceThreshold); }
     }
 }

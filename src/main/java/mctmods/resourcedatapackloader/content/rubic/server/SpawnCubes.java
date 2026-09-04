@@ -105,7 +105,7 @@ public class SpawnCubes implements ITicket {
         progress.rdpl$setUserMessage("menu.generatingTerrain");
     }
 
-    private void forEachCube(int spawnCubeX, int spawnCubeY, int spawnCubeZ, int r, int ry, XYZConsumer action) {
+    private void forEachCube(int spawnCubeX, int spawnCubeY, int spawnCubeZ, int r, int ry, IXYZConsumer action) {
         for (int cubeX = spawnCubeX - r; cubeX <= spawnCubeX + r; cubeX++) {
             for (int cubeZ = spawnCubeZ - r; cubeZ <= spawnCubeZ + r; cubeZ++) {
                 for (int cubeY = spawnCubeY + ry; cubeY >= spawnCubeY - ry; cubeY--) { action.accept(cubeX, cubeY, cubeZ); }
@@ -115,5 +115,5 @@ public class SpawnCubes implements ITicket {
 
     @Override public boolean shouldTick() { return false; }
 
-    @FunctionalInterface private interface XYZConsumer { void accept(int x, int y, int z); }
+    @FunctionalInterface private interface IXYZConsumer { void accept(int x, int y, int z); }
 }

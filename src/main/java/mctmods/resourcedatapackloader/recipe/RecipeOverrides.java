@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentOwners;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.InvokerJsonContext;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IJsonContext;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -225,7 +225,7 @@ public final class RecipeOverrides {
         try {
             String contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
             JsonObject[] json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject[].class);
-            if (json != null) { ((InvokerJsonContext) ctx).rdpl$loadConstants(json); }
+            if (json != null) { ((IJsonContext) ctx).rdpl$loadConstants(json); }
         }
         catch (IOException | IllegalArgumentException | JsonParseException ex) {
             ContentLog.LOGGER.error("Could not read {} for {}, recipe constants will be unavailable", CONSTANTS, ctx.getModId(), ex);

@@ -10,7 +10,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.RoadLayout;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
@@ -308,7 +308,7 @@ public final class BeardRoads {
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} runs along {} from {} to {}, is asked for the patch of land from {}, {} to {}, {}, and so will lay rows {} to {}", box.minX, box.minZ, alongX ? "x" : "z", alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, clip.minX, clip.minZ, clip.maxX, clip.maxZ, least, most); }
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
-        Grade graded = piece instanceof RoadLayout ? ((RoadLayout) piece).rdpl$layout() : null;
+        Grade graded = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
         if (graded != null && (graded.start != (alongX ? box.minX : box.minZ) || graded.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1)) {
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
             graded = null;
@@ -508,8 +508,8 @@ public final class BeardRoads {
         if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return repaved; }
         ChunkProviderServer provider = (ChunkProviderServer) world.getChunkProvider();
         for (StructureComponent piece : start.getComponents()) {
-            if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
-            Grade grade = ((RoadLayout) piece).rdpl$layout();
+            if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout)) { continue; }
+            Grade grade = ((IRoadLayout) piece).rdpl$layout();
             if (grade == null) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
@@ -534,7 +534,7 @@ public final class BeardRoads {
                         try {
                             ContentBeard.fellFor(start, piece, world, patch);
                             BeardKeep.watch(world, piece, patch);
-                            ((RoadLayout) piece).rdpl$repave(world, patch);
+                            ((IRoadLayout) piece).rdpl$repave(world, patch);
                             BeardKeep.learn(world);
                         }
                         finally { ContentBeard.building(null); }
@@ -973,7 +973,7 @@ public final class BeardRoads {
         int[] strip = ContentBeard.facingStrip(plotBox, roadBox, 6);
         if (strip == null) { return 0; }
         boolean alongX = BeardPlots.roadAlongX(roadBox);
-        Grade grade = road instanceof RoadLayout ? ((RoadLayout) road).rdpl$layout() : null;
+        Grade grade = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
         if (grade == null) { grade = chainGrade(world, road, alongX); }
         if (grade == null) { return 0; }
         IBlockState planks = pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, Blocks.PLANKS.getDefaultState());
@@ -1436,7 +1436,7 @@ public final class BeardRoads {
     }
 
     @Nullable public static Grade chainGrade(World world, StructureComponent road, boolean alongX) {
-        Grade laid = road instanceof RoadLayout ? ((RoadLayout) road).rdpl$layout() : null;
+        Grade laid = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The grade of the road at {}, {} comes from {}", road.getBoundingBox().minX, road.getBoundingBox().minZ, laid != null ? "its built layout" : chaining ? "a plain profile" : "a profile with its own junctions"); }
         if (laid != null) { return laid; }
         StructureBoundingBox box = road.getBoundingBox();
@@ -1467,7 +1467,7 @@ public final class BeardRoads {
             }
             boolean alongX = BeardPlots.roadAlongX(other);
             int start = alongX ? road.minX : road.minZ;
-            Grade grade = other instanceof RoadLayout ? ((RoadLayout) other).rdpl$layout() : null;
+            Grade grade = other instanceof IRoadLayout ? ((IRoadLayout) other).rdpl$layout() : null;
             if (grade == null) { grade = roadProfile(world, other, alongX, start, alongX ? road.maxX : road.maxZ, alongX ? road.minZ : road.minX, alongX ? road.maxZ : road.maxX, true); }
             if (grade == null) { return Integer.MIN_VALUE; }
             int center = alongX ? (box.minX + box.maxX) / 2 : (box.minZ + box.maxZ) / 2;
@@ -1580,8 +1580,8 @@ public final class BeardRoads {
                     int crossed = crossing == null ? Integer.MIN_VALUE : crossing.at(crossRow);
                     if (crossed != Integer.MIN_VALUE) { grade = crossed; }
                 }
-                else if (other instanceof RoadLayout) {
-                    Grade laid = ((RoadLayout) other).rdpl$layout();
+                else if (other instanceof IRoadLayout) {
+                    Grade laid = ((IRoadLayout) other).rdpl$layout();
                     int crossed = laid == null ? Integer.MIN_VALUE : laid.at(crossRow);
                     if (crossed > grade) {
                         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} raises its junction with the road at {}, {} from y {} to y {}, the level that road was lifted to out of a dip", own.minX, own.minZ, road.minX, road.minZ, grade, crossed); }

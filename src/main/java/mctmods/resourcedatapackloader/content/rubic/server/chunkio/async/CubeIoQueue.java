@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
         ColumnAt at = new ColumnAt(world, columnX, columnZ);
         PendingColumn queued = columnReads.remove(at);
         if (queued == null || queued.hasBeenHandedOver()) {
-            PendingColumn here = new PendingColumn(io, world, columnX, columnZ, ((IRubicWorldInternal.Server) world).rdpl$getCubeCache().getCubeGenerator(), tellProviderLoading);
+            PendingColumn here = new PendingColumn(io, world, columnX, columnZ, ((IRubicWorldInternal.IServer) world).rdpl$getCubeCache().getCubeGenerator(), tellProviderLoading);
             here.readNow();
             here.handOver();
             return here.loaded();
@@ -104,7 +104,7 @@ import javax.annotation.Nullable;
             waiting.waitFor(whenLoaded);
             return;
         }
-        PendingColumn read = new PendingColumn(io, world, columnX, columnZ, ((IRubicWorldInternal.Server) world).rdpl$getCubeCache().getCubeGenerator(), tellProviderLoading);
+        PendingColumn read = new PendingColumn(io, world, columnX, columnZ, ((IRubicWorldInternal.IServer) world).rdpl$getCubeCache().getCubeGenerator(), tellProviderLoading);
         read.waitFor(whenLoaded);
         columnReads.put(at, read);
         columnReaders.execute(() -> readThenQueue(read));

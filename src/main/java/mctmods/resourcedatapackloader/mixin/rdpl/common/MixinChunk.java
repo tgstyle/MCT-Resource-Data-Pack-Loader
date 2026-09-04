@@ -260,7 +260,7 @@ public abstract class MixinChunk {
     @ModifyConstant(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/ChunkPrimer;II)V",
             constant = @Constant(intValue = 16, ordinal = 0), require = 1)
     private int getInitChunkLoopEnd(int _16, World worldIn, ChunkPrimer primer, int x, int z) {
-        if (((IRubicWorldInternal.Server) worldIn).rdpl$isCompatGenerationScope()) {
+        if (((IRubicWorldInternal.IServer) worldIn).rdpl$isCompatGenerationScope()) {
             this.rdpl$compatGenerationPrimer = primer;
             return -1;
         }

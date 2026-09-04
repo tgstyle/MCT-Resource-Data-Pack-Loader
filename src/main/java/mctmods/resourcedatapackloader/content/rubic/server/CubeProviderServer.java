@@ -43,7 +43,7 @@ import javax.annotation.Detainted;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class CubeProviderServer extends ChunkProviderServer implements ICubeProviderServer, ICubeProviderInternal.Server {
+public class CubeProviderServer extends ChunkProviderServer implements ICubeProviderServer, ICubeProviderInternal.IServer {
     @Nonnull private final EmptyColumn emptyColumn;
     @Nonnull private final BlankCube emptyCube;
     @Nonnull private final WorldServer worldServer;
