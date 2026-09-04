@@ -58,7 +58,7 @@ import java.util.Set;
         }
     }
 
-    @SuppressWarnings("ConstantConditions") public void tracker$setVertViewDistance(int viewDistance) {
+    public void tracker$setVertViewDistance(int viewDistance) {
         this.rdpl$maxVertTrackingDistanceThreshold = (viewDistance - 1) * 16;
         for (EntityTrackerEntry e : this.entries) { ((IRubicEntityTracker.IEntry) e).setMaxVertRange(this.rdpl$maxVertTrackingDistanceThreshold); }
     }

@@ -34,6 +34,7 @@ import static mctmods.resourcedatapackloader.util.ReflectionUtil.cast;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.Random;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldSettings;
@@ -116,7 +117,7 @@ import net.minecraft.world.GameRules;
     @Shadow @Final private TreeSet<NextTickListEntry> pendingTickListEntriesTreeSet;
     @Shadow @Mutable @Final private List<NextTickListEntry> pendingTickListEntriesThisTick;
     @Unique private int rdpl$immediateTickDepth;
-    @Unique private final Map<Long, List<NextTickListEntry>> rdpl$byChunk = new HashMap<>();
+    @Unique private final Long2ObjectOpenHashMap<List<NextTickListEntry>> rdpl$byChunk = new Long2ObjectOpenHashMap<>();
 
     @SuppressWarnings("UnusedAssignment") @WrapOperation(method = "updateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V"))
     private void rdpl$boundImmediateTicks(Block block, World worldIn, BlockPos pos, IBlockState state, Random rand, Operation<Void> original) {
@@ -187,7 +188,12 @@ import net.minecraft.world.GameRules;
     @Unique private void rdpl$gather(Iterable<NextTickListEntry> entries) {
         for (NextTickListEntry entry : entries) {
             long key = ChunkPos.asLong(entry.position.getX() >> 4, entry.position.getZ() >> 4);
-            rdpl$byChunk.computeIfAbsent(key, at -> new ArrayList<>()).add(entry);
+            List<NextTickListEntry> here = rdpl$byChunk.get(key);
+            if (here == null) {
+                here = new ArrayList<>();
+                rdpl$byChunk.put(key, here);
+            }
+            here.add(entry);
         }
     }
 

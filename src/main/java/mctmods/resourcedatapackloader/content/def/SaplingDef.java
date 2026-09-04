@@ -11,9 +11,8 @@ public final class SaplingDef {
     public final String log;
     public final String leaves;
     public final int height;
-    public final boolean vines;
 
-    public SaplingDef(List<String> soil, int stages, int chance, int light, String structure, String log, String leaves, int height, boolean vines) {
+    public SaplingDef(List<String> soil, int stages, int chance, int light, String structure, String log, String leaves, int height) {
         this.soil = soil;
         this.stages = stages;
         this.chance = chance;
@@ -22,7 +21,6 @@ public final class SaplingDef {
         this.log = log;
         this.leaves = leaves;
         this.height = height;
-        this.vines = vines;
     }
 
     public boolean usesStructure() { return !structure.isEmpty(); }

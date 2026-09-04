@@ -2,10 +2,10 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +20,6 @@ import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +61,7 @@ public final class ContentSeams {
         Integer below = BELOW.targetFor(dimension);
         Integer above = ABOVE.targetFor(dimension);
         if (below == null && above == null) { return; }
-        boolean rubic = ((IRubicWorld) world).rdpl$isRubicWorld();
-        int floor = rubic ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
+        int floor = GenHeights.floor(world, 0);
         int ceiling = RubicWorldControl.generatedCeiling(world);
         boolean carryEntities = ContentControl.flag(ContentControl.TERRAIN, "worldSeamEntities", Config.worldgen.worldSeamEntities);
         List<Entity> falling = null;
@@ -98,8 +96,7 @@ public final class ContentSeams {
         MinecraftServer server = world.getMinecraftServer();
         if (server == null) { return; }
         WorldServer destination = server.getWorld(target);
-        boolean rubic = ((IRubicWorld) destination).rdpl$isRubicWorld();
-        int floor = rubic ? ((IMinMaxHeight) destination).rdpl$getMinHeight() : 0;
+        int floor = GenHeights.floor(destination, 0);
         int ceiling = RubicWorldControl.generatedCeiling(destination);
         double arriveY = down ? ceiling - INSET_DOWN : floor + INSET_UP;
         boolean walking = entity instanceof EntityPlayerMP;
@@ -286,43 +283,24 @@ public final class ContentSeams {
 
     private static final class Target {
         private final String key;
-        private String[] raw;
-        @Nullable private Integer everywhere;
-        private Map<Integer, Integer> byDimension = new HashMap<>();
+        private final DimensionValues<Integer> values;
+        private final TemplateMemo<String[]> asked = new TemplateMemo<>();
 
-        Target(String key) { this.key = key; }
+        Target(String key) {
+            this.key = key;
+            this.values = new DimensionValues<>(key, Target::dimension, "which is not a dimension id");
+        }
 
-        String[] asked() { return ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow : Config.worldgen.worldAbove); }
+        String[] asked() { return asked.get(() -> ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow : Config.worldgen.worldAbove)); }
 
         @Nullable Integer targetFor(int dimension) {
             if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-            String[] asked = asked();
-            if (asked.length == 0) { return null; }
-            if (!Arrays.equals(asked, raw)) {
-                Integer bare = null;
-                Map<Integer, Integer> scoped = new HashMap<>();
-                for (String entry : asked) {
-                    String line = entry.trim();
-                    int split = line.indexOf('=');
-                    String value = split < 0 ? line : line.substring(split + 1).trim();
-                    int found;
-                    try { found = Integer.parseInt(value); }
-                    catch (NumberFormatException wrong) {
-                        ContentLog.LOGGER.error("{} names '{}', which is not a dimension id, ignoring it", key, line);
-                        continue;
-                    }
-                    if (split < 0) { bare = found; }
-                    else {
-                        try { scoped.put(Integer.parseInt(line.substring(0, split).trim()), found); }
-                        catch (NumberFormatException wrong) { ContentLog.LOGGER.error("{} names '{}', whose dimension is not a number, ignoring it", key, line); }
-                    }
-                }
-                everywhere = bare;
-                byDimension = scoped;
-                raw = asked;
-            }
-            Integer scoped = byDimension.get(dimension);
-            return scoped != null ? scoped : everywhere;
+            return values.at(dimension, asked());
+        }
+
+        @Nullable private static Integer dimension(String value) {
+            try { return Integer.parseInt(value); }
+            catch (NumberFormatException wrong) { return null; }
         }
     }
 }

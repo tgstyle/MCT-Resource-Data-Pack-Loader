@@ -1,12 +1,10 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio.async;
 
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
-import mctmods.resourcedatapackloader.content.rubic.world.CubeDataEvent;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 
 import net.minecraft.world.chunk.Chunk;
-import net.minecraftforge.common.MinecraftForge;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -43,8 +41,6 @@ final class PendingCube extends PendingLoad<Cube> {
         if (held == null) { throw new IllegalStateException("Nothing was read for " + describe()); }
         if (held.getObject() == null) { return; }
         io.loadCubeSyncPart(held);
-        ICube cube = held.getObject();
-        MinecraftForge.EVENT_BUS.post(new CubeDataEvent.Load(cube, held.getNbt()));
     }
 
     @Nullable @Override Cube loaded() { return data == null ? null : (Cube) data.getObject(); }

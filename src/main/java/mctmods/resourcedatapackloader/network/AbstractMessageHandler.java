@@ -44,10 +44,13 @@ public abstract class AbstractMessageHandler<T extends IMessage> implements IMes
             if (ctx.side.isClient()) { handleClientMessage(mainWorld, player, message, ctx); }
             else { handleServerMessage(player, message, ctx); }
             return null;
-        } catch (Throwable t) {
-            Rubic.LOGGER.catching(t);
+        } catch (Error error) {
+            Rubic.LOGGER.catching(error);
             FMLCommonHandler.instance().exitJava(-1, false);
-            throw t;
+            throw error;
+        } catch (RuntimeException ex) {
+            Rubic.LOGGER.error("A {} packet could not be handled and was dropped", message.getClass().getSimpleName(), ex);
+            return null;
         }
     }
 

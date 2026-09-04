@@ -9,7 +9,6 @@ import javax.annotation.Nullable;
 public final class StructureMapDef {
     public static final int LIMIT = 8;
     public final ResourceLocation key;
-    public final String name;
     public final int cell;
     public final int ground;
     public final int spacing;
@@ -21,9 +20,8 @@ public final class StructureMapDef {
     public final int cellsDeep;
     public final int widest;
 
-    public StructureMapDef(ResourceLocation key, String name, int cell, int ground, int spacing, int chance, @Nullable int[] at, Set<Integer> dimensions, Layer[] layers) {
+    public StructureMapDef(ResourceLocation key, int cell, int ground, int spacing, int chance, @Nullable int[] at, Set<Integer> dimensions, Layer[] layers) {
         this.key = key;
-        this.name = name;
         this.cell = cell;
         this.ground = ground;
         this.spacing = spacing;

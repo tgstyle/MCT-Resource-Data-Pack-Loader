@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.management.PlayerChunkMap;
 import net.minecraft.server.management.PlayerChunkMapEntry;
 import net.minecraft.server.management.PlayerList;
@@ -47,6 +48,7 @@ import net.minecraftforge.common.MinecraftForge;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Supplier;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -66,21 +68,12 @@ public class PlayerCubeMap extends PlayerChunkMap {
     private final Set<CubeWatcher> cubeWatchersToUpdate = new HashSet<>();
     private final Set<ColumnWatcher> columnWatchersToUpdate = new HashSet<>();
 
-    private final WatchersSortingList3D<CubeWatcher> watchersToAddPlayersTo = new WatchersSortingList3D<>(0, () ->
-            players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList()));
-
-    private final WatchersSortingList3D<CubeWatcher> cubesToSendToClients = new WatchersSortingList3D<>(1, () ->
-            players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList()));
-
-    private final WatchersSortingList3D<CubeWatcher> cubesToGenerate = new WatchersSortingList3D<>(2, () ->
-            players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList()));
-
-    private final WatchersSortingList2D<ColumnWatcher> columnsToSendToClients = new WatchersSortingList2D<>(3, () ->
-            players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList()));
-
-    private final WatchersSortingList2D<ColumnWatcher> columnsToGenerate = new WatchersSortingList2D<>(4, () ->
-            players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList()));
-
+    private final Supplier<Collection<EntityPlayer>> everyone = () -> players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList());
+    private final WatchersSortingList3D<CubeWatcher> watchersToAddPlayersTo = new WatchersSortingList3D<>(0, everyone);
+    private final WatchersSortingList3D<CubeWatcher> cubesToSendToClients = new WatchersSortingList3D<>(1, everyone);
+    private final WatchersSortingList3D<CubeWatcher> cubesToGenerate = new WatchersSortingList3D<>(2, everyone);
+    private final WatchersSortingList2D<ColumnWatcher> columnsToSendToClients = new WatchersSortingList2D<>(3, everyone);
+    private final WatchersSortingList2D<ColumnWatcher> columnsToGenerate = new WatchersSortingList2D<>(4, everyone);
     private final WatchersSortingList3D<CubeWatcher> tickableCubeTracker = new WatchersSortingList3D<>(5, () ->
             players.valueCollection().stream().map(p -> p.playerEntity).filter(NOT_SPECTATOR).collect(Collectors.toList()));
 
@@ -238,7 +231,6 @@ public class PlayerCubeMap extends PlayerChunkMap {
                 if (playerInstance.sendToPlayers()) { it.remove(); }
                 else if (!columnsToGenerate.contains(playerInstance)) { columnsToGenerate.add(playerInstance); }
             }
-            this.columnsToSendToClients.removeIf(ColumnWatcher::sendToPlayers);
             getWorldServer().profiler.endSection();
         }
         if (!this.cubesToSendToClients.isEmpty()) {
@@ -441,14 +433,14 @@ public class PlayerCubeMap extends PlayerChunkMap {
     }
 
     @Override public boolean isPlayerWatchingChunk(@Nonnull EntityPlayerMP player, int cubeX, int cubeZ) {
-        ColumnWatcher columnWatcher = this.getColumnWatcher(new ChunkPos(cubeX, cubeZ));
+        ColumnWatcher columnWatcher = this.getColumnWatcher(cubeX, cubeZ);
         return columnWatcher != null &&
                 columnWatcher.containsPlayer(player) &&
                 columnWatcher.isSentToPlayers();
     }
 
     public boolean isPlayerWatchingCube(EntityPlayerMP player, int cubeX, int cubeY, int cubeZ) {
-        CubeWatcher watcher = this.getCubeWatcher(new CubePos(cubeX, cubeY, cubeZ));
+        CubeWatcher watcher = this.getCubeWatcher(cubeX, cubeY, cubeZ);
         return watcher != null &&
                 watcher.containsPlayer(player) &&
                 watcher.isSentToPlayers();
@@ -547,9 +539,11 @@ public class PlayerCubeMap extends PlayerChunkMap {
 
     @Nullable public CubeWatcher getCubeWatcher(CubePos pos) { return this.cubeWatchers.get(pos.getX(), pos.getY(), pos.getZ()); }
 
+    @Nullable public CubeWatcher getCubeWatcher(int cubeX, int cubeY, int cubeZ) { return this.cubeWatchers.get(cubeX, cubeY, cubeZ); }
+
     @Nullable public ColumnWatcher getColumnWatcher(ChunkPos pos) { return this.columnWatchers.get(pos.x, pos.z); }
 
-    public boolean contains(CubePos coords) { return this.cubeWatchers.get(coords.getX(), coords.getY(), coords.getZ()) != null; }
+    @Nullable public ColumnWatcher getColumnWatcher(int cubeX, int cubeZ) { return this.columnWatchers.get(cubeX, cubeZ); }
 
     private static final class PlayerWrapper {
         final EntityPlayerMP playerEntity;

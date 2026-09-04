@@ -14,6 +14,7 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
+import net.minecraft.util.math.MathHelper;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -504,8 +505,8 @@ public final class ContentCofhWorld {
 
     private static JsonObject entry(JsonObject one) {
         JsonObject properties = properties(one);
-        int meta = properties.entrySet().isEmpty() ? Math.max(0, Math.min(15, integer(one, "data", integer(one, "metadata", 0)))) : 0;
-        return weighted(qualified(JsonUtils.getString(one, "name", "")), meta, Math.max(1, Math.min(1000000, integer(one, "weight", 100))), properties);
+        int meta = properties.entrySet().isEmpty() ? MathHelper.clamp(integer(one, "data", integer(one, "metadata", 0)), 0, 15) : 0;
+        return weighted(qualified(JsonUtils.getString(one, "name", "")), meta, MathHelper.clamp(integer(one, "weight", 100), 1, 1000000), properties);
     }
 
     private static JsonObject properties(JsonObject one) {

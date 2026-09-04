@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap;
-import mctmods.resourcedatapackloader.content.rubic.world.CubeDataEvent;
 import mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
@@ -58,7 +57,6 @@ class IONbtWriter {
         writeScheduledTicks(cube, level);
         writeLightingInfo(cube, level);
         writeBiomes(cube, level);
-        writeModData(cube, cubeNbt);
         return cubeNbt;
     }
 
@@ -202,8 +200,6 @@ class IONbtWriter {
         cubeNbt.setTag("LightingInfo", lightingInfo);
         lightingManager.writeToNbt(cube, lightingInfo);
     }
-
-    private static void writeModData(Cube cube, NBTTagCompound level) { EVENT_BUS.post(new CubeDataEvent.Save(cube, level)); }
 
     private static void writeBiomes(Cube cube, NBTTagCompound nbt) {
         byte[] biomes = cube.getBiomeArray();

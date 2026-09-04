@@ -25,35 +25,33 @@ import net.minecraft.util.math.ChunkPos;
     @Shadow private boolean isLightPopulated;
     @Shadow private boolean isTerrainPopulated;
     @Shadow private boolean isGapLightingUpdated;
-    @Unique private static final ThreadLocal<Long> rdpl$litStart = ThreadLocal.withInitial(() -> 0L);
-    @Unique private static final ThreadLocal<Long> rdpl$relitStart = ThreadLocal.withInitial(() -> 0L);
+    @Unique private static final ThreadLocal<long[]> rdpl$litStart = ThreadLocal.withInitial(() -> new long[1]);
+    @Unique private static final ThreadLocal<long[]> rdpl$relitStart = ThreadLocal.withInitial(() -> new long[1]);
+    @Unique private final BlockPos.MutableBlockPos rdpl$column = new BlockPos.MutableBlockPos();
 
     @Inject(method = "checkLight()V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$wholeChunkLight(CallbackInfo ci) {
+    private void rdpl$startLight(CallbackInfo ci) {
         Chunk chunk = (Chunk) (Object) this;
         World world = chunk.getWorld();
-        if (world.isRemote || ((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
+        boolean timing = ContentChunkWatch.watching();
+        long start = timing ? System.nanoTime() : 0L;
+        ContentLightArea.enter(world, chunk.x, chunk.z);
+        if (world.isRemote || ((IRubicWorld) world).rdpl$isRubicWorld()) {
+            if (timing) { rdpl$litStart.get()[0] = start; }
+            return;
+        }
         ci.cancel();
         isTerrainPopulated = true;
-        long start = ContentChunkWatch.watching() ? System.nanoTime() : 0L;
-        ContentLightArea.enter(world, chunk.x, chunk.z);
         try { isLightPopulated = ContentFirstLight.relight(chunk); }
         finally { ContentLightArea.leave(world); }
         if (isLightPopulated) { isGapLightingUpdated = true; }
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - start, isLightPopulated); }
-    }
-
-    @Inject(method = "checkLight()V", at = @At("HEAD"))
-    private void rdpl$startLight(CallbackInfo ci) {
-        Chunk chunk = (Chunk) (Object) this;
-        ContentLightArea.enter(chunk.getWorld(), chunk.x, chunk.z);
-        if (ContentChunkWatch.watching()) { rdpl$litStart.set(System.nanoTime()); }
+        if (timing) { ContentChunkWatch.lit(System.nanoTime() - start, isLightPopulated); }
     }
 
     @Inject(method = "checkLight()V", at = @At("RETURN"))
     private void rdpl$endLight(CallbackInfo ci) {
         ContentLightArea.leave(((Chunk) (Object) this).getWorld());
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - rdpl$litStart.get(), isLightPopulated); }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - rdpl$litStart.get()[0], isLightPopulated); }
     }
 
     @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;recheckGaps(Z)V"))
@@ -79,11 +77,11 @@ import net.minecraft.util.math.ChunkPos;
     }
 
     @Inject(method = "enqueueRelightChecks", at = @At("HEAD")) private void rdpl$startRelight(CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { rdpl$relitStart.set(System.nanoTime()); }
+        if (ContentChunkWatch.watching()) { rdpl$relitStart.get()[0] = System.nanoTime(); }
     }
 
     @Inject(method = "enqueueRelightChecks", at = @At("RETURN")) private void rdpl$endRelight(CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.relit(System.nanoTime() - rdpl$relitStart.get()); }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.relit(System.nanoTime() - rdpl$relitStart.get()[0]); }
     }
 
     @Redirect(method = "checkLight(II)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;checkLight(Lnet/minecraft/util/math/BlockPos;)Z"))
@@ -99,7 +97,7 @@ import net.minecraft.util.math.ChunkPos;
     private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
         if (rdpl$dressingThis(x, z)) { return; }
         World world = chunk.getWorld();
-        if (ContentPregen.quenches(world, chunk.x, chunk.z) || !world.isAreaLoaded(new BlockPos(x, 0, z), 16)) {
+        if (ContentPregen.quenches(world, chunk.x, chunk.z) || !world.isAreaLoaded(rdpl$column.setPos(x, 0, z), 16)) {
             isLightPopulated = false;
             return;
         }

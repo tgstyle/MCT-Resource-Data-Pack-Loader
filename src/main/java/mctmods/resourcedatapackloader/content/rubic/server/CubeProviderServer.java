@@ -91,7 +91,9 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
 
     @Nullable @Override public Chunk getLoadedColumn(int columnX, int columnZ) {
         Chunk chunk = this.loadedChunks.get(ChunkPos.asLong(columnX, columnZ));
-        return chunk == null ? currentlyLoadingColumn : chunk;
+        if (chunk != null) { return chunk; }
+        Chunk loading = currentlyLoadingColumn;
+        return loading != null && loading.x == columnX && loading.z == columnZ ? loading : null;
     }
 
     @Nullable @Override @Deprecated public Chunk getLoadedChunk(int columnX, int columnZ) { return getLoadedColumn(columnX, columnZ); }
@@ -210,13 +212,11 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         if (req == Requirement.LOAD) { return cube; }
         if (req == Requirement.GENERATE && cube != null) { return cube; }
         if (cube == null) {
-            if (!forceNow && cubeGen.pollAsyncCubeGenerator(cubeX, cubeY, cubeZ) != ICubeGenerator.GeneratorReadyState.READY) { return emptyCube; }
             cube = generateCube(cubeX, cubeY, cubeZ, column, forceNow).orElse(null);
             if (cube == null) { return emptyCube; }
             if (req == Requirement.GENERATE) { return cube; }
         }
         if (!cube.isFullyPopulated()) {
-            if (!forceNow && cubeGen.pollAsyncCubePopulator(cubeX, cubeY, cubeZ) != ICubeGenerator.GeneratorReadyState.READY) { return emptyCube; }
             if (!populateCube(cube, forceNow)) { return cube; }
             if (req == Requirement.POPULATE) { return cube; }
         }
@@ -328,7 +328,6 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             return column;
         }
         else if (req == Requirement.LOAD) { return null; }
-        if (!force && cubeGen.pollAsyncColumnGenerator(columnX, columnZ) != ICubeGenerator.GeneratorReadyState.READY) { return emptyColumn; }
         column = cubeGen.tryGenerateColumn(world, columnX, columnZ, new ChunkPrimer(), force).orElse(null);
         if (column == null) { return emptyColumn; }
         loadedChunks.put(ChunkPos.asLong(columnX, columnZ), column);

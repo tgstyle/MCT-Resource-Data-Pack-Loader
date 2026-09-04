@@ -17,7 +17,6 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.JsonContext;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryModifiable;
@@ -61,12 +60,19 @@ public final class RecipeOverrides {
         };
     }
 
-    private static boolean serve(Path root, Path file) {
+    @Nullable private static String[] locate(Path root, Path file) {
         String relative = root.relativize(file).toString().replace('\\', '/');
-        if (!relative.endsWith(EXTENSION) || relative.startsWith("_")) { return false; }
+        if (!relative.endsWith(EXTENSION) || relative.startsWith("_")) { return null; }
         String modid = modIdOf(root);
-        if (modid == null) { return false; }
-        String path = relative.substring(0, relative.length() - EXTENSION.length());
+        if (modid == null) { return null; }
+        return new String[] {modid, relative.substring(0, relative.length() - EXTENSION.length())};
+    }
+
+    private static boolean serve(Path root, Path file) {
+        String[] at = locate(root, file);
+        if (at == null) { return false; }
+        String modid = at[0];
+        String path = at[1];
         String contents = PackManager.get().read(modid, path, PackManager.RECIPES, PackManager.JSON);
         if (contents == null) { return false; }
         ResourceLocation key = new ResourceLocation(modid, path);
@@ -77,24 +83,22 @@ public final class RecipeOverrides {
         }
         IRecipe recipe = build(key, contents, context(modid, root));
         if (recipe == null) { return false; }
-        setOwner(modid);
-        ForgeRegistries.RECIPES.register(recipe.setRegistryName(key));
+        ContentOwners.as(modid, () -> ForgeRegistries.RECIPES.register(recipe.setRegistryName(key)));
         SERVED.add(key);
         overridden++;
         return true;
     }
 
     private static boolean skip(Path root, Path file) {
-        String relative = root.relativize(file).toString().replace('\\', '/');
-        if (!relative.endsWith(EXTENSION) || relative.startsWith("_")) { return false; }
-        String modid = modIdOf(root);
-        if (modid == null) { return false; }
+        String[] at = locate(root, file);
+        if (at == null) { return false; }
+        String modid = at[0];
         JsonObject json = read(file);
         if (json == null) { return false; }
         String missing = findMissing(json, modid);
         if (missing == null) { return false; }
         if (!conditionsPass(json, modid, root)) { return false; }
-        String path = relative.substring(0, relative.length() - EXTENSION.length());
+        String path = at[1];
         ContentLog.LOGGER.debug("Skipping recipe {}:{}, it uses '{}' which is not registered", modid, path, missing);
         skipped++;
         return true;
@@ -208,8 +212,6 @@ public final class RecipeOverrides {
         }
     }
 
-    private static void setOwner(String modid) { Loader.instance().setActiveModContainer(ContentOwners.of(modid)); }
-
     private static JsonContext context(String modid, @Nullable Path root) {
         JsonContext ctx = CONTEXTS.get(modid);
         if (ctx != null) { return ctx; }
@@ -252,8 +254,7 @@ public final class RecipeOverrides {
             if (recipe == null) { return; }
             boolean existing = registry.containsKey(key);
             if (existing && !remove(registry, key)) { return; }
-            setOwner(namespace);
-            registry.register(recipe.setRegistryName(key));
+            ContentOwners.as(namespace, () -> registry.register(recipe.setRegistryName(key)));
             if (existing) { replaced[0]++; }
             else { added[0]++; }
         });

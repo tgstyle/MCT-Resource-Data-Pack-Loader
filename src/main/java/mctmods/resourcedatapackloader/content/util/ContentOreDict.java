@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.content.util;
 
+import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -11,7 +13,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.JsonUtils;
@@ -33,11 +34,7 @@ public final class ContentOreDict {
         applied = true;
         if (!Config.content.oreDictionary) { return; }
         int[] count = new int[2];
-        PackManager.get().forEach(PackManager.OREDICT, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents, count); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in ore dictionary file {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.OREDICT, "ore dictionary file", (key, contents) -> read(key, contents, count));
         if (count[0] > 0) { Summary.info("oredict_extra", "Added " + count[0] + " extra ore dictionary entry/entries"); }
         if (count[1] > 0) { Summary.info("oredict_removed", "Removed " + count[1] + " ore dictionary entry/entries"); }
     }
@@ -97,9 +94,7 @@ public final class ContentOreDict {
             boolean found = false;
             for (Iterator<ItemStack> each = registered.iterator(); each.hasNext();) {
                 ItemStack held = each.next();
-                if (held.getItem() != stack.getItem()) { continue; }
-                boolean wildcard = held.getItemDamage() == OreDictionary.WILDCARD_VALUE || stack.getItemDamage() == OreDictionary.WILDCARD_VALUE;
-                if (!wildcard && held.getItemDamage() != stack.getItemDamage()) { continue; }
+                if (!Stacks.matches(stack, held)) { continue; }
                 if (held.getItemDamage() == OreDictionary.WILDCARD_VALUE && stack.getItemDamage() != OreDictionary.WILDCARD_VALUE) { ContentLog.LOGGER.info("Ore dictionary name '{}' carries {} for every metadata, so {} in {} removes the whole entry", name, held.getItem().getRegistryName(), wanted, key); }
                 unlink(stackToId, held, id);
                 each.remove();

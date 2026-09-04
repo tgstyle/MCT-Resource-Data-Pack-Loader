@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.interfaces;
 
-import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.util.RomanNumerals;
 
@@ -12,7 +11,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public interface IContentItem {
-    ItemDef getDef();
 
     static void potionTooltip(@Nullable ItemVariant value, List<String> tooltip) {
         if (value == null) { return; }

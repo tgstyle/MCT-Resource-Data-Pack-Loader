@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.ModJars;
 
 import net.minecraftforge.common.config.Config.Type;
 import net.minecraftforge.common.config.ConfigManager;
@@ -90,17 +91,11 @@ import java.util.Map;
     private static boolean inModJars() {
         if (MCTMixin.class.getClassLoader().getResource("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
         try {
-            File home = (File) net.minecraftforge.fml.relauncher.FMLInjectionData.data()[6];
-            File[] roots = { new File(home, "mods"), new File(new File(home, "mods"), "1.12.2") };
-            for (File root : roots) {
-                File[] jars = root.listFiles((dir, name) -> name.endsWith(".jar"));
-                if (jars == null) { continue; }
-                for (File jar : jars) {
-                    try (ZipFile zip = new ZipFile(jar)) {
-                        if (zip.getEntry("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
-                    }
-                    catch (Exception unreadable) { ContentLog.LOGGER.debug("Could not open {} while looking for {}", jar.getName(), "CoFH World"); }
+            for (File jar : ModJars.list()) {
+                try (ZipFile zip = new ZipFile(jar)) {
+                    if (zip.getEntry("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
                 }
+                catch (Exception unreadable) { ContentLog.LOGGER.debug("Could not open {} while looking for {}", jar.getName(), "CoFH World"); }
             }
             return false;
         }

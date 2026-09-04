@@ -33,17 +33,7 @@ public class GuiPackOptions extends GuiScreen {
         }
     }
 
-    private boolean changed() {
-        for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) {
-            Map<String, Boolean> was = loaded.get(entry.getKey());
-            if (was == null) { continue; }
-            for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
-                if (!PackOptions.gates(entry.getKey(), option.getKey())) { continue; }
-                if (!option.getValue().equals(was.get(option.getKey()))) { return true; }
-            }
-        }
-        return false;
-    }
+    private boolean changed() { return PackOptions.differs(staged, loaded); }
 
     @Override public void initGui() {
         buttonList.clear();

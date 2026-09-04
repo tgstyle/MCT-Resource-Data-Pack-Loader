@@ -16,10 +16,15 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentTree;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVent;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVines;
+import mctmods.resourcedatapackloader.util.world.Biomes;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,9 +65,10 @@ public final class WorldgenDef {
     public String snap = "";
     public int snapDepth;
     private String token;
-    @Nullable private IBlockState state;
     @Nullable private IContentShape figure;
-    private Set<String> biomeNames = Collections.emptySet();
+    private Set<Biome> biomeSet = Collections.emptySet();
+    private Set<ResourceLocation> caveRegionKeys = Collections.emptySet();
+    private IntSet dimensionSet = IntSets.EMPTY_SET;
     private List<BiomeDictionary.Type> types = Collections.emptyList();
 
     public WorldgenDef(ResourceLocation registryName, ResourceLocation block, int meta, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, List<BlockMatchDef> replaces, List<BlockMatchDef> adjacent, boolean sparse, List<Integer> dimensions, boolean dimensionsAreBlacklist, List<String> biomes, List<String> biomeTypes, boolean biomesAreBlacklist, List<String> requires, boolean retrogen, String retrogenKey, int minDistanceFromSpawn, SpreadDef spread, ShapeDef shape, float leastTemperature, float mostTemperature, float leastRainfall, float mostRainfall, boolean replacesGiven) {
@@ -101,9 +107,14 @@ public final class WorldgenDef {
     public String getToken() { return token; }
 
     public void resolve(List<IBlockState> states, List<Integer> weights, Set<Block> targets, Set<IBlockState> exact, Set<Block> nearby, Set<IBlockState> nearbyExact, Set<Block> surface, @Nullable IBlockState outline, @Nullable IBlockState fill) {
-        this.state = states.isEmpty() ? null : states.get(0);
         this.figure = states.isEmpty() ? null : build(new ContentPlacer(states, weights, targets, exact, nearby, nearbyExact), surface, outline, fill);
-        this.biomeNames = biomes.isEmpty() ? Collections.emptySet() : new HashSet<>(biomes);
+        this.biomeSet = new HashSet<>();
+        for (String name : biomes) {
+            Biome found = Biomes.byName(name);
+            if (found != null) { biomeSet.add(found); }
+        }
+        this.caveRegionKeys = caveRegions.isEmpty() ? Collections.emptySet() : new HashSet<>(caveRegions);
+        this.dimensionSet = dimensions.isEmpty() ? IntSets.EMPTY_SET : new IntOpenHashSet(dimensions);
         if (biomeTypes.isEmpty()) { return; }
         List<BiomeDictionary.Type> resolved = new ArrayList<>(biomeTypes.size());
         for (String name : biomeTypes) { resolved.add(BiomeDictionary.Type.getType(name)); }
@@ -134,11 +145,16 @@ public final class WorldgenDef {
                 && rainfall >= leastRainfall && rainfall <= mostRainfall;
     }
 
-    public Set<String> getBiomeNames() { return biomeNames; }
+    public boolean namesBiome(Biome biome) { return biomeSet.contains(biome); }
+
+    public boolean inCaveRegion(ResourceLocation key) { return caveRegionKeys.contains(key); }
+
+    public boolean allowsDimension(int dimension) {
+        if (dimensionSet.isEmpty()) { return true; }
+        return dimensionSet.contains(dimension) != dimensionsAreBlacklist;
+    }
 
     public List<BiomeDictionary.Type> getTypes() { return types; }
-
-    @Nullable public IBlockState getState() { return state; }
 
     public boolean hasBiomeFilter() { return !biomes.isEmpty() || !biomeTypes.isEmpty(); }
 }

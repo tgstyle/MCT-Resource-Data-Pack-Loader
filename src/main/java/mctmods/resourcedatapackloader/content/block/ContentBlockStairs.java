@@ -5,15 +5,12 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
-import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -40,14 +37,8 @@ public class ContentBlockStairs extends BlockStairs implements IContentBlock {
     }
 
     private static IBlockState model(BlockDef def) {
-        ResourceLocation name = new ResourceLocation(def.modelBlock);
-        if (!ForgeRegistries.BLOCKS.containsKey(name)) {
-            ContentLog.LOGGER.error("Stairs {} name modelBlock {}, which is not registered, using stone", def.registryName, name);
-            return Objects.requireNonNull(Blocks.STONE).getDefaultState();
-        }
-        Block block = ForgeRegistries.BLOCKS.getValue(name);
-        if (block == null) { return Objects.requireNonNull(Blocks.STONE).getDefaultState(); }
-        return ContentStates.of(block, def.modelMeta);
+        Block block = ContentStates.block(def.modelBlock, def.registryName);
+        return block == null ? Objects.requireNonNull(Blocks.STONE).getDefaultState() : ContentStates.of(block, def.modelMeta);
     }
 
     @Override public BlockDef getDef() { return def; }

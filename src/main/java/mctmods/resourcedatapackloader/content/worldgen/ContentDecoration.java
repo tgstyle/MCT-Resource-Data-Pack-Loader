@@ -38,9 +38,9 @@ public final class ContentDecoration implements IContentShape {
         boolean placed = false;
         int placements = size.pick(random);
         for (int attempt = 0; attempt < placements; attempt++) {
-            int x = origin.getX() + scatter(random, scatterX);
-            int z = origin.getZ() + scatter(random, scatterZ);
-            int y = origin.getY() + scatter(random, scatterY);
+            int x = origin.getX() + ContentPlacer.scatter(random, scatterX);
+            int z = origin.getZ() + ContentPlacer.scatter(random, scatterZ);
+            int y = origin.getY() + ContentPlacer.scatter(random, scatterY);
             BlockPos pos = new BlockPos(x, y, z);
             if (!world.isAreaLoaded(pos, 3)) { continue; }
             if (seeSky && !world.canSeeSky(pos)) { continue; }
@@ -57,10 +57,5 @@ public final class ContentDecoration implements IContentShape {
             }
         }
         return placed;
-    }
-
-    private static int scatter(Random random, int bound) {
-        if (bound <= 0) { return 0; }
-        return random.nextInt(bound) - random.nextInt(bound);
     }
 }

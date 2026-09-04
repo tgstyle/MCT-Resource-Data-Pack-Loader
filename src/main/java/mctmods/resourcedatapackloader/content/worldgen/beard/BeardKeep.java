@@ -12,6 +12,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureMineshaftPieces;
 import net.minecraft.world.gen.structure.StructureStrongholdPieces;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -51,11 +52,7 @@ public final class BeardKeep {
         HELD.addAll(spots);
     }
 
-    public static void holdSpot(int x, int y, int z) {
-        Set<Long> spot = new HashSet<>();
-        spot.add(packed(x, y, z));
-        hold(spot);
-    }
+    public static void holdSpot(int x, int y, int z) { hold(Collections.singleton(packed(x, y, z))); }
 
     public static void watch(World world, StructureComponent piece, StructureBoundingBox clip) {
         forget();
@@ -167,20 +164,28 @@ public final class BeardKeep {
     public static void holdLamp(Set<Long> cells) {
         if (cells.isEmpty()) { return; }
         hold(cells);
-        for (long cell : cells) { LAMPS.put(cell & ~((long) 0xFFF << 26), cells); }
+        for (long cell : cells) { LAMPS.put(column(cell), cells); }
     }
 
     @Nullable public static Set<Long> takeLamp(int x, int z) {
         Set<Long> cells = LAMPS.remove(packed(x, 0, z));
         if (cells == null) { return null; }
         for (long cell : cells) {
-            LAMPS.remove(cell & ~((long) 0xFFF << 26));
+            LAMPS.remove(column(cell));
             HELD.remove(cell);
         }
         return cells;
     }
 
-    public static int[] unpacked(long key) { return new int[] { (int) (key >> 38), (int) ((key >> 26) & 0xFFF), (int) (key << 38 >> 38) }; }
+    public static int[] unpacked(long key) { return new int[] { keyX(key), keyY(key), keyZ(key) }; }
+
+    private static int keyX(long key) { return (int) (key >> 38); }
+
+    private static int keyY(long key) { return (int) ((key >> 26) & 0xFFF); }
+
+    private static int keyZ(long key) { return (int) (key << 38 >> 38); }
+
+    private static long column(long key) { return key & ~((long) 0xFFF << 26); }
 
     public static void learn(World world) {
         StructureBoundingBox box = watched;
@@ -197,9 +202,9 @@ public final class BeardKeep {
             int leastZ = Integer.MAX_VALUE;
             int mostZ = Integer.MIN_VALUE;
             for (long key : mine) {
-                int y = (int) ((key >> 26) & 0xFFF);
-                int z = (int) (key << 38 >> 38);
-                int x = (int) (key >> 38);
+                int y = keyY(key);
+                int z = keyZ(key);
+                int x = keyX(key);
                 if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { outside++; }
                 leastY = Math.min(leastY, y);
                 mostY = Math.max(mostY, y);

@@ -63,21 +63,26 @@ public class RenderCubeCache extends ChunkCache {
         int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
         int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
         int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        if (arrayX < 0 || arrayX >= this.cubeArrays.length ||
-                arrayY < 0 || arrayY >= this.cubeArrays[arrayX].length ||
-                arrayZ < 0 || arrayZ >= this.cubeArrays[arrayX][arrayY].length) { return null; }
+        if (!inRange(arrayX, arrayY, arrayZ)) { return null; }
         return this.tileEntities[arrayX][arrayY][arrayZ].get(pos);
+    }
+
+    private boolean inRange(int arrayX, int arrayY, int arrayZ) {
+        return arrayX >= 0 && arrayX < this.cubeArrays.length && arrayY >= 0 && arrayY < this.cubeArrays[arrayX].length && arrayZ >= 0 && arrayZ < this.cubeArrays[arrayX][arrayY].length;
+    }
+
+    @Nullable private ExtendedBlockStorage storageAt(BlockPos pos) {
+        int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
+        int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
+        int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
+        return inRange(arrayX, arrayY, arrayZ) ? this.cubeArrays[arrayX][arrayY][arrayZ] : null;
     }
 
     @Override @Nonnull public IBlockState getBlockState(@Nonnull BlockPos pos) {
         if (world.isOutsideBuildHeight(pos)) { return Blocks.AIR.getDefaultState(); }
-        int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
-        int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
-        int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        if (arrayX < 0 || arrayX >= this.cubeArrays.length ||
-                arrayY < 0 || arrayY >= this.cubeArrays[arrayX].length ||
-                arrayZ < 0 || arrayZ >= this.cubeArrays[arrayX][arrayY].length) { return Blocks.AIR.getDefaultState(); }
-        return this.cubeArrays[arrayX][arrayY][arrayZ].get(blockToLocal(pos.getX()), blockToLocal(pos.getY()), blockToLocal(pos.getZ()));
+        ExtendedBlockStorage cube = storageAt(pos);
+        if (cube == null) { return Blocks.AIR.getDefaultState(); }
+        return cube.get(blockToLocal(pos.getX()), blockToLocal(pos.getY()), blockToLocal(pos.getZ()));
     }
 
     private int getLightForExt(EnumSkyBlock type, BlockPos pos) {
@@ -92,26 +97,14 @@ public class RenderCubeCache extends ChunkCache {
             }
             return max;
         }
-        int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
-        int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
-        int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        if (arrayX < 0 || arrayX >= this.cubeArrays.length ||
-                arrayY < 0 || arrayY >= this.cubeArrays[arrayX].length ||
-                arrayZ < 0 || arrayZ >= this.cubeArrays[arrayX][arrayY].length) { return type.defaultLightValue; }
-        ExtendedBlockStorage cube = this.cubeArrays[arrayX][arrayY][arrayZ];
-        return getRawLight(cube, type, pos);
+        ExtendedBlockStorage cube = storageAt(pos);
+        return cube == null ? type.defaultLightValue : getRawLight(cube, type, pos);
     }
 
     @Override public int getLightFor(@Nonnull EnumSkyBlock type, @Nonnull BlockPos pos) {
         if (world.isOutsideBuildHeight(pos)) { return type.defaultLightValue; }
-        int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
-        int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
-        int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        if (arrayX < 0 || arrayX >= this.cubeArrays.length ||
-                arrayY < 0 || arrayY >= this.cubeArrays[arrayX].length ||
-                arrayZ < 0 || arrayZ >= this.cubeArrays[arrayX][arrayY].length) { return type.defaultLightValue; }
-        ExtendedBlockStorage cube = this.cubeArrays[arrayX][arrayY][arrayZ];
-        return getRawLight(cube, type, pos);
+        ExtendedBlockStorage cube = storageAt(pos);
+        return cube == null ? type.defaultLightValue : getRawLight(cube, type, pos);
     }
 
     private int getRawLight(ExtendedBlockStorage ebs, EnumSkyBlock type, BlockPos pos) {
@@ -121,12 +114,7 @@ public class RenderCubeCache extends ChunkCache {
 
     @SuppressWarnings("deprecation") @Override public boolean isSideSolid(@Nonnull BlockPos pos, @Nonnull EnumFacing side, boolean defaultValue) {
         if (world.isOutsideBuildHeight(pos)) { return defaultValue; }
-        int arrayX = Coords.blockToCube(pos.getX()) - this.chunkX;
-        int arrayY = Coords.blockToCube(pos.getY()) - this.cubeY;
-        int arrayZ = Coords.blockToCube(pos.getZ()) - this.chunkZ;
-        if (arrayX < 0 || arrayX >= this.cubeArrays.length ||
-                arrayY < 0 || arrayY >= this.cubeArrays[arrayX].length ||
-                arrayZ < 0 || arrayZ >= this.cubeArrays[arrayX][arrayY].length) { return defaultValue; }
+        if (storageAt(pos) == null) { return defaultValue; }
         IBlockState state = getBlockState(pos);
         return state.getBlock().isSideSolid(state, this, pos, side);
     }

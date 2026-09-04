@@ -49,7 +49,10 @@ public final class RDPLNetwork {
         return marked == null || !marked;
     }
 
-    public static void sendTo(IMessage message, EntityPlayerMP player) { channel.sendTo(message, player); }
+    public static void sendTo(IMessage message, EntityPlayerMP player) {
+        if (channel == null || vanilla(player)) { return; }
+        channel.sendTo(message, player);
+    }
 
     public static void playIntro(EntityPlayerMP player) {
         if (channel == null || vanilla(player)) { return; }

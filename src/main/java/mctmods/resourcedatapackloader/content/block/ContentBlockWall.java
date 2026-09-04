@@ -1,12 +1,12 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
-import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockWall;
@@ -19,12 +19,10 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.Collections;
@@ -35,14 +33,13 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockWall extends BlockWall implements IContentBlock {
     public static final Set<String> HIDDEN = Collections.singleton(VARIANT.getName());
-    private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
     private final PropertyVariant variant;
 
     public static ContentBlockWall create(BlockDef def) {
-        PROPERTY.set(new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockWall(def, PROPERTY.get()); }
-        finally { PROPERTY.remove(); }
+        BlockVariants.property(new PropertyVariant(ContentSetup.names(def)));
+        try { return new ContentBlockWall(def, BlockVariants.property()); }
+        finally { BlockVariants.end(); }
     }
 
     protected ContentBlockWall(BlockDef def, PropertyVariant property) {
@@ -65,16 +62,11 @@ import javax.annotation.Nullable;
     }
 
     private static Block model(BlockDef def) {
-        ResourceLocation name = new ResourceLocation(def.modelBlock);
-        if (!ForgeRegistries.BLOCKS.containsKey(name)) {
-            ContentLog.LOGGER.error("Wall {} names modelBlock {}, which is not registered, using cobblestone", def.registryName, name);
-            return Objects.requireNonNull(Blocks.COBBLESTONE);
-        }
-        Block block = ForgeRegistries.BLOCKS.getValue(name);
+        Block block = ContentStates.block(def.modelBlock, def.registryName);
         return block == null ? Objects.requireNonNull(Blocks.COBBLESTONE) : block;
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, PROPERTY.get(), UP, NORTH, EAST, WEST, SOUTH, VARIANT); }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, BlockVariants.property(), UP, NORTH, EAST, WEST, SOUTH, VARIANT); }
 
     @Override public BlockDef getDef() { return def; }
 

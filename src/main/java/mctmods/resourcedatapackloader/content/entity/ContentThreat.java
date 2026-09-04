@@ -3,11 +3,10 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
-import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
-import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -31,6 +30,7 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.oredict.OreDictionary;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,8 +47,8 @@ public final class ContentThreat {
     private static final Map<World, Integer> OTHERS = new HashMap<>();
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final Map<Integer, String> SAYS = new HashMap<>();
-    @Nullable private static WorldTemplateDef readFrom;
-    private static boolean read;
+    private static final TemplateMemo<Boolean> LIVE = new TemplateMemo<>();
+    private static int[] scratch = new int[0];
     private static int[] levels = new int[0];
     private static int most;
     private static float spawnRate;
@@ -84,11 +84,9 @@ public final class ContentThreat {
         }
     }
 
-    private static boolean live() {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (read && active == readFrom) { return levels.length > 0 && !ENTRIES.isEmpty(); }
-        readFrom = active;
-        read = true;
+    private static boolean disabled() { return !LIVE.get(ContentThreat::read); }
+
+    private static boolean read() {
         ENTRIES.clear();
         SAYS.clear();
         levels = ContentControl.numbers(ContentControl.SPAWNING, "threatLevels", Config.worldgen.threatLevels);
@@ -112,8 +110,10 @@ public final class ContentThreat {
             try { SAYS.put(Integer.parseInt(parts[0].trim()), parts[1].trim()); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("threatSays entry '{}' names band '{}', which is not a number, skipping it", entry, parts[0].trim()); }
         }
-        if (levels.length > 0 && !ENTRIES.isEmpty()) { ContentLog.LOGGER.debug("The threat level watches {} item entry/entries over {} band(s), scaling hostile spawns by {} and noticing {} block(s) farther at the top", ENTRIES.size(), levels.length, spawnRate, notice); }
-        return levels.length > 0 && !ENTRIES.isEmpty();
+        scratch = new int[ENTRIES.size()];
+        boolean live = levels.length > 0 && !ENTRIES.isEmpty();
+        if (live) { ContentLog.LOGGER.debug("The threat level watches {} item entry/entries over {} band(s), scaling hostile spawns by {} and noticing {} block(s) farther at the top", ENTRIES.size(), levels.length, spawnRate, notice); }
+        return live;
     }
 
     private static void parse(String entry) {
@@ -158,7 +158,7 @@ public final class ContentThreat {
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null || server.getTickCounter() % SAMPLE != 0 || !live()) { return; }
+        if (server == null || server.getTickCounter() % SAMPLE != 0 || disabled()) { return; }
         for (WorldServer world : server.worlds) { sample(world); }
     }
 
@@ -200,7 +200,8 @@ public final class ContentThreat {
     }
 
     private static int score(Entity entity) {
-        int[] held = new int[ENTRIES.size()];
+        int[] held = scratch;
+        Arrays.fill(held, 0);
         if (entity instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) entity;
             if (player.isCreative() || player.isSpectator()) { return 0; }
@@ -215,7 +216,7 @@ public final class ContentThreat {
                 for (int slot = 0; slot < handler.getSlots(); slot++) { tally(held, handler.getStackInSlot(slot)); }
             }
         }
-        else if (entity instanceof EntityLivingBase) { tally(held, ((EntityLivingBase) entity).getEquipmentAndArmor()); }
+        else if (entity instanceof EntityLivingBase) { tally(held, entity.getEquipmentAndArmor()); }
         else { return 0; }
         int score = 0;
         for (int i = 0; i < held.length; i++) {
@@ -249,7 +250,7 @@ public final class ContentThreat {
     }
 
     public static float spawnRate(World world, BlockPos pos) {
-        if (!live() || spawnRate == 1.0F) { return 1.0F; }
+        if (disabled() || spawnRate == 1.0F) { return 1.0F; }
         int band = bandNear(world, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, REACH);
         if (band == 0) { return 1.0F; }
         return 1.0F + (spawnRate - 1.0F) * band / levels.length;
@@ -258,20 +259,22 @@ public final class ContentThreat {
     public static boolean allowed(Entity entity) {
         int least = ContentEntities.threatLeast(entity);
         if (least <= 0) { return true; }
-        if (!live()) { return false; }
+        if (disabled()) { return false; }
         return bandNear(entity.world, entity.posX, entity.posY, entity.posZ, REACH) >= least;
     }
+
+    public static boolean docile(boolean found, @Nullable EntityLivingBase target, Entity mob) { return found && target instanceof EntityPlayer && !provokes((EntityPlayer) target, mob); }
 
     public static boolean provokes(EntityPlayer player, Entity mob) {
         int least = ContentEntities.threatHostile(mob);
         if (least <= 0) { return true; }
-        if (!live()) { return false; }
+        if (disabled()) { return false; }
         Integer band = BANDS.get(player.getUniqueID());
         return band != null && band >= least;
     }
 
     public static double notice(Entity owner, double base) {
-        if (!live() || notice <= 0.0F) { return base; }
+        if (disabled() || notice <= 0.0F) { return base; }
         double reach = base + notice;
         int band = bandNear(owner.world, owner.posX, owner.posY, owner.posZ, reach * reach);
         if (band == 0) { return base; }

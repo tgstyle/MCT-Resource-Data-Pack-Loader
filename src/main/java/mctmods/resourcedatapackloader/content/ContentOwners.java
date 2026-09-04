@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public final class ContentOwners {
     private static final Map<String, ModContainer> CONTAINERS = new HashMap<>();
@@ -29,6 +30,24 @@ public final class ContentOwners {
             ContentLog.LOGGER.error("A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace());
         }
         return true;
+    }
+
+    public static void as(String namespace, Runnable body) {
+        ModContainer previous = Loader.instance().activeModContainer();
+        try {
+            Loader.instance().setActiveModContainer(of(namespace));
+            body.run();
+        }
+        finally { Loader.instance().setActiveModContainer(previous); }
+    }
+
+    public static <T> T as(String namespace, Supplier<T> body) {
+        ModContainer previous = Loader.instance().activeModContainer();
+        try {
+            Loader.instance().setActiveModContainer(of(namespace));
+            return body.get();
+        }
+        finally { Loader.instance().setActiveModContainer(previous); }
     }
 
     public static ModContainer of(String namespace) {

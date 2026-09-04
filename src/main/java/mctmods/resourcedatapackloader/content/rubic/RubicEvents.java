@@ -132,7 +132,6 @@ public class RubicEvents {
     @SubscribeEvent public void onWorldUnload(WorldEvent.Unload event) {
         if (event.getWorld().isRemote || !((IRubicWorld) event.getWorld()).rdpl$isRubicWorld()) { return; }
         IRubicWorld world = (IRubicWorld) event.getWorld();
-        if (!world.rdpl$isRubicWorld()) { return; }
         ICubeIO io = ((ICubeProviderInternal.IServer) world.rdpl$getCubeCache()).getCubeIO();
         try {
             io.close();

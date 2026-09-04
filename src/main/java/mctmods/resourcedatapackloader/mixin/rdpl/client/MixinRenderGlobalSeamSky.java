@@ -1,9 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -40,7 +39,7 @@ import javax.annotation.Nullable;
         Integer under = ContentSeams.below(dimension);
         Integer over = ContentSeams.above(dimension);
         if (under == null && over == null) { return; }
-        int floor = ((IRubicWorld) world).rdpl$isRubicWorld() ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
+        int floor = GenHeights.floor(world, 0);
         double eyeY = viewer.lastTickPosY + (viewer.posY - viewer.lastTickPosY) * partialTicks + viewer.getEyeHeight();
         if (under != null) { rdpl$plane(under, floor - 1 - eyeY, partialTicks); }
         if (over != null) { rdpl$plane(over, RubicWorldControl.generatedCeiling(world) + 1 - eyeY, partialTicks); }

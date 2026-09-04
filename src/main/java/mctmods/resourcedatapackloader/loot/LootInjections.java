@@ -5,11 +5,12 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.ILootTableManager;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootPool;
@@ -24,28 +25,25 @@ import java.util.List;
 import java.util.Map;
 
 public final class LootInjections {
+    private static final Gson GSON = new Gson();
     public static final String TARGET = "target";
     public static final String POOLS = "pools";
     private static final Map<ResourceLocation, List<String>> BY_TABLE = new LinkedHashMap<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private LootInjections() {}
 
     public static void reload() {
         BY_TABLE.clear();
-        generation = PackManager.get().getGeneration();
+        GENERATION.stale();
         if (!Config.data.lootInjections) { return; }
         int[] count = new int[1];
-        PackManager.get().forEach(PackManager.LOOT_INJECTIONS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents, count); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in loot injection {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.LOOT_INJECTIONS, "loot injection", (key, contents) -> read(key, contents, count));
         if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
     }
 
     private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = new Gson().fromJson(contents, JsonObject.class);
+        JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Loot injection {} is empty, ignoring it", key);
             return;
@@ -68,7 +66,7 @@ public final class LootInjections {
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onLootTableLoad(LootTableLoadEvent event) {
         if (!Config.data.lootInjections) { return; }
-        if (generation != PackManager.get().getGeneration()) { reload(); }
+        if (GENERATION.stale()) { reload(); }
         List<String> pools = BY_TABLE.get(event.getName());
         LootTable table = event.getTable();
         if (pools == null || table == null) { return; }

@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.util.interfaces.IBucketSorterEntry;
 import net.minecraft.entity.player.EntityPlayer;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
@@ -91,7 +90,12 @@ import javax.annotation.Nonnull;
         }
     }
 
-    public boolean isEmpty() { return false; }
+    public boolean isEmpty() {
+        for (int size : bucketSizes) {
+            if (size > 0) { return false; }
+        }
+        return true;
+    }
 
     @Override @Nonnull public Iterator<T> iterator() { return iteratorUpToDistance(bucketCount - 1); }
 
@@ -130,13 +134,6 @@ import javax.annotation.Nonnull;
                 }
             }
         };
-    }
-
-    public void removeIf(Predicate<T> predicate) {
-        for (Iterator<T> iterator = this.iterator(); iterator.hasNext();) {
-            T t = iterator.next();
-            if (predicate.test(t)) { iterator.remove(); }
-        }
     }
 
     public void remove(T entry) {

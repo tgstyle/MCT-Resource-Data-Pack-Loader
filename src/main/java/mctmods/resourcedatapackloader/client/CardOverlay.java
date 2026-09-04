@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.network.AbstractClientMessageHandler;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -157,7 +158,7 @@ import javax.annotation.Nullable;
         GlStateManager.popMatrix();
     }
 
-    private static int withAlpha(int rgb, float alpha) { return (Math.round(Math.max(0.05F, Math.min(1.0F, alpha)) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
+    private static int withAlpha(int rgb, float alpha) { return (Math.round(MathHelper.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
 
     private static int darker(int rgb) { return ((rgb >> 16 & 0xFF) / 2 << 16) | ((rgb >> 8 & 0xFF) / 2 << 8) | ((rgb & 0xFF) / 2); }
 

@@ -9,6 +9,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
 public final class EntityAISleepByDay extends EntityAIBase {
+    private static final int RETRY = 40;
+    private static final int TRIES = 3;
     private final EntityCreature mob;
     private BlockPos shade;
     private boolean settled;
@@ -25,7 +27,8 @@ public final class EntityAISleepByDay extends EntityAIBase {
             shade = feet;
             return true;
         }
-        for (int tries = 0; tries < 10; tries++) {
+        if (mob.ticksExisted % RETRY != 0) { return false; }
+        for (int tries = 0; tries < TRIES; tries++) {
             Vec3d spot = RandomPositionGenerator.findRandomTarget(mob, 8, 3);
             if (spot == null) { continue; }
             BlockPos at = new BlockPos(spot);

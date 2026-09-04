@@ -39,10 +39,8 @@ import net.minecraft.world.gen.structure.WoodlandMansion;
     @Shadow @Final private World world;
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
-        if (!ContentVoidWorld.appliesTo(world)) { return; }
-        Chunk chunk = new Chunk(world, new ChunkPrimer(), x, z);
-        chunk.generateSkylightMap();
-        cir.setReturnValue(chunk);
+        Chunk chunk = ContentVoidWorld.emptyChunk(world, x, z);
+        if (chunk != null) { cir.setReturnValue(chunk); }
     }
 
     @Inject(method = "replaceBiomeBlocks", at = @At("RETURN")) private void rdpl$packStone(int x, int z, ChunkPrimer primer, Biome[] biomesIn, CallbackInfo ci) { ContentBiomes.replaceStone(primer, biomesIn); }
@@ -79,6 +77,6 @@ import net.minecraft.world.gen.structure.WoodlandMansion;
         if (!mapFeaturesEnabled || !ContentBeard.wanted()) { return; }
         MapGenStructure[] generators = { villageGenerator, strongholdGenerator, mineshaftGenerator, oceanMonumentGenerator, woodlandMansionGenerator };
         String[] names = { "villages", "strongholds", "mineshafts", "monuments", "mansions" };
-        ContentBeard.apply(world, (ChunkGeneratorOverworld) (Object) this, generators, names, heightMap, x / 4, z / 4);
+        ContentBeard.apply(world, generators, names, heightMap, x / 4, z / 4);
     }
 }

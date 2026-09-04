@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
@@ -25,10 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow public EntityPlayerMP player;
 
     @Redirect(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;getBuildLimit()I"))
-    private int rdpl$buildCeiling(MinecraftServer server) {
-        World world = player.world;
-        return ((IRubicWorld) world).rdpl$isRubicWorld() ? ((IRubicWorld) world).rdpl$getMaxHeight() : server.getBuildLimit();
-    }
+    private int rdpl$buildCeiling(MinecraftServer server) { return GenHeights.ceiling(player.world, server.getBuildLimit()); }
 
     @Inject(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/EntityPlayerMP;markPlayerActive()V", shift = At.Shift.AFTER), cancellable = true)
     private void rdpl$buildFloor(CPacketPlayerTryUseItemOnBlock packetIn, CallbackInfo ci) {

@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
@@ -17,6 +18,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.*;
 import javax.annotation.Nullable;
@@ -307,14 +309,7 @@ public final class CityGrowth {
         ContentLog.LOGGER.debug("The village at chunk {}, {} builds its {} road(s) before its plots, so a plot settles onto ground the roads have already laid", held.getChunkPosX(), held.getChunkPosZ(), sorted.size());
     }
 
-    private static boolean metAtEnd(World world, StructureStart held, StructureComponent piece, boolean alongX, int end, int acrossLeast, int acrossMost) {
-        if (metIn(held, piece, alongX, end, acrossLeast, acrossMost)) { return true; }
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village == held) { continue; }
-            if (metIn(village, piece, alongX, end, acrossLeast, acrossMost)) { return true; }
-        }
-        return false;
-    }
+    private static boolean metAtEnd(World world, StructureStart held, StructureComponent piece, boolean alongX, int end, int acrossLeast, int acrossMost) { return ContentStructureSearch.anyVillage(world, held, village -> metIn(village, piece, alongX, end, acrossLeast, acrossMost)); }
 
     private static boolean metIn(StructureStart village, StructureComponent piece, boolean alongX, int end, int acrossLeast, int acrossMost) {
         for (StructureComponent other : village.getComponents()) {
@@ -341,12 +336,7 @@ public final class CityGrowth {
     }
 
     @Nullable private static List<StructureComponent> yielding(World world, StructureStart held, StructureComponent piece, StructureBoundingBox bulb) {
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village == held) { continue; }
-            for (StructureComponent other : village.getComponents()) {
-                if (other.getBoundingBox().intersectsWith(bulb.minX, bulb.minZ, bulb.maxX, bulb.maxZ)) { return null; }
-            }
-        }
+        if (ContentStructureSearch.anyOtherOver(world, held.getComponents(), bulb)) { return null; }
         List<StructureComponent> plots = new ArrayList<>();
         for (StructureComponent other : held.getComponents()) {
             if (other == piece || !other.getBoundingBox().intersectsWith(bulb.minX, bulb.minZ, bulb.maxX, bulb.maxZ)) { continue; }
@@ -382,13 +372,7 @@ public final class CityGrowth {
         for (StructureComponent other : held.getComponents()) {
             if (other != plot && other.getBoundingBox().intersectsWith(tried.minX, tried.minZ, tried.maxX, tried.maxZ)) { return false; }
         }
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village == held) { continue; }
-            for (StructureComponent other : village.getComponents()) {
-                if (other.getBoundingBox().intersectsWith(tried.minX, tried.minZ, tried.maxX, tried.maxZ)) { return false; }
-            }
-        }
-        return true;
+        return !ContentStructureSearch.anyOtherOver(world, held.getComponents(), tried);
     }
 
     public static boolean bulbWide(StructureComponent piece) {
@@ -411,21 +395,14 @@ public final class CityGrowth {
         return true;
     }
 
-    private static boolean clearFor(World world, StructureStart held, StructureComponent piece, int discX, int discZ, int radius) {
-        if (nearDisc(held, piece, discX, discZ, radius)) { return false; }
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village == held) { continue; }
-            if (nearDisc(village, piece, discX, discZ, radius)) { return false; }
-        }
-        return true;
-    }
+    private static boolean clearFor(World world, StructureStart held, StructureComponent piece, int discX, int discZ, int radius) { return !ContentStructureSearch.anyVillage(world, held, village -> nearDisc(village, piece, discX, discZ, radius)); }
 
     private static boolean nearDisc(StructureStart village, StructureComponent piece, int discX, int discZ, int radius) {
         for (StructureComponent other : village.getComponents()) {
             if (other == piece) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
-            int nearX = Math.max(held.minX, Math.min(discX, held.maxX));
-            int nearZ = Math.max(held.minZ, Math.min(discZ, held.maxZ));
+            int nearX = MathHelper.clamp(discX, held.minX, held.maxX);
+            int nearZ = MathHelper.clamp(discZ, held.minZ, held.maxZ);
             int away = (nearX - discX) * (nearX - discX) + (nearZ - discZ) * (nearZ - discZ);
             if (away <= (radius + 1) * (radius + 1)) { return true; }
         }
@@ -441,6 +418,7 @@ public final class CityGrowth {
         long best = Long.MIN_VALUE;
         long bestAway = Long.MAX_VALUE;
         int reach = march();
+        int spacing = spacing();
         for (StructureComponent piece : components) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = piece.getBoundingBox();
@@ -448,29 +426,29 @@ public final class CityGrowth {
             int line = alongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
             for (int sign = -1; sign <= 1; sign += 2) {
                 int edge = alongX ? (sign < 0 ? road.minX : road.maxX) : (sign < 0 ? road.minZ : road.maxZ);
-                for (int away = ContentBeard.plazaReach() + 4; away <= Math.max(48, spacing() + 16); away += 8) {
+                for (int away = ContentBeard.plazaReach() + 4; away <= Math.max(48, spacing + 16); away += 8) {
                     int siteX = alongX ? edge + sign * away : line;
                     int siteZ = alongX ? line : edge + sign * away;
                     long dx = siteX - cx;
                     long dz = siteZ - cz;
                     long far = dx * dx + dz * dz;
                     if (far > (long) reach * reach || far >= bestAway) { continue; }
-                    long packed = ((long) siteX << 32) ^ (siteZ & 0xFFFFFFFFL);
-                    if (tried.contains(packed) || crowdedAt(components, siteX, siteZ, spacing())) { continue; }
+                    long packed = Longs.pack(siteX, siteZ);
+                    if (tried.contains(packed) || crowdedAt(components, siteX, siteZ, spacing)) { continue; }
                     bestAway = far;
                     best = packed;
                 }
             }
         }
         if (best != Long.MIN_VALUE) { return best; }
-        int step = Math.max(8, spacing() / 2);
+        int step = Math.max(8, spacing / 2);
         for (int dx = -reach; dx <= reach; dx += step) {
             for (int dz = -reach; dz <= reach; dz += step) {
                 if (dx == 0 && dz == 0) { continue; }
                 long away = (long) dx * dx + (long) dz * dz;
                 if (away > (long) reach * reach || away >= bestAway) { continue; }
-                long packed = ((long) (cx + dx) << 32) ^ ((cz + dz) & 0xFFFFFFFFL);
-                if (tried.contains(packed) || crowdedAt(components, cx + dx, cz + dz, spacing())) { continue; }
+                long packed = Longs.pack(cx + dx, cz + dz);
+                if (tried.contains(packed) || crowdedAt(components, cx + dx, cz + dz, spacing)) { continue; }
                 bestAway = away;
                 best = packed;
             }
@@ -502,14 +480,9 @@ public final class CityGrowth {
                 return false;
             }
         }
-        for (StructureStart neighbor : ContentStructureSearch.villageStarts(world)) {
-            if (neighbor.getComponents() == components || !neighbor.getBoundingBox().intersectsWith(square)) { continue; }
-            for (StructureComponent other : neighbor.getComponents()) {
-                if (other.getBoundingBox().intersectsWith(square.minX, square.minZ, square.maxX, square.maxZ)) {
-                    settledNeighbored++;
-                    return false;
-                }
-            }
+        if (ContentStructureSearch.anyOtherOver(world, components, square)) {
+            settledNeighbored++;
+            return false;
         }
         List<StructureVillagePieces.PieceWeight> weights = StructureVillagePieces.getStructureVillageWeightedPieceList(rand, sizeFor);
         StructureVillagePieces.Start district = new StructureVillagePieces.Start(world.getBiomeProvider(), 0, rand, wellX, wellZ, weights, sizeFor);

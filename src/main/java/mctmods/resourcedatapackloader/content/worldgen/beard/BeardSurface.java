@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorOverworld;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -16,8 +17,9 @@ import net.minecraft.world.gen.ChunkGeneratorSettings;
 import net.minecraft.world.gen.FlatGeneratorInfo;
 import net.minecraft.world.gen.FlatLayerInfo;
 import net.minecraft.world.gen.IChunkGenerator;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -27,10 +29,11 @@ public final class BeardSurface {
     private static final Map<World, ChunkGeneratorOverworld> SAMPLERS = new WeakHashMap<>();
     private static final Set<World> UNSAMPLED = Collections.newSetFromMap(new WeakHashMap<>());
     private static final Map<World, Integer> FLATS = new WeakHashMap<>();
-    private static final Map<World, Map<Long, Integer>> TOPS = new WeakHashMap<>();
+    private static final Map<World, Long2IntOpenHashMap> TOPS = new WeakHashMap<>();
+    private static final int NO_TOP = Integer.MIN_VALUE;
     private static final ThreadLocal<Scratch> SCRATCH = ThreadLocal.withInitial(Scratch::new);
-    private static World lastWorld = null;
-    private static Map<Long, Integer> lastTops = null;
+    private static WeakReference<World> lastWorld = new WeakReference<>(null);
+    private static Long2IntOpenHashMap lastTops = null;
 
     private BeardSurface() {}
 
@@ -42,12 +45,16 @@ public final class BeardSurface {
         private final Biome[] window = new Biome[25];
     }
 
-    private static long topsKey(int blockX, int blockZ) { return ((long) (blockX >> 2) << 32) | ((blockZ >> 2) & 0xFFFFFFFFL); }
+    private static long topsKey(int blockX, int blockZ) { return Longs.pack(blockX >> 2, blockZ >> 2); }
 
-    private static Map<Long, Integer> topsFor(World world) {
-        if (world == lastWorld) { return lastTops; }
-        lastTops = TOPS.computeIfAbsent(world, held -> new HashMap<>());
-        lastWorld = world;
+    private static Long2IntOpenHashMap topsFor(World world) {
+        if (world == lastWorld.get()) { return lastTops; }
+        lastTops = TOPS.computeIfAbsent(world, held -> {
+            Long2IntOpenHashMap made = new Long2IntOpenHashMap();
+            made.defaultReturnValue(NO_TOP);
+            return made;
+        });
+        lastWorld = new WeakReference<>(world);
         return lastTops;
     }
 
@@ -68,18 +75,18 @@ public final class BeardSurface {
             Integer flat = FLATS.get(world);
             return flat != null ? flat : -1;
         }
-        Integer known = knownTop(world, blockX, blockZ);
-        return known != null ? known : keepTop(world, blockX, blockZ, surface(sampled, world, blockX, blockZ));
+        int known = knownTop(world, blockX, blockZ);
+        return known != NO_TOP ? known : keepTop(world, blockX, blockZ, surface(sampled, world, blockX, blockZ));
     }
-    @Nullable private static Integer knownTop(World world, int blockX, int blockZ) { return topsFor(world).get(topsKey(blockX, blockZ)); }
+    private static int knownTop(World world, int blockX, int blockZ) { return topsFor(world).get(topsKey(blockX, blockZ)); }
 
     private static int keepTop(World world, int blockX, int blockZ, int made) {
         topsFor(world).put(topsKey(blockX, blockZ), made);
         return made;
     }
     public static int surfaceAt(World world, ChunkGeneratorOverworld sampled, Biome[] region, int originX, int originZ, int size, int blockX, int blockZ) {
-        Integer known = knownTop(world, blockX, blockZ);
-        if (known != null) { return known; }
+        int known = knownTop(world, blockX, blockZ);
+        if (known != NO_TOP) { return known; }
         Biome[] window = SCRATCH.get().window;
         int nx = blockX >> 2;
         int nz = blockZ >> 2;
@@ -123,15 +130,16 @@ public final class BeardSurface {
         return sampled;
     }
     private static int surface(ChunkGeneratorOverworld generator, World world, int blockX, int blockZ) {
-        Biome[] biomes = world.getBiomeProvider().getBiomesForGeneration(SCRATCH.get().window, (blockX >> 2) - 2, (blockZ >> 2) - 2, 5, 5);
-        return surface(generator, biomes, blockX, blockZ);
+        Scratch scratch = SCRATCH.get();
+        Biome[] biomes = world.getBiomeProvider().getBiomesForGeneration(scratch.window, (blockX >> 2) - 2, (blockZ >> 2) - 2, 5, 5);
+        return surface(generator, biomes, blockX, blockZ, scratch);
     }
-    private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ) {
+    private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ) { return surface(generator, biomes, blockX, blockZ, SCRATCH.get()); }
+    private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ, Scratch scratch) {
         IChunkGeneratorOverworld inside = (IChunkGeneratorOverworld) generator;
         ChunkGeneratorSettings settings = inside.rdpl$settings();
         int nx = blockX >> 2;
         int nz = blockZ >> 2;
-        Scratch scratch = SCRATCH.get();
         double[] depth = inside.rdpl$depthNoise().generateNoiseOctaves(scratch.depth, nx, nz, 1, 1, settings.depthNoiseScaleX, settings.depthNoiseScaleZ, settings.depthNoiseScaleExponent);
         float coordinate = settings.coordinateScale;
         float height = settings.heightScale;

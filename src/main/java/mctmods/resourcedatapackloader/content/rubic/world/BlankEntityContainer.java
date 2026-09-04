@@ -20,12 +20,7 @@ public class BlankEntityContainer extends EntityContainer {
 
     @Override public boolean remove(@Nonnull Entity entity) { return false; }
 
-    @Override public void clear() {
-    }
-
     @Override @Nonnull public Collection<Entity> getEntities() { return Collections.emptyList(); }
-
-    @Override public int size() { return 0; }
 
     @Override public boolean needsSaving(boolean flag, long time, boolean isModified) { return false; }
 

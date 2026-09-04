@@ -22,16 +22,14 @@ public final class CityMapDef {
     }
 
     public final ResourceLocation key;
-    public final String name;
     public final int cell;
     public final Map<Character, Cell> palette;
     public final String[] rows;
     public final int cellsWide;
     public final int cellsDeep;
 
-    public CityMapDef(ResourceLocation key, String name, int cell, Map<Character, Cell> palette, String[] rows) {
+    public CityMapDef(ResourceLocation key, int cell, Map<Character, Cell> palette, String[] rows) {
         this.key = key;
-        this.name = name;
         this.cell = cell;
         this.palette = Collections.unmodifiableMap(palette);
         this.rows = rows;
@@ -52,8 +50,7 @@ public final class CityMapDef {
         for (int z = 0; z < cellsDeep; z++) {
             for (int x = 0; x < cellsWide; x++) { grid[z][x] = x < rows[z].length() ? kindOf(rows[z].charAt(x)) : Kind.OPEN; }
         }
-        int quarter = turn == Rotation.CLOCKWISE_90 ? 1 : turn == Rotation.CLOCKWISE_180 ? 2 : turn == Rotation.COUNTERCLOCKWISE_90 ? 3 : 0;
-        for (int i = 0; i < quarter; i++) { grid = clockwise(grid); }
+        for (int i = quarters(turn); i > 0; i--) { grid = clockwise(grid); }
         return grid;
     }
 
@@ -62,10 +59,11 @@ public final class CityMapDef {
         for (int z = 0; z < cellsDeep; z++) {
             for (int x = 0; x < cellsWide; x++) { marks[z][x] = x < rows[z].length() ? rows[z].charAt(x) : '.'; }
         }
-        int quarter = turn == Rotation.CLOCKWISE_90 ? 1 : turn == Rotation.CLOCKWISE_180 ? 2 : turn == Rotation.COUNTERCLOCKWISE_90 ? 3 : 0;
-        for (int i = 0; i < quarter; i++) { marks = clockwise(marks); }
+        for (int i = quarters(turn); i > 0; i--) { marks = clockwise(marks); }
         return marks;
     }
+
+    private static int quarters(Rotation turn) { return turn == Rotation.CLOCKWISE_90 ? 1 : turn == Rotation.CLOCKWISE_180 ? 2 : turn == Rotation.COUNTERCLOCKWISE_90 ? 3 : 0; }
 
     private static Kind[][] clockwise(Kind[][] grid) {
         int deep = grid.length;

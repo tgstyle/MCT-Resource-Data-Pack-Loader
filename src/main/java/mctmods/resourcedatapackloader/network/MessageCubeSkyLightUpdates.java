@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.util.Bits;
 import mctmods.resourcedatapackloader.util.CubePos;
@@ -66,6 +67,10 @@ public class MessageCubeSkyLightUpdates implements IMessage {
             }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
             Cube cube = cubeCache.getCube(message.getCubePos());
+            if (cube instanceof BlankCube) {
+                Rubic.LOGGER.error("Ignored a sky light update to blank cube {}", message.getCubePos());
+                return;
+            }
             if (message.getData() == null) {
                 cube.setStorage(Chunk.NULL_BLOCK_STORAGE);
                 return;

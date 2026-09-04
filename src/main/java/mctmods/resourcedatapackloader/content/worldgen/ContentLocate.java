@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.world.SavedData;
+import mctmods.resourcedatapackloader.util.Longs;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -12,9 +15,7 @@ public class ContentLocate extends WorldSavedData {
     private static final String NAME = "RDPLLocate";
     private NBTTagCompound placed = new NBTTagCompound();
 
-    public ContentLocate() { super(NAME); }
-
-    @SuppressWarnings("unused") public ContentLocate(String name) { super(name); }
+    public ContentLocate(String name) { super(name); }
 
     @Override public void readFromNBT(NBTTagCompound nbt) { placed = nbt.getCompoundTag("Placed"); }
 
@@ -23,14 +24,7 @@ public class ContentLocate extends WorldSavedData {
         return nbt;
     }
 
-    private static ContentLocate of(World world) {
-        ContentLocate held = (ContentLocate) world.getPerWorldStorage().getOrLoadData(ContentLocate.class, NAME);
-        if (held == null) {
-            held = new ContentLocate();
-            world.getPerWorldStorage().setData(NAME, held);
-        }
-        return held;
-    }
+    private static ContentLocate of(World world) { return SavedData.get(world.getPerWorldStorage(), ContentLocate.class, NAME, ContentLocate::new); }
 
     public static void record(World world, String name, BlockPos at) {
         ContentLocate held = of(world);
@@ -65,15 +59,15 @@ public class ContentLocate extends WorldSavedData {
     private static long[] readLongs(NBTTagCompound from, String name) {
         int[] halves = from.getIntArray(name);
         long[] out = new long[halves.length / 2];
-        for (int i = 0; i < out.length; i++) { out[i] = ((long) halves[i * 2] << 32) | (halves[i * 2 + 1] & 0xFFFFFFFFL); }
+        for (int i = 0; i < out.length; i++) { out[i] = Longs.pack(halves[i * 2], halves[i * 2 + 1]); }
         return out;
     }
 
     private static void writeLongs(NBTTagCompound into, String name, long[] values) {
         int[] halves = new int[values.length * 2];
         for (int i = 0; i < values.length; i++) {
-            halves[i * 2] = (int) (values[i] >> 32);
-            halves[i * 2 + 1] = (int) values[i];
+            halves[i * 2] = Longs.high(values[i]);
+            halves[i * 2 + 1] = Longs.low(values[i]);
         }
         into.setIntArray(name, halves);
     }

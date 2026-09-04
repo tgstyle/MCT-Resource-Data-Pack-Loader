@@ -50,7 +50,7 @@ public final class EntityAIPatrol extends EntityAIBase {
         if (mob.getAttackTarget() != null) { return false; }
         decide();
         if (leads()) { return true; }
-        leader = leaderNear();
+        if (leader == null || !leader.isEntityAlive()) { leader = leaderNear(); }
         if (leader == null) { mob.getEntityData().setBoolean(LEADER, true); }
         return true;
     }
@@ -63,7 +63,6 @@ public final class EntityAIPatrol extends EntityAIBase {
     }
 
     @Override public void resetTask() {
-        leader = null;
         waypoint = null;
         mob.getNavigator().clearPath();
     }

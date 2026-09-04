@@ -1,15 +1,18 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.JsonUtils;
@@ -38,8 +41,9 @@ public final class BlockDrops {
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
+    private static final Gson GSON = new Gson();
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private BlockDrops() {}
 
@@ -57,16 +61,14 @@ public final class BlockDrops {
 
     private static final class Drop {
         final ItemStack item;
-        final int least;
-        final int most;
+        final AmountDef count;
         final float chance;
         final int fortune;
         final String silkTouch;
 
-        Drop(ItemStack item, int least, int most, float chance, int fortune, String silkTouch) {
+        Drop(ItemStack item, AmountDef count, float chance, int fortune, String silkTouch) {
             this.item = item;
-            this.least = least;
-            this.most = most;
+            this.count = count;
             this.chance = chance;
             this.fortune = fortune;
             this.silkTouch = silkTouch;
@@ -75,19 +77,15 @@ public final class BlockDrops {
 
     public static void reload() {
         BY_BLOCK.clear();
-        generation = PackManager.get().getGeneration();
+        GENERATION.stale();
         if (!Config.data.blockDrops) { return; }
         int[] count = new int[1];
-        PackManager.get().forEach(PackManager.BLOCK_DROPS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents, count); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block drops {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.BLOCK_DROPS, "block drops", (key, contents) -> read(key, contents, count));
         if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)"); }
     }
 
     private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = new Gson().fromJson(contents, JsonObject.class);
+        JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Block drops {} is empty, ignoring it", key);
             return;
@@ -149,12 +147,12 @@ public final class BlockDrops {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
         }
-        return new Drop(item, least, most, Math.max(0.0F, Math.min(1.0F, JsonUtils.getFloat(json, CHANCE, 1.0F))), Math.max(0, JsonUtils.getInt(json, FORTUNE, 0)), silkTouch);
+        return new Drop(item, new AmountDef(least, most), MathHelper.clamp(JsonUtils.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, JsonUtils.getInt(json, FORTUNE, 0)), silkTouch);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onHarvest(BlockEvent.HarvestDropsEvent event) {
         if (!Config.data.blockDrops) { return; }
-        if (generation != PackManager.get().getGeneration()) { reload(); }
+        if (GENERATION.stale()) { reload(); }
         Block block = event.getState().getBlock();
         List<Rule> rules = BY_BLOCK.get(block);
         if (rules == null) { return; }
@@ -167,7 +165,7 @@ public final class BlockDrops {
                 if (ONLY.equals(drop.silkTouch) && !event.isSilkTouching()) { continue; }
                 if (NEVER.equals(drop.silkTouch) && event.isSilkTouching()) { continue; }
                 if (drop.chance < 1.0F && random.nextFloat() >= drop.chance) { continue; }
-                int count = drop.least + random.nextInt(drop.most - drop.least + 1);
+                int count = drop.count.pick(random);
                 if (drop.fortune > 0 && event.getFortuneLevel() > 0) { count += random.nextInt(drop.fortune * event.getFortuneLevel() + 1); }
                 if (count <= 0) { continue; }
                 ItemStack stack = drop.item.copy();

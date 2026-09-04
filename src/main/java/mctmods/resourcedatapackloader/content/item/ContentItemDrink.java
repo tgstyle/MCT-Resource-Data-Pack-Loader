@@ -36,8 +36,6 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Override public ItemDef getDef() { return def; }
-
     @Nullable private ItemVariant variant(ItemStack stack) { return def.byMeta.get(stack.getMetadata()); }
 
     @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {

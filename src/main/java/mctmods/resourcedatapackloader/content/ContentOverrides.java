@@ -11,6 +11,8 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IPotionType;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableList;
@@ -19,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFire;
 import net.minecraft.block.SoundType;
@@ -51,15 +54,14 @@ public final class ContentOverrides {
     private static final Map<Item, FoodSnapshot> FOODS = new IdentityHashMap<>();
     private static final Map<PotionType, ImmutableList<PotionEffect>> TYPES = new IdentityHashMap<>();
     private static final Map<Item, OverrideDef.FoodDef> EDIBLE = new IdentityHashMap<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentOverrides() {}
 
     @Nullable public static OverrideDef.FoodDef edible(Item item) { return EDIBLE.isEmpty() ? null : EDIBLE.get(item); }
 
     public static void reload() {
-        if (generation == PackManager.get().getGeneration()) { return; }
-        generation = PackManager.get().getGeneration();
+        if (!GENERATION.stale()) { return; }
         restoreAll();
         DEFS.clear();
         EDIBLE.clear();
@@ -110,7 +112,7 @@ public final class ContentOverrides {
                 stringOrNull(json, "containerItem"),
                 json.has("effects") ? effects(source, json) : null,
                 json.has("food") ? food(source, JsonUtils.getJsonObject(json, "food")) : null,
-                requires(json));
+                Json.strings(json, "requires"));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
@@ -138,8 +140,8 @@ public final class ContentOverrides {
         if (def.hardness != null) { block.setHardness(def.hardness); }
         if (def.resistance != null) { block.setResistance(def.resistance); }
         if (def.slipperiness != null) { block.setDefaultSlipperiness(def.slipperiness); }
-        if (def.light != null) { block.setLightLevel(Math.max(0, Math.min(15, def.light)) / 15.0F); }
-        if (def.lightOpacity != null) { block.setLightOpacity(Math.max(0, Math.min(255, def.lightOpacity))); }
+        if (def.light != null) { block.setLightLevel(MathHelper.clamp(def.light, 0, 15) / 15.0F); }
+        if (def.lightOpacity != null) { block.setLightOpacity(MathHelper.clamp(def.lightOpacity, 0, 255)); }
         if (def.soundType != null) { inside.rdpl$setSoundType(ContentTypes.soundType(def.soundType, inside.rdpl$getSoundType(), def.source.toString())); }
         if (def.harvestTool != null) { block.setHarvestLevel(def.harvestTool, def.harvestToolLevel == null ? 0 : def.harvestToolLevel); }
         if (def.flammability != null) {
@@ -156,7 +158,7 @@ public final class ContentOverrides {
         Item item = ForgeRegistries.ITEMS.getValue(def.target);
         if (item == null) { return false; }
         if (!ITEMS.containsKey(item)) { ITEMS.put(item, ItemSnapshot.of(item)); }
-        if (def.maxStackSize != null) { item.setMaxStackSize(Math.max(1, Math.min(64, def.maxStackSize))); }
+        if (def.maxStackSize != null) { item.setMaxStackSize(MathHelper.clamp(def.maxStackSize, 1, 64)); }
         if (def.maxDamage != null) { item.setMaxDamage(Math.max(0, def.maxDamage)); }
         if (def.containerItem != null) {
             ItemStack container = ContentStacks.parse(def.source, def.containerItem, 1);
@@ -253,12 +255,6 @@ public final class ContentOverrides {
         return Collections.unmodifiableList(effects);
     }
 
-    private static List<String> requires(JsonObject json) {
-        if (!json.has("requires")) { return Collections.emptyList(); }
-        List<String> values = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, "requires")) { values.add(element.getAsString()); }
-        return Collections.unmodifiableList(values);
-    }
 
     @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? JsonUtils.getFloat(json, key) : null; }
 

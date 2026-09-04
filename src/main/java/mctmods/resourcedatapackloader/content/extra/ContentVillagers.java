@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.VillagerDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -16,13 +17,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
@@ -45,17 +43,11 @@ public final class ContentVillagers {
         if (loaded) { return wanted(); }
         loaded = true;
         if (!Config.registersToClients() || !Config.content.villagers) { return false; }
-        PackManager.get().forEach(PackManager.VILLAGERS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            if (ContentOwners.reserved(key)) { return; }
-            try { readVillager(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in villager file {}, ignoring it", key, ex); }
+        Json.eachFile(PackManager.VILLAGERS, "villager file", (key, contents) -> {
+            if (!ContentOwners.reserved(key)) { readVillager(key, contents); }
         });
-        PackManager.get().forEach(PackManager.TRADES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            if (ContentOwners.reserved(key)) { return; }
-            try { readTrades(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in trade file {}, ignoring it", key, ex); }
+        Json.eachFile(PackManager.TRADES, "trade file", (key, contents) -> {
+            if (!ContentOwners.reserved(key)) { readTrades(key, contents); }
         });
         if (!VILLAGERS.isEmpty()) { Summary.info("villagers", "Loaded " + VILLAGERS.size() + " villager profession(s) from packs"); }
         if (!TRADES.isEmpty()) { Summary.info("trades", "Loaded " + TRADES.size() + " villager trade(s) from packs"); }
@@ -129,14 +121,11 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.debug("Villager profession {} is already registered, leaving it alone", def.registryName);
                 continue;
             }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
+            ContentOwners.as(def.registryName.getNamespace(), () -> {
                 VillagerRegistry.VillagerProfession profession = new VillagerRegistry.VillagerProfession(def.registryName.toString(), def.texture, def.zombieTexture);
                 for (String career : def.careers) { new VillagerRegistry.VillagerCareer(profession, career); }
                 event.getRegistry().register(profession);
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
             count++;
         }
         if (count > 0) { Summary.info("content_villagers", "Registered " + count + " villager profession(s) from packs"); }

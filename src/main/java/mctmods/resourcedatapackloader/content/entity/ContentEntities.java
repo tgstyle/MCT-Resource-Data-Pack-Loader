@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
+import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAICharge;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIFleeWhenHurt;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIPounce;
@@ -23,9 +24,11 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityVillager;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
@@ -89,8 +92,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Random;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -100,6 +101,7 @@ public final class ContentEntities {
     private static final List<String> PLAYER_ONLY = Collections.singletonList("minecraft:player");
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> NAMES = new LinkedHashMap<>();
+    private static final Map<String, SoundEvent> SOUNDS = new LinkedHashMap<>();
     private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
     private static boolean loaded;
 
@@ -109,18 +111,14 @@ public final class ContentEntities {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.entities) { return false; }
-        PackManager.get().forEach(PackManager.ENTITIES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                EntityVariantDef def = ContentParser.entityVariant(key, contents);
-                if (def == null) { return; }
-                if (missing(def)) {
-                    ContentLog.LOGGER.debug("Entity variant {} needs {}, which is not here, so it is left out", key, def.requires);
-                    return;
-                }
-                DEFS.put(key, def);
+        Json.eachFile(PackManager.ENTITIES, "entity file", (key, contents) -> {
+            EntityVariantDef def = ContentParser.entityVariant(key, contents);
+            if (def == null) { return; }
+            if (missing(def)) {
+                ContentLog.LOGGER.debug("Entity variant {} needs {}, which is not here, so it is left out", key, def.requires);
+                return;
             }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in entity file {}, ignoring it", key, ex); }
+            DEFS.put(key, def);
         });
         if (!DEFS.isEmpty()) { Summary.info("entities", "Loaded " + DEFS.size() + " entity variant(s) from packs"); }
         return !DEFS.isEmpty();
@@ -132,7 +130,7 @@ public final class ContentEntities {
         int network = 0;
         for (Map.Entry<ResourceLocation, EntityVariantDef> entry : DEFS.entrySet()) {
             EntityVariantDef def = entry.getValue();
-            EntityEntry base = ForgeRegistries.ENTITIES.containsKey(def.base) ? ForgeRegistries.ENTITIES.getValue(def.base) : null;
+            EntityEntry base = Registries.find(ForgeRegistries.ENTITIES, def.base);
             if (base == null) {
                 ContentLog.LOGGER.error("Entity variant {} is based on {}, which nothing registers, leaving it out", entry.getKey(), def.base);
                 continue;
@@ -170,9 +168,11 @@ public final class ContentEntities {
         if (def == null) { return null; }
         String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : def.deathSound;
         if (name.isEmpty()) { return null; }
+        if (SOUNDS.containsKey(name)) { return SOUNDS.get(name); }
         ResourceLocation key = new ResourceLocation(name);
-        SoundEvent event = ForgeRegistries.SOUND_EVENTS.containsKey(key) ? ForgeRegistries.SOUND_EVENTS.getValue(key) : null;
+        SoundEvent event = Registries.find(ForgeRegistries.SOUND_EVENTS, key);
         if (event == null) { ContentLog.LOGGER.error("Entity variant {} names sound {}, which nothing registers", def.registryName, key); }
+        SOUNDS.put(name, event);
         return event;
     }
 
@@ -280,9 +280,8 @@ public final class ContentEntities {
     @Nullable public static EnumCreatureAttribute creatureAttribute(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.creatureAttribute.isEmpty()) { return null; }
-        for (EnumCreatureAttribute value : EnumCreatureAttribute.values()) {
-            if (value.name().equalsIgnoreCase(def.creatureAttribute)) { return value; }
-        }
+        EnumCreatureAttribute value = Enums.byName(EnumCreatureAttribute.class, def.creatureAttribute);
+        if (value != null) { return value; }
         ContentLog.LOGGER.error("Entity variant {} names creature attribute '{}', which is not one of undefined, undead, arthropod or illager", def.registryName, def.creatureAttribute);
         return null;
     }
@@ -301,6 +300,8 @@ public final class ContentEntities {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         return def != null && def.hideHeld;
     }
+
+    public static float channel(int tint, int shift) { return (tint >> shift & 255) / 255.0F; }
 
     public static int tint(Entity entity, String part) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
@@ -322,11 +323,11 @@ public final class ContentEntities {
 
     private static boolean swapped(EntityJoinWorldEvent event, EntityVariantDef def) {
         if (def.becomes.isEmpty() || SWAPPING.get() == Boolean.TRUE) { return false; }
-        PickDef chosen = pick(def.becomes, event.getWorld().rand);
-        if (chosen == null || chosen.name.equals(def.registryName.toString())) { return false; }
-        ResourceLocation wanted = new ResourceLocation(chosen.name);
+        String chosen = PickDef.pick(def.becomes, event.getWorld().rand, null);
+        if (chosen == null || chosen.equals(def.registryName.toString())) { return false; }
+        ResourceLocation wanted = new ResourceLocation(chosen);
         if (!EntityList.isRegistered(wanted)) {
-            ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.registryName, chosen.name);
+            ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.registryName, chosen);
             return false;
         }
         Entity was = event.getEntity();
@@ -343,17 +344,6 @@ public final class ContentEntities {
         return true;
     }
 
-    @Nullable private static PickDef pick(List<PickDef> pool, Random random) {
-        int total = 0;
-        for (PickDef entry : pool) { total += entry.weight; }
-        if (total <= 0) { return null; }
-        int roll = random.nextInt(total);
-        for (PickDef entry : pool) {
-            roll -= entry.weight;
-            if (roll < 0) { return entry; }
-        }
-        return null;
-    }
 
     private static void apply(Entity entity, EntityVariantDef def) {
         if (!def.name.isEmpty() && !entity.hasCustomName()) {
@@ -396,11 +386,8 @@ public final class ContentEntities {
 
     private static void attributes(EntityLivingBase living, EntityVariantDef def) {
         for (Map.Entry<String, Double> entry : def.attributes.entrySet()) {
-            IAttribute attribute = attribute(entry.getKey());
-            if (attribute == null) {
-                ContentLog.LOGGER.error("Entity variant {} names attribute '{}', which is not one of maxHealth, movementSpeed, attackDamage, knockbackResistance, followRange or armor", def.registryName, entry.getKey());
-                continue;
-            }
+            IAttribute attribute = ContentAttributes.find(entry.getKey(), def.registryName);
+            if (attribute == null) { continue; }
             AbstractAttributeMap map = living.getAttributeMap();
             IAttributeInstance instance = map.getAttributeInstanceByName(attribute.getName());
             if (instance == null) { instance = map.registerAttribute(attribute); }
@@ -498,6 +485,7 @@ public final class ContentEntities {
     private static final int ROUSED = 60;
     private static final String BORN = "rdplBorn";
     private static final String CALM = "rdplCalmAt";
+    private static final long CALM_STEP = 10L;
     private static final String ROLLED = "rdplBabyRolled";
     private static final String YOUNG = "rdplBabyYoung";
     private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -505,7 +493,8 @@ public final class ContentEntities {
     private static boolean stillRoused(EntityLiving living) {
         long now = living.world.getTotalWorldTime();
         if (living.getAttackTarget() != null) {
-            living.getEntityData().setLong(CALM, now + ROUSED);
+            NBTTagCompound held = living.getEntityData();
+            if (held.getLong(CALM) + CALM_STEP < now + ROUSED) { held.setLong(CALM, now + ROUSED); }
             return true;
         }
         return living.getEntityData().getLong(CALM) > now;
@@ -537,7 +526,7 @@ public final class ContentEntities {
 
     private static void profession(EntityVillager villager, EntityVariantDef def) {
         ResourceLocation key = new ResourceLocation(def.profession);
-        VillagerRegistry.VillagerProfession found = ForgeRegistries.VILLAGER_PROFESSIONS.containsKey(key) ? ForgeRegistries.VILLAGER_PROFESSIONS.getValue(key) : null;
+        VillagerRegistry.VillagerProfession found = Registries.find(ForgeRegistries.VILLAGER_PROFESSIONS, key);
         if (found == null) {
             ContentLog.LOGGER.error("Entity variant {} names profession {}, which nothing registers", def.registryName, key);
             return;
@@ -602,7 +591,7 @@ public final class ContentEntities {
     private static void effects(EntityLivingBase living, EntityVariantDef def) {
         for (Map.Entry<String, Integer> entry : def.effects.entrySet()) {
             ResourceLocation name = new ResourceLocation(entry.getKey());
-            Potion potion = ForgeRegistries.POTIONS.containsKey(name) ? ForgeRegistries.POTIONS.getValue(name) : null;
+            Potion potion = Registries.find(ForgeRegistries.POTIONS, name);
             if (potion == null) {
                 ContentLog.LOGGER.error("Entity variant {} wants effect {}, which nothing registers", def.registryName, name);
                 continue;
@@ -629,7 +618,7 @@ public final class ContentEntities {
         String named = def.equipment.get("mainhand");
         if (named == null) { return ItemStack.EMPTY; }
         ResourceLocation name = new ResourceLocation(named);
-        Item item = ForgeRegistries.ITEMS.containsKey(name) ? ForgeRegistries.ITEMS.getValue(name) : null;
+        Item item = Registries.find(ForgeRegistries.ITEMS, name);
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 
@@ -641,7 +630,7 @@ public final class ContentEntities {
                 continue;
             }
             ResourceLocation name = new ResourceLocation(entry.getValue());
-            Item item = ForgeRegistries.ITEMS.containsKey(name) ? ForgeRegistries.ITEMS.getValue(name) : null;
+            Item item = Registries.find(ForgeRegistries.ITEMS, name);
             if (item == null) {
                 ContentLog.LOGGER.error("Entity variant {} gives {}, which nothing registers", def.registryName, name);
                 continue;
@@ -707,36 +696,15 @@ public final class ContentEntities {
         }
     }
 
-    @Nullable private static IAttribute attribute(String name) {
-        switch (name.trim().toLowerCase(Locale.ROOT)) {
-            case "maxhealth": return SharedMonsterAttributes.MAX_HEALTH;
-            case "movementspeed": return SharedMonsterAttributes.MOVEMENT_SPEED;
-            case "attackdamage": return SharedMonsterAttributes.ATTACK_DAMAGE;
-            case "knockbackresistance": return SharedMonsterAttributes.KNOCKBACK_RESISTANCE;
-            case "followrange": return SharedMonsterAttributes.FOLLOW_RANGE;
-            case "armor": return SharedMonsterAttributes.ARMOR;
-            default: return null;
-        }
-    }
 
-    @Nullable private static EntityEquipmentSlot slot(String name) {
-        for (EntityEquipmentSlot slot : EntityEquipmentSlot.values()) {
-            if (slot.getName().equalsIgnoreCase(name.trim())) { return slot; }
-        }
-        return null;
-    }
+    @Nullable private static EntityEquipmentSlot slot(String name) { return Enums.byName(EntityEquipmentSlot.class, name); }
 
-    @Nullable private static net.minecraft.entity.EnumCreatureType creatureType(String name) {
-        for (net.minecraft.entity.EnumCreatureType type : net.minecraft.entity.EnumCreatureType.values()) {
-            if (type.name().equalsIgnoreCase(name.trim())) { return type; }
-        }
-        return null;
-    }
+    @Nullable private static net.minecraft.entity.EnumCreatureType creatureType(String name) { return Enums.byName(net.minecraft.entity.EnumCreatureType.class, name); }
 
     @Nullable private static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
         ResourceLocation location = new ResourceLocation(name);
         if ("minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return EntityPlayer.class; }
-        EntityEntry entry = ForgeRegistries.ENTITIES.containsKey(location) ? ForgeRegistries.ENTITIES.getValue(location) : null;
+        EntityEntry entry = Registries.find(ForgeRegistries.ENTITIES, location);
         if (entry == null || !EntityLivingBase.class.isAssignableFrom(entry.getEntityClass())) {
             ContentLog.LOGGER.error("Entity variant {} wants to attack '{}', which is not a living entity that is registered", def.registryName, name);
             return null;

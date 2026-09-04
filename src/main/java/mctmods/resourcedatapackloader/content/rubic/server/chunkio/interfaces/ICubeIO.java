@@ -63,6 +63,5 @@ public interface ICubeIO extends Flushable, AutoCloseable, IThreadedFileIO {
 
 		public NBTTagCompound getNbt() { return nbt; }
 
-		public void setNbt(NBTTagCompound nbt) { this.nbt = nbt; }
 	}
 }

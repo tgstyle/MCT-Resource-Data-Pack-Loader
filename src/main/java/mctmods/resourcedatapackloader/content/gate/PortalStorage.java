@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.util.world.SavedData;
 import mctmods.resourcedatapackloader.content.block.ContentBlockPortal;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -70,12 +71,7 @@ public final class PortalStorage extends WorldSavedData {
 
     private static PortalStorage get(World world) {
         MapStorage storage = world.getPerWorldStorage();
-        PortalStorage data = (PortalStorage) storage.getOrLoadData(PortalStorage.class, NAME);
-        if (data == null) {
-            data = new PortalStorage(NAME);
-            storage.setData(NAME, data);
-        }
-        return data;
+        return SavedData.get(storage, PortalStorage.class, NAME, PortalStorage::new);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {

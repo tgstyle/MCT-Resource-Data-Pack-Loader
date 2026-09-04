@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.server.MinecraftServer;
@@ -28,7 +29,7 @@ import javax.annotation.Nullable;
 public class ContentStructureMaps {
     private static final Map<String, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new HashSet<>();
-    private static final Rotation[] TURNS = { Rotation.NONE, Rotation.CLOCKWISE_90, Rotation.CLOCKWISE_180, Rotation.COUNTERCLOCKWISE_90 };
+    private static final Rotation[] TURNS = Rotation.values();
     private static final int OFFSET = 8;
     private static final int FLAGS = 2;
     private static boolean loaded = false;
@@ -36,8 +37,7 @@ public class ContentStructureMaps {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        PackManager.get().forEach(PackManager.STRUCTUREMAPS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.STRUCTUREMAPS, "structure map", (key, contents) -> {
             StructureMapDef def = ContentParser.structureMap(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
@@ -139,8 +139,8 @@ public class ContentStructureMaps {
                         continue;
                     }
                     BlockPos span = piece.transformedSize(turn);
-                    int backX = turn == Rotation.CLOCKWISE_90 || turn == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0;
-                    int backZ = turn == Rotation.CLOCKWISE_180 || turn == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0;
+                    int backX = ContentImprint.backX(turn, span);
+                    int backZ = ContentImprint.backZ(turn, span);
                     PlacementSettings settings = new PlacementSettings();
                     settings.setRotation(turn);
                     settings.setRandom(new Random(cellSeed));

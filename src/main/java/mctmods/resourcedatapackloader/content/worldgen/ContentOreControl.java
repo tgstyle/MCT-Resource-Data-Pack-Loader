@@ -6,22 +6,20 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.world.gen.feature.WorldGenerator;
 import net.minecraftforge.event.terraingen.OreGenEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import java.io.File;
-import java.security.CodeSource;
 import java.util.*;
 
 public final class ContentOreControl {
     public static final String MINECRAFT = "minecraft";
     public static final String UNKNOWN = "unknown";
-    private static final Map<Class<?>, String> OWNERS = new HashMap<>();
+    private static final TemplateMemo<int[]> SCOPE = new TemplateMemo<>();
+    private static final TemplateMemo<Boolean> SCOPE_BLACKLIST = new TemplateMemo<>();
     private static final ThreadLocal<String> PACK = new ThreadLocal<>();
     private static final Blocked BLOCKED = new Blocked();
     private static final Set<String> REPORTED = new HashSet<>();
@@ -49,9 +47,9 @@ public final class ContentOreControl {
     }
 
     private static boolean outsideScope(int dimension) {
-        int[] allowed = ContentControl.numbers(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions);
+        int[] allowed = SCOPE.get(() -> ContentControl.numbers(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions));
         if (allowed.length == 0) { return false; }
-        return listed(allowed, dimension) == ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist);
+        return listed(allowed, dimension) == SCOPE_BLACKLIST.get(() -> ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist));
     }
 
     private static boolean listed(int[] allowed, int dimension) {
@@ -111,24 +109,6 @@ public final class ContentOreControl {
         String pack = PACK.get();
         if (pack != null) { return pack; }
         if (generator == null) { return UNKNOWN; }
-        Class<?> type = generator.getClass();
-        String cached = OWNERS.get(type);
-        if (cached != null) { return cached; }
-        String owner = resolve(type);
-        OWNERS.put(type, owner);
-        return owner;
-    }
-
-    private static String resolve(Class<?> type) {
-        if (type.getName().startsWith("net.minecraft.")) { return MINECRAFT; }
-        CodeSource source = type.getProtectionDomain() == null ? null : type.getProtectionDomain().getCodeSource();
-        if (source == null || source.getLocation() == null) { return UNKNOWN; }
-        String location = source.getLocation().getPath();
-        for (ModContainer container : Loader.instance().getModList()) {
-            File file = container.getSource();
-            if (file == null) { continue; }
-            if (location.endsWith(file.getName()) || location.contains(file.getName())) { return container.getModId().toLowerCase(Locale.ROOT); }
-        }
-        return UNKNOWN;
+        return ContentGeneratorControl.owner(generator.getClass());
     }
 }

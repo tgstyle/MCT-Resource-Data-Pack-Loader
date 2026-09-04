@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.content.util;
 
+import mctmods.resourcedatapackloader.content.types.ContentTypes;
+
 import com.google.gson.JsonObject;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.JsonUtils;
 import javax.annotation.Nullable;
 
@@ -26,15 +29,11 @@ public final class TintFactory {
     public static int opaque(int color) { return color >>> 24 == 0 ? color | OPAQUE : color; }
 
     @Nullable public static Integer color(String written) {
-        String text = written.trim();
-        if (text.startsWith("#")) { text = text.substring(1); }
-        if (text.startsWith("0x") || text.startsWith("0X")) { text = text.substring(2); }
-        if (text.length() != 6 && text.length() != 8) { return null; }
-        try {
-            long value = Long.parseLong(text, 16);
-            return text.length() == 6 ? (int) (value | 0xFF000000L) : (int) value;
-        }
-        catch (NumberFormatException ex) { return null; }
+        int digits = ContentTypes.hexDigits(written);
+        if (digits != 6 && digits != 8) { return null; }
+        Long value = ContentTypes.hex(written);
+        if (value == null) { return null; }
+        return digits == 6 ? (int) (value | 0xFF000000L) : value.intValue();
     }
 
     public int shade(int color) {
@@ -46,6 +45,6 @@ public final class TintFactory {
         int starts = (from >> shift) & 0xFF;
         int ends = (to >> shift) & 0xFF;
         int made = (int) Math.floor(starts + level * (ends - starts) / 255.0 + 0.5);
-        return Math.max(0, Math.min(255, made));
+        return MathHelper.clamp(made, 0, 255);
     }
 }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.village;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.RecurrentPlots;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Rotation;
@@ -74,23 +75,12 @@ public final class RecurrentVillages {
             if (!ContentBeard.wanted()) { return null; }
             Map<String, Integer> capped = LIMITS.get(random);
             List<RecurrentPlots.Plot> plots = new ArrayList<>();
-            int total = 0;
             for (RecurrentPlots.Plot plot : RecurrentPlots.plots()) {
                 if (!RecurrentPlots.fits(plot.structure, plot.generation, start.biome)) { continue; }
                 if (capped != null && standing(placed, plot.structure) >= capped.getOrDefault(plot.structure, 0)) { continue; }
                 plots.add(plot);
-                total += plot.weight;
             }
-            if (total <= 0) { return null; }
-            RecurrentPlots.Plot chosen = null;
-            int roll = random.nextInt(total);
-            for (RecurrentPlots.Plot plot : plots) {
-                roll -= plot.weight;
-                if (roll < 0) {
-                    chosen = plot;
-                    break;
-                }
-            }
+            RecurrentPlots.Plot chosen = WeightedPicks.pick(plots, plot -> plot.weight, random);
             if (chosen == null) { return null; }
             int[] size = RecurrentPlots.sizeOf(chosen.structure);
             if (size == null) { return null; }

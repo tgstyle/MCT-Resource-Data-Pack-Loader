@@ -8,6 +8,8 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.world.BiomeNames;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -34,6 +36,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBiomeControl {
+    private static final TemplateMemo<Boolean> DIMENSION_BLACKLIST = new TemplateMemo<>();
     private static final Blocked BLOCKED = new Blocked();
     private static final Set<Biome> SUBSTITUTED = new HashSet<>();
     private static final Map<BiomeProvider, Integer> DIMENSIONS = Collections.synchronizedMap(new IdentityHashMap<>());
@@ -142,7 +145,7 @@ public final class ContentBiomeControl {
             }
             return false;
         }
-        return allowed.contains(dimension) == ContentControl.flag(ContentControl.BIOMES, "blockBiomeDimensionsAreBlacklist", Config.worldgen.blockBiomeDimensionsAreBlacklist);
+        return allowed.contains(dimension) == DIMENSION_BLACKLIST.get(() -> ContentControl.flag(ContentControl.BIOMES, "blockBiomeDimensionsAreBlacklist", Config.worldgen.blockBiomeDimensionsAreBlacklist));
     }
 
     @Nullable private static Integer dimensionOf(BiomeProvider provider) {
@@ -197,7 +200,7 @@ public final class ContentBiomeControl {
 
     private static boolean allowed(Biome biome, Set<String> whitelist, Set<String> names) {
         ResourceLocation name = biome.getRegistryName();
-        if (!names.isEmpty() && named(biome, name, names) == ContentControl.flag(ContentControl.BIOMES, "biomeNamesAreBlacklist", Config.worldgen.biomeNamesAreBlacklist)) { return false; }
+        if (!names.isEmpty() && BiomeNames.named(biome, names) == ContentControl.flag(ContentControl.BIOMES, "biomeNamesAreBlacklist", Config.worldgen.biomeNamesAreBlacklist)) { return false; }
         if (name == null) { return true; }
         if (!ContentControl.flag(ContentControl.BIOMES, "blockBiomes", Config.worldgen.blockBiomes)) { return true; }
         return whitelist.contains(name.getNamespace().toLowerCase(Locale.ROOT));
@@ -208,11 +211,6 @@ public final class ContentBiomeControl {
         if (held != null) { return held; }
         ResourceLocation name = biome.getRegistryName();
         return name == null ? "unknown" : name.getPath();
-    }
-
-    private static boolean named(Biome biome, @Nullable ResourceLocation name, Set<String> names) {
-        if (names.contains(shownName(biome).toLowerCase(Locale.ROOT))) { return true; }
-        return name != null && names.contains(name.toString().toLowerCase(Locale.ROOT));
     }
 
     private static void count(Biome biome) {

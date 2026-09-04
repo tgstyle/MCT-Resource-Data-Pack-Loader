@@ -1,18 +1,19 @@
 package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.util.JsonUtils;
@@ -35,11 +36,7 @@ public final class ContentMaterials {
         if (loaded) { return; }
         loaded = true;
         if (!Config.registersToClients()) { return; }
-        PackManager.get().forEach(PackManager.MATERIALS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in material file {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.MATERIALS, "material file", ContentMaterials::read);
         if (!DEFS.isEmpty()) { Summary.info("materials", "Loaded " + DEFS.size() + " material definition(s)"); }
     }
 
@@ -75,6 +72,7 @@ public final class ContentMaterials {
     public static void register() {
         load();
         for (MaterialDef def : DEFS.values()) {
+            if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
             Item.ToolMaterial tool = EnumHelper.addToolMaterial(def.name, def.harvestLevel, def.durability, def.efficiency, def.damage, def.enchantability);
             ItemArmor.ArmorMaterial armor = EnumHelper.addArmorMaterial(def.name, def.armorTexture, def.durability / 10, def.reduction, def.enchantability, sound(def.equipSound), def.toughness);
             def.resolve(tool, armor, net.minecraft.item.ItemStack.EMPTY);
@@ -89,8 +87,6 @@ public final class ContentMaterials {
         }
     }
 
-    public static boolean isEmpty() { return DEFS.isEmpty(); }
-
     @Nullable public static MaterialDef find(String name, Object context) {
         if (name == null || name.isEmpty()) { return null; }
         MaterialDef def = DEFS.get(name);
@@ -101,6 +97,6 @@ public final class ContentMaterials {
 
     @Nullable private static SoundEvent sound(String name) {
         ResourceLocation location = new ResourceLocation(name);
-        return ForgeRegistries.SOUND_EVENTS.containsKey(location) ? ForgeRegistries.SOUND_EVENTS.getValue(location) : null;
+        return Registries.find(ForgeRegistries.SOUND_EVENTS, location);
     }
 }

@@ -105,15 +105,16 @@ public class RubicClientEvents {
 
         @Override protected int getHoverState(boolean mouseOver) { return 0; }
 
+        private void slideTo(int mouseX) {
+            this.sliderValue = MathHelper.clamp((float) (mouseX - (this.x + 4)) / (float) (this.width - 8), 0.0F, 1.0F);
+            setVerticalViewDistance(Math.round(MathUtil.lerp(this.sliderValue, 2, MAX_VIEW_DIST)));
+            this.sliderValue = MathUtil.unlerp(Config.client.verticalCubeLoadDistance, 2, MAX_VIEW_DIST);
+            this.displayString = this.createDisplayString();
+        }
+
         @Override protected void mouseDragged(@Nonnull Minecraft mc, int mouseX, int mouseY) {
             if (this.visible) {
-                if (this.dragging) {
-                    this.sliderValue = (float) (mouseX - (this.x + 4)) / (float) (this.width - 8);
-                    this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0F, 1.0F);
-                    setVerticalViewDistance(Math.round(MathUtil.lerp(this.sliderValue, 2, MAX_VIEW_DIST)));
-                    this.sliderValue = MathUtil.unlerp(Config.client.verticalCubeLoadDistance, 2, MAX_VIEW_DIST);
-                    this.displayString = this.createDisplayString();
-                }
+                if (this.dragging) { slideTo(mouseX); }
                 mc.getTextureManager().bindTexture(BUTTON_TEXTURES);
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 this.drawTexturedModalRect(this.x + (int) (this.sliderValue * (float) (this.width - 8)), this.y, 0, 66, 4, 20);
@@ -123,11 +124,7 @@ public class RubicClientEvents {
 
         @Override public boolean mousePressed(@Nonnull Minecraft mc, int mouseX, int mouseY) {
             if (super.mousePressed(mc, mouseX, mouseY)) {
-                this.sliderValue = (float) (mouseX - (this.x + 4)) / (float) (this.width - 8);
-                this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0F, 1.0F);
-                setVerticalViewDistance(Math.round(MathUtil.lerp(this.sliderValue, 2, MAX_VIEW_DIST)));
-                this.sliderValue = MathUtil.unlerp(Config.client.verticalCubeLoadDistance, 2, MAX_VIEW_DIST);
-                this.displayString = this.createDisplayString();
+                slideTo(mouseX);
                 this.dragging = true;
                 return true;
             }

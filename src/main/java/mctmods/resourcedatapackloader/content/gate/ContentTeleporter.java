@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registries;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -207,7 +208,7 @@ public final class ContentTeleporter implements ITeleporter {
     private static Block block(String name) {
         if (name.isEmpty()) { return Blocks.STONE; }
         ResourceLocation key = new ResourceLocation(name);
-        Block found = ForgeRegistries.BLOCKS.containsKey(key) ? ForgeRegistries.BLOCKS.getValue(key) : null;
+        Block found = Registries.find(ForgeRegistries.BLOCKS, key);
         if (found != null) { return found; }
         ContentLog.LOGGER.error("Portal platform block {} is not registered, using stone", name);
         return Blocks.STONE;

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
+import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
@@ -44,10 +45,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlock extends Block implements IContentBlock {
-    private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
-    private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
     private final PropertyVariant variant;
+    private final AmountDef expDrop;
 
     public static ContentBlock create(BlockDef def) {
         beginConstruction(def);
@@ -55,17 +55,15 @@ import javax.annotation.Nullable;
         finally { endConstruction(); }
     }
 
-    protected static void beginConstruction(BlockDef def) { CONSTRUCTING.set(def); }
+    protected static void beginConstruction(BlockDef def) { BlockVariants.begin(def); }
 
-    protected static void endConstruction() {
-        CONSTRUCTING.remove();
-        PROPERTY.remove();
-    }
+    protected static void endConstruction() { BlockVariants.end(); }
 
     protected ContentBlock(BlockDef def) {
         super(def.material, def.mapColor);
         this.def = def;
-        this.variant = PROPERTY.get();
+        this.variant = BlockVariants.property();
+        this.expDrop = def.expDropMax <= def.expDropMin ? AmountDef.of(def.expDropMin) : new AmountDef(def.expDropMin, def.expDropMax);
         ContentSetup.apply(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultSlipperiness(def.slipperiness);
@@ -73,8 +71,7 @@ import javax.annotation.Nullable;
     }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() {
-        PropertyVariant property = new PropertyVariant(ContentSetup.names(CONSTRUCTING.get()));
-        PROPERTY.set(property);
+        PropertyVariant property = BlockVariants.fresh();
         return new BlockStateContainer(this, property);
     }
 
@@ -86,7 +83,7 @@ import javax.annotation.Nullable;
         return super.canSustainPlant(state, world, pos, direction, plantable);
     }
 
-    private BlockDef def() { return def == null ? CONSTRUCTING.get() : def; }
+    private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
@@ -115,10 +112,7 @@ import javax.annotation.Nullable;
         return def.at(getMetaFromState(state)).resistance / def.explosionResistanceDivisor;
     }
 
-    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) {
-        if (def.expDropMax <= def.expDropMin) { return Math.max(0, def.expDropMin); }
-        return def.expDropMin + RANDOM.nextInt(def.expDropMax - def.expDropMin + 1);
-    }
+    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return Math.max(0, expDrop.pick(RANDOM)); }
 
     @Override public boolean canSilkHarvest(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull net.minecraft.entity.player.EntityPlayer player) {
         return def.silkHarvest;

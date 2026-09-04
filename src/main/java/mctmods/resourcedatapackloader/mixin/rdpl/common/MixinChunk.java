@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
-import mctmods.resourcedatapackloader.util.CubePos;
 import static mctmods.resourcedatapackloader.util.Coords.blockToCube;
 import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
 
@@ -157,9 +156,14 @@ public abstract class MixinChunk {
 
     @Shadow public abstract byte[] getBiomeArray();
 
-    @Shadow public abstract int getLightFor(EnumSkyBlock type, BlockPos pos);
-
     @Unique @SuppressWarnings("unchecked") public <T extends World & IRubicWorldInternal> T rdpl$getRubicWorld() { return (T) this.world; }
+
+    @Unique private boolean rdpl$cubeLoadedAt(int blockY) {
+        ICube cube = ((IColumn) this).getLoadedCube(blockToCube(blockY));
+        return cube != null && cube.isCubeLoaded();
+    }
+
+    @Unique private int rdpl$clampCubeY(int cubeY) { return MathHelper.clamp(cubeY, blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()), blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight())); }
 
     @Unique private boolean rdpl$compatGenerating() { return rdpl$compatGenerationPrimer != null; }
 
@@ -341,8 +345,7 @@ public abstract class MixinChunk {
     @Redirect(method = "getBlockLightOpacity(III)I", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD))
     private boolean getBlockLightOpacity_isChunkLoadedCubeRedirect(Chunk chunk, int x, int y, int z) {
         if (!rdpl$isColumn) { return loaded; }
-        ICube cube = ((IColumn) this).getLoadedCube(blockToCube(y));
-        return cube != null && cube.isCubeLoaded();
+        return rdpl$cubeLoadedAt(y);
     }
 
     @ModifyConstant(method = "getBlockState(III)Lnet/minecraft/block/state/IBlockState;",
@@ -400,7 +403,7 @@ public abstract class MixinChunk {
             opcode = Opcodes.GETFIELD, args = "array=set"
     ), cancellable = true)
     private void setBlockState_Rubic_EBSSetInject(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir) {
-        if (rdpl$isColumn && !rdpl$compatGenerating() && rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(CubePos.fromBlockCoords(pos)) == null) { cir.setReturnValue(null); }
+        if (rdpl$isColumn && !rdpl$compatGenerating() && rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(blockToCube(pos.getX()), blockToCube(pos.getY()), blockToCube(pos.getZ())) == null) { cir.setReturnValue(null); }
     }
 
     @Redirect(method = "setBlockState", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;dirty:Z", opcode = Opcodes.PUTFIELD)) private void setIsModifiedFromSetBlockState_Field(Chunk chunk, boolean isModifiedIn, BlockPos pos, IBlockState state) {
@@ -576,14 +579,12 @@ public abstract class MixinChunk {
             at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD))
     private boolean addTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, TileEntity tileEntityIn) {
         if (!rdpl$isColumn) { return loaded; }
-        ICube cube = ((IColumn) this).getLoadedCube(blockToCube(tileEntityIn.getPos().getY()));
-        return cube != null && cube.isCubeLoaded();
+        return rdpl$cubeLoadedAt(tileEntityIn.getPos().getY());
     }
 
     @Redirect(method = "removeTileEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean removeTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, BlockPos pos) {
         if (!rdpl$isColumn) { return loaded; }
-        ICube cube = ((IColumn) this).getLoadedCube(blockToCube(pos.getY()));
-        return cube != null && cube.isCubeLoaded();
+        return rdpl$cubeLoadedAt(pos.getY());
     }
 
     @Inject(method = "onLoad", at = @At("HEAD"), cancellable = true) private void onChunkLoad_Rubic(CallbackInfo cbi) {
@@ -608,12 +609,8 @@ public abstract class MixinChunk {
         cbi.cancel();
         int minY = MathHelper.floor((aabb.minY - World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
         int maxY = MathHelper.floor((aabb.maxY + World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
-        minY = MathHelper.clamp(minY,
-                blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()),
-                blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight()));
-        maxY = MathHelper.clamp(maxY,
-                blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()),
-                blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight()));
+        minY = rdpl$clampCubeY(minY);
+        maxY = rdpl$clampCubeY(maxY);
         for (Cube cube : rdpl$cubeMap.cubes(minY, maxY)) {
             if (cube.getEntityContainer().getEntitySet().isEmpty()) { continue; }
             for (Entity entity : cube.getEntityContainer().getEntitySet()) {
@@ -636,12 +633,8 @@ public abstract class MixinChunk {
         cbi.cancel();
         int minY = MathHelper.floor((aabb.minY - World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
         int maxY = MathHelper.floor((aabb.maxY + World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
-        minY = MathHelper.clamp(minY,
-                blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()),
-                blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight()));
-        maxY = MathHelper.clamp(maxY,
-                blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()),
-                blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight()));
+        minY = rdpl$clampCubeY(minY);
+        maxY = rdpl$clampCubeY(maxY);
         for (Cube cube : rdpl$cubeMap.cubes(minY, maxY)) {
             for (T t : cube.getEntityContainer().getEntitySet().getByClass(entityClass)) {
                 if (t.getEntityBoundingBox().intersects(aabb) && (filter == null || filter.apply(t))) { listToFill.add(t); }
@@ -712,8 +705,7 @@ public abstract class MixinChunk {
 
     @Redirect(method = "removeInvalidTileEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean removeInvalidTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, BlockPos pos) {
         if (!rdpl$isColumn) { return loaded; }
-        ICube cube = ((IColumn) this).getLoadedCube(blockToCube(pos.getY()));
-        return cube != null && cube.isCubeLoaded();
+        return rdpl$cubeLoadedAt(pos.getY());
     }
 
     @Inject(method = "enqueueRelightChecks", at = @At(value = "HEAD"), cancellable = true) private void enqueueRelightChecks_Rubic(CallbackInfo cbi) {

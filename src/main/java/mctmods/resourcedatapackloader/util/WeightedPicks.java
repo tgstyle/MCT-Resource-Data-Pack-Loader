@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 
+import java.util.function.ToIntFunction;
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -66,6 +68,18 @@ public final class WeightedPicks {
             weights.add(weight);
             total += weight;
         }
+    }
+
+    @Nullable public static <T> T pick(Collection<T> choices, ToIntFunction<T> weight, Random random) {
+        int total = 0;
+        for (T choice : choices) { total += Math.max(0, weight.applyAsInt(choice)); }
+        if (total <= 0) { return null; }
+        int roll = random.nextInt(total);
+        for (T choice : choices) {
+            roll -= Math.max(0, weight.applyAsInt(choice));
+            if (roll < 0) { return choice; }
+        }
+        return null;
     }
 
     @Nullable public Pick pick(Random random) {

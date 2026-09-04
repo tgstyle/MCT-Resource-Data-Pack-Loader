@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.util.interfaces.IXYZAddressable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -47,13 +46,6 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
 
     private int getNextPointerIndex(int pointerIndex) { return ++pointerIndex & this.mask; }
 
-    public void clear() {
-        checkThreadedWrite();
-        Arrays.fill(this.bucketsByHash, null);
-        Arrays.fill(this.bucketsByPointer, null);
-        Arrays.fill(this.pointers, 0);
-        this.size = 0;
-    }
 
     @SuppressWarnings("unchecked") @Nullable public T put(T value) {
         checkThreadedWrite();
@@ -109,18 +101,6 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
         return null;
     }
 
-    public boolean contains(int x, int y, int z) {
-        IXYZAddressable[] buckets = this.bucketsByHash;
-        int slots = this.mask;
-        int index = hash(x, y, z) & slots;
-        for (IXYZAddressable bucket = buckets[index]; bucket != null; bucket = buckets[index]) {
-            if (bucket.getX() == x && bucket.getY() == y && bucket.getZ() == z) { return true; }
-            index = ++index & slots;
-        }
-        return false;
-    }
-
-    public boolean contains(T value) { return this.contains(value.getX(), value.getY(), value.getZ()); }
 
     private void grow() {
         int newLength = this.bucketsByPointer.length * 2;

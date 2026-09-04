@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.galacticraft;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import micdoodle8.mods.galacticraft.api.world.IExitHeight;
 import net.minecraft.world.World;
@@ -13,7 +12,7 @@ import org.spongepowered.asm.mixin.Shadow;
     @Shadow protected World world;
 
     @Override public double getYCoordinateToTeleport() {
-        if (world instanceof IRubicWorld && ((IRubicWorld) world).rdpl$isRubicWorld()) { return ((IMinMaxHeight) world).rdpl$getMaxHeight() + 944; }
+        if (GenHeights.rubic(world)) { return GenHeights.ceiling(world, 256) + 944; }
         return 1200;
     }
 }

@@ -52,7 +52,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (wet) { average = worldIn.getSeaLevel(); }
         if (average != Integer.MIN_VALUE) {
             if (average != found) { cir.setReturnValue(average); }
-            ContentLog.LOGGER.debug("{} at {}, {} measures its ground at y {} from the noise surface{}", getClass().getSimpleName(), box.minX, box.minZ, average, average == found ? ", agreeing with the world" : " instead of y " + found);
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {} measures its ground at y {} from the noise surface{}", getClass().getSimpleName(), box.minX, box.minZ, average, average == found ? ", agreeing with the world" : " instead of y " + found); }
             found = average;
         }
         if (!((Object) this instanceof StructureVillagePieces.Well)) {

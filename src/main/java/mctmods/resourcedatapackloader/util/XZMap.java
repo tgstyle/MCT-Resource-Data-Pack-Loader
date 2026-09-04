@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.util.interfaces.IXZAddressable;
 import javax.annotation.Nonnull;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 
@@ -24,8 +23,6 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         this.refreshFields();
     }
 
-    public int getSize() { return this.size; }
-
     private static int hash(int x, int z) {
         int hash = HASH_SEED;
         hash += x;
@@ -39,10 +36,6 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
 
     private int getNextIndex(int index) { return (index + 1) & this.mask; }
 
-    public void clear() {
-        Arrays.fill(this.buckets, null);
-        this.size = 0;
-    }
 
     @SuppressWarnings("unchecked") @Nullable public T put(T value) {
         int x = value.getX();
@@ -90,18 +83,6 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         return null;
     }
 
-    public boolean contains(int x, int z) {
-        int index = getIndex(x, z);
-        IXZAddressable bucket = this.buckets[index];
-        while (bucket != null) {
-            if (bucket.getX() == x && bucket.getZ() == z) { return true; }
-            index = getNextIndex(index);
-            bucket = this.buckets[index];
-        }
-        return false;
-    }
-
-    public boolean contains(T value) { return this.contains(value.getX(), value.getZ()); }
 
     private void grow() {
         IXZAddressable[] oldBuckets = this.buckets;

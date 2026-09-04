@@ -97,7 +97,8 @@ public final class RubicLightEngine implements ICubeLightEngine {
     }
 
     @Override public void cubeLoaded(ICube cube) {
-        if (!owed.isEmpty() && owed.remove(cubeKey(cube.getX(), cube.getY(), cube.getZ()))) { ready.add(cubeKey(cube.getX(), cube.getY(), cube.getZ())); }
+        long key = cubeKey(cube.getX(), cube.getY(), cube.getZ());
+        if (!owed.isEmpty() && owed.remove(key)) { ready.add(key); }
         if (world.isRemote) { return; }
         int minX = cube.getCoords().getMinBlockX();
         int minY = cube.getCoords().getMinBlockY();

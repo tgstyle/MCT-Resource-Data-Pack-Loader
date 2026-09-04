@@ -24,8 +24,6 @@ import static mctmods.resourcedatapackloader.util.Coords.blockToCube;
 import static mctmods.resourcedatapackloader.util.Coords.cubeToMinBlock;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -211,8 +209,6 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Shadow public abstract boolean isBlockLoaded(BlockPos pos);
 
     @Shadow public abstract Biome getBiome(BlockPos pos);
-
-    @Shadow public abstract boolean isBlockLoaded(BlockPos pos, boolean allowEmpty);
 
     @Shadow public abstract Chunk getChunk(BlockPos pos);
 
@@ -414,30 +410,28 @@ import net.minecraft.util.math.AxisAlignedBB;
         else { cbi.setReturnValue(cube != null && !(cube instanceof BlankCube)); }
     }
 
+    @Unique private boolean rdpl$columnOrCubeLoaded(int chunkX, int blockY, int chunkZ, boolean allowEmpty) {
+        if (!rdpl$isRubicWorld()) { return this.isChunkLoaded(chunkX, chunkZ, allowEmpty); }
+        ICube cube = this.rdpl$getCubeCache().getLoadedCube(chunkX, blockToCube(blockY), chunkZ);
+        if (allowEmpty) { return cube != null; }
+        return cube != null && !(cube instanceof BlankCube);
+    }
+
     @Redirect(method = "updateEntityWithOptionalForce",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 0))
     private boolean updateEntityWithOptionalForce_isChunkLoaded0(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
         assert this == (Object) world;
-        if (rdpl$isRubicWorld()) { return this.isBlockLoaded(new BlockPos(cubeToMinBlock(chunkX), cubeToMinBlock(entityIn.chunkCoordY), cubeToMinBlock(chunkZ)), allowEmpty); }
-        else { return this.isChunkLoaded(chunkX, chunkZ, allowEmpty); }
+        return rdpl$columnOrCubeLoaded(chunkX, cubeToMinBlock(entityIn.chunkCoordY), chunkZ, allowEmpty);
     }
 
     @Redirect(method = "updateEntityWithOptionalForce",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1))
     private boolean updateEntityWithOptionalForce_isChunkLoaded1(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
         assert this == (Object) world;
-        if (rdpl$isRubicWorld()) { return this.isBlockLoaded(new BlockPos(cubeToMinBlock(chunkX), entityIn.posY, cubeToMinBlock(chunkZ)), allowEmpty); }
-        else { return this.isChunkLoaded(chunkX, chunkZ, allowEmpty); }
+        return rdpl$columnOrCubeLoaded(chunkX, MathHelper.floor(entityIn.posY), chunkZ, allowEmpty);
     }
 
     @Unique private int updateEntities_entityChunkBlockY;
-
-    @Inject(method = "updateEntities",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 0),
-            require = 1)
-    private void updateEntities_isChunkLoaded0_getLocals(CallbackInfo cbi, @Local(name = "entity1") Entity entity1) {
-        updateEntities_entityChunkBlockY = cubeToMinBlock(entity1.chunkCoordY);
-    }
 
     @Inject(method = "updateEntities",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1),
@@ -449,8 +443,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Redirect(method = "updateEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1))
     private boolean updateEntities_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty) {
         assert this == (Object) world;
-        if (rdpl$isRubicWorld()) { return this.isBlockLoaded(new BlockPos(cubeToMinBlock(chunkX), updateEntities_entityChunkBlockY, cubeToMinBlock(chunkZ)), allowEmpty); }
-        else { return this.isChunkLoaded(chunkX, chunkZ, allowEmpty); }
+        return rdpl$columnOrCubeLoaded(chunkX, updateEntities_entityChunkBlockY, chunkZ, allowEmpty);
     }
 
     @Inject(method = "getBiome", at = @At("HEAD"), cancellable = true) private void getBiome(BlockPos pos, CallbackInfoReturnable<Biome> ci) {
@@ -475,8 +468,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Redirect(method = "spawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z"))
     private boolean spawnEntity_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn) {
         assert this == (Object) world;
-        if (rdpl$isRubicWorld()) { return this.isBlockLoaded(new BlockPos(cubeToMinBlock(chunkX), entityIn.posY, cubeToMinBlock(chunkZ)), allowEmpty); }
-        else { return this.isChunkLoaded(chunkX, chunkZ, allowEmpty); }
+        return rdpl$columnOrCubeLoaded(chunkX, MathHelper.floor(entityIn.posY), chunkZ, allowEmpty);
     }
 
     @Shadow public abstract WorldBorder getWorldBorder();

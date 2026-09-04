@@ -25,7 +25,5 @@ public class Box {
         return true;
     }
 
-    public Box add(Box o) { return new Box(x1 + o.x1, y1 + o.y1, z1 + o.z1, x2 + o.x2, y2 + o.y2, z2 + o.z2); }
-
     @FunctionalInterface public interface IXYZPredicate { boolean test(int x, int y, int z); }
 }

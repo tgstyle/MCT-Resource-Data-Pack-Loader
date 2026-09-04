@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SavedData;
 import mctmods.resourcedatapackloader.util.interfaces.ITicket;
 
 import net.minecraft.entity.Entity;
@@ -170,14 +171,7 @@ public final class ThutRubicLifts {
 
         public LiftPositions(String name) { super(name); }
 
-        static LiftPositions of(WorldServer world) {
-            LiftPositions data = (LiftPositions) world.getPerWorldStorage().getOrLoadData(LiftPositions.class, ID);
-            if (data == null) {
-                data = new LiftPositions(ID);
-                world.getPerWorldStorage().setData(ID, data);
-            }
-            return data;
-        }
+        static LiftPositions of(WorldServer world) { return SavedData.get(world.getPerWorldStorage(), LiftPositions.class, ID, LiftPositions::new); }
 
         @Override public void readFromNBT(NBTTagCompound nbt) {
             positions.clear();

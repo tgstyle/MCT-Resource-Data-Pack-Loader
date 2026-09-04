@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import mctmods.resourcedatapackloader.content.worldgen.ContentField;
 
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import java.util.List;
 
 public final class HardnessDef {
@@ -42,7 +43,7 @@ public final class HardnessDef {
 
     private float at(float least, float most, int bucket) {
         if (buckets <= 1 || least == most) { return most; }
-        float along = Math.max(0, Math.min(buckets - 1, bucket)) / (float) (buckets - 1);
+        float along = MathHelper.clamp(bucket, 0, buckets - 1) / (float) (buckets - 1);
         return most - along * (most - least);
     }
 }

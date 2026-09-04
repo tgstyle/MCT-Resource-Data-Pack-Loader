@@ -8,12 +8,12 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.world.Biomes;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,13 +41,9 @@ public final class ContentWorldTemplates {
         loaded = true;
         if (!Config.content.load) { return; }
         for (WorldTemplateDef def : builtins()) { DEFS.put(def.registryName, def); }
-        PackManager.get().forEach(PackManager.WORLDTEMPLATES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                WorldTemplateDef def = ContentParser.worldTemplate(key, contents);
-                if (def != null) { DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in world template {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.WORLDTEMPLATES, "world template", (key, contents) -> {
+            WorldTemplateDef def = ContentParser.worldTemplate(key, contents);
+            if (def != null) { DEFS.put(key, def); }
         });
         active = select();
         ContentControl.check(active);
@@ -56,8 +52,6 @@ public final class ContentWorldTemplates {
     }
 
     @Nullable public static WorldTemplateDef active() { return active; }
-
-    public static Map<ResourceLocation, WorldTemplateDef> all() { return Collections.unmodifiableMap(DEFS); }
 
     public static boolean isVoid() { return active != null && WorldTemplateDef.VOID.equals(active.fallback) && active.roles.isEmpty(); }
 
@@ -95,8 +89,7 @@ public final class ContentWorldTemplates {
 
     @Nullable private static Biome biome(String name, List<String> missing) {
         if (name.isEmpty() || WorldTemplateDef.VOID.equals(name)) { return null; }
-        ResourceLocation key = new ResourceLocation(name);
-        Biome found = ForgeRegistries.BIOMES.containsKey(key) ? ForgeRegistries.BIOMES.getValue(key) : null;
+        Biome found = Biomes.byName(name);
         if (found == null && !missing.contains(name)) { missing.add(name); }
         return found;
     }

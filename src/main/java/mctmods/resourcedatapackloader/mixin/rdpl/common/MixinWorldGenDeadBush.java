@@ -23,7 +23,7 @@ import java.util.Random;
     }
 
     @ModifyConstant(method = "generate", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO, ordinal = 0)) private int getReplaceMaterial_HeightCheckHack(int orig, World worldIn, Random rand, BlockPos position) {
-        if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return orig; }
-        return rdpl$minPos;
+        if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return rdpl$minPos; }
+        return orig;
     }
 }

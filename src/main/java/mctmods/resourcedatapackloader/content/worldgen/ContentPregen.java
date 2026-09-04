@@ -419,6 +419,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void welcome(EntityPlayerMP player) {
         String greeting = welcomeAtDefault() ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player.dimension, true);
         if (greeting == null || greeting.isEmpty()) { return; }
+        if (Says.card()) {
+            Says.tell(player, greeting, TextFormatting.GREEN);
+            return;
+        }
         player.connection.sendPacket(new SPacketTitle(10, 70, 20));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
@@ -735,8 +739,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             }
             finally { WorldgenHangWatchdog.endWorldGen(); }
         }
+        boolean rubic = RubicWorldControl.rubicWorld(provider);
         if (chunk != null) {
-            boolean rubic = RubicWorldControl.rubicWorld(provider);
             rubicRun = rubic;
             if (!lightOnly && rubic && RubicWorldControl.makeColumnCubes(provider, chunk)) { made++; }
             if (!rubic && !chunk.isTerrainPopulated()) {
@@ -755,11 +759,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         checkpoint(world);
         tellScreen(server);
         if ((done & 1023L) == 0L) { ContentStructures.forgetFarStarts(world, next.x, next.z); }
-        if ((done & 255L) == 0L && RubicWorldControl.rubicWorld(provider)) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
+        if ((done & 255L) == 0L && rubic) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
         if ((done & 255L) == 0L) {
             Runtime memory = Runtime.getRuntime();
             long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
-            if (RubicWorldControl.rubicWorld(provider)) {
+            if (rubic) {
                 ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20);
             }
             else {

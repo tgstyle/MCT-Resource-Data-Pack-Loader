@@ -7,8 +7,8 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
 import net.minecraftforge.common.DimensionManager;
@@ -32,13 +32,9 @@ public final class ContentDimensions {
         if (parsed) { return; }
         parsed = true;
         if (!Config.registersToClients() || !Config.content.dimensions) { return; }
-        PackManager.get().forEach(PackManager.DIMENSIONS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                DimensionDef def = ContentParser.dimension(key, contents);
-                if (def != null) { DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in dimension definition {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
+            DimensionDef def = ContentParser.dimension(key, contents);
+            if (def != null) { DEFS.put(key, def); }
         });
     }
 

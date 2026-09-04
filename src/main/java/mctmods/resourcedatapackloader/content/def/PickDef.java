@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.util.WeightedPicks;
+
 import java.util.List;
 import java.util.Random;
 
@@ -14,13 +16,7 @@ public final class PickDef {
 
     public static String pick(List<PickDef> choices, Random random, String fallback) {
         if (choices == null || choices.isEmpty()) { return fallback; }
-        int total = 0;
-        for (PickDef choice : choices) { total += choice.weight; }
-        int roll = random.nextInt(total);
-        for (PickDef choice : choices) {
-            roll -= choice.weight;
-            if (roll < 0) { return choice.name; }
-        }
-        return choices.get(0).name;
+        PickDef picked = WeightedPicks.pick(choices, choice -> choice.weight, random);
+        return picked == null ? choices.get(0).name : picked.name;
     }
 }

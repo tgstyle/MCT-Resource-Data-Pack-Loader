@@ -42,8 +42,8 @@ public final class ContentTree implements IContentShape {
         boolean placed = false;
         int attempts = count.pick(random);
         for (int attempt = 0; attempt < attempts; attempt++) {
-            int x = origin.getX() + scatter(random, scatterX);
-            int z = origin.getZ() + scatter(random, scatterZ);
+            int x = origin.getX() + ContentPlacer.scatter(random, scatterX);
+            int z = origin.getZ() + ContentPlacer.scatter(random, scatterZ);
             BlockPos top = world.getHeight(new BlockPos(x, 0, z));
             if (!world.isAreaLoaded(top, 3)) { continue; }
             if (Math.abs(top.getY() - origin.getY()) > drift) { continue; }
@@ -53,10 +53,5 @@ public final class ContentTree implements IContentShape {
             placed |= tree.generate(world, random, top);
         }
         return placed;
-    }
-
-    private static int scatter(Random random, int bound) {
-        if (bound <= 0) { return 0; }
-        return random.nextInt(bound) - random.nextInt(bound);
     }
 }

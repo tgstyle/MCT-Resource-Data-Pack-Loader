@@ -16,8 +16,7 @@ import javax.annotation.Nullable;
 
 public class BlankCube extends Cube {
     public BlankCube(Chunk column) {
-        super(new TicketList(null), column.getWorld(), column, new CubePos(0, 0, 0),
-                null, new BlankEntityContainer(), new HashMap<>(), new ConcurrentLinkedQueue<>(), null);
+        super(new TicketList(null), column.getWorld(), column, new CubePos(0, 0, 0), new BlankEntityContainer(), new HashMap<>(), new ConcurrentLinkedQueue<>());
     }
 
     @Override public boolean isEmpty() { return true; }

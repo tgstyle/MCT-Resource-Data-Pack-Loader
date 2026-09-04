@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -15,7 +16,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -52,13 +53,9 @@ public final class ContentHardness {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.hardness) { return false; }
-        PackManager.get().forEach(PackManager.HARDNESS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                HardnessDef def = read(key, contents);
-                if (def != null) { DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in hardness file {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.HARDNESS, "hardness file", (key, contents) -> {
+            HardnessDef def = read(key, contents);
+            if (def != null) { DEFS.put(key, def); }
         });
         if (!DEFS.isEmpty()) { Summary.info("hardness", "Loaded " + DEFS.size() + " hardness group(s)"); }
         return !DEFS.isEmpty();
@@ -114,7 +111,7 @@ public final class ContentHardness {
         if (y < def.minHeight || y > def.maxHeight) { return 0; }
         float strength = def.field.strength(salt, x, y, z);
         int bucket = Math.round(strength * (def.buckets - 1));
-        return Math.max(0, Math.min(def.buckets - 1, bucket));
+        return MathHelper.clamp(bucket, 0, def.buckets - 1);
     }
 
     public static float miningAt(@Nullable IBlockState state, int x, int y, int z) {
@@ -178,7 +175,7 @@ public final class ContentHardness {
         }
         float[] mining = range(json, "miningTime");
         float[] blast = range(json, "blastResistance");
-        int buckets = Math.max(1, Math.min(256, JsonUtils.getInt(json, "buckets", 10)));
+        int buckets = MathHelper.clamp(JsonUtils.getInt(json, "buckets", 10), 1, 256);
         int minHeight = JsonUtils.getInt(json, "minHeight", 0);
         int maxHeight = JsonUtils.getInt(json, "maxHeight", 255);
         if (maxHeight < minHeight) {

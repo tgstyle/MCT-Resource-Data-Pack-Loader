@@ -23,6 +23,8 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
@@ -40,7 +42,6 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -108,39 +109,23 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", key, ex.getMessage()); }
         }
-        PackManager.get().forEach(PackManager.FLUIDS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.FLUIDS, "fluid definition", (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
-            try {
-                FluidDef def = ContentParser.fluid(key, contents);
-                if (def != null) { FLUID_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in fluid definition {}, ignoring it: {}", key, ex.getMessage()); }
+            FluidDef def = ContentParser.fluid(key, contents);
+            if (def != null) { FLUID_DEFS.put(key, def); }
         });
-        PackManager.get().forEach(PackManager.WORLDGEN, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
-            try {
-                WorldgenDef def = ContentParser.worldgen(key, contents);
-                if (def != null) { WORLDGEN_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in worldgen definition {}, ignoring it: {}", key, ex.getMessage()); }
+            WorldgenDef def = ContentParser.worldgen(key, contents);
+            if (def != null) { WORLDGEN_DEFS.put(key, def); }
         });
-        PackManager.get().forEach(PackManager.EXPOSURES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                ExposureDef def = ContentParser.exposure(key, contents);
-                if (def != null) { EXPOSURE_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in exposure definition {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
+            ExposureDef def = ContentParser.exposure(key, contents);
+            if (def != null) { EXPOSURE_DEFS.put(key, def); }
         });
-        PackManager.get().forEach(PackManager.CAVEREGIONS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                CaveRegionDef def = ContentParser.caveRegion(key, contents);
-                if (def != null) { CAVEREGION_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in cave region definition {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.CAVEREGIONS, "cave region definition", (key, contents) -> {
+            CaveRegionDef def = ContentParser.caveRegion(key, contents);
+            if (def != null) { CAVEREGION_DEFS.put(key, def); }
         });
         if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
@@ -204,16 +189,12 @@ public final class ContentRegistry {
         load();
         for (FluidDef def : FLUID_DEFS.values()) {
             if (!available(def.requires, def.registryName)) { continue; }
-            boolean registered;
-            Fluid fluid;
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
-                fluid = new ContentFluid(def);
-                registered = FluidRegistry.registerFluid(fluid);
-                if (registered && def.bucket) { FluidRegistry.addBucketForFluid(fluid); }
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            Fluid fluid = new ContentFluid(def);
+            boolean registered = ContentOwners.as(def.registryName.getNamespace(), () -> {
+                boolean made = FluidRegistry.registerFluid(fluid);
+                if (made && def.bucket) { FluidRegistry.addBucketForFluid(fluid); }
+                return made;
+            });
             if (registered) {
                 def.resolve(fluid);
                 continue;
@@ -230,9 +211,7 @@ public final class ContentRegistry {
             ResourceLocation key = entry.getKey();
             BlockDef def = entry.getValue();
             if (!available(def.requires, key)) { continue; }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(key.getNamespace()));
+            ContentOwners.as(key.getNamespace(), () -> {
                 for (Block block : ContentBlockTypes.get(def.type, key).create(def)) {
                     ResourceLocation name = block.getRegistryName();
                     if (name == null) {
@@ -247,8 +226,7 @@ public final class ContentRegistry {
                     BLOCKS_BY_NAME.put(name, block);
                     DEF_BY_BLOCK.put(name, def);
                 }
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
         }
         for (Map.Entry<ResourceLocation, FluidDef> entry : FLUID_DEFS.entrySet()) {
             ResourceLocation key = entry.getKey();
@@ -263,15 +241,12 @@ public final class ContentRegistry {
                 ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack fluid block", key);
                 continue;
             }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(key.getNamespace()));
+            ContentOwners.as(key.getNamespace(), () -> {
                 ContentBlockFluid block = new ContentBlockFluid(def.getResolved(), def);
                 ContentSetup.apply(block, def.creativeTab);
                 event.getRegistry().register(block);
                 FLUID_BLOCKS.put(key, block);
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
         }
     }
 
@@ -282,17 +257,14 @@ public final class ContentRegistry {
         for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
             ResourceLocation key = entry.getKey();
             if (ForgeRegistries.ITEMS.containsKey(key)) { continue; }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(key.getNamespace()));
-                Block block = entry.getValue();
-                if (!(block instanceof IContentBlock)) { continue; }
+            Block block = entry.getValue();
+            if (!(block instanceof IContentBlock)) { continue; }
+            ContentOwners.as(key.getNamespace(), () -> {
                 Item blockItem = ((IContentBlock) block).createItem();
-                if (blockItem == null) { continue; }
+                if (blockItem == null) { return; }
                 blockItem.setRegistryName(key);
                 event.getRegistry().register(blockItem);
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
         }
         for (Map.Entry<ResourceLocation, ItemDef> entry : ITEM_DEFS.entrySet()) {
             ResourceLocation key = entry.getKey();
@@ -302,15 +274,12 @@ public final class ContentRegistry {
             }
             ItemDef def = entry.getValue();
             if (!available(def.requires, key)) { continue; }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(key.getNamespace()));
+            ContentOwners.as(key.getNamespace(), () -> {
                 for (Item item : ContentItemTypes.get(def.type, key).create(def)) {
                     event.getRegistry().register(item);
                     ITEMS_BY_NAME.put(key, item);
                 }
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
         }
         resolve();
         resolveCrops();
@@ -333,7 +302,7 @@ public final class ContentRegistry {
             Set<Block> targets = new LinkedHashSet<>();
             Set<IBlockState> exact = new LinkedHashSet<>();
             for (BlockMatchDef name : def.replaces) {
-                Block target = ForgeRegistries.BLOCKS.containsKey(name.block) ? ForgeRegistries.BLOCKS.getValue(name.block) : null;
+                Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
                 if (target == null) {
                     ContentLog.LOGGER.error("Worldgen {} names replace block {}, which is not registered, leaving it out", entry.getKey(), name.block);
                     continue;
@@ -349,7 +318,7 @@ public final class ContentRegistry {
             Set<Block> nearby = new LinkedHashSet<>();
             Set<IBlockState> nearbyExact = new LinkedHashSet<>();
             for (BlockMatchDef name : def.adjacent) {
-                Block target = ForgeRegistries.BLOCKS.containsKey(name.block) ? ForgeRegistries.BLOCKS.getValue(name.block) : null;
+                Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
                 if (target == null) {
                     ContentLog.LOGGER.error("Worldgen {} names adjacent block {}, which is not registered, leaving it out", entry.getKey(), name.block);
                     continue;
@@ -367,7 +336,7 @@ public final class ContentRegistry {
                 Set<String> unknown = new LinkedHashSet<>();
                 for (String name : def.shape.surface) {
                     ResourceLocation location = new ResourceLocation(name);
-                    Block target = ForgeRegistries.BLOCKS.containsKey(location) ? ForgeRegistries.BLOCKS.getValue(location) : null;
+                    Block target = Registries.find(ForgeRegistries.BLOCKS, location);
                     if (target == null) {
                         unknown.add(name);
                         continue;
@@ -391,7 +360,7 @@ public final class ContentRegistry {
             else {
                 Set<String> missing = new LinkedHashSet<>();
                 for (BlockWeightDef weighted : def.blocks) {
-                    Block block = ForgeRegistries.BLOCKS.containsKey(weighted.block) ? ForgeRegistries.BLOCKS.getValue(weighted.block) : null;
+                    Block block = Registries.find(ForgeRegistries.BLOCKS, weighted.block);
                     if (block == null) {
                         missing.add(weighted.block.toString());
                         continue;

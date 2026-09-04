@@ -51,7 +51,6 @@ import javax.annotation.Nullable;
     }
 
     @Shadow protected World world;
-    @Shadow protected boolean nether;
 
     @Shadow public abstract IChunkGenerator createChunkGenerator();
 

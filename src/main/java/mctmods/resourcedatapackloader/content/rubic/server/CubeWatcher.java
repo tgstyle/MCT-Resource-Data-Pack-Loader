@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.rubic.server;
 
 import mctmods.resourcedatapackloader.content.rubic.entity.IRubicEntityTracker;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQueue;
-import mctmods.resourcedatapackloader.content.rubic.world.CubeUnWatchEvent;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
@@ -28,7 +27,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeModContainer;
-import net.minecraftforge.common.MinecraftForge;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -108,7 +106,6 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
             playerCubeMap.removeSchedulesSendCubeToPlayer(cube, player);
         }
         this.players.remove(player);
-        MinecraftForge.EVENT_BUS.post(new CubeUnWatchEvent(cube, player));
         if (this.players.isEmpty()) { playerCubeMap.removeEntry(this); }
     }
 
@@ -151,7 +148,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
     boolean isWaitingForCube() { return this.cube == null || !this.cube.isFullyPopulated() || !this.cube.isInitialLightingDone() || !this.cube.isSurfaceTracked(); }
 
     boolean isWaitingForColumn() {
-        ColumnWatcher columnEntry = playerCubeMap.getColumnWatcher(this.cubePos.chunkPos());
+        ColumnWatcher columnEntry = playerCubeMap.getColumnWatcher(this.cubePos.getX(), this.cubePos.getZ());
         return columnEntry == null || !columnEntry.isSentToPlayers();
     }
 

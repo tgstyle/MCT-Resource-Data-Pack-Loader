@@ -27,19 +27,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockFence extends BlockFence implements IContentBlock {
-    private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
-    private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
     private final PropertyVariant variant;
 
     public static ContentBlockFence create(BlockDef def) {
-        CONSTRUCTING.set(def);
-        PROPERTY.set(new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockFence(def, PROPERTY.get()); }
-        finally {
-            CONSTRUCTING.remove();
-            PROPERTY.remove();
-        }
+        BlockVariants.begin(def, new PropertyVariant(ContentSetup.names(def)));
+        try { return new ContentBlockFence(def, BlockVariants.property()); }
+        finally { BlockVariants.end(); }
     }
 
     protected ContentBlockFence(BlockDef def, PropertyVariant property) {
@@ -59,9 +53,9 @@ import javax.annotation.Nullable;
                 .withProperty(SOUTH, Boolean.FALSE).withProperty(WEST, Boolean.FALSE));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, PROPERTY.get(), NORTH, EAST, WEST, SOUTH); }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, BlockVariants.property(), NORTH, EAST, WEST, SOUTH); }
 
-    private BlockDef def() { return def == null ? CONSTRUCTING.get() : def; }
+    private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 
     @Override public BlockDef getDef() { return def(); }
 

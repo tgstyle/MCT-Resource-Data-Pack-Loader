@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -178,7 +179,7 @@ import javax.annotation.Nullable;
         lines.clear();
         totalScrollLength = 0.0F;
         IntroPageDef def = pages.get(page);
-        wrapWidth = (int) Math.min(TEXT_WIDTH, Math.max(1.0F, (width - MARGIN) / def.textScale));
+        wrapWidth = (int) MathHelper.clamp((width - MARGIN) / def.textScale, 1.0F, TEXT_WIDTH);
         if (def.text == null) { return; }
         InputStream stream = null;
         try {

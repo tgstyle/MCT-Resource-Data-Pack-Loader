@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world.cube;
 
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
-import mctmods.resourcedatapackloader.content.rubic.world.CubeEvent;
 import mctmods.resourcedatapackloader.content.rubic.world.EntityContainer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
@@ -21,7 +20,6 @@ import static mctmods.resourcedatapackloader.util.Coords.cubeToMaxBlock;
 import static mctmods.resourcedatapackloader.util.Coords.cubeToMinBlock;
 import static mctmods.resourcedatapackloader.util.Coords.localToBlock;
 
-import static net.minecraftforge.common.MinecraftForge.EVENT_BUS;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -112,18 +110,18 @@ public class Cube implements ICube {
         isModified = true;
     }
 
-    protected Cube(@Nonnull TicketList tickets, @Nonnull World world, @Nonnull Chunk column, @Nonnull CubePos coords, @Nullable ExtendedBlockStorage storage,
+    protected Cube(@Nonnull TicketList tickets, @Nonnull World world, @Nonnull Chunk column, @Nonnull CubePos coords,
                    @Nonnull EntityContainer entities, @Nonnull Map<BlockPos, TileEntity> tileEntityMap,
-                   @Nonnull ConcurrentLinkedQueue<BlockPos> tileEntityPosQueue, @Nullable ICubeLightTrackingInfo cubeLightData) {
+                   @Nonnull ConcurrentLinkedQueue<BlockPos> tileEntityPosQueue) {
         this.tickets = tickets;
         this.world = world;
         this.column = column;
         this.coords = coords;
-        this.storage = storage;
+        this.storage = null;
         this.entities = entities;
         this.tileEntityMap = tileEntityMap;
         this.tileEntityPosQueue = tileEntityPosQueue;
-        this.cubeLightData = cubeLightData;
+        this.cubeLightData = null;
         AttachCapabilitiesEvent<ICube> event = new AttachCapabilitiesEvent<>(ICube.class, this);
         MinecraftForge.EVENT_BUS.post(event);
         this.capabilities = !event.getCapabilities().isEmpty() ? new CapabilityDispatcher(event.getCapabilities(), null) : null;
@@ -218,8 +216,10 @@ public class Cube implements ICube {
     @Nullable public byte[] getBiomeArray() { return this.blockBiomeArray; }
 
     public void setBiomeArray(byte[] biomeArray) {
-        if (this.blockBiomeArray == null)
-            this.blockBiomeArray = biomeArray;
+        if (this.blockBiomeArray == null) {
+            this.blockBiomeArray = biomeArray.clone();
+            return;
+        }
         if (this.blockBiomeArray.length != biomeArray.length) {
             Rubic.LOGGER.warn("Could not set level cube biomes, array length is {} instead of {}", biomeArray.length,
                     this.blockBiomeArray.length);
@@ -292,7 +292,6 @@ public class Cube implements ICube {
         }
         ((IRubicWorldInternal) world).rdpl$getLightingManager().onCubeLoad(this, raised);
         CompatHandler.onCubeLoad(new ChunkEvent.Load(getColumn()));
-        EVENT_BUS.post(new CubeEvent.Load(this));
     }
 
     @SuppressWarnings("deprecation") public void trackSurface() {
@@ -326,7 +325,6 @@ public class Cube implements ICube {
         for (Entity entity : this.entities.getEntities()) { entity.addedToChunk = false; }
         for (TileEntity blockEntity : this.tileEntityMap.values()) { this.world.markTileEntityForRemoval(blockEntity); }
         ((IColumnInternal) getColumn()).removeFromStagingHeightmap(this);
-        EVENT_BUS.post(new CubeEvent.Unload(this));
     }
 
     @Override public boolean needsSaving() { return this.entities.needsSaving(true, this.world.getTotalWorldTime(), this.isModified) || cubeLightData.needsSaving(this); }

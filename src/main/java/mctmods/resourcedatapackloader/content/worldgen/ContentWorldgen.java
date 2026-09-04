@@ -105,7 +105,7 @@ public final class ContentWorldgen implements IWorldGenerator {
                     }
                     if (!def.caveRegions.isEmpty()) {
                         CaveRegionDef cave = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
-                        if (cave == null || !def.caveRegions.contains(cave.key)) { continue; }
+                        if (cave == null || !def.inCaveRegion(cave.key)) { continue; }
                     }
                     Biome biome = world.getBiome(pos);
                     if (filtered && biomeBlocked(def, biome)) { continue; }
@@ -157,15 +157,12 @@ public final class ContentWorldgen implements IWorldGenerator {
         return dx * dx + dz * dz >= (double) def.minDistanceFromSpawn * def.minDistanceFromSpawn;
     }
 
-    private static boolean dimensionAllowed(WorldgenDef def, int dimension) {
-        if (def.dimensions.isEmpty()) { return true; }
-        return def.dimensions.contains(dimension) != def.dimensionsAreBlacklist;
-    }
+    private static boolean dimensionAllowed(WorldgenDef def, int dimension) { return def.allowsDimension(dimension); }
 
     private static boolean biomeBlocked(WorldgenDef def, Biome biome) { return matchesBiome(def, biome) == def.biomesAreBlacklist; }
 
     private static boolean matchesBiome(WorldgenDef def, Biome biome) {
-        if (biome.getRegistryName() != null && def.getBiomeNames().contains(biome.getRegistryName().toString())) { return true; }
+        if (def.namesBiome(biome)) { return true; }
         for (BiomeDictionary.Type type : def.getTypes()) {
             if (BiomeDictionary.hasType(biome, type)) { return true; }
         }

@@ -10,7 +10,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInte
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.CubePos;
-import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
 
 import static net.minecraftforge.fml.common.network.ByteBufUtils.readVarInt;
 import gnu.trove.TShortCollection;
@@ -56,7 +55,7 @@ public class MessageCubeBlockChange implements IMessage {
         TIntIterator it = xzAddresses.iterator();
         while (it.hasNext()) {
             int v = it.next();
-            int height = ((IColumnInternal) cube.getColumn()).getTopYWithStaging(blockToLocal(v), blockToLocal(v));
+            int height = ((IColumnInternal) cube.getColumn()).getTopYWithStaging(AddressTools.getLocalX(v), AddressTools.getLocalZ(v));
             v |= height << 8;
             heightValues[i] = v;
             i++;

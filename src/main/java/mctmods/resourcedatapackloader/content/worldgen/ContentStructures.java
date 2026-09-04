@@ -14,6 +14,7 @@ import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import java.util.EnumMap;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -28,12 +29,14 @@ public final class ContentStructures {
     public static final Set<String> MAP_GENS = mapGens();
     private static final Map<String, String> STRUCTURE_NAMES = structureNames();
     public static final Map<String, PopulateChunkEvent.Populate.EventType> POPULATES = populates();
+    private static final Map<PopulateChunkEvent.Populate.EventType, String> POPULATE_KEYS = populateKeys();
     private static final Map<Integer, Map<String, Boolean>> BY_DIMENSION = new LinkedHashMap<>();
 
     private ContentStructures() {}
 
     public static void load() {
         BY_DIMENSION.clear();
+        if (ContentControl.off(ContentControl.STRUCTURES)) { return; }
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template != null && !template.structures.isEmpty()) { remember(template.structures, template.dimensions); }
         if (!BY_DIMENSION.isEmpty()) { Summary.info("structures", "Controlling structure generation in " + BY_DIMENSION.keySet()); }
@@ -46,11 +49,6 @@ public final class ContentStructures {
             return;
         }
         for (int dimension : dimensions) { BY_DIMENSION.computeIfAbsent(dimension, key -> new LinkedHashMap<>()).putAll(settings); }
-    }
-
-    public static boolean enabled() {
-        if (ContentControl.off(ContentControl.STRUCTURES)) { return false; }
-        return !BY_DIMENSION.isEmpty();
     }
 
     public static void watchStarts(World world, MapGenStructure generator) {
@@ -101,11 +99,12 @@ public final class ContentStructures {
 
     @Nullable private static Boolean lookup(@Nullable Map<String, Boolean> settings, String key) { return settings == null ? null : settings.get(key); }
 
-    @Nullable private static String keyFor(PopulateChunkEvent.Populate.EventType type) {
-        for (Map.Entry<String, PopulateChunkEvent.Populate.EventType> entry : POPULATES.entrySet()) {
-            if (entry.getValue() == type) { return entry.getKey(); }
-        }
-        return null;
+    @Nullable private static String keyFor(PopulateChunkEvent.Populate.EventType type) { return POPULATE_KEYS.get(type); }
+
+    private static Map<PopulateChunkEvent.Populate.EventType, String> populateKeys() {
+        Map<PopulateChunkEvent.Populate.EventType, String> keys = new EnumMap<>(PopulateChunkEvent.Populate.EventType.class);
+        for (Map.Entry<String, PopulateChunkEvent.Populate.EventType> entry : POPULATES.entrySet()) { keys.putIfAbsent(entry.getValue(), entry.getKey()); }
+        return keys;
     }
 
     public static boolean known(String key) { return MAP_GENS.contains(key) || POPULATES.containsKey(key); }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import net.minecraft.util.ResourceLocation;
 import java.util.HashSet;
@@ -31,7 +32,7 @@ public final class ContentInherits {
                     }
                 }
             }
-            catch (Exception ignored) {}
+            catch (JsonParseException | IllegalStateException ex) { ContentLog.LOGGER.error("Parsing error in {} {}, it inherits and lends nothing", type, entry.getKey(), ex); }
         }
         Map<ResourceLocation, JsonObject> resolved = new LinkedHashMap<>();
         for (ResourceLocation key : parsed.keySet()) { resolve(key, parsed, owners, resolved, new HashSet<>()); }

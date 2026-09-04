@@ -159,44 +159,23 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         return universalTweaks;
     }
 
-    private static boolean settingOn() {
+    private static boolean settingOn() { return cfgFlag("paperfixes.cfg", "B:pathNodeCache=", true); }
+
+    private static boolean tweakOn(String name) { return cfgFlag("Universal Tweaks - Tweaks.cfg", "B:\"" + name + "\"=", true); }
+
+    private static boolean optimizationsDisabled() { return cfgFlag("mct_resourcedatapackloader_mixin.cfg", "B:disableOptimizations=", false); }
+
+    private static boolean cfgFlag(String file, String prefix, boolean fallback) {
         try {
-            File held = new File(Launch.minecraftHome, "config/" + "paperfixes.cfg");
-            if (!held.isFile()) { return true; }
-            String wanted = "B:" + "pathNodeCache" + "=";
+            File held = new File(Launch.minecraftHome, "config/" + file);
+            if (!held.isFile()) { return fallback; }
             for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
                 String trimmed = line.trim();
-                if (trimmed.startsWith(wanted)) { return trimmed.endsWith("true"); }
+                if (trimmed.startsWith(prefix)) { return trimmed.endsWith("true"); }
             }
         }
         catch (Exception ignored) {}
-        return true;
-    }
-
-    private static boolean tweakOn(String name) {
-        try {
-            File held = new File(Launch.minecraftHome, "config/Universal Tweaks - Tweaks.cfg");
-            if (!held.isFile()) { return true; }
-            String wanted = "B:\"" + name + "\"=";
-            for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
-                String trimmed = line.trim();
-                if (trimmed.startsWith(wanted)) { return trimmed.endsWith("true"); }
-            }
-        }
-        catch (Exception ignored) {}
-        return true;
-    }
-
-    private static boolean optimizationsDisabled() {
-        try {
-            File held = new File(Launch.minecraftHome, "config/mct_resourcedatapackloader_mixin.cfg");
-            if (!held.isFile()) { return false; }
-            for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
-                if (line.trim().equals("B:disableOptimizations=true")) { return true; }
-            }
-        }
-        catch (Exception ignored) {}
-        return false;
+        return fallback;
     }
 
     @Override public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}

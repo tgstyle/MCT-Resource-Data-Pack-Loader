@@ -15,15 +15,15 @@ import org.spongepowered.asm.mixin.Unique;
         if (ContentChunkWatch.watching()) { ContentChunkWatch.opened(); }
     }
 
-    @Unique private static final ThreadLocal<Long> rdpl$start = ThreadLocal.withInitial(() -> 0L);
+    @Unique private static final ThreadLocal<long[]> rdpl$start = ThreadLocal.withInitial(() -> new long[1]);
 
     @Inject(method = "write(II[BI)V", at = @At("HEAD"))
     private void rdpl$startFile(int x, int z, byte[] data, int length, CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { rdpl$start.set(System.nanoTime()); }
+        if (ContentChunkWatch.watching()) { rdpl$start.get()[0] = System.nanoTime(); }
     }
 
     @Inject(method = "write(II[BI)V", at = @At("RETURN"))
     private void rdpl$endFile(int x, int z, byte[] data, int length, CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.toFile(System.nanoTime() - rdpl$start.get()); }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.toFile(System.nanoTime() - rdpl$start.get()[0]); }
     }
 }

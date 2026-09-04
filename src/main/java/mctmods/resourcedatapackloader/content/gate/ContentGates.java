@@ -1,15 +1,17 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.util.Stacks;
+import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -20,6 +22,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,21 +31,22 @@ import javax.annotation.Nullable;
 public final class ContentGates {
     private static final Map<ResourceLocation, GateDef> DEFS = new LinkedHashMap<>();
     private static final Map<Integer, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
-    private static boolean loaded;
+    private static final Map<ResourceLocation, GateDef> ALL = Collections.unmodifiableMap(DEFS);
+    private static final Map<String, ItemStack> STACKS = new HashMap<>();
+    private static final ResourceLocation GATE = new ResourceLocation("rdpl", "gate");
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentGates() {}
 
     public static void load() {
-        if (loaded) { return; }
-        loaded = true;
+        if (!GENERATION.stale()) { return; }
+        DEFS.clear();
+        BY_DIMENSION.clear();
+        STACKS.clear();
         if (!Config.content.load) { return; }
-        PackManager.get().forEach(PackManager.GATES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                GateDef def = ContentParser.gate(key, contents);
-                if (def != null) { DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in gate definition {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
+            GateDef def = ContentParser.gate(key, contents);
+            if (def != null) { DEFS.put(key, def); }
         });
         for (Map.Entry<ResourceLocation, GateDef> entry : DEFS.entrySet()) {
             GateDef def = entry.getValue();
@@ -56,7 +60,7 @@ public final class ContentGates {
 
     public static List<GateDef> forDimension(int dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
 
-    public static Map<ResourceLocation, GateDef> all() { return Collections.unmodifiableMap(DEFS); }
+    public static Map<ResourceLocation, GateDef> all() { return ALL; }
 
     @Nullable public static GateDef find(String key) {
         for (GateDef def : DEFS.values()) {
@@ -79,7 +83,7 @@ public final class ContentGates {
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
         String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());
         if (def.global) { broadcast(player, message); }
-        else { player.sendStatusMessage(new TextComponentString(TextFormatting.GREEN + message), false); }
+        else { Says.line(player, TextFormatting.GREEN, message); }
     }
 
     public static void lock(EntityPlayer player, GateDef def) {
@@ -96,7 +100,7 @@ public final class ContentGates {
     }
 
     public static boolean carrying(EntityPlayer player, String item) {
-        ItemStack wanted = ContentStacks.parse(new ResourceLocation("rdpl", "gate"), item, 1);
+        ItemStack wanted = stack(item);
         if (wanted.isEmpty()) { return false; }
         for (ItemStack held : player.inventory.mainInventory) {
             if (matches(held, wanted)) { return true; }
@@ -104,10 +108,7 @@ public final class ContentGates {
         return matches(player.inventory.offHandInventory.get(0), wanted);
     }
 
-    public static boolean matches(ItemStack found, ItemStack wanted) {
-        if (found.isEmpty() || found.getItem() != wanted.getItem()) { return false; }
-        return wanted.getMetadata() == 32767 || found.getMetadata() == wanted.getMetadata();
-    }
+    public static boolean matches(ItemStack found, ItemStack wanted) { return Stacks.matches(wanted, found); }
 
     private static boolean earned(EntityPlayer player, String name) {
         if (!(player instanceof EntityPlayerMP)) { return false; }
@@ -121,14 +122,16 @@ public final class ContentGates {
     private static void broadcast(EntityPlayer player, String message) {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
-        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { online.sendStatusMessage(new TextComponentString(TextFormatting.GREEN + message), false); }
+        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { Says.line(online, TextFormatting.GREEN, message); }
     }
 
     private static String describe(String item) {
         if (item.isEmpty()) { return "something"; }
-        ItemStack stack = ContentStacks.parse(new ResourceLocation("rdpl", "gate"), item, 1);
+        ItemStack stack = stack(item);
         return stack.isEmpty() ? item : stack.getDisplayName();
     }
+
+    public static ItemStack stack(String item) { return STACKS.computeIfAbsent(item, held -> ContentStacks.parse(GATE, held, 1)); }
 
     private static int count() {
         int total = 0;

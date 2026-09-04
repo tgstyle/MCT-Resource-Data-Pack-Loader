@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.network.MessageCard;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -37,13 +38,18 @@ public final class Says {
         RDPLNetwork.sendTo(new MessageCard("", Collections.singletonList(said), icon, image, background, rgb(color), CARD_TICKS), player);
     }
 
+    public static void line(ICommandSender sender, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        sender.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(color)));
+    }
+
     public static void tellAll(String said, TextFormatting color) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || said.isEmpty()) { return; }
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, said, color); }
     }
 
-    private static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard); }
+    public static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard); }
 
     private static int rgb(TextFormatting color) {
         switch (color) {

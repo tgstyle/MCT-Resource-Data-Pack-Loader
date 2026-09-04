@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTreeGenerator;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.IGrowable;
@@ -22,7 +23,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.relauncher.Side;
@@ -71,21 +71,12 @@ import javax.annotation.Nullable;
     @Override @Nullable public ItemBlock createItem() { return new ItemBlock(this); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(stage, Math.max(0, Math.min(stage.getAllowedValues().size() - 1, meta)));
+        return getDefaultState().withProperty(stage, MathHelper.clamp(meta, 0, stage.getAllowedValues().size() - 1));
     }
 
     @Override public int getMetaFromState(IBlockState state) { return state.getValue(stage); }
 
-    public void resolveSoil() {
-        Set<Block> resolved = new HashSet<>();
-        for (String name : sapling.soil) {
-            ResourceLocation key = new ResourceLocation(name);
-            Block block = ForgeRegistries.BLOCKS.containsKey(key) ? ForgeRegistries.BLOCKS.getValue(key) : null;
-            if (block != null) { resolved.add(block); }
-            else { ContentLog.LOGGER.error("Sapling {} names soil {}, which is not registered, leaving it out", def.registryName, name); }
-        }
-        this.soil = resolved;
-    }
+    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(sapling.soil, def.registryName); }
 
     @Override protected boolean canSustainBush(@Nonnull IBlockState state) {
         if (soil.isEmpty()) { return super.canSustainBush(state); }

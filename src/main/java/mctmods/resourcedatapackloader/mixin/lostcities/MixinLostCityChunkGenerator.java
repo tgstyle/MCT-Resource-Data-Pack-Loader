@@ -8,7 +8,6 @@ import mcjty.lostcities.config.LostCityProfile;
 import mcjty.lostcities.dimensions.world.LostCityChunkGenerator;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.ChunkGeneratorSettings;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,10 +30,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int chunkX, int chunkZ, CallbackInfoReturnable<Chunk> cir) {
-        if (!ContentVoidWorld.appliesTo(worldObj)) { return; }
-        Chunk chunk = new Chunk(worldObj, new ChunkPrimer(), chunkX, chunkZ);
-        chunk.generateSkylightMap();
-        cir.setReturnValue(chunk);
+        Chunk chunk = ContentVoidWorld.emptyChunk(worldObj, chunkX, chunkZ);
+        if (chunk != null) { cir.setReturnValue(chunk); }
     }
 
     @Inject(method = "populate", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$skipPopulate(int chunkX, int chunkZ, CallbackInfo ci) {

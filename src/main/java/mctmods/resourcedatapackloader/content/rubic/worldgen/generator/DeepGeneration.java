@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.block.Block;
@@ -406,21 +407,21 @@ public class DeepGeneration {
         int vanillaY = cubeY - Coords.blockToCube(offsetBlocks);
         double[][][] lattice = caveScope > 0 ? sampleLattice(cubeX << 4, Coords.cubeToMinBlock(cubeY) - offsetBlocks, cubeZ << 4) : null;
         for (int y = 0; y < Cube.SIZE; y++) {
+            int genY = Coords.cubeToMinBlock(cubeY) + y - offsetBlocks;
+            int blockY = Coords.localToBlock(vanillaY, y);
             for (int z = 0; z < Cube.SIZE; z++) {
+                int worldZ = (cubeZ << 4) + z;
                 for (int x = 0; x < Cube.SIZE; x++) {
                     int worldX = (cubeX << 4) + x;
-                    int worldZ = (cubeZ << 4) + z;
-                    int genY = Coords.cubeToMinBlock(cubeY) + y - offsetBlocks;
                     double carved = lattice != null ? trilerp(lattice, x, y, z) : 1.0D;
                     if (carved <= CAVE_THRESHOLD) {
                         IBlockState opened = fluidOrAir(worldX, genY, worldZ, carved);
-                        opened = WorldGenUtils.getRandomBedrockReplacement(world, rand, opened, Coords.localToBlock(vanillaY, y), 5, topBedrock, bottomBedrock);
+                        opened = WorldGenUtils.getRandomBedrockReplacement(world, rand, opened, blockY, 5, topBedrock, bottomBedrock);
                         primer.setBlockState(x, y, z, opened);
                         continue;
                     }
                     IBlockState state = deepStone != null ? deepStone : extensionBottom;
                     state = veinState(worldX, genY, worldZ, state);
-                    int blockY = Coords.localToBlock(vanillaY, y);
                     state = WorldGenUtils.getRandomBedrockReplacement(world, rand, state, blockY, 5, topBedrock, bottomBedrock);
                     primer.setBlockState(x, y, z, state);
                 }
@@ -639,16 +640,7 @@ public class DeepGeneration {
         return base;
     }
 
-    private float hash01(int x, int y, int z, int salt) {
-        long h = seed ^ (salt * 0x9E3779B97F4A7C15L);
-        h ^= x * 0x2545F4914F6CDD1DL;
-        h ^= (long) y * 0x6C62272E07BB0142L;
-        h ^= (long) z * 0xCBF29CE484222325L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        return (h >>> 40) / (float) (1 << 24);
-    }
+    private float hash01(int x, int y, int z, int salt) { return (MathUtil.scramble(seed ^ (salt * 0x9E3779B97F4A7C15L), x, y, z) >>> 40) / (float) (1 << 24); }
 
     private static double lerp(double t, double a, double b) { return a + t * (b - a); }
 

@@ -2,13 +2,11 @@ package mctmods.resourcedatapackloader.content.rubic.regionlib.impl;
 
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection2D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection3D;
-import mctmods.resourcedatapackloader.content.rubic.regionlib.util.Utils;
 
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,16 +33,6 @@ public class SaveCubeColumns implements Flushable, Closeable {
 
 	public Optional<ByteBuffer> load(EntryLocation2D location, boolean createRegion) throws IOException { return saveSection2D.load(location, createRegion); }
 
-	public static SaveCubeColumns create(Path directory) throws IOException {
-		Utils.createDirectories(directory);
-		Path part2d = directory.resolve("region2d");
-		Utils.createDirectories(part2d);
-		Path part3d = directory.resolve("region3d");
-		Utils.createDirectories(part3d);
-		SaveSection2D section2d = SaveSection2D.createAt(part2d);
-		SaveSection3D section3d = SaveSection3D.createAt(part3d);
-		return new SaveCubeColumns(section2d, section3d);
-	}
 
 	@Override public void flush() throws IOException {
 		this.saveSection2D.flush();

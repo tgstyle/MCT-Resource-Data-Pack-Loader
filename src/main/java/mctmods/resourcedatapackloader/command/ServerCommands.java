@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.command;
 
 import static mctmods.resourcedatapackloader.command.CommandShared.config;
+import static mctmods.resourcedatapackloader.command.CommandShared.blockedReport;
+import static mctmods.resourcedatapackloader.command.CommandShared.rescan;
 import static mctmods.resourcedatapackloader.command.CommandShared.send;
 import static mctmods.resourcedatapackloader.command.CommandShared.unused;
 import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
@@ -10,7 +12,6 @@ import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
@@ -23,7 +24,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.pack.PackManager;
-import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -42,7 +42,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -103,9 +102,9 @@ public class ServerCommands extends CommandBase {
         lowest = Math.min(lowest, level("gotoNextLevel", Config.commands.gotoNextLevel));
         lowest = Math.min(lowest, level("gotoBackLevel", Config.commands.gotoBackLevel));
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
-            int split = entry.indexOf('=');
-            if (split < 0) { continue; }
-            try { lowest = Math.min(lowest, clamp(Integer.parseInt(entry.substring(split + 1).trim()))); }
+            String[] parts = Settings.pair(entry, "gotoPlaceLevels", "name=level");
+            if (parts == null) { continue; }
+            try { lowest = Math.min(lowest, clamp(Integer.parseInt(parts[1]))); }
             catch (NumberFormatException ignored) { }
         }
         return lowest;
@@ -234,12 +233,8 @@ public class ServerCommands extends CommandBase {
     }
 
     private void reload(MinecraftServer server, ICommandSender sender) throws CommandException {
-        Path root = PackManager.get().getRoot();
-        if (root == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.noroot")); }
         long start = System.currentTimeMillis();
-        PackManager.get().scan(root);
-        PackManager.get().report();
-        ContentOverrides.reload();
+        rescan(sender);
         server.reload();
         int packs = PackManager.get().getPacks().size();
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.serverreloaded", packs, elapsed(start)));
@@ -247,56 +242,18 @@ public class ServerCommands extends CommandBase {
     }
 
     private void list(ICommandSender sender) {
-        List<RDPLPack> packs = PackManager.get().getPacks();
-        if (packs.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nopacks", PackManager.get().getRoot()));
-            return;
-        }
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.packs", packs.size()));
-        for (RDPLPack pack : packs) {
-            String priority = pack.getPriority() >= 0 ? " [" + pack.getPriority() + "]" : "";
-            String tier = pack.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : "";
-            send(sender, TextFormatting.WHITE, "  " + pack.getName() + priority + tier
-                    + TextFormatting.GRAY + "  advancements=" + pack.count(PackManager.ADVANCEMENTS, PackManager.JSON)
-                    + " loot_tables=" + pack.count(PackManager.LOOT_TABLES, PackManager.JSON)
-                    + " functions=" + pack.count(PackManager.FUNCTIONS, PackManager.MCFUNCTION)
-                    + " namespaces=" + pack.getNamespaces());
-        }
+        CommandShared.listPacks(sender, (pack, label) -> send(sender, TextFormatting.WHITE, label
+                + TextFormatting.GRAY + "  advancements=" + pack.count(PackManager.ADVANCEMENTS, PackManager.JSON)
+                + " loot_tables=" + pack.count(PackManager.LOOT_TABLES, PackManager.JSON)
+                + " functions=" + pack.count(PackManager.FUNCTIONS, PackManager.MCFUNCTION)
+                + " namespaces=" + pack.getNamespaces()));
     }
 
-    private void oregen(ICommandSender sender) {
-        Map<String, Integer> blocked = ContentOreControl.blocked();
-        if (blocked.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.orenone"));
-            return;
-        }
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.oreblocked"));
-        for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue()); }
-    }
+    private void oregen(ICommandSender sender) { blockedReport(sender, ContentOreControl.blocked(), "rdpl.command.orenone", "rdpl.command.oreblocked"); }
 
-    private void generators(ICommandSender sender) {
-        Map<String, Integer> blocked = ContentGeneratorControl.blocked();
-        if (blocked.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.gennone"));
-            return;
-        }
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.genblocked"));
-        for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue()); }
-    }
+    private void generators(ICommandSender sender) { blockedReport(sender, ContentGeneratorControl.blocked(), "rdpl.command.gennone", "rdpl.command.genblocked"); }
 
-    private void which(ICommandSender sender, String target) {
-        int colon = target.indexOf(':');
-        String namespace = colon < 0 ? "minecraft" : target.substring(0, colon);
-        String path = colon < 0 ? target : target.substring(colon + 1);
-        List<RDPLPack> holders = PackManager.get().holders(namespace, path);
-        if (holders.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unprovided", namespace + ":" + path));
-            return;
-        }
-        RDPLPack winner = holders.get(holders.size() - 1);
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.served", namespace + ":" + path, winner.getName()));
-        for (int i = holders.size() - 2; i >= 0; i--) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName())); }
-    }
+    private void which(ICommandSender sender, String target) { CommandShared.which(sender, target, false); }
 
     private void gate(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (!ContentGates.enabled()) {

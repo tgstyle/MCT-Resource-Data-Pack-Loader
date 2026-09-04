@@ -1,43 +1,38 @@
 package mctmods.resourcedatapackloader.recipe;
 
+import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IFurnaceRecipes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.oredict.OreDictionary;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class FurnaceRecipes {
     private static final Gson GSON = new GsonBuilder().create();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private FurnaceRecipes() {}
 
     public static void reload() {
         if (!Config.recipes.furnace) { return; }
-        if (generation == PackManager.get().getGeneration()) { return; }
-        generation = PackManager.get().getGeneration();
+        if (!GENERATION.stale()) { return; }
         int[] counts = new int[2];
         Map<String, int[]> perPack = new LinkedHashMap<>();
-        PackManager.get().forEach(PackManager.FURNACE, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            int[] mine = perPack.computeIfAbsent(namespace, k -> new int[2]);
-            try { apply(key, contents, mine); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in furnace file {}, ignoring it: {}", key, ex.getMessage()); }
-        });
+        Json.eachFile(PackManager.FURNACE, "furnace file", (key, contents) -> apply(key, contents, perPack.computeIfAbsent(key.getNamespace(), k -> new int[2])));
         for (int[] mine : perPack.values()) {
             counts[0] += mine[0];
             counts[1] += mine[1];
@@ -111,8 +106,5 @@ public final class FurnaceRecipes {
         return true;
     }
 
-    private static boolean differs(ItemStack wanted, ItemStack found) {
-        if (found.isEmpty() || wanted.getItem() != found.getItem()) { return true; }
-        return wanted.getMetadata() != OreDictionary.WILDCARD_VALUE && wanted.getMetadata() != found.getMetadata();
-    }
+    private static boolean differs(ItemStack wanted, ItemStack found) { return !Stacks.matches(wanted, found); }
 }

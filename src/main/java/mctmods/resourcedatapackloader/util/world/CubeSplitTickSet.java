@@ -29,18 +29,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
 
     @Override public boolean contains(Object o) { return all.contains(o); }
 
-    @SuppressWarnings("Duplicates") @Override @Nonnull public Iterator<NextTickListEntry> iterator() {
-        return new Iterator<NextTickListEntry>() {
-            private final Iterator<NextTickListEntry> it = all.iterator();
-            private NextTickListEntry lastEntry = null;
-            @Override public boolean hasNext() { return it.hasNext(); }
-            @Override public NextTickListEntry next() { return lastEntry = it.next(); }
-            @Override public void remove() {
-                it.remove();
-                removeByCube(lastEntry);
-            }
-        };
-    }
+    @Override @Nonnull public Iterator<NextTickListEntry> iterator() { return new CubeSplitIterator(all.iterator(), this::removeByCube); }
 
     private void removeByCube(NextTickListEntry e) {
         CubePos pos = CubePos.fromBlockCoords(e.position);
@@ -126,6 +115,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
                 final Iterator<EqualsHashCodeWrapper<NextTickListEntry>> it = backingSet.iterator();
                 @Override public boolean hasNext() { return it.hasNext(); }
                 @Override public NextTickListEntry next() { return it.next().entry; }
+                @Override public void remove() { it.remove(); }
             };
         }
 

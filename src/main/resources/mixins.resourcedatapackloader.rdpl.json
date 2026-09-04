@@ -17,7 +17,6 @@
     "common.IBiomeTaiga",
     "common.IBlock",
     "common.IBlockFire",
-    "common.IBlockStateContainer",
     "common.IChunk",
     "common.IChunkCache",
     "common.IChunkGaps",
@@ -95,7 +94,6 @@
     "common.MixinCommandFill",
     "common.MixinCommandLocate",
     "common.MixinCommandSpreadPlayers",
-    "common.MixinCommandSuccess",
     "common.MixinCommandTP",
     "common.MixinCommandTeleport",
     "common.MixinCommandsHeightLimits",
@@ -218,6 +216,7 @@
   ],
   "client": [
     "client.IChunkProviderClient",
+    "client.MixinCommandSuccess",
     "client.IContainerLocalRenderInformation",
     "client.IGuiOptionsRowList",
     "client.IGuiScreen",

@@ -15,6 +15,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProviderEnd;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraft.world.end.DragonFightManager;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
@@ -31,6 +33,13 @@ public final class ContentVoidWorld {
     public static boolean enabled() {
         if (ContentControl.off(ContentControl.VOID)) { return false; }
         return ContentControl.flag(ContentControl.VOID, "voidWorld", Config.worldgen.voidWorld) || ContentBiomeControl.everythingBlocked();
+    }
+
+    @Nullable public static Chunk emptyChunk(@Nullable World world, int chunkX, int chunkZ) {
+        if (!appliesTo(world)) { return null; }
+        Chunk chunk = new Chunk(world, new ChunkPrimer(), chunkX, chunkZ);
+        chunk.generateSkylightMap();
+        return chunk;
     }
 
     public static boolean appliesTo(@Nullable World world) {

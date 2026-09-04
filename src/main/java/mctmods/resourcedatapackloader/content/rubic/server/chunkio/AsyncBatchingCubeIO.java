@@ -42,8 +42,6 @@ public class AsyncBatchingCubeIO implements ICubeIO {
 
     protected void ensureOpen() { checkState(this.open, "already closed?!?"); }
 
-    public IRubicStorage getStorage() { return this.storage; }
-
     @Override public boolean columnExists(int columnX, int columnZ) {
         ChunkPos pos = new ChunkPos(columnX, columnZ);
         this.lock.readLock().lock();

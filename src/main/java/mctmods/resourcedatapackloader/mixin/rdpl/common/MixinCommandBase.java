@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +18,8 @@ import javax.annotation.Nonnull;
     @Unique @Nonnull private static WeakReference<IRubicWorld> rdpl$commandWorld = new WeakReference<>(null);
 
     @Inject(method = "parseBlockPos", at = @At(value = "HEAD")) private static void parseBlockPosPre(ICommandSender sender, String[] args, int startIndex, boolean centerBlock, CallbackInfoReturnable<?> cbi) {
-        rdpl$commandWorld = new WeakReference<>((IRubicWorld) sender.getEntityWorld());
+        World world = sender.getEntityWorld();
+        rdpl$commandWorld = new WeakReference<>(world instanceof IRubicWorld ? (IRubicWorld) world : null);
     }
 
     @ModifyArg(method = "parseBlockPos",

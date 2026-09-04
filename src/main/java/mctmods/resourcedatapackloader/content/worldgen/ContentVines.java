@@ -35,7 +35,7 @@ public final class ContentVines implements IContentShape {
         boolean placed = false;
         int attempts = count.pick(random);
         for (int attempt = 0; attempt < attempts; attempt++) {
-            BlockPos start = origin.add(scatter(random, scatterX), scatter(random, scatterY), scatter(random, scatterZ));
+            BlockPos start = origin.add(ContentPlacer.scatter(random, scatterX), ContentPlacer.scatter(random, scatterY), ContentPlacer.scatter(random, scatterZ));
             if (!world.isBlockLoaded(start) || !world.isAirBlock(start)) { continue; }
             EnumFacing wall = wallBeside(world, start);
             if (wall == null) { continue; }
@@ -64,10 +64,5 @@ public final class ContentVines implements IContentShape {
     private static boolean attachable(World world, BlockPos pos, EnumFacing face) {
         if (!world.isBlockLoaded(pos)) { return false; }
         return ContentBlockVine.attachable(world, pos, face);
-    }
-
-    private static int scatter(Random random, int bound) {
-        if (bound <= 0) { return 0; }
-        return random.nextInt(bound) - random.nextInt(bound);
     }
 }

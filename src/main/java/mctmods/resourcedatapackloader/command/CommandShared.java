@@ -1,17 +1,22 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.pack.RDPLPack;
+import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.world.Biomes;
 
+import java.util.Map;
+import java.nio.file.Path;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -20,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 
 public final class CommandShared {
@@ -28,8 +34,57 @@ public final class CommandShared {
     private CommandShared() {}
 
     static void send(ICommandSender sender, TextFormatting color, String message) {
-        sender.sendMessage(new TextComponentString(color + message));
+        Says.line(sender, color, message);
         ContentLog.LOGGER.debug("  {}", message);
+    }
+
+    static void listPacks(ICommandSender sender, BiConsumer<RDPLPack, String> each) {
+        List<RDPLPack> packs = PackManager.get().getPacks();
+        if (packs.isEmpty()) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nopacks", PackManager.get().getRoot()));
+            return;
+        }
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.packs", packs.size()));
+        for (RDPLPack pack : packs) {
+            String priority = pack.getPriority() >= 0 ? " [" + pack.getPriority() + "]" : "";
+            String tier = pack.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : "";
+            each.accept(pack, "  " + pack.getName() + priority + tier);
+        }
+    }
+
+    static void rescan(ICommandSender sender) throws CommandException {
+        Path root = PackManager.get().getRoot();
+        if (root == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.noroot")); }
+        PackManager.get().scan(root);
+        PackManager.get().report();
+        ContentOverrides.reload();
+    }
+
+    static void which(ICommandSender sender, String target, boolean clientSide) {
+        int colon = target.indexOf(':');
+        String namespace = colon < 0 ? "minecraft" : target.substring(0, colon);
+        String path = colon < 0 ? target : target.substring(colon + 1);
+        List<RDPLPack> holders = PackManager.get().holders(namespace, path);
+        if (holders.isEmpty()) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unprovided", namespace + ":" + path));
+            return;
+        }
+        RDPLPack winner = holders.get(holders.size() - 1);
+        if (clientSide) {
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.provided", namespace + ":" + path, winner.getName(), winner.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : ""));
+            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.providednote"));
+        }
+        else { send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.served", namespace + ":" + path, winner.getName())); }
+        for (int i = holders.size() - 2; i >= 0; i--) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName())); }
+    }
+
+    static void blockedReport(ICommandSender sender, Map<String, Integer> blocked, String noneKey, String headerKey) {
+        if (blocked.isEmpty()) {
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, noneKey));
+            return;
+        }
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, headerKey));
+        for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(sender, TextFormatting.GRAY, "  " + entry.getKey() + ": " + entry.getValue()); }
     }
 
     static void send(ICommandSender sender, ITextComponent message, String logged) {
@@ -43,8 +98,8 @@ public final class CommandShared {
     }
 
     @Nullable static Biome findBiome(String name) {
-        ResourceLocation location = new ResourceLocation(name);
-        if (ForgeRegistries.BIOMES.containsKey(location)) { return ForgeRegistries.BIOMES.getValue(location); }
+        Biome found = Biomes.byName(name);
+        if (found != null) { return found; }
         for (Biome biome : ForgeRegistries.BIOMES) {
             if (biome.getBiomeName().equalsIgnoreCase(name)) { return biome; }
         }

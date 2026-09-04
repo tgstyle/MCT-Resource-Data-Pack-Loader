@@ -32,8 +32,6 @@ import javax.annotation.Nullable;
 @SuppressWarnings("deprecation") public class ContentBlockSlab extends BlockSlab implements IContentBlock {
     public static final int MAX_VARIANTS = 8;
     public static final String DOUBLE_SUFFIX = "_double";
-    private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
-    private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private static final ThreadLocal<Boolean> DOUBLE = new ThreadLocal<>();
     private final BlockDef def;
     private final PropertyVariant variant;
@@ -41,13 +39,11 @@ import javax.annotation.Nullable;
     @Nullable private ContentBlockSlab other;
 
     public static ContentBlockSlab create(BlockDef def, boolean isDouble, PropertyVariant property) {
-        CONSTRUCTING.set(def);
-        PROPERTY.set(property);
+        BlockVariants.begin(def, property);
         DOUBLE.set(isDouble);
         try { return new ContentBlockSlab(def, isDouble, property); }
         finally {
-            CONSTRUCTING.remove();
-            PROPERTY.remove();
+            BlockVariants.end();
             DOUBLE.remove();
         }
     }
@@ -72,13 +68,13 @@ import javax.annotation.Nullable;
     public void pair(ContentBlockSlab other) { this.other = other; }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() {
-        PropertyVariant property = PROPERTY.get();
+        PropertyVariant property = BlockVariants.property();
         return Boolean.TRUE.equals(DOUBLE.get())
                 ? new BlockStateContainer(this, property)
                 : new BlockStateContainer(this, property, HALF);
     }
 
-    private BlockDef def() { return def == null ? CONSTRUCTING.get() : def; }
+    private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 
     @Override public BlockDef getDef() { return def(); }
 

@@ -22,19 +22,7 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
 
     @Override public boolean contains(Object o) { return all.contains(o); }
 
-    @Nonnull
-    @SuppressWarnings("Duplicates") @Override public Iterator<NextTickListEntry> iterator() {
-        return new Iterator<NextTickListEntry>() {
-            private final Iterator<NextTickListEntry> it = all.iterator();
-            private NextTickListEntry lastEntry = null;
-            @Override public boolean hasNext() { return it.hasNext(); }
-            @Override public NextTickListEntry next() { return lastEntry = it.next(); }
-            @Override public void remove() {
-                it.remove();
-                removeByCube(lastEntry);
-            }
-        };
-    }
+    @Nonnull @Override public Iterator<NextTickListEntry> iterator() { return new CubeSplitIterator(all.iterator(), this::removeByCube); }
 
     private void removeByCube(NextTickListEntry e) {
         CubePos pos = CubePos.fromBlockCoords(e.position);
@@ -74,7 +62,7 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
         NextTickListEntry old = all.set(index, e);
         removeByCube(old);
         addByCube(e);
-        return null;
+        return old;
     }
 
     @Override public void add(int index, NextTickListEntry element) {

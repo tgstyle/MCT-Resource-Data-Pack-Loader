@@ -23,8 +23,6 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Override public ItemDef getDef() { return def; }
-
     @Nullable private ItemVariant single() { return def.visible.isEmpty() ? null : def.visible.get(0); }
 
     @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) {

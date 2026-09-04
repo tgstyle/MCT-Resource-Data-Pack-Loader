@@ -30,38 +30,32 @@ import javax.annotation.Nullable;
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
     public static final int MAX_VARIANTS = 16;
-    private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
-    private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
     private final GrowthDef growth;
     private final PropertyVariant variant;
     private Set<Block> soil = new HashSet<>();
 
     public static ContentBlockFlower create(BlockDef def, GrowthDef growth) {
-        CONSTRUCTING.set(def);
+        BlockVariants.begin(def);
         try { return new ContentBlockFlower(def, growth); }
-        finally {
-            CONSTRUCTING.remove();
-            PROPERTY.remove();
-        }
+        finally { BlockVariants.end(); }
     }
 
     protected ContentBlockFlower(BlockDef def, GrowthDef growth) {
         super(def.material);
         this.def = def;
         this.growth = growth;
-        this.variant = PROPERTY.get();
+        this.variant = BlockVariants.property();
         ContentSetup.apply(this, def);
         setHardness(def.at(0).hardness);
         if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultState(blockState.getBaseState().withProperty(variant, def.at(0).name));
     }
 
-    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth); }
+    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth.soil, def.registryName); }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() {
-        PropertyVariant property = new PropertyVariant(ContentSetup.names(CONSTRUCTING.get()));
-        PROPERTY.set(property);
+        PropertyVariant property = BlockVariants.fresh();
         return new BlockStateContainer(this, property);
     }
 

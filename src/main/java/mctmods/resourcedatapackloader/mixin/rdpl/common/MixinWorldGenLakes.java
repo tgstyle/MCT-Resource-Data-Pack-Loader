@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -56,6 +57,6 @@ import java.util.Random;
     }
 
     @ModifyConstant(method = "generate", constant = @Constant(intValue = 4, ordinal = 0)) private int getMinWorldHeight(int orig, World worldIn, Random rand, BlockPos position) {
-        return ((IRubicWorld) worldIn).rdpl$getMinHeight() + orig;
+        return GenHeights.floor(worldIn, orig);
     }
 }

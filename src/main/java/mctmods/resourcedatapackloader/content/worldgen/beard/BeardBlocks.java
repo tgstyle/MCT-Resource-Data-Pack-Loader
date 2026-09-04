@@ -32,12 +32,14 @@ public final class BeardBlocks {
         if (held.getMaterial() != Material.LEAVES) { return false; }
         return !held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) || held.getValue(BlockLeaves.DECAYABLE);
     }
+    private static final BlockPos.MutableBlockPos AT = new BlockPos.MutableBlockPos();
+
     private static boolean sandBiome(World world, int x, int z) {
-        Biome biome = world.getBiome(new BlockPos(x, 64, z));
+        Biome biome = world.getBiome(AT.setPos(x, 64, z));
         return biome.topBlock.getBlock() == Blocks.SAND;
     }
     public static IBlockState fillGround(World world, int x, int z) {
-        Biome biome = world.getBiome(new BlockPos(x, 64, z));
+        Biome biome = world.getBiome(AT.setPos(x, 64, z));
         Block top = biome.topBlock.getBlock();
         Block filler = biome.fillerBlock.getBlock();
         if (top == Blocks.HARDENED_CLAY || top == Blocks.STAINED_HARDENED_CLAY || filler == Blocks.HARDENED_CLAY || filler == Blocks.STAINED_HARDENED_CLAY) { return Blocks.HARDENED_CLAY.getDefaultState(); }

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Biomes;
@@ -9,8 +10,9 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.Objects;
 
 public final class RubicAquifer {
@@ -30,9 +32,9 @@ public final class RubicAquifer {
     private final DeepGeneration.Field lavaPocket;
     private final long seed;
     private final DeepGeneration carver;
-    private final Map<Long, int[]> locations = new HashMap<>();
-    private final Map<Long, Long> statuses = new HashMap<>();
-    private final Map<Long, Integer> surfaces = new HashMap<>();
+    private final Long2ObjectOpenHashMap<int[]> locations = new Long2ObjectOpenHashMap<>();
+    private final Long2LongOpenHashMap statuses = new Long2LongOpenHashMap();
+    private final Long2IntOpenHashMap surfaces = new Long2IntOpenHashMap();
 
     public RubicAquifer(World world, long seed, int lavaLevel, int offsetBlocks, IBlockState barrierBlock, DeepGeneration carver) {
         this.world = world;
@@ -199,8 +201,7 @@ public final class RubicAquifer {
     }
 
     private long status(long cell, int[] location) {
-        Long held = statuses.get(cell);
-        if (held != null) { return held; }
+        if (statuses.containsKey(cell)) { return statuses.get(cell); }
         long made = computeFluid(location[0], location[1], location[2]);
         if (statuses.size() > CACHE_LIMIT) { statuses.clear(); }
         statuses.put(cell, made);
@@ -260,8 +261,7 @@ public final class RubicAquifer {
 
     private int surfaceEstimate(int x, int z) {
         long key = ((long) (x >> 4) << 32) ^ ((z >> 4) & 0xFFFFFFFFL);
-        Integer held = surfaces.get(key);
-        if (held != null) { return held; }
+        if (surfaces.containsKey(key)) { return surfaces.get(key); }
         Biome biome = world.getBiomeProvider().getBiome(new BlockPos((x & ~15) + 8, 0, (z & ~15) + 8), Biomes.PLAINS);
         int estimate = SEA_LEVEL + Math.round(biome.getBaseHeight() * 17.0F + Math.max(0.0F, biome.getHeightVariation()) * 8.0F);
         if (surfaces.size() > CACHE_LIMIT) { surfaces.clear(); }
@@ -290,14 +290,5 @@ public final class RubicAquifer {
 
     private static int gridZ(int block) { return block >> 4; }
 
-    private long mix(int x, int y, int z) {
-        long h = seed ^ 0x56E27EB562EDDF5DL;
-        h ^= x * 0x2545F4914F6CDD1DL;
-        h ^= (long) y * 0x6C62272E07BB0142L;
-        h ^= (long) z * 0xCBF29CE484222325L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        return h;
-    }
+    private long mix(int x, int y, int z) { return MathUtil.scramble(seed ^ 0x56E27EB562EDDF5DL, x, y, z); }
 }

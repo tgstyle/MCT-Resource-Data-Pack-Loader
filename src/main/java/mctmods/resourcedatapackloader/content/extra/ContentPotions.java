@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -20,7 +21,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
@@ -30,8 +30,6 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
@@ -54,24 +52,15 @@ public final class ContentPotions {
         if (loaded) { return wanted(); }
         loaded = true;
         if (!Config.registersToClients() || !Config.content.potions) { return false; }
-        PackManager.get().forEach(PackManager.POTIONS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            if (ContentOwners.reserved(key)) { return; }
-            try { readPotion(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in potion file {}, ignoring it", key, ex); }
+        Json.eachFile(PackManager.POTIONS, "potion file", (key, contents) -> {
+            if (!ContentOwners.reserved(key)) { readPotion(key, contents); }
         });
-        PackManager.get().forEach(PackManager.POTION_TYPES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            if (ContentOwners.reserved(key)) { return; }
-            try { readType(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in potion type file {}, ignoring it", key, ex); }
+        Json.eachFile(PackManager.POTION_TYPES, "potion type file", (key, contents) -> {
+            if (!ContentOwners.reserved(key)) { readType(key, contents); }
         });
         if (Config.content.brewing) {
-            PackManager.get().forEach(PackManager.BREWING, PackManager.JSON, (namespace, path, contents) -> {
-                ResourceLocation key = new ResourceLocation(namespace, path);
-                if (ContentOwners.reserved(key)) { return; }
-                try { readBrewing(key, contents); }
-                catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in brewing file {}, ignoring it", key, ex); }
+            Json.eachFile(PackManager.BREWING, "brewing file", (key, contents) -> {
+                if (!ContentOwners.reserved(key)) { readBrewing(key, contents); }
             });
         }
         if (!POTIONS.isEmpty()) { Summary.info("potions", "Loaded " + POTIONS.size() + " potion effect(s) from packs"); }
@@ -194,12 +183,7 @@ public final class ContentPotions {
                 ContentLog.LOGGER.debug("Potion {} is already registered, leaving it alone", def.registryName);
                 continue;
             }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
-                event.getRegistry().register(new ContentPotion(def));
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            ContentOwners.as(def.registryName.getNamespace(), () -> event.getRegistry().register(new ContentPotion(def)));
             count++;
         }
         if (count > 0) { Summary.info("content_potions", "Registered " + count + " potion effect(s) from packs"); }
@@ -226,14 +210,11 @@ public final class ContentPotions {
                 ContentLog.LOGGER.error("Potion type {} has no effect whose potion exists, skipping it", def.registryName);
                 continue;
             }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(def.registryName.getNamespace()));
+            ContentOwners.as(def.registryName.getNamespace(), () -> {
                 PotionType type = new PotionType(def.baseName, effects.toArray(new PotionEffect[0]));
                 type.setRegistryName(def.registryName);
                 event.getRegistry().register(type);
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
             count++;
         }
         if (count > 0) { Summary.info("content_potion_types", "Registered " + count + " potion type(s) from packs"); }

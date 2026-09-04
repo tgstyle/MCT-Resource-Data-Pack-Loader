@@ -38,8 +38,6 @@ public class ContentPotion extends Potion {
         }
     }
 
-    public PotionDef getDef() { return def; }
-
     @Override public boolean isInstant() { return def.instant; }
 
     @Override public boolean hasStatusIcon() { return icon == null; }

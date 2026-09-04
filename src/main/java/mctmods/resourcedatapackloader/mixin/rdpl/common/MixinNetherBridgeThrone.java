@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement
 
 import net.minecraft.tileentity.MobSpawnerBaseLogic;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureNetherBridgePieces;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +14,7 @@ import java.util.Random;
 
 @Mixin(StructureNetherBridgePieces.Throne.class) public abstract class MixinNetherBridgeThrone {
     @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/tileentity/MobSpawnerBaseLogic;setEntityId(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id) {
-        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.FORTRESSES, id, new Random()));
+    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id, World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn) {
+        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.FORTRESSES, id, randomIn));
     }
 }

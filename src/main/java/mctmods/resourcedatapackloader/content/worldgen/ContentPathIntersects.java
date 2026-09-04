@@ -6,13 +6,15 @@ import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Random;
 
 public class ContentPathIntersects {
     private static final Map<String, PathIntersectDef> DEFS = new LinkedHashMap<>();
@@ -21,8 +23,7 @@ public class ContentPathIntersects {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        PackManager.get().forEach(PackManager.PATHINTERSECTS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.PATHINTERSECTS, "path intersect design", (key, contents) -> {
             PathIntersectDef def = ContentParser.pathIntersect(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
@@ -32,20 +33,11 @@ public class ContentPathIntersects {
     public static PathIntersectDef forJunction(World world, int x, int z) {
         String[] wanted = ContentControl.list(ContentControl.VILLAGES, "villagePathIntersects", Config.worldgen.villagePathIntersects);
         if (wanted.length == 0) { return null; }
-        int total = 0;
+        List<PathIntersectDef> defs = new ArrayList<>();
         for (String key : wanted) {
             PathIntersectDef def = DEFS.get(key);
-            if (def != null) { total += def.weight; }
+            if (def != null) { defs.add(def); }
         }
-        if (total == 0) { return null; }
-        Random random = SeededRandom.at(world, x, z);
-        int roll = random.nextInt(total);
-        for (String key : wanted) {
-            PathIntersectDef def = DEFS.get(key);
-            if (def == null) { continue; }
-            roll -= def.weight;
-            if (roll < 0) { return def; }
-        }
-        return null;
+        return WeightedPicks.pick(defs, def -> def.weight, SeededRandom.at(world, x, z));
     }
 }

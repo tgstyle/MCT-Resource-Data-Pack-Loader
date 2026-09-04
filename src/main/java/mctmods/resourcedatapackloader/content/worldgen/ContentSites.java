@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SavedData;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -15,16 +17,10 @@ public class ContentSites extends WorldSavedData {
     private int spacing;
     private boolean warned;
 
-    public ContentSites() { super(NAME); }
-
-    @SuppressWarnings("unused") public ContentSites(String name) { super(name); }
+    public ContentSites(String name) { super(name); }
 
     public static ContentSites of(World world, int spacing) {
-        ContentSites held = (ContentSites) world.getPerWorldStorage().getOrLoadData(ContentSites.class, NAME);
-        if (held == null) {
-            held = new ContentSites();
-            world.getPerWorldStorage().setData(NAME, held);
-        }
+        ContentSites held = SavedData.get(world.getPerWorldStorage(), ContentSites.class, NAME, ContentSites::new);
         int wanted = Math.max(9, spacing);
         if (held.spacing == 0) {
             held.spacing = wanted;
@@ -59,7 +55,7 @@ public class ContentSites extends WorldSavedData {
         chosen.clear();
         spacing = nbt.getInteger("Spacing");
         int[] packed = nbt.getIntArray("Sites");
-        for (int i = 0; i + 3 < packed.length; i += 4) { chosen.put(((long) packed[i] << 32) | (packed[i + 1] & 0xFFFFFFFFL), ((long) packed[i + 2] << 32) | (packed[i + 3] & 0xFFFFFFFFL)); }
+        for (int i = 0; i + 3 < packed.length; i += 4) { chosen.put(Longs.pack(packed[i], packed[i + 1]), Longs.pack(packed[i + 2], packed[i + 3])); }
     }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
@@ -68,10 +64,10 @@ public class ContentSites extends WorldSavedData {
         for (Map.Entry<Long, Long> entry : chosen.entrySet()) {
             long cell = entry.getKey();
             long site = entry.getValue();
-            packed[at++] = (int) (cell >> 32);
-            packed[at++] = (int) cell;
-            packed[at++] = (int) (site >> 32);
-            packed[at++] = (int) site;
+            packed[at++] = Longs.high(cell);
+            packed[at++] = Longs.low(cell);
+            packed[at++] = Longs.high(site);
+            packed[at++] = Longs.low(site);
         }
         nbt.setInteger("Spacing", spacing);
         nbt.setIntArray("Sites", packed);

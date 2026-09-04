@@ -30,6 +30,8 @@ public final class GateEvents {
 
     private GateEvents() {}
 
+    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { SPOKEN.remove(event.player.getUniqueID()); }
+
     @SubscribeEvent public static void onTravel(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof EntityPlayerMP)) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
@@ -78,7 +80,7 @@ public final class GateEvents {
         if (!(player instanceof EntityPlayerMP)) { return; }
         for (GateDef def : ContentGates.all().values()) {
             if (def.craft.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
-            if (!ContentGates.matches(event.crafting, stack(def.craft))) { continue; }
+            if (!ContentGates.matches(event.crafting, ContentGates.stack(def.craft))) { continue; }
             ContentGates.unlock(player, def, true);
         }
     }
@@ -95,7 +97,7 @@ public final class GateEvents {
         for (GateDef def : ContentGates.all().values()) {
             if (def.consume.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!def.portalBlocks.isEmpty() && !def.portalBlocks.contains(name.toString())) { continue; }
-            if (!ContentGates.matches(held, stack(def.consume))) { continue; }
+            if (!ContentGates.matches(held, ContentGates.stack(def.consume))) { continue; }
             if (held.getCount() < def.consumeCount) { continue; }
             if (!player.capabilities.isCreativeMode) { held.shrink(def.consumeCount); }
             ContentGates.unlock(player, def, true);
@@ -133,6 +135,4 @@ public final class GateEvents {
         SPOKEN.put(player.getUniqueID(), now);
         return false;
     }
-
-    private static ItemStack stack(String item) { return ContentStacks.parse(new ResourceLocation("rdpl", "gate"), item, 1); }
 }

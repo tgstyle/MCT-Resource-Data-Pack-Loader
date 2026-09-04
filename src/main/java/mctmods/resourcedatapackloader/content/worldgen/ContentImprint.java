@@ -22,6 +22,10 @@ public final class ContentImprint implements IContentShape {
     private static final int WORLDGEN_FLAGS = 2;
     private static final int OFFSET = 8;
     private static final Rotation[] TURNS = Rotation.values();
+
+    public static int backX(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0; }
+
+    public static int backZ(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0; }
     private final ContentPlacer placer;
     private final ShapeDef shape;
     private final ResourceLocation key;
@@ -54,8 +58,8 @@ public final class ContentImprint implements IContentShape {
         settings.setIntegrity(shape.integrity / 100.0F);
         settings.setRandom(random);
         BlockPos span = loaded.transformedSize(rotation);
-        int backX = rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0;
-        int backZ = rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0;
+        int backX = backX(rotation, span);
+        int backZ = backZ(rotation, span);
         int cornerX = within(origin.getX(), origin.getX() - span.getX() / 2, span.getX());
         int cornerZ = within(origin.getZ(), origin.getZ() - span.getZ() / 2, span.getZ());
         BlockPos fitted = new BlockPos(cornerX + backX, origin.getY(), cornerZ + backZ);

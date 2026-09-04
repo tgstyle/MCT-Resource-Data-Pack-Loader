@@ -100,7 +100,7 @@ import javax.annotation.Nullable;
         return blocker;
     }
 
-    @SuppressWarnings("ConstantConditions") @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$widen(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
+    @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$widen(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
         StructureBoundingBox found = cir.getReturnValue();
         ContentLog.LOGGER.debug("A road box comes back {} facing {}: {}", found == null ? "null" : (Math.max(found.maxX - found.minX, found.maxZ - found.minZ) + 1) + " long", facing, found);
         if (found == null || !ContentBeard.wanted()) { return; }
@@ -341,7 +341,7 @@ import javax.annotation.Nullable;
         cir.setReturnValue(true);
     }
 
-    @SuppressWarnings({"ConstantConditions"}) @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
+    @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
         IBlockState deck = getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.PLANKS).getDefaultState());
         if (deck.getMaterial() != Material.WOOD) { deck = Objects.requireNonNull(Blocks.PLANKS).getDefaultState(); }
         BeardRoads.pave(this, world, clip,

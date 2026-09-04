@@ -199,7 +199,7 @@ public final class ContentChunkWatch {
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null) { return; }
+        if (server == null || !watching()) { return; }
         takeStock();
         int waiting = 0;
         int held = 0;

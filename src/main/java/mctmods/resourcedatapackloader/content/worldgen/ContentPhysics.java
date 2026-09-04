@@ -3,15 +3,14 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
+import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public final class ContentPhysics {
     private ContentPhysics() {}
@@ -48,13 +47,16 @@ public final class ContentPhysics {
 
     private static final class Scale {
         private final String key;
+        private final TemplateMemo<String[]> memo = new TemplateMemo<>();
         private String[] raw;
         private double everywhere = 1.0;
-        private Map<Integer, Double> byDimension = new HashMap<>();
+        private Int2DoubleOpenHashMap byDimension = new Int2DoubleOpenHashMap();
 
         Scale(String key) { this.key = key; }
 
-        String[] asked() {
+        String[] asked() { return memo.get(this::read); }
+
+        private String[] read() {
             switch (key) {
                 case "worldGravity": return ContentControl.list(ContentControl.TERRAIN, key, Config.worldgen.worldGravity);
                 case "worldFallDamage": return ContentControl.list(ContentControl.TERRAIN, key, Config.worldgen.worldFallDamage);
@@ -67,9 +69,9 @@ public final class ContentPhysics {
             if (ContentControl.off(ContentControl.TERRAIN)) { return 1.0; }
             String[] asked = asked();
             if (asked.length == 0) { return 1.0; }
-            if (!Arrays.equals(asked, raw)) {
+            if (asked != raw) {
                 double bare = 1.0;
-                Map<Integer, Double> scoped = new HashMap<>();
+                Int2DoubleOpenHashMap scoped = new Int2DoubleOpenHashMap();
                 for (String entry : asked) {
                     String line = entry.trim();
                     int split = line.indexOf('=');
@@ -94,8 +96,7 @@ public final class ContentPhysics {
                 byDimension = scoped;
                 raw = asked;
             }
-            Double found = byDimension.get(dimension);
-            return found != null ? found : everywhere;
+            return byDimension.containsKey(dimension) ? byDimension.get(dimension) : everywhere;
         }
     }
 }

@@ -141,7 +141,7 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
                             world.spawnEntity(toSpawn);
                         }
                         else { toSpawn.setDead(); }
-                        if (blockZ >= ForgeEventFactory.getMaxSpawnPackSize(toSpawn)) { continue nextChunk; }
+                        if (currentPackSize >= ForgeEventFactory.getMaxSpawnPackSize(toSpawn)) { continue nextChunk; }
                     }
                     totalSpawned += currentPackSize;
                 }

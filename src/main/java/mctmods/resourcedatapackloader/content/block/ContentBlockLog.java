@@ -26,16 +26,15 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockLog extends BlockLog implements IContentBlock {
     public static final int MAX_VARIANTS = 4;
-    private static final ThreadLocal<PropertyVariant> PENDING = new ThreadLocal<>();
     private static final int VARIANT_MASK = 3;
     private static final int AXIS_MASK = 12;
     private final BlockDef def;
     private final PropertyVariant variant;
 
     public static ContentBlockLog create(BlockDef def) {
-        PENDING.set(new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockLog(def, PENDING.get()); }
-        finally { PENDING.remove(); }
+        BlockVariants.begin(def, new PropertyVariant(ContentSetup.names(def)));
+        try { return new ContentBlockLog(def, BlockVariants.property()); }
+        finally { BlockVariants.end(); }
     }
 
     protected ContentBlockLog(BlockDef def, PropertyVariant property) {
@@ -51,7 +50,7 @@ import javax.annotation.Nullable;
         setDefaultState(this.blockState.getBaseState().withProperty(LOG_AXIS, EnumAxis.Y).withProperty(property, def.at(0).name));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, LOG_AXIS, PENDING.get()); }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, LOG_AXIS, BlockVariants.property()); }
 
     @Override public BlockDef getDef() { return def; }
 

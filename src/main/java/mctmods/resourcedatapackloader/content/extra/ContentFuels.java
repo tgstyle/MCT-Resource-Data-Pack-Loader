@@ -1,18 +1,21 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.JsonUtils;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -20,23 +23,20 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.oredict.OreDictionary;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class ContentFuels {
     private static final Gson GSON = new GsonBuilder().create();
     private static final List<Entry> ENTRIES = new ArrayList<>();
-    private static boolean loaded;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentFuels() {}
 
     public static boolean load() {
-        if (loaded) { return !ENTRIES.isEmpty(); }
-        loaded = true;
+        if (!GENERATION.stale()) { return !ENTRIES.isEmpty(); }
+        ENTRIES.clear();
         if (!Config.content.fuels) { return false; }
-        PackManager.get().forEach(PackManager.FUELS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in fuel file {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.FUELS, "fuel file", ContentFuels::read);
         if (!ENTRIES.isEmpty()) { Summary.info("fuels", "Loaded " + ENTRIES.size() + " fuel entry/entries"); }
         return !ENTRIES.isEmpty();
     }
@@ -82,24 +82,18 @@ public final class ContentFuels {
 
     private static final class Entry {
         private final ItemStack stack;
-        private final String oreDict;
+        @Nullable private final NonNullList<ItemStack> ores;
         private final int burnTime;
 
         private Entry(ItemStack stack, String oreDict, int burnTime) {
             this.stack = stack;
-            this.oreDict = oreDict;
+            this.ores = oreDict.isEmpty() ? null : OreDictionary.getOres(oreDict);
             this.burnTime = burnTime;
         }
 
         private boolean matches(ItemStack fuel) {
-            if (!oreDict.isEmpty()) {
-                for (int id : OreDictionary.getOreIDs(fuel)) {
-                    if (oreDict.equals(OreDictionary.getOreName(id))) { return true; }
-                }
-                return false;
-            }
-            if (stack.getItem() != fuel.getItem()) { return false; }
-            return stack.getMetadata() == OreDictionary.WILDCARD_VALUE || stack.getMetadata() == fuel.getMetadata();
+            if (ores != null) { return OreDictionary.containsMatch(false, ores, fuel); }
+            return Stacks.matches(stack, fuel);
         }
     }
 }

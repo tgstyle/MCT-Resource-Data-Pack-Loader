@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.EnumCreatureType;
@@ -34,6 +35,9 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 public final class ContentSpawning {
+    private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
+    private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
+    private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
     public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(java.util.Arrays.asList(
             "path", "till")));
     private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
@@ -93,14 +97,14 @@ public final class ContentSpawning {
             if (event.getSpawner() == null && deniedAboveWindow(world, event.getY())) { event.setResult(Event.Result.DENY); }
             return;
         }
+        BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
         if (event.getSpawner() == null) {
-            int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight);
-            if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, new BlockPos(event.getX(), event.getY(), event.getZ())) > lightCap) {
+            int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight));
+            if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, pos) > lightCap) {
                 event.setResult(Event.Result.DENY);
                 return;
             }
         }
-        BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
         float rate = rateFor(world, pos) * ContentThreat.spawnRate(world, pos);
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {
@@ -115,7 +119,7 @@ public final class ContentSpawning {
     }
 
     private static boolean deniedAboveWindow(World world, float y) {
-        if (ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals)) { return false; }
+        if (SKY_ANIMALS.get(() -> ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals))) { return false; }
         return ((IRubicWorld) world).rdpl$isRubicWorld() && y > world.provider.getActualHeight();
     }
 
@@ -127,8 +131,13 @@ public final class ContentSpawning {
             float wanted = ((ContentBiome) biome).monsterRate(sky, day);
             if (wanted >= 0.0F) { return wanted; }
         }
-        if (sky) { return day ? ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate) : ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate); }
-        return day ? ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate) : ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate);
+        float[] rates = RATES.get(() -> new float[] {
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate) });
+        if (sky) { return day ? rates[0] : rates[1]; }
+        return day ? rates[2] : rates[3];
     }
 
     public static boolean rateControlled() { return !ContentControl.off(ContentControl.SPAWNING); }

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInte
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.CubePos;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
@@ -59,20 +60,7 @@ public class LightingManager implements ILightingManager {
     @Override public void readFromNbt(ICube cube, NBTTagCompound lightingInfo) {
         CubeLightData lightData = getLightData(cube);
         lightData.lastHeightMap = lightingInfo.hasKey("LastHeightMap") ? lightingInfo.getIntArray("LastHeightMap") : null;
-        if (lightData.lastHeightMap != null) {
-            Arrays.fill(lightData.lastSaveHeightMapInfo, 0L);
-            for (int i = 0; i < lightData.lastHeightMap.length; i++) {
-                int cy = Coords.blockToCube(lightData.lastHeightMap[i] - 1);
-                int flags = 0;
-                if (cy >= cube.getY()) { flags |= 1; }
-                if (cy <= cube.getY()) { flags |= 2; }
-                int idx = i >> 5;
-                int bit = (i & 31) << 1;
-                long v = lightData.lastSaveHeightMapInfo[idx];
-                v |= ((long) flags) << bit;
-                lightData.lastSaveHeightMapInfo[idx] = v;
-            }
-        }
+        if (lightData.lastHeightMap != null) { CubeLightData.packFlags(lightData.lastHeightMap, cube.getY(), lightData.lastSaveHeightMapInfo); }
     }
 
     @Override public Cube.ICubeLightTrackingInfo createLightData() { return new CubeLightData(); }
@@ -83,11 +71,10 @@ public class LightingManager implements ILightingManager {
 
     @Override public void onTrackCubeSurface(ICube cube) {
         if (!world.isRemote) {
-            BlockPos min = cube.getCoords().getMinBlockPos();
-            BlockPos max = cube.getCoords().getMaxBlockPos();
+            CubePos coords = cube.getCoords();
             PlayerCubeMap watchers = (PlayerCubeMap) ((WorldServer) world).getPlayerChunkMap();
-            for (int x = min.getX(); x <= max.getX() + 1; x++) {
-                for (int z = min.getZ(); z <= max.getZ() + 1; z++) { watchers.heightUpdated(x, z); }
+            for (int x = coords.getMinBlockX(); x <= coords.getMaxBlockX() + 1; x++) {
+                for (int z = coords.getMinBlockZ(); z <= coords.getMaxBlockZ() + 1; z++) { watchers.heightUpdated(x, z); }
             }
             tryScheduleOnLoadHeightChangeRelight(cube);
         }
@@ -125,33 +112,25 @@ public class LightingManager implements ILightingManager {
         @Override public boolean needsSaving(ICube cube) {
             int[] heightmap = cube.getColumn().getHeightMap();
             for (int i = 0; i < heightmap.length; i++) {
-                int cy = Coords.blockToCube(heightmap[i] - 1);
-                int idx = i >> 5;
-                int bit = (i & 31) << 1;
-                int flags = (int) ((lastSaveHeightMapInfo[idx] >>> bit) & 3);
-                if (flags == 0) { return true; }
-                int newFlags = 0;
-                if (cy >= cube.getY()) { newFlags |= 1; }
-                if (cy <= cube.getY()) { newFlags |= 2; }
-                if (flags != newFlags) { return true; }
+                int flags = (int) ((lastSaveHeightMapInfo[i >> 5] >>> ((i & 31) << 1)) & 3);
+                if (flags == 0 || flags != flagsFor(heightmap[i], cube.getY())) { return true; }
             }
             return false;
         }
 
-        @Override public void markSaved(ICube cube) {
-            Arrays.fill(lastSaveHeightMapInfo, 0L);
-            int[] heightmap = cube.getColumn().getHeightMap();
-            for (int i = 0; i < heightmap.length; i++) {
-                int cy = Coords.blockToCube(heightmap[i] - 1);
-                int flags = 0;
-                if (cy >= cube.getY()) { flags |= 1; }
-                if (cy <= cube.getY()) { flags |= 2; }
-                int idx = i >> 5;
-                int bit = (i & 31) << 1;
-                long v = lastSaveHeightMapInfo[idx];
-                v |= ((long) flags) << bit;
-                lastSaveHeightMapInfo[idx] = v;
-            }
+        @Override public void markSaved(ICube cube) { packFlags(cube.getColumn().getHeightMap(), cube.getY(), lastSaveHeightMapInfo); }
+
+        static int flagsFor(int height, int cubeY) {
+            int cy = Coords.blockToCube(height - 1);
+            int flags = 0;
+            if (cy >= cubeY) { flags |= 1; }
+            if (cy <= cubeY) { flags |= 2; }
+            return flags;
+        }
+
+        static void packFlags(int[] heights, int cubeY, long[] out) {
+            Arrays.fill(out, 0L);
+            for (int i = 0; i < heights.length; i++) { out[i >> 5] |= ((long) flagsFor(heights[i], cubeY)) << ((i & 31) << 1); }
         }
     }
 }

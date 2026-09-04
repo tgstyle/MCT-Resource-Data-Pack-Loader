@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.recipe;
 
+import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -11,12 +13,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryModifiable;
 import java.util.ArrayList;
@@ -41,11 +41,7 @@ public final class RecipeRemovals {
         NAMES.clear();
         PREFIXES.clear();
         OUTPUTS.clear();
-        PackManager.get().forEach(PackManager.RECIPE_REMOVALS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in recipe removal file {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
         if (NAMES.isEmpty() && PREFIXES.isEmpty() && OUTPUTS.isEmpty()) { return; }
         List<ResourceLocation> doomed = new ArrayList<>();
         for (ResourceLocation key : registry.getKeys()) {
@@ -86,8 +82,7 @@ public final class RecipeRemovals {
         ItemStack output = recipe.getRecipeOutput();
         if (output.isEmpty()) { return false; }
         for (ItemStack wanted : OUTPUTS) {
-            if (wanted.getItem() != output.getItem()) { continue; }
-            if (wanted.getMetadata() == OreDictionary.WILDCARD_VALUE || wanted.getMetadata() == output.getMetadata()) { return true; }
+            if (Stacks.matches(wanted, output)) { return true; }
         }
         return false;
     }

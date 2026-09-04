@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
-import mctmods.resourcedatapackloader.content.rubic.world.CubeEvent;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
@@ -11,7 +10,6 @@ import mctmods.resourcedatapackloader.mixin.rdpl.client.IChunkProviderClient;
 import mctmods.resourcedatapackloader.util.CubePos;
 import mctmods.resourcedatapackloader.util.XYZMap;
 
-import static net.minecraftforge.common.MinecraftForge.EVENT_BUS;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -63,7 +61,6 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
         ((IColumn) column).addCube(cube);
         this.cubeMap.put(cube);
         world.rdpl$getLightingManager().onCubeLoad(cube, false);
-        EVENT_BUS.post(new CubeEvent.Load(cube));
         cube.setCubeLoaded();
         return cube;
     }

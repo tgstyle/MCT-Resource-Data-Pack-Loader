@@ -18,6 +18,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -430,8 +431,8 @@ public final class BeardGround {
                 if (x > box.minX - 3 && x < box.maxX + 3 && z > box.minZ - 3 && z < box.maxZ + 3) { continue; }
                 if (BeardPlots.underAnother(start, piece, x, z)) { continue; }
                 if (BeardPlots.besideRoad(start, piece, x, z)) { continue; }
-                int inX = Math.max(box.minX - 2, Math.min(box.maxX + 2, x));
-                int inZ = Math.max(box.minZ - 2, Math.min(box.maxZ + 2, z));
+                int inX = MathHelper.clamp(x, box.minX - 2, box.maxX + 2);
+                int inZ = MathHelper.clamp(z, box.minZ - 2, box.maxZ + 2);
                 int index = (inX - box.minX + 2) * deepDepth + (inZ - box.minZ + 2);
                 if (shorn[index] >= 2) {
                     if (yarded) { continue; }

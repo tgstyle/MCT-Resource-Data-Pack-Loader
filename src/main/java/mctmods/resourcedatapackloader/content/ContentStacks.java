@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registries;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -39,6 +40,6 @@ public final class ContentStacks {
 
     @Nullable private static Item find(String name) {
         ResourceLocation location = new ResourceLocation(name);
-        return ForgeRegistries.ITEMS.containsKey(location) ? ForgeRegistries.ITEMS.getValue(location) : null;
+        return Registries.find(ForgeRegistries.ITEMS, location);
     }
 }

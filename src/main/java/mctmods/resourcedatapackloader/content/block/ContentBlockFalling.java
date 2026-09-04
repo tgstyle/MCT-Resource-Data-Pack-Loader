@@ -28,24 +28,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockFalling extends BlockFalling implements IContentBlock {
-    private static final ThreadLocal<BlockDef> CONSTRUCTING = new ThreadLocal<>();
-    private static final ThreadLocal<PropertyVariant> PROPERTY = new ThreadLocal<>();
     private final BlockDef def;
     private final PropertyVariant variant;
 
     public static ContentBlockFalling create(BlockDef def) {
-        CONSTRUCTING.set(def);
+        BlockVariants.begin(def);
         try { return new ContentBlockFalling(def); }
-        finally {
-            CONSTRUCTING.remove();
-            PROPERTY.remove();
-        }
+        finally { BlockVariants.end(); }
     }
 
     protected ContentBlockFalling(BlockDef def) {
         super(def.material);
         this.def = def;
-        this.variant = PROPERTY.get();
+        this.variant = BlockVariants.property();
         ContentSetup.apply(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultSlipperiness(def.slipperiness);
@@ -53,14 +48,13 @@ import javax.annotation.Nullable;
     }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() {
-        PropertyVariant property = new PropertyVariant(ContentSetup.names(CONSTRUCTING.get()));
-        PROPERTY.set(property);
+        PropertyVariant property = BlockVariants.fresh();
         return new BlockStateContainer(this, property);
     }
 
     @Override public BlockDef getDef() { return def; }
 
-    private BlockDef def() { return def == null ? CONSTRUCTING.get() : def; }
+    private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 

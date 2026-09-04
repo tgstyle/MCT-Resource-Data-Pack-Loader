@@ -192,7 +192,7 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} builds on {}, which is not {} by {}, so nothing is drawn", namespace, path, baseFrom, size[0], size[1]);
                 return null;
             }
-            return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, base, baseFrom, sources.toString());
+            return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, base, sources.toString());
         }
         if (rows.size() != size[1]) {
             ContentLog.LOGGER.error("Pixel map {}:{} is {} tall but has {} row(s). Give it one row per line of pixels, from the top down", namespace, path, size[1], rows.size());
@@ -204,7 +204,7 @@ public final class ContentPixelMaps {
                 return null;
             }
         }
-        return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, null, null, sources.toString());
+        return new Resolved(size, rows, palette, notes, from, chain, rowsFrom, tint, null, sources.toString());
     }
 
     public static final class Resolved {
@@ -217,10 +217,9 @@ public final class ContentPixelMaps {
         public final String rowsFrom;
         @Nullable public final TintFactory tint;
         @Nullable public final int[] base;
-        @Nullable public final String baseFrom;
         final String sources;
 
-        Resolved(int[] size, List<String> rows, Map<String, String> palette, Map<String, String> notes, Map<String, String> from, List<String> chain, String rowsFrom, @Nullable TintFactory tint, @Nullable int[] base, @Nullable String baseFrom, String sources) {
+        Resolved(int[] size, List<String> rows, Map<String, String> palette, Map<String, String> notes, Map<String, String> from, List<String> chain, String rowsFrom, @Nullable TintFactory tint, @Nullable int[] base, String sources) {
             this.size = size;
             this.rows = rows;
             this.palette = palette;
@@ -230,7 +229,6 @@ public final class ContentPixelMaps {
             this.rowsFrom = rowsFrom;
             this.tint = tint;
             this.base = base;
-            this.baseFrom = baseFrom;
             this.sources = sources;
         }
 

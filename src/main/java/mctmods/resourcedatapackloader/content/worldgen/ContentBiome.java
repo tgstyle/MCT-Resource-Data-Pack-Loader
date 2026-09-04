@@ -14,6 +14,7 @@ import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.math.MathHelper;
 import java.util.List;
 import java.util.Locale;
 import java.util.EnumMap;
@@ -125,7 +126,7 @@ public class ContentBiome extends Biome {
             case "clay": decorator.clayPerChunk = value; return true;
             case "waterlily": decorator.waterlilyPerChunk = value; return true;
             case "falls": decorator.generateFalls = value > 0; return true;
-            case "extratreechance": decorator.extraTreeChance = Math.max(0, Math.min(100, value)) / 100.0F; return true;
+            case "extratreechance": decorator.extraTreeChance = MathHelper.clamp(value, 0, 100) / 100.0F; return true;
             case "pumpkins": case "desertwells": case "ice": case "fossils": case "rocks": return true;
             default: return false;
         }

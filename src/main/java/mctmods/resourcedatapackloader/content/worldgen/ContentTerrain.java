@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.DimensionValues;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,10 +20,10 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -43,30 +44,22 @@ public final class ContentTerrain {
 
     private ContentTerrain() {}
 
-    public static String worldType() {
+    private static String text(String key, String fallback) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-        return ContentControl.text(ContentControl.TERRAIN, "worldType", Config.worldgen.worldType).trim();
+        return ContentControl.text(ContentControl.TERRAIN, key, fallback).trim();
     }
 
-    public static String worldSeed() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-        return ContentControl.text(ContentControl.TERRAIN, "worldSeed", Config.worldgen.worldSeed).trim();
-    }
+    private static String generatorOptions() { return ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim(); }
 
-    public static String worldName() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-        return ContentControl.text(ContentControl.TERRAIN, "worldName", Config.worldgen.worldName).trim();
-    }
+    public static String worldType() { return text("worldType", Config.worldgen.worldType); }
 
-    public static String worldGameMode() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-        return ContentControl.text(ContentControl.TERRAIN, "worldGameMode", Config.worldgen.worldGameMode).trim();
-    }
+    public static String worldSeed() { return text("worldSeed", Config.worldgen.worldSeed); }
 
-    public static String worldSpawn() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
-        return ContentControl.text(ContentControl.TERRAIN, "worldSpawn", Config.worldgen.worldSpawn).trim();
-    }
+    public static String worldName() { return text("worldName", Config.worldgen.worldName); }
+
+    public static String worldGameMode() { return text("worldGameMode", Config.worldgen.worldGameMode); }
+
+    public static String worldSpawn() { return text("worldSpawn", Config.worldgen.worldSpawn); }
 
     public static int worldTime() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return -1; }
@@ -75,32 +68,7 @@ public final class ContentTerrain {
 
     @Nullable public static EnumDifficulty difficultyFor(int dimension) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        String[] asked = ContentControl.lines(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty);
-        if (asked.length == 0) { return null; }
-        if (!Arrays.equals(asked, difficultyRaw)) {
-            EnumDifficulty everywhere = null;
-            Map<Integer, EnumDifficulty> scoped = new HashMap<>();
-            for (String entry : asked) {
-                String line = entry.trim();
-                int split = line.indexOf('=');
-                String name = split < 0 ? line : line.substring(split + 1).trim();
-                EnumDifficulty found = difficultyFrom(name);
-                if (found == null) {
-                    ContentLog.LOGGER.error("worldDifficulty names '{}', which is not one of peaceful, easy, normal or hard, ignoring it", line);
-                    continue;
-                }
-                if (split < 0) { everywhere = found; }
-                else {
-                    try { scoped.put(Integer.parseInt(line.substring(0, split).trim()), found); }
-                    catch (NumberFormatException wrong) { ContentLog.LOGGER.error("worldDifficulty names '{}', whose dimension is not a whole number, ignoring it", line); }
-                }
-            }
-            difficultyEverywhere = everywhere;
-            difficultyByDimension = scoped;
-            difficultyRaw = asked;
-        }
-        EnumDifficulty found = difficultyByDimension.get(dimension);
-        return found != null ? found : difficultyEverywhere;
+        return DIFFICULTY.at(dimension, ContentControl.lines(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty));
     }
 
     @Nullable private static EnumDifficulty difficultyFrom(String name) {
@@ -110,9 +78,7 @@ public final class ContentTerrain {
         return null;
     }
 
-    @Nullable private static String[] difficultyRaw;
-    @Nullable private static EnumDifficulty difficultyEverywhere;
-    private static Map<Integer, EnumDifficulty> difficultyByDimension = Collections.emptyMap();
+    private static final DimensionValues<EnumDifficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", ContentTerrain::difficultyFrom, "which is not one of peaceful, easy, normal or hard");
 
     public static int worldBorder() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return 0; }
@@ -206,14 +172,14 @@ public final class ContentTerrain {
 
     public static String options(String worldType) {
         if (leaves(worldType)) { return ""; }
-        String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
+        String options = generatorOptions();
         if (options.isEmpty() || !BOP.equalsIgnoreCase(worldType)) { return options; }
         return forBiomesOPlenty(options);
     }
 
     public static String owner(String worldType) {
         if (leaves(worldType)) { return ""; }
-        String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
+        String options = generatorOptions();
         if (options.isEmpty()) { return ""; }
         WorldTemplateDef template = ContentWorldTemplates.active();
         return template == null ? "the settings" : template.name;
@@ -221,7 +187,7 @@ public final class ContentTerrain {
 
     @Nullable public static JsonObject settings(String worldType) {
         if (leaves(worldType)) { return null; }
-        String options = ContentControl.text(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions).trim();
+        String options = generatorOptions();
         if (options.isEmpty()) { return null; }
         try { return new JsonParser().parse(options).getAsJsonObject(); }
         catch (RuntimeException notJson) { return null; }
@@ -254,7 +220,7 @@ public final class ContentTerrain {
     private static String biomeSize(JsonElement value) {
         try {
             if (value.getAsJsonPrimitive().isString()) { return value.getAsString().toLowerCase(Locale.ROOT); }
-            int size = Math.max(0, Math.min(BOP_SIZES.size() - 1, value.getAsInt() - 2));
+            int size = MathHelper.clamp(value.getAsInt() - 2, 0, BOP_SIZES.size() - 1);
             return BOP_SIZES.get(size);
         }
         catch (RuntimeException unreadable) { return "medium"; }

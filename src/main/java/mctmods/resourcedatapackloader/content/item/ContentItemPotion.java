@@ -29,8 +29,6 @@ public class ContentItemPotion extends ItemPotion implements IContentItem {
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Override public ItemDef getDef() { return def; }
-
     @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> items) {
         if (!isInCreativeTab(tab)) { return; }
         for (PotionType type : types()) { items.add(PotionUtils.addPotionToItemStack(new ItemStack(this), type)); }

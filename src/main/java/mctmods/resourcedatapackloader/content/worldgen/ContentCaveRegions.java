@@ -7,9 +7,9 @@ import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.PackGeneration;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -31,6 +31,7 @@ public final class ContentCaveRegions {
     private static final ThreadLocal<Map<Long, Object>> MEMO = ThreadLocal.withInitial(HashMap::new);
     private static final Object NONE = new Object();
     private static final Map<Integer, List<CaveRegionDef>> BY_DIMENSION = new HashMap<>();
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentCaveRegions() {}
 
@@ -153,9 +154,8 @@ public final class ContentCaveRegions {
         int spanY = cellsY >> 2;
         int blockX0 = chunkX * 16 + OFFSET;
         int blockZ0 = chunkZ * 16 + OFFSET;
-        boolean rubic = ((IRubicWorld) world).rdpl$isRubicWorld();
-        int floor = rubic ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
-        int ceiling = rubic ? ((IMinMaxHeight) world).rdpl$getMaxHeight() : 256;
+        int floor = GenHeights.floor(world, 0);
+        int ceiling = GenHeights.ceiling(world, 256);
         int cellY0 = Math.floorDiv(Math.floorDiv(floor, 4), spanY);
         int cellY1 = Math.floorDiv(Math.floorDiv(ceiling - 1, 4), spanY);
         int qx0 = blockX0 >> 2;
@@ -214,8 +214,8 @@ public final class ContentCaveRegions {
         settings.setRotation(rotation);
         settings.setRandom(random);
         BlockPos span = loaded.transformedSize(rotation);
-        int backX = rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0;
-        int backZ = rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0;
+        int backX = ContentImprint.backX(rotation, span);
+        int backZ = ContentImprint.backZ(rotation, span);
         BlockPos fitted = new BlockPos(x - span.getX() / 2 + backX, y, z - span.getZ() / 2 + backZ);
         if (span.getX() > 16 || span.getZ() > 16) {
             if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return; }
@@ -227,9 +227,8 @@ public final class ContentCaveRegions {
     public static void decorate(World world, int chunkX, int chunkZ, Random random) {
         List<CaveRegionDef> defs = forDimension(world.provider.getDimension());
         if (defs.isEmpty()) { return; }
-        boolean rubic = ((IRubicWorld) world).rdpl$isRubicWorld();
-        int floor = rubic ? ((IMinMaxHeight) world).rdpl$getMinHeight() : 0;
-        int ceiling = rubic ? ((IMinMaxHeight) world).rdpl$getMaxHeight() : world.getActualHeight();
+        int floor = GenHeights.floor(world, 0);
+        int ceiling = GenHeights.ceiling(world, world.getActualHeight());
         List<int[]> bands = coverBands(defs, floor + 1, ceiling - 2);
         if (bands.isEmpty()) { return; }
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -294,6 +293,10 @@ public final class ContentCaveRegions {
     }
 
     private static List<CaveRegionDef> forDimension(int dimension) {
+        if (GENERATION.stale()) {
+            BY_DIMENSION.clear();
+            MEMO.get().clear();
+        }
         List<CaveRegionDef> cached = BY_DIMENSION.get(dimension);
         if (cached != null) { return cached; }
         List<CaveRegionDef> active = new ArrayList<>();

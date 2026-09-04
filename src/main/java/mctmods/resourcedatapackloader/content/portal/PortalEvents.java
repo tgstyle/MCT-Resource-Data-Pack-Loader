@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.portal;
 
+import mctmods.resourcedatapackloader.content.block.ContentBlockPortal;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
@@ -10,9 +12,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 public final class PortalEvents {
     private PortalEvents() {}
+
+    @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentBlockPortal.forget(event.player.getUniqueID()); }
 
     @SubscribeEvent public static void onBroken(BlockEvent.BreakEvent event) { ContentPortals.shaken(event.getWorld(), event.getPos(), event.getState()); }
 

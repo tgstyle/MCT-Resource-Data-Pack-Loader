@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.galacticraft;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import micdoodle8.mods.galacticraft.api.vector.BlockVec3;
 import micdoodle8.mods.galacticraft.core.fluid.ThreadFindSeal;
@@ -19,14 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow private World world;
     @Shadow private BlockVec3 head;
 
-    @Unique private boolean rdpl$rubic() { return world instanceof IRubicWorld && ((IRubicWorld) world).rdpl$isRubicWorld(); }
-
-    @Unique private int rdpl$yBase() { return rdpl$rubic() ? head.y - 128 : 0; }
+    @Unique private int rdpl$yBase() { return GenHeights.rubic(world) ? head.y - 128 : 0; }
 
     @Inject(method = "checkedAdd", at = @At("HEAD"), cancellable = true)
     private void rdpl$dropBeyondWindow(BlockVec3 vec, CallbackInfo cbi) {
-        if (!rdpl$rubic()) { return; }
-        int base = head.y - 128;
+        if (!GenHeights.rubic(world)) { return; }
+        int base = rdpl$yBase();
         if (vec.y < base || vec.y > base + 255) { cbi.cancel(); }
     }
 

@@ -57,6 +57,12 @@ public final class SkyDecoration {
     private static final double SPARSE_PLAINS = -0.8D;
     private static final NoiseGeneratorPerlin GRASS_COLOR_NOISE = new NoiseGeneratorPerlin(new Random(2345L), 1);
     private static final WorldGenDoublePlant DOUBLE_PLANT = new WorldGenDoublePlant();
+    private static final WorldGenDeadBush DEAD_BUSH = new WorldGenDeadBush();
+    private static final WorldGenDesertWells DESERT_WELL = new WorldGenDesertWells();
+    private static final WorldGenMelon MELON = new WorldGenMelon();
+    private static final WorldGenIceSpike ICE_SPIKE = new WorldGenIceSpike();
+    private static final WorldGenIcePath ICE_PATH = new WorldGenIcePath(4);
+    private static final WorldGenBigMushroom BIG_MUSHROOM = new WorldGenBigMushroom();
     private static final WorldGenBlockBlob FOREST_ROCK = new WorldGenBlockBlob(Objects.requireNonNull(Blocks.MOSSY_COBBLESTONE), 0);
     private static final BlockDoublePlant.EnumPlantType[] FOREST_PLANTS = {
             BlockDoublePlant.EnumPlantType.SYRINGA, BlockDoublePlant.EnumPlantType.ROSE, BlockDoublePlant.EnumPlantType.PAEONIA };
@@ -117,7 +123,7 @@ public final class SkyDecoration {
         }
         for (int attempt = 0; attempt < decorator.deadBushPerChunk; attempt++) {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-            if (top != null) { new WorldGenDeadBush().generate(world, random, top); }
+            if (top != null) { DEAD_BUSH.generate(world, random, top); }
         }
         for (int attempt = 0; attempt < decorator.waterlilyPerChunk; attempt++) {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
@@ -153,11 +159,11 @@ public final class SkyDecoration {
     private static void extras(World world, Random random, int cubeX, int cubeY, int cubeZ, Biome biome) {
         if (biome instanceof BiomeDesert && random.nextInt(1000) == 0) {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { new WorldGenDesertWells().generate(world, random, top); }
+            if (top != null) { DESERT_WELL.generate(world, random, top); }
         }
         if (biome instanceof BiomeJungle && random.nextInt(10) == 0) {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { new WorldGenMelon().generate(world, random, top); }
+            if (top != null) { MELON.generate(world, random, top); }
         }
         if (biome instanceof BiomeForest) {
             BiomeForest.Type kind = ((IBiomeForest) biome).rdpl$type();
@@ -183,11 +189,11 @@ public final class SkyDecoration {
         if (biome instanceof BiomeSnow && ((IBiomeSnow) biome).rdpl$superIcy()) {
             for (int attempt = 0; attempt < 3; attempt++) {
                 BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-                if (top != null) { new WorldGenIceSpike().generate(world, random, top); }
+                if (top != null) { ICE_SPIKE.generate(world, random, top); }
             }
             for (int attempt = 0; attempt < 2; attempt++) {
                 BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-                if (top != null) { new WorldGenIcePath(4).generate(world, random, top); }
+                if (top != null) { ICE_PATH.generate(world, random, top); }
             }
         }
     }
@@ -199,7 +205,7 @@ public final class SkyDecoration {
                 int z = (cubeZ << 4) + gridZ * GRID + 1 + SPREAD + random.nextInt(GRID / 2 + 1);
                 BlockPos top = surfaceAt(world, x, z, cubeY, true);
                 if (top == null) { continue; }
-                if (random.nextInt(20) == 0) { new WorldGenBigMushroom().generate(world, random, top); }
+                if (random.nextInt(20) == 0) { BIG_MUSHROOM.generate(world, random, top); }
                 else {
                     WorldGenAbstractTree tree = biome.getRandomTreeFeature(random);
                     tree.setDecorationDefaults();

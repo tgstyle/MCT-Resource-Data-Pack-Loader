@@ -20,6 +20,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -165,7 +166,7 @@ public final class CitySeams {
         int seeded = middle + roll.nextInt(span / 2 + 1) - span / 4;
         int low = Math.min(alongX ? wx : wz, alongX ? bx : bz) + keepOff;
         int high = Math.max(alongX ? wx : wz, alongX ? bx : bz) - keepOff;
-        seeded = Math.max(low, Math.min(high, seeded));
+        seeded = MathHelper.clamp(seeded, low, high);
         boolean onward = alongX ? dx > 0 : dz > 0;
         List<StructureComponent> components = start.getComponents();
         List<StructureComponent> everyone = ContentBeard.everyone(components);
@@ -442,7 +443,7 @@ public final class CitySeams {
                 int end = alongX ? (dir > 0 ? box.maxX : box.minX) : (dir > 0 ? box.maxZ : box.minZ);
                 int endX = alongX ? end : (acrossLo + acrossHi) / 2;
                 int endZ = alongX ? (acrossLo + acrossHi) / 2 : end;
-                if (metBeyond(everyone, piece, alongX, end + dir, acrossLo, acrossHi)) { continue; }
+                if (ContentBeard.metBeyond(everyone, piece, alongX, end + dir, acrossLo, acrossHi)) { continue; }
                 StructureBoundingBox best = null;
                 int bestAhead = Integer.MAX_VALUE;
                 for (StructureComponent mine : components) {
@@ -473,18 +474,6 @@ public final class CitySeams {
                 break;
             }
         }
-    }
-
-    private static boolean metBeyond(List<StructureComponent> pieces, StructureComponent piece, boolean alongX, int beyond, int acrossLo, int acrossHi) {
-        for (StructureComponent other : pieces) {
-            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox met = other.getBoundingBox();
-            if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(other))) { continue; }
-            if (beyond < (alongX ? met.minX : met.minZ) - 1 || beyond > (alongX ? met.maxX : met.maxZ) + 1) { continue; }
-            if ((alongX ? met.maxZ : met.maxX) < acrossLo || (alongX ? met.minZ : met.minX) > acrossHi) { continue; }
-            return true;
-        }
-        return false;
     }
 
     private static void unroll(World world, StructureStart neighbor, boolean alongX, int wellAt, int siteAt) {

@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockPortal;
 import mctmods.resourcedatapackloader.content.def.PortalFrameDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -20,15 +22,14 @@ import javax.annotation.Nullable;
 public final class ContentPortalFrames {
     private static final int BUDGET = 20000;
     private static final Map<String, PortalFrameDef> DEFS = new LinkedHashMap<>();
-    private static boolean loaded;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentPortalFrames() {}
 
     public static void load() {
-        if (loaded) { return; }
-        loaded = true;
-        PackManager.get().forEach(PackManager.PORTALFRAMES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        if (!GENERATION.stale()) { return; }
+        DEFS.clear();
+        Json.eachFile(PackManager.PORTALFRAMES, "portal frame", (key, contents) -> {
             PortalFrameDef def = ContentParser.portalFrame(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
+import mctmods.resourcedatapackloader.util.StateIdCache;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ObjectIntIdentityMap;
@@ -13,21 +14,18 @@ import java.util.Arrays;
 
 @Mixin(ChunkPrimer.class) public abstract class MixinChunkPrimer {
     @Unique private static final int RDPL_SLOTS = 32;
-    @Unique private final IBlockState[] rdpl$states = new IBlockState[RDPL_SLOTS];
-    @Unique private final int[] rdpl$ids = new int[RDPL_SLOTS];
+    @Unique private final StateIdCache rdpl$ids = new StateIdCache();
     @Unique private final IBlockState[] rdpl$byValue = new IBlockState[RDPL_SLOTS];
     @Unique private final int[] rdpl$values = new int[RDPL_SLOTS];
     @Unique private boolean rdpl$valuesReady;
 
     @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ObjectIntIdentityMap;get(Ljava/lang/Object;)I"))
     private int rdpl$idOfRun(ObjectIntIdentityMap<IBlockState> ids, Object key) {
-        int slot = System.identityHashCode(key) & RDPL_SLOTS - 1;
-        if (rdpl$states[slot] == key) { return rdpl$ids[slot]; }
+        IBlockState state = (IBlockState) key;
+        int id = rdpl$ids.held(state);
+        if (id != StateIdCache.MISS) { return id; }
         if (ContentChunkWatch.watching()) { ContentChunkWatch.primerLookup(); }
-        int id = ids.get((IBlockState) key);
-        rdpl$states[slot] = (IBlockState) key;
-        rdpl$ids[slot] = id;
-        return id;
+        return rdpl$ids.remember(state, ids.get(state));
     }
 
     @Redirect(method = "getBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ObjectIntIdentityMap;getByValue(I)Ljava/lang/Object;"))

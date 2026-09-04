@@ -6,7 +6,6 @@ import static mctmods.resourcedatapackloader.util.Coords.getCubeXForEntity;
 import static mctmods.resourcedatapackloader.util.Coords.getCubeYForEntity;
 import static mctmods.resourcedatapackloader.util.Coords.getCubeZForEntity;
 
-import mctmods.resourcedatapackloader.util.interfaces.IXYZAddressable;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -29,11 +28,6 @@ public class CubePos {
         this.cubeZ = cubeZ;
     }
 
-    public CubePos(IXYZAddressable addressable) {
-        this.cubeX = addressable.getX();
-        this.cubeY = addressable.getY();
-        this.cubeZ = addressable.getZ();
-    }
 
     public int getX() { return this.cubeX; }
 
@@ -77,15 +71,9 @@ public class CubePos {
 
     public int getMaxBlockZ() { return Coords.cubeToMaxBlock(this.cubeZ); }
 
-    public BlockPos getMinBlockPos() { return new BlockPos(getMinBlockX(), getMinBlockY(), getMinBlockZ()); }
-
-    public BlockPos getMaxBlockPos() { return new BlockPos(getMaxBlockX(), getMaxBlockY(), getMaxBlockZ()); }
-
     public CubePos add(int dx, int dy, int dz) { return new CubePos(getX() + dx, getY() + dy, getZ() + dz); }
 
     public ChunkPos chunkPos() { return new ChunkPos(getX(), getZ()); }
-
-    public CubePos below() { return add(0, -1, 0); }
 
     public static CubePos fromBlockCoords(int blockX, int blockY, int blockZ) { return new CubePos(blockToCube(blockX), blockToCube(blockY), blockToCube(blockZ)); }
 

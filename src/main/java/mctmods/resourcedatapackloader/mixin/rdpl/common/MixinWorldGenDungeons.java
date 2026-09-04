@@ -17,8 +17,8 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(WorldGenDungeons.class) public abstract class MixinWorldGenDungeons {
     @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Lnet/minecraft/tileentity/MobSpawnerBaseLogic;setEntityId(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id) {
-        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.DUNGEONS, id, new Random()));
+    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id, World worldIn, Random rand, BlockPos position) {
+        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.DUNGEONS, id, rand));
     }
 
     @ModifyConstant(method = "generate", constant = @Constant(

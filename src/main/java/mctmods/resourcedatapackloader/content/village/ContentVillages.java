@@ -6,12 +6,10 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
-import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
-import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -19,8 +17,9 @@ import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
@@ -56,17 +55,13 @@ public final class ContentVillages {
     @Nullable private static List<VillageDef> bySize;
     private static final Set<String> GROWN = new HashSet<>();
     private static final Map<IBlockState, IBlockState> BLOCKS = new HashMap<>();
+    private static final Set<IBlockState> REPLACEMENTS = new HashSet<>();
     private static final List<VillageRule> RULES = new ArrayList<>();
-    @Nullable private static WorldTemplateDef blocksFrom;
-    private static boolean blocksLoaded;
-    @Nullable private static WorldTemplateDef namedFrom;
-    private static Set<String> named;
+    private static final TemplateMemo<Boolean> BLOCKS_READ = new TemplateMemo<>();
+    private static final TemplateMemo<Set<String>> NAMED = new TemplateMemo<>();
     private static final Map<VillageDef, Boolean> BARRED = new HashMap<>();
-    @Nullable private static WorldTemplateDef barredFrom;
-    private static boolean barredLoaded;
-    private static int largest;
-    @Nullable private static WorldTemplateDef largestFrom;
-    private static boolean largestLoaded;
+    private static final TemplateMemo<Boolean> BARRED_READ = new TemplateMemo<>();
+    private static final TemplateMemo<Integer> LARGEST = new TemplateMemo<>();
     private static final WeightedPicks BLOCK_SIZES = new WeightedPicks("villageBlockSizes");
     private static boolean loaded;
     private static boolean registered;
@@ -77,18 +72,14 @@ public final class ContentVillages {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.content.villages) { return false; }
-        PackManager.get().forEach(PackManager.VILLAGES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                VillageDef def = ContentParser.village(key, contents);
-                if (def == null) { return; }
-                if (missing(def)) {
-                    ContentLog.LOGGER.debug("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);
-                    return;
-                }
-                DEFS.put(key.toString(), def);
+        Json.eachFile(PackManager.VILLAGES, "village file", (key, contents) -> {
+            VillageDef def = ContentParser.village(key, contents);
+            if (def == null) { return; }
+            if (missing(def)) {
+                ContentLog.LOGGER.debug("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);
+                return;
             }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in village file {}, ignoring it", key, ex); }
+            DEFS.put(key.toString(), def);
         });
         if (!DEFS.isEmpty()) { Summary.info("villages", "Loaded " + DEFS.size() + " village plot(s) from packs"); }
         return !DEFS.isEmpty();
@@ -128,23 +119,19 @@ public final class ContentVillages {
         SIZES.clear();
         bySize = null;
         BLOCKS.clear();
+        REPLACEMENTS.clear();
         RULES.clear();
         BARRED.clear();
-        blocksLoaded = false;
-        barredLoaded = false;
-        largestLoaded = false;
-        named = null;
+        BLOCKS_READ.forget();
+        BARRED_READ.forget();
+        LARGEST.forget();
+        NAMED.forget();
         loaded = false;
     }
 
-    private static Set<String> names() {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (named == null || active != namedFrom) {
-            named = Settings.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces));
-            namedFrom = active;
-        }
-        return named;
-    }
+    private static Set<String> names() { return NAMED.get(() -> Settings.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces))); }
+
+    private static boolean named(ResourceLocation key) { return names().contains(key.toString().toLowerCase(Locale.ROOT)) || names().contains(key.getPath().toLowerCase(Locale.ROOT)); }
 
     private static boolean missing(VillageDef def) { return !ContentRegistry.available(def.requires, def.registryName); }
 
@@ -189,9 +176,9 @@ public final class ContentVillages {
 
     private static boolean exceeds(VillageDef def, int block) { return span(def) > block; }
 
-    public static int largestPlot() {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (largestLoaded && active == largestFrom) { return largest; }
+    public static int largestPlot() { return LARGEST.get(ContentVillages::widestPlot); }
+
+    private static int widestPlot() {
         int widest = 13;
         for (VillageDef def : defs().values()) {
             if (missing(def) || blocked(def)) { continue; }
@@ -202,18 +189,11 @@ public final class ContentVillages {
             }
             widest = Math.max(widest, Math.max(def.width, def.depth));
         }
-        largest = widest;
-        largestFrom = active;
-        largestLoaded = true;
-        return largest;
+        return widest;
     }
 
     @Nullable public static IBlockState swap(IBlockState original) {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (!blocksLoaded || active != blocksFrom) {
-            loadBlocks();
-            blocksFrom = active;
-        }
+        blocks();
         if (BLOCKS.isEmpty()) { return null; }
         IBlockState wanted = BLOCKS.get(original);
         if (wanted != null) { return wanted; }
@@ -221,13 +201,9 @@ public final class ContentVillages {
     }
 
     @Nullable public static IBlockState ruled(World world, BlockPos pos, IBlockState laid) {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (!blocksLoaded || active != blocksFrom) {
-            loadBlocks();
-            blocksFrom = active;
-        }
+        blocks();
         IBlockState held = laid;
-        if (!BLOCKS.containsValue(held)) {
+        if (!REPLACEMENTS.contains(held)) {
             IBlockState swapped = swap(held);
             if (swapped != null) { held = swapped; }
         }
@@ -238,14 +214,24 @@ public final class ContentVillages {
         return held == laid ? null : held;
     }
 
+    private static void blocks() {
+        BLOCKS_READ.get(() -> {
+            loadBlocks();
+            return Boolean.TRUE;
+        });
+    }
+
     private static void loadBlocks() {
         BLOCKS.clear();
+        REPLACEMENTS.clear();
         RULES.clear();
-        blocksLoaded = true;
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
             VillageRule rule = rule(entry);
             if (rule == null) { continue; }
-            if (rule.plain()) { BLOCKS.put(rule.original(), rule.replacement()); }
+            if (rule.plain()) {
+                BLOCKS.put(rule.original(), rule.replacement());
+                REPLACEMENTS.add(rule.replacement());
+            }
             else { RULES.add(rule); }
         }
         if (!BLOCKS.isEmpty()) { ContentLog.LOGGER.info("Villages build with {} replaced block(s), whatever any other mod asks for", BLOCKS.size()); }
@@ -295,26 +281,24 @@ public final class ContentVillages {
 
     public static boolean blockedTemplate(ResourceLocation template) {
         if (template == null || !filtering()) { return false; }
-        boolean listed = names().contains(template.toString().toLowerCase(Locale.ROOT)) || names().contains(template.getPath().toLowerCase(Locale.ROOT));
+        boolean listed = named(template);
         if (!ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return false; }
         return listed;
     }
 
     public static boolean blocked(VillageDef def) {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (!barredLoaded || active != barredFrom) {
+        BARRED_READ.get(() -> {
             BARRED.clear();
-            barredFrom = active;
-            barredLoaded = true;
-        }
+            return Boolean.TRUE;
+        });
         Boolean held = BARRED.get(def);
         if (held != null) { return held; }
         boolean listed = false;
         if (def.isTemplate() && !def.structure.isEmpty()) {
             ResourceLocation template = new ResourceLocation(def.structure);
-            listed = names().contains(template.toString().toLowerCase(Locale.ROOT)) || names().contains(template.getPath().toLowerCase(Locale.ROOT));
+            listed = named(template);
         }
-        if (!listed) { listed = names().contains(def.registryName.toString().toLowerCase(Locale.ROOT)) || names().contains(def.registryName.getPath().toLowerCase(Locale.ROOT)); }
+        if (!listed) { listed = named(def.registryName); }
         boolean barred = ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist) == listed;
         BARRED.put(def, barred);
         return barred;
@@ -327,19 +311,7 @@ public final class ContentVillages {
 
     @Nullable private static VillageDef pick(Random random, int block) {
         boolean filtering = filtering();
-        int total = 0;
-        for (VillageDef def : defs().values()) {
-            if ((filtering && blocked(def)) || exceeds(def, block)) { continue; }
-            total += Math.max(1, def.weight) * span(def);
-        }
-        if (total <= 0) { return null; }
-        int roll = random.nextInt(total);
-        for (VillageDef def : defs().values()) {
-            if ((filtering && blocked(def)) || exceeds(def, block)) { continue; }
-            roll -= Math.max(1, def.weight) * span(def);
-            if (roll < 0) { return def; }
-        }
-        return null;
+        return WeightedPicks.pick(defs().values(), def -> (filtering && blocked(def)) || exceeds(def, block) ? 0 : Math.max(1, def.weight) * span(def), random);
     }
 
     public static final class Handler implements VillagerRegistry.IVillageCreationHandler {

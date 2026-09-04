@@ -15,16 +15,18 @@ import java.util.Random;
 
 @Mixin(value = StoneInfoBasedGenerator.class, remap = false) public abstract class MixinStoneInfoBasedGenerator {
     @Unique private BlockPos rdpl$middle;
+    @Unique private double rdpl$reachSq;
 
     @Inject(method = "generateChunkPart", at = @At("HEAD")) private void rdpl$rememberMiddle(BlockPos src, Random random, int chunkX, int chunkZ, World world, CallbackInfo ci) {
         rdpl$middle = src;
+        int reach = ((StoneInfoBasedGenerator) (Object) this).infoSupplier.get().clusterSize;
+        rdpl$reachSq = (double) reach * (double) reach;
     }
 
     @Redirect(method = "lambda$generateChunkPart$0", at = @At(value = "INVOKE", target = "Lvazkii/quark/world/world/StoneInfoBasedGenerator;canPlaceBlock(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Z"))
     private boolean rdpl$measureBeforeReading(StoneInfoBasedGenerator generator, World world, BlockPos pos) {
         BlockPos middle = rdpl$middle;
-        int reach = generator.infoSupplier.get().clusterSize;
-        if (middle != null && pos.distanceSq(middle) >= (double) reach * (double) reach) {
+        if (middle != null && pos.distanceSq(middle) >= rdpl$reachSq) {
             if (ContentChunkWatch.watching()) { ContentChunkWatch.stoneSpared(); }
             return false;
         }

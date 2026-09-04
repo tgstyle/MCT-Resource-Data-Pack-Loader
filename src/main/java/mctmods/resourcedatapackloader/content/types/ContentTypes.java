@@ -9,6 +9,7 @@ import net.minecraft.item.EnumRarity;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class ContentTypes {
     public static final int NO_COLOR = -1;
@@ -136,13 +137,24 @@ public final class ContentTypes {
 
     public static int color(String value, String context) {
         if (value == null || value.isEmpty()) { return 0xFFFFFFFF; }
-        String cleaned = value.startsWith("#") ? value.substring(1) : value;
+        Long parsed = hex(value);
+        if (parsed != null) { return parsed.intValue(); }
+        ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);
+        return 0xFFFFFFFF;
+    }
+
+    @Nullable public static Long hex(String value) {
+        try { return Long.parseLong(digits(value), 16); }
+        catch (NumberFormatException ex) { return null; }
+    }
+
+    public static int hexDigits(String value) { return digits(value).length(); }
+
+    private static String digits(String value) {
+        String cleaned = value.trim();
+        if (cleaned.startsWith("#")) { cleaned = cleaned.substring(1); }
         if (cleaned.startsWith("0x") || cleaned.startsWith("0X")) { cleaned = cleaned.substring(2); }
-        try { return (int) Long.parseLong(cleaned, 16); }
-        catch (NumberFormatException ex) {
-            ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);
-            return 0xFFFFFFFF;
-        }
+        return cleaned;
     }
 
     public static EnumRarity rarity(String name, String context) {

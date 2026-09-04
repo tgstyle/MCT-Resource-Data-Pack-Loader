@@ -9,7 +9,7 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.interfaces.IBucketSorterEntry;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.CubePos;
+import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.interfaces.IXZAddressable;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -97,7 +97,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
     }
 
     @Override @Deprecated public void blockChanged(int x, int y, int z) {
-        CubeWatcher watcher = playerCubeMap.getCubeWatcher(CubePos.fromBlockCoords(x, y, z));
+        CubeWatcher watcher = playerCubeMap.getCubeWatcher(Coords.blockToCube(x), Coords.blockToCube(y), Coords.blockToCube(z));
         if (watcher != null) { watcher.blockChanged(x, y, z); }
     }
 
@@ -105,7 +105,8 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         if (!this.isSentToPlayers()) { return; }
         if (this.dirtyColumns.isEmpty()) { return; }
         assert getChunk() != null;
-        for (EntityPlayerMP player : self().getPlayerList()) { RDPLNetwork.sendTo(new MessageHeightMapUpdate(dirtyColumns, getChunk()), player); }
+        MessageHeightMapUpdate update = new MessageHeightMapUpdate(dirtyColumns, getChunk());
+        for (EntityPlayerMP player : self().getPlayerList()) { RDPLNetwork.sendTo(update, player); }
         this.dirtyColumns.clear();
     }
 

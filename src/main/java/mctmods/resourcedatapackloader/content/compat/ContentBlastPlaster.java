@@ -3,7 +3,9 @@ package mctmods.resourcedatapackloader.content.compat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
@@ -21,7 +23,7 @@ public final class ContentBlastPlaster {
     private static final Map<String, JsonElement> EVERYWHERE = new LinkedHashMap<>();
     private static final Map<Integer, Map<String, JsonElement>> PER_DIMENSION = new LinkedHashMap<>();
     private static final Map<Integer, mctmods.blastplaster.Config.View> RESOLVED = new ConcurrentHashMap<>();
-    private static boolean loaded;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentBlastPlaster() {}
 
@@ -44,8 +46,10 @@ public final class ContentBlastPlaster {
     }
 
     private static void load() {
-        if (loaded) { return; }
-        loaded = true;
+        if (!GENERATION.stale()) { return; }
+        EVERYWHERE.clear();
+        PER_DIMENSION.clear();
+        RESOLVED.clear();
         if (ContentControl.packDecides(ContentControl.BLAST_PLASTER)) { read(); }
     }
 
@@ -92,9 +96,8 @@ public final class ContentBlastPlaster {
         @Override public mctmods.blastplaster.Config.ExplosionMode getExplosionMode() {
             JsonElement held = settings.get("explosionMode");
             if (held != null && held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
-                for (mctmods.blastplaster.Config.ExplosionMode mode : mctmods.blastplaster.Config.ExplosionMode.values()) {
-                    if (mode.name().equalsIgnoreCase(held.getAsString())) { return mode; }
-                }
+                mctmods.blastplaster.Config.ExplosionMode mode = Enums.byName(mctmods.blastplaster.Config.ExplosionMode.class, held.getAsString());
+                if (mode != null) { return mode; }
                 ContentLog.LOGGER.error("Blast Plaster explosionMode '{}' is not HEAL, EJECT_DROPS or VISUAL_TOSS, using EJECT_DROPS", held.getAsString());
             }
             return mctmods.blastplaster.Config.ExplosionMode.EJECT_DROPS;

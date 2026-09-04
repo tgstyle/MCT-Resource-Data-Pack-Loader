@@ -21,6 +21,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -235,8 +236,9 @@ public final class PackManager {
             return create(fileName, entry, null);
         }
         if (!fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) { return null; }
+        FileSystem zip = null;
         try {
-            FileSystem zip = FileSystems.newFileSystem(entry, null);
+            zip = FileSystems.newFileSystem(entry, null);
             RDPLPack pack = create(stripExtension(fileName), zip.getPath("/"), zip);
             if (pack.getNamespaces().isEmpty()) {
                 ContentLog.LOGGER.warn("Skipping '{}': no '{}' directory inside the zip", fileName, RDPLPack.ASSETS);
@@ -247,7 +249,12 @@ public final class PackManager {
         }
         catch (IOException ex) {
             ContentLog.LOGGER.error("Could not open zip pack '{}'", fileName, ex);
+            IOUtils.closeQuietly(zip);
             return null;
+        }
+        catch (RuntimeException ex) {
+            IOUtils.closeQuietly(zip);
+            throw ex;
         }
     }
 
@@ -423,7 +430,7 @@ public final class PackManager {
         return unused;
     }
 
-    public static void registerDataFolders(String... folders) { Collections.addAll(EXTRA_DATA, folders); }
+    @SuppressWarnings("unused") public static void registerDataFolders(String... folders) { Collections.addAll(EXTRA_DATA, folders); }
 
     private static boolean extraData(String path) {
         for (String folder : EXTRA_DATA) {

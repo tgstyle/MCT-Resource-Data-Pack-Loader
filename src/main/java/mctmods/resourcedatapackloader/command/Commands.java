@@ -1,13 +1,13 @@
 package mctmods.resourcedatapackloader.command;
 
 import static mctmods.resourcedatapackloader.command.CommandShared.config;
+import static mctmods.resourcedatapackloader.command.CommandShared.rescan;
 import static mctmods.resourcedatapackloader.command.CommandShared.send;
 import static mctmods.resourcedatapackloader.command.CommandShared.unused;
 import static mctmods.resourcedatapackloader.command.CommandShared.elapsed;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeNames;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
-import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
@@ -34,7 +34,6 @@ import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,12 +101,8 @@ import javax.annotation.Nullable;
     }
 
     private void reloadAll(ICommandSender sender) throws CommandException {
-        Path root = PackManager.get().getRoot();
-        if (root == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.noroot")); }
         long start = System.currentTimeMillis();
-        PackManager.get().scan(root);
-        PackManager.get().report();
-        ContentOverrides.reload();
+        rescan(sender);
         FMLClientHandler.instance().refreshResources(ReloadRequirements.all());
         MinecraftServer integrated = Minecraft.getMinecraft().getIntegratedServer();
         if (integrated != null) { integrated.reload(); }
@@ -127,15 +122,7 @@ import javax.annotation.Nullable;
     }
 
     private void list(ICommandSender sender) {
-        List<RDPLPack> packs = PackManager.get().getPacks();
-        if (packs.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nopacks", PackManager.get().getRoot()));
-            return;
-        }
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.packs", packs.size()));
-        for (RDPLPack pack : packs) {
-            String priority = pack.getPriority() >= 0 ? " [" + pack.getPriority() + "]" : "";
-            String tier = pack.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : "";
+        CommandShared.listPacks(sender, (pack, label) -> {
             String detail = "files=" + pack.getFileCount()
                     + "\nnamespaces=" + pack.getNamespaces()
                     + "\nadvancements=" + pack.count(PackManager.ADVANCEMENTS, PackManager.JSON)
@@ -144,12 +131,12 @@ import javax.annotation.Nullable;
                     + "\nfunctions=" + pack.count(PackManager.FUNCTIONS, PackManager.MCFUNCTION)
                     + " remaps=" + pack.count(PackManager.REGISTRY_REMAP, PackManager.JSON)
                     + "\n" + Lang.tr(sender, "rdpl.command.clickhint");
-            ITextComponent line = new TextComponentString("  " + pack.getName() + priority + tier);
+            ITextComponent line = new TextComponentString(label);
             line.getStyle().setColor(pack.isOverriding() ? TextFormatting.AQUA : TextFormatting.WHITE);
             line.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString(detail)));
             line.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/rdpl which " + firstNamespace(pack) + ":"));
-            send(sender, line, "  " + pack.getName() + priority + tier + " " + detail.replace('\n', ' '));
-        }
+            send(sender, line, label + " " + detail.replace('\n', ' '));
+        });
     }
 
     private static String firstNamespace(RDPLPack pack) {
@@ -184,20 +171,7 @@ import javax.annotation.Nullable;
         }
     }
 
-    private void which(ICommandSender sender, String target) {
-        int colon = target.indexOf(':');
-        String namespace = colon < 0 ? "minecraft" : target.substring(0, colon);
-        String path = colon < 0 ? target : target.substring(colon + 1);
-        List<RDPLPack> holders = PackManager.get().holders(namespace, path);
-        if (holders.isEmpty()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.unprovided", namespace + ":" + path));
-            return;
-        }
-        RDPLPack winner = holders.get(holders.size() - 1);
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.provided", namespace + ":" + path, winner.getName(), winner.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : ""));
-        send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.providednote"));
-        for (int i = holders.size() - 2; i >= 0; i--) { send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.shadows", holders.get(i).getName())); }
-    }
+    private void which(ICommandSender sender, String target) { CommandShared.which(sender, target, true); }
 
     private void biome(ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 1 || "list".equals(args[1])) { biomeList(sender, args.length > 2 && "all".equals(args[2])); }

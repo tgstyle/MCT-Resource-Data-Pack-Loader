@@ -104,7 +104,7 @@ public class IONbtReader {
             return null;
         }
         assert cubeX == column.x && cubeZ == column.z :
-                String.format("Cube is corrupted! Cube (%d,%d,%d) does not match column (%d,%d).", cubeX, cubeY, cubeZ, column.z,
+                String.format("Cube is corrupted! Cube (%d,%d,%d) does not match column (%d,%d).", cubeX, cubeY, cubeZ, column.x,
                         column.z);
         final Cube cube = new Cube(column, cubeY);
         cube.setPopulated(nbt.getBoolean("populated"));

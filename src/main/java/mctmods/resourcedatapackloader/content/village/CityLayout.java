@@ -29,7 +29,7 @@ import java.util.Random;
 import java.util.Set;
 
 public final class CityLayout {
-    private static final Rotation[] TURNS = { Rotation.NONE, Rotation.CLOCKWISE_90, Rotation.CLOCKWISE_180, Rotation.COUNTERCLOCKWISE_90 };
+    private static final Rotation[] TURNS = Rotation.values();
     private static final int WELL = 6;
     private static final int ALLEY = 3;
     private static final Set<String> MISSING = new HashSet<>();

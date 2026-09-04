@@ -66,6 +66,8 @@ public final class ContentVillageDecor {
     private static void alongRoad(World world, StructureComponent piece, StructureBoundingBox clip, int[] tally) {
         StructureBoundingBox box = piece.getBoundingBox();
         if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { return; }
+        Collection<StructureStart> villages = ContentStructureSearch.villageStarts(world);
+        boolean wanted = ContentBeard.wanted();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         boolean alongX = BeardPlots.roadAlongX(box);
         int from = alongX ? box.minX : box.minZ;
@@ -74,16 +76,16 @@ public final class ContentVillageDecor {
         int far = (alongX ? box.maxZ : box.maxX) + 1;
         for (int row = from; row <= to; row++) {
             if (Math.floorMod(row, STEP) != 0) { continue; }
-            tally[place(world, clip, at, alongX ? row : near, alongX ? near : row)]++;
-            tally[place(world, clip, at, alongX ? row : far, alongX ? far : row)]++;
+            tally[place(world, villages, wanted, clip, at, alongX ? row : near, alongX ? near : row)]++;
+            tally[place(world, villages, wanted, clip, at, alongX ? row : far, alongX ? far : row)]++;
         }
     }
 
-    private static int place(World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int z) {
+    private static int place(World world, Collection<StructureStart> villages, boolean wanted, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int x, int z) {
         if (x < clip.minX || x > clip.maxX || z < clip.minZ || z > clip.maxZ) { return 0; }
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
+        for (StructureStart village : villages) {
             if (BeardPlots.underAnother(village, null, x, z) || BeardPlots.overRoad(village, x, z)) { return 1; }
-            if (ContentBeard.wanted() && BeardPlots.insidePlaza(village.getComponents(), x, z)) { return 1; }
+            if (wanted && BeardPlots.insidePlaza(village.getComponents(), x, z)) { return 1; }
         }
         BlockPos origin = GroundLevel.inWindow(world, new BlockPos(x, 0, z));
         int bed = origin.getY();

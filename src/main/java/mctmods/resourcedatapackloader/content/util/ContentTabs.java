@@ -2,11 +2,11 @@ package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.LinkedHashMap;
@@ -24,11 +24,7 @@ public final class ContentTabs {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        PackManager.get().forEach(PackManager.TABS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in creative tab {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.TABS, "creative tab", ContentTabs::read);
     }
 
     private static void read(ResourceLocation key, String contents) {

@@ -38,11 +38,7 @@ public class EntityContainer {
 
     public ClassInheritanceMultiMap<Entity> getEntitySet() { return this.entities; }
 
-    public void clear() { this.entities.clear(); }
-
     public Collection<Entity> getEntities() { return Collections.unmodifiableCollection(this.entities); }
-
-    public int size() { return this.entities.size(); }
 
     public boolean needsSaving(boolean flag, long time, boolean isModified) {
         if (flag) {

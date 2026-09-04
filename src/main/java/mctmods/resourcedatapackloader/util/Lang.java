@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.text.translation.LanguageMap;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -59,8 +60,10 @@ public final class Lang {
             ContentLog.LOGGER.error("The language files are missing from the jar, so players will see raw language keys");
             return;
         }
-        InputStream vanillaSide = Lang.class.getResourceAsStream("/" + HOME + "en_us.lang");
-        if (vanillaSide != null) { LanguageMap.inject(vanillaSide); }
+        try (InputStream vanillaSide = Lang.class.getResourceAsStream("/" + HOME + "en_us.lang")) {
+            if (vanillaSide != null) { LanguageMap.inject(vanillaSide); }
+        }
+        catch (IOException failed) { ContentLog.LOGGER.error("Could not read the shipped en_us.lang", failed); }
         ContentLog.LOGGER.info("Speaking {} language(s) to players", TABLES.size());
     }
 

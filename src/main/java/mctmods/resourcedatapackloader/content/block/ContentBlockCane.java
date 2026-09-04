@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
         ContentSetup.properties(this, def);
     }
 
-    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth); }
+    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth.soil, def.registryName); }
 
     @Override public BlockDef getDef() { return def; }
 

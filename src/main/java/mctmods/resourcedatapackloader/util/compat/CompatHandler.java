@@ -167,7 +167,7 @@ public class CompatHandler {
                         String modClass = desc.split("@")[0].substring("ASM: ".length());
                         try {
                             Class<?> cl = Class.forName(modClass);
-                            String newModid = cl.getPackage() == null ? null : getPackageToModId().get(cl.getPackage().getName());
+                            String newModid = cl.getPackage() == null ? null : packageToModId.get(cl.getPackage().getName());
                             if (newModid != null) { modid = newModid; }
                         } catch (ClassNotFoundException ignored) {
                         }

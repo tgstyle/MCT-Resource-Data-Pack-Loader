@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -30,10 +31,8 @@ public final class BeardSite {
 
     private BeardSite() {}
 
-    public static long packedChunk(int chunkX, int chunkZ) { return ((long) chunkX << 32) | (chunkZ & 0xFFFFFFFFL); }
-
     public static long siteFor(World world, ContentSites known, int cellX, int cellZ, int spacing) {
-        long cell = packedChunk(cellX, cellZ);
+        long cell = Longs.pack(cellX, cellZ);
         Long held = known.get(cell);
         if (held != null) { return held; }
         if (world.getMinecraftServer() != null) { ((IMinecraftServerMessage) world.getMinecraftServer()).rdpl$setUserMessage("menu.generatingTerrain"); }
@@ -95,7 +94,7 @@ public final class BeardSite {
                 if (spread == bestSpread && pull >= bestPull) { continue; }
                 bestSpread = spread;
                 bestPull = pull;
-                chosen = packedChunk(baseX + x, baseZ + z);
+                chosen = Longs.pack(baseX + x, baseZ + z);
             }
         }
         return chosen;
@@ -130,7 +129,7 @@ public final class BeardSite {
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) { continue; }
-                    if (known.get(packedChunk(cellX + dx, cellZ + dz)) == null && System.nanoTime() >= ending) { return best; }
+                    if (known.get(Longs.pack(cellX + dx, cellZ + dz)) == null && System.nanoTime() >= ending) { return best; }
                     long chosen = siteFor(world, known, cellX + dx, cellZ + dz, grid);
                     if (chosen == ContentBeard.NO_SITE) { continue; }
                     int chunkX = (int) (chosen >> 32);
@@ -154,7 +153,7 @@ public final class BeardSite {
         ContentSites known = ContentSites.of(world, spacing);
         int grid = known.spacing();
         long chosen = siteFor(world, known, Math.floorDiv(chunkX, grid), Math.floorDiv(chunkZ, grid), grid);
-        return chosen != ContentBeard.NO_SITE && chosen == packedChunk(chunkX, chunkZ);
+        return chosen != ContentBeard.NO_SITE && chosen == Longs.pack(chunkX, chunkZ);
     }
     public static boolean mansionCandidateNear(World world, int chunkX, int chunkZ) {
         ChunkGeneratorOverworld sampled = BeardSurface.samplerFor(world);

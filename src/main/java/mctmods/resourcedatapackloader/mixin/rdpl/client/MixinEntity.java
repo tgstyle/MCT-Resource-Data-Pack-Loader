@@ -7,6 +7,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import net.minecraft.util.math.MathHelper;
@@ -15,11 +16,14 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(Entity.class) public abstract class MixinEntity {
     @Shadow public World world;
+    @Shadow public double posX;
+    @Shadow public double posZ;
+    @Unique private final BlockPos.MutableBlockPos rdpl$spawnPos = new BlockPos.MutableBlockPos();
 
     @ModifyConstant(method = "preparePlayerToSpawn",
             constant = @Constant(doubleValue = 0))
     private double rdpl$getMinHeight(double zero) {
-        if (!world.isBlockLoaded(new BlockPos((Entity) (Object) this))) { return Double.POSITIVE_INFINITY; }
+        if (!world.isBlockLoaded(rdpl$spawnPos.setPos(posX, posY, posZ))) { return Double.POSITIVE_INFINITY; }
         return ((IRubicWorld) world).rdpl$getMinHeight();
     }
 

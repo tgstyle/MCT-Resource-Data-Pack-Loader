@@ -14,8 +14,6 @@ public class RegionEntryLocation {
 
 	public int getSize() { return size; }
 
-	public RegionEntryLocation withSize(int size) { return new RegionEntryLocation(getOffset(), size); }
-
 	@Override public boolean equals(Object o) {
 		if (this == o) { return true; }
 		if (o == null || getClass() != o.getClass()) { return false; }

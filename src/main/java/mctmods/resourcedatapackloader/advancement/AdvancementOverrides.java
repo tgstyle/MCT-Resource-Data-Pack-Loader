@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.advancement;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 
 import com.google.gson.JsonParseException;
 import net.minecraft.advancements.Advancement;
@@ -14,7 +15,7 @@ import javax.annotation.Nullable;
 
 public final class AdvancementOverrides {
     private static final Map<ResourceLocation, String> CACHE = new LinkedHashMap<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean quiet;
 
     private AdvancementOverrides() {}
@@ -22,8 +23,7 @@ public final class AdvancementOverrides {
     public static void apply(Map<ResourceLocation, Advancement.Builder> map) {
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
-        if (generation != manager.getGeneration()) {
-            generation = manager.getGeneration();
+        if (GENERATION.stale()) {
             quiet = false;
             CACHE.clear();
             manager.forEach(PackManager.ADVANCEMENTS, PackManager.JSON, (namespace, path, contents) -> CACHE.put(new ResourceLocation(namespace, path), contents));

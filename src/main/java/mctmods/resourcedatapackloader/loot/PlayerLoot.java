@@ -3,11 +3,12 @@ package mctmods.resourcedatapackloader.loot;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PlayerLoot {
+    private static final Gson GSON = new Gson();
     public static final String TABLE = "table";
     public static final String MODE = "mode";
     public static final String KEEP_INVENTORY = "rollOnKeepInventory";
@@ -32,24 +34,20 @@ public final class PlayerLoot {
     private static final String REPLACE = "replace";
     private static final String KEEP_INVENTORY_RULE = "keepInventory";
     private static final List<Entry> ENTRIES = new ArrayList<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private PlayerLoot() {}
 
     public static void reload() {
         ENTRIES.clear();
-        generation = PackManager.get().getGeneration();
+        GENERATION.stale();
         if (!Config.data.playerLoot) { return; }
-        PackManager.get().forEach(PackManager.PLAYER_LOOT, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in player loot {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
         if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = new Gson().fromJson(contents, JsonObject.class);
+        JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Player loot {} is empty, ignoring it", key);
             return;
@@ -69,7 +67,7 @@ public final class PlayerLoot {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onPlayerDrops(PlayerDropsEvent event) {
         if (!Config.data.playerLoot) { return; }
-        if (generation != PackManager.get().getGeneration()) { reload(); }
+        if (GENERATION.stale()) { reload(); }
         if (ENTRIES.isEmpty()) { return; }
         EntityPlayer player = event.getEntityPlayer();
         if (player == null || !(player.world instanceof WorldServer)) { return; }

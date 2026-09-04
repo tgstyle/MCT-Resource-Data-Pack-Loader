@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.IWorldGenerator;
@@ -27,6 +28,7 @@ public final class ContentGeneratorControl {
     public static final String UNKNOWN = "unknown";
     private static final Map<String, List<String>> PATTERNS = new LinkedHashMap<>();
     private static final Blocked BLOCKED = new Blocked();
+    private static final TemplateMemo<Boolean> BLOCKING = new TemplateMemo<>();
     private static final Map<Class<?>, String> OWNERS = new HashMap<>();
     private static final Map<Class<?>, String> KINDS = new HashMap<>();
     private static final Set<String> REPORTED = new HashSet<>();
@@ -98,8 +100,7 @@ public final class ContentGeneratorControl {
             return true;
         }
         if (!inScope(world)) { return false; }
-        String type = generator.getClass().getName().toLowerCase(Locale.ROOT);
-        if (!named.isEmpty() && (named.contains(owner) || matches(type))) {
+        if (!named.isEmpty() && (named.contains(owner) || matches(generator.getClass().getName().toLowerCase(Locale.ROOT)))) {
             count(owner, generator, kind(generator.getClass(), owner));
             return true;
         }
@@ -108,7 +109,7 @@ public final class ContentGeneratorControl {
             count(owner, generator, kind);
             return true;
         }
-        if (!ContentControl.flag(ContentControl.GENERATORS, "blockWorldGenerators", Config.worldgen.blockWorldGenerators) || whitelist.contains(owner)) { return false; }
+        if (!BLOCKING.get(() -> ContentControl.flag(ContentControl.GENERATORS, "blockWorldGenerators", Config.worldgen.blockWorldGenerators)) || whitelist.contains(owner)) { return false; }
         count(owner, generator, kind);
         return true;
     }
@@ -119,10 +120,6 @@ public final class ContentGeneratorControl {
         String kind = resolveKind(type, owner);
         KINDS.put(type, kind);
         return kind;
-    }
-
-    public static void report() {
-        if (ContentControl.flag(ContentControl.GENERATORS, "logBlockedGenerators", Config.worldgen.logBlockedGenerators) && BLOCKED.total() > 0) { BLOCKED.report("world generator call(s)"); }
     }
 
     public static Map<String, Integer> blocked() { return BLOCKED.map(); }
@@ -169,7 +166,7 @@ public final class ContentGeneratorControl {
 
     public static String owner(IWorldGenerator generator) { return owner(generator.getClass()); }
 
-    private static String owner(Class<?> type) {
+    public static String owner(Class<?> type) {
         String cached = OWNERS.get(type);
         if (cached != null) { return cached; }
         String owner = resolve(type);

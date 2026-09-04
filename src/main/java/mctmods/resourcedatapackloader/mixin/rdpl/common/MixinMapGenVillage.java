@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.MapGenStructureData;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureStart;
@@ -24,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.List;
 
 @Mixin(MapGenVillage.class) public abstract class MixinMapGenVillage implements IMapGenVillageHold {
     @Shadow private int distance;
@@ -31,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private int rdpl$asked;
     @Unique private boolean rdpl$stated;
     @Unique private boolean rdpl$told;
+    @Unique private static List<Biome> rdpl$vanillaBiomes;
 
     @Inject(method = "getStructureStart", at = @At("RETURN")) private void rdpl$grownVillage(int chunkX, int chunkZ, CallbackInfoReturnable<StructureStart> cir) {
         World world = ((IMapGenBase) this).rdpl$getWorld();
@@ -52,7 +55,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         rdpl$stated = stated != distance;
         rdpl$asked = Math.max(9, stated);
         distance = rdpl$asked;
-        MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, MapGenVillage.VILLAGE_SPAWN_BIOMES);
+        if (rdpl$vanillaBiomes == null) { rdpl$vanillaBiomes = MapGenVillage.VILLAGE_SPAWN_BIOMES; }
+        MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, rdpl$vanillaBiomes);
         if (ContentVillages.plotsLeast() > 0) { ((IMapGenBase) this).rdpl$setRange(CityGrowth.chunkRange()); }
     }
 

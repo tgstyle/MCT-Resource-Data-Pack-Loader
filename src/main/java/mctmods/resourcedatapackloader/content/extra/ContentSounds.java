@@ -9,8 +9,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -39,15 +37,12 @@ public final class ContentSounds {
                 ContentLog.LOGGER.warn("A sound named {} is already registered, skipping the pack entry", name);
                 continue;
             }
-            ModContainer previous = Loader.instance().activeModContainer();
-            try {
-                Loader.instance().setActiveModContainer(ContentOwners.of(name.getNamespace()));
+            ContentOwners.as(name.getNamespace(), () -> {
                 SoundEvent sound = new SoundEvent(name);
                 sound.setRegistryName(name);
                 event.getRegistry().register(sound);
-                count++;
-            }
-            finally { Loader.instance().setActiveModContainer(previous); }
+            });
+            count++;
         }
         if (count > 0) { Summary.info("sounds", "Registered " + count + " sound event(s) from packs"); }
     }

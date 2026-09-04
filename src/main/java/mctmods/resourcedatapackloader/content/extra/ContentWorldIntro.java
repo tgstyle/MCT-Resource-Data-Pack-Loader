@@ -6,10 +6,10 @@ import mctmods.resourcedatapackloader.content.def.IntroPageDef;
 import mctmods.resourcedatapackloader.content.def.WorldIntroDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,21 +20,17 @@ import javax.annotation.Nullable;
 
 public final class ContentWorldIntro {
     private static final Map<ResourceLocation, WorldIntroDef> DEFS = new LinkedHashMap<>();
-    private static boolean loaded;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentWorldIntro() {}
 
     public static void load() {
-        if (loaded) { return; }
-        loaded = true;
+        if (!GENERATION.stale()) { return; }
+        DEFS.clear();
         if (!Config.content.load) { return; }
-        PackManager.get().forEach(PackManager.WORLDINTRO, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
-            try {
-                WorldIntroDef def = ContentParser.worldIntro(key, contents);
-                if (def != null) { DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in world intro {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.WORLDINTRO, "world intro", (key, contents) -> {
+            WorldIntroDef def = ContentParser.worldIntro(key, contents);
+            if (def != null) { DEFS.put(key, def); }
         });
         int pages = pages().size();
         if (pages > 0) { Summary.info("worldintro", "Showing an intro of " + pages + " page(s) when a player enters the world"); }

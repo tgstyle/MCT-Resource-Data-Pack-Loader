@@ -8,13 +8,13 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 @SuppressWarnings("unused") public class RubicWorldEditTransformer implements IClassTransformer {
     @Override public byte[] transform(String name, String transformedName, byte[] basicClass) {
@@ -40,7 +40,7 @@ import org.objectweb.asm.tree.TypeInsnNode;
         LabelNode end = new LabelNode(new Label());
         list.add(start);
         list.add(new LineNumberNode(10000, start));
-        list.add(new IntInsnNode(Opcodes.ALOAD, 0));
+        list.add(new VarInsnNode(Opcodes.ALOAD, 0));
         list.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
                 "com/sk89q/worldedit/forge/ForgeWorld", "getWorld", "()Lnet/minecraft/world/World;", false));
         list.add(new TypeInsnNode(Opcodes.CHECKCAST, "mctmods/resourcedatapackloader/content/rubic/world/interfaces/IRubicWorld"));
@@ -54,6 +54,4 @@ import org.objectweb.asm.tree.TypeInsnNode;
         getMinY.maxLocals = 1;
         getMinY.maxStack = 1;
     }
-
-    public int getMinY() { return 0; }
 }

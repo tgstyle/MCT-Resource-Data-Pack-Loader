@@ -25,6 +25,8 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
     private int seat;
     private Rotation turned = Rotation.NONE;
 
+    private final BlockPos.MutableBlockPos scratch = new BlockPos.MutableBlockPos();
+
     @SuppressWarnings("unused") public RecurrentVillagePiece() {}
 
     public RecurrentVillagePiece(StructureVillagePieces.Start start, int type, StructureBoundingBox box, EnumFacing facing, RecurrentPlots.Plot plot, Rotation turned) {
@@ -124,7 +126,7 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
 
     private IBlockState ground(World world, int lx, int ly, int lz, int sx, int sz, int tall) {
         if (getYWithOffset(ly) < world.getSeaLevel() - 3) { return Blocks.STONE.getDefaultState(); }
-        Biome biome = world.getBiome(new BlockPos(getXWithOffset(lx, lz), 0, getZWithOffset(lx, lz)));
+        Biome biome = world.getBiome(scratch.setPos(getXWithOffset(lx, lz), 0, getZWithOffset(lx, lz)));
         boolean buried = ly + 1 < tall && RecurrentPlots.classify(structure, sx, ly + 1, sz) == RecurrentPlots.GROUND;
         IBlockState laid = buried ? biome.fillerBlock : biome.topBlock;
         return laid != null ? laid : Blocks.DIRT.getDefaultState();

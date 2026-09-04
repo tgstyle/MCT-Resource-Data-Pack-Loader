@@ -20,15 +20,15 @@ import java.util.List;
 
 @Mixin(WoodlandMansion.class) public abstract class MixinWoodlandMansion {
     @Mutable @Shadow @Final public static List<Biome> ALLOWED_BIOMES;
-    @Unique private static boolean rdpl$biomesFiltered;
+    @Unique private static List<Biome> rdpl$vanillaBiomes;
+    @Unique private boolean rdpl$biomesFiltered;
 
-    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD")) private void rdpl$widenBiomes(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
-        if (rdpl$biomesFiltered) { return; }
-        rdpl$biomesFiltered = true;
-        ALLOWED_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.MANSIONS, ALLOWED_BIOMES);
-    }
-
-    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true) private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true) private void rdpl$widenBiomes(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
+        if (!rdpl$biomesFiltered) {
+            rdpl$biomesFiltered = true;
+            if (rdpl$vanillaBiomes == null) { rdpl$vanillaBiomes = ALLOWED_BIOMES; }
+            ALLOWED_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.MANSIONS, rdpl$vanillaBiomes);
+        }
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.MANSIONS, chunkX, chunkZ)) { cir.setReturnValue(true); }
     }
 

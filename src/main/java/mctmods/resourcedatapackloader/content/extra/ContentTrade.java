@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.TradeDef;
 import mctmods.resourcedatapackloader.content.def.TradeStackDef;
 
@@ -16,24 +17,30 @@ public class ContentTrade implements EntityVillager.ITradeList {
     private final ItemStack buy;
     private final ItemStack buySecondary;
     private final ItemStack sell;
+    private final AmountDef buyCount;
+    private final AmountDef buySecondaryCount;
+    private final AmountDef sellCount;
 
     public ContentTrade(TradeDef def, ItemStack buy, ItemStack buySecondary, ItemStack sell) {
         this.def = def;
         this.buy = buy;
         this.buySecondary = buySecondary;
         this.sell = sell;
+        this.buyCount = amount(def.buy);
+        this.buySecondaryCount = amount(def.buySecondary);
+        this.sellCount = amount(def.sell);
     }
 
-    public TradeDef getDef() { return def; }
+    private static AmountDef amount(TradeStackDef def) { return def.max <= def.min ? AmountDef.of(def.min) : new AmountDef(def.min, def.max); }
 
     @Override public void addMerchantRecipe(@Nonnull IMerchant merchant, @Nonnull MerchantRecipeList list, @Nonnull Random rand) {
-        list.add(new MerchantRecipe(sized(buy, def.buy, rand), sized(buySecondary, def.buySecondary, rand), sized(sell, def.sell, rand), 0, def.maxUses));
+        list.add(new MerchantRecipe(sized(buy, buyCount, rand), sized(buySecondary, buySecondaryCount, rand), sized(sell, sellCount, rand), 0, def.maxUses));
     }
 
-    private static ItemStack sized(ItemStack stack, TradeStackDef def, Random rand) {
+    private static ItemStack sized(ItemStack stack, AmountDef count, Random rand) {
         if (stack.isEmpty()) { return ItemStack.EMPTY; }
         ItemStack copy = stack.copy();
-        copy.setCount(def.max <= def.min ? def.min : def.min + rand.nextInt(def.max - def.min + 1));
+        copy.setCount(count.pick(rand));
         return copy;
     }
 }

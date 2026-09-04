@@ -21,6 +21,7 @@ public final class ContentPlacer {
     private final Set<Block> nearby;
     private final Set<IBlockState> nearbyExact;
     private final boolean wantsNearby;
+    private final BlockPos.MutableBlockPos scratch = new BlockPos.MutableBlockPos();
 
     public ContentPlacer(List<IBlockState> states, List<Integer> weights, Set<Block> targets, Set<IBlockState> exact, Set<Block> nearby, Set<IBlockState> nearbyExact) {
         this.states = Collections.unmodifiableList(states);
@@ -38,6 +39,11 @@ public final class ContentPlacer {
         this.weight = Math.max(1, running);
     }
 
+    public static int scatter(Random random, int bound) {
+        if (bound <= 0) { return 0; }
+        return random.nextInt(bound) - random.nextInt(bound);
+    }
+
     public boolean place(World world, Random random, int x, int y, int z) {
         if (occupied(world, x, y, z)) { return false; }
         return world.setBlockState(new BlockPos(x, y, z), choose(random), FLAGS);
@@ -50,7 +56,7 @@ public final class ContentPlacer {
 
     public boolean occupied(World world, int x, int y, int z) {
         if (y < floorY(world) || y >= ceilingY(world)) { return true; }
-        BlockPos pos = new BlockPos(x, y, z);
+        BlockPos pos = scratch.setPos(x, y, z);
         IBlockState found = world.getBlockState(pos);
         if (!found.getBlock().isReplaceableOreGen(found, world, pos, replaceable)) { return true; }
         return wantsNearby && !beside(world, x, y, z);

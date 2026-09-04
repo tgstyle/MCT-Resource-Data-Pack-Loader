@@ -16,7 +16,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.biome.Biome;
@@ -88,11 +87,9 @@ public final class ContentBiomes {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.registersToClients() || !Config.content.biomes) { return false; }
-        PackManager.get().forEach(PackManager.BIOMES, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.BIOMES, "biome file", (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in biome file {}, ignoring it", key, ex); }
+            read(key, contents);
         });
         if (!DEFS.isEmpty()) { Summary.info("biomes", "Loaded " + DEFS.size() + " biome definition(s) from packs"); }
         return !DEFS.isEmpty();

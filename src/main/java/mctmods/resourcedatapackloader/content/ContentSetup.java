@@ -6,6 +6,8 @@ import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.util.ContentCreativeTab;
 import mctmods.resourcedatapackloader.content.util.ContentTabs;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
+import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registries;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -111,12 +113,12 @@ public final class ContentSetup {
         return CREATED.computeIfAbsent(label, created -> new ContentCreativeTab(created, declared(created, icon)));
     }
 
-    public static Set<Block> resolveSoil(GrowthDef growth) {
+    public static Set<Block> resolveSoil(List<String> soil, ResourceLocation owner) {
         Set<Block> resolved = new HashSet<>();
-        for (String name : growth.soil) {
-            ResourceLocation key = new ResourceLocation(name);
-            Block block = ForgeRegistries.BLOCKS.containsKey(key) ? ForgeRegistries.BLOCKS.getValue(key) : null;
+        for (String name : soil) {
+            Block block = Registries.find(ForgeRegistries.BLOCKS, new ResourceLocation(name));
             if (block != null) { resolved.add(block); }
+            else { ContentLog.LOGGER.error("{} names soil {}, which is not registered, leaving it out", owner, name); }
         }
         return resolved;
     }

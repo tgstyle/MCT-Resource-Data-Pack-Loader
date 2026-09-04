@@ -38,12 +38,6 @@ public interface ICubeGenerator {
         return Optional.of(column);
     }
 
-    @SuppressWarnings("unused") default GeneratorReadyState pollAsyncCubeGenerator(int cubeX, int cubeY, int cubeZ) { return GeneratorReadyState.READY; }
-
-    @SuppressWarnings("unused") default GeneratorReadyState pollAsyncColumnGenerator(int chunkX, int chunkZ) { return GeneratorReadyState.READY; }
-
-    @SuppressWarnings("unused") default GeneratorReadyState pollAsyncCubePopulator(int cubeX, int cubeY, int cubeZ) { return GeneratorReadyState.READY; }
-
     Box getFullPopulationRequirements(ICube cube);
 
     Box getPopulationPregenerationRequirements(ICube cube);
@@ -54,11 +48,4 @@ public interface ICubeGenerator {
 
     @Nullable BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored);
 
-    enum GeneratorReadyState {
-        READY,
-
-        WAITING,
-
-        FAIL
-    }
 }

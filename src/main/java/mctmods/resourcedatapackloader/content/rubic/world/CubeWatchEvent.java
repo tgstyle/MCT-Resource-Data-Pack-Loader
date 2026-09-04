@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -18,8 +17,6 @@ public class CubeWatchEvent extends Event {
     }
 
     @Nullable public ICube getCube() { return cube; }
-
-    public IRubicWorld getWorld() { return (IRubicWorld) player.world; }
 
     public EntityPlayerMP getPlayer() { return player; }
 }

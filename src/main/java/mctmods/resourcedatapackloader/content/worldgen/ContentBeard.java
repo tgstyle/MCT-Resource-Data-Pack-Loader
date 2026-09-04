@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
-import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGround;
@@ -26,6 +25,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.BlockLeaves;
@@ -41,7 +41,6 @@ import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
-import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.structure.MapGenStructure;
@@ -54,6 +53,8 @@ import net.minecraft.world.gen.structure.WoodlandMansionPieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,10 +88,13 @@ public final class ContentBeard {
     private static boolean applying;
     private static boolean layingBuilding;
     private static int peeks;
-    private static WorldTemplateDef wantedFrom;
-    private static boolean wantedHeld;
-    private static boolean wantedKnown;
+    private static final TemplateMemo<Boolean> WANTED = new TemplateMemo<>();
     private static Boolean recurrent;
+
+    private static boolean recurrent() {
+        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
+        return recurrent;
+    }
     public static final int SITE_REACH = 2;
     public static final int SITE_TOLERANCE = 10;
     private static final int ATTACH_GAP = 8;
@@ -99,7 +103,6 @@ public final class ContentBeard {
     public static final int FOOTING_COURSE = 1;
     public static final long NO_SITE = Long.MIN_VALUE;
     private static final ChunkPrimer UNUSED = new ChunkPrimer();
-    public static ChunkGeneratorOverworld sampler;
     public static World samplerWorld;
 
     private ContentBeard() {}
@@ -413,14 +416,7 @@ public final class ContentBeard {
         return false;
     }
 
-    private static boolean lampBlocked(World world, StructureStart start, StructureComponent piece, int x, int z) {
-        if (inPlaza(start, x, z) || onPaving(start, piece, x, z)) { return true; }
-        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
-            if (other == start) { continue; }
-            if (inPlaza(other, x, z) || onPaving(other, piece, x, z)) { return true; }
-        }
-        return false;
-    }
+    private static boolean lampBlocked(World world, StructureStart start, StructureComponent piece, int x, int z) { return ContentStructureSearch.anyVillage(world, start, village -> inPlaza(village, x, z) || onPaving(village, piece, x, z)); }
 
     private static boolean inPlaza(StructureStart start, int x, int z) { return BeardPlots.insidePlaza(start.getComponents(), x, z); }
 
@@ -479,7 +475,8 @@ public final class ContentBeard {
             if (!under.getMaterial().isSolid() || BeardBlocks.terrainBlock(under.getBlock())) { break; }
             bed--;
         }
-        for (int y = bed + 1; y <= bed + lampHeight() + 1; y++) {
+        int top = bed + lampHeight() + 1;
+        for (int y = bed + 1; y <= top; y++) {
             at.setPos(x, y, z);
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
             if (BeardKeep.holds(x, y, z)) { return false; }
@@ -505,19 +502,16 @@ public final class ContentBeard {
 
     public static int footingSink(StructureComponent piece) {
         if (piece instanceof RecurrentVillagePiece) { return ((RecurrentVillagePiece) piece).footingSink(); }
-        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
-        return recurrent ? RecurrentPlots.sink(piece) : 0;
+        return recurrent() ? RecurrentPlots.sink(piece) : 0;
     }
 
     public static int groundCourse(StructureComponent piece) {
         if (piece instanceof RecurrentVillagePiece) { return ((RecurrentVillagePiece) piece).groundCourses(); }
-        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
-        return recurrent ? RecurrentPlots.groundCourse(piece) : 0;
+        return recurrent() ? RecurrentPlots.groundCourse(piece) : 0;
     }
 
     public static int plotSeat(StructureComponent piece) {
-        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
-        return recurrent ? RecurrentPlots.seat(piece) : -1;
+        return recurrent() ? RecurrentPlots.seat(piece) : -1;
     }
 
     public static void foundAtBirth(World world, StructureStart start) { BeardSite.foundAtBirth(world, start); }
@@ -619,6 +613,15 @@ public final class ContentBeard {
         return all == null ? own : all;
     }
 
+    public static List<StructureComponent> everyone(World world, @Nullable List<StructureComponent> own) {
+        List<StructureComponent> all = own == null ? new ArrayList<>() : new ArrayList<>(own);
+        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
+            if (other.getComponents() == own) { continue; }
+            all.addAll(other.getComponents());
+        }
+        return all;
+    }
+
     public static boolean taken(@Nullable List<StructureComponent> own, StructureBoundingBox box) {
         World world = samplerWorld;
         if (world == null) {
@@ -660,11 +663,7 @@ public final class ContentBeard {
     public static void closeEnds(StructureStart start, World world, Random rand, Predicate<StructureComponent> veto, List<StructureComponent> also) {
         if (!wanted()) { return; }
         List<StructureComponent> pieces = start.getComponents();
-        List<StructureComponent> everyone = new ArrayList<>(pieces);
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village == start || village.getComponents() == pieces) { continue; }
-            everyone.addAll(village.getComponents());
-        }
+        List<StructureComponent> everyone = everyone(world, pieces);
         for (StructureComponent piece : also) { if (!everyone.contains(piece)) { everyone.add(piece); } }
         vetoed = veto;
         try {
@@ -690,11 +689,7 @@ public final class ContentBeard {
     public static void attachAll(StructureStart start, World world, Random rand) {
         if (!wanted()) { return; }
         List<StructureComponent> pieces = start.getComponents();
-        List<StructureComponent> everyone = new ArrayList<>(pieces);
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village == start || village.getComponents() == pieces) { continue; }
-            everyone.addAll(village.getComponents());
-        }
+        List<StructureComponent> everyone = everyone(world, pieces);
         for (StructureComponent piece : pieces.toArray(new StructureComponent[0])) { elbows(start, piece, everyone, rand); }
         for (StructureComponent piece : pieces.toArray(new StructureComponent[0])) { attach(start, piece); }
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The village at {}, {} settled every road box before any chunk was built, so no road is extended into ground that is already made", start.getBoundingBox().minX, start.getBoundingBox().minZ); }
@@ -715,6 +710,7 @@ public final class ContentBeard {
         int acrossHi = alongX ? box.maxZ : box.maxX;
         int endX = alongX ? end : (acrossLo + acrossHi) / 2;
         int endZ = alongX ? (acrossLo + acrossHi) / 2 : end;
+        int attachGap = attachGap();
         List<StructureComponent> pieces = start.getComponents();
         if (metBeyond(everyone, piece, alongX, end + (outward ? 1 : -1), acrossLo, acrossHi)) {
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The end at {}, {} of the road at {}, {} already meets something", endX, endZ, box.minX, box.minZ); }
@@ -735,7 +731,7 @@ public final class ContentBeard {
                 int metAcrossHi = alongX ? met.maxZ : met.maxX;
                 if (metAcrossHi < acrossLo || metAcrossLo > acrossHi) { continue; }
                 int gap = outward ? (alongX ? met.minX : met.minZ) - end : end - (alongX ? met.maxX : met.maxZ);
-                if (gap < 2 || gap > attachGap() * 2 || gap >= bestScore) { continue; }
+                if (gap < 2 || gap > attachGap * 2 || gap >= bestScore) { continue; }
                 bestScore = gap;
                 bestOther = other;
                 bestMet = met;
@@ -745,12 +741,12 @@ public final class ContentBeard {
             int metAcrossLo = alongX ? met.minX : met.minZ;
             int metAcrossHi = alongX ? met.maxX : met.maxZ;
             int ahead = outward ? metAcrossLo - end : end - metAcrossHi;
-            if (ahead < 2 || ahead > attachGap() * 2) { continue; }
+            if (ahead < 2 || ahead > attachGap * 2) { continue; }
             int metAlongLo = alongX ? met.minZ : met.minX;
             int metAlongHi = alongX ? met.maxZ : met.maxX;
             boolean overlaps = metAlongHi >= acrossLo && metAlongLo <= acrossHi;
             int sideGap = overlaps ? 0 : metAlongLo > acrossHi ? metAlongLo - acrossHi - 1 : acrossLo - metAlongHi - 1;
-            if (sideGap > attachGap()) { continue; }
+            if (sideGap > attachGap) { continue; }
             if (ahead + sideGap >= bestScore) { continue; }
             bestScore = ahead + sideGap;
             bestOther = other;
@@ -908,7 +904,7 @@ public final class ContentBeard {
         ContentLog.LOGGER.debug("The dead end at {}, {} and the offset street at {}, {} tie through a cross street at {}, {}, {} plot(s) making way", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ, avenue.minX, avenue.minZ, making.size());
     }
 
-    private static boolean metBeyond(List<StructureComponent> pieces, StructureComponent piece, boolean alongX, int beyond, int acrossLo, int acrossHi) {
+    public static boolean metBeyond(List<StructureComponent> pieces, StructureComponent piece, boolean alongX, int beyond, int acrossLo, int acrossHi) {
         for (StructureComponent other : pieces) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
@@ -923,8 +919,6 @@ public final class ContentBeard {
         }
         return false;
     }
-
-    @Nullable public static List<StructureComponent> standing(List<StructureComponent> everyone, List<StructureComponent> own, StructureComponent piece, int minX, int minZ, int maxX, int maxZ) { return standing(everyone, own, piece, piece, minX, minZ, maxX, maxZ); }
 
     @Nullable private static List<StructureComponent> standing(List<StructureComponent> everyone, List<StructureComponent> own, StructureComponent piece, StructureComponent other, int minX, int minZ, int maxX, int maxZ) {
         if (maxX < minX || maxZ < minZ) { return new ArrayList<>(); }
@@ -1171,39 +1165,29 @@ public final class ContentBeard {
 
     public static int plazaReach() { return 3 + (BeardRoads.pathFullWidth() - 3) / 2; }
 
-    public static boolean wanted() {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (!wantedKnown || active != wantedFrom) {
-            wantedHeld = ContentControl.flag(ContentControl.STRUCTURES, "terrainAdaptation", Config.worldgen.terrainAdaptation);
-            wantedFrom = active;
-            wantedKnown = true;
-        }
-        return wantedHeld;
-    }
+    public static boolean wanted() { return WANTED.get(() -> ContentControl.flag(ContentControl.STRUCTURES, "terrainAdaptation", Config.worldgen.terrainAdaptation)); }
 
-    public static void apply(World world, ChunkGeneratorOverworld generator, MapGenStructure[] generators, String[] names, double[] heightMap, int chunkX, int chunkZ) {
+    public static void apply(World world, MapGenStructure[] generators, String[] names, double[] heightMap, int chunkX, int chunkZ) {
         if (applying) { return; }
         applying = true;
-        try { seat(world, generator, generators, names, heightMap, chunkX, chunkZ); }
+        try { seat(world, generators, names, heightMap, chunkX, chunkZ); }
         finally { applying = false; }
     }
 
-    private static void seat(World world, ChunkGeneratorOverworld generator, MapGenStructure[] generators, String[] names, double[] heightMap, int chunkX, int chunkZ) {
+    private static void seat(World world, MapGenStructure[] generators, String[] names, double[] heightMap, int chunkX, int chunkZ) {
         loadModes();
         double[] before = heightMap.clone();
         int blockX = chunkX << 4;
         int blockZ = chunkZ << 4;
         StructureBoundingBox reach = new StructureBoundingBox(blockX - RADIUS, 0, blockZ - RADIUS, blockX + 15 + RADIUS, 255, blockZ + 15 + RADIUS);
         List<StructureBoundingBox> boxes = new ArrayList<>();
-        List<Integer> bases = new ArrayList<>();
+        IntList bases = new IntArrayList();
         List<Mode> modes = new ArrayList<>();
         for (int at = 0; at < generators.length; at++) {
             Mode mode = MODES.getOrDefault(names[at], Mode.NONE);
             if (mode == Mode.NONE) { continue; }
-            sampler = generator;
             samplerWorld = world;
             generators[at].generate(world, chunkX, chunkZ, UNUSED);
-            sampler = null;
             samplerWorld = null;
             for (StructureStart start : ((IMapGenStructure) generators[at]).rdpl$getStructureMap().values()) {
                 if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(reach)) { continue; }
@@ -1221,7 +1205,7 @@ public final class ContentBeard {
         if (ContentLog.LOGGER.debugEnabled()) {
             int lowest = Integer.MAX_VALUE;
             int highest = Integer.MIN_VALUE;
-            for (Integer base : bases) {
+            for (int base : bases) {
                 lowest = Math.min(lowest, base);
                 highest = Math.max(highest, base);
             }
@@ -1240,14 +1224,14 @@ public final class ContentBeard {
         }
     }
 
-    private static double sink(List<StructureBoundingBox> boxes, List<Integer> bases, List<Mode> modes, int x, int y, int z) {
+    private static double sink(List<StructureBoundingBox> boxes, IntList bases, List<Mode> modes, int x, int y, int z) {
         double sum = 0.0D;
         for (int i = 0; i < boxes.size(); i++) {
             StructureBoundingBox box = boxes.get(i);
             int dx = Math.max(0, Math.max(box.minX - x, x - box.maxX));
             int dz = Math.max(0, Math.max(box.minZ - z, z - box.maxZ));
             if (dx > RADIUS || dz > RADIUS) { continue; }
-            int base = bases.get(i);
+            int base = bases.getInt(i);
             int dy = y - base;
             Mode mode = modes.get(i);
             if (mode == Mode.BURY) { sum += bury(dx, dy / 2.0D, dz); }

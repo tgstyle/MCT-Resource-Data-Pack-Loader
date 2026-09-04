@@ -28,7 +28,6 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -112,10 +111,11 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             fillWithBlocks(world, box, x, 0, 1, x, 0, lastZ - 1, soil, soil, false);
             for (int z = 1; z < lastZ; z++) { setBlockState(world, crop(random, def), x, 1, z, box); }
         }
+        IBlockState ground = state(def.ground, Blocks.DIRT.getDefaultState());
         for (int z = 0; z <= lastZ; z++) {
             for (int x = 0; x <= lastX; x++) {
                 clearCurrentPositionBlocksUpwards(world, x, def.height, z, box);
-                replaceAirAndLiquidDownwards(world, state(def.ground, Blocks.DIRT.getDefaultState()), x, -1, z, box);
+                replaceAirAndLiquidDownwards(world, ground, x, -1, z, box);
             }
         }
     }
@@ -143,8 +143,9 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
         int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;
         int depth = (turned ? boundingBox.maxX - boundingBox.minX : boundingBox.maxZ - boundingBox.minZ) + 1;
+        IBlockState ground = state(def.ground, Blocks.DIRT.getDefaultState());
         for (int z = 0; z < depth; z++) {
-            for (int x = 0; x < width; x++) { replaceAirAndLiquidDownwards(world, state(def.ground, Blocks.DIRT.getDefaultState()), x, -1, z, box); }
+            for (int x = 0; x < width; x++) { replaceAirAndLiquidDownwards(world, ground, x, -1, z, box); }
         }
     }
 
@@ -173,27 +174,7 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
 
     private static IBlockState state(@Nullable String name, IBlockState fallback) {
         if (name == null || name.isEmpty()) { return fallback; }
-        int split = name.lastIndexOf(':');
-        String plain = name;
-        int meta = -1;
-        if (split > 0 && isNumber(name.substring(split + 1))) {
-            plain = name.substring(0, split);
-            meta = Integer.parseInt(name.substring(split + 1));
-        }
-        ResourceLocation location = new ResourceLocation(plain);
-        Block block = ForgeRegistries.BLOCKS.containsKey(location) ? ForgeRegistries.BLOCKS.getValue(location) : null;
-        if (block == null) {
-            ContentLog.LOGGER.error("Village plot names block {}, which no mod registers, using {} instead", location, fallback.getBlock().getRegistryName());
-            return fallback;
-        }
-        return meta < 0 ? block.getDefaultState() : ContentStates.of(block, meta);
-    }
-
-    private static boolean isNumber(String value) {
-        if (value.isEmpty()) { return false; }
-        for (int i = 0; i < value.length(); i++) {
-            if (!Character.isDigit(value.charAt(i))) { return false; }
-        }
-        return true;
+        IBlockState parsed = ContentStates.parse(name, "a village plot");
+        return parsed == null ? fallback : parsed;
     }
 }

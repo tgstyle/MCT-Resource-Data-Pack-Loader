@@ -165,7 +165,7 @@ public final class PackOptions {
         return merged;
     }
 
-    private static String gsonPretty(JsonObject held) { return new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(held); }
+    private static String gsonPretty(JsonObject held) { return ModPacks.GSON.toJson(held); }
 
     public static Boolean option(String fileKey, String name) {
         Map<String, Boolean> options = VALUES.get(fileKey);
@@ -187,16 +187,18 @@ public final class PackOptions {
         return held == null ? new LinkedHashMap<>() : new LinkedHashMap<>(held);
     }
 
-    public static boolean applied() {
-        for (Map.Entry<String, Map<String, Boolean>> entry : VALUES.entrySet()) {
-            Map<String, Boolean> was = LOADED.get(entry.getKey());
+    public static boolean applied() { return !differs(VALUES, LOADED); }
+
+    public static boolean differs(Map<String, Map<String, Boolean>> current, Map<String, Map<String, Boolean>> loaded) {
+        for (Map.Entry<String, Map<String, Boolean>> entry : current.entrySet()) {
+            Map<String, Boolean> was = loaded.get(entry.getKey());
             if (was == null) { continue; }
             for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
                 if (!gates(entry.getKey(), option.getKey())) { continue; }
-                if (!option.getValue().equals(was.get(option.getKey()))) { return false; }
+                if (!option.getValue().equals(was.get(option.getKey()))) { return true; }
             }
         }
-        return true;
+        return false;
     }
 
     public static void gating(String asked) { GATING.add(asked); }

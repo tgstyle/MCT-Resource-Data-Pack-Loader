@@ -1,17 +1,11 @@
 package mctmods.resourcedatapackloader.util;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.util.math.BlockPos;
 
 public class PacketUtils {
     private static final int MASK_6 = (1 << 6) - 1;
     private static final int MASK_7 = (1 << 7) - 1;
 
-    public static void write(ByteBuf buf, BlockPos pos) {
-        writeSignedVarInt(buf, pos.getX());
-        writeSignedVarInt(buf, pos.getY());
-        writeSignedVarInt(buf, pos.getZ());
-    }
 
     public static void write(ByteBuf buf, CubePos pos) {
         writeSignedVarInt(buf, pos.getX());

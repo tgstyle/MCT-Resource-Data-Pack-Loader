@@ -79,9 +79,11 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return def.starBrightness;
     }
 
+    private static Vec3d color(int rgb) { return new Vec3d(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D); }
+
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) {
         if (def == null || def.cloudColor < 0) { return super.getCloudColor(partialTicks); }
-        return new Vec3d(((def.cloudColor >> 16) & 255) / 255.0D, ((def.cloudColor >> 8) & 255) / 255.0D, (def.cloudColor & 255) / 255.0D);
+        return color(def.cloudColor);
     }
 
     @Override @Nonnull public float[] getLightBrightnessTable() {
@@ -120,12 +122,12 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getSkyColor(@Nonnull Entity camera, float partialTicks) {
         if (def == null || def.skyColor < 0) { return super.getSkyColor(camera, partialTicks); }
-        return new Vec3d(((def.skyColor >> 16) & 255) / 255.0D, ((def.skyColor >> 8) & 255) / 255.0D, (def.skyColor & 255) / 255.0D);
+        return color(def.skyColor);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
         if (def == null || def.fogColor < 0) { return super.getFogColor(celestialAngle, partialTicks); }
-        return new Vec3d(((def.fogColor >> 16) & 255) / 255.0D, ((def.fogColor >> 8) & 255) / 255.0D, (def.fogColor & 255) / 255.0D);
+        return color(def.fogColor);
     }
 
     @Override @Nonnull public String getSaveFolder() { return def == null ? "DIM" + getDimension() : def.suffix; }

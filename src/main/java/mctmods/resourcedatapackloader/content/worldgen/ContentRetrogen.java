@@ -91,15 +91,16 @@ public final class ContentRetrogen {
         if (!replace && (!retrogenWanted() || (defs.isEmpty() && !bedrockWanted()))) { return; }
         List<WorldgenDef> pending = new ArrayList<>();
         boolean bedrock = false;
+        String bedrockToken = bedrockToken();
         if (retrogenWanted()) {
             for (WorldgenDef def : defs) {
                 if (def.retrogen && !already.contains(def.getToken())) { pending.add(def); }
             }
-            bedrock = bedrockWanted() && !already.contains(bedrockToken()) && ContentBedrock.appliesTo(dimension);
+            bedrock = bedrockWanted() && !already.contains(bedrockToken) && ContentBedrock.appliesTo(dimension);
         }
         if (pending.isEmpty() && !bedrock && !replace) {
             ContentLog.LOGGER.debug("Nothing to do for chunk {}: bedrockToken={} present={} appliesTo={}",
-                    event.getChunk().getPos(), bedrockToken(), already.contains(bedrockToken()), ContentBedrock.appliesTo(dimension));
+                    event.getChunk().getPos(), bedrockToken, already.contains(bedrockToken), ContentBedrock.appliesTo(dimension));
             return;
         }
         QUEUES.computeIfAbsent(dimension, k -> new ArrayDeque<>()).add(new Pending(event.getChunk().getPos(), pending, bedrock, replace));
@@ -171,8 +172,7 @@ public final class ContentRetrogen {
     }
 
     private static void generateVeins(ContentWorldgen worldgen, World world, Pending pending) {
-        Random random = new Random(world.getSeed());
-        random.setSeed(pending.pos.x * (random.nextLong() | 1L) + pending.pos.z * (random.nextLong() | 1L) ^ world.getSeed());
+        Random random = ContentSpread.regionRandom(world, pending.pos.x, pending.pos.z);
         worldgen.generate(random, pending.pos.x, pending.pos.z, world, pending.defs);
     }
 

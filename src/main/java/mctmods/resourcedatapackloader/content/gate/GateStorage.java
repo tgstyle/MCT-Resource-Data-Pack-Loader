@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.util.world.SavedData;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -94,12 +96,7 @@ public final class GateStorage extends WorldSavedData {
         World overworld = DimensionManager.getWorld(0);
         MapStorage storage = overworld == null ? world.getMapStorage() : overworld.getMapStorage();
         if (storage == null) { return null; }
-        GateStorage data = (GateStorage) storage.getOrLoadData(GateStorage.class, NAME);
-        if (data == null) {
-            data = new GateStorage(NAME);
-            storage.setData(NAME, data);
-        }
-        return data;
+        return SavedData.get(storage, GateStorage.class, NAME, GateStorage::new);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {

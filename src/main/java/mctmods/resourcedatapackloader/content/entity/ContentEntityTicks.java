@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.content.entity;
 
-import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
-import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.beard.PredictedChunk;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityAITasks;
@@ -9,7 +7,9 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityItem;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
+import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
@@ -27,7 +27,6 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,19 +39,20 @@ public final class ContentEntityTicks {
     private static int TICKS = 1;
     private static final int VANILLA_THINK = 3;
     private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList("items", "experience", "projectiles"));
-    private static final Map<World, Map<Long, Boolean>> FAR = new HashMap<>();
+    private static final Map<World, Long2BooleanOpenHashMap> FAR = new HashMap<>();
     private static final Map<World, Long> CHECKED = new HashMap<>();
     private static final int SNAPSHOT = 100;
-    private static Set<String> kinds;
-    private static Set<String> spared;
+    private static final TemplateMemo<Set<String>> KINDS_SLOWED = new TemplateMemo<>();
+    private static final TemplateMemo<Set<String>> SPARED = new TemplateMemo<>();
     private static long considered;
     private static long slowed;
 
     private ContentEntityTicks() {}
 
     public static void reload() {
-        kinds = null;
-        spared = null;
+        KINDS_SLOWED.forget();
+        SPARED.forget();
+        SLOWING.forget();
         considered = 0L;
         slowed = 0L;
         FAR.clear();
@@ -86,28 +86,27 @@ public final class ContentEntityTicks {
         slowed = 0L;
     }
 
-    @Nullable private static WorldTemplateDef slowingFrom;
-    private static boolean slowingRead;
-    private static boolean slowing;
-    private static int slowRate;
+    private static final TemplateMemo<Slowing> SLOWING = new TemplateMemo<>();
 
-    private static boolean slowing() {
-        WorldTemplateDef active = ContentWorldTemplates.active();
-        if (slowingRead && active == slowingFrom) { return slowing; }
-        slowing = !ContentControl.off(ContentControl.ENTITIES) && ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities);
-        slowRate = ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate);
-        slowingFrom = active;
-        slowingRead = true;
-        return slowing;
+    private static final class Slowing {
+        final boolean on = !ContentControl.off(ContentControl.ENTITIES) && ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities);
+        final int rate = ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate);
+        final int recheck = ContentControl.number(ContentControl.ENTITIES, "slowRecheck", Config.entities.slowRecheck);
+        final double reach = square(ContentControl.number(ContentControl.ENTITIES, "slowDistance", Config.entities.slowDistance));
+
+        private static double square(double blocks) { return blocks * blocks; }
     }
+
+    private static Slowing slowing() { return SLOWING.get(Slowing::new); }
 
     public static boolean slowedNow(Entity entity) {
         if (entity == null || entity.world == null || entity.world.isRemote) { return false; }
-        if (!slowing()) { return false; }
+        Slowing slowing = slowing();
+        if (!slowing.on) { return false; }
         World world = entity.world;
         int chunkX = entity.chunkCoordX;
         int chunkZ = entity.chunkCoordZ;
-        int rate = slowRate;
+        int rate = slowing.rate;
         if (entity instanceof EntityLiving) {
             boolean thinkSlower = !spared(entity) && rate > 1 && far(world, chunkX, chunkZ);
             think((EntityLiving) entity, thinkSlower ? VANILLA_THINK * rate : VANILLA_THINK);
@@ -129,19 +128,17 @@ public final class ContentEntityTicks {
     }
 
     private static boolean far(World world, int chunkX, int chunkZ) {
-        int recheck = ContentControl.number(ContentControl.ENTITIES, "slowRecheck", Config.entities.slowRecheck);
-        long now = world.getTotalWorldTime() / Math.max(1, recheck);
+        long now = world.getTotalWorldTime() / Math.max(1, slowing().recheck);
         Long last = CHECKED.get(world);
-        Map<Long, Boolean> known = FAR.get(world);
+        Long2BooleanOpenHashMap known = FAR.get(world);
         if (last == null || last != now || known == null) {
-            known = new HashMap<>();
+            known = new Long2BooleanOpenHashMap();
             FAR.put(world, known);
             CHECKED.put(world, now);
         }
-        Long key = ChunkPos.asLong(chunkX, chunkZ);
-        Boolean answer = known.get(key);
-        if (answer != null) { return answer; }
-        answer = measure(world, chunkX, chunkZ);
+        long key = ChunkPos.asLong(chunkX, chunkZ);
+        if (known.containsKey(key)) { return known.get(key); }
+        boolean answer = measure(world, chunkX, chunkZ);
         known.put(key, answer);
         return answer;
     }
@@ -149,8 +146,7 @@ public final class ContentEntityTicks {
     private static boolean measure(World world, int chunkX, int chunkZ) {
         if (world.getPersistentChunks().containsKey(new ChunkPos(chunkX, chunkZ))) { return false; }
         if (world.playerEntities.isEmpty()) { return true; }
-        double blocks = ContentControl.number(ContentControl.ENTITIES, "slowDistance", Config.entities.slowDistance);
-        double reach = blocks * blocks;
+        double reach = slowing().reach;
         double middleX = (chunkX << 4) + 8;
         double middleZ = (chunkZ << 4) + 8;
         for (EntityPlayer player : world.playerEntities) {
@@ -170,14 +166,19 @@ public final class ContentEntityTicks {
         if (entity instanceof EntityXPOrb) { ((EntityXPOrb) entity).xpOrbAge++; }
     }
 
-    private static boolean kindSlowed(Entity entity) {
-        if (kinds == null) {
-            kinds = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds));
+    private static Set<String> slowedKinds() {
+        return KINDS_SLOWED.get(() -> {
+            Set<String> kinds = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds));
             for (String kind : kinds) {
                 if (KINDS.contains(kind)) { continue; }
                 ContentLog.LOGGER.error("slowedKinds names '{}', which is not one of {}, so nothing is slowed for it. Anything that thinks for itself is already given a slower pace without being named, and machines are never slowed", kind, KINDS);
             }
-        }
+            return kinds;
+        });
+    }
+
+    private static boolean kindSlowed(Entity entity) {
+        Set<String> kinds = slowedKinds();
         if (entity instanceof EntityItem) { return kinds.contains("items"); }
         if (entity instanceof EntityXPOrb) { return kinds.contains("experience"); }
         if (entity instanceof IProjectile) { return kinds.contains("projectiles"); }
@@ -192,7 +193,7 @@ public final class ContentEntityTicks {
         }
         if (entity.hasCustomName() || entity.isGlowing()) { return true; }
         if (entity instanceof EntityLivingBase && !((EntityLivingBase) entity).getActivePotionEffects().isEmpty()) { return true; }
-        if (spared == null) { spared = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)); }
+        Set<String> spared = SPARED.get(() -> Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)));
         if (spared.isEmpty()) { return false; }
         ResourceLocation name = EntityList.getKey(entity);
         return name != null && spared.contains(name.toString().toLowerCase(Locale.ROOT));

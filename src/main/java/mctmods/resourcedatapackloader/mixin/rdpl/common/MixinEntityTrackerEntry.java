@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityTrackerEntry;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.management.PlayerChunkMap;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
@@ -33,11 +34,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "isPlayerWatchingThisChunk", cancellable = true, at = @At("HEAD")) private void isPlayerWatchingThisChunkRubic(EntityPlayerMP playerMP, CallbackInfoReturnable<Boolean> cir) {
-        if (((IRubicWorld) playerMP.world).rdpl$isRubicWorld()) {
-            boolean ret = ((PlayerCubeMap) playerMP.getServerWorld().getPlayerChunkMap())
-                    .isPlayerWatchingCube(playerMP, this.trackedEntity.chunkCoordX, this.trackedEntity.chunkCoordY, this.trackedEntity.chunkCoordZ);
-            cir.setReturnValue(ret);
-        }
+        if (!((IRubicWorld) playerMP.world).rdpl$isRubicWorld()) { return; }
+        PlayerChunkMap map = playerMP.getServerWorld().getPlayerChunkMap();
+        if (!(map instanceof PlayerCubeMap)) { return; }
+        cir.setReturnValue(((PlayerCubeMap) map).isPlayerWatchingCube(playerMP, this.trackedEntity.chunkCoordX, this.trackedEntity.chunkCoordY, this.trackedEntity.chunkCoordZ));
     }
 
     public void entry$setMaxVertRange(int maxVertTrackingDistanceThreshold) { this.rdpl$maxVertRange = maxVertTrackingDistanceThreshold; }

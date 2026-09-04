@@ -9,6 +9,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -19,10 +20,13 @@ import javax.annotation.Nullable;
 
 public final class BeardPlots {
     private static final StructureComponent[] NONE = new StructureComponent[0];
+    private static final int ANY = 0;
+    private static final int ROADS = 1;
+    private static final int BUILDINGS = 2;
     private static final Map<StructureStart, Index> INDEXES = new WeakHashMap<>();
     @Nullable private static List<StructureComponent> layingOut;
     @Nullable private static Index layout;
-    @Nullable private static List<StructureComponent> wellsFrom;
+    private static WeakReference<List<StructureComponent>> wellsFrom = new WeakReference<>(null);
     private static int wellsCount;
     private static final List<StructureBoundingBox> WELLS = new ArrayList<>();
 
@@ -153,9 +157,14 @@ public final class BeardPlots {
         return false;
     }
 
-    public static boolean underAnother(StructureStart start, @Nullable StructureComponent piece, int x, int z) {
+    public static boolean underAnother(StructureStart start, @Nullable StructureComponent piece, int x, int z) { return hit(start, piece, x, z, ANY); }
+
+    private static boolean hit(StructureStart start, @Nullable StructureComponent piece, int x, int z, int kind) {
         for (StructureComponent other : around(start, x, z)) {
             if (other == piece) { continue; }
+            boolean road = other instanceof StructureVillagePieces.Path;
+            if (kind == ROADS && !road) { continue; }
+            if (kind == BUILDINGS && road) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
@@ -178,32 +187,11 @@ public final class BeardPlots {
         return false;
     }
 
-    public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) {
-        for (StructureComponent other : around(start, x, z)) {
-            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
-            if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
-        }
-        return false;
-    }
+    public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) { return hit(start, piece, x, z, ROADS); }
 
-    public static boolean underBuilding(StructureStart start, StructureComponent piece, int x, int z) {
-        for (StructureComponent other : around(start, x, z)) {
-            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
-            if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
-        }
-        return false;
-    }
+    public static boolean underBuilding(StructureStart start, StructureComponent piece, int x, int z) { return hit(start, piece, x, z, BUILDINGS); }
 
-    public static boolean overRoad(StructureStart start, int x, int z) {
-        for (StructureComponent other : around(start, x, z)) {
-            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
-            if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
-        }
-        return false;
-    }
+    public static boolean overRoad(StructureStart start, int x, int z) { return hit(start, null, x, z, ROADS); }
 
     public static List<StructureBoundingBox> wellBoxes(@Nullable List<StructureComponent> pieces) {
         if (pieces == null) { return new ArrayList<>(); }
@@ -211,14 +199,14 @@ public final class BeardPlots {
     }
 
     private static List<StructureBoundingBox> wells(List<StructureComponent> pieces) {
-        if (pieces != wellsFrom || pieces.size() != wellsCount) {
+        if (pieces != wellsFrom.get() || pieces.size() != wellsCount) {
             WELLS.clear();
             if (!pieces.isEmpty() && pieces.get(0) instanceof StructureVillagePieces.Start) {
                 for (StructureComponent piece : pieces) {
                     if (piece instanceof StructureVillagePieces.Well) { WELLS.add(piece.getBoundingBox()); }
                 }
             }
-            wellsFrom = pieces;
+            wellsFrom = new WeakReference<>(pieces);
             wellsCount = pieces.size();
         }
         return WELLS;
@@ -249,10 +237,9 @@ public final class BeardPlots {
             StructureBoundingBox box = other.getBoundingBox();
             if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
             boolean alongX = roadAlongX(other);
-            int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
-            int offset = Math.abs((alongX ? z : x) - center);
-            int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
-            int core = Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2);
+            int offset = roadOffset(box, alongX, x, z);
+            int span = roadSpan(box, alongX);
+            int core = coreOf(span);
             if (offset > core && offset <= core + BeardRoads.pathLineColumns() && offset <= (span - 1) / 2) { return true; }
         }
         return false;
@@ -264,13 +251,19 @@ public final class BeardPlots {
             StructureBoundingBox box = other.getBoundingBox();
             if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
             boolean alongX = roadAlongX(other);
-            int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
-            int offset = Math.abs((alongX ? z : x) - center);
-            int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
-            if (offset <= Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2)) { return true; }
+            if (roadOffset(box, alongX, x, z) <= coreOf(roadSpan(box, alongX))) { return true; }
         }
         return false;
     }
+
+    private static int roadOffset(StructureBoundingBox box, boolean alongX, int x, int z) {
+        int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+        return Math.abs((alongX ? z : x) - center);
+    }
+
+    static int roadSpan(StructureBoundingBox box, boolean alongX) { return (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1; }
+
+    static int coreOf(int span) { return Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2); }
 
     public static int restingFloor(int[] tops, int depth, int spot, int from) {
         int own = tops[spot];

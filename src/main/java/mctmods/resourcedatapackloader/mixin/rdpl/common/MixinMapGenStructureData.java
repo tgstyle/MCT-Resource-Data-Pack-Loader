@@ -61,20 +61,13 @@ import javax.annotation.Nullable;
     @Override public void rdpl$packFarStarts(int chunkX, int chunkZ, int keep) {
         NBTTagCompound far = null;
         for (String key : new ArrayList<>(tagCompound.getKeySet())) {
-            int comma = key.indexOf(',');
-            if (key.length() < 5 || key.charAt(0) != '[' || comma < 0 || !key.endsWith("]")) { continue; }
-            int x;
-            int z;
-            try {
-                x = Integer.parseInt(key.substring(1, comma));
-                z = Integer.parseInt(key.substring(comma + 1, key.length() - 1));
-            }
-            catch (NumberFormatException notCoords) { continue; }
-            if (Math.abs(x - chunkX) <= keep && Math.abs(z - chunkZ) <= keep) { continue; }
+            long at = rdpl$coords(key);
+            if (at == Long.MIN_VALUE) { continue; }
+            if (Math.abs((int) at - chunkX) <= keep && Math.abs((int) (at >> 32) - chunkZ) <= keep) { continue; }
             if (far == null) { far = new NBTTagCompound(); }
             far.setTag(key, tagCompound.getTag(key));
             tagCompound.removeTag(key);
-            rdpl$packedAt.put(ChunkPos.asLong(x, z), rdpl$packed.size());
+            rdpl$packedAt.put(at, rdpl$packed.size());
         }
         if (far == null) { return; }
         try {

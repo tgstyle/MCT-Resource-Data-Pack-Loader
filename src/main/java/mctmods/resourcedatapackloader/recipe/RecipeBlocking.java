@@ -5,9 +5,9 @@ import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -90,11 +90,5 @@ public final class RecipeBlocking {
         return owners;
     }
 
-    @Nullable private static String output(@Nullable IRecipe recipe) {
-        if (recipe == null) { return null; }
-        ItemStack result = recipe.getRecipeOutput();
-        if (result.isEmpty()) { return null; }
-        ResourceLocation name = result.getItem().getRegistryName();
-        return name == null ? null : name.getNamespace().toLowerCase(Locale.ROOT);
-    }
+    @Nullable private static String output(@Nullable IRecipe recipe) { return recipe == null ? null : Stacks.namespace(recipe.getRecipeOutput()); }
 }

@@ -30,6 +30,9 @@ public final class ContentExposures {
     private static final Map<ExposureDef, Map<Block, Integer>> BLOCK_LEVELS = new IdentityHashMap<>();
     private static final Map<ExposureDef, Map<Item, Integer>> ITEM_LEVELS = new IdentityHashMap<>();
     private static final Map<ExposureDef, DamageSource> SOURCES = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Potion[]> MARKERS = new IdentityHashMap<>();
+    private static final Map<PotionEffectDef, Potion> EXTRAS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Potion> IMMUNITIES = new IdentityHashMap<>();
 
     private ContentExposures() {}
 
@@ -52,13 +55,20 @@ public final class ContentExposures {
 
     private static int scan(ExposureDef def, EntityPlayer player) {
         if (!def.immunity.isEmpty()) {
-            Potion immune = Potion.getPotionFromResourceLocation(def.immunity);
+            Potion immune = immunity(def);
             if (immune != null && player.isPotionActive(immune)) { return 0; }
         }
         int most = def.levels.size();
         int level = scanItems(def, player, most);
         if (level >= most) { return most; }
         return Math.max(level, scanWorld(def, player, most));
+    }
+
+    @Nullable private static Potion immunity(ExposureDef def) {
+        if (IMMUNITIES.containsKey(def)) { return IMMUNITIES.get(def); }
+        Potion potion = Potion.getPotionFromResourceLocation(def.immunity);
+        IMMUNITIES.put(def, potion);
+        return potion;
     }
 
     private static int scanItems(ExposureDef def, EntityPlayer player, int most) {
@@ -125,18 +135,18 @@ public final class ContentExposures {
 
     private static void applyLevel(ExposureDef def, EntityPlayer player, int level) {
         int duration = def.scanInterval * 2 + 20;
-        for (int index = 0; index < def.levels.size(); index++) {
+        Potion[] markers = markers(def);
+        for (int index = 0; index < markers.length; index++) {
             if (index + 1 == level) { continue; }
-            Potion marker = Potion.getPotionFromResourceLocation(def.levels.get(index).effect);
-            if (marker != null) { player.removePotionEffect(marker); }
+            if (markers[index] != null) { player.removePotionEffect(markers[index]); }
         }
         if (level <= 0) { return; }
         ExposureLevelDef entry = def.levels.get(level - 1);
-        Potion marker = Potion.getPotionFromResourceLocation(entry.effect);
+        Potion marker = markers[level - 1];
         if (marker == null) { return; }
         player.addPotionEffect(new PotionEffect(marker, duration, 0, false, true));
         for (PotionEffectDef extra : entry.extras) {
-            Potion potion = Potion.getPotionFromResourceLocation(extra.potion);
+            Potion potion = extraPotion(extra);
             if (potion == null) { continue; }
             player.addPotionEffect(new PotionEffect(potion, extra.duration > 0 ? extra.duration : duration, extra.amplifier, extra.ambient, extra.showParticles));
         }
@@ -144,9 +154,9 @@ public final class ContentExposures {
 
     private static void damageTick(ExposureDef def, EntityPlayer player) {
         ExposureLevelDef active = null;
-        for (ExposureLevelDef entry : def.levels) {
-            Potion marker = Potion.getPotionFromResourceLocation(entry.effect);
-            if (marker != null && player.isPotionActive(marker)) { active = entry; }
+        Potion[] markers = markers(def);
+        for (int index = 0; index < markers.length; index++) {
+            if (markers[index] != null && player.isPotionActive(markers[index])) { active = def.levels.get(index); }
         }
         NBTTagCompound data = player.getEntityData();
         String tag = "RDPLExposure" + def.name;
@@ -159,6 +169,21 @@ public final class ContentExposures {
             data.setInteger(tag, timer);
         }
         else { data.setInteger(tag, 0); }
+    }
+
+    private static Potion[] markers(ExposureDef def) {
+        return MARKERS.computeIfAbsent(def, held -> {
+            Potion[] markers = new Potion[held.levels.size()];
+            for (int index = 0; index < markers.length; index++) { markers[index] = Potion.getPotionFromResourceLocation(held.levels.get(index).effect); }
+            return markers;
+        });
+    }
+
+    @Nullable private static Potion extraPotion(PotionEffectDef extra) {
+        if (EXTRAS.containsKey(extra)) { return EXTRAS.get(extra); }
+        Potion potion = Potion.getPotionFromResourceLocation(extra.potion);
+        EXTRAS.put(extra, potion);
+        return potion;
     }
 
     private static DamageSource source(ExposureDef def) {

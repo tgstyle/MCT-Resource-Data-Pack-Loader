@@ -152,6 +152,8 @@ import javax.annotation.Nullable;
         return ContentPortals.fitAt(world, pos, binding);
     }
 
+    public static void forget(UUID player) { RECENT.remove(player); }
+
     private boolean recently(EntityPlayer player, PortalDef portal) {
         Long last = RECENT.get(player.getUniqueID());
         if (last == null) { return false; }

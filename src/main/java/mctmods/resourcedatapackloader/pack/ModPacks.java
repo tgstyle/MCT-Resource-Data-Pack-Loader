@@ -19,6 +19,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -35,7 +36,7 @@ public final class ModPacks {
     private static final String CONTROL_FILE = "mods.json";
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private ModPacks() {}
 
@@ -102,8 +103,9 @@ public final class ModPacks {
     }
 
     @Nullable private static RDPLPack open(Found entry, int priority) {
+        FileSystem jar = null;
         try {
-            FileSystem jar = FileSystems.newFileSystem(entry.jar.toPath(), null);
+            jar = FileSystems.newFileSystem(entry.jar.toPath(), null);
             Path root = jar.getPath("/" + IN_JAR);
             RDPLPack pack = new RDPLPack(entry.modId, priority, false, root, jar, entry.namespaces);
             if (pack.getNamespaces().isEmpty()) {
@@ -115,6 +117,7 @@ public final class ModPacks {
         }
         catch (IOException | RuntimeException failed) {
             ContentLog.LOGGER.error("Could not open the '{}' folder inside '{}'", IN_JAR, entry.jar.getName(), failed);
+            IOUtils.closeQuietly(jar);
             return null;
         }
     }

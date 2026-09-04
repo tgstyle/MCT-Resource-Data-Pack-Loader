@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -34,6 +35,7 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraftforge.common.WorldWorkerManager;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.lang.reflect.Field;
@@ -44,6 +46,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 public final class ContentStructureSearch implements WorldWorkerManager.IWorker {
     private static final long SLICE_NANOS = 40_000_000L;
@@ -89,8 +92,6 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     public static boolean looking() { return running != null; }
-
-    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored) { start(player, name, key, findUnexplored, false); }
 
     public static boolean point(EntityPlayerMP player, String name, String key) {
         if (looking()) { return false; }
@@ -146,7 +147,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 long cell = ringSpot(step);
                 int atX = (int) (cell >> 32);
                 int atZ = (int) cell;
-                if (known.get(packed(atX, atZ)) == null && System.nanoTime() >= ending) { return true; }
+                if (known.get(Longs.pack(atX, atZ)) == null && System.nanoTime() >= ending) { return true; }
                 step++;
                 considerCell(known, atX, atZ);
             }
@@ -207,6 +208,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, boolean findUnexplored, boolean skipHere) {
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
+        List<BlockPos> visited = skipHere ? been(player, name) : Collections.emptyList();
         for (long[] pin : pinned) {
             int chunkX = (int) pin[0] >> 4;
             int chunkZ = (int) pin[1] >> 4;
@@ -215,7 +217,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             long awayZ = pin[1] - (long) player.posZ;
             long away = awayX * awayX + awayZ * awayZ;
             if (skipHere && away < BEEN_NEAR) { continue; }
-            if (skipHere && beenNear(player, name, (int) pin[0], (int) pin[1])) { continue; }
+            if (skipHere && beenNear(visited, (int) pin[0], (int) pin[1])) { continue; }
             if (away >= bestAway) { continue; }
             bestAway = away;
             best = new BlockPos((int) pin[0], 64, (int) pin[1]);
@@ -284,17 +286,10 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return held == null ? new ArrayList<>() : new ArrayList<>(held);
     }
 
-    private boolean beenNear(int x, int z) {
-        for (BlockPos at : been) {
-            long awayX = x - (long) at.getX();
-            long awayZ = z - (long) at.getZ();
-            if (awayX * awayX + awayZ * awayZ < BEEN_NEAR) { return true; }
-        }
-        return false;
-    }
+    private boolean beenNear(int x, int z) { return beenNear(been, x, z); }
 
-    private static boolean beenNear(EntityPlayerMP player, String name, int x, int z) {
-        for (BlockPos at : been(player, name)) {
+    private static boolean beenNear(List<BlockPos> been, int x, int z) {
+        for (BlockPos at : been) {
             long awayX = x - (long) at.getX();
             long awayZ = z - (long) at.getZ();
             if (awayX * awayX + awayZ * awayZ < BEEN_NEAR) { return true; }
@@ -334,11 +329,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     @Nullable private static BlockPos footing(World world, int x, int z) {
         int start = world.provider.hasSkyLight() ? world.getActualHeight() - 1 : 118;
+        BlockPos.MutableBlockPos ground = new BlockPos.MutableBlockPos();
         for (int y = start; y > 0; y--) {
-            BlockPos ground = new BlockPos(x, y, z);
-            Material material = world.getBlockState(ground).getMaterial();
+            Material material = world.getBlockState(ground.setPos(x, y, z)).getMaterial();
             if (!material.blocksMovement() && !material.isLiquid()) { continue; }
-            if (open(world, ground.up()) && open(world, ground.up(2))) { return ground.up(); }
+            if (open(world, ground.setPos(x, y + 1, z)) && open(world, ground.setPos(x, y + 2, z))) { return new BlockPos(x, y + 1, z); }
         }
         return null;
     }
@@ -350,6 +345,24 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             if (cubes instanceof VanillaCompatibilityGenerator) { return ((VanillaCompatibilityGenerator) cubes).vanilla(); }
         }
         return ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+    }
+
+    public static boolean anyOtherOver(World world, @Nullable List<StructureComponent> own, StructureBoundingBox box) {
+        for (StructureStart village : villageStarts(world)) {
+            if (village.getComponents() == own) { continue; }
+            for (StructureComponent piece : village.getComponents()) {
+                if (piece.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { return true; }
+            }
+        }
+        return false;
+    }
+
+    public static boolean anyVillage(World world, StructureStart held, Predicate<StructureStart> test) {
+        if (test.test(held)) { return true; }
+        for (StructureStart village : villageStarts(world)) {
+            if (village != held && test.test(village)) { return true; }
+        }
+        return false;
     }
 
     public static Collection<StructureStart> villageStarts(World world) {
@@ -387,7 +400,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                     Object inside = field.get(held);
                     if (inside instanceof MapGenStructure && inside != held) { return (MapGenStructure) inside; }
                 }
-                catch (Exception ignored) { }
+                catch (ReflectiveOperationException | RuntimeException ex) { ContentLog.LOGGER.debug("Could not read the structure field {} of {}", field.getName(), held.getClass().getName(), ex); }
             }
         }
         return null;
@@ -413,17 +426,15 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private int onRing(int around) { return around == 0 ? 1 : around * 16; }
 
     private long ringSpot(int at) {
-        if (ring == 0) { return packed(middleX, middleZ); }
+        if (ring == 0) { return Longs.pack(middleX, middleZ); }
         int side = ring * 2;
         int leg = at / side;
         int along = at % side;
-        if (leg == 0) { return packed(middleX - ring + along, middleZ - ring); }
-        if (leg == 1) { return packed(middleX + ring, middleZ - ring + along); }
-        if (leg == 2) { return packed(middleX + ring - along, middleZ + ring); }
-        return packed(middleX - ring, middleZ + ring - along);
+        if (leg == 0) { return Longs.pack(middleX - ring + along, middleZ - ring); }
+        if (leg == 1) { return Longs.pack(middleX + ring, middleZ - ring + along); }
+        if (leg == 2) { return Longs.pack(middleX + ring - along, middleZ + ring); }
+        return Longs.pack(middleX - ring, middleZ + ring - along);
     }
-
-    private static long packed(int x, int z) { return ((long) x << 32) | (z & 0xFFFFFFFFL); }
 
     private static void tell(EntityPlayerMP player, TextFormatting color, String message) { player.sendMessage(new TextComponentString(color + message)); }
 }

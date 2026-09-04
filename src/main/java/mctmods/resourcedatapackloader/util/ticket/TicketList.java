@@ -37,8 +37,6 @@ public class TicketList {
         }
     }
 
-    public boolean contains(ITicket ticket) { return tickets.contains(ticket); }
-
     public boolean shouldTick() { return tickRefs > 0; }
 
     public boolean canUnload() { return tickets.isEmpty(); }

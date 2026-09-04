@@ -44,6 +44,6 @@ import javax.annotation.Nullable;
         if (rdpl$commandWorld == null) { return original; }
         IRubicWorld world = rdpl$commandWorld.get();
         if (world == null) { return original; }
-        return world.rdpl$getMaxHeight() + original;
+        return world.rdpl$getMaxHeight() + original - 256;
     }
 }

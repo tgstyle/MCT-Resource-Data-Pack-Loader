@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,7 @@ import javax.annotation.Nullable;
         Chunk column = cache.getColumn(cubeX, cubeZ, ICubeProviderServer.Requirement.LIGHT);
         CubeAt at = new CubeAt(world, cubeX, cubeY, cubeZ);
         PendingCube queued = cubeReads.remove(at);
+        if (queued != null) { forget(at.column()); }
         if (queued == null || queued.hasBeenHandedOver()) {
             PendingCube here = new PendingCube(io, cubeX, cubeY, cubeZ);
             here.tellColumn(column);
@@ -58,7 +60,6 @@ import javax.annotation.Nullable;
             here.handOver();
             return here.loaded();
         }
-        forget(at.column());
         queued.tellColumn(column);
         if (queued.claimRead()) { queued.readNow(); }
         else { queued.awaitRead(); }
@@ -136,7 +137,12 @@ import javax.annotation.Nullable;
 
     public static void tick() {
         for (PendingLoad<?> ready = readyToHandOver.poll(); ready != null; ready = readyToHandOver.poll()) { ready.handOver(); }
-        cubeReads.values().removeIf(PendingLoad::hasBeenHandedOver);
+        for (Iterator<Map.Entry<CubeAt, PendingCube>> it = cubeReads.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<CubeAt, PendingCube> entry = it.next();
+            if (!entry.getValue().hasBeenHandedOver()) { continue; }
+            it.remove();
+            forget(entry.getKey().column());
+        }
         columnReads.values().removeIf(PendingLoad::hasBeenHandedOver);
     }
 

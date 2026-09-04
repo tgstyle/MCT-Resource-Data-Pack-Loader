@@ -4,8 +4,8 @@ import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import net.minecraft.util.ResourceLocation;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -20,8 +20,7 @@ public final class ContentCityMaps {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        PackManager.get().forEach(PackManager.CITYMAPS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.CITYMAPS, "city map", (key, contents) -> {
             CityMapDef def = ContentParser.cityMap(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });

@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.world.SavedData;
+import mctmods.resourcedatapackloader.util.Longs;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
@@ -21,19 +24,9 @@ public final class SeamMemory extends WorldSavedData {
 
     public SeamMemory(String name) { super(name); }
 
-    public static SeamMemory of(WorldServer world) {
-        SeamMemory held = (SeamMemory) world.getPerWorldStorage().getOrLoadData(SeamMemory.class, ID);
-        if (held != null) { return held; }
-        SeamMemory made = new SeamMemory(ID);
-        world.getPerWorldStorage().setData(ID, made);
-        return made;
-    }
+    public static SeamMemory of(WorldServer world) { return SavedData.get(world.getPerWorldStorage(), SeamMemory.class, ID, SeamMemory::new); }
 
-    public static long column(int x, int z) { return ((long) x << 32) | (z & 0xFFFFFFFFL); }
-
-    private static int columnX(long key) { return (int) (key >> 32); }
-
-    private static int columnZ(long key) { return (int) key; }
+    public static long column(int x, int z) { return Longs.pack(x, z); }
 
     public void noteEntry(int x, int z) {
         if (entries.add(column(x, z))) { markDirty(); }
@@ -44,15 +37,15 @@ public final class SeamMemory extends WorldSavedData {
         double closest = (double) reach * reach;
         boolean found = false;
         for (long key : entries) {
-            double dx = columnX(key) + 0.5 - x;
-            double dz = columnZ(key) + 0.5 - z;
+            double dx = Longs.high(key) + 0.5 - x;
+            double dz = Longs.low(key) + 0.5 - z;
             double away = dx * dx + dz * dz;
             if (away > closest) { continue; }
             closest = away;
             best = key;
             found = true;
         }
-        return found ? new BlockPos(columnX(best), 0, columnZ(best)) : null;
+        return found ? new BlockPos(Longs.high(best), 0, Longs.low(best)) : null;
     }
 
     @Nullable public BlockPos landingFor(long key) { return landings.get(key); }
