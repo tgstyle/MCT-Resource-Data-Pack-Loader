@@ -4,7 +4,7 @@ import groovy.json.JsonSlurper
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev.legacyforge' version '2.0.140'
+    id 'net.neoforged.moddev' version '2.0.140'
     id 'idea'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.6'
     id 'eclipse'
@@ -38,7 +38,7 @@ tasks.withType(Jar).configureEach {
 
 group = 'mctmods.resourcedatapackloader'
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 tasks.withType(Jar).configureEach {
     zip64 = true
@@ -47,8 +47,8 @@ tasks.withType(Jar).configureEach {
 ext {
     mod_id = gradleProps['mod_id']
     version_minecraft = versionProps['version_mc']
-    version_forge = versionProps['version_forge']
-    version_forge_min = versionProps['version_forge_min']
+    version_neoforge = versionProps['version_neoforge']
+    version_neoforge_min = versionProps['version_neoforge_min']
     version_parchment = versionProps['version_parchment']
     mod_license = gradleProps['mod_license']
     mod_name = gradleProps['mod_name']
@@ -58,17 +58,17 @@ ext {
 }
 
 def version_replaces = [
-        'version'          : project.version,
-        'build_number'     : version_buildnumber,
-        'version_mc'       : version_minecraft,
-        'version_forge'    : version_forge,
-        'version_forge_min': version_forge_min,
-        'mod_license'      : mod_license,
-        'mod_name'         : mod_name,
-        'mod_authors'      : mod_authors,
-        'mod_description'  : mod_description,
-        'mod_url'          : mod_url,
-        'stage'            : stage,
+        'version'             : project.version,
+        'build_number'        : version_buildnumber,
+        'version_mc'          : version_minecraft,
+        'version_neoforge'    : version_neoforge,
+        'version_neoforge_min': version_neoforge_min,
+        'mod_license'         : mod_license,
+        'mod_name'            : mod_name,
+        'mod_authors'         : mod_authors,
+        'mod_description'     : mod_description,
+        'mod_url'             : mod_url,
+        'stage'               : stage,
 ]
 
 sourceSets {
@@ -81,7 +81,7 @@ sourceSets {
 processResources {
     duplicatesStrategy = DuplicatesStrategy.FAIL
     inputs.properties(version_replaces)
-    filesMatching("META-INF/mods.toml") {
+    filesMatching("META-INF/*.mods.toml") {
         expand version_replaces
     }
     exclude ".cache"
@@ -97,19 +97,17 @@ processResources {
 tasks.register('copyModsTomlForIntelliJ', Copy) {
     from processResources.destinationDir
     into "$projectDir/out/production/resources"
-    include "META-INF/mods.toml"
+    include "META-INF/neoforge.mods.toml"
     dependsOn processResources
 }
 
-legacyForge {
-    version = "${version_minecraft}-${version_forge}"
+neoForge {
+    version = project.version_neoforge
 
     parchment {
         mappingsVersion = project.version_parchment
         minecraftVersion = project.version_minecraft
     }
-
-    validateAccessTransformers = true
 
     mods {
         "${mod_id}" {
@@ -138,11 +136,6 @@ legacyForge {
     }
 }
 
-mixin {
-    add sourceSets.main, 'mixins.resourcedatapackloader.refmap.json'
-    config 'mixins.resourcedatapackloader.json'
-}
-
 repositories {
     mavenCentral()
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
@@ -154,7 +147,6 @@ configurations {
 }
 
 dependencies {
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
 def customGradle = rootProject.file('custom.gradle')
@@ -213,9 +205,6 @@ tasks.register('genIntellijRunsDummy') {}
 jar {
     archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft}")
     archiveClassifier.set('')
-    manifest.attributes([
-            "MixinConfigs": "mixins.resourcedatapackloader.json"
-    ])
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
