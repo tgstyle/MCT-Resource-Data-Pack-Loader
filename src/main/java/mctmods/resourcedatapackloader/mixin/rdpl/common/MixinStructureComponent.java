@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -25,7 +26,7 @@ import java.util.List;
             for (StructureComponent piece : listIn) {
                 StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
                 if (held == null || !rdpl$flatHit(held, boundingboxIn, 0)) { continue; }
-                if (piece instanceof StructureVillagePieces.Path && rdpl$crosses(held, boundingboxIn)) { continue; }
+                if (piece instanceof StructureVillagePieces.Path && rdpl$roadShaped(boundingboxIn) && rdpl$crosses(held, boundingboxIn)) { continue; }
                 cir.setReturnValue(piece);
                 return;
             }
@@ -43,6 +44,12 @@ import java.util.List;
             }
         }
         cir.setReturnValue(null);
+    }
+
+    @Unique private static boolean rdpl$roadShaped(StructureBoundingBox box) {
+        int narrow = Math.min(box.maxX - box.minX, box.maxZ - box.minZ) + 1;
+        int wide = Math.max(box.maxX - box.minX, box.maxZ - box.minZ) + 1;
+        return narrow == 3 || (narrow == BeardRoads.pathFullWidth() && wide > narrow);
     }
 
     @Unique private static boolean rdpl$crosses(StructureBoundingBox road, StructureBoundingBox box) {

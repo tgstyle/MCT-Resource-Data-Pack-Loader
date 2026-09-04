@@ -17,13 +17,8 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
-import java.util.ArrayList;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+
+import java.util.*;
 import javax.annotation.Nullable;
 
 public final class CityGrowth {
@@ -212,6 +207,17 @@ public final class CityGrowth {
                     }
                     int from = edge + dir;
                     int to = edge + dir * length;
+                    for (StructureComponent other : components) {
+                        if (other instanceof StructureVillagePieces.Path) { continue; }
+                        StructureBoundingBox plot = other.getBoundingBox();
+                        if (!plot.intersectsWith(alongX ? row - 1 : Math.min(from, to), alongX ? Math.min(from, to) : row - 1, alongX ? row + 1 : Math.max(from, to), alongX ? Math.max(from, to) : row + 1)) { continue; }
+                        int near = dir > 0 ? (alongX ? plot.minZ : plot.minX) - 1 : (alongX ? plot.maxZ : plot.maxX) + 1;
+                        if (dir > 0 ? near < to : near > to) { to = near; }
+                    }
+                    if ((dir > 0 ? to < from : to > from) || Math.abs(to - from) + 1 < shortest) {
+                        row += 7;
+                        continue;
+                    }
                     StructureBoundingBox alley = new StructureBoundingBox(
                             alongX ? row - 1 : Math.min(from, to), box.minY, alongX ? Math.min(from, to) : row - 1,
                             alongX ? row + 1 : Math.max(from, to), box.maxY, alongX ? Math.max(from, to) : row + 1);
@@ -359,7 +365,7 @@ public final class CityGrowth {
         int[][] pushes = {
                 { bulb.maxX + 1 - box.minX, 0 }, { bulb.minX - 1 - box.maxX, 0 },
                 { 0, bulb.maxZ + 1 - box.minZ }, { 0, bulb.minZ - 1 - box.maxZ } };
-        Arrays.sort(pushes, (a, b) -> Integer.compare(Math.abs(a[0]) + Math.abs(a[1]), Math.abs(b[0]) + Math.abs(b[1])));
+        Arrays.sort(pushes, Comparator.comparingInt(a -> Math.abs(a[0]) + Math.abs(a[1])));
         for (int[] push : pushes) {
             StructureBoundingBox tried = new StructureBoundingBox(box);
             tried.offset(push[0], 0, push[1]);

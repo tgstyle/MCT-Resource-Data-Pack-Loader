@@ -30,6 +30,7 @@ public final class BeardPlots {
 
     private static final class Index {
         private final int count;
+        @Nullable private final StructureComponent last;
         private final int cellX;
         private final int cellZ;
         private final int wide;
@@ -38,6 +39,7 @@ public final class BeardPlots {
 
         private Index(List<StructureComponent> components) {
             count = components.size();
+            last = count == 0 ? null : components.get(count - 1);
             int minX = Integer.MAX_VALUE;
             int minZ = Integer.MAX_VALUE;
             int maxX = Integer.MIN_VALUE;
@@ -85,12 +87,14 @@ public final class BeardPlots {
             if (cx < 0 || cx >= wide || cz < 0 || cz >= deep) { return NONE; }
             return cells[cx * deep + cz];
         }
+
+        private boolean stale(List<StructureComponent> components) { return count != components.size() || last != (components.isEmpty() ? null : components.get(components.size() - 1)); }
     }
 
     private static Index index(StructureStart start) {
         List<StructureComponent> components = start.getComponents();
         Index held = INDEXES.get(start);
-        if (held != null && held.count == components.size()) { return held; }
+        if (held != null && !held.stale(components)) { return held; }
         held = new Index(components);
         INDEXES.put(start, held);
         return held;
@@ -100,7 +104,7 @@ public final class BeardPlots {
 
     public static boolean collides(List<StructureComponent> placed, StructureBoundingBox box) {
         Index held = layout;
-        if (held == null || layingOut != placed || held.count != placed.size()) {
+        if (held == null || layingOut != placed || held.stale(placed)) {
             held = new Index(placed);
             layout = held;
             layingOut = placed;
@@ -108,7 +112,7 @@ public final class BeardPlots {
         for (int cx = box.minX >> 4; cx <= box.maxX >> 4; cx++) {
             for (int cz = box.minZ >> 4; cz <= box.maxZ >> 4; cz++) {
                 for (StructureComponent other : held.at(cx << 4, cz << 4)) {
-                    if (other.getBoundingBox().intersectsWith(box)) { return true; }
+                    if (other.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { return true; }
                 }
             }
         }

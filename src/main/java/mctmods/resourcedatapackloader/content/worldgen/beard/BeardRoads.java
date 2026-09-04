@@ -492,21 +492,9 @@ public final class BeardRoads {
                 int x = alongX ? start + i : across;
                 int z = alongX ? across : start + i;
                 if (profile[i] == Integer.MIN_VALUE || bridged[i]) { continue; }
-                if (insidePlaza(x, z)) { continue; }
                 at.setPos(x, profile[i], z);
                 if (!clip.isVecInside(at)) { continue; }
-                StructureStart holder = ContentBeard.current();
-                if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { continue; }
-                if (BeardKeep.holds(x, profile[i], z)) { continue; }
-                IBlockState verge = world.getBlockState(at);
-                if (verge.getMaterial().isLiquid()) { continue; }
-                if (verge.getMaterial().isSolid()) {
-                    at.setPos(x, profile[i] - 1, z);
-                    if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { continue; }
-                    filled += BeardBlocks.fillBank(world, at, x, z, profile[i] - 1, profile[i] - 6, false);
-                    continue;
-                }
-                filled += BeardBlocks.fillBank(world, at, x, z, profile[i], profile[i] - 5, false);
+                filled += vergeFill(world, piece, x, z, profile[i], at);
             }
         }
         if (stored && (alongX ? clip.minZ : clip.minX) <= acrossLeast - 1 && (alongX ? clip.maxZ : clip.maxX) >= acrossMost + 1) {
@@ -833,7 +821,32 @@ public final class BeardRoads {
                 paved++;
             }
         }
-        if (paved > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paved {} column(s) of the cul-de-sac at {}, {} at y {}", paved, box.minX, box.minZ, level); }
+        int filled = 0;
+        for (int z = Math.max(box.minZ - 1, clip.minZ); z <= Math.min(box.maxZ + 1, clip.maxZ); z++) {
+            for (int x = Math.max(box.minX - 1, clip.minX); x <= Math.min(box.maxX + 1, clip.maxX); x++) {
+                if (bulb.pavedAt(x, z)) { continue; }
+                boolean inside = x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ;
+                if (!inside && !bulb.pavedAt(x - 1, z) && !bulb.pavedAt(x + 1, z) && !bulb.pavedAt(x, z - 1) && !bulb.pavedAt(x, z + 1)) { continue; }
+                filled += vergeFill(world, piece, x, z, level, at);
+            }
+        }
+        if ((paved > 0 || filled > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paved {} column(s) of the cul-de-sac at {}, {} at y {}, and filled {} block(s) into its box corners and the verge around its circle", paved, box.minX, box.minZ, level, filled); }
+    }
+
+    private static int vergeFill(World world, StructureComponent piece, int x, int z, int level, BlockPos.MutableBlockPos at) {
+        if (insidePlaza(x, z)) { return 0; }
+        StructureStart holder = ContentBeard.current();
+        if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }
+        if (BeardKeep.holds(x, level, z)) { return 0; }
+        at.setPos(x, level, z);
+        IBlockState verge = world.getBlockState(at);
+        if (verge.getMaterial().isLiquid()) { return 0; }
+        if (verge.getMaterial().isSolid()) {
+            at.setPos(x, level - 1, z);
+            if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { return 0; }
+            return BeardBlocks.fillBank(world, at, x, z, level - 1, level - 6, false);
+        }
+        return BeardBlocks.fillBank(world, at, x, z, level, level - 5, false);
     }
 
     private static final HashMap<Long, Boolean> SQUARE_DECK = new HashMap<>();
@@ -1567,9 +1580,10 @@ public final class BeardRoads {
                     int crossed = crossing == null ? Integer.MIN_VALUE : crossing.at(crossRow);
                     if (crossed != Integer.MIN_VALUE) { grade = crossed; }
                 }
-                else if (other instanceof RoadLayout && ((RoadLayout) other).rdpl$layout() != null) {
-                    int crossed = ((RoadLayout) other).rdpl$layout().at(crossRow);
-                    if (crossed != Integer.MIN_VALUE && crossed > grade) {
+                else if (other instanceof RoadLayout) {
+                    Grade laid = ((RoadLayout) other).rdpl$layout();
+                    int crossed = laid == null ? Integer.MIN_VALUE : laid.at(crossRow);
+                    if (crossed > grade) {
                         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} raises its junction with the road at {}, {} from y {} to y {}, the level that road was lifted to out of a dip", own.minX, own.minZ, road.minX, road.minZ, grade, crossed); }
                         grade = crossed;
                     }

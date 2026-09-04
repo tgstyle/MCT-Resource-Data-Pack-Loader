@@ -154,14 +154,14 @@ import javax.annotation.Nullable;
         StructureBoundingBox held = null;
         int nearest = Integer.MAX_VALUE;
         for (StructureComponent other : pieces) {
-            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            if (!(other instanceof StructureVillagePieces.Path) || CityGrowth.bulbWide(other)) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
             if (BeardPlots.roadAlongX(met) != alongX) { continue; }
             if (BeardRoads.roadNarrow(met, alongX)) { continue; }
             boolean acrossed = alongX ? met.maxZ >= found.minZ - half && met.minZ <= found.maxZ + half : met.maxX >= found.minX - half && met.minX <= found.maxX + half;
             if (!acrossed) { continue; }
             int gap = alongX ? Math.max(met.minX - found.maxX, found.minX - met.maxX) : Math.max(met.minZ - found.maxZ, found.minZ - met.maxZ);
-            if (gap < 2 || gap >= nearest) { continue; }
+            if (gap < 2 || gap > CityGrowth.march() || gap >= nearest) { continue; }
             nearest = gap;
             held = met;
         }
@@ -197,10 +197,26 @@ import javax.annotation.Nullable;
     }
 
     @Unique private static boolean rdpl$tooNear(List<StructureComponent> own, StructureBoundingBox wide, EnumFacing facing) {
-        StructureBoundingBox held = ContentBeard.beside(own, wide, facing.getAxis() == EnumFacing.Axis.X);
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        StructureBoundingBox ahead = new StructureBoundingBox(wide);
+        int reach = rdpl$fromWell(own, wide, facing) ? ContentBeard.attachGap() * 2 : 0;
+        if (alongX) { if (facing.getXOffset() > 0) { ahead.maxX += reach; } else { ahead.minX -= reach; } }
+        else { if (facing.getZOffset() > 0) { ahead.maxZ += reach; } else { ahead.minZ -= reach; } }
+        StructureBoundingBox held = ContentBeard.beside(own, ahead, alongX);
         if (held == null) { return false; }
         ContentLog.LOGGER.debug("A road attempt {} facing {} would run beside the road at {}, {}, under the {} block spacing two plots need, so it may only be an alley", wide, facing, held.minX, held.minZ, 2 * ContentVillages.largestPlot());
         return true;
+    }
+
+    @Unique private static boolean rdpl$fromWell(List<StructureComponent> own, StructureBoundingBox box, EnumFacing facing) {
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        int back = alongX ? (facing.getXOffset() > 0 ? box.minX - 1 : box.maxX + 1) : (facing.getZOffset() > 0 ? box.minZ - 1 : box.maxZ + 1);
+        for (StructureComponent other : own) {
+            if (!(other instanceof StructureVillagePieces.Well)) { continue; }
+            StructureBoundingBox well = other.getBoundingBox();
+            if (alongX ? (back >= well.minX && back <= well.maxX && box.maxZ >= well.minZ && box.minZ <= well.maxZ) : (back >= well.minZ && back <= well.maxZ && box.maxX >= well.minX && box.minX <= well.maxX)) { return true; }
+        }
+        return false;
     }
 
     @Unique private static boolean rdpl$widensPast(List<StructureComponent> pieces, StructureBoundingBox wide, EnumFacing facing) {
