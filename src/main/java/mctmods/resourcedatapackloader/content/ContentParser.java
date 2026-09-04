@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
+import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -122,6 +123,29 @@ public final class ContentParser {
                 GsonHelper.getAsInt(json, "harvestLevel", -1),
                 Mth.clamp(GsonHelper.getAsInt(json, "light", 0), 0, 15),
                 Collections.unmodifiableList(drops));
+    }
+
+    public static List<PotionEffectDef> effects(ResourceLocation key, JsonObject json) {
+        if (!json.has("effects")) { return Collections.emptyList(); }
+        List<PotionEffectDef> effects = new ArrayList<>();
+        for (JsonElement element : GsonHelper.getAsJsonArray(json, "effects")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            String potion = GsonHelper.getAsString(entry, "potion", "");
+            if (potion.isEmpty()) {
+                ContentLog.LOGGER.error("An effect in {} names no potion, skipping it", key);
+                continue;
+            }
+            effects.add(new PotionEffectDef(potion,
+                    Math.max(1, GsonHelper.getAsInt(entry, "duration", 3600)),
+                    Math.max(0, GsonHelper.getAsInt(entry, "amplifier", 0)),
+                    GsonHelper.getAsBoolean(entry, "ambient", false),
+                    GsonHelper.getAsBoolean(entry, "showParticles", true)));
+        }
+        return Collections.unmodifiableList(effects);
     }
 
     private static List<String> tags(ResourceLocation key, String name, JsonObject json) {

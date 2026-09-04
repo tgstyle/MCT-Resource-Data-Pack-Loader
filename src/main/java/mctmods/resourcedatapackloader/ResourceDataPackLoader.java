@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentEvents;
+import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
@@ -90,6 +91,7 @@ import java.util.Set;
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.reload();
+            event.enqueueWork(ContentOverrides::reload);
             return;
         }
         String message = "Packs require mods that are not installed: " + String.join(", ", missing) + ". Install them or remove the packs that need them";
@@ -111,6 +113,7 @@ import java.util.Set;
         PackManager.get().scan(root);
         PackManager.get().report();
         RegistryRemaps.reload();
+        ContentOverrides.reload();
     }
 
     private void onServerStopped(ServerStoppedEvent event) {

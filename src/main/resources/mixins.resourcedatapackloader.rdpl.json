@@ -5,8 +5,14 @@
     "compatibilityLevel": "JAVA_17",
     "refmap": "mixins.resourcedatapackloader.refmap.json",
     "mixins": [
+        "common.IBlockBehaviour",
+        "common.IBlockStateBase",
+        "common.IFireBlock",
+        "common.IItem",
         "common.ILootTable",
+        "common.IPotion",
         "common.IPotionBrewing",
+        "common.MixinBlockStateBase",
         "common.MixinPackRepository",
         "common.MixinRecipeManager"
     ],

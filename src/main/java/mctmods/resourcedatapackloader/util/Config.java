@@ -67,6 +67,7 @@ public final class Config {
         private final ForgeConfigSpec.BooleanValue potions;
         private final ForgeConfigSpec.BooleanValue brewing;
         private final ForgeConfigSpec.BooleanValue villagers;
+        private final ForgeConfigSpec.BooleanValue overrides;
         private final ForgeConfigSpec.BooleanValue shovelPaths;
         private final ForgeConfigSpec.ConfigValue<String> shovelPathBecomes;
         private final ForgeConfigSpec.ConfigValue<String> shovelPathReverts;
@@ -82,6 +83,7 @@ public final class Config {
             potions = builder.comment("Register the potion effects and potion types described by potions/*.json and potion_types/*.json in packs. Requires a restart [Default=true]").worldRestart().define("potions", true);
             brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
             villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
+            overrides = builder.comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]").define("overrides", true);
             shovelPaths = builder.comment("Let a shovel turn blocks marked behavesAs path into a path, and revert a path while sneaking [Default=true]").define("shovelPaths", true);
             shovelPathBecomes = builder.comment("What a shovel turns those blocks into. Empty uses the dirt path").define("shovelPathBecomes", "");
             shovelPathReverts = builder.comment("What sneaking with a shovel turns a path back into. Empty uses dirt").define("shovelPathReverts", "");
@@ -103,6 +105,8 @@ public final class Config {
         public boolean brewing() { return loaded() ? brewing.get() : ConfigCore.flag("content.brewing", true); }
 
         public boolean villagers() { return loaded() ? villagers.get() : ConfigCore.flag("content.villagers", true); }
+
+        public boolean overrides() { return loaded() ? overrides.get() : ConfigCore.flag("content.overrides", true); }
 
         public boolean shovelPaths() { return loaded() ? shovelPaths.get() : ConfigCore.flag("content.shovelPaths", true); }
 

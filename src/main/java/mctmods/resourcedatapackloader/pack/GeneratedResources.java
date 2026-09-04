@@ -42,6 +42,10 @@ public final class GeneratedResources {
         }
     }
 
+    public static void remove(PackType type, String prefix) {
+        for (Map<String, byte[]> paths : HELD.get(type).values()) { paths.keySet().removeIf(path -> path.startsWith(prefix)); }
+    }
+
     public static boolean isEmpty() {
         for (Map<String, Map<String, byte[]>> held : HELD.values()) {
             if (!held.isEmpty()) { return false; }
