@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 
 import net.minecraft.core.BlockPos;
@@ -19,12 +20,14 @@ import javax.annotation.Nullable;
 public class ContentBlock extends Block {
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
+    private final AmountDef expDrop;
 
     public ContentBlock(BlockDef def, Properties properties) {
         super(properties);
         this.def = def;
         double[] bounds = def.bounds();
         this.shape = bounds == null ? null : Block.box(bounds[0] * 16.0D, bounds[1] * 16.0D, bounds[2] * 16.0D, bounds[3] * 16.0D, bounds[4] * 16.0D, bounds[5] * 16.0D);
+        this.expDrop = def.expDropMax() <= def.expDropMin() ? AmountDef.of(def.expDropMin()) : new AmountDef(def.expDropMin(), def.expDropMax());
     }
 
     public BlockDef getDef() { return def; }
@@ -35,8 +38,7 @@ public class ContentBlock extends Block {
 
     @Override public int getExpDrop(@Nonnull BlockState state, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity breaker, @Nonnull ItemStack tool) {
         if (!def.dropsExperience()) { return 0; }
-        if (def.expDropMax() <= def.expDropMin()) { return Math.max(0, def.expDropMin()); }
-        return def.expDropMin() + level.getRandom().nextInt(def.expDropMax() - def.expDropMin() + 1);
+        return Math.max(0, expDrop.pick(level.getRandom()));
     }
 
     @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,7 +21,7 @@ public final class ContentEffects {
             return null;
         }
         ResourceLocation key = ResourceLocation.tryParse(parts[0].trim());
-        Holder<MobEffect> effect = key == null ? null : BuiltInRegistries.MOB_EFFECT.getHolder(key).orElse(null);
+        Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, key);
         if (effect == null) {
             ContentLog.LOGGER.error("Unknown potion '{}' for {}", parts[0].trim(), context);
             return null;

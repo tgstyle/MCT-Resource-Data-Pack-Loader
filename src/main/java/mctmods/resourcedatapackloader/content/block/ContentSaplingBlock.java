@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +17,6 @@ import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -37,15 +36,7 @@ public class ContentSaplingBlock extends SaplingBlock {
 
     public BlockDef getDef() { return def; }
 
-    public void resolveSoil() {
-        Set<Block> resolved = new HashSet<>();
-        for (String name : sapling.soil()) {
-            ResourceLocation key = ResourceLocation.tryParse(name);
-            if (key != null && BuiltInRegistries.BLOCK.containsKey(key)) { resolved.add(BuiltInRegistries.BLOCK.get(key)); }
-            else { ContentLog.LOGGER.error("Sapling {} names soil {}, which is not registered, leaving it out", def.key(), name); }
-        }
-        soil = resolved;
-    }
+    public void resolveSoil() { soil = ContentRegistry.resolveSoil(sapling.soil(), def.key()); }
 
     @Override protected boolean mayPlaceOn(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos) {
         if (soil.isEmpty()) { return super.mayPlaceOn(state, level, pos); }

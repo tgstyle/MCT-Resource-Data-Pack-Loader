@@ -7,7 +7,6 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import java.nio.file.Path;
 
 public final class ServerCommands {
     private static final String NAME = "rdplserver";
@@ -22,14 +21,8 @@ public final class ServerCommands {
     private static int reload(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         CommandShared.ran(source, NAME, "reload");
-        Path root = PackManager.get().getRoot();
-        if (root == null) {
-            source.sendFailure(CommandShared.tr("rdpl.command.noroot"));
-            return 0;
-        }
         long start = System.currentTimeMillis();
-        PackManager.get().scan(root);
-        PackManager.get().report();
+        if (CommandShared.rescanFailed(source)) { return 0; }
         MinecraftServer server = source.getServer();
         CommandShared.reloadServer(server).thenRun(() -> server.execute(() ->
                 CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.serverreloaded", PackManager.get().getPacks().size(), CommandShared.elapsed(start)))));

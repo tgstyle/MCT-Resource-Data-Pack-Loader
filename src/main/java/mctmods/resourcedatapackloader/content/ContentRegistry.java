@@ -13,9 +13,12 @@ import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.PackRequirements;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -66,37 +69,25 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }
         }
-        PackManager.get().forEach(PackManager.FLUIDS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
+        Json.eachFile(PackManager.FLUIDS, "fluid definition", (key, contents) -> {
             if (reserved(key)) { return; }
-            try {
-                FluidDef def = ContentParser.fluid(key, contents);
-                if (def != null) { FLUID_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in fluid definition {}, ignoring it: {}", key, ex.getMessage()); }
+            FluidDef def = ContentParser.fluid(key, contents);
+            if (def != null) { FLUID_DEFS.put(key, def); }
         });
-        PackManager.get().forEach(PackManager.MATERIALS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
-            try {
-                MaterialDef def = ContentParser.material(key, contents);
-                if (def != null) { MATERIAL_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in material file {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.MATERIALS, "material file", (key, contents) -> {
+            MaterialDef def = ContentParser.material(key, contents);
+            if (def != null) { MATERIAL_DEFS.put(key, def); }
         });
-        PackManager.get().forEach(PackManager.TABS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
-            try {
-                TabDef def = ContentParser.tab(key, contents);
-                if (def != null) { TAB_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in creative tab {}, ignoring it: {}", key, ex.getMessage()); }
+        Json.eachFile(PackManager.TABS, "creative tab", (key, contents) -> {
+            TabDef def = ContentParser.tab(key, contents);
+            if (def != null) { TAB_DEFS.put(key, def); }
         });
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !MATERIAL_DEFS.isEmpty() || !TAB_DEFS.isEmpty()) {
             Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid, " + MATERIAL_DEFS.size() + " material and " + TAB_DEFS.size() + " creative tab definition(s)");
         }
     }
 
-    private static boolean reserved(ResourceLocation key) {
+    public static boolean reserved(ResourceLocation key) {
         if (!ResourceDataPackLoader.MOD_ID.equals(key.getNamespace())) { return false; }
         ContentLog.LOGGER.error("Definition {} claims the namespace '{}', which belongs to this mod, so it is ignored", key, key.getNamespace());
         return true;
@@ -151,7 +142,7 @@ public final class ContentRegistry {
         }
         ResourceLocation key = ResourceLocation.tryParse(name);
         MaterialDef def = key == null ? null : MATERIAL_DEFS.get(key);
-        if (def != null) { return def; }
+        if (def != null) { return available(def.requires(), def.key()) ? def : null; }
         ContentLog.LOGGER.error("Unknown material '{}' in {}, the item is skipped. Known materials are {}", name, context, MATERIAL_DEFS.keySet());
         return null;
     }
@@ -182,7 +173,22 @@ public final class ContentRegistry {
 
     @Nullable public static BlockEntry entry(Block block) { return BY_BLOCK.get(block); }
 
+    public static boolean lacks(String behavior, Block block) {
+        BlockEntry entry = BY_BLOCK.get(block);
+        return entry == null || !entry.def().behavesAs().contains(behavior);
+    }
+
     @Nullable public static ItemEntry entry(Item item) { return BY_ITEM.get(item); }
+
+    public static Set<Block> resolveSoil(Iterable<String> names, ResourceLocation owner) {
+        Set<Block> resolved = new HashSet<>();
+        for (String name : names) {
+            Block block = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name));
+            if (block != null) { resolved.add(block); }
+            else { ContentLog.LOGGER.error("{} names soil {}, which is not registered, leaving it out", owner, name); }
+        }
+        return resolved;
+    }
 
     public static boolean isEmpty() { return BLOCK_DEFS.isEmpty() && ITEM_DEFS.isEmpty() && FLUID_DEFS.isEmpty(); }
 

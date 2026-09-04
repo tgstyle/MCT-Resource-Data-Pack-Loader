@@ -17,8 +17,6 @@ public class ContentFoodItem extends Item {
         this.def = def;
     }
 
-    public ItemDef getDef() { return def; }
-
     @Override @Nonnull public ItemStack finishUsingItem(@Nonnull ItemStack stack, @Nonnull Level level, @Nonnull LivingEntity entity) {
         ItemStack left = super.finishUsingItem(stack, level, entity);
         if (def.cooldown() > 0 && entity instanceof Player player) { player.getCooldowns().addCooldown(this, def.cooldown()); }

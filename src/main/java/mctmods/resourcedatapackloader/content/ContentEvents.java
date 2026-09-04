@@ -4,12 +4,16 @@ import mctmods.resourcedatapackloader.content.block.ContentBushBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCaneBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
 import mctmods.resourcedatapackloader.content.block.ContentSaplingBlock;
+import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
+import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.TabDef;
-import mctmods.resourcedatapackloader.content.fluid.ContentFluids;
+import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
@@ -36,6 +40,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class ContentEvents {
     private ContentEvents() {}
@@ -49,6 +54,11 @@ public final class ContentEvents {
         else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
         else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
         else if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) { event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs); }
+        else if (event.getRegistryKey().equals(Registries.SOUND_EVENT)) { event.register(Registries.SOUND_EVENT, ContentSounds::register); }
+        else if (event.getRegistryKey().equals(Registries.MOB_EFFECT)) { event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions); }
+        else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
+        else if (event.getRegistryKey().equals(Registries.POINT_OF_INTEREST_TYPE)) { event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites); }
+        else if (event.getRegistryKey().equals(Registries.VILLAGER_PROFESSION)) { event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions); }
     }
 
     private static void registerBlocks(RegisterEvent.RegisterHelper<Block> helper) {
@@ -141,19 +151,31 @@ public final class ContentEvents {
     }
 
     private static void registerTabs(RegisterEvent.RegisterHelper<CreativeModeTab> helper) {
+        int count = 0;
         for (TabDef def : ContentRegistry.tabDefs()) {
+            if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             ResourceKey<CreativeModeTab> key = ResourceKey.create(Registries.CREATIVE_MODE_TAB, def.key());
             CreativeModeTab tab = CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + def.key().getNamespace() + "." + def.key().getPath().replace('/', '.')))
                     .icon(() -> icon(def))
                     .displayItems((parameters, out) -> {
                         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-                            if (def.key().equals(ResourceLocation.tryParse(entry.tab()))) { out.accept(entry.item()); }
+                            if (def.key().equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), out::accept); }
                         }
                     })
                     .build();
             helper.register(key, tab);
+            count++;
         }
+        if (count > 0) { Summary.info("content.tabs", "Registered " + count + " creative tab(s) from packs"); }
+    }
+
+    private static void show(Item item, Consumer<ItemStack> out) {
+        if (!(item instanceof ContentPotionItem bottle)) {
+            out.accept(new ItemStack(item));
+            return;
+        }
+        for (ItemStack stack : bottle.stacks()) { out.accept(stack.copy()); }
     }
 
     private static ItemStack icon(TabDef def) {
@@ -169,7 +191,7 @@ public final class ContentEvents {
         ResourceLocation tab = event.getTabKey().location();
         if (ContentRegistry.tab(tab.toString()) != null) { return; }
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-            if (tab.equals(ResourceLocation.tryParse(entry.tab()))) { event.accept(entry.item()); }
+            if (tab.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), event::accept); }
         }
     }
 

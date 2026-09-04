@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -167,7 +168,7 @@ public final class ContentBlockTypes {
         ResourceLocation named = ResourceLocation.tryParse(def.modelBlock());
         ContentRegistry.BlockEntry made = named == null ? null : ContentRegistry.block(named);
         if (made != null) { return made.block().defaultBlockState(); }
-        Block block = named != null && BuiltInRegistries.BLOCK.containsKey(named) ? BuiltInRegistries.BLOCK.get(named) : null;
+        Block block = Registered.find(BuiltInRegistries.BLOCK, named);
         return block == null || block == Blocks.AIR ? Blocks.STONE.defaultBlockState() : block.defaultBlockState();
     }
 

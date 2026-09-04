@@ -68,6 +68,8 @@ public final class PackManager {
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String PLAYER_LOOT = "player_loot";
     public static final String REGISTRY_REMAP = "registry_remap";
+    public static final String SOUNDS = "sounds";
+    public static final String FUELS = "fuels";
     public static final String MATERIALS = "materials";
     public static final String TABS = "tabs";
     private static final String README = "readme.txt";
@@ -223,8 +225,9 @@ public final class PackManager {
             return create(fileName, entry, null);
         }
         if (!fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) { return null; }
+        FileSystem zip = null;
         try {
-            FileSystem zip = FileSystems.newFileSystem(entry);
+            zip = FileSystems.newFileSystem(entry);
             RDPLPack pack = create(stripExtension(fileName), zip.getPath("/"), zip);
             if (pack.isEmpty()) {
                 ContentLog.LOGGER.warn("Skipping '{}': no '{}' or '{}' directory inside the zip", fileName, RDPLPack.ASSETS, RDPLPack.DATA);
@@ -235,8 +238,19 @@ public final class PackManager {
         }
         catch (IOException ex) {
             ContentLog.LOGGER.error("Could not open zip pack '{}'", fileName, ex);
+            closeQuietly(zip);
             return null;
         }
+        catch (RuntimeException ex) {
+            closeQuietly(zip);
+            throw ex;
+        }
+    }
+
+    private static void closeQuietly(@Nullable FileSystem owned) {
+        if (owned == null) { return; }
+        try { owned.close(); }
+        catch (IOException ignored) { }
     }
 
     private static RDPLPack create(String raw, Path root, @Nullable FileSystem owned) {

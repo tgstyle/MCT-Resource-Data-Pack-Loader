@@ -488,6 +488,16 @@ public final class ContentGenerated {
         if (hasItem) { tag(itemTags, tag, id); }
     }
 
+    public static void jobSites(Set<ResourceLocation> sites) {
+        if (sites.isEmpty()) { return; }
+        Map<String, Set<String>> poiTags = new LinkedHashMap<>();
+        for (ResourceLocation site : sites) {
+            tag(poiTags, "minecraft:acquirable_job_site", site);
+            tag(poiTags, "minecraft:job_site", site);
+        }
+        tags(poiTags, ContentFormats.POI_TAGS);
+    }
+
     private static void tag(Map<String, Set<String>> tags, String tag, ResourceLocation id) { tags.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(id.toString()); }
 
     private static void tags(Map<String, Set<String>> tags, String folder) {

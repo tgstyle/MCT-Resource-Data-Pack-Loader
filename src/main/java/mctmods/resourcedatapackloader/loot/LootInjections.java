@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.loot;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
@@ -27,20 +29,16 @@ public final class LootInjections {
     public static final String POOLS = "pools";
     private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ResourceLocation, List<JsonElement>> BY_TABLE = new LinkedHashMap<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private LootInjections() {}
 
     public static void reload() {
         BY_TABLE.clear();
-        generation = PackManager.get().getGeneration();
+        GENERATION.stale();
         if (Config.data.lootInjectionsOff()) { return; }
         int[] count = new int[1];
-        PackManager.get().forEach(PackManager.LOOT_INJECTIONS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
-            try { read(key, contents, count); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in loot injection {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.LOOT_INJECTIONS, "loot injection", (key, contents) -> read(key, contents, count));
         if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
     }
 
@@ -68,10 +66,10 @@ public final class LootInjections {
 
     public static void onLootTableLoad(LootTableLoadEvent event) {
         if (Config.data.lootInjectionsOff()) { return; }
-        if (generation != PackManager.get().getGeneration()) { reload(); }
+        if (GENERATION.stale()) { reload(); }
         List<JsonElement> pools = BY_TABLE.get(event.getName());
+        if (pools == null) { return; }
         LootTable table = event.getTable();
-        if (pools == null || table == null) { return; }
         RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, event.getRegistries());
         for (JsonElement pool : pools) {
             try { table.addPool(LootPool.CODEC.parse(ops, pool).getOrThrow(JsonParseException::new)); }

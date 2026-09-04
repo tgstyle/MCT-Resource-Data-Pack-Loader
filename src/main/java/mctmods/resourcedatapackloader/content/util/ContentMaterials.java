@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.util;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -74,6 +75,7 @@ public final class ContentMaterials {
 
     private static Holder<SoundEvent> sound(String name) {
         ResourceLocation key = ResourceLocation.tryParse(name);
-        return key == null ? SoundEvents.ARMOR_EQUIP_IRON : BuiltInRegistries.SOUND_EVENT.getHolder(key).map(held -> (Holder<SoundEvent>) held).orElse(SoundEvents.ARMOR_EQUIP_IRON);
+        Holder<SoundEvent> sound = Registered.holder(BuiltInRegistries.SOUND_EVENT, key);
+        return sound == null ? SoundEvents.ARMOR_EQUIP_IRON : sound;
     }
 }

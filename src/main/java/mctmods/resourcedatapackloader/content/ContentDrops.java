@@ -57,7 +57,7 @@ public final class ContentDrops {
             if (WARNED.add(drop.entity().toString())) { ContentLog.LOGGER.error("Drop entity {} is not registered, that drop is skipped", drop.entity()); }
             return;
         }
-        int amount = drop.amount().fixed() ? drop.amount().least() : drop.amount().least() + level.getRandom().nextInt(drop.amount().most() - drop.amount().least() + 1);
+        int amount = drop.amount().pick(level.getRandom());
         for (int i = 0; i < amount; i++) { type.spawn(level, pos, MobSpawnType.MOB_SUMMONED); }
     }
 }

@@ -1,11 +1,11 @@
 {
     "required": true,
     "minVersion": "0.8.5",
-    "package": "mctmods.resourcedatapackloader.mixin",
+    "package": "mctmods.resourcedatapackloader.mixin.rdpl",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
-        "MixinPackRepository",
-        "MixinRecipeManager"
+        "common.MixinPackRepository",
+        "common.MixinRecipeManager"
     ],
     "client": [],
     "server": [],

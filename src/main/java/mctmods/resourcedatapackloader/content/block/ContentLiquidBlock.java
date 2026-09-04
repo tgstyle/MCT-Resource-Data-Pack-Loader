@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content.fluid;
+package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;

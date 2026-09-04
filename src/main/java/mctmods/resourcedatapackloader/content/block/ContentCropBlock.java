@@ -1,11 +1,10 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
@@ -14,7 +13,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
@@ -29,14 +27,7 @@ public class ContentCropBlock extends CropBlock {
 
     public BlockDef getDef() { return def; }
 
-    public void resolveSoil(Iterable<String> names) {
-        Set<Block> resolved = new HashSet<>();
-        for (String name : names) {
-            ResourceLocation key = ResourceLocation.tryParse(name);
-            if (key != null && BuiltInRegistries.BLOCK.containsKey(key)) { resolved.add(BuiltInRegistries.BLOCK.get(key)); }
-        }
-        soil = resolved;
-    }
+    public void resolveSoil(Iterable<String> names) { soil = ContentRegistry.resolveSoil(names, def.key()); }
 
     @Override public int getMaxAge() { return def.cropMaxAge(); }
 

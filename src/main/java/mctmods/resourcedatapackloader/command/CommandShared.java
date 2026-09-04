@@ -18,6 +18,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -73,6 +74,17 @@ public final class CommandShared {
     static String elapsed(long start) {
         long time = System.currentTimeMillis() - start;
         return time < 1000L ? (time + "ms") : String.format("%.02fs", time / 1000D);
+    }
+
+    static boolean rescanFailed(CommandSourceStack source) {
+        Path root = PackManager.get().getRoot();
+        if (root == null) {
+            source.sendFailure(tr("rdpl.command.noroot"));
+            return true;
+        }
+        PackManager.get().scan(root);
+        PackManager.get().report();
+        return false;
     }
 
     static CompletableFuture<Void> reloadServer(MinecraftServer server) {

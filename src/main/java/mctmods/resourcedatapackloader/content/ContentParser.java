@@ -35,6 +35,7 @@ public final class ContentParser {
     public static final String VARIANTS = "variants";
     public static final String TAGS = "tags";
     private static final String ORE_DICT = "oreDict";
+    private static final String PLANT_TYPES = "plantTypes";
     private static final Gson GSON = new GsonBuilder().create();
     private static final int[] NO_CHANCE = new int[0];
 
@@ -90,7 +91,7 @@ public final class ContentParser {
                 Math.clamp(GsonHelper.getAsInt(json, "maxAge", 7), 1, 7),
                 sapling(json),
                 growth(json),
-                lowered(Json.strings(json, "plantTypes")),
+                plantTypes(key, json),
                 lowered(Json.strings(json, "behavesAs")),
                 GsonHelper.getAsString(json, "tint", "").trim(),
                 GsonHelper.getAsString(json, "leafSapling", "").trim(),
@@ -121,6 +122,12 @@ public final class ContentParser {
                 GsonHelper.getAsInt(json, "harvestLevel", -1),
                 Math.clamp(GsonHelper.getAsInt(json, "light", 0), 0, 15),
                 Collections.unmodifiableList(drops));
+    }
+
+    private static List<String> plantTypes(ResourceLocation key, JsonObject json) {
+        List<String> types = lowered(Json.strings(json, PLANT_TYPES));
+        if (!types.isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Let the plant name this block in its own soil list instead", key, PLANT_TYPES); }
+        return types;
     }
 
     private static List<String> tags(ResourceLocation key, String name, JsonObject json) {
@@ -198,6 +205,7 @@ public final class ContentParser {
                 GsonHelper.getAsString(json, "slot", "").trim().toLowerCase(Locale.ROOT),
                 GsonHelper.getAsString(json, "crop", "").trim(),
                 GsonHelper.getAsString(json, "soil", "minecraft:farmland").trim(),
+                Json.strings(json, "potionTypes"),
                 GsonHelper.getAsFloat(json, "attackSpeed", Float.NaN),
                 Math.max(0, GsonHelper.getAsInt(json, "cooldown", 0)));
     }
@@ -269,7 +277,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Creative tab {} is empty, ignoring it", key);
             return null;
         }
-        return new TabDef(key, GsonHelper.getAsString(json, "label", key.getPath()).trim(), GsonHelper.getAsString(json, "icon", "").trim());
+        return new TabDef(key, GsonHelper.getAsString(json, "label", key.getPath()).trim(), GsonHelper.getAsString(json, "icon", "").trim(), Json.strings(json, "requires"));
     }
 
     @Nullable private static GrowthDef growth(JsonObject json) {

@@ -27,8 +27,6 @@ public class ContentDrinkItem extends Item {
         this.effect = ContentEffects.parse(variant.id(), variant.potion());
     }
 
-    public ItemDef getDef() { return def; }
-
     @Override public int getUseDuration(@Nonnull ItemStack stack, @Nonnull LivingEntity entity) { return def.useDuration(); }
 
     @Override @Nonnull public UseAnim getUseAnimation(@Nonnull ItemStack stack) { return def.eat() ? UseAnim.EAT : UseAnim.DRINK; }

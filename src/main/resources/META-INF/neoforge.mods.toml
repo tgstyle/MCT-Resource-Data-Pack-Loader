@@ -25,4 +25,4 @@ ordering="NONE"
 side="BOTH"
 
 [[mixins]]
-config="mixins.resourcedatapackloader.json"
+config="mixins.resourcedatapackloader.rdpl.json"

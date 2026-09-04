@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -167,7 +166,7 @@ public final class PackOptions {
         return merged;
     }
 
-    private static String gsonPretty(JsonObject held) { return new GsonBuilder().setPrettyPrinting().create().toJson(held); }
+    private static String gsonPretty(JsonObject held) { return ModPacks.GSON.toJson(held); }
 
     @Nullable public static Boolean option(String fileKey, String name) {
         Map<String, Boolean> options = VALUES.get(fileKey);

@@ -12,6 +12,7 @@ public final class Config {
     public static final Recipes recipes;
     public static final Data data;
     public static final Worldgen worldgen;
+    public static final Tweaks tweaks;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -20,6 +21,7 @@ public final class Config {
         recipes = new Recipes(builder);
         data = new Data(builder);
         worldgen = new Worldgen(builder);
+        tweaks = new Tweaks(builder);
         SPEC = builder.build();
     }
 
@@ -32,17 +34,57 @@ public final class Config {
     public static final class Content {
         private final ModConfigSpec.BooleanValue load;
         private final ModConfigSpec.BooleanValue vanillaClients;
+        private final ModConfigSpec.BooleanValue sounds;
+        private final ModConfigSpec.BooleanValue fuels;
+        private final ModConfigSpec.BooleanValue potions;
+        private final ModConfigSpec.BooleanValue brewing;
+        private final ModConfigSpec.BooleanValue villagers;
+        private final ModConfigSpec.BooleanValue shovelPaths;
+        private final ModConfigSpec.ConfigValue<String> shovelPathBecomes;
+        private final ModConfigSpec.ConfigValue<String> shovelPathReverts;
+        private final ModConfigSpec.BooleanValue hoeTilling;
+        private final ModConfigSpec.ConfigValue<String> hoeTillsInto;
 
         private Content(ModConfigSpec.Builder builder) {
             builder.comment("Blocks, items, fluids and everything else packs define").push("content");
             load = builder.comment("Register the blocks, items, fluids, materials and creative tabs that packs define. Requires a restart [Default=true]").worldRestart().define("load", true);
             vanillaClients = builder.comment("Serve plain vanilla clients: nothing from any pack is registered, no blocks, items, fluids or creative tabs, so a client without the mod can join. Everything that lives on the server alone still applies. Requires a restart [Default=false]").worldRestart().define("vanillaClients", false);
+            sounds = builder.comment("Register the sound events named by sounds/*.json, so packs can ship their own audio [Default=true]").define("sounds", true);
+            fuels = builder.comment("Apply fuels/*.json files, which give items a furnace burn time [Default=true]").define("fuels", true);
+            potions = builder.comment("Register the potion effects and potion types described by potions/*.json and potion_types/*.json in packs. Requires a restart [Default=true]").worldRestart().define("potions", true);
+            brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
+            villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
+            shovelPaths = builder.comment("Let a shovel turn blocks marked behavesAs path into a path, and revert a path while sneaking [Default=true]").define("shovelPaths", true);
+            shovelPathBecomes = builder.comment("What a shovel turns those blocks into. Empty uses the dirt path").define("shovelPathBecomes", "");
+            shovelPathReverts = builder.comment("What sneaking with a shovel turns a path back into. Empty uses dirt").define("shovelPathReverts", "");
+            hoeTilling = builder.comment("Let a hoe till blocks marked behavesAs till [Default=true]").define("hoeTilling", true);
+            hoeTillsInto = builder.comment("What a hoe turns those blocks into. Empty uses farmland").define("hoeTillsInto", "");
             builder.pop();
         }
 
         public boolean load() { return loaded() ? load.get() : ConfigCore.flag("content.load", true); }
 
         public boolean vanillaClients() { return loaded() ? vanillaClients.get() : ConfigCore.flag("content.vanillaClients", false); }
+
+        public boolean sounds() { return loaded() ? sounds.get() : ConfigCore.flag("content.sounds", true); }
+
+        public boolean fuels() { return loaded() ? fuels.get() : ConfigCore.flag("content.fuels", true); }
+
+        public boolean potions() { return loaded() ? potions.get() : ConfigCore.flag("content.potions", true); }
+
+        public boolean brewing() { return loaded() ? brewing.get() : ConfigCore.flag("content.brewing", true); }
+
+        public boolean villagers() { return loaded() ? villagers.get() : ConfigCore.flag("content.villagers", true); }
+
+        public boolean shovelPaths() { return loaded() ? shovelPaths.get() : ConfigCore.flag("content.shovelPaths", true); }
+
+        public String shovelPathBecomes() { return loaded() ? shovelPathBecomes.get() : ConfigCore.text("content.shovelPathBecomes", ""); }
+
+        public String shovelPathReverts() { return loaded() ? shovelPathReverts.get() : ConfigCore.text("content.shovelPathReverts", ""); }
+
+        public boolean hoeTilling() { return loaded() ? hoeTilling.get() : ConfigCore.flag("content.hoeTilling", true); }
+
+        public String hoeTillsInto() { return loaded() ? hoeTillsInto.get() : ConfigCore.text("content.hoeTillsInto", ""); }
     }
 
     public static final class Packs {
@@ -143,6 +185,18 @@ public final class Config {
         public boolean playerLootOff() { return !playerLoot.get(); }
 
         public boolean registryRemapsOff() { return !registryRemaps.get(); }
+    }
+
+    public static final class Tweaks {
+        private final ModConfigSpec.BooleanValue lenientPaths;
+
+        private Tweaks(ModConfigSpec.Builder builder) {
+            builder.comment("Small changes to how vanilla behaves").push("tweaks");
+            lenientPaths = builder.comment("Paths and tilled ground can be made under a block and stay there when one is placed above [Default=true]").define("lenientPaths", true);
+            builder.pop();
+        }
+
+        public boolean lenientPaths() { return loaded() ? lenientPaths.get() : ConfigCore.flag("tweaks.lenientPaths", true); }
     }
 
     public static final class Worldgen {

@@ -4,13 +4,14 @@ import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
@@ -27,22 +28,17 @@ public final class RecipeRemovals {
     private static final Set<String> NAMED = new LinkedHashSet<>();
     private static final Set<String> PREFIXES = new LinkedHashSet<>();
     private static final Set<Item> OUTPUT_ITEMS = new LinkedHashSet<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private RecipeRemovals() {}
 
     public static void reload() {
-        if (generation == PackManager.get().getGeneration()) { return; }
-        generation = PackManager.get().getGeneration();
+        if (!GENERATION.stale()) { return; }
         NAMED.clear();
         PREFIXES.clear();
         OUTPUT_ITEMS.clear();
         if (!Config.recipes.removals()) { return; }
-        PackManager.get().forEach(PackManager.RECIPE_REMOVALS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in recipe removal file {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
     }
 
     private static void read(ResourceLocation key, String contents) {

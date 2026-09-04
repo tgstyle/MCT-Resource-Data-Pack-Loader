@@ -34,7 +34,7 @@ public final class ContentInherits {
                     }
                 }
             }
-            catch (RuntimeException unreadable) { ContentLog.LOGGER.debug("Definition {} is not readable JSON, inherits cannot see it", entry.getKey()); }
+            catch (RuntimeException unreadable) { ContentLog.LOGGER.error("Parsing error in {} {}, it inherits and lends nothing", folder, entry.getKey(), unreadable); }
         }
         Map<ResourceLocation, JsonObject> resolved = new LinkedHashMap<>();
         for (ResourceLocation key : parsed.keySet()) { resolve(key, parsed, owners, resolved, new HashSet<>()); }
