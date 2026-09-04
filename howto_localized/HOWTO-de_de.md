@@ -27,6 +27,7 @@ Drei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Eigenschaften überschreiben](#eigenschaften-überschreiben)
 - [Registry-Umbenennungen](#registry-umbenennungen)
 - [Spielerbeute](#spielerbeute)
+- [Blockdrops](#blockdrops)
 
 **Neuen Inhalt beschreiben**
 - [Wie Definitionen funktionieren](#wie-definitionen-funktionieren)
@@ -137,6 +138,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/trades/*.json` | Was Laufbahnen kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel) |
 | `<namespace>/loot_tables/*.json` | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/loot_injections/*.json` | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/block_drops/*.json` | Zusätzliche oder ersetzende Drops für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops) |
 | `<namespace>/player_loot/*.json` | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute) |
 | `<namespace>/advancements/*.json` | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/functions/*.mcfunction` | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
@@ -272,7 +274,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
+| `loot_tables`, `loot_injections`, `block_drops`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
 
@@ -302,6 +304,7 @@ Einrichtung:
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
 - **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
+- **Blockdrops**: dem Drop eines beliebigen Blocks beim Abbau durch einen Spieler etwas hinzufügen oder ihn ersetzen
 - **Eigenschaften vorhandener Blöcke, Items und Tränke**: Härte, Licht, Stapelgrößen, Essbarkeit für alles, die Effekte eines Tranks, siehe [Eigenschaften überschreiben](#eigenschaften-überschreiben)
 - **Ore-Dictionary-Namen, Ofenrezepte, Brenndauern, Kreativtabs und Sound-Events**
 
@@ -587,6 +590,45 @@ Setz `playerLoot` in der Config-Kategorie `data` auf `false`, um den Ordner ganz
 ---
 
 # Neuen Inhalt beschreiben
+
+## Blockdrops
+
+`<namespace>/block_drops/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Vanilla-Blöcke in 1.12 haben keine Beutetabellen, ein Pack konnte also den Drop seiner eigenen Blöcke erweitern, aber Stein, ein Erz oder den Block eines anderen Mods nicht anrühren. Das hier kann es: Eine Regel nennt einen Block und das, was ein Spieler beim Abbau zusätzlich zu den üblichen Drops bekommt, oder an deren Stelle.
+
+```json
+{
+  "block": "minecraft:stone",
+  "meta": 0,
+  "replace": false,
+  "drops": [
+    { "item": "minecraft:diamond", "count": "1-2", "chance": 0.05, "fortune": 1, "silkTouch": "never" },
+    { "item": "minecraft:emerald", "silkTouch": "only" }
+  ]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er macht |
+| --- | --- | --- | --- | --- |
+| `block` | ja | Block-ID | | Der Block, den die Regel beobachtet |
+| `meta` | nein | int | `-1` | Nur diese Metadaten des Blocks; `-1` ist jeder Zustand |
+| `replace` | nein | boolean | `false` | Ob die üblichen Drops verworfen werden, bevor diese gewürfelt werden |
+| `drops` | ja | Liste von Drops | | Jeder wird für sich gewürfelt, wenn ein Spieler den Block abbaut |
+
+Jeder Drop:
+
+| Schlüssel | Pflicht | Wert | Standard | Was er macht |
+| --- | --- | --- | --- | --- |
+| `item` | ja | Item-ID | | Was fällt, mit Metadaten wie `minecraft:dye:4` |
+| `count` | nein | Zahl oder `min-max` | `1` | Wie viele, gleichmäßig innerhalb des Bereichs gewürfelt |
+| `chance` | nein | float | `1.0` | Die Wahrscheinlichkeit, dass der Drop überhaupt fällt, `0.05` ist ein Abbau von zwanzig |
+| `fortune` | nein | int | `0` | Bis zu so viele extra pro Stufe Glück auf dem Werkzeug |
+| `silkTouch` | nein | `either`, `only` oder `never` | `either` | Ob der Drop ein Werkzeug mit Behutsamkeit braucht, eines ablehnt oder sich nicht darum kümmert |
+
+Regeln sehen nur den Abbau durch einen Spieler; Explosionen, Kolben und Mob-Schäden würfeln nichts. Mehrere Regeln für einen Block gelten alle, ein `replace` auf irgendeiner davon leert zuerst die üblichen Drops.
 
 ## Wie Definitionen funktionieren
 
@@ -1449,6 +1491,8 @@ Das Vanilla-Format von `sounds.json`, ein Pack kann also eigenes Audio mitbringe
 Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
 
 Fügt Ore-Dictionary-Namen zu Items hinzu, die es schon gibt. Jeder Schlüssel ist ein Ore-Dictionary-Name und sein Wert die Items, die darunter eingetragen werden, eigene feste Schlüssel hat eine solche Datei also nicht. Eigene Blöcke und Items eines Packs nennen ihre stattdessen im `oreDict` der Variante.
+
+Ein Schlüssel, der mit `-` beginnt, entfernt stattdessen: `"-ingotCopper": ["thermalfoundation:material:128"]` nimmt dieses Item vom Namen, und `["*"]` leert den Namen. Rezepte, die den Namen nutzten, passen sofort nicht mehr auf das Item, und genau das ist der Sinn. Ein Name, den nichts registriert, wird mit einem Fehler abgewiesen, ebenso ein Item, das der Name nicht trägt. Ein Eintrag, der für jede Metadaten-Variante registriert ist, wie Vanilla `plankWood` registriert, wird als Ganzes entfernt, welche Metadaten du auch nennst, und das Log sagt es; nenne ihn mit `:*`, um dasselbe offen zu sagen.
 
 ```json
 {
@@ -3395,7 +3439,11 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
     "pregenFinishedSays": "Your world is ready",
     "pregenStoppedSays": "World building stopped",
     "pregenSpectatingSays": "Spectating until the world is ready",
-    "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"]
+    "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"],
+    "saysCard": true,
+    "saysIcon": "minecraft:compass",
+    "saysColor": "1E2630",
+    "saysImage": "rubyworld:textures/gui/card.png"
   }
 }
 ```
@@ -3415,6 +3463,10 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
 | `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | Die Chatnachrichten für die einzelnen Phasen. Die ersten beiden dürfen `%d` für den Prozentwert und dahinter `%s` für den Namen der Dimension enthalten, oder `%1$d` und `%2$s`, um sie in beliebiger Reihenfolge zu setzen, und enden immer mit ` - ETA 00:00:00` für diesen Durchgang, was keine Einstellung ist. Fertig und gestoppt werden einmal gesagt, wenn alles Angeforderte erledigt ist, und enden mit ` - Total time 00:00:00` für das Ganze, was ebenfalls keine Einstellung ist | Formulier sie im Ton deines Packs, nenne die Dimension, wenn mehrere gebaut werden, oder stell sie stumm |
 | `pregenSpectatingSays` | Die Haltezeile mitten im Bild, während Land gebaut wird. Auf dem Standardwert spricht sie die Sprache jedes Spielers; leer zeigt nichts | Halte sie unter etwa fünfunddreißig Zeichen, sonst schneiden kleine Fenster sie ab |
 | `welcomeSays` | Die grüne Begrüßung, gezeigt bei jedem Login und nach dem Landbau. Ein bloßer Eintrag ist die Zeile für überall; ein Eintrag `dimension=nachricht` überschreibt sie für diese Dimension und begrüßt außerdem jede Ankunft dort, z. B. `"-1=Welcome to the Nether!"`. Eine leere Nachricht nach dem `=` stellt diese Dimension stumm; eine leere Liste zeigt nichts. Auf dem Standardwert spricht sie die Sprache jedes Spielers | Eine bloße Zeile nennt dein Pack; mit Dimensionszeilen gibst du jeder Welt ihr Thema. Halte die Zeilen unter etwa fünfunddreißig Zeichen |
+| `saysCard` | Zeigt die Zeilen, die dieser Mod sagt, die Begrüßung, den Fortschritt beim Landbau und die Bedrohungszeilen, als Karte unten rechts statt im Chat. Die Karte gleitet herein, bleibt acht Sekunden und verblasst, und erscheint auch über einem offenen Bildschirm | Schalte es ein, wenn der Chat voll ist oder die Zeilen wie ein Teil der Welt wirken sollen statt wie Geplauder |
+| `saysIcon` | Ein Item, das auf der Karte gezeichnet wird, z. B. `minecraft:compass`. Leer zeichnet keines | Gib der Karte das Wappen deines Packs |
+| `saysColor` | Die Hintergrundfarbe der Karte als Hex, z. B. `1E2630`. Leer nimmt ein dunkles Schiefergrau | Passe sie an die Palette deines Packs an |
+| `saysImage` | Ein PNG aus den Client-Assets des Packs, z. B. `rubyworld:textures/gui/card.png`, über die Karte gestreckt als ihr Hintergrund und über die Farbe gezeichnet. Leer zeichnet keines | Gib der Karte eine gemalte Tafel; halte das Bild breit und flach, es wird auf das gestreckt, was der Text braucht |
 
 Der Landbau hat einen eigenen schnellen Weg für die Beleuchtung, und er tritt beiseite, sobald eine Licht-Engine wie Alfheim oder Phosphor installiert ist, und überlässt ihr die Arbeit. So oder so bekommst du am Ende fertiges, vollständig beleuchtetes Land.
 

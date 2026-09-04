@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IWorldProviderEnd;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.block.BlockFalling;
 import net.minecraft.command.ICommandSender;
@@ -190,6 +191,13 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         startWhenEntered(event.toDim);
         if (running != null || !(event.player instanceof EntityPlayerMP)) { return; }
         if (greetingFor(event.toDim, false) != null) { welcome((EntityPlayerMP) event.player); }
+    }
+
+    private static boolean online(MinecraftServer server, UUID id) {
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            if (player.getUniqueID().equals(id)) { return true; }
+        }
+        return false;
     }
 
     private static boolean welcomeAtDefault() {
@@ -396,7 +404,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             if (welcomed) { welcome(player); }
             released++;
         }
-        HELD.keySet().removeIf(id -> server.getPlayerList().getPlayerByUUID(id) == null);
+        HELD.keySet().removeIf(id -> !online(server, id));
         if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentTerrain.worldGameMode().isEmpty() ? "the mode they had" : ContentTerrain.worldGameMode()); }
     }
 
@@ -457,7 +465,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (server == null) { return; }
         if (!busy()) {
             int stranded = 0;
-            for (UUID id : HELD.keySet()) { if (!ContentIntroPlay.reading(id) && server.getPlayerList().getPlayerByUUID(id) != null) { stranded++; } }
+            for (UUID id : HELD.keySet()) { if (!ContentIntroPlay.reading(id) && online(server, id)) { stranded++; } }
             if (stranded > 0) {
                 ContentLog.LOGGER.warn("{} player(s) were still held as spectators with no land being made, so they are released now; the release at the end of the run was missed", stranded);
                 releaseEveryone(true);
@@ -487,11 +495,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         worker.finish(DimensionManager.getWorld(worker.dimension));
     }
 
-    public static void tell(String said, TextFormatting color) {
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null || said.isEmpty()) { return; }
-        server.getPlayerList().sendMessage(new TextComponentString(said).setStyle(new Style().setColor(color)));
-    }
+    public static void tell(String said, TextFormatting color) { Says.tellAll(said, color); }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         startWhenEntered(event.player.dimension);
@@ -503,7 +507,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player); }
         String said = worker.sofar();
         if (said.isEmpty()) { return; }
-        event.player.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(TextFormatting.YELLOW)));
+        if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, said, TextFormatting.YELLOW); }
     }
 
     private static NBTTagCompound runRecord(int dimension, int middleX, int middleZ, int reach) {

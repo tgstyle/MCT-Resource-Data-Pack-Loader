@@ -74,6 +74,7 @@ public final class PackManager {
     public static final String RECIPE_REMOVALS = "recipe_removals";
     public static final String MATERIALS = "materials";
     public static final String LOOT_INJECTIONS = "loot_injections";
+    public static final String BLOCK_DROPS = "block_drops";
     public static final String PLAYER_LOOT = "player_loot";
     public static final String TABS = "tabs";
     public static final String FUNCTIONS = "functions";
@@ -293,6 +294,7 @@ public final class PackManager {
         collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);
         collect(off, Config.recipes.removals, "recipes.removals", JSON, RECIPE_REMOVALS);
         collect(off, Config.data.lootInjections, "data.lootInjections", JSON, LOOT_INJECTIONS);
+        collect(off, Config.data.blockDrops, "data.blockDrops", JSON, BLOCK_DROPS);
         collect(off, Config.data.playerLoot, "data.playerLoot", JSON, PLAYER_LOOT);
         collect(off, Config.data.registryRemaps, "data.registryRemaps", JSON, REGISTRY_REMAP);
         collect(off, Config.worldgen.load, "worldgen.load", JSON, WORLDGEN);
@@ -435,7 +437,7 @@ public final class PackManager {
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
                 || path.startsWith(GATES + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
                 || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(GAMERULES + "/")
-                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
+                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(BLOCK_DROPS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
     }
 
     @Nullable public String getPackName(String namespace, String path) {

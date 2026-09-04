@@ -58,6 +58,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.loot.BlockDrops;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.loot.KilledName;
@@ -108,6 +109,7 @@ public class ResourceDataPackLoader {
         Rubic.init();
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
+        MinecraftForge.EVENT_BUS.register(BlockDrops.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
         LootTableList.register(ContentPierCargo.LOOT_TABLE);
@@ -191,6 +193,7 @@ public class ResourceDataPackLoader {
                 ContentHardnessCheck.watching();
             }
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CardOverlay.class);
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
         }
     }

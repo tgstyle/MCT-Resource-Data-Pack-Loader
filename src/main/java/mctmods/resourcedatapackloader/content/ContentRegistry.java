@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.content.util.ContentOreDict;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCofhWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
+import mctmods.resourcedatapackloader.loot.BlockDrops;
 import mctmods.resourcedatapackloader.core.CofhWorldContainer;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
@@ -317,6 +318,7 @@ public final class ContentRegistry {
         ContentMaterials.resolveRepairItems();
         registerOreDictionary();
         ContentOreDict.apply();
+        BlockDrops.reload();
     }
 
     public static List<WorldgenDef> resolveWorldgen() {

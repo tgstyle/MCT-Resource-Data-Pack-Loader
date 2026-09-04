@@ -27,6 +27,7 @@ Three working examples. Drop any of them straight into `rdploader` and look at h
 - [Property overrides](#property-overrides)
 - [Registry renames](#registry-renames)
 - [Player loot](#player-loot)
+- [Block drops](#block-drops)
 
 **Defining new content**
 - [How definitions work](#how-definitions-work)
@@ -137,6 +138,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/trades/*.json` | What careers buy and sell. [Villagers and trades](#villagers-and-trades) |
 | `<namespace>/loot_tables/*.json` | Loot tables, replaced. [What you can override](#what-you-can-override) |
 | `<namespace>/loot_injections/*.json` | A pool added to a table that already exists. [What you can override](#what-you-can-override) |
+| `<namespace>/block_drops/*.json` | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops) |
 | `<namespace>/player_loot/*.json` | A loot table rolled when a player dies. [Player loot](#player-loot) |
 | `<namespace>/advancements/*.json` | Advancements. [What you can override](#what-you-can-override) |
 | `<namespace>/functions/*.mcfunction` | Function files. [What you can override](#what-you-can-override) |
@@ -272,7 +274,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
+| `loot_tables`, `loot_injections`, `block_drops`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 
@@ -302,6 +304,7 @@ Setup:
 - **Recipe removals**, delete a crafting recipe by name, namespace or output
 - **Loot injections**, add a pool to a loot table instead of replacing the whole thing
 - **Player loot**, roll a loot table when a player dies, on top of what they were carrying or instead of it
+- **Block drops**, add to or replace what any block drops when a player breaks it
 - **Properties of existing blocks, items and potions**, hardness, light, stack sizes, food on anything, a potion's effects, see [Property overrides](#property-overrides)
 - **Ore dictionary names, furnace recipes, fuel burn times, creative tabs and sound events**
 
@@ -587,6 +590,45 @@ Set `playerLoot` in the `data` config category to `false` to turn the folder off
 ---
 
 # Defining new content
+
+## Block drops
+
+`<namespace>/block_drops/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+Vanilla 1.12 blocks have no loot tables, so a pack could add to what its own blocks drop but not touch stone, an ore or another mod's block. This does: a rule names a block and what a player harvesting it drops on top of the usual drops, or instead of them.
+
+```json
+{
+  "block": "minecraft:stone",
+  "meta": 0,
+  "replace": false,
+  "drops": [
+    { "item": "minecraft:diamond", "count": "1-2", "chance": 0.05, "fortune": 1, "silkTouch": "never" },
+    { "item": "minecraft:emerald", "silkTouch": "only" }
+  ]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `block` | yes | block id | | The block the rule watches |
+| `meta` | no | int | `-1` | Only this metadata of the block; `-1` is every state |
+| `replace` | no | boolean | `false` | Whether the usual drops are discarded before these are rolled |
+| `drops` | yes | list of drops | | Each rolled on its own when a player breaks the block |
+
+Each drop:
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `item` | yes | item id | | What drops, with metadata as `minecraft:dye:4` |
+| `count` | no | number or `low-high` | `1` | How many, rolled evenly within the range |
+| `chance` | no | float | `1.0` | The odds the drop happens at all, `0.05` being one break in twenty |
+| `fortune` | no | int | `0` | Up to this many extra per level of Fortune on the tool |
+| `silkTouch` | no | `either`, `only` or `never` | `either` | Whether the drop needs a Silk Touch tool, refuses one, or does not care |
+
+Rules only see a player's harvest; explosions, pistons and mob grief roll nothing. Several rules for one block all apply, a `replace` on any of them clearing the usual drops first.
 
 ## How definitions work
 
@@ -1449,6 +1491,8 @@ The vanilla `sounds.json` format, so a pack can ship its own audio.
 The file name is yours to choose, only the folder is read, and several files stack.
 
 Adds ore dictionary names to items that already exist. Every key is an ore dictionary name and its value the items registered under it, so a file has no fixed keys of its own. A pack's own blocks and items name theirs in the variant's `oreDict` instead.
+
+A key starting with `-` removes instead: `"-ingotCopper": ["thermalfoundation:material:128"]` takes that item off the name, and `["*"]` empties the name. Recipes that used the name stop matching the item at once, which is the point. A name nothing registers is refused with an error, and so is an item the name does not carry. An entry registered for every metadata, as vanilla registers `plankWood`, is removed whole whichever metadata you name, and the log says so; name it with `:*` to say the same plainly.
 
 ```json
 {
@@ -3395,7 +3439,11 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
     "pregenFinishedSays": "Your world is ready",
     "pregenStoppedSays": "World building stopped",
     "pregenSpectatingSays": "Spectating until the world is ready",
-    "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"]
+    "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"],
+    "saysCard": true,
+    "saysIcon": "minecraft:compass",
+    "saysColor": "1E2630",
+    "saysImage": "rubyworld:textures/gui/card.png"
   }
 }
 ```
@@ -3415,6 +3463,10 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
 | `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | The chat messages for each stage. The first two may hold `%d` for the percent and, after it, `%s` for the dimension's name, or `%1$d` and `%2$s` to put them in any order, and always end with ` - ETA 00:00:00` for that pass, which is not a setting. Finished and stopped are said once, when everything asked for is done, ending with ` - Total time 00:00:00` for the whole of it, which is not a setting either | Reword them in your pack's voice, name the dimension when several are made, or silence them |
 | `pregenSpectatingSays` | The mid-screen hold line while land is being made. Left at its default it speaks each player's language; empty shows nothing | Keep it under about thirty-five characters or small windows clip it |
 | `welcomeSays` | The green greeting, shown on every login and after land-making. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
+| `saysCard` | Shows the lines this mod says, the welcome, the land-making progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too | Turn it on when chat is busy or the lines should read as part of the world rather than as chatter |
+| `saysIcon` | An item drawn on the card, e.g. `minecraft:compass`. Empty draws none | Give the card your pack's emblem |
+| `saysColor` | The card's background color as hex, e.g. `1E2630`. Empty uses a dark slate | Match your pack's palette |
+| `saysImage` | A PNG from the pack's client assets, e.g. `rubyworld:textures/gui/card.png`, stretched over the card as its background and drawn over the color. Empty draws none | Give the card a painted panel; keep the image wide and short, it is stretched to whatever the text needs |
 
 Land making has its own fast path for lighting, and it stands aside when a light engine such as Alfheim or Phosphor is installed, letting that engine do the work instead. Either way you end up with finished, fully lit land.
 

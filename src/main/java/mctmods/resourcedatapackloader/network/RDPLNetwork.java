@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -24,6 +25,8 @@ public final class RDPLNetwork {
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(IntroPlayHandler.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
         else { channel.registerMessage(MessageIntroPlay.Idle.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
         channel.registerMessage(MessageIntroDone.Handler.class, MessageIntroDone.class, packetId++, Side.SERVER);
+        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(CardOverlay.Handler.class, MessageCard.class, packetId++, Side.CLIENT); }
+        else { channel.registerMessage(MessageCard.Idle.class, MessageCard.class, packetId++, Side.CLIENT); }
         channel.registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class, packetId++, Side.CLIENT);
         registerMessage(MessageCubes.Handler.class, MessageCubes.class);
         registerMessage(MessageColumn.Handler.class, MessageColumn.class);

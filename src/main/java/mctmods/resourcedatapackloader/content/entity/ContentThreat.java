@@ -7,18 +7,18 @@ import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -196,7 +196,7 @@ public final class ContentThreat {
         ContentLog.LOGGER.debug("Player {} carries a threat score of {} and stands in band {} of {}", player.getName(), score, band, levels.length);
         if (before == null) { return; }
         String said = SAYS.get(band);
-        if (said != null && !said.isEmpty()) { player.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(TextFormatting.YELLOW))); }
+        if (said != null && !said.isEmpty() && player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) player, said, TextFormatting.YELLOW); }
     }
 
     private static int score(Entity entity) {

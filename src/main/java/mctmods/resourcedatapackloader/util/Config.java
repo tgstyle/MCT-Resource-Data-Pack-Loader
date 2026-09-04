@@ -91,6 +91,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 
     public static class Data {
         @net.minecraftforge.common.config.Config.Comment("Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table [Default=true]") public boolean lootInjections = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply block_drops/*.json files, which add to or replace what a block drops when a player breaks it, for blocks a pack does not own [Default=true]") public boolean blockDrops = true;
         @net.minecraftforge.common.config.Config.Comment("Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory [Default=true]") public boolean playerLoot = true;
         @net.minecraftforge.common.config.Config.Comment("Load .mcfunction files from packs, so they work in every world. A function saved in the world still wins [Default=true]") public boolean functions = true;
         @net.minecraftforge.common.config.Config.Comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]") public boolean registryRemaps = true;
@@ -140,6 +141,10 @@ import mctmods.resourcedatapackloader.pack.PackManager;
         @net.minecraftforge.common.config.Config.Comment("The message players see when generation is stopped early. Empty tells them nothing. Left at this default it speaks each player's language [Default=World pregeneration stopped]") public String pregenStoppedSays = "World pregeneration stopped";
         @net.minecraftforge.common.config.Config.Comment("The mid-screen message players see while held in spectator during world generation. Empty shows nothing. Left at this default it speaks each player's language [Default=Spectating until the world is ready]") public String pregenSpectatingSays = "Spectating until the world is ready";
         @net.minecraftforge.common.config.Config.Comment("Welcome lines, shown in green on every login and after land-making. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. -1=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]") public String[] welcomeSays = {"Welcome to your World!"};
+        @net.minecraftforge.common.config.Config.Comment("Show the lines this mod says, the welcome, the land-making progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too [Default=false]") public boolean saysCard = false;
+        @net.minecraftforge.common.config.Config.Comment("An item drawn on the card, e.g. minecraft:compass. Empty draws none [Default=]") public String saysIcon = "";
+        @net.minecraftforge.common.config.Config.Comment("The card's background color as hex, e.g. 1E2630. Empty uses a dark slate [Default=]") public String saysColor = "";
+        @net.minecraftforge.common.config.Config.Comment("A PNG from the pack's client assets stretched over the card as its background, e.g. rubyworld:textures/gui/card.png, drawn over the color. Empty draws none [Default=]") public String saysImage = "";
     }
 
     public static class Worldgen {
