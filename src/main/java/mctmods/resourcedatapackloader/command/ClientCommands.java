@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public final class ClientCommands {
@@ -23,14 +22,8 @@ public final class ClientCommands {
     private static int reload(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         CommandShared.ran(source, NAME, "reload");
-        Path root = PackManager.get().getRoot();
-        if (root == null) {
-            source.sendFailure(CommandShared.tr("rdpl.command.noroot"));
-            return 0;
-        }
         long start = System.currentTimeMillis();
-        PackManager.get().scan(root);
-        PackManager.get().report();
+        if (CommandShared.rescanFailed(source)) { return 0; }
         Minecraft minecraft = Minecraft.getInstance();
         IntegratedServer server = minecraft.getSingleplayerServer();
         CompletableFuture<Void> done = minecraft.reloadResourcePacks();

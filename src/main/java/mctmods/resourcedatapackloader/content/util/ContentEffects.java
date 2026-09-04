@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
@@ -19,7 +20,7 @@ public final class ContentEffects {
             return null;
         }
         ResourceLocation key = ResourceLocation.tryParse(parts[0].trim());
-        MobEffect effect = key == null ? null : ForgeRegistries.MOB_EFFECTS.getValue(key);
+        MobEffect effect = Registered.find(ForgeRegistries.MOB_EFFECTS, key);
         if (effect == null) {
             ContentLog.LOGGER.error("Unknown potion '{}' for {}", parts[0].trim(), context);
             return null;

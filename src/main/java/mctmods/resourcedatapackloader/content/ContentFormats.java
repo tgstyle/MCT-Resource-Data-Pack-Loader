@@ -7,6 +7,7 @@ public final class ContentFormats {
     public static final String LOOT_FOLDER = "loot_tables";
     public static final String BLOCK_TAGS = "tags/blocks";
     public static final String ITEM_TAGS = "tags/items";
+    public static final String POI_TAGS = "tags/point_of_interest_type";
     private static final String SILK_TOUCH = "{\"condition\":\"minecraft:match_tool\",\"predicate\":{\"enchantments\":[{\"enchantment\":\"minecraft:silk_touch\",\"levels\":{\"min\":1}}]}}";
     private static final String SHEARS = "{\"condition\":\"minecraft:match_tool\",\"predicate\":{\"items\":[\"minecraft:shears\"]}}";
 

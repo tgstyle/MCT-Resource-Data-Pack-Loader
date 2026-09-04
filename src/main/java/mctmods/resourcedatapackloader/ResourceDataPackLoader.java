@@ -3,8 +3,12 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentEvents;
+import mctmods.resourcedatapackloader.content.extra.ContentFuels;
+import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
-import mctmods.resourcedatapackloader.content.client.ContentClient;
+import mctmods.resourcedatapackloader.content.ContentClient;
 import mctmods.resourcedatapackloader.loot.LootFunctions;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
@@ -44,11 +48,15 @@ import java.util.Set;
     public ResourceDataPackLoader(FMLJavaModLoadingContext context) {
         Lang.load();
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug());
         IEventBus modBus = context.getModEventBus();
         PackFinder.ensureScanned();
         ContentRegistry.load();
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
+        MinecraftForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
+        if (ContentPaths.enabled()) { MinecraftForge.EVENT_BUS.addListener(ContentPaths::onRightClick); }
         MinecraftForge.EVENT_BUS.addListener(ContentEvents::onBreak);
         MinecraftForge.EVENT_BUS.addListener(ContentEvents::onDetonate);
         modBus.addListener(this::onConfig);
@@ -78,6 +86,7 @@ import java.util.Set;
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
         PackFinder.ensureScanned();
+        event.enqueueWork(ContentPotions::applyBrewing);
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.reload();

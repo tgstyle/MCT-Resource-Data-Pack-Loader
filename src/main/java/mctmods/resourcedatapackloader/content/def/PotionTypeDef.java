@@ -3,4 +3,4 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
-public record TabDef(ResourceLocation key, String label, String icon, List<String> requires) {}
+public record PotionTypeDef(ResourceLocation key, String baseName, List<PotionEffectDef> effects, List<String> requires) {}

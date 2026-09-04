@@ -1,13 +1,14 @@
 {
     "required": true,
     "minVersion": "0.8.5",
-    "package": "mctmods.resourcedatapackloader.mixin",
+    "package": "mctmods.resourcedatapackloader.mixin.rdpl",
     "compatibilityLevel": "JAVA_17",
     "refmap": "mixins.resourcedatapackloader.refmap.json",
     "mixins": [
-        "MixinPackRepository",
-        "MixinRecipeManager",
-        "ILootTable"
+        "common.ILootTable",
+        "common.IPotionBrewing",
+        "common.MixinPackRepository",
+        "common.MixinRecipeManager"
     ],
     "client": [],
     "server": [],

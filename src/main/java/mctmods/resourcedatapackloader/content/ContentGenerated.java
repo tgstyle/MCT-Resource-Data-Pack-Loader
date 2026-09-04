@@ -20,6 +20,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.util.Mth;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -420,7 +421,7 @@ public final class ContentGenerated {
 
     private static JsonObject bonus(DropDef drop) {
         JsonArray chances = new JsonArray();
-        for (int chance : drop.bonusChance()) { chances.add(Math.max(0, Math.min(100, chance)) / 100.0); }
+        for (int chance : drop.bonusChance()) { chances.add(Mth.clamp(chance, 0, 100) / 100.0); }
         return obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", chances);
     }
 
@@ -486,6 +487,16 @@ public final class ContentGenerated {
     private static void both(Map<String, Set<String>> blockTags, Map<String, Set<String>> itemTags, boolean hasItem, String tag, ResourceLocation id) {
         tag(blockTags, tag, id);
         if (hasItem) { tag(itemTags, tag, id); }
+    }
+
+    public static void jobSites(Set<ResourceLocation> sites) {
+        if (sites.isEmpty()) { return; }
+        Map<String, Set<String>> poiTags = new LinkedHashMap<>();
+        for (ResourceLocation site : sites) {
+            tag(poiTags, "minecraft:acquirable_job_site", site);
+            tag(poiTags, "minecraft:job_site", site);
+        }
+        tags(poiTags, ContentFormats.POI_TAGS);
     }
 
     private static void tag(Map<String, Set<String>> tags, String tag, ResourceLocation id) { tags.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(id.toString()); }

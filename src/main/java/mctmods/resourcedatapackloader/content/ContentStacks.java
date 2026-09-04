@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -23,11 +24,9 @@ public final class ContentStacks {
             ContentLog.LOGGER.error("Item '{}' in {} needs a namespace, such as minecraft:iron_ingot", value, key);
             return null;
         }
-        if (!registered(name)) {
-            ContentLog.LOGGER.error("Unknown item '{}' in {}, skipping it", value, key);
-            return null;
-        }
-        return ForgeRegistries.ITEMS.getValue(name);
+        Item item = Registered.find(ForgeRegistries.ITEMS, name);
+        if (item == null) { ContentLog.LOGGER.error("Unknown item '{}' in {}, skipping it", value, key); }
+        return item;
     }
 
     public static boolean registered(ResourceLocation name) { return ForgeRegistries.ITEMS.containsKey(name); }

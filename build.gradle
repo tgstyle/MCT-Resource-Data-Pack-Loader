@@ -140,7 +140,7 @@ legacyForge {
 
 mixin {
     add sourceSets.main, 'mixins.resourcedatapackloader.refmap.json'
-    config 'mixins.resourcedatapackloader.json'
+    config 'mixins.resourcedatapackloader.rdpl.json'
 }
 
 repositories {
@@ -214,7 +214,7 @@ jar {
     archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft}")
     archiveClassifier.set('')
     manifest.attributes([
-            "MixinConfigs": "mixins.resourcedatapackloader.json"
+            "MixinConfigs": "mixins.resourcedatapackloader.rdpl.json"
     ])
 }
 

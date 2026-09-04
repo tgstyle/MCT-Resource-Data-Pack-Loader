@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -52,7 +53,7 @@ public final class ContentMaterials {
 
     private static SoundEvent sound(String name) {
         ResourceLocation key = ResourceLocation.tryParse(name);
-        SoundEvent sound = key == null ? null : ForgeRegistries.SOUND_EVENTS.getValue(key);
+        SoundEvent sound = Registered.find(ForgeRegistries.SOUND_EVENTS, key);
         return sound == null ? SoundEvents.ARMOR_EQUIP_IRON : sound;
     }
 

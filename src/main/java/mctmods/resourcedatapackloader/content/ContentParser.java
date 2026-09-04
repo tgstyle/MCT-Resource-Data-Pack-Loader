@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,14 +88,14 @@ public final class ContentParser {
                 color(GsonHelper.getAsString(json, "particleColor", "FFFFFF"), key),
                 GsonHelper.getAsString(json, "seed", "").trim(),
                 GsonHelper.getAsString(json, "produce", "").trim(),
-                Math.max(1, Math.min(7, GsonHelper.getAsInt(json, "maxAge", 7))),
+                Mth.clamp(GsonHelper.getAsInt(json, "maxAge", 7), 1, 7),
                 sapling(json),
                 growth(json),
                 lowered(Json.strings(json, "plantTypes")),
                 lowered(Json.strings(json, "behavesAs")),
                 GsonHelper.getAsString(json, "tint", "").trim(),
                 GsonHelper.getAsString(json, "leafSapling", "").trim(),
-                Math.max(0, Math.min(100, GsonHelper.getAsInt(json, "leafSaplingChance", 5))),
+                Mth.clamp(GsonHelper.getAsInt(json, "leafSaplingChance", 5), 0, 100),
                 location(GsonHelper.getAsString(json, "opensWith", "")),
                 GsonHelper.getAsString(json, "openSound", "").trim());
     }
@@ -114,12 +115,12 @@ public final class ContentParser {
         }
         return new BlockVariant(id, id.getPath(),
                 GsonHelper.getAsString(json, "rarity", "common").trim().toLowerCase(Locale.ROOT),
-                Math.max(1, Math.min(64, GsonHelper.getAsInt(json, "maxSize", 64))),
+                Mth.clamp(GsonHelper.getAsInt(json, "maxSize", 64), 1, 64),
                 tags(key, id.getPath(), json),
                 GsonHelper.getAsFloat(json, "hardness", 1.0F),
                 GsonHelper.getAsFloat(json, "resistance", 5.0F),
                 GsonHelper.getAsInt(json, "harvestLevel", -1),
-                Math.max(0, Math.min(15, GsonHelper.getAsInt(json, "light", 0))),
+                Mth.clamp(GsonHelper.getAsInt(json, "light", 0), 0, 15),
                 Collections.unmodifiableList(drops));
     }
 
@@ -157,7 +158,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("A drop for '{}' in {} names '{}', which is not a valid id, skipping it", name, key, entity.isEmpty() ? block : entity);
             return null;
         }
-        return new DropDef(item, spawned, amount(json, "amount", 1, 0), Math.max(0, Math.min(100, GsonHelper.getAsInt(json, "chance", guaranteed ? 100 : 0))), Math.max(0, GsonHelper.getAsInt(json, "weight", 0)), chances);
+        return new DropDef(item, spawned, amount(json, "amount", 1, 0), Mth.clamp(GsonHelper.getAsInt(json, "chance", guaranteed ? 100 : 0), 0, 100), Math.max(0, GsonHelper.getAsInt(json, "weight", 0)), chances);
     }
 
     @Nullable public static ItemDef item(ResourceLocation key, String contents) {
@@ -176,7 +177,7 @@ public final class ContentParser {
             JsonObject variant = entry.getValue().getAsJsonObject();
             variants.add(new ItemVariant(id, id.getPath(),
                     GsonHelper.getAsString(variant, "rarity", "common").trim().toLowerCase(Locale.ROOT),
-                    Math.max(1, Math.min(64, GsonHelper.getAsInt(variant, "maxSize", 64))),
+                    Mth.clamp(GsonHelper.getAsInt(variant, "maxSize", 64), 1, 64),
                     tags(key, id.getPath(), variant),
                     GsonHelper.getAsInt(variant, "healAmount", 0),
                     GsonHelper.getAsFloat(variant, "saturation", 0.0F),
@@ -198,6 +199,7 @@ public final class ContentParser {
                 GsonHelper.getAsString(json, "slot", "").trim().toLowerCase(Locale.ROOT),
                 GsonHelper.getAsString(json, "crop", "").trim(),
                 GsonHelper.getAsString(json, "soil", "minecraft:farmland").trim(),
+                Json.strings(json, "potionTypes"),
                 GsonHelper.getAsFloat(json, "attackSpeed", Float.NaN),
                 Math.max(0, GsonHelper.getAsInt(json, "cooldown", 0)));
     }
@@ -223,7 +225,7 @@ public final class ContentParser {
                 GsonHelper.getAsInt(json, "temperature", 300),
                 GsonHelper.getAsInt(json, "density", 1000),
                 GsonHelper.getAsInt(json, "viscosity", 1000),
-                Math.max(0, Math.min(15, GsonHelper.getAsInt(json, "luminosity", 0))),
+                Mth.clamp(GsonHelper.getAsInt(json, "luminosity", 0), 0, 15),
                 GsonHelper.getAsBoolean(json, "gaseous", false),
                 GsonHelper.getAsBoolean(json, "bucket", true),
                 json.has("block"),
@@ -269,14 +271,14 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Creative tab {} is empty, ignoring it", key);
             return null;
         }
-        return new TabDef(key, GsonHelper.getAsString(json, "label", key.getPath()).trim(), GsonHelper.getAsString(json, "icon", "").trim());
+        return new TabDef(key, GsonHelper.getAsString(json, "label", key.getPath()).trim(), GsonHelper.getAsString(json, "icon", "").trim(), Json.strings(json, "requires"));
     }
 
     @Nullable private static GrowthDef growth(JsonObject json) {
         if (!json.has("growth")) { return null; }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "growth");
         return new GrowthDef(Math.max(1, GsonHelper.getAsInt(entry, "maxHeight", 3)),
-                Math.max(1, Math.min(16, GsonHelper.getAsInt(entry, "stages", 16))),
+                Mth.clamp(GsonHelper.getAsInt(entry, "stages", 16), 1, 16),
                 Json.strings(entry, "soil"),
                 GsonHelper.getAsBoolean(entry, "needsWater", false),
                 Math.max(1, GsonHelper.getAsInt(entry, "waterRange", 1)),

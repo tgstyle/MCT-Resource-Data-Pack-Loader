@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.mixin;
+package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;

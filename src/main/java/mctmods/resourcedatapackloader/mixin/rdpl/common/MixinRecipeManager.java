@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.mixin;
+package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.recipe.FurnaceRecipes;
 import mctmods.resourcedatapackloader.recipe.RecipeLoading;

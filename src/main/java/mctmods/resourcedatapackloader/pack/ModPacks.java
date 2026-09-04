@@ -28,7 +28,7 @@ public final class ModPacks {
     private static final String MODS_TOML = "META-INF/mods.toml";
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private ModPacks() {}
 

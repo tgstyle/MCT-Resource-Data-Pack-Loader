@@ -1,8 +1,8 @@
-package mctmods.resourcedatapackloader.content.client;
+package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
-import mctmods.resourcedatapackloader.content.fluid.ContentFluids;
+import mctmods.resourcedatapackloader.content.block.ContentFluids;
 
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;

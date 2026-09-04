@@ -3,12 +3,13 @@ package mctmods.resourcedatapackloader.loot;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,19 +38,15 @@ public final class PlayerLoot {
     private static final String REPLACE = "replace";
     private static final Gson GSON = new GsonBuilder().create();
     private static final List<Entry> ENTRIES = new ArrayList<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private PlayerLoot() {}
 
     public static void reload() {
         ENTRIES.clear();
-        generation = PackManager.get().getGeneration();
+        GENERATION.stale();
         if (Config.data.playerLootOff()) { return; }
-        PackManager.get().forEach(PackManager.PLAYER_LOOT, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in player loot {}, ignoring it", key, ex); }
-        });
+        Json.eachFile(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
         if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
     }
 
@@ -74,7 +71,7 @@ public final class PlayerLoot {
 
     public static void onDrops(LivingDropsEvent event) {
         if (Config.data.playerLootOff()) { return; }
-        if (generation != PackManager.get().getGeneration()) { reload(); }
+        if (GENERATION.stale()) { reload(); }
         if (ENTRIES.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         ServerLevel level = player.serverLevel();
         boolean keeping = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || player.isSpectator();

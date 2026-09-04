@@ -4,13 +4,14 @@ import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
@@ -34,21 +35,16 @@ public final class FurnaceRecipes {
     private static final Gson GSON = new GsonBuilder().create();
     private static final List<Removal> REMOVALS = new ArrayList<>();
     private static final List<Addition> ADDITIONS = new ArrayList<>();
-    private static int generation = -1;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private FurnaceRecipes() {}
 
     public static void reload() {
-        if (generation == PackManager.get().getGeneration()) { return; }
-        generation = PackManager.get().getGeneration();
+        if (!GENERATION.stale()) { return; }
         REMOVALS.clear();
         ADDITIONS.clear();
         if (!Config.recipes.furnace()) { return; }
-        PackManager.get().forEach(PackManager.FURNACE, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
-            try { read(key, contents); }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in furnace file {}, ignoring it: {}", key, ex.getMessage()); }
-        });
+        Json.eachFile(PackManager.FURNACE, "furnace file", FurnaceRecipes::read);
     }
 
     private static void read(ResourceLocation key, String contents) {

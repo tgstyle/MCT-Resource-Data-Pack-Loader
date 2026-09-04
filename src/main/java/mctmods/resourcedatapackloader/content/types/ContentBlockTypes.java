@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -165,7 +166,7 @@ public final class ContentBlockTypes {
 
     private static BlockState base(BlockDef def) {
         ResourceLocation named = ResourceLocation.tryParse(def.modelBlock());
-        Block block = named == null ? null : ForgeRegistries.BLOCKS.getValue(named);
+        Block block = Registered.find(ForgeRegistries.BLOCKS, named);
         return block == null || block == Blocks.AIR ? Blocks.STONE.defaultBlockState() : block.defaultBlockState();
     }
 

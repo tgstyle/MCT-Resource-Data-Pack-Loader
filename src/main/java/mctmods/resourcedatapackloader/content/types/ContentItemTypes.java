@@ -6,9 +6,11 @@ import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
 import mctmods.resourcedatapackloader.content.item.ContentDrinkItem;
 import mctmods.resourcedatapackloader.content.item.ContentFoodItem;
+import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -34,8 +36,9 @@ public final class ContentItemTypes {
     public static final String TOOL = "tool";
     public static final String ARMOR = "armor";
     public static final String SEED = "seed";
-    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED);
-    private static final Set<String> LATER = Set.of("potion", "potion_bottle");
+    public static final String POTION = "potion";
+    public static final String POTION_BOTTLE = "potion_bottle";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE);
     private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
             "leggings", ArmorItem.Type.LEGGINGS, "legs", ArmorItem.Type.LEGGINGS, "boots", ArmorItem.Type.BOOTS, "feet", ArmorItem.Type.BOOTS);
 
@@ -43,10 +46,6 @@ public final class ContentItemTypes {
 
     @Nullable public static Item create(ItemDef def, ItemVariant variant) {
         String type = def.type();
-        if (LATER.contains(type)) {
-            ContentLog.LOGGER.error("Item {} is a '{}', which this line does not carry yet, skipping it", variant.id(), type);
-            return null;
-        }
         if (!KNOWN.contains(type)) {
             ContentLog.LOGGER.error("Unknown item type '{}' in {}, treating it as '{}'. Known types are {}", type, def.key(), BASIC, KNOWN);
             type = BASIC;
@@ -54,7 +53,8 @@ public final class ContentItemTypes {
         Item.Properties properties = new Item.Properties().stacksTo(variant.maxSize()).rarity(ContentTypes.rarity(variant.rarity(), variant.id()));
         return switch (type) {
             case FOOD -> new ContentFoodItem(def, properties.food(food(def, variant)));
-            case DRINK -> new ContentDrinkItem(def, variant, properties);
+            case DRINK, POTION -> new ContentDrinkItem(def, variant, properties);
+            case POTION_BOTTLE -> new ContentPotionItem(def, variant.id(), properties);
             case TOOL -> tool(def, variant, properties.stacksTo(1));
             case ARMOR -> armor(def, variant, properties.stacksTo(1));
             case SEED -> seed(def, variant, properties);
@@ -102,7 +102,7 @@ public final class ContentItemTypes {
     @Nullable private static Item seed(ItemDef def, ItemVariant variant, Item.Properties properties) {
         ResourceLocation named = ResourceLocation.tryParse(def.crop());
         ContentRegistry.BlockEntry made = named == null ? null : ContentRegistry.block(named);
-        Block crop = made != null ? made.block() : named == null ? null : ForgeRegistries.BLOCKS.getValue(named);
+        Block crop = made != null ? made.block() : Registered.find(ForgeRegistries.BLOCKS, named);
         if (crop == null) {
             ContentLog.LOGGER.error("Seed {} plants '{}', which is not a registered block, the item is skipped", variant.id(), def.crop());
             return null;

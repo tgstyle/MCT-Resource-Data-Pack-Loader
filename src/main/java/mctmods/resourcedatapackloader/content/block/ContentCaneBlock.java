@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -24,9 +24,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
@@ -46,15 +44,7 @@ import javax.annotation.Nonnull;
 
     public BlockDef getDef() { return def; }
 
-    public void resolveSoil() {
-        Set<Block> resolved = new HashSet<>();
-        for (String name : growth.soil()) {
-            ResourceLocation key = ResourceLocation.tryParse(name);
-            Block block = key == null ? null : ForgeRegistries.BLOCKS.getValue(key);
-            if (block != null) { resolved.add(block); }
-        }
-        soil = resolved;
-    }
+    public void resolveSoil() { soil = ContentRegistry.resolveSoil(growth.soil(), def.key()); }
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(AGE); }
 
