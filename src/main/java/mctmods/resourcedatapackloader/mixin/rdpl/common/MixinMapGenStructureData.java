@@ -11,16 +11,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.gen.structure.MapGenStructureData;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 @Mixin(MapGenStructureData.class) public abstract class MixinMapGenStructureData implements IPackingStructureData {
     @Shadow private NBTTagCompound tagCompound;
     @Unique private final List<byte[]> rdpl$packed = new ArrayList<>();
+    @Unique private final Map<Long, Integer> rdpl$packedAt = new HashMap<>();
 
     @Override public void rdpl$packFarStarts(int chunkX, int chunkZ, int keep) {
         NBTTagCompound far = null;
@@ -38,6 +43,7 @@ import java.util.List;
             if (far == null) { far = new NBTTagCompound(); }
             far.setTag(key, tagCompound.getTag(key));
             tagCompound.removeTag(key);
+            rdpl$packedAt.put(ChunkPos.asLong(x, z), rdpl$packed.size());
         }
         if (far == null) { return; }
         try {
@@ -46,6 +52,17 @@ import java.util.List;
             rdpl$packed.add(out.toByteArray());
         }
         catch (IOException impossible) { throw new RuntimeException("Packing structure starts away failed", impossible); }
+    }
+
+    @Override @Nullable public NBTTagCompound rdpl$recall(int chunkX, int chunkZ) {
+        Integer batch = rdpl$packedAt.get(ChunkPos.asLong(chunkX, chunkZ));
+        if (batch == null) { return null; }
+        try {
+            NBTTagCompound entries = CompressedStreamTools.readCompressed(new ByteArrayInputStream(rdpl$packed.get(batch)));
+            String key = "[" + chunkX + "," + chunkZ + "]";
+            return entries.hasKey(key, 10) ? entries.getCompoundTag(key) : null;
+        }
+        catch (IOException impossible) { throw new RuntimeException("Unpacking a structure start that was packed away failed", impossible); }
     }
 
     @Inject(method = "writeToNBT", at = @At("HEAD"), cancellable = true)

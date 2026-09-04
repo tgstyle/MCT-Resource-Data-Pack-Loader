@@ -110,8 +110,9 @@ public final class BeardPlaza {
                 at.setPos(x, ground, z);
                 if (!clip.isVecInside(at) || BeardPlots.underBuilding(start, piece, x, z)) { continue; }
                 if (BeardKeep.holds(x, ground, z)) { continue; }
-                if (world.getBlockState(GroundLevel.inWindow(world, at).down()).getMaterial().isLiquid()) { continue; }
-                BeardBlocks.clearAbove(world, at, x, z, ground + 1, ground + 4);
+                BlockPos top = GroundLevel.inWindow(world, at).down();
+                if (world.getBlockState(top).getMaterial().isLiquid()) { continue; }
+                BeardBlocks.clearAbove(world, at, x, z, ground + 1, Math.max(ground + 4, top.getY() + 2));
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);
                 at.setPos(x, ground, z);
                 IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()), true);

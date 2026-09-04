@@ -3737,7 +3737,7 @@ Der Pfad der Datei ist der Registrierungsschlüssel des Musters, den `villagePat
 
 Fünf Zeichen sind Rollen statt Blöcke und folgen damit dem, womit die Straße ohnehin schon gedeckt ist: `r` ist die Straßenoberfläche, `l` die Randlinie, `s` der Gehweg, `.` lässt den Block genau so, wie er war, und `c` ist reserviert und malt die Straßenoberfläche. Eine Rolle, deren Block das Pack nie gesetzt hat, fällt auf die Straßenoberfläche zurück, und jedes andere Zeichen wird in der `legend` nachgeschlagen und fällt ebenfalls auf die Straßenoberfläche zurück.
 
-Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kreuzung berechnet, dieselbe Welt malt ihre Kreuzungen also immer gleich.
+Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kreuzung berechnet, dieselbe Welt malt ihre Kreuzungen also immer gleich. Gemalt wird ein Muster nur dort, wo drei oder mehr Straßen zusammentreffen, an einer Kreuzung wie am Platz eines Brunnens; wo sich nur zwei Straßen treffen, entsteht eine schlichte Ecke.
 
 #### Dorfschmuck
 

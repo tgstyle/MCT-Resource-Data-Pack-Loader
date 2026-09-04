@@ -19,6 +19,7 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -99,7 +100,7 @@ public final class CityGrowth {
         int sea = world.getSeaLevel();
         int bulbs = 0;
         for (StructureComponent piece : components.toArray(new StructureComponent[0])) {
-            if (!(piece instanceof StructureVillagePieces.Path) || bulbWide(piece)) { continue; }
+            if (!(piece instanceof StructureVillagePieces.Path) || bulbWide(piece) || CitySeams.reserved(piece)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
             if (BeardRoads.roadNarrow(box, alongX)) { continue; }
@@ -111,17 +112,24 @@ public final class CityGrowth {
                 int endX = alongX ? end : center;
                 int endZ = alongX ? center : end;
                 if (metAtEnd(world, held, piece, alongX, end, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX)) { continue; }
+                if (CitySeams.facesNeighbor(world, components, alongX, end, dir, center)) {
+                    ContentLog.LOGGER.debug("The dead end at {}, {} faces a neighboring village's site, so it rolls no cul-de-sac and stays open for that village's streets", endX, endZ);
+                    continue;
+                }
                 if (SeededRandom.at(world, endX + dir, endZ + dir).nextInt(4) == 3) { continue; }
                 int least = (BeardRoads.pathFullWidth() + 1) / 2 + 1;
                 int found = 0;
                 int stem = 0;
                 boolean steep = false;
+                List<StructureComponent> yielding = null;
                 for (int r = (wide - 1) / 2; r >= least && found == 0; r--) {
                     for (int out = 1; out <= 7; out += 3) {
                         int spot = end + dir * (out + r + 1);
                         int discX = alongX ? spot : center;
                         int discZ = alongX ? center : spot;
                         if (!clearFor(world, held, piece, discX, discZ, r)) { continue; }
+                        yielding = yielding(world, held, piece, court(box, alongX, end, dir, outward, center, r, out));
+                        if (yielding == null) { continue; }
                         if (!seated(world, piece, alongX, end, discX, discZ, r)) {
                             steep = true;
                             continue;
@@ -136,12 +144,7 @@ public final class CityGrowth {
                     continue;
                 }
                 int half = found;
-                int span = stem + 2 * half + 1;
-                int lo = end + dir * (outward ? 1 : span);
-                int hi = end + dir * (outward ? span : 1);
-                StructureBoundingBox bulb = new StructureBoundingBox(
-                        alongX ? Math.min(lo, hi) : center - half, box.minY, alongX ? center - half : Math.min(lo, hi),
-                        alongX ? Math.max(lo, hi) : center + half, box.maxY, alongX ? center + half : Math.max(lo, hi));
+                StructureBoundingBox bulb = court(box, alongX, end, dir, outward, center, half, stem);
                 int heart = end + dir * (stem + half + 1);
                 int discX = alongX ? heart : center;
                 int discZ = alongX ? center : heart;
@@ -157,6 +160,7 @@ public final class CityGrowth {
                     }
                 }
                 if (!dry) { continue; }
+                for (StructureComponent plot : yielding) { makeWay(world, held, plot, bulb); }
                 EnumFacing facing = alongX ? (outward ? EnumFacing.EAST : EnumFacing.WEST) : (outward ? EnumFacing.SOUTH : EnumFacing.NORTH);
                 StructureVillagePieces.Path bulbPiece = new StructureVillagePieces.Path(startPiece, 0, rand, bulb, facing);
                 components.add(bulbPiece);
@@ -321,6 +325,66 @@ public final class CityGrowth {
         return false;
     }
 
+    private static StructureBoundingBox court(StructureBoundingBox box, boolean alongX, int end, int dir, boolean outward, int center, int half, int stem) {
+        int span = stem + 2 * half + 1;
+        int lo = end + dir * (outward ? 1 : span);
+        int hi = end + dir * (outward ? span : 1);
+        return new StructureBoundingBox(
+                alongX ? Math.min(lo, hi) : center - half, box.minY, alongX ? center - half : Math.min(lo, hi),
+                alongX ? Math.max(lo, hi) : center + half, box.maxY, alongX ? center + half : Math.max(lo, hi));
+    }
+
+    @Nullable private static List<StructureComponent> yielding(World world, StructureStart held, StructureComponent piece, StructureBoundingBox bulb) {
+        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
+            if (village == held) { continue; }
+            for (StructureComponent other : village.getComponents()) {
+                if (other.getBoundingBox().intersectsWith(bulb.minX, bulb.minZ, bulb.maxX, bulb.maxZ)) { return null; }
+            }
+        }
+        List<StructureComponent> plots = new ArrayList<>();
+        for (StructureComponent other : held.getComponents()) {
+            if (other == piece || !other.getBoundingBox().intersectsWith(bulb.minX, bulb.minZ, bulb.maxX, bulb.maxZ)) { continue; }
+            if (other instanceof StructureVillagePieces.Well) { return null; }
+            if (other instanceof StructureVillagePieces.Path) {
+                if (BeardRoads.roadNarrow(other.getBoundingBox(), BeardPlots.roadAlongX(other))) { continue; }
+                return null;
+            }
+            plots.add(other);
+        }
+        return plots;
+    }
+
+    private static void makeWay(World world, StructureStart held, StructureComponent plot, StructureBoundingBox bulb) {
+        StructureBoundingBox box = plot.getBoundingBox();
+        int[][] pushes = {
+                { bulb.maxX + 1 - box.minX, 0 }, { bulb.minX - 1 - box.maxX, 0 },
+                { 0, bulb.maxZ + 1 - box.minZ }, { 0, bulb.minZ - 1 - box.maxZ } };
+        Arrays.sort(pushes, (a, b) -> Integer.compare(Math.abs(a[0]) + Math.abs(a[1]), Math.abs(b[0]) + Math.abs(b[1])));
+        for (int[] push : pushes) {
+            StructureBoundingBox tried = new StructureBoundingBox(box);
+            tried.offset(push[0], 0, push[1]);
+            if (!standsFree(world, held, plot, tried)) { continue; }
+            box.offset(push[0], 0, push[1]);
+            ContentLog.LOGGER.debug("{} at {}, {} slides {}, {} out of the cul-de-sac at {}, {}", plot.getClass().getSimpleName(), box.minX, box.minZ, push[0], push[1], bulb.minX, bulb.minZ);
+            return;
+        }
+        held.getComponents().remove(plot);
+        ContentLog.LOGGER.debug("{} at {}, {} makes way for the cul-de-sac at {}, {}, having no room to slide out of it", plot.getClass().getSimpleName(), box.minX, box.minZ, bulb.minX, bulb.minZ);
+    }
+
+    private static boolean standsFree(World world, StructureStart held, StructureComponent plot, StructureBoundingBox tried) {
+        for (StructureComponent other : held.getComponents()) {
+            if (other != plot && other.getBoundingBox().intersectsWith(tried.minX, tried.minZ, tried.maxX, tried.maxZ)) { return false; }
+        }
+        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
+            if (village == held) { continue; }
+            for (StructureComponent other : village.getComponents()) {
+                if (other.getBoundingBox().intersectsWith(tried.minX, tried.minZ, tried.maxX, tried.maxZ)) { return false; }
+            }
+        }
+        return true;
+    }
+
     public static boolean bulbWide(StructureComponent piece) {
         StructureBoundingBox box = piece.getBoundingBox();
         return Math.min(box.maxX - box.minX, box.maxZ - box.minZ) + 1 > BeardRoads.pathFullWidth();
@@ -432,12 +496,13 @@ public final class CityGrowth {
                 return false;
             }
         }
-        int margin = 2 * ContentVillages.largestPlot();
-        StructureBoundingBox held = new StructureBoundingBox(square.minX - margin, 0, square.minZ - margin, square.maxX + margin, 255, square.maxZ + margin);
         for (StructureStart neighbor : ContentStructureSearch.villageStarts(world)) {
-            if (neighbor.getBoundingBox().intersectsWith(held)) {
-                settledNeighbored++;
-                return false;
+            if (neighbor.getComponents() == components || !neighbor.getBoundingBox().intersectsWith(square)) { continue; }
+            for (StructureComponent other : neighbor.getComponents()) {
+                if (other.getBoundingBox().intersectsWith(square.minX, square.minZ, square.maxX, square.maxZ)) {
+                    settledNeighbored++;
+                    return false;
+                }
             }
         }
         List<StructureVillagePieces.PieceWeight> weights = StructureVillagePieces.getStructureVillageWeightedPieceList(rand, sizeFor);
@@ -525,8 +590,10 @@ public final class CityGrowth {
         return built;
     }
 
-    private static boolean connected(List<StructureComponent> components, int mark) {
+    private static boolean connected(List<StructureComponent> own, int mark) {
+        List<StructureComponent> components = ContentBeard.everyone(own);
         int count = components.size();
+        int standing = own.size();
         int reach = ContentBeard.plazaReach();
         StructureBoundingBox[] boxes = new StructureBoundingBox[count];
         for (int i = 0; i < count; i++) {
@@ -550,7 +617,7 @@ public final class CityGrowth {
                 if (seen[i] || boxes[i] == null) { continue; }
                 boolean touching = boxes[at].intersectsWith(boxes[i].minX - 1, boxes[i].minZ - 1, boxes[i].maxX + 1, boxes[i].maxZ + 1);
                 if (!touching && !ContentBeard.joins(components, components.get(at), components.get(i))) { continue; }
-                if (i < mark) { return true; }
+                if (i < mark || i >= standing) { return true; }
                 seen[i] = true;
                 queue.add(i);
             }

@@ -12,9 +12,11 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureMineshaftPieces;
 import net.minecraft.world.gen.structure.StructureStrongholdPieces;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -22,6 +24,7 @@ public final class BeardKeep {
     private static final int REACH = 3;
     private static final int CROWDED = 400000;
     private static final Set<Long> HELD = new LinkedHashSet<>();
+    private static final Map<Long, Set<Long>> LAMPS = new HashMap<>();
     @Nullable private static StructureBoundingBox watched = null;
     @Nullable private static String watchedName = null;
     private static IBlockState[] before = null;
@@ -135,14 +138,10 @@ public final class BeardKeep {
         return highest;
     }
 
-    public static void learn(World world) {
-        StructureBoundingBox box = watched;
-        String name = watchedName;
+    private static Set<Long> changed(World world) {
         IBlockState[] seen = before;
-        forget();
-        if (box == null || seen == null) { return; }
         Set<Long> mine = new HashSet<>();
-        int found = 0;
+        if (seen == null) { return mine; }
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int index = 0;
         for (int x = fromX; index < seen.length; x++) {
@@ -153,13 +152,45 @@ public final class BeardKeep {
                     IBlockState now = world.getBlockState(at);
                     if (now == was || now.getBlock() == Blocks.AIR) { continue; }
                     mine.add(packed(x, y, z));
-                    found++;
                 }
             }
         }
-        if (mine.isEmpty()) { return; }
+        return mine;
+    }
+
+    public static void learnLamp(World world) {
+        Set<Long> mine = changed(world);
+        forget();
+        holdLamp(mine);
+    }
+
+    public static void holdLamp(Set<Long> cells) {
+        if (cells.isEmpty()) { return; }
+        hold(cells);
+        for (long cell : cells) { LAMPS.put(cell & ~((long) 0xFFF << 26), cells); }
+    }
+
+    @Nullable public static Set<Long> takeLamp(int x, int z) {
+        Set<Long> cells = LAMPS.remove(packed(x, 0, z));
+        if (cells == null) { return null; }
+        for (long cell : cells) {
+            LAMPS.remove(cell & ~((long) 0xFFF << 26));
+            HELD.remove(cell);
+        }
+        return cells;
+    }
+
+    public static int[] unpacked(long key) { return new int[] { (int) (key >> 38), (int) ((key >> 26) & 0xFFF), (int) (key << 38 >> 38) }; }
+
+    public static void learn(World world) {
+        StructureBoundingBox box = watched;
+        String name = watchedName;
+        Set<Long> mine = changed(world);
+        forget();
+        if (box == null || mine.isEmpty()) { return; }
+        int found = mine.size();
         hold(mine);
-        if (found > 0 && ContentLog.LOGGER.debugEnabled()) {
+        if (ContentLog.LOGGER.debugEnabled()) {
             int outside = 0;
             int leastY = Integer.MAX_VALUE;
             int mostY = Integer.MIN_VALUE;
@@ -179,7 +210,7 @@ public final class BeardKeep {
         }
     }
 
-    private static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFF); }
+    public static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFF); }
 
     public static boolean holds(int x, int y, int z) { return HELD.contains(packed(x, y, z)); }
 

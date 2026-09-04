@@ -3,10 +3,12 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.interfaces.IMapGenVillageHold;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
+import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.BlockPos;
@@ -34,9 +36,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (!CityLayout.lay(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand())) { CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size); }
         BeardRoads.pierOut(world, cir.getReturnValue());
         ContentBeard.attachAll(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
+        CitySeams.tie(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
         CityGrowth.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
         CityGrowth.alleyFill(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand());
         CityGrowth.roadsFirst(cir.getReturnValue());
+        BeardSite.gradeRoads(world, cir.getReturnValue(), "once every road of the village is laid");
         ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
     }
 

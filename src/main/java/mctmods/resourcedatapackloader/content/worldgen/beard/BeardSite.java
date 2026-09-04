@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class BeardSite {
+    private static final int GRADE_PASSES = 4;
+
     private BeardSite() {}
 
     public static long packedChunk(int chunkX, int chunkZ) { return ((long) chunkX << 32) | (chunkZ & 0xFFFFFFFFL); }
@@ -278,22 +280,43 @@ public final class BeardSite {
         List<StructureComponent> pieces = start.getComponents();
         List<StructureComponent> held = ContentBeard.laid();
         ContentBeard.laying(pieces);
-        int stored = 0;
         try {
             for (StructureComponent piece : pieces) { frontRoad(pieces, piece); }
             for (StructureComponent piece : pieces) { ContentBeard.attach(start, piece); }
-            for (StructureComponent piece : pieces) {
-                if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
-                StructureBoundingBox box = piece.getBoundingBox();
-                boolean alongX = BeardPlots.roadAlongX(piece);
-                BeardRoads.Grade grade = BeardRoads.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
-                if (grade == null) { continue; }
-                ((RoadLayout) piece).rdpl$layout(grade);
-                stored++;
+        }
+        finally { ContentBeard.laying(held); }
+        gradeRoads(world, start, "at layout time");
+    }
+
+    public static void gradeRoads(World world, StructureStart start, String when) {
+        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        List<StructureComponent> pieces = start.getComponents();
+        List<StructureComponent> held = ContentBeard.laid();
+        ContentBeard.laying(pieces);
+        int stored = 0;
+        int passes = 0;
+        try {
+            for (StructureComponent piece : pieces) { if (piece instanceof RoadLayout) { ((RoadLayout) piece).rdpl$layout(null); } }
+            boolean settled = false;
+            while (!settled && passes < GRADE_PASSES) {
+                passes++;
+                settled = true;
+                stored = 0;
+                for (StructureComponent piece : pieces) {
+                    if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof RoadLayout)) { continue; }
+                    StructureBoundingBox box = piece.getBoundingBox();
+                    boolean alongX = BeardPlots.roadAlongX(piece);
+                    BeardRoads.Grade grade = BeardRoads.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
+                    if (grade == null) { continue; }
+                    BeardRoads.Grade before = ((RoadLayout) piece).rdpl$layout();
+                    if (before == null || !before.sameAs(grade)) { settled = false; }
+                    ((RoadLayout) piece).rdpl$layout(grade);
+                    stored++;
+                }
             }
         }
         finally { ContentBeard.laying(held); }
-        if (stored > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Attached the junctions and stored the graded profile of {} road(s) of the village at {}, {} at layout time", stored, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
+        if (stored > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Stored the graded profile of {} road(s) of the village at {}, {} {}, settled after {} pass(es)", stored, start.getBoundingBox().minX, start.getBoundingBox().minZ, when, passes); }
     }
 
     private static void frontRoad(List<StructureComponent> pieces, StructureComponent piece) {

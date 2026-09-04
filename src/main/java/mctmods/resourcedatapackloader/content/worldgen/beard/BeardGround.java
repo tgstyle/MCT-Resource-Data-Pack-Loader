@@ -291,6 +291,18 @@ public final class BeardGround {
     }
 
     private static int takeDownLamp(World world, StructureBoundingBox reach, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        Set<Long> lamp = BeardKeep.takeLamp(x, z);
+        if (lamp != null) {
+            int taken = 0;
+            for (long cell : lamp) {
+                int[] spot = BeardKeep.unpacked(cell);
+                at.setPos(spot[0], spot[1], spot[2]);
+                if (!reach.isVecInside(at) || !world.isBlockLoaded(at)) { continue; }
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                taken++;
+            }
+            return taken;
+        }
         IBlockState post = ContentBeard.lampBlock();
         if (post.getBlock() == Blocks.AIR) { return 0; }
         IBlockState head = ContentBeard.lampTop();

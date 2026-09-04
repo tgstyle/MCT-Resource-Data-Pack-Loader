@@ -122,7 +122,14 @@ public final class BeardPlots {
         return box.maxX - box.minX >= box.maxZ - box.minZ;
     }
 
-    public static boolean roadAlongX(StructureBoundingBox box) { return box.maxX - box.minX >= box.maxZ - box.minZ; }
+    public static boolean roadAlongX(StructureBoundingBox box) {
+        int spanX = box.maxX - box.minX + 1;
+        int spanZ = box.maxZ - box.minZ + 1;
+        int full = BeardRoads.pathFullWidth();
+        if (spanX == full && spanZ != full) { return false; }
+        if (spanZ == full && spanX != full) { return true; }
+        return spanX >= spanZ;
+    }
 
     public static Predicate<BlockPos> outside(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean inOwn, int top) {
         return spot -> world.isChunkGeneratedAt(spot.getX() >> 4, spot.getZ() >> 4)

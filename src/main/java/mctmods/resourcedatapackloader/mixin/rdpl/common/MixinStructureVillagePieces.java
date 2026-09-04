@@ -78,7 +78,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         StructureBoundingBox box = placed.getBoundingBox();
         structureComponents.remove(placed);
         int sink = ContentBeard.footingSink(placed);
-        int misfit = ContentBeard.footingMisfit(box, structureComponents, sink);
+        int misfit = ContentBeard.taken(structureComponents, box) ? Integer.MAX_VALUE : ContentBeard.footingMisfit(box, structureComponents, sink);
         if (misfit == 0) {
             structureComponents.add(placed);
             return;
@@ -94,7 +94,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
             StructureBoundingBox tried = new StructureBoundingBox(box);
             tried.offset(alongX * slide, 0, (1 - alongX) * slide);
             if (!(tried.minX > well.maxX + reach || tried.maxX < well.minX - reach || tried.minZ > well.maxZ + reach || tried.maxZ < well.minZ - reach)) { continue; }
-            if (StructureComponent.findIntersecting(structureComponents, tried) != null) { continue; }
+            if (StructureComponent.findIntersecting(structureComponents, tried) != null || ContentBeard.taken(structureComponents, tried)) { continue; }
             int triedMisfit = ContentBeard.footingMisfit(tried, structureComponents, sink);
             if (triedMisfit < bestMisfit) {
                 bestMisfit = triedMisfit;
@@ -103,7 +103,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
             }
         }
         if (bestMisfit == Integer.MAX_VALUE) {
-            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than {} block(s) and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, 2 + sink);
+            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than {} block(s) or on another village's piece, and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, 2 + sink);
             cir.setReturnValue(null);
             return;
         }

@@ -3737,7 +3737,7 @@ The file's path is the design's registry key, which `villagePathIntersects` then
 
 Five characters are roles rather than blocks, so they follow whatever the road is already dressed in: `r` is the road surface, `l` the edge line, `s` the sidewalk, `.` leaves the block exactly as it was, and `c` is reserved and paints the road surface. A role whose block the pack never set falls back to the road surface, and any other character is looked up in the `legend`, falling back to the road surface as well.
 
-Which design a junction gets is worked out from the world seed and the junction's own position, so the same world always paints the same junctions.
+Which design a junction gets is worked out from the world seed and the junction's own position, so the same world always paints the same junctions. A design is painted only where three or more streets meet, at a junction or at a well's plaza; two streets meeting render as a plain elbow.
 
 #### Village decoration
 
