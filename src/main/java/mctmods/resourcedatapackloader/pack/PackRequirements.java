@@ -7,6 +7,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLPaths;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -32,6 +34,10 @@ public final class PackRequirements {
         return Collections.unmodifiableSet(WANTED);
     }
 
+    public static boolean modLoaded(String modid) { return ModList.get().isLoaded(modid); }
+
+    public static Path gameDirectory() { return FMLPaths.GAMEDIR.get(); }
+
     private static void scan() {
         scanned = true;
         PackManager manager = PackManager.get();
@@ -39,7 +45,7 @@ public final class PackRequirements {
         Set<String> found = new LinkedHashSet<>();
         for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, (namespace, path, contents) -> collect(contents, found)); }
         for (String modid : found) {
-            if (ModList.get().isLoaded(modid) || manager.provides(modid)) { continue; }
+            if (modLoaded(modid) || manager.provides(modid)) { continue; }
             WANTED.add(modid);
         }
     }

@@ -32,7 +32,7 @@ public final class RegistryRemaps {
     public static void reload() {
         REMAPS.clear();
         generation = PackManager.get().getGeneration();
-        if (!Config.data.registryRemaps()) { return; }
+        if (Config.data.registryRemapsOff()) { return; }
         int[] count = new int[1];
         PackManager.get().forEach(PackManager.REGISTRY_REMAP, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
@@ -74,7 +74,7 @@ public final class RegistryRemaps {
     }
 
     public static void applyAliases() {
-        if (!Config.data.registryRemaps()) { return; }
+        if (Config.data.registryRemapsOff()) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
         for (Map.Entry<ResourceLocation, Map<ResourceLocation, ResourceLocation>> entry : REMAPS.entrySet()) {
             Registry<?> registry = BuiltInRegistries.REGISTRY.get(entry.getKey());

@@ -7,6 +7,7 @@ import java.util.List;
 
 public final class Config {
     public static final ModConfigSpec SPEC;
+    public static final Content content;
     public static final Packs packs;
     public static final Recipes recipes;
     public static final Data data;
@@ -14,6 +15,7 @@ public final class Config {
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+        content = new Content(builder);
         packs = new Packs(builder);
         recipes = new Recipes(builder);
         data = new Data(builder);
@@ -24,6 +26,24 @@ public final class Config {
     private Config() {}
 
     public static boolean loaded() { return SPEC.isLoaded(); }
+
+    public static boolean contentOff() { return !content.load() || content.vanillaClients(); }
+
+    public static final class Content {
+        private final ModConfigSpec.BooleanValue load;
+        private final ModConfigSpec.BooleanValue vanillaClients;
+
+        private Content(ModConfigSpec.Builder builder) {
+            builder.comment("Blocks, items, fluids and everything else packs define").push("content");
+            load = builder.comment("Register the blocks, items, fluids, materials and creative tabs that packs define. Requires a restart [Default=true]").worldRestart().define("load", true);
+            vanillaClients = builder.comment("Serve plain vanilla clients: nothing from any pack is registered, no blocks, items, fluids or creative tabs, so a client without the mod can join. Everything that lives on the server alone still applies. Requires a restart [Default=false]").worldRestart().define("vanillaClients", false);
+            builder.pop();
+        }
+
+        public boolean load() { return loaded() ? load.get() : ConfigCore.flag("content.load", true); }
+
+        public boolean vanillaClients() { return loaded() ? vanillaClients.get() : ConfigCore.flag("content.vanillaClients", false); }
+    }
 
     public static final class Packs {
         private final ModConfigSpec.ConfigValue<String> rootDirectory;
@@ -118,11 +138,11 @@ public final class Config {
             builder.pop();
         }
 
-        public boolean lootInjections() { return lootInjections.get(); }
+        public boolean lootInjectionsOff() { return !lootInjections.get(); }
 
-        public boolean playerLoot() { return playerLoot.get(); }
+        public boolean playerLootOff() { return !playerLoot.get(); }
 
-        public boolean registryRemaps() { return registryRemaps.get(); }
+        public boolean registryRemapsOff() { return !registryRemaps.get(); }
     }
 
     public static final class Worldgen {

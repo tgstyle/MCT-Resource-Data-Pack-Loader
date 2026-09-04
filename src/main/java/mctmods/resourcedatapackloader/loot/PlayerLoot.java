@@ -46,7 +46,7 @@ public final class PlayerLoot {
     public static void reload() {
         ENTRIES.clear();
         generation = PackManager.get().getGeneration();
-        if (!Config.data.playerLoot()) { return; }
+        if (Config.data.playerLootOff()) { return; }
         PackManager.get().forEach(PackManager.PLAYER_LOOT, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
             try { read(key, contents); }
@@ -75,7 +75,7 @@ public final class PlayerLoot {
     }
 
     public static void onDrops(LivingDropsEvent event) {
-        if (!Config.data.playerLoot()) { return; }
+        if (Config.data.playerLootOff()) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
         if (ENTRIES.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         ServerLevel level = player.serverLevel();

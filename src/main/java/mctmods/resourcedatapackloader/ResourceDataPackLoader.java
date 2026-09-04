@@ -2,6 +2,9 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
+import mctmods.resourcedatapackloader.content.ContentEvents;
+import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.client.ContentClient;
 import mctmods.resourcedatapackloader.loot.LootFunctions;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
@@ -41,6 +44,12 @@ import java.util.Set;
     public ResourceDataPackLoader(IEventBus modBus, ModContainer container) {
         Lang.load();
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        PackFinder.ensureScanned();
+        ContentRegistry.load();
+        modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
+        modBus.addListener(ContentEvents::onBuildTab);
+        NeoForge.EVENT_BUS.addListener(ContentEvents::onBreak);
+        NeoForge.EVENT_BUS.addListener(ContentEvents::onDetonate);
         modBus.addListener(this::onConfig);
         modBus.addListener(this::onCommonSetup);
         modBus.addListener(this::onAddPackFinders);
@@ -51,7 +60,10 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::beforeServerStart);
         NeoForge.EVENT_BUS.addListener(this::onServerStopped);
-        if (FMLEnvironment.dist == Dist.CLIENT) { NeoForge.EVENT_BUS.addListener(ClientCommands::register); }
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            NeoForge.EVENT_BUS.addListener(ClientCommands::register);
+            ContentClient.register(modBus);
+        }
     }
 
     private void onConfig(ModConfigEvent event) {

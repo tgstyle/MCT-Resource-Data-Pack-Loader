@@ -42,8 +42,19 @@ public final class PackFinder implements RepositorySource {
         ensureScanned();
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
+        if (!GeneratedResources.isEmpty()) { offerGenerated(out); }
         if (manager.hasTier(false)) { offer(out, false); }
         if (manager.hasTier(true)) { offer(out, true); }
+    }
+
+    private void offerGenerated(Consumer<Pack> out) {
+        PackLocationInfo location = new PackLocationInfo(GeneratedPack.ID, Component.literal(GeneratedPack.ID), SOURCE, Optional.empty());
+        Pack pack = Pack.readMetaAndCreate(location, GeneratedPack.supplier(type), type, new PackSelectionConfig(true, Pack.Position.BOTTOM, true));
+        if (pack == null) {
+            ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", GeneratedPack.ID, type.getDirectory());
+            return;
+        }
+        out.accept(pack);
     }
 
     private void offer(Consumer<Pack> out, boolean overriding) {
@@ -59,16 +70,20 @@ public final class PackFinder implements RepositorySource {
     }
 
     public static List<Pack> seat(List<Pack> selected) {
+        Pack generated = null;
         Pack normal = null;
         Pack overriding = null;
         List<Pack> seated = new ArrayList<>(selected.size());
         for (Pack pack : selected) {
-            if (RDPLResourcePack.ID.equals(pack.getId())) { normal = pack; }
+            if (GeneratedPack.ID.equals(pack.getId())) { generated = pack; }
+            else if (RDPLResourcePack.ID.equals(pack.getId())) { normal = pack; }
             else if (RDPLResourcePack.ID_OVERRIDING.equals(pack.getId())) { overriding = pack; }
             else { seated.add(pack); }
         }
-        if (normal == null && overriding == null) { return selected; }
-        if (normal != null) { seated.add(lastBase(seated) + 1, normal); }
+        if (generated == null && normal == null && overriding == null) { return selected; }
+        int at = lastBase(seated) + 1;
+        if (generated != null) { seated.add(at++, generated); }
+        if (normal != null) { seated.add(at, normal); }
         if (overriding != null) { seated.add(overriding); }
         return ImmutableList.copyOf(seated);
     }
