@@ -33,7 +33,7 @@ public final class RegistryRemaps {
     public static void reload() {
         REMAPS.clear();
         generation = PackManager.get().getGeneration();
-        if (!Config.data.registryRemaps()) { return; }
+        if (Config.data.registryRemapsOff()) { return; }
         int[] count = new int[1];
         PackManager.get().forEach(PackManager.REGISTRY_REMAP, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
@@ -75,7 +75,7 @@ public final class RegistryRemaps {
     }
 
     @SuppressWarnings("unchecked") public static void onMissingMappings(MissingMappingsEvent event) {
-        if (!Config.data.registryRemaps()) { return; }
+        if (Config.data.registryRemapsOff()) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
         Map<ResourceLocation, ResourceLocation> target = REMAPS.get(event.getKey().location());
         if (target == null) { return; }

@@ -68,6 +68,8 @@ public final class PackManager {
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String PLAYER_LOOT = "player_loot";
     public static final String REGISTRY_REMAP = "registry_remap";
+    public static final String MATERIALS = "materials";
+    public static final String TABS = "tabs";
     private static final String README = "readme.txt";
     private static final String README_BASE = "/assets/resourcedatapackloader/readme";
     private static final String README_FALLBACK = README_BASE + "_en_us.txt";

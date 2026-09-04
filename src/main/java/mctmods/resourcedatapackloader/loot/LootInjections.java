@@ -37,7 +37,7 @@ public final class LootInjections {
     public static void reload() {
         BY_TABLE.clear();
         generation = PackManager.get().getGeneration();
-        if (!Config.data.lootInjections()) { return; }
+        if (Config.data.lootInjectionsOff()) { return; }
         int[] count = new int[1];
         PackManager.get().forEach(PackManager.LOOT_INJECTIONS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
@@ -70,7 +70,7 @@ public final class LootInjections {
     }
 
     public static void onLootTableLoad(LootTableLoadEvent event) {
-        if (!Config.data.lootInjections()) { return; }
+        if (Config.data.lootInjectionsOff()) { return; }
         if (generation != PackManager.get().getGeneration()) { reload(); }
         List<JsonElement> pools = BY_TABLE.get(event.getName());
         LootTable table = event.getTable();

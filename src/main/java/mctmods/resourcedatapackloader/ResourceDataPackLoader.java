@@ -2,6 +2,9 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
+import mctmods.resourcedatapackloader.content.ContentEvents;
+import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.client.ContentClient;
 import mctmods.resourcedatapackloader.loot.LootFunctions;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
@@ -42,6 +45,12 @@ import java.util.Set;
         Lang.load();
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         IEventBus modBus = context.getModEventBus();
+        PackFinder.ensureScanned();
+        ContentRegistry.load();
+        modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
+        modBus.addListener(ContentEvents::onBuildTab);
+        MinecraftForge.EVENT_BUS.addListener(ContentEvents::onBreak);
+        MinecraftForge.EVENT_BUS.addListener(ContentEvents::onDetonate);
         modBus.addListener(this::onConfig);
         modBus.addListener(this::onCommonSetup);
         modBus.addListener(this::onAddPackFinders);
@@ -53,7 +62,10 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(this::beforeServerStart);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStopped);
-        if (FMLEnvironment.dist == Dist.CLIENT) { MinecraftForge.EVENT_BUS.addListener(ClientCommands::register); }
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            MinecraftForge.EVENT_BUS.addListener(ClientCommands::register);
+            ContentClient.register(modBus);
+        }
     }
 
     private void onConfig(ModConfigEvent event) {

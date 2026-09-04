@@ -1,0 +1,45 @@
+package mctmods.resourcedatapackloader.content.block;
+
+import mctmods.resourcedatapackloader.content.def.BlockDef;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+@SuppressWarnings("deprecation") public class ContentBlock extends Block {
+    private final BlockDef def;
+    @Nullable private final VoxelShape shape;
+
+    public ContentBlock(BlockDef def, Properties properties) {
+        super(properties);
+        this.def = def;
+        double[] bounds = def.bounds();
+        this.shape = bounds == null ? null : Block.box(bounds[0] * 16.0D, bounds[1] * 16.0D, bounds[2] * 16.0D, bounds[3] * 16.0D, bounds[4] * 16.0D, bounds[5] * 16.0D);
+    }
+
+    public BlockDef getDef() { return def; }
+
+    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
+        return shape == null ? super.getShape(state, level, pos, context) : shape;
+    }
+
+    @Override public int getExpDrop(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull RandomSource random, @Nonnull BlockPos pos, int fortune, int silkTouch) {
+        if (silkTouch > 0 || !def.dropsExperience()) { return 0; }
+        if (def.expDropMax() <= def.expDropMin()) { return Math.max(0, def.expDropMin()); }
+        return def.expDropMin() + random.nextInt(def.expDropMax() - def.expDropMin() + 1);
+    }
+
+    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
+
+    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
+
+    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
+}
