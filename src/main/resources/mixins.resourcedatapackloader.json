@@ -4,7 +4,9 @@
     "package": "mctmods.resourcedatapackloader.mixin",
     "compatibilityLevel": "JAVA_17",
     "refmap": "mixins.resourcedatapackloader.refmap.json",
-    "mixins": [],
+    "mixins": [
+        "MixinPackRepository"
+    ],
     "client": [],
     "server": [],
     "injectors": {
