@@ -96,6 +96,7 @@ public final class EntityVariantDef {
     public final float gustPower;
     public final int threatLeast;
     public final int threatHostile;
+    public final List<TaskDef> tasks;
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, List<PickDef> becomes,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
@@ -106,7 +107,7 @@ public final class EntityVariantDef {
                             boolean hostile, boolean passive, boolean ignoresSpawnRules, List<String> targets, boolean persistent, boolean silent,
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
                             boolean explodes, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower, float throwArc, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
-                            List<String> biomes, List<String> biomeTypes, List<String> requires, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, int threatLeast, int threatHostile) {
+                            List<String> biomes, List<String> biomeTypes, List<String> requires, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, int threatLeast, int threatHostile, List<TaskDef> tasks) {
         this.registryName = registryName;
         this.base = base;
         this.name = name;
@@ -195,5 +196,6 @@ public final class EntityVariantDef {
         this.gustPower = gustPower;
         this.threatLeast = threatLeast;
         this.threatHostile = threatHostile;
+        this.tasks = tasks;
     }
 }

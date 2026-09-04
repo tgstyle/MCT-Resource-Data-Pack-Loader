@@ -1914,6 +1914,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `trackVelocity` | no | boolean | `true` | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no | int | `3` | How often, in ticks |
 | `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+| `tasks` | no | list | none | Any task the game has, added to the variant by name at a priority of your choosing, or taken away from what its base came with. The list below |
 
 **A creature with a shelf life.** `despawnAfter` counts in seconds from the moment a creature first enters the world and takes it away quietly when the time is up: no death, no drops, no sound, exactly as if it had wandered off and been cleared. The clock is written into the creature itself, so it keeps running across a save and reload rather than starting over each time a chunk comes back.
 
@@ -1951,6 +1952,102 @@ The count is written into the creature, so it does not refill because a chunk wa
 `explosionFuse` remains the fuse on the thrown TNT, and stands in for either timer you leave out, so a variant written before these keys behaves exactly as it did.
 
 How the throw itself flies is `throwPower` and `throwArc`. The first is a multiplier on the shove, and since the shove already grows with distance, raising it lengthens the reach without changing how long the throw hangs in the air. The second is the lift, and it changes the shape: high and it lobs over a wall and takes its time, near zero and it is hurled flat and lands almost at once, below zero and it is thrown down at something beneath. Both leave the fuse alone, so a lobbed charge and a flat one go off the same number of seconds after leaving the hand, which is what decides whether one bursts overhead or lands first and waits. How far it will throw from is its `followRange`, and it closes as usual once you are nearer than three blocks, so it is dangerous at range and ordinary in your face.
+
+**Any task the game has.** The keys above are RDPL's own behaviors. `tasks` reaches past them to every task vanilla itself uses, on any base: an entry is an object naming the `task` and its `priority`, plus whatever that task reads; a name after a `-` drops every task of that kind the base came with. Priorities run 0 first, and vanilla keeps its own between 1 and 8, so a task at 0 wins over everything the base does and one at 9 only runs when nothing else wants to.
+
+```json
+{
+  "entity": "minecraft:cow",
+  "tasks": [
+    "-wander",
+    { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
+    { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+  ]
+}
+```
+
+The list is applied after `hostile`, `passive` and the behaviors above have done their work, so it has the last word. Tasks that move the body lock each other out: one only runs when nothing ahead of it in priority is moving the creature, and the attack a monster comes with sits at 2, so a leap or a flee on a zombie needs priority 1 or it never gets a turn; the spider and the wolf keep their leap ahead of their attack for the same reason. A task the base already runs is added a second time rather than replaced; drop the old one first. Some tasks only make sense on a base that has what they drive: a bow fight needs a base that shoots, sitting needs a base that can be tamed, and trading needs a villager. Ask for one on a base that cannot carry it and the log says which base it needs, and the variant does without it.
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `priority` | int | required | Where it sits among the base's tasks. Lower runs first |
+| `speed` | number | the task's usual | How fast it moves while the task runs, as a multiplier on its walking speed |
+| `nearSpeed` | number | `1.2` | `avoidEntity`: the multiplier once the thing it avoids is close |
+| `distance` | number, blocks | the task's usual | How far it looks, follows, shoots or keeps away |
+| `near` | number, blocks | the task's usual | `follow`, `followOwner`, `followOwnerFlying`: how close it comes before it stops |
+| `chance` | number | the task's usual | `wander`: one roll in that many ticks; `wanderAvoidWater`: the odds, 0 to 1, of leaving cover; `watchClosest`, `watchClosest2`: the odds, 0 to 1, of looking each tick |
+| `leap` | number | `0.4` | `leapAtTarget`: how high the leap goes |
+| `cooldown` | int, ticks | `20` | `attackRanged`, `attackRangedBow`: ticks between shots |
+| `entity` | entity name | none | Which entity the task looks for, avoids, watches or breeds with. `minecraft:player` is understood |
+| `items` | list of item names | none | `tempt`: what a player holds out |
+| `sight` | boolean | `true` | `nearestAttackableTarget`, `targetNonTamed`: only what it can see |
+| `nearby` | boolean | `false` | `nearestAttackableTarget`: only what is within its own follow range |
+| `help` | boolean | `false` | `hurtByTarget`: others of its kind nearby join in |
+| `memory` | boolean | `false` | `attackMelee`, `zombieAttack`: keeps after a target it lost sight of |
+| `close` | boolean | `false` | `openDoor`: closes the door behind it |
+| `nocturnal` | boolean | `false` | `moveThroughVillage`: only at night |
+| `scared` | boolean | `false` | `tempt`: a player moving too fast breaks the spell |
+
+The `List` column says where the task lives. `tasks` is what the creature does; `targets` is how it picks what to go after, and a target task without a matching attack does nothing on its own.
+
+| Task | Needs | List | Reads | What it does |
+| --- | --- | --- | --- | --- |
+| `attackMelee` | a walking creature | `tasks` | `speed`, `memory` | Walks up to its target and hits it |
+| `attackRanged` | a base that shoots | `tasks` | `speed`, `cooldown`, `distance` | Keeps its distance and shoots whatever its base shoots |
+| `attackRangedBow` | a monster that shoots | `tasks` | `speed`, `cooldown`, `distance` | The skeleton's bow fight: strafes, draws and looses |
+| `avoidEntity` | a walking creature | `tasks` | `entity`, `distance`, `speed`, `nearSpeed` | Runs from the named entity when it comes within `distance` |
+| `beg` | a wolf | `tasks` | `distance` | Begs from a player holding out food |
+| `breakDoor` | any base | `tasks` |  | Breaks the wooden doors in its way, on hard difficulty |
+| `creeperSwell` | a creeper | `tasks` |  | Hisses and goes off next to its target |
+| `defendVillage` | an iron golem | `targets` |  | Goes after whoever attacked a villager |
+| `eatGrass` | any base | `tasks` |  | Eats grass, the way a sheep does |
+| `findEntityNearest` | any base | `targets` | `entity` | Targets the nearest of the named entity, the way a slime or ghast targets |
+| `findEntityNearestPlayer` | any base | `targets` |  | Targets the nearest player it can reach |
+| `fleeSun` | a walking creature | `tasks` | `speed` | Looks for shade when the sun is on it |
+| `follow` | any base | `tasks` | `speed`, `near`, `distance` | Follows others of its own kind |
+| `followGolem` | a villager | `tasks` |  | Follows an iron golem holding out a poppy |
+| `followOwner` | a tameable base | `tasks` | `speed`, `near`, `distance` | Follows its owner, and teleports after them when far behind |
+| `followOwnerFlying` | a tameable base | `tasks` | `speed`, `near`, `distance` | The same, flying |
+| `followParent` | an animal | `tasks` | `speed` | A child keeps close to a grown one of its kind |
+| `harvestFarmland` | a villager | `tasks` | `speed` | Harvests ripe crops and replants them |
+| `hurtByTarget` | a walking creature | `targets` | `help` | Fights back at whatever hit it |
+| `landOnOwnersShoulder` | a parrot | `tasks` |  | Rides on its owner's shoulder |
+| `leapAtTarget` | any base | `tasks` | `leap` | Leaps at its target from close by |
+| `llamaFollowCaravan` | a llama | `tasks` | `speed` | Falls in behind a led llama |
+| `lookAtTradePlayer` | a villager | `tasks` |  | Faces the player it is trading with |
+| `lookAtVillager` | an iron golem | `tasks` |  | Looks at villagers |
+| `lookIdle` | any base | `tasks` |  | Looks about now and then |
+| `mate` | an animal | `tasks` | `speed`, `entity` | Breeds when in love, with its own kind or the `entity` named |
+| `moveIndoors` | a walking creature | `tasks` |  | Goes inside a village house at nightfall |
+| `moveThroughVillage` | a walking creature | `tasks` | `speed`, `nocturnal` | Walks the village paths from door to door |
+| `moveTowardsRestriction` | a walking creature | `tasks` | `speed` | Walks back toward its home spot when it strays |
+| `moveTowardsTarget` | a walking creature | `tasks` | `speed`, `distance` | Closes in on a target that is far off |
+| `nearestAttackableTarget` | a walking creature | `targets` | `entity`, `sight`, `nearby` | Targets the nearest of the named entity |
+| `ocelotAttack` | any base | `tasks` |  | The cat's stalk and pounce |
+| `ocelotSit` | an ocelot | `tasks` | `speed` | Sits on chests, beds and lit furnaces |
+| `openDoor` | any base | `tasks` | `close` | Opens the wooden doors it walks through |
+| `ownerHurtByTarget` | a tameable base | `targets` |  | Goes after whatever hit its owner |
+| `ownerHurtTarget` | a tameable base | `targets` |  | Goes after whatever its owner hit |
+| `panic` | a walking creature | `tasks` | `speed` | Runs when hurt or on fire |
+| `play` | a villager | `tasks` | `speed` | Children play tag with each other |
+| `restrictOpenDoor` | a walking creature | `tasks` |  | Stays inside the village doors at night |
+| `restrictSun` | a walking creature | `tasks` |  | Keeps to the shade by day |
+| `runAroundLikeCrazy` | a horse, donkey, mule or llama | `tasks` | `speed` | Bucks a rider it does not trust yet |
+| `sit` | a tameable base | `tasks` |  | Sits when told to |
+| `skeletonRiders` | a skeleton horse | `tasks` |  | Calls in skeleton riders when a player comes near, the trap horse |
+| `swimming` | any base | `tasks` |  | Keeps its head above water |
+| `targetNonTamed` | a tameable base | `targets` | `entity`, `sight` | Targets the named entity while it is not yet tamed |
+| `tempt` | a walking creature | `tasks` | `items`, `speed`, `scared` | Follows a player holding out one of the `items` |
+| `tradePlayer` | a villager | `tasks` |  | Stands still while trading |
+| `villagerInteract` | a villager | `tasks` |  | Chats with other villagers |
+| `villagerMate` | a villager | `tasks` |  | Breeds when the village has room |
+| `wander` | a walking creature | `tasks` | `speed`, `chance` | Wanders about |
+| `wanderAvoidWater` | a walking creature | `tasks` | `speed`, `chance` | Wanders, keeping out of the water |
+| `wanderAvoidWaterFlying` | a walking creature | `tasks` | `speed` | Wanders in the air and perches in trees |
+| `watchClosest` | any base | `tasks` | `entity`, `distance`, `chance` | Looks at the nearest of the named entity, the player if none is named |
+| `watchClosest2` | any base | `tasks` | `entity`, `distance`, `chance` | The same, kept up while another task runs |
+| `zombieAttack` | a zombie | `tasks` | `speed`, `memory` | The zombie's attack, arms raised |
 
 **One egg or spawner giving a mix.** A variant is a class of its own, so on its own it always spawns exactly what it says. `becomes` is how a pack breaks that: a list of variants this one may turn into as it spawns, each with a weight, decided per creature.
 

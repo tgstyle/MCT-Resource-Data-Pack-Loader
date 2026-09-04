@@ -1914,6 +1914,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `trackVelocity` | nein | boolean | `true` | Schickt neben der Position auch die Geschwindigkeit. Aus spart Traffic bei Dingen, die sich kaum bewegen |
 | `trackingFrequency` | nein | int | `3` | Wie oft, in Ticks |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Variante bleibt weg, wenn nicht alle da sind |
+| `tasks` | nein | Liste | keine | Jede Aufgabe, die das Spiel kennt, der Variante beim Namen und mit einer Priorität deiner Wahl hinzugefügt oder aus dem entfernt, was ihre Basis mitbringt. Die Liste unten |
 
 **Eine Kreatur mit Haltbarkeitsdatum.** `despawnAfter` zählt in Sekunden ab dem Moment, in dem eine Kreatur zum ersten Mal in die Welt kommt, und nimmt sie still fort, wenn die Zeit um ist: kein Tod, kein Drop, kein Geräusch, genau als wäre sie weggewandert und weggeräumt worden. Die Uhr wird in die Kreatur selbst geschrieben, sie läuft also über Speichern und Laden hinweg weiter, statt jedes Mal neu zu beginnen, wenn ein Chunk zurückkommt.
 
@@ -1951,6 +1952,102 @@ Die Zahl wird in die Kreatur geschrieben, sie füllt sich also nicht wieder auf,
 `explosionFuse` bleibt die Lunte am geworfenen TNT und springt für jeden der beiden Zeitwerte ein, den du weglässt, eine vor diesen Schlüsseln geschriebene Variante verhält sich also genau wie zuvor.
 
 Wie der Wurf selbst fliegt, bestimmen `throwPower` und `throwArc`. Das erste ist ein Faktor auf den Schwung, und da der Schwung ohnehin mit der Entfernung wächst, verlängert ein höherer Wert die Weite, ohne zu ändern, wie lange der Wurf in der Luft hängt. Das zweite ist die Höhe und ändert die Form: hoch, und er segelt im Bogen über eine Mauer und lässt sich Zeit; nahe null, und er wird flach geschleudert und landet fast sofort; unter null, und er wird auf etwas darunter hinabgeworfen. Beide lassen die Lunte in Ruhe, eine im Bogen geworfene und eine flache Ladung gehen also gleich viele Sekunden nach dem Verlassen der Hand hoch – und das entscheidet, ob eine über den Köpfen zerplatzt oder erst landet und wartet. Wie weit sie wirft, sagt ihre `followRange`, und näher als drei Blöcke geht sie wie gewohnt zum Angriff über, sie ist also auf Distanz gefährlich und im Nahkampf gewöhnlich.
+
+**Jede Aufgabe, die das Spiel kennt.** Die Schlüssel oben sind RDPLs eigene Verhaltensweisen. `tasks` greift darüber hinaus auf jede Aufgabe zu, die Vanilla selbst benutzt, auf jeder Basis: ein Eintrag ist ein Objekt, das die `task` und ihre `priority` nennt, dazu was diese Aufgabe sonst liest; ein Name hinter einem `-` entfernt jede Aufgabe dieser Art, die die Basis mitbrachte. Prioritäten laufen bei 0 zuerst, und Vanilla hält seine eigenen zwischen 1 und 8, also gewinnt eine Aufgabe bei 0 gegen alles, was die Basis tut, und eine bei 9 läuft nur, wenn sonst nichts will.
+
+```json
+{
+  "entity": "minecraft:cow",
+  "tasks": [
+    "-wander",
+    { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
+    { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+  ]
+}
+```
+
+Die Liste wird angewendet, nachdem `hostile`, `passive` und die Verhaltensweisen oben ihre Arbeit getan haben, sie hat also das letzte Wort. Aufgaben, die den Körper bewegen, sperren einander aus: eine läuft nur, wenn nichts vor ihr in der Priorität die Kreatur bewegt, und der Angriff, den ein Monster mitbringt, sitzt auf 2, also braucht ein Sprung oder eine Flucht auf einem Zombie Priorität 1, sonst kommt sie nie dran; Spinne und Wolf halten ihren Sprung aus demselben Grund vor ihrem Angriff. Eine Aufgabe, die die Basis schon ausführt, wird ein zweites Mal hinzugefügt statt ersetzt; entferne die alte zuerst. Manche Aufgaben ergeben nur auf einer Basis Sinn, die hat, was sie steuern: ein Bogenkampf braucht eine Basis, die schießt, Sitzen braucht eine zähmbare Basis, und Handeln braucht einen Dorfbewohner. Verlangst du eine auf einer Basis, die sie nicht tragen kann, sagt das Log, welche Basis sie braucht, und die Variante kommt ohne sie aus.
+
+| Schlüssel | Typ | Standard | Was er tut |
+| --- | --- | --- | --- |
+| `priority` | int | Pflicht | Wo sie zwischen den Aufgaben der Basis sitzt. Niedriger läuft zuerst |
+| `speed` | Zahl | das Übliche der Aufgabe | Wie schnell sie sich bewegt, solange die Aufgabe läuft, als Faktor auf ihre Gehgeschwindigkeit |
+| `nearSpeed` | Zahl | `1.2` | `avoidEntity`: der Faktor, sobald das Gemiedene nah ist |
+| `distance` | Zahl, Blöcke | das Übliche der Aufgabe | Wie weit sie schaut, folgt, schießt oder Abstand hält |
+| `near` | Zahl, Blöcke | das Übliche der Aufgabe | `follow`, `followOwner`, `followOwnerFlying`: wie nah sie herankommt, bevor sie stehen bleibt |
+| `chance` | Zahl | das Übliche der Aufgabe | `wander`: ein Wurf in so vielen Ticks; `wanderAvoidWater`: die Chance, 0 bis 1, die Deckung zu verlassen; `watchClosest`, `watchClosest2`: die Chance, 0 bis 1, in jedem Tick hinzusehen |
+| `leap` | Zahl | `0.4` | `leapAtTarget`: wie hoch der Sprung geht |
+| `cooldown` | int, Ticks | `20` | `attackRanged`, `attackRangedBow`: Ticks zwischen zwei Schüssen |
+| `entity` | Entity-Name | keiner | Welche Entity die Aufgabe sucht, meidet, beobachtet oder mit der sie sich paart. `minecraft:player` wird verstanden |
+| `items` | Liste von Item-Namen | keine | `tempt`: was ein Spieler hinhält |
+| `sight` | boolean | `true` | `nearestAttackableTarget`, `targetNonTamed`: nur was sie sehen kann |
+| `nearby` | boolean | `false` | `nearestAttackableTarget`: nur was in ihrer eigenen Folgereichweite ist |
+| `help` | boolean | `false` | `hurtByTarget`: Artgenossen in der Nähe mischen mit |
+| `memory` | boolean | `false` | `attackMelee`, `zombieAttack`: bleibt an einem Ziel, das sie aus den Augen verloren hat |
+| `close` | boolean | `false` | `openDoor`: schließt die Tür hinter sich |
+| `nocturnal` | boolean | `false` | `moveThroughVillage`: nur nachts |
+| `scared` | boolean | `false` | `tempt`: ein Spieler, der sich zu schnell bewegt, bricht den Bann |
+
+Die Spalte `Liste` sagt, wo die Aufgabe lebt. `tasks` ist, was die Kreatur tut; `targets` ist, wie sie sich aussucht, wen sie verfolgt, und eine Zielaufgabe ohne passenden Angriff tut für sich allein nichts.
+
+| Aufgabe | Braucht | Liste | Liest | Was sie tut |
+| --- | --- | --- | --- | --- |
+| `attackMelee` | eine gehende Kreatur | `tasks` | `speed`, `memory` | Geht auf ihr Ziel zu und schlägt es |
+| `attackRanged` | eine Basis, die schießt | `tasks` | `speed`, `cooldown`, `distance` | Hält Abstand und schießt, was ihre Basis schießt |
+| `attackRangedBow` | ein Monster, das schießt | `tasks` | `speed`, `cooldown`, `distance` | Der Bogenkampf des Skeletts: seitwärts ausweichen, spannen und lösen |
+| `avoidEntity` | eine gehende Kreatur | `tasks` | `entity`, `distance`, `speed`, `nearSpeed` | Läuft vor der genannten Entity weg, sobald sie innerhalb von `distance` kommt |
+| `beg` | einen Wolf | `tasks` | `distance` | Bettelt bei einem Spieler, der Futter hinhält |
+| `breakDoor` | jede Basis | `tasks` |  | Bricht die Holztüren auf ihrem Weg, auf schwer |
+| `creeperSwell` | einen Creeper | `tasks` |  | Zischt und geht neben ihrem Ziel hoch |
+| `defendVillage` | einen Eisengolem | `targets` |  | Verfolgt, wer einen Dorfbewohner angegriffen hat |
+| `eatGrass` | jede Basis | `tasks` |  | Frisst Gras, wie ein Schaf |
+| `findEntityNearest` | jede Basis | `targets` | `entity` | Nimmt die nächste der genannten Entity ins Visier, wie ein Schleim oder Ghast |
+| `findEntityNearestPlayer` | jede Basis | `targets` |  | Nimmt den nächsten erreichbaren Spieler ins Visier |
+| `fleeSun` | eine gehende Kreatur | `tasks` | `speed` | Sucht Schatten, wenn die Sonne auf sie scheint |
+| `follow` | jede Basis | `tasks` | `speed`, `near`, `distance` | Folgt Artgenossen |
+| `followGolem` | einen Dorfbewohner | `tasks` |  | Folgt einem Eisengolem, der eine Mohnblume hinhält |
+| `followOwner` | eine zähmbare Basis | `tasks` | `speed`, `near`, `distance` | Folgt ihrem Besitzer und teleportiert sich hinterher, wenn sie weit zurückfällt |
+| `followOwnerFlying` | eine zähmbare Basis | `tasks` | `speed`, `near`, `distance` | Dasselbe, fliegend |
+| `followParent` | ein Tier | `tasks` | `speed` | Ein Kind bleibt nah bei einem Erwachsenen seiner Art |
+| `harvestFarmland` | einen Dorfbewohner | `tasks` | `speed` | Erntet reife Pflanzen und sät nach |
+| `hurtByTarget` | eine gehende Kreatur | `targets` | `help` | Wehrt sich gegen das, was sie getroffen hat |
+| `landOnOwnersShoulder` | einen Papagei | `tasks` |  | Reitet auf der Schulter ihres Besitzers |
+| `leapAtTarget` | jede Basis | `tasks` | `leap` | Springt ihr Ziel aus der Nähe an |
+| `llamaFollowCaravan` | ein Lama | `tasks` | `speed` | Reiht sich hinter einem geführten Lama ein |
+| `lookAtTradePlayer` | einen Dorfbewohner | `tasks` |  | Wendet sich dem Spieler zu, mit dem sie handelt |
+| `lookAtVillager` | einen Eisengolem | `tasks` |  | Sieht Dorfbewohner an |
+| `lookIdle` | jede Basis | `tasks` |  | Sieht sich ab und zu um |
+| `mate` | ein Tier | `tasks` | `speed`, `entity` | Paart sich, wenn verliebt, mit ihresgleichen oder der genannten `entity` |
+| `moveIndoors` | eine gehende Kreatur | `tasks` |  | Geht bei Einbruch der Nacht in ein Dorfhaus |
+| `moveThroughVillage` | eine gehende Kreatur | `tasks` | `speed`, `nocturnal` | Geht die Dorfwege von Tür zu Tür |
+| `moveTowardsRestriction` | eine gehende Kreatur | `tasks` | `speed` | Geht zurück zu ihrem Heimatpunkt, wenn sie sich entfernt |
+| `moveTowardsTarget` | eine gehende Kreatur | `tasks` | `speed`, `distance` | Rückt an ein weit entferntes Ziel heran |
+| `nearestAttackableTarget` | eine gehende Kreatur | `targets` | `entity`, `sight`, `nearby` | Nimmt die nächste der genannten Entity ins Visier |
+| `ocelotAttack` | jede Basis | `tasks` |  | Das Anschleichen und Anspringen der Katze |
+| `ocelotSit` | einen Ozelot | `tasks` | `speed` | Setzt sich auf Truhen, Betten und brennende Öfen |
+| `openDoor` | jede Basis | `tasks` | `close` | Öffnet die Holztüren, durch die sie geht |
+| `ownerHurtByTarget` | eine zähmbare Basis | `targets` |  | Verfolgt, was ihren Besitzer getroffen hat |
+| `ownerHurtTarget` | eine zähmbare Basis | `targets` |  | Verfolgt, was ihr Besitzer getroffen hat |
+| `panic` | eine gehende Kreatur | `tasks` | `speed` | Rennt, wenn sie verletzt ist oder brennt |
+| `play` | einen Dorfbewohner | `tasks` | `speed` | Kinder spielen miteinander Fangen |
+| `restrictOpenDoor` | eine gehende Kreatur | `tasks` |  | Bleibt nachts hinter den Dorftüren |
+| `restrictSun` | eine gehende Kreatur | `tasks` |  | Bleibt tagsüber im Schatten |
+| `runAroundLikeCrazy` | ein Pferd, einen Esel, ein Maultier oder ein Lama | `tasks` | `speed` | Wirft einen Reiter ab, dem sie noch nicht vertraut |
+| `sit` | eine zähmbare Basis | `tasks` |  | Sitzt, wenn es ihr gesagt wird |
+| `skeletonRiders` | ein Skelettpferd | `tasks` |  | Ruft Skelettreiter, wenn ein Spieler nahe kommt, das Fallenpferd |
+| `swimming` | jede Basis | `tasks` |  | Hält den Kopf über Wasser |
+| `targetNonTamed` | eine zähmbare Basis | `targets` | `entity`, `sight` | Nimmt die genannte Entity ins Visier, solange sie noch nicht gezähmt ist |
+| `tempt` | eine gehende Kreatur | `tasks` | `items`, `speed`, `scared` | Folgt einem Spieler, der eines der `items` hinhält |
+| `tradePlayer` | einen Dorfbewohner | `tasks` |  | Steht still, solange gehandelt wird |
+| `villagerInteract` | einen Dorfbewohner | `tasks` |  | Plaudert mit anderen Dorfbewohnern |
+| `villagerMate` | einen Dorfbewohner | `tasks` |  | Vermehrt sich, wenn das Dorf Platz hat |
+| `wander` | eine gehende Kreatur | `tasks` | `speed`, `chance` | Streift umher |
+| `wanderAvoidWater` | eine gehende Kreatur | `tasks` | `speed`, `chance` | Streift umher und meidet das Wasser |
+| `wanderAvoidWaterFlying` | eine gehende Kreatur | `tasks` | `speed` | Streift durch die Luft und setzt sich in Bäume |
+| `watchClosest` | jede Basis | `tasks` | `entity`, `distance`, `chance` | Sieht die nächste der genannten Entity an, den Spieler, wenn keine genannt ist |
+| `watchClosest2` | jede Basis | `tasks` | `entity`, `distance`, `chance` | Dasselbe, auch während eine andere Aufgabe läuft |
+| `zombieAttack` | einen Zombie | `tasks` | `speed`, `memory` | Der Angriff des Zombies mit erhobenen Armen |
 
 **Ein Ei oder Spawner, der Verschiedenes liefert.** Eine Variante ist eine eigene Klasse, für sich allein erscheint sie also immer genau als das, was sie sagt. `becomes` bricht das auf: eine Liste von Varianten, zu denen diese beim Erscheinen werden kann, jede mit einem Gewicht, für jede Kreatur einzeln entschieden.
 

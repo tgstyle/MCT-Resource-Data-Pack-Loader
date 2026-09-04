@@ -382,6 +382,7 @@ public final class ContentEntities {
         priorities(living, def);
         gear(living, def);
         behavior(living, def);
+        ContentTasks.apply(living, def);
     }
 
     private static void attributes(EntityLivingBase living, EntityVariantDef def) {
@@ -701,7 +702,7 @@ public final class ContentEntities {
 
     @Nullable private static net.minecraft.entity.EnumCreatureType creatureType(String name) { return Enums.byName(net.minecraft.entity.EnumCreatureType.class, name); }
 
-    @Nullable private static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
+    @Nullable static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
         ResourceLocation location = new ResourceLocation(name);
         if ("minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return EntityPlayer.class; }
         EntityEntry entry = Registries.find(ForgeRegistries.ENTITIES, location);

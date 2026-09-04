@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.*;
+import mctmods.resourcedatapackloader.content.entity.ContentTasks;
 import mctmods.resourcedatapackloader.content.portal.PortalShapes;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
@@ -1162,7 +1163,8 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "gusts", false),
                 Math.max(0.1F, JsonUtils.getFloat(json, "gustPower", 1.5F)),
                 Math.max(0, JsonUtils.getInt(json, "threatLeast", 0)),
-                Math.max(0, JsonUtils.getInt(json, "threatHostile", 0)));
+                Math.max(0, JsonUtils.getInt(json, "threatHostile", 0)),
+                ContentTasks.parse(key, json));
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {
