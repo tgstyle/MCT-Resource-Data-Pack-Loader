@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
@@ -84,6 +85,10 @@ public final class ContentSpawning {
             event.setResult(Event.Result.DENY);
             return;
         }
+        if (event.getSpawner() == null && !ContentThreat.allowed(event.getEntity())) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
         if (!(event.getEntity() instanceof IMob)) {
             if (event.getSpawner() == null && deniedAboveWindow(world, event.getY())) { event.setResult(Event.Result.DENY); }
             return;
@@ -95,7 +100,8 @@ public final class ContentSpawning {
                 return;
             }
         }
-        float rate = rateFor(world, new BlockPos(event.getX(), event.getY(), event.getZ()));
+        BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
+        float rate = rateFor(world, pos) * ContentThreat.spawnRate(world, pos);
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {
             event.setResult(Event.Result.DENY);

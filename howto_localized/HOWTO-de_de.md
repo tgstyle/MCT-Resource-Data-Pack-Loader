@@ -1860,6 +1860,8 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `swoops` | nein | boolean | `false` | Kreist über ihrem Ziel und stürzt hindurch, schlägt im Vorbeiflug zu, wie ein Phantom. Die Variante bekommt eine Flughilfe, fliegt also, solange sie jagt, und lässt sich im Leerlauf zu Boden; sie braucht eine Basis, die eine Kreatur ist, etwa einen Papagei, und eine Fledermaus ist keine. Braucht `hostile` |
 | `gusts` | nein | boolean | `false` | Holt aus und lässt aus der Entfernung einen Windstoß auf ihr Ziel los, der alles nahe dem Ziel zurück und nach oben wirft, wie die Windkugel einer Brise. Braucht `hostile` |
 | `gustPower` | nein | float | `1.5` | Wie hart ein Windstoß wirft. Ein Treffer eines Mobs ist 0,4, eine starke Rückstoß-Verzauberung etwa 1 |
+| `threatLeast` | nein | int | `0` | Die niedrigste Bedrohungsstufe, in der ein Spieler oder anderer Träger im Umkreis von 128 Blöcken stehen muss, bevor die Variante natürlich spawnt. `0` spawnt wie gewohnt |
+| `threatHostile` | nein | int | `0` | Die niedrigste Bedrohungsstufe, in der ein Spieler stehen muss, bevor die Variante von sich aus auf ihn losgeht. Darunter ist die Variante diesem Spieler gegenüber friedlich, wehrt sich aber weiterhin, wenn sie getroffen wird. `0` greift wie gewohnt an |
 | `equipment` | nein | Objekt | keines | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, jeweils ein Itemname |
 | `spawns` | nein | Liste von Objekten | keine | `creatureType`, `weight`, `min` und `max`, dieselbe Form, die ein Biom nutzt |
 | `biomes` | nein | Liste von Biomnamen | jedes Biom | Wo diese Spawns hinzugefügt werden |
@@ -3853,12 +3855,20 @@ Der Abstand entscheidet, wo eine Struktur gesät wird, ihn in einer bestehenden 
     "ambientCap": 15,
     "waterCreatureCap": 5,
     "monsterSpawnLight": 0,
-    "skyAnimals": false
+    "skyAnimals": false,
+    "threatItems": ["minecraft:diamond_sword=5,1", "minecraft:diamond=1,16,batch"],
+    "threatLevels": [10, 25, 50],
+    "threatMost": -1,
+    "threatSpawnRate": 2.0,
+    "threatNotice": 16.0,
+    "threatSays": ["1=Something out there has taken notice of you.", "0=The world loses interest in you."]
   }
 }
 ```
 
 Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wird über `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` und `undergroundNightMonsterRate` skaliert, jeweils ein Faktor, bei dem `1.0` Vanilla ist – Spawnen bei Tageslicht an der Oberfläche lässt sich also abschalten, ohne die Höhlen anzurühren. Die Obergrenzen sind `monsterCap`, `creatureCap` für friedliche Tiere, `ambientCap` für Fledermäuse und Ähnliches und `waterCreatureCap` für Tintenfische; Vanillas Werte sind 70, 10, 15 und 5, und `-1` lässt eine davon unangetastet. `monsterSpawnLight` begrenzt zusätzlich zu den Vanilla-Prüfungen das Blocklicht, das ein feindlicher Spawn verträgt: `0` ist die moderne Regel, bei der eine Fackel eine Höhle vollständig schützt, und `-1`, der Standard, behält Vanillas Würfeln bei. `skyAnimals` entscheidet, ob sich friedliche Mobs auf dem Land ansiedeln, das eine Rubic-Welt über ihrem Terrainfenster erzeugt, allen voran auf den schwebenden Inseln: `true`, der Standard, lässt Vanillas Herden dort, wo der oberste Block liegt, `false` hält Tiere und Fledermäuse auf dem Boden darunter. Spawner ignorieren beides.
+
+Die Bedrohungsstufe bewertet, was jeder Spieler bei sich trägt, und lässt die Welt darauf antworten. `threatItems` listet die zählenden Gegenstände als `item=level,count`-Einträge mit einem optionalen `,each` oder `,batch` am Ende: `each`, der Standard, addiert die Stufe für jedes getragene Stück, zählt aber höchstens `count` davon, und `batch` addiert die Stufe einmal je `count` getragener Stücke, nur ganze Sätze. Ein `count` über der Stapelgröße des Gegenstands wird auf die Stapelgröße gekürzt, ein voller Stapel ist also das Meiste, was ein Eintrag zählen kann, und der Gegenstand darf Metadaten tragen wie `minecraft:dye:4`. Jede geladene Entity, die Gegenstände hält, ist ein Träger, nicht nur Spieler: Hauptinventar, Rüstung und Zweithand eines Spielers, ein fallen gelassener Stapel, alles mit einem Gegenstandsinventar wie ein Maultier mit Kiste oder eine Güterlore, und die gehaltenen Gegenstände und die Rüstung jedes anderen Mobs, sodass ein Gebiet gefährlich bleibt um das, was dort liegt, reitet oder läuft. Spieler im Kreativ- oder Zuschauermodus erreichen nichts. `threatLevels` sind die Punktzahlen, mit denen jede Stufe beginnt, aufsteigend, `[10, 25, 50]` ergibt also drei Stufen, und `threatMost` deckelt die Punktzahl, `-1` lässt sie ungedeckelt. Die Punktzahl wird alle fünf Sekunden erhoben. `threatSpawnRate` skaliert das Spawnen feindlicher Mobs im Umkreis von 128 Blöcken um einen Träger in der obersten Stufe, zusätzlich zu den anderen Raten, und niedrigere Stufen bekommen einen anteiligen Teil der Änderung: `2.0` verdoppelt es ganz oben und legt auf Stufe eins von drei ein Drittel drauf. `threatNotice` ist, um wie viele Blöcke weiter feindliche Mobs, Vanilla-Mobs eingeschlossen, einen Träger in der obersten Stufe sehen, wieder anteilig über die niedrigeren Stufen verteilt. `threatSays` sind die Zeilen, die gelb erscheinen, wenn sich die eigene Stufe eines Spielers ändert, als `band=message`-Einträge, wobei Stufe `0` die Zeile für das Zurückfallen unter die erste Stufe ist. Eine Entity-Variante kann `threatLeast` setzen, um nur dann natürlich zu spawnen, solange ein Träger im Umkreis von 128 Blöcken in dieser Stufe oder darüber steht. Bleibt eine der beiden Listen leer, ist die Bedrohungsstufe aus.
 
 ### Strukturen aufsetzen
 

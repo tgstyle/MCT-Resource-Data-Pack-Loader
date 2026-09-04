@@ -52,7 +52,7 @@ public final class ContentControl {
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
             "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels",
-            "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
+            "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice", "threatSays", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
             "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "verticalCubeLoadDistance", "cubesSentPerTick", "cubeGenMillisPerRound", "cubeGCInterval",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",

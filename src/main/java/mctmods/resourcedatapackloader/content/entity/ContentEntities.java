@@ -191,6 +191,16 @@ public final class ContentEntities {
         return entity.isSprinting() ? def.angryScale : def.scale;
     }
 
+    public static int threatLeast(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def == null ? 0 : def.threatLeast;
+    }
+
+    public static int threatHostile(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def == null ? 0 : def.threatHostile;
+    }
+
     public static boolean leashable(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         return def != null && def.leashable;

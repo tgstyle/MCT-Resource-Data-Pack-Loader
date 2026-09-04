@@ -1172,7 +1172,9 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "patrols", false),
                 JsonUtils.getBoolean(json, "swoops", false),
                 JsonUtils.getBoolean(json, "gusts", false),
-                Math.max(0.1F, JsonUtils.getFloat(json, "gustPower", 1.5F)));
+                Math.max(0.1F, JsonUtils.getFloat(json, "gustPower", 1.5F)),
+                Math.max(0, JsonUtils.getInt(json, "threatLeast", 0)),
+                Math.max(0, JsonUtils.getInt(json, "threatHostile", 0)));
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {

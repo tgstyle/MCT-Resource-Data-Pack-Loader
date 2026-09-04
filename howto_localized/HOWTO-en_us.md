@@ -1860,6 +1860,8 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `swoops` | no | boolean | `false` | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile` |
 | `gusts` | no | boolean | `false` | Winds up and lets loose a blast of wind at its target from a distance, throwing everything near the target back and up, the way a breeze's wind charge does. Needs `hostile` |
 | `gustPower` | no | float | `1.5` | How hard a gust throws. A hit from a mob is 0.4, a strong knockback enchantment about 1 |
+| `threatLeast` | no | int | `0` | The lowest threat band a player or other carrier within 128 blocks must stand in before the variant spawns naturally. `0` spawns as usual |
+| `threatHostile` | no | int | `0` | The lowest threat band a player must stand in before the variant goes after them on its own. Below it the variant is docile toward that player, though it still fights back when hit. `0` attacks as usual |
 | `equipment` | no | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
 | `spawns` | no | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
 | `biomes` | no | list of biome names | every biome | Where those spawns are added |
@@ -3853,12 +3855,20 @@ Spacing decides where a structure is seeded, so changing it in a world that alre
     "ambientCap": 15,
     "waterCreatureCap": 5,
     "monsterSpawnLight": 0,
-    "skyAnimals": false
+    "skyAnimals": false,
+    "threatItems": ["minecraft:diamond_sword=5,1", "minecraft:diamond=1,16,batch"],
+    "threatLevels": [10, 25, 50],
+    "threatMost": -1,
+    "threatSpawnRate": 2.0,
+    "threatNotice": 16.0,
+    "threatSays": ["1=Something out there has taken notice of you.", "0=The world loses interest in you."]
   }
 }
 ```
 
 Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone. `monsterSpawnLight` caps the block light a hostile spawn tolerates on top of the vanilla checks: `0` is the modern rule, where a torch fully protects a cave, and `-1`, the default, keeps vanilla's dice. `skyAnimals` decides whether passive mobs settle on the land a rubic world generates above its terrain window, the sky islands above all: `true`, the default, leaves vanilla's herds wherever the top block is, and `false` keeps animals and bats on the ground below. Spawners ignore both.
+
+The threat level scores what each player carries and lets the world answer. `threatItems` lists the items that count, as `item=level,count` entries with an optional `,each` or `,batch` at the end: `each`, the default, adds the level for every one held, counting no more than `count` of them, and `batch` adds the level once for every `count` held, whole batches only. A count above the item's stack size is cut to the stack size, so a full stack is the most one entry can count, and the item may carry metadata as `minecraft:dye:4`. Every loaded entity that holds items is a carrier, not only players: a player's main inventory, armor and off hand, a dropped stack, anything with an item inventory such as a chest mule or a chest minecart, and the held items and armor of any other mob, so an area stays dangerous around what lies, rides or walks there. Creative and spectator players score nothing. `threatLevels` are the scores that enter each band, rising, so `[10, 25, 50]` makes three bands, and `threatMost` caps the score, `-1` leaving it uncapped. The score is taken every five seconds. `threatSpawnRate` scales hostile spawning within 128 blocks of a carrier in the top band, on top of the other rates, and lower bands take a proportional share of the change: `2.0` doubles it at the top and adds a third at band one of three. `threatNotice` is how many blocks farther hostile mobs, vanilla ones included, see a carrier in the top band, again shared out proportionally over the lower bands. `threatSays` are the lines shown in yellow when a player's own band changes, as `band=message` entries, band `0` being the line for dropping back below the first band. An entity variant can set `threatLeast` to spawn naturally only while a carrier within 128 blocks stands in that band or above. Either list left empty turns the threat level off.
 
 ### Seating structures
 
