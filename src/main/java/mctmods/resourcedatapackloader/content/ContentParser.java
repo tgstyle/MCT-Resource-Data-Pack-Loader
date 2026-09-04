@@ -950,6 +950,7 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 picks(json, "structures", "structure"),
                 clamp01(JsonUtils.getFloat(json, "structureChance", 1.0F)),
+                JsonUtils.getString(json, "structureLoot", ""),
                 JsonUtils.getString(json, "biome", ""),
                 JsonUtils.getString(json, "skyStone", ""),
                 Json.bounded(json, "skyIslands", -1.0F, 1.0F, key),
@@ -1200,7 +1201,8 @@ public final class ContentParser {
                 JsonUtils.getInt(json, "villagerX", 1),
                 JsonUtils.getInt(json, "villagerY", 1),
                 JsonUtils.getInt(json, "villagerZ", 1),
-                strings(json, "requires"));
+                strings(json, "requires"),
+                JsonUtils.getString(json, "lootTable", ""));
     }
 
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
@@ -1244,7 +1246,8 @@ public final class ContentParser {
                 Math.max(0, JsonUtils.getInt(entry, "rarity", 0)),
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
-                JsonUtils.getFloat(entry, "threshold", 0.5F));
+                JsonUtils.getFloat(entry, "threshold", 0.5F),
+                JsonUtils.getString(entry, "lootTable", ""));
         made.locateAs = JsonUtils.getString(entry, "locateAs", "");
         made.fade = Math.max(0, JsonUtils.getInt(entry, "fade", 0));
         if (entry.has("at")) {

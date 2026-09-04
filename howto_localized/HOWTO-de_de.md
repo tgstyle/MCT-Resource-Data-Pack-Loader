@@ -2002,6 +2002,7 @@ Ein `template`, dessen `structure` eine deiner [Strukturkarten](#strukturkarten)
 | `rowWidth` | farm | int | `2` | Wie breit jede Erdreihe ist |
 | `structure` | template | `namespace:name` | keine | Die Vorlage, die gesetzt wird, oder eine deiner Strukturkarten, die dann die Größe des Grundstücks bestimmt |
 | `integrity` | template | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die erscheinen |
+| `lootTable` | template | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird. Ein Grundstück, das einen Strukturplan nennt, bleibt unberührt |
 | `villagers` | allen | int | `0` | Wie viele Leute das Grundstück spawnt |
 | `villagerEntity` | allen | `namespace:name` | ein Dorfbewohner | Wer dort wohnt, etwa eine eigene Entity-Variante |
 | `villagerX` | allen | int | `1` | Wo sie erscheinen, quer über das Grundstück |
@@ -2630,6 +2631,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `keepDefaultSpawns` | boolean | `false` | Behält die Spawnliste des Bioms neben der der Region. Aus, ersetzt die Liste der Region sie innerhalb der Region vollständig |
 | `structures` | Liste | keine | Ein Bauwerk, einmal pro Regionszelle gesetzt, im Herzen der Zelle, auf den nächsten Höhlenboden gesetzt — so wie moderne Versionen einem Höhlenbiom sein Wahrzeichen geben. Einträge sind `namespace:name`-Vorlagen oder `{ "structure": "...", "weight": 3 }` zur Auswahl zwischen mehreren |
 | `structureChance` | 0,0 bis 1,0 | `1.0` | Die Chance, mit der jede Zelle der Region ihr Bauwerk tatsächlich bekommt |
+| `structureLoot` | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in einem gesetzten Bauwerk beim ersten Öffnen gefüllt wird |
 | `biome` | Biomname | keiner | Das Biom, das die Region in ihrem Raum meldet, als 3D-Biom in den Würfel geschrieben. Gibt der Region eigene Laub-, Gras- und Wasserfarben, eigene Musik und Umgebungsgeräusche, und Vanillas Spawn-Gewichtung liest es. Die Oberfläche darüber bleibt unberührt, da nur die Zellen geschrieben werden, die die Region einnimmt |
 | `skyStone` | Block | die Welteinstellung | Der Block, aus dem Himmelsinseln innerhalb dieser Region unter ihrer Oberfläche bestehen, eine Region trägt also eigene Inseln |
 | `skyIslands` | `-1` bis `1` | die Welteinstellung | Die Inselschwelle innerhalb der Region. Niedriger sammelt mehr Land |
@@ -3127,6 +3129,7 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
 | `vines` | tree | boolean | `false` | Ranken von den Blättern hängen lassen |
 | `structure` | imprint | `namespace:name` | keine | Die Vorlage, die gesetzt wird |
 | `integrity` | imprint | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die tatsächlich erscheinen |
+| `lootTable` | imprint | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird, und jeder andere Behälter, der eine annimmt, eine Shulkerkiste oder die Kiste eines Mods darunter. Gilt für `structure` und jeden Eintrag von `structures`; jede Truhe würfelt ihren eigenen Seed |
 | `structures` | imprint | Liste | keine | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
 | `turns` | imprint | Liste | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich |
 | `mirrors` | imprint | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight`. Ein Eintrag mit eigenem Gewicht wird `{ "mirror": "leftright", "weight": 2 }` geschrieben, ein `turns`-Eintrag genauso mit `turn` |

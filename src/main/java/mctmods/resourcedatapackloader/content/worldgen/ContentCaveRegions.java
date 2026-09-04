@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
@@ -220,6 +221,7 @@ public final class ContentCaveRegions {
             if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return; }
         }
         loaded.addBlocksToWorld(world, fitted, settings, 2);
+        StructureLoot.stock(world, x - span.getX() / 2, y, z - span.getZ() / 2, x - span.getX() / 2 + span.getX() - 1, y + span.getY() - 1, z - span.getZ() / 2 + span.getZ() - 1, region.structureLoot, random);
     }
 
     public static void decorate(World world, int chunkX, int chunkZ, Random random) {

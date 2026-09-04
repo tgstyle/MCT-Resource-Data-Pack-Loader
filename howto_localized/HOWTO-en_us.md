@@ -2002,6 +2002,7 @@ A `template` whose `structure` names one of your [structure maps](#structure-map
 | `rowWidth` | farm | int | `2` | How wide each row of soil is |
 | `structure` | template | `namespace:name` | none | The template to place, or one of your structure maps, which then sets the plot's size |
 | `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
+| `lootTable` | template | `namespace:path` | none | The loot table every chest inside the placed template is filled from the first time it is opened. A plot that names a structure map is left alone |
 | `villagers` | all | int | `0` | How many people the plot spawns |
 | `villagerEntity` | all | `namespace:name` | a villager | Who lives there, such as an entity variant of your own |
 | `villagerX` | all | int | `1` | Where they appear, across the plot |
@@ -2630,6 +2631,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `keepDefaultSpawns` | boolean | `false` | Keep the biome's own spawn list alongside the region's. Off, the region's list replaces it entirely inside the region |
 | `structures` | list | none | A structure placed once per region cell, at the cell's heart, snapped to a cave floor — the way modern versions give a cave biome its landmark. Entries are `namespace:name` templates, or `{ "structure": "...", "weight": 3 }` to choose between several |
 | `structureChance` | 0.0 to 1.0 | `1.0` | The chance each cell of the region actually gets its structure |
+| `structureLoot` | `namespace:path` | none | The loot table every chest inside a placed structure is filled from the first time it is opened |
 | `biome` | biome name | none | The biome the region reports inside its volume, written into the cube as a 3D biome. Gives the region its own foliage, grass and water colors, music and ambient sounds, and lets vanilla spawn weighting read it. The surface above is untouched, since only the cells the region occupies are written |
 | `skyStone` | block | the world setting | The block sky islands are made of under their surface inside this region, so one region carries islands of its own |
 | `skyIslands` | `-1` to `1` | the world setting | The island threshold inside the region. Lower gathers more land |
@@ -3127,6 +3129,7 @@ A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
 | `vines` | tree | boolean | `false` | Hang vines from the leaves |
 | `structure` | imprint | `namespace:name` | none | The template to place |
 | `integrity` | imprint | 1 to 100 | `100` | Percentage of the template's blocks that actually appear |
+| `lootTable` | imprint | `namespace:path` | none | The loot table every chest inside the placed template is filled from the first time it is opened, and any other container that takes one, a shulker box or a mod's crate among them. Covers `structure` and every entry of `structures`; each chest rolls its own seed |
 | `structures` | imprint | list | none | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
 | `turns` | imprint | list | any | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely |
 | `mirrors` | imprint | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight`. An entry naming its own weight is written `{ "mirror": "leftright", "weight": 2 }`, and a `turns` entry the same with `turn` |

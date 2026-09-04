@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.village;
 
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
@@ -137,6 +138,7 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             Rotation rotation = rotation();
             PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
             template.addBlocksToWorld(world, corner(rotation), settings);
+            StructureLoot.stock(world, Math.max(box.minX, boundingBox.minX), Math.max(box.minY, boundingBox.minY), Math.max(box.minZ, boundingBox.minZ), Math.min(box.maxX, boundingBox.maxX), Math.min(box.maxY, boundingBox.maxY), Math.min(box.maxZ, boundingBox.maxZ), def.lootTable, new Random(MathUtil.mix(world.getSeed(), boundingBox.minX, 3, boundingBox.minZ) ^ ((long) box.minX << 32 ^ box.minZ)));
         }
         boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
         int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;

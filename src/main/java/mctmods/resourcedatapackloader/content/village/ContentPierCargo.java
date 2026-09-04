@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.village;
 
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
@@ -10,8 +11,6 @@ import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityLockableLoot;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -68,13 +67,7 @@ public final class ContentPierCargo {
         return 1;
     }
 
-    private static void stock(World world, BlockPos at, Random random) {
-        TileEntity tile = world.getTileEntity(at);
-        if (!(tile instanceof TileEntityLockableLoot)) { return; }
-        String named = ContentControl.text(ContentControl.VILLAGES, LOOT, Config.worldgen.villagePathPierLoot);
-        if (named.isEmpty()) { return; }
-        ((TileEntityLockableLoot) tile).setLootTable(new ResourceLocation(named), random.nextLong());
-    }
+    private static void stock(World world, BlockPos at, Random random) { StructureLoot.stock(world.getTileEntity(at), ContentControl.text(ContentControl.VILLAGES, LOOT, Config.worldgen.villagePathPierLoot), random); }
 
     private static void load() {
         CHOICES.load(ContentControl.list(ContentControl.VILLAGES, NAME, Config.worldgen.villagePathPierCargo));

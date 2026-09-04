@@ -37,6 +37,7 @@ public final class CaveRegionDef {
     public final boolean keepDefaultSpawns;
     public final List<PickDef> structures;
     public final float structureChance;
+    public final String structureLoot;
     public final String biome;
     public final String skyStone;
     public final float skyIslands;
@@ -53,7 +54,7 @@ public final class CaveRegionDef {
     public CaveRegionDef(ResourceLocation key, int weight, int minHeight, int maxHeight, List<Integer> dimensions,
                          String floorCover, float floorChance, String ceilingCover, float ceilingChance,
                          List<String> coverReplace, int waterLevel, List<SpawnEntryDef> spawns, boolean keepDefaultSpawns,
-                         List<PickDef> structures, float structureChance, String biome,
+                         List<PickDef> structures, float structureChance, String structureLoot, String biome,
                          String skyStone, float skyIslands, float skyThickness) {
         this.key = key;
         this.weight = weight;
@@ -70,6 +71,7 @@ public final class CaveRegionDef {
         this.keepDefaultSpawns = keepDefaultSpawns;
         this.structures = structures;
         this.structureChance = structureChance;
+        this.structureLoot = structureLoot;
         this.biome = biome;
         this.skyStone = skyStone;
         this.skyIslands = skyIslands;
