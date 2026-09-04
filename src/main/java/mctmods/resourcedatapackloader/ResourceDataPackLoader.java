@@ -2,36 +2,54 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
+import mctmods.resourcedatapackloader.loot.LootFunctions;
+import mctmods.resourcedatapackloader.loot.LootInjections;
+import mctmods.resourcedatapackloader.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.pack.PackFinder;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.PackRequirements;
+import mctmods.resourcedatapackloader.recipe.RecipeLoading;
+import mctmods.resourcedatapackloader.registry.RegistryRemaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddPackFindersEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TagsUpdatedEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.nio.file.Path;
+import java.util.Set;
 
 @Mod(ResourceDataPackLoader.MOD_ID) public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
     public static final Logger LOGGER = LogManager.getLogger("RDPL");
 
     public ResourceDataPackLoader(FMLJavaModLoadingContext context) {
+        Lang.load();
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         IEventBus modBus = context.getModEventBus();
         modBus.addListener(this::onConfig);
+        modBus.addListener(this::onCommonSetup);
         modBus.addListener(this::onAddPackFinders);
+        LootFunctions.REGISTER.register(modBus);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        MinecraftForge.EVENT_BUS.addListener(RegistryRemaps::onMissingMappings);
+        MinecraftForge.EVENT_BUS.addListener(this::onTagsUpdated);
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(this::beforeServerStart);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStopped);
@@ -46,6 +64,22 @@ import java.nio.file.Path;
         LOGGER.info("Config worldgen: worldgenDebug={}", Config.worldgen.worldgenDebug());
     }
 
+    private void onCommonSetup(FMLCommonSetupEvent event) {
+        PackFinder.ensureScanned();
+        Set<String> missing = PackRequirements.required();
+        if (missing.isEmpty()) {
+            RegistryRemaps.reload();
+            return;
+        }
+        String message = "Packs require mods that are not installed: " + String.join(", ", missing) + ". Install them or remove the packs that need them";
+        ContentLog.LOGGER.fatal(message);
+        throw new IllegalStateException(message);
+    }
+
+    private void onTagsUpdated(TagsUpdatedEvent event) {
+        if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); }
+    }
+
     private void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 
     private void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); }
@@ -55,6 +89,7 @@ import java.nio.file.Path;
         if (root == null) { return; }
         PackManager.get().scan(root);
         PackManager.get().report();
+        RegistryRemaps.reload();
     }
 
     private void onServerStopped(ServerStoppedEvent event) {

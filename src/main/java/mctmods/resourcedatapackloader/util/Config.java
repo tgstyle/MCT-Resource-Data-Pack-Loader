@@ -3,15 +3,20 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.pack.PackManager;
 
 import net.minecraftforge.common.ForgeConfigSpec;
+import java.util.List;
 
 public final class Config {
     public static final ForgeConfigSpec SPEC;
     public static final Packs packs;
+    public static final Recipes recipes;
+    public static final Data data;
     public static final Worldgen worldgen;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         packs = new Packs(builder);
+        recipes = new Recipes(builder);
+        data = new Data(builder);
         worldgen = new Worldgen(builder);
         SPEC = builder.build();
     }
@@ -46,6 +51,78 @@ public final class Config {
         public boolean logContents() { return loaded() ? logContents.get() : ConfigCore.flag("packs.logContents", false); }
 
         public boolean traceUnresolvedVariables() { return loaded() ? traceUnresolvedVariables.get() : ConfigCore.flag("packs.traceUnresolvedVariables", false); }
+    }
+
+    public static final class Recipes {
+        private final ForgeConfigSpec.BooleanValue furnace;
+        private final ForgeConfigSpec.BooleanValue removals;
+        private final ForgeConfigSpec.BooleanValue skipMissingItems;
+        private final ForgeConfigSpec.BooleanValue blockRecipes;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> recipeWhitelist;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> blockedRecipeMods;
+        private final ForgeConfigSpec.ConfigValue<String> recipeMatch;
+        private final ForgeConfigSpec.BooleanValue blockFurnaceRecipes;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> furnaceWhitelist;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> blockedFurnaceMods;
+        private final ForgeConfigSpec.BooleanValue logBlockedRecipes;
+
+        private Recipes(ForgeConfigSpec.Builder builder) {
+            builder.comment("Recipe files, removals and blocking").push("recipes");
+            furnace = builder.comment("Apply furnace/*.json files, which add and remove furnace smelting recipes [Default=true]").define("furnace", true);
+            removals = builder.comment("Apply recipe_removals/*.json files, which delete recipes by name, namespace or output [Default=true]").define("removals", true);
+            skipMissingItems = builder.comment("Skip recipes that use an item which is not registered, instead of letting them fail. The count is logged once [Default=true]").define("skipMissingItems", true);
+            blockRecipes = builder.comment("Remove every crafting recipe, keeping only the mods in recipeWhitelist. Include your pack's namespace to keep its own recipes [Default=false]").define("blockRecipes", false);
+            recipeWhitelist = builder.comment("Mod ids whose crafting recipes survive while blockRecipes is on. Include your pack's namespace to keep its own recipes").defineList("recipeWhitelist", List.of("minecraft"), each -> each instanceof String);
+            blockedRecipeMods = builder.comment("Mod ids whose crafting recipes are removed outright, whoever they belong to and whatever the whitelist says").defineList("blockedRecipeMods", List.of(), each -> each instanceof String);
+            recipeMatch = builder.comment("What the mod id is read from when blocking crafting recipes. 'recipe' uses the recipe's own name, 'output' uses the item it makes, 'both' blocks if either matches and spares if either is whitelisted [Default=recipe]").define("recipeMatch", "recipe");
+            blockFurnaceRecipes = builder.comment("Remove every furnace, blast furnace, smoker and campfire recipe, keeping only the mods in furnaceWhitelist. The mod is read from the item produced [Default=false]").define("blockFurnaceRecipes", false);
+            furnaceWhitelist = builder.comment("Mod ids whose furnace recipes survive while blockFurnaceRecipes is on. Include your pack's namespace to keep its own recipes").defineList("furnaceWhitelist", List.of("minecraft"), each -> each instanceof String);
+            blockedFurnaceMods = builder.comment("Mod ids whose furnace recipes are removed outright, whatever the whitelist says").defineList("blockedFurnaceMods", List.of(), each -> each instanceof String);
+            logBlockedRecipes = builder.comment("Log a per mod count of what was blocked, so you can see what to whitelist [Default=true]").define("logBlockedRecipes", true);
+            builder.pop();
+        }
+
+        public boolean furnace() { return furnace.get(); }
+
+        public boolean removals() { return removals.get(); }
+
+        public boolean skipMissingItems() { return skipMissingItems.get(); }
+
+        public boolean blockRecipes() { return blockRecipes.get(); }
+
+        public List<? extends String> recipeWhitelist() { return recipeWhitelist.get(); }
+
+        public List<? extends String> blockedRecipeMods() { return blockedRecipeMods.get(); }
+
+        public String recipeMatch() { return recipeMatch.get(); }
+
+        public boolean blockFurnaceRecipes() { return blockFurnaceRecipes.get(); }
+
+        public List<? extends String> furnaceWhitelist() { return furnaceWhitelist.get(); }
+
+        public List<? extends String> blockedFurnaceMods() { return blockedFurnaceMods.get(); }
+
+        public boolean logBlockedRecipes() { return logBlockedRecipes.get(); }
+    }
+
+    public static final class Data {
+        private final ForgeConfigSpec.BooleanValue lootInjections;
+        private final ForgeConfigSpec.BooleanValue playerLoot;
+        private final ForgeConfigSpec.BooleanValue registryRemaps;
+
+        private Data(ForgeConfigSpec.Builder builder) {
+            builder.comment("Loot and registry names").push("data");
+            lootInjections = builder.comment("Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table [Default=true]").define("lootInjections", true);
+            playerLoot = builder.comment("Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory [Default=true]").define("playerLoot", true);
+            registryRemaps = builder.comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]").define("registryRemaps", true);
+            builder.pop();
+        }
+
+        public boolean lootInjections() { return lootInjections.get(); }
+
+        public boolean playerLoot() { return playerLoot.get(); }
+
+        public boolean registryRemaps() { return registryRemaps.get(); }
     }
 
     public static final class Worldgen {

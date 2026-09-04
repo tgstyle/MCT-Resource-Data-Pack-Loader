@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.server.packs.PackType;
@@ -132,6 +133,22 @@ public final class RDPLPack {
     private Path locate(PackType type, String namespace, String path) { return root.resolve(type.getDirectory()).resolve(namespace).resolve(path); }
 
     public InputStream open(PackType type, String namespace, String path) throws IOException { return Files.newInputStream(locate(type, namespace, path)); }
+
+    private String read(PackType type, String namespace, String path) throws IOException { return Files.readString(locate(type, namespace, path)); }
+
+    public void forEach(PackType type, String folder, String ext, IPackConsumer consumer) {
+        String prefix = folder + "/";
+        String suffix = "." + ext;
+        for (Map.Entry<String, Set<String>> entry : index.getOrDefault(type, Collections.emptyMap()).entrySet()) {
+            String namespace = entry.getKey();
+            for (String path : entry.getValue()) {
+                if (!path.startsWith(prefix) || !path.endsWith(suffix)) { continue; }
+                String id = path.substring(prefix.length(), path.length() - suffix.length());
+                try { consumer.accept(namespace, id, read(type, namespace, path)); }
+                catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not read {}/{}/{}", name, type.getDirectory(), namespace, path, ex); }
+            }
+        }
+    }
 
     public List<String> packFiles(String folder, String ext) {
         List<String> out = new ArrayList<>();

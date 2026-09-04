@@ -1,0 +1,7 @@
+repositories {
+    maven { url = 'https://maven.blamejared.com' }
+}
+
+dependencies {
+    modRuntimeOnly "mezz.jei:jei-${version_minecraft}-forge:15.20.0.112"
+}

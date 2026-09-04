@@ -5,7 +5,9 @@
     "compatibilityLevel": "JAVA_17",
     "refmap": "mixins.resourcedatapackloader.refmap.json",
     "mixins": [
-        "MixinPackRepository"
+        "MixinPackRepository",
+        "MixinRecipeManager",
+        "ILootTable"
     ],
     "client": [],
     "server": [],
