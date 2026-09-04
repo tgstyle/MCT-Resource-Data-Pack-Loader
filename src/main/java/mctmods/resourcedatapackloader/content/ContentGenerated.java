@@ -55,8 +55,8 @@ public final class ContentGenerated {
             try { item(entry, itemTags); }
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for item {}", entry.id(), ex); }
         }
-        tags(blockTags, ContentFormats.BLOCK_TAGS);
-        tags(itemTags, ContentFormats.ITEM_TAGS);
+        blockTags(blockTags);
+        tags(itemTags, Map.of(), ContentFormats.ITEM_TAGS);
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
 
@@ -447,14 +447,7 @@ public final class ContentGenerated {
             tag(blockTags, tag, id);
             if (hasItem) { tag(itemTags, tag, id); }
         }
-        switch (def.harvestTool()) {
-            case "pickaxe", "axe", "shovel", "hoe" -> tag(blockTags, "minecraft:mineable/" + def.harvestTool(), id);
-            default -> { }
-        }
-        int level = entry.variant().harvestLevelOr(def.harvestToolLevel());
-        if (level == 1) { tag(blockTags, "minecraft:needs_stone_tool", id); }
-        else if (level == 2) { tag(blockTags, "minecraft:needs_iron_tool", id); }
-        else if (level >= 3) { tag(blockTags, "minecraft:needs_diamond_tool", id); }
+        harvestTags(blockTags, id, def.harvestTool(), entry.variant().harvestLevelOr(def.harvestToolLevel()));
         boolean wood = "wood".equals(def.material());
         switch (def.type()) {
             case ContentBlockTypes.FENCE -> {
@@ -495,18 +488,53 @@ public final class ContentGenerated {
             tag(poiTags, "minecraft:acquirable_job_site", site);
             tag(poiTags, "minecraft:job_site", site);
         }
-        tags(poiTags, ContentFormats.POI_TAGS);
+        tags(poiTags, Map.of(), ContentFormats.POI_TAGS);
     }
 
-    private static void tag(Map<String, Set<String>> tags, String tag, ResourceLocation id) { tags.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(id.toString()); }
+    public static void retag() {
+        GeneratedResources.remove(PackType.SERVER_DATA, ContentFormats.BLOCK_TAGS + "/");
+        Map<String, Set<String>> blockTags = new LinkedHashMap<>();
+        Map<String, Set<String>> itemTags = new LinkedHashMap<>();
+        for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
+            if (entry.isMain()) { tagBlock(entry, blockTags, itemTags, false); }
+        }
+        blockTags(blockTags);
+    }
 
-    private static void tags(Map<String, Set<String>> tags, String folder) {
-        for (Map.Entry<String, Set<String>> entry : tags.entrySet()) {
-            ResourceLocation tag = ResourceLocation.tryParse(entry.getKey());
+    private static void blockTags(Map<String, Set<String>> blockTags) {
+        Map<String, Set<String>> removed = new LinkedHashMap<>();
+        ContentOverrides.harvestTags(blockTags, removed);
+        tags(blockTags, removed, ContentFormats.BLOCK_TAGS);
+    }
+
+    public static void harvestTags(Map<String, Set<String>> tags, ResourceLocation id, String tool, int level) {
+        switch (tool) {
+            case "pickaxe", "axe", "shovel", "hoe" -> tag(tags, "minecraft:mineable/" + tool, id);
+            default -> { }
+        }
+        if (level == 1) { tag(tags, "minecraft:needs_stone_tool", id); }
+        else if (level == 2) { tag(tags, "minecraft:needs_iron_tool", id); }
+        else if (level >= 3) { tag(tags, "minecraft:needs_diamond_tool", id); }
+    }
+
+    public static void tag(Map<String, Set<String>> tags, String tag, ResourceLocation id) { tags.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(id.toString()); }
+
+    private static void tags(Map<String, Set<String>> tags, Map<String, Set<String>> removed, String folder) {
+        Set<String> names = new LinkedHashSet<>(tags.keySet());
+        names.addAll(removed.keySet());
+        for (String name : names) {
+            ResourceLocation tag = ResourceLocation.tryParse(name);
             if (tag == null) { continue; }
             JsonArray values = new JsonArray();
-            for (String value : entry.getValue()) { values.add(value); }
-            data(tag.getNamespace(), folder + "/" + tag.getPath() + ".json", obj("replace", false, "values", values));
+            for (String value : tags.getOrDefault(name, Set.of())) { values.add(value); }
+            JsonObject file = obj("replace", false, "values", values);
+            Set<String> gone = removed.get(name);
+            if (gone != null) {
+                JsonArray remove = new JsonArray();
+                for (String value : gone) { remove.add(value); }
+                file.add("remove", remove);
+            }
+            data(tag.getNamespace(), folder + "/" + tag.getPath() + ".json", file);
         }
     }
 

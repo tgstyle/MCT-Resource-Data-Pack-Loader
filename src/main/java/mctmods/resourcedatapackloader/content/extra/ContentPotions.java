@@ -119,31 +119,14 @@ public final class ContentPotions {
             ContentLog.LOGGER.error("Potion type file {} is empty, ignoring it", key);
             return;
         }
-        List<PotionEffectDef> effects = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "effects")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
-            String potion = GsonHelper.getAsString(entry, "potion", "");
-            if (potion.isEmpty()) {
-                ContentLog.LOGGER.error("An effect in {} names no potion, skipping it", key);
-                continue;
-            }
-            effects.add(new PotionEffectDef(potion,
-                    Math.max(1, GsonHelper.getAsInt(entry, "duration", 3600)),
-                    Math.max(0, GsonHelper.getAsInt(entry, "amplifier", 0)),
-                    GsonHelper.getAsBoolean(entry, "ambient", false),
-                    GsonHelper.getAsBoolean(entry, "showParticles", true)));
-        }
+        List<PotionEffectDef> effects = ContentParser.effects(key, json);
         if (effects.isEmpty()) {
             ContentLog.LOGGER.error("Potion type {} has no usable effects, ignoring it", key);
             return;
         }
         TYPES.put(key, new PotionTypeDef(key,
                 GsonHelper.getAsString(json, "baseName", key.getNamespace() + "." + key.getPath()),
-                Collections.unmodifiableList(effects),
+                effects,
                 Json.strings(json, "requires")));
     }
 

@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
+import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -128,6 +129,29 @@ public final class ContentParser {
         List<String> types = lowered(Json.strings(json, PLANT_TYPES));
         if (!types.isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Let the plant name this block in its own soil list instead", key, PLANT_TYPES); }
         return types;
+    }
+
+    public static List<PotionEffectDef> effects(ResourceLocation key, JsonObject json) {
+        if (!json.has("effects")) { return Collections.emptyList(); }
+        List<PotionEffectDef> effects = new ArrayList<>();
+        for (JsonElement element : GsonHelper.getAsJsonArray(json, "effects")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            String potion = GsonHelper.getAsString(entry, "potion", "");
+            if (potion.isEmpty()) {
+                ContentLog.LOGGER.error("An effect in {} names no potion, skipping it", key);
+                continue;
+            }
+            effects.add(new PotionEffectDef(potion,
+                    Math.max(1, GsonHelper.getAsInt(entry, "duration", 3600)),
+                    Math.max(0, GsonHelper.getAsInt(entry, "amplifier", 0)),
+                    GsonHelper.getAsBoolean(entry, "ambient", false),
+                    GsonHelper.getAsBoolean(entry, "showParticles", true)));
+        }
+        return Collections.unmodifiableList(effects);
     }
 
     private static List<String> tags(ResourceLocation key, String name, JsonObject json) {

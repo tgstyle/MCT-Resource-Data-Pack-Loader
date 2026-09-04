@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
@@ -84,6 +85,7 @@ public final class CommandShared {
         }
         PackManager.get().scan(root);
         PackManager.get().report();
+        ContentOverrides.reload();
         return false;
     }
 

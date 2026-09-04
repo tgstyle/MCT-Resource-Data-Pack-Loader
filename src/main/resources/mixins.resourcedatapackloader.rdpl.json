@@ -4,6 +4,12 @@
     "package": "mctmods.resourcedatapackloader.mixin.rdpl",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
+        "common.IBlockBehaviour",
+        "common.IBlockStateBase",
+        "common.IFireBlock",
+        "common.IItem",
+        "common.IPotion",
+        "common.MixinBlockStateBase",
         "common.MixinPackRepository",
         "common.MixinRecipeManager"
     ],
