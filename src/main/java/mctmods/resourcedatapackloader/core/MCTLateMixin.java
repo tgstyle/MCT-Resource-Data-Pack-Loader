@@ -33,7 +33,8 @@ import java.util.List;
                 "mixins.resourcedatapackloader.paperfixes.json",
                 "mixins.resourcedatapackloader.vanillaportals.json",
                 "mixins.resourcedatapackloader.betterf3.json",
-                "mixins.resourcedatapackloader.galacticraft.json");
+                "mixins.resourcedatapackloader.galacticraft.json",
+                "mixins.resourcedatapackloader.vintagefix.json");
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
@@ -58,6 +59,7 @@ import java.util.List;
         if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
         if (mixinConfig.endsWith(".betterf3.json")) { return Loader.isModLoaded("betterf3reborn"); }
         if (mixinConfig.endsWith(".galacticraft.json")) { return Loader.isModLoaded("galacticraftcore"); }
+        if (mixinConfig.endsWith(".vintagefix.json")) { return Loader.isModLoaded("vintagefix"); }
         return true;
     }
 

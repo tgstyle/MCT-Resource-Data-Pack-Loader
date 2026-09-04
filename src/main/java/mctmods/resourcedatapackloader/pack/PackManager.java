@@ -415,6 +415,18 @@ public final class PackManager {
         return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
 
+    public List<String> rawPaths(boolean overriding) {
+        List<String> paths = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Entry>> namespace : (overriding ? mergedOverride : mergedNormal).entrySet()) {
+            for (Entry entry : namespace.getValue().values()) {
+                String path = "assets/" + namespace.getKey() + "/" + entry.actual;
+                paths.add(path);
+                if (path.endsWith(ContentPixelMaps.PNG + ContentPixelMaps.SUFFIX)) { paths.add(path.substring(0, path.length() - ContentPixelMaps.SUFFIX.length())); }
+            }
+        }
+        return paths;
+    }
+
     public List<String> findUnused() {
         List<String> unused = new ArrayList<>();
         for (RDPLPack pack : packs) {

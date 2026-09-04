@@ -587,6 +587,15 @@ public abstract class MixinChunk {
         return rdpl$cubeLoadedAt(pos.getY());
     }
 
+    @SuppressWarnings("unchecked") @Inject(method = "getEntityLists", at = @At("HEAD"), cancellable = true) private void rdpl$entitiesFromCubes(CallbackInfoReturnable<ClassInheritanceMultiMap<Entity>[]> cir) {
+        if (!rdpl$isColumn) { return; }
+        Collection<Cube> cubes = rdpl$cubeMap.all();
+        ClassInheritanceMultiMap<Entity>[] lists = new ClassInheritanceMultiMap[cubes.size()];
+        int at = 0;
+        for (Cube cube : cubes) { lists[at++] = cube.getEntitySet(); }
+        cir.setReturnValue(lists);
+    }
+
     @Inject(method = "onLoad", at = @At("HEAD"), cancellable = true) private void onChunkLoad_Rubic(CallbackInfo cbi) {
         if (!rdpl$isColumn) { return; }
         cbi.cancel();

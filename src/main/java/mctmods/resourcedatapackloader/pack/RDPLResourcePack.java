@@ -34,6 +34,8 @@ import javax.imageio.ImageIO;
         this.overriding = overriding;
     }
 
+    public boolean isOverriding() { return overriding; }
+
     @Override @Nonnull public InputStream getInputStream(@Nonnull ResourceLocation location) throws IOException {
         InputStream stream = PackManager.get().openRaw(location.getNamespace(), location.getPath(), overriding);
         if (stream == null) { throw new FileNotFoundException(location.toString()); }

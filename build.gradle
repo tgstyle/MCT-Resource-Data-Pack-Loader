@@ -123,6 +123,7 @@ dependencies {
     compileOnly rfg.deobf("curse.maven:${common.dngn_version}")
     compileOnly rfg.deobf("curse.maven:${common.lstc_version}")
     compileOnly rfg.deobf("curse.maven:${common.aeth_version}")
+    compileOnly rfg.deobf("curse.maven:${common.vfix_version}")
     compileOnly rfg.deobf("curse.maven:${common.btwl_version}")
     compileOnly rfg.deobf("curse.maven:${common.ntra_version}")
     compileOnly rfg.deobf("curse.maven:${common.otgn_version}")
