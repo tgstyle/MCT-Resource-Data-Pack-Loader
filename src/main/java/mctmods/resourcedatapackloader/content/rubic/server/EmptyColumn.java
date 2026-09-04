@@ -23,6 +23,7 @@ import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public class EmptyColumn extends Chunk implements IColumnInternal {
 	private final ICube emptyCube;
@@ -64,6 +65,10 @@ public class EmptyColumn extends Chunk implements IColumnInternal {
 	@Override public int getZ() { return 0; }
 
 	@Override public ChunkPrimer getCompatGenerationPrimer() { return null; }
+
+	@Override @Nullable public ExtendedBlockStorage getStorageForCube(int cubeY) { return null; }
+
+	@Override public void setStorageForCube(int cubeY, ExtendedBlockStorage storage) {}
 
 	@Override public void removeFromStagingHeightmap(ICube cube) {
 	}

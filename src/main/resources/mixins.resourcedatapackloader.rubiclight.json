@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "mctmods.resourcedatapackloader.mixin.rubiclight",
+  "plugin": "mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin",
+  "refmap": "mixins.resourcedatapackloader.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixinPriority": 1500,
+  "mixins": [
+    "common.MixinChunkLightRubic",
+    "common.MixinWorldLightRubic"
+  ],
+  "client": [
+    "client.MixinChunkCacheLightRubic",
+    "client.MixinWorldLightRubic"
+  ],
+  "server": []
+}

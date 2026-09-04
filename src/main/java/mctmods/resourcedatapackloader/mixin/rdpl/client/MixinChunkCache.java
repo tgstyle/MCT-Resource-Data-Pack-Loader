@@ -16,7 +16,6 @@ import net.minecraft.world.chunk.Chunk;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkCache.class) public abstract class MixinChunkCache {
@@ -41,20 +40,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private int getLightFor_getMinHeight(int orig) { return ((IRubicWorld) world).rdpl$getMinHeight(); }
 
     @ModifyConstant(method = "getLightFor", constant = @Constant(intValue = 256)) private int getLightFor_getMaxHeight(int orig) {
-        return ((IRubicWorld) world).rdpl$getMaxHeight();
-    }
-
-    @ModifyConstant(method = "getLightForExt",
-            constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO),
-            slice = @Slice(
-                    from = @At(value = "INVOKE:FIRST", target = "Lnet/minecraft/util/math/BlockPos;getY()I"),
-                    to = @At(value = "INVOKE:FIRST",
-                            target = "Lnet/minecraft/world/ChunkCache;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;")
-            )
-    )
-    private int getLightForExt_getMinHeight(int orig) { return ((IRubicWorld) world).rdpl$getMinHeight(); }
-
-    @ModifyConstant(method = "getLightForExt", constant = @Constant(intValue = 256)) private int getLightForExt_getMaxHeight(int orig) {
         return ((IRubicWorld) world).rdpl$getMaxHeight();
     }
 }

@@ -260,7 +260,6 @@
     "client.MixinViewFrustum",
     "client.MixinViewFrustumOptifine",
     "client.MixinViewFrustumVertViewDistance",
-    "client.MixinWorld",
     "client.MixinWorldClient",
     "client.MixinWorldProvider"
   ],

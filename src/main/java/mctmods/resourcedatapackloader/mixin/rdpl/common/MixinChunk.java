@@ -305,10 +305,6 @@ public abstract class MixinChunk {
         if (rdpl$isColumn) { cbi.cancel(); }
     }
 
-    @Inject(method = "recheckGaps", at = @At(value = "HEAD"), cancellable = true) private void recheckGaps_Rubic_Replace(boolean onlyOne, CallbackInfo cbi) {
-        if (rdpl$isColumn) { cbi.cancel(); }
-    }
-
     @ModifyVariable(
             method = "setBlockState",
             at = @At(
@@ -336,10 +332,6 @@ public abstract class MixinChunk {
     private int setBlockState_Rubic_noGetLightFor(Chunk instance, EnumSkyBlock type, BlockPos pos) {
         if (!rdpl$isColumn) { return instance.getLightFor(type, pos); }
         return 0;
-    }
-
-    @Inject(method = "relightBlock", at = @At(value = "HEAD"), cancellable = true) private void relightBlock_Rubic_Replace(int x, int y, int z, CallbackInfo cbi) {
-        if (rdpl$isColumn) { cbi.cancel(); }
     }
 
     @Redirect(method = "getBlockLightOpacity(III)I", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD))
@@ -410,19 +402,6 @@ public abstract class MixinChunk {
         if (rdpl$isColumn && !rdpl$compatGenerating()) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
         else { dirty = isModifiedIn; }
     }
-
-    @Inject(method = "getLightFor", at = @At("HEAD"), cancellable = true) private void replacedGetLightForRubic(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (!rdpl$isColumn || rdpl$compatGenerating()) { return; }
-        ((IRubicWorldInternal) world).rdpl$getLightingManager().onGetLight();
-        cir.setReturnValue(((Cube) ((IColumn) this).getCube(blockToCube(pos.getY()))).getCachedLightFor(type, pos));
-    }
-
-    @Nullable @Redirect(method = "getLightFor", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;",
-            opcode = Opcodes.GETFIELD, args = "array=get"
-    ))
-    private ExtendedBlockStorage getLightFor_Rubic_EBSGetRedirect(ExtendedBlockStorage[] array, int index) { return getEBS_Rubic(index); }
 
     @Inject(method = "getLightSubtracted", at = @At("HEAD")) private void onGetLightSubtracted(BlockPos pos, int amount, CallbackInfoReturnable<Integer> cir) {
         if (!rdpl$isColumn) { return; }
@@ -707,11 +686,6 @@ public abstract class MixinChunk {
         if (rdpl$isColumn) { throw new UnsupportedOperationException("setting storage arrays it not supported with rubic"); }
     }
 
-    @Inject(method = "checkLight()V", at = @At(value = "HEAD"), cancellable = true)
-    private void checkLight_Rubic_NotSupported(CallbackInfo cbi) {
-        if (rdpl$isColumn) { cbi.cancel(); }
-    }
-
     @Redirect(method = "removeInvalidTileEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean removeInvalidTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, BlockPos pos) {
         if (!rdpl$isColumn) { return loaded; }
         return rdpl$cubeLoadedAt(pos.getY());
@@ -765,6 +739,10 @@ public abstract class MixinChunk {
     public void chunk_internal$markPregenDone() { rdpl$pregenDone = true; }
 
     public ChunkPrimer chunk_internal$getCompatGenerationPrimer() { return rdpl$compatGenerationPrimer; }
+
+    @Nullable public ExtendedBlockStorage chunk_internal$getStorageForCube(int cubeY) { return getEBS_Rubic(cubeY); }
+
+    public void chunk_internal$setStorageForCube(int cubeY, ExtendedBlockStorage storage) { setEBS_Rubic(cubeY, storage); }
 
     public void chunk_internal$syncCompatGenerationWrites() {
         if (!rdpl$compatArraysFilled) { return; }

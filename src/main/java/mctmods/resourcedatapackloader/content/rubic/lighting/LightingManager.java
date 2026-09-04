@@ -39,7 +39,7 @@ public class LightingManager implements ILightingManager {
 
     @Override public void onCreateCubeStorage(ICube cube, ExtendedBlockStorage storage) { lightEngine.cubeStorageMade(cube, storage); }
 
-    public boolean checkLightFor(EnumSkyBlock lightType, BlockPos pos) {
+    @Override public boolean checkLightFor(EnumSkyBlock lightType, BlockPos pos) {
         lightEngine.scheduleLightUpdate(lightType, pos);
         return true;
     }

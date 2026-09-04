@@ -61,7 +61,6 @@ import net.minecraft.util.math.MathHelper;
 import org.spongepowered.asm.mixin.injection.Group;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.Slice;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import net.minecraft.world.border.WorldBorder;
@@ -276,11 +275,6 @@ import net.minecraft.util.math.AxisAlignedBB;
         return this.provider.getHeight();
     }
 
-    @Inject(method = "checkLightFor", at = @At("HEAD"), cancellable = true) private void checkLightFor(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> ci) {
-        if (!rdpl$isRubicWorld()) { return; }
-        ci.setReturnValue(rdpl$getLightingManager().checkLightFor(lightType, pos));
-    }
-
     @Inject(method = "markChunkDirty", at = @At("HEAD"), cancellable = true) private void onMarkChunkDirty(BlockPos pos, TileEntity unusedTileEntity, CallbackInfo ci) {
         if (this.rdpl$isRubicWorld()) {
             Cube cube = this.rdpl$getCubeCache().getLoadedCube(CubePos.fromBlockCoords(pos));
@@ -371,20 +365,6 @@ import net.minecraft.util.math.AxisAlignedBB;
         if (pos.getY() >= this.rdpl$getMaxHeight()) { return EnumSkyBlock.SKY.defaultLightValue; }
         return this.getChunk(pos).getLightSubtracted(pos, 0);
     }
-
-    @Group(name = "getLightHeightOverride", max = 4) @ModifyConstant(
-            method = "getLight(Lnet/minecraft/util/math/BlockPos;Z)I",
-            constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.LESS_THAN_ZERO, ordinal = 0),
-            slice = @Slice(
-                    from = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I"),
-                    to = @At(value = "INVOKE",
-                            target = "Lnet/minecraft/world/World;getChunk(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;")
-            ))
-    private int getLightGetYReplace(int zero) { return rdpl$getMinHeight(); }
-
-    @Group(name = "getLightHeightOverride") @ModifyConstant(method = "getLight(Lnet/minecraft/util/math/BlockPos;Z)I",
-            constant = {@Constant(intValue = 255), @Constant(intValue = 256)}, require = 2)
-    private int getLightGetReplacementYTooHigh(int original) { return this.rdpl$getMaxHeight() + original - 256; }
 
     @Group(name = "getLightForHeightOverride", min = 2, max = 2) @ModifyConstant(method = "getLightFor",
             constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.LESS_THAN_ZERO))

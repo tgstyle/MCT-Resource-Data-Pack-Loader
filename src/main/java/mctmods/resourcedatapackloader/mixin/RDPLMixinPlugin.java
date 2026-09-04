@@ -26,6 +26,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final Object2BooleanMap<String> RUBIC_CONDITIONS = new Object2BooleanLinkedOpenHashMap<>();
     private static final String CUBIC_CHUNKS_MARKER = "io/github/opencubicchunks/cubicchunks/core/CubicChunks.class";
     private static final String RUBIC_PACKAGE = "mctmods.resourcedatapackloader.mixin.rdpl.";
+    private static final String RUBIC_LIGHT_PACKAGE = "mctmods.resourcedatapackloader.mixin.rubiclight.";
     private static Boolean cubicChunks;
     private static boolean rubicLoaded;
     private Boolean lightingReplaced;
@@ -112,7 +113,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     @Override public String getRefMapperConfig() { return null; }
 
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (mixinClassName.startsWith(RUBIC_PACKAGE) && cubicChunksPresent()) { return false; }
+        if ((mixinClassName.startsWith(RUBIC_PACKAGE) || mixinClassName.startsWith(RUBIC_LIGHT_PACKAGE)) && cubicChunksPresent()) { return false; }
         if (RUBIC_CONDITIONS.containsKey(mixinClassName)) { return RUBIC_CONDITIONS.getBoolean(mixinClassName); }
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
         switch (simple) {

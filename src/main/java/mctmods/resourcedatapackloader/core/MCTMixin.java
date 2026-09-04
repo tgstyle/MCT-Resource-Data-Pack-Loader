@@ -125,8 +125,8 @@ import java.util.Map;
     @Override public String getAccessTransformerClass() { return null; }
 
     @Override public List<String> getMixinConfigs() {
-        return Arrays.asList("mixins.resourcedatapackloader.rdpl.json", "mixins.resourcedatapackloader.fml.json", "mixins.resourcedatapackloader.groovyscript.json",
-                "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json");
+        return Arrays.asList("mixins.resourcedatapackloader.rdpl.json", "mixins.resourcedatapackloader.rubiclight.json", "mixins.resourcedatapackloader.fml.json",
+                "mixins.resourcedatapackloader.groovyscript.json", "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json");
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {

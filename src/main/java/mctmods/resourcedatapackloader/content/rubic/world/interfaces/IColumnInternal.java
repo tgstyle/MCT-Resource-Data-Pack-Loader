@@ -6,9 +6,15 @@ import mctmods.resourcedatapackloader.util.AddressTools;
 
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import javax.annotation.Nullable;
 
 public interface IColumnInternal extends IColumn {
     ChunkPrimer getCompatGenerationPrimer();
+
+    @Nullable ExtendedBlockStorage getStorageForCube(int cubeY);
+
+    void setStorageForCube(int cubeY, ExtendedBlockStorage storage);
 
     default void syncCompatGenerationWrites() {}
 
