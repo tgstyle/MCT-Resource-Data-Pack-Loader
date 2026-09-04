@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -30,6 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -42,6 +44,30 @@ public final class PackManager {
     public static final String ROOT_PACK = "<loose files>";
     public static final String CONFIG = "config";
     public static final String JSON = "json";
+    public static final PackType CONTENT = PackType.SERVER_DATA;
+    public static final String BLOCKS = "blocks";
+    public static final String ITEMS = "items";
+    public static final String FLUIDS = "fluids";
+    public static final String BIOMES = "biomes";
+    public static final String WORLDGEN = "worldgen";
+    public static final String DIMENSIONS = "dimensions";
+    public static final String WORLDTEMPLATES = "worldtemplates";
+    public static final String PATHINTERSECTS = "pathintersects";
+    public static final String STRUCTUREMAPS = "structuremaps";
+    public static final String PORTALFRAMES = "portalframes";
+    public static final String GATES = "gates";
+    public static final String POTIONS = "potions";
+    public static final String POTION_TYPES = "potion_types";
+    public static final String BREWING = "brewing";
+    public static final String VILLAGERS = "villagers";
+    public static final String TRADES = "trades";
+    public static final String VILLAGES = "villages";
+    public static final String ENTITIES = "entities";
+    public static final String RECIPE_REMOVALS = "recipe_removals";
+    public static final String FURNACE = "furnace";
+    public static final String LOOT_INJECTIONS = "loot_injections";
+    public static final String PLAYER_LOOT = "player_loot";
+    public static final String REGISTRY_REMAP = "registry_remap";
     private static final String README = "readme.txt";
     private static final String README_BASE = "/assets/resourcedatapackloader/readme";
     private static final String README_FALLBACK = README_BASE + "_en_us.txt";
@@ -54,6 +80,7 @@ public final class PackManager {
     private final Map<PackType, Map<String, Map<String, Entry>>> mergedOverride = new EnumMap<>(PackType.class);
     private final Set<String> warned = ConcurrentHashMap.newKeySet();
     private final Set<String> served = ConcurrentHashMap.newKeySet();
+    private final AtomicInteger generation = new AtomicInteger();
     @Nullable private volatile Path root;
     @Nullable private volatile String description;
 
@@ -71,6 +98,21 @@ public final class PackManager {
     public List<RDPLPack> getPacks() { return Collections.unmodifiableList(packs); }
 
     @Nullable public Path getRoot() { return root; }
+
+    public int getGeneration() { return generation.get(); }
+
+    public boolean provides(String namespace) {
+        for (RDPLPack pack : packs) {
+            for (PackType type : PackType.values()) {
+                if (pack.getNamespaces(type).contains(namespace)) { return true; }
+            }
+        }
+        return false;
+    }
+
+    public void forEach(String folder, String ext, IPackConsumer consumer) {
+        for (RDPLPack pack : packs) { pack.forEach(CONTENT, folder, ext, consumer); }
+    }
 
     public void scan(Path packRoot) {
         if (packRoot.getNameCount() == 0 || packRoot.equals(packRoot.getRoot())) {
@@ -113,6 +155,7 @@ public final class PackManager {
         buildIndex();
         description = resolveDescription();
         PackOptions.reload(packRoot, packs);
+        generation.incrementAndGet();
     }
 
     private void buildIndex() {

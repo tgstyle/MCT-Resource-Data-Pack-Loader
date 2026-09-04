@@ -4,7 +4,8 @@
     "package": "mctmods.resourcedatapackloader.mixin",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
-        "MixinPackRepository"
+        "MixinPackRepository",
+        "MixinRecipeManager"
     ],
     "client": [],
     "server": [],
