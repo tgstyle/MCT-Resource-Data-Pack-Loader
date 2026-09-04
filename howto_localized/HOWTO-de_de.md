@@ -3783,7 +3783,8 @@ Was nach einer Explosion geschieht, aus `<namespace>/blastplaster/*.json`. `defa
     "structureBiomesAreBlacklist": false,
     "structureSpawns": ["temples=minecraft:witch:1:1:1", "monuments="],
     "structureSpawners": ["dungeons=minecraft:zombie,minecraft:husk"],
-    "structureAt": ["villages=1000,-500"]
+    "structureAt": ["villages=1000,-500"],
+    "structureMost": ["villages=100"]
   }
 }
 ```
@@ -3801,7 +3802,7 @@ temples=minecraft:desert,SANDY
 monuments=minecraft:deep_ocean
 ```
 
-Nicht jede Struktur versteht jede Einstellung. Der Abstand erreicht Tempel, Monumente, Herrenhäuser, Endstädte und Festungen; bei `mineshafts` bedeutet die Zahl einer von so vielen Chunks statt eines Rasters, weil Vanilla sie so platziert. Die Trennung erreicht Monumente, Herrenhäuser, Endstädte und Festungen. Die Biome erreichen jede Struktur außer den Endstädten, weil das Ende in dieser Version ein einziges Biom ist und es nichts auszuwählen gibt. Endstädte suchen sich ihren Platz im Raster trotzdem selbst: Sie sitzen nur auf einer äußeren Insel, deren Oberfläche bis y60 reicht, ein größerer Abstand dünnt sie also aus, kann aber keine über die Leere setzen. Netherfestungen sitzen auf einem festen Raster, das Vanilla nicht offenlegt, sie erreichen also nur die Listen für Biome und Spawnabstand. Dörfer behalten ihre eigenen `villageSpacing`, `villageBiomes` und den Rest.
+Nicht jede Struktur versteht jede Einstellung. Der Abstand erreicht Tempel, Monumente, Herrenhäuser, Endstädte und Festungen; bei `mineshafts` bedeutet die Zahl einer von so vielen Chunks statt eines Rasters, weil Vanilla sie so platziert. Die Trennung erreicht Monumente, Herrenhäuser, Endstädte und Festungen, und Dörfer, für die sie die wenigsten Chunks zwischen einem Dorf und dem nächsten ist, was auch immer das Raster erlauben würde. `structureMost` deckelt, wie viele einer Struktur eine Dimension haben darf, `villages=100`: Sind so viele gegründet, wird kein weiteres gegründet, wohin das Raster es auch setzen würde, während ein mit `structureAt` festgenageltes Dorf trotzdem gegründet wird. Nur Dörfer lesen es. Die Biome erreichen jede Struktur außer den Endstädten, weil das Ende in dieser Version ein einziges Biom ist und es nichts auszuwählen gibt. Endstädte suchen sich ihren Platz im Raster trotzdem selbst: Sie sitzen nur auf einer äußeren Insel, deren Oberfläche bis y60 reicht, ein größerer Abstand dünnt sie also aus, kann aber keine über die Leere setzen. Netherfestungen sitzen auf einem festen Raster, das Vanilla nicht offenlegt, sie erreichen also nur die Listen für Biome und Spawnabstand. Dörfer behalten ihre eigenen `villageSpacing`, `villageBiomes` und den Rest.
 
 `structureSpawns` ersetzt die Mobs, die eine Struktur spawnt, ganz gleich, was das Biom ringsum sagt, geschrieben als `structure=namespace:entity:gewicht:mindestens:höchstens`, durch Kommas getrennt:
 

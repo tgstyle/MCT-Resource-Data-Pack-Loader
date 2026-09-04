@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 import mctmods.resourcedatapackloader.content.interfaces.IMapGenVillageHold;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
@@ -13,6 +14,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.MapGenStructureData;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureStart;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,6 +58,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Override public void rdpl$holdDistance() { rdpl$hold(); }
 
+    @Unique private boolean rdpl$capped(int chunkX, int chunkZ) {
+        int most = ContentStructurePlacement.most(ContentStructurePlacement.VILLAGES);
+        int apart = ContentStructurePlacement.separation(ContentStructurePlacement.VILLAGES, 0);
+        if (most <= 0 && apart <= 0) { return false; }
+        MapGenStructureData data = ((IMapGenStructure) this).rdpl$getStructureData();
+        if (data == null) { return false; }
+        IPackingStructureData known = (IPackingStructureData) data;
+        if (most > 0 && known.rdpl$startCount() >= most) {
+            if (!rdpl$cappedTold) {
+                rdpl$cappedTold = true;
+                ContentLog.LOGGER.info("The world holds its {} village(s), the most the pack allows, so no further village is founded", most);
+            }
+            return true;
+        }
+        return apart > 0 && known.rdpl$startWithin(chunkX, chunkZ, apart);
+    }
+
+    @Unique private boolean rdpl$cappedTold;
+
     @Unique private void rdpl$hold() {
         if (!rdpl$stated || distance == rdpl$asked) { return; }
         int found = distance;
@@ -69,6 +90,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         rdpl$hold();
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, chunkX, chunkZ)) {
             cir.setReturnValue(true);
+            return;
+        }
+        if (rdpl$capped(chunkX, chunkZ)) {
+            cir.setReturnValue(false);
             return;
         }
         if (!ContentBeard.wanted()) { return; }

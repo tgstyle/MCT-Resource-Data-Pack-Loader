@@ -3783,7 +3783,8 @@ What happens after an explosion, from `<namespace>/blastplaster/*.json`. `defaul
     "structureBiomesAreBlacklist": false,
     "structureSpawns": ["temples=minecraft:witch:1:1:1", "monuments="],
     "structureSpawners": ["dungeons=minecraft:zombie,minecraft:husk"],
-    "structureAt": ["villages=1000,-500"]
+    "structureAt": ["villages=1000,-500"],
+    "structureMost": ["villages=100"]
   }
 }
 ```
@@ -3801,7 +3802,7 @@ temples=minecraft:desert,SANDY
 monuments=minecraft:deep_ocean
 ```
 
-Not every structure understands every setting. Spacing reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many rather than a grid, since that is how vanilla places them. Separation reaches monuments, mansions, end cities and strongholds. Biomes reach every structure except end cities, because the End is one biome in this version and there is nothing to choose between. End cities still pick their own spot within the grid: they only sit on an outer island whose surface reaches y60, so raising their spacing thins them out but cannot put one over the void. Nether fortresses sit on a fixed grid vanilla does not expose, so only the biome and spawn distance lists reach them. Villages keep their own `villageSpacing`, `villageBiomes` and the rest.
+Not every structure understands every setting. Spacing reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many rather than a grid, since that is how vanilla places them. Separation reaches monuments, mansions, end cities and strongholds, and villages, for which it is the fewest chunks between one village and the next whatever the grid would allow. `structureMost` caps how many of a structure a dimension may hold, `villages=100`: once that many have been founded no further one is, wherever the grid would put it, while a village pinned with `structureAt` is founded regardless. Only villages read it. Biomes reach every structure except end cities, because the End is one biome in this version and there is nothing to choose between. End cities still pick their own spot within the grid: they only sit on an outer island whose surface reaches y60, so raising their spacing thins them out but cannot put one over the void. Nether fortresses sit on a fixed grid vanilla does not expose, so only the biome and spawn distance lists reach them. Villages keep their own `villageSpacing`, `villageBiomes` and the rest.
 
 `structureSpawns` replaces the mobs a structure spawns whatever the biome around it says, written as `structure=namespace:entity:weight:least:most`, comma separated:
 

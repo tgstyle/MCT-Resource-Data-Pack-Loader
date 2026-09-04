@@ -38,6 +38,7 @@ public final class ContentStructurePlacement {
     private static final Map<String, Integer> SPACING = new LinkedHashMap<>();
     private static final Map<String, Integer> SEPARATION = new LinkedHashMap<>();
     private static final Map<String, Integer> SPAWN_DISTANCE = new LinkedHashMap<>();
+    private static final Map<String, Integer> MOST = new LinkedHashMap<>();
     private static final Map<String, Set<String>> BIOMES = new LinkedHashMap<>();
     private static final Map<String, Boolean> BLACKLISTS = new LinkedHashMap<>();
     private static final Map<String, List<String>> SPAWNS = new LinkedHashMap<>();
@@ -50,6 +51,8 @@ public final class ContentStructurePlacement {
     public static int spacing(String key, int fallback) { return value(SPACING, key, fallback, 1); }
 
     public static int separation(String key, int fallback) { return value(SEPARATION, key, fallback, 0); }
+
+    public static int most(String key) { return value(MOST, key, 0, 0); }
 
     public static double chance(String key, double fallback) {
         int wanted = value(SPACING, key, -1, 1);
@@ -169,6 +172,7 @@ public final class ContentStructurePlacement {
         numbers(SPACING, "structureSpacing", Config.worldgen.structureSpacing);
         numbers(SEPARATION, "structureSeparation", Config.worldgen.structureSeparation);
         numbers(SPAWN_DISTANCE, "structureMinDistanceFromSpawn", Config.worldgen.structureMinDistanceFromSpawn);
+        numbers(MOST, "structureMost", Config.worldgen.structureMost);
         pins(Config.worldgen.structureAt);
         lists(Config.worldgen.structureBiomes);
         spawnLists(Config.worldgen.structureSpawns);

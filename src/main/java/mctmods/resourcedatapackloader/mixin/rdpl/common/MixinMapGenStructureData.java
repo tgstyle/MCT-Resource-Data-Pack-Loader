@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
@@ -26,6 +28,35 @@ import javax.annotation.Nullable;
     @Shadow private NBTTagCompound tagCompound;
     @Unique private final List<byte[]> rdpl$packed = new ArrayList<>();
     @Unique private final Map<Long, Integer> rdpl$packedAt = new HashMap<>();
+    @Unique private final LongOpenHashSet rdpl$known = new LongOpenHashSet();
+
+    @Inject(method = "readFromNBT", at = @At("TAIL")) private void rdpl$learnStarts(NBTTagCompound nbt, CallbackInfo ci) {
+        for (String key : tagCompound.getKeySet()) {
+            long at = rdpl$coords(key);
+            if (at != Long.MIN_VALUE) { rdpl$known.add(at); }
+        }
+    }
+
+    @Inject(method = "writeInstance", at = @At("TAIL")) private void rdpl$learnStart(NBTTagCompound tagCompoundIn, int chunkX, int chunkZ, CallbackInfo ci) { rdpl$known.add(ChunkPos.asLong(chunkX, chunkZ)); }
+
+    @Unique private static long rdpl$coords(String key) {
+        int comma = key.indexOf(',');
+        if (key.length() < 5 || key.charAt(0) != '[' || comma < 0 || !key.endsWith("]")) { return Long.MIN_VALUE; }
+        try { return ChunkPos.asLong(Integer.parseInt(key.substring(1, comma)), Integer.parseInt(key.substring(comma + 1, key.length() - 1))); }
+        catch (NumberFormatException notCoords) { return Long.MIN_VALUE; }
+    }
+
+    @Override public int rdpl$startCount() { return rdpl$known.size(); }
+
+    @Override public boolean rdpl$startWithin(int chunkX, int chunkZ, int chunks) {
+        long reach = (long) chunks * chunks;
+        for (long at : rdpl$known) {
+            long dx = (int) at - chunkX;
+            long dz = (int) (at >> 32) - chunkZ;
+            if (dx * dx + dz * dz < reach) { return true; }
+        }
+        return false;
+    }
 
     @Override public void rdpl$packFarStarts(int chunkX, int chunkZ, int keep) {
         NBTTagCompound far = null;
