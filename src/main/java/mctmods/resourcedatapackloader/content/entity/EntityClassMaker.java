@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.monster.IMob;
 import net.minecraft.world.World;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -18,7 +19,7 @@ public final class EntityClassMaker {
 
     private EntityClassMaker() {}
 
-    @Nullable public static Class<? extends Entity> make(Class<? extends Entity> base, String key, boolean ignoresSpawnRules) {
+    @Nullable public static Class<? extends Entity> make(Class<? extends Entity> base, String key, boolean ignoresSpawnRules, boolean hostile) {
         try { base.getConstructor(World.class); }
         catch (NoSuchMethodException absent) {
             ContentLog.LOGGER.error("Entity variant {} is based on {}, which has no plain world constructor, so it cannot be copied", key, base.getName());
@@ -30,7 +31,7 @@ public final class EntityClassMaker {
         ClassLoader loader = EntityClassMaker.class.getClassLoader();
         try { return loaded(loader.loadClass(name)); }
         catch (ClassNotFoundException expected) { ContentLog.LOGGER.debug("Making a class for entity variant {}", key); }
-        byte[] bytes = write(name, base, check);
+        byte[] bytes = write(name, base, check, hostile && !IMob.class.isAssignableFrom(base));
         try { return loaded((Class<?>) definer().invoke(loader, name, bytes, 0, bytes.length)); }
         catch (ReflectiveOperationException ex) {
             ContentLog.LOGGER.error("Could not make a class for entity variant {}", key, ex);
@@ -57,12 +58,12 @@ public final class EntityClassMaker {
         return define;
     }
 
-    private static byte[] write(String name, Class<?> base, @Nullable String check) {
+    private static byte[] write(String name, Class<?> base, @Nullable String check, boolean monster) {
         String self = name.replace('.', '/');
         String parent = Type.getInternalName(base);
         String world = Type.getInternalName(World.class);
         ClassWriter writer = new ClassWriter(0);
-        writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, self, null, parent, null);
+        writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, self, null, parent, monster ? new String[] { Type.getInternalName(IMob.class) } : null);
         MethodVisitor made = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "(L" + world + ";)V", null, null);
         made.visitCode();
         made.visitVarInsn(Opcodes.ALOAD, 0);

@@ -1162,7 +1162,17 @@ public final class ContentParser {
                 Math.max(1, JsonUtils.getInt(json, "explosionFuse", 30)),
                 JsonUtils.getBoolean(json, "explosionFire", false),
                 equipment, spawns,
-                strings(json, "biomes"), strings(json, "biomeTypes"), strings(json, "requires"));
+                strings(json, "biomes"), strings(json, "biomeTypes"), strings(json, "requires"),
+                JsonUtils.getBoolean(json, "charges", false),
+                JsonUtils.getBoolean(json, "pounces", false),
+                Math.max(0, JsonUtils.getInt(json, "sniffs", 0)),
+                JsonUtils.getBoolean(json, "sleepsByDay", false),
+                Math.max(0, JsonUtils.getInt(json, "home", 0)),
+                Math.max(0.0F, Math.min(1.0F, JsonUtils.getFloat(json, "fleesWhenHurt", 0.0F))),
+                JsonUtils.getBoolean(json, "patrols", false),
+                JsonUtils.getBoolean(json, "swoops", false),
+                JsonUtils.getBoolean(json, "gusts", false),
+                Math.max(0.1F, JsonUtils.getFloat(json, "gustPower", 1.5F)));
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {

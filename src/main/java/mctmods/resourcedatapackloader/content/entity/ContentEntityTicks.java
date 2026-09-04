@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
+import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.beard.PredictedChunk;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityAITasks;
@@ -25,6 +27,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,14 +86,28 @@ public final class ContentEntityTicks {
         slowed = 0L;
     }
 
+    @Nullable private static WorldTemplateDef slowingFrom;
+    private static boolean slowingRead;
+    private static boolean slowing;
+    private static int slowRate;
+
+    private static boolean slowing() {
+        WorldTemplateDef active = ContentWorldTemplates.active();
+        if (slowingRead && active == slowingFrom) { return slowing; }
+        slowing = !ContentControl.off(ContentControl.ENTITIES) && ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities);
+        slowRate = ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate);
+        slowingFrom = active;
+        slowingRead = true;
+        return slowing;
+    }
+
     public static boolean slowedNow(Entity entity) {
         if (entity == null || entity.world == null || entity.world.isRemote) { return false; }
-        if (ContentControl.off(ContentControl.ENTITIES)) { return false; }
-        if (!ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities)) { return false; }
+        if (!slowing()) { return false; }
         World world = entity.world;
         int chunkX = entity.chunkCoordX;
         int chunkZ = entity.chunkCoordZ;
-        int rate = ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate);
+        int rate = slowRate;
         if (entity instanceof EntityLiving) {
             boolean thinkSlower = !spared(entity) && rate > 1 && far(world, chunkX, chunkZ);
             think((EntityLiving) entity, thinkSlower ? VANILLA_THINK * rate : VANILLA_THINK);
@@ -168,11 +185,12 @@ public final class ContentEntityTicks {
     }
 
     private static boolean spared(Entity entity) {
-        if (entity.isBeingRidden() || entity.isRiding() || entity.hasCustomName() || entity.isGlowing()) { return true; }
+        if (entity.isBeingRidden() || entity.isRiding()) { return true; }
         if (entity instanceof EntityLiving) {
             EntityLiving living = (EntityLiving) entity;
             if (living.isNoDespawnRequired() || living.getLeashed() || living.getAttackTarget() != null) { return true; }
         }
+        if (entity.hasCustomName() || entity.isGlowing()) { return true; }
         if (entity instanceof EntityLivingBase && !((EntityLivingBase) entity).getActivePotionEffects().isEmpty()) { return true; }
         if (spared == null) { spared = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed)); }
         if (spared.isEmpty()) { return false; }

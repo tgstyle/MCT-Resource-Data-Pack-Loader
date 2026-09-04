@@ -1829,7 +1829,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `pathPriorities` | nein | Objekt | keines | Wodurch sie läuft, als `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` und so weiter, jeweils eine Zahl, wobei negativ „nie“ heißt |
 | `egg` | nein | boolean oder Objekt | `true` | Ein Spawn-Ei, gefärbt wie das der kopierten Entity. `{ "primary": "AABBCC", "secondary": "112233" }` wählt eigene Farben, `false` lässt das Ei weg |
 | `attributes` | nein | Objekt | keines | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. Ein Attribut, das die Entity normalerweise nicht hat, bekommt sie dazu |
-| `hostile` | nein | boolean | `false` | Greift an, was sie erreicht, und wehrt sich, wenn sie verletzt wird |
+| `hostile` | nein | boolean | `false` | Greift an, was sie erreicht, und wehrt sich, wenn sie verletzt wird. Eine feindliche Variante zählt für das Spiel als Monster, welche Basis sie auch hat, das Monsterlimit hält sie also und Friedlich räumt sie weg, und sie legt die Tieraufgaben ihrer Basis ab, Paaren, Anlocken, einem Elternteil, einem Besitzer oder Artgenossen folgen, Sitzen |
 | `targets` | nein | Liste von Entity-Namen | der Spieler | Wonach sie sucht, solange sie feindselig ist. `minecraft:player` wird verstanden, obwohl der Spieler keine registrierte Entity ist |
 | `passive` | nein | boolean | `false` | Hält sie davon ab, irgendetwas anzugreifen, egal wie sie sich sonst verhält |
 | `persistent` | nein | boolean | `false` | Despawnt nie |
@@ -1850,6 +1850,16 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `explosionPower` | nein | Zahl | `3.0` | Wie groß die Explosion ist. Ein Creeper ist 3, TNT ist 4 |
 | `explosionFuse` | nein | int, Ticks | `30` | Wie lange sie zischt, bevor es losgeht |
 | `explosionFire` | nein | boolean | `false` | Lässt Feuer zurück |
+| `charges` | nein | boolean | `false` | Stürmt aus der Entfernung auf ihr Ziel los und trifft beim Aufprall mit kräftigem Rückstoß, wie ein Verwüster, und ruht dann vor dem nächsten Anlauf. Braucht `hostile` |
+| `pounces` | nein | boolean | `false` | Duckt sich, springt dann im Bogen auf ihr Ziel und schlägt beim Aufsetzen zu, wie ein Fuchs. Braucht `hostile` |
+| `sniffs` | nein | int, Blöcke | `0` | Hört Spieler, die sich innerhalb so vieler Blöcke bewegen, durch Wände hindurch, und geht dorthin, wo sie sie gehört hat; ein schleichender oder stehender Spieler wird nicht gehört, und einen, den sie dann sieht, nimmt sie ins Ziel. `0` hört nicht. Braucht `hostile` |
+| `fleesWhenHurt` | nein | 0,0 bis 1,0 | `0` | Bricht ab und läuft vor dem davon, mit dem sie kämpft, solange ihre Gesundheit unter diesem Anteil liegt, und kehrt zurück, sobald sie darüber ist. `0` flieht nie. Braucht `hostile` |
+| `sleepsByDay` | nein | boolean | `false` | Sucht bei Tag Schatten und steht dort still bis zur Nacht oder bis etwas sie angreift |
+| `home` | nein | int, Blöcke | `0` | Bleibt in so vielen Blöcken um die Stelle, an der sie zuerst stand, streift darin umher und geht zurück, wenn sie sich verläuft. `0` streift frei |
+| `patrols` | nein | boolean | `false` | Zieht in langen Etappen über das Land, mit anderen ihrer Art, die einem Anführer folgen, wie eine Plünderer-Patrouille. Eine Gruppe, die zusammen erscheint, wählt einen Anführer; die anderen bleiben wenige Blöcke bei ihm, und nimmt der Anführer ein Ziel, nehmen es alle. Ein Gefolgsmann, der seinen Anführer verliert, übernimmt selbst die Führung. Braucht `hostile` |
+| `swoops` | nein | boolean | `false` | Kreist über ihrem Ziel und stürzt hindurch, schlägt im Vorbeiflug zu, wie ein Phantom. Die Variante bekommt eine Flughilfe, fliegt also, solange sie jagt, und lässt sich im Leerlauf zu Boden; sie braucht eine Basis, die eine Kreatur ist, etwa einen Papagei, und eine Fledermaus ist keine. Braucht `hostile` |
+| `gusts` | nein | boolean | `false` | Holt aus und lässt aus der Entfernung einen Windstoß auf ihr Ziel los, der alles nahe dem Ziel zurück und nach oben wirft, wie die Windkugel einer Brise. Braucht `hostile` |
+| `gustPower` | nein | float | `1.5` | Wie hart ein Windstoß wirft. Ein Treffer eines Mobs ist 0,4, eine starke Rückstoß-Verzauberung etwa 1 |
 | `equipment` | nein | Objekt | keines | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, jeweils ein Itemname |
 | `spawns` | nein | Liste von Objekten | keine | `creatureType`, `weight`, `min` und `max`, dieselbe Form, die ein Biom nutzt |
 | `biomes` | nein | Liste von Biomnamen | jedes Biom | Wo diese Spawns hinzugefügt werden |
