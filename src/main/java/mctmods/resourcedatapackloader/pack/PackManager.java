@@ -73,6 +73,7 @@ public final class PackManager {
     public static final String MATERIALS = "materials";
     public static final String TABS = "tabs";
     public static final String OVERRIDES = "overrides";
+    public static final String HARDNESS = "hardness";
     private static final String README = "readme.txt";
     private static final String README_BASE = "/assets/resourcedatapackloader/readme";
     private static final String README_FALLBACK = README_BASE + "_en_us.txt";
