@@ -40,6 +40,7 @@ public final class Config {
         private final ModConfigSpec.BooleanValue brewing;
         private final ModConfigSpec.BooleanValue villagers;
         private final ModConfigSpec.BooleanValue overrides;
+        private final ModConfigSpec.BooleanValue hardness;
         private final ModConfigSpec.BooleanValue shovelPaths;
         private final ModConfigSpec.ConfigValue<String> shovelPathBecomes;
         private final ModConfigSpec.ConfigValue<String> shovelPathReverts;
@@ -56,6 +57,7 @@ public final class Config {
             brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
             villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
             overrides = builder.comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]").define("overrides", true);
+            hardness = builder.comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]").define("hardness", true);
             shovelPaths = builder.comment("Let a shovel turn blocks marked behavesAs path into a path, and revert a path while sneaking [Default=true]").define("shovelPaths", true);
             shovelPathBecomes = builder.comment("What a shovel turns those blocks into. Empty uses the dirt path").define("shovelPathBecomes", "");
             shovelPathReverts = builder.comment("What sneaking with a shovel turns a path back into. Empty uses dirt").define("shovelPathReverts", "");
@@ -79,6 +81,8 @@ public final class Config {
         public boolean villagers() { return loaded() ? villagers.get() : ConfigCore.flag("content.villagers", true); }
 
         public boolean overrides() { return loaded() ? overrides.get() : ConfigCore.flag("content.overrides", true); }
+
+        public boolean hardness() { return loaded() ? hardness.get() : ConfigCore.flag("content.hardness", true); }
 
         public boolean shovelPaths() { return loaded() ? shovelPaths.get() : ConfigCore.flag("content.shovelPaths", true); }
 

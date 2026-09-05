@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentEvents;
+import mctmods.resourcedatapackloader.content.ContentHardness;
+import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -59,6 +61,8 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
         if (ContentPaths.enabled()) { NeoForge.EVENT_BUS.addListener(ContentPaths::onRightClick); }
+        NeoForge.EVENT_BUS.addListener(ContentHardness::onBreakSpeed);
+        NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentEvents::onBreak);
         NeoForge.EVENT_BUS.addListener(ContentEvents::onDetonate);
         modBus.addListener(this::onConfig);
@@ -74,6 +78,10 @@ import java.util.Set;
         if (FMLEnvironment.dist == Dist.CLIENT) {
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
             ContentClient.register(modBus);
+            if (Config.worldgen.worldgenDebug()) {
+                NeoForge.EVENT_BUS.addListener(ContentHardnessCheck::onLevelLoad);
+                ContentHardnessCheck.watching();
+            }
         }
     }
 
@@ -90,7 +98,10 @@ import java.util.Set;
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.applyAliases();
-            event.enqueueWork(ContentOverrides::reload);
+            event.enqueueWork(() -> {
+                ContentHardness.setup();
+                ContentOverrides.reload();
+            });
             return;
         }
         String message = "Packs require mods that are not installed: " + String.join(", ", missing) + ". Install them or remove the packs that need them";

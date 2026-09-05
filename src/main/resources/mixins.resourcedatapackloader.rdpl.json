@@ -4,16 +4,20 @@
     "package": "mctmods.resourcedatapackloader.mixin.rdpl",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
+        "common.IBiomeManager",
         "common.IBlockBehaviour",
         "common.IBlockStateBase",
         "common.IFireBlock",
         "common.IItem",
         "common.IPotion",
         "common.MixinBlockStateBase",
+        "common.MixinExplosionDamageCalculator",
         "common.MixinPackRepository",
         "common.MixinRecipeManager"
     ],
-    "client": [],
+    "client": [
+        "client.IWeightedBakedModel"
+    ],
     "server": [],
     "injectors": {
         "defaultRequire": 1

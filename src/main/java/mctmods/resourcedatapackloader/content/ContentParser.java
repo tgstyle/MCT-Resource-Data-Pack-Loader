@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
@@ -129,6 +130,30 @@ public final class ContentParser {
         List<String> types = lowered(Json.strings(json, PLANT_TYPES));
         if (!types.isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Let the plant name this block in its own soil list instead", key, PLANT_TYPES); }
         return types;
+    }
+
+    @Nullable public static BlockMatchDef match(ResourceLocation key, JsonElement element) {
+        if (!element.isJsonObject()) { return match(key, element.getAsString()); }
+        JsonObject entry = element.getAsJsonObject();
+        if (entry.has("meta")) { ContentLog.LOGGER.warn("A block match in {} sets 'meta', which this line does not read. Name the state under 'properties' instead", key); }
+        String name = GsonHelper.getAsString(entry, "block", "");
+        ResourceLocation block = ResourceLocation.tryParse(name);
+        if (block == null) {
+            ContentLog.LOGGER.error("A block match in {} names '{}', which is not a valid block id, leaving it out", key, name);
+            return null;
+        }
+        return new BlockMatchDef(block, Json.map(entry, "properties"));
+    }
+
+    @Nullable private static BlockMatchDef match(ResourceLocation key, String name) {
+        String[] parts = name.split(":");
+        if (parts.length >= 3) {
+            ContentLog.LOGGER.warn("Block match '{}' in {} carries metadata, which this line does not read, so every state of {}:{} is matched", name, key, parts[0], parts[1]);
+            name = parts[0] + ":" + parts[1];
+        }
+        ResourceLocation block = ResourceLocation.tryParse(name);
+        if (block == null) { ContentLog.LOGGER.error("Block match '{}' in {} is not a valid block id, leaving it out", name, key); }
+        return block == null ? null : new BlockMatchDef(block, Collections.emptyMap());
     }
 
     public static List<PotionEffectDef> effects(ResourceLocation key, JsonObject json) {
