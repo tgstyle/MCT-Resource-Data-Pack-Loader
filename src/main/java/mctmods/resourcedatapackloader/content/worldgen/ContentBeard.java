@@ -297,6 +297,7 @@ public final class ContentBeard {
         if (grade == null) { grade = BeardRoads.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true); }
         int raised = 0;
         for (int spot : along) {
+            if (BeardRoads.tunnelAt(grade, spot)) { continue; }
             int roadTop = grade == null ? Integer.MIN_VALUE : grade.at(spot);
             for (int side = 0; side < 2; side++) {
                 int x = alongX ? spot : (side == 0 ? box.minX - off : box.maxX + off);

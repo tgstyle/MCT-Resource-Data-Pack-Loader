@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 
 public final class BeardGrade {
     public static final int CAP = 2;
+    public static final int TUNNEL_LEAST = 12;
 
     private BeardGrade() {}
 
@@ -279,6 +280,62 @@ public final class BeardGrade {
             if (profile[i2 - 1] == profile[i2 + 1] && Math.abs(profile[i2] - profile[i2 - 1]) == 1) { profile[i2] = profile[i2 - 1]; }
         }
     }
+    public static boolean[] bore(int[] profile, int[] ground, boolean[] held, boolean[] bridged, int depth) {
+        int rows = profile.length;
+        boolean[] bored = new boolean[rows];
+        if (depth <= 0) { return bored; }
+        int i = 0;
+        while (i < rows) {
+            if (!free(profile, held, bridged, i)) {
+                i++;
+                continue;
+            }
+            int end = i;
+            while (end + 1 < rows && free(profile, held, bridged, end + 1)) { end++; }
+            int[] leftFloor = new int[end - i + 1];
+            int running = Integer.MAX_VALUE;
+            for (int k = i; k <= end; k++) {
+                running = Math.min(running, profile[k]);
+                leftFloor[k - i] = running;
+            }
+            int[] rightFloor = new int[end - i + 1];
+            running = Integer.MAX_VALUE;
+            for (int k = end; k >= i; k--) {
+                running = Math.min(running, profile[k]);
+                rightFloor[k - i] = running;
+            }
+            int high = -1;
+            for (int k = i; k <= end + 1; k++) {
+                boolean raised = k <= end && Math.max(leftFloor[k - i], rightFloor[k - i]) < profile[k];
+                if (raised && high < 0) { high = k; }
+                if (!raised && high >= 0) {
+                    if (buried(ground, leftFloor, rightFloor, i, high, k, depth) >= TUNNEL_LEAST) {
+                        for (int at = high; at < k; at++) {
+                            profile[at] = Math.max(leftFloor[at - i], rightFloor[at - i]);
+                            bored[at] = true;
+                        }
+                    }
+                    high = -1;
+                }
+            }
+            i = end + 1;
+        }
+        return bored;
+    }
+
+    private static boolean free(int[] profile, boolean[] held, boolean[] bridged, int i) { return profile[i] != Integer.MIN_VALUE && !held[i] && !bridged[i]; }
+
+    private static int buried(int[] ground, int[] leftFloor, int[] rightFloor, int from, int lo, int hi, int depth) {
+        int longest = 0;
+        int run = 0;
+        for (int at = lo; at < hi; at++) {
+            boolean deep = ground[at] != Integer.MIN_VALUE && ground[at] - Math.max(leftFloor[at - from], rightFloor[at - from]) >= depth;
+            run = deep ? run + 1 : 0;
+            longest = Math.max(longest, run);
+        }
+        return longest;
+    }
+
     public static boolean walkable(int[] profile, boolean[] bridged) {
         int held = Integer.MIN_VALUE;
         for (int i = 0; i < profile.length; i++) {

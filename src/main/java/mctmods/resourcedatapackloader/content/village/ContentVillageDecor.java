@@ -7,6 +7,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
@@ -74,8 +76,9 @@ public final class ContentVillageDecor {
         int to = alongX ? box.maxX : box.maxZ;
         int near = (alongX ? box.minZ : box.minX) - 1;
         int far = (alongX ? box.maxZ : box.maxX) + 1;
+        BeardRoads.Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
         for (int row = from; row <= to; row++) {
-            if (Math.floorMod(row, STEP) != 0) { continue; }
+            if (Math.floorMod(row, STEP) != 0 || BeardRoads.tunnelAt(grade, row)) { continue; }
             tally[place(world, villages, wanted, clip, at, alongX ? row : near, alongX ? near : row)]++;
             tally[place(world, villages, wanted, clip, at, alongX ? row : far, alongX ? far : row)]++;
         }

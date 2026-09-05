@@ -3790,6 +3790,10 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathBridgeBarrierBlock": "minecraft:oak_fence",
     "villagePathBridgeBarrierHeight": 1,
     "villagePathBridgeSidewalkBlock": "minecraft:planks",
+    "villagePathTunnelBlock": "minecraft:stonebrick",
+    "villagePathTunnelDepth": 6,
+    "villagePathTunnelLightBlock": "minecraft:sea_lantern",
+    "villagePathTunnelLightRun": 8,
     "villagePathCenterBlock": "minecraft:quartz_block",
     "villagePathCenterDash": 2,
     "villagePathLineBlock": "minecraft:stone_slab",
@@ -3825,6 +3829,10 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 | `villagePathBridgeBarrierBlock` | block | empty | Barriers stacked along both edges of a bridge deck. Empty builds none |
 | `villagePathBridgeBarrierHeight` | number | `1` | How many blocks tall those barriers stand |
 | `villagePathBridgeSidewalkBlock` | block | empty | Decks the sidewalk where a road crosses water. Empty carries the normal sidewalk block across |
+| `villagePathTunnelBlock` | block | empty | Lines a road where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels, and a road cuts through a hill as before |
+| `villagePathTunnelDepth` | number | `6` | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
+| `villagePathTunnelLightBlock` | block | empty | A light set into the tunnel roof down its center line. Empty lights none |
+| `villagePathTunnelLightRun` | number | `8` | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next; a tunnel too short to reach one of those spots is lit once, in its middle |
 | `villagePathCenterBlock` | block | empty | A center line down the middle of the road. Empty draws none |
 | `villagePathCenterDash` | number | `0` | Dashes that line: N blocks of line, then one of road. Anchored to world coordinates, so the dashes of one road piece continue into the next. `0` keeps it solid |
 | `villagePathLineBlock` | block | empty | Edge lines between road and sidewalk. Empty draws none |
@@ -3850,6 +3858,8 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
+
+**Tunnels.** Without a tunnel block a road that meets a hill climbs it, one block a row at most, and cuts no deeper than two blocks into a short rise. Once `villagePathTunnelBlock` names a block, a rise that stands `villagePathTunnelDepth` or more over the road for at least twelve rows is bored instead: the road holds the level of the higher side through the whole rise, every row with that much ground over it gets a bore four blocks high with the lining block for walls and roof, and the shallower rows before the portals are cut open as the approach. The whole street runs through, lanes, lines and sidewalks alike, lit from the roof by `villagePathTunnelLightBlock` every `villagePathTunnelLightRun` blocks, while lamp posts and verge decoration stop at the portals. A junction is never bored, so a crossing street always meets the road in the open. A house never fronts a tunnel, since the rows its doorstep holds bound the bore.
 
 **Lamp blocks carry data.** The three lamp blocks take a plain name, a name with metadata, or a name with block entity data in braces, `minecraft:skull:1{SkullType:3}`. The braces are read as NBT and applied to the block entity after the block is placed, which is how a lamp from another mod keeps the settings it needs. Bad NBT is reported and ignored rather than stopping the lamp being built.
 
