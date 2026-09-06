@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -28,6 +29,8 @@ public final class RDPLNetwork {
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(CardOverlay.Handler.class, MessageCard.class, packetId++, Side.CLIENT); }
         else { channel.registerMessage(MessageCard.Idle.class, MessageCard.class, packetId++, Side.CLIENT); }
         channel.registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class, packetId++, Side.CLIENT);
+        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(HoldView.Handler.class, MessageHold.class, packetId++, Side.CLIENT); }
+        else { channel.registerMessage(MessageHold.Idle.class, MessageHold.class, packetId++, Side.CLIENT); }
         registerMessage(MessageCubes.Handler.class, MessageCubes.class);
         registerMessage(MessageColumn.Handler.class, MessageColumn.class);
         registerMessage(MessageUnloadColumn.Handler.class, MessageUnloadColumn.class);
@@ -57,6 +60,11 @@ public final class RDPLNetwork {
     public static void playIntro(EntityPlayerMP player) {
         if (channel == null || vanilla(player)) { return; }
         channel.sendTo(new MessageIntroPlay(ContentPregen.busy()), player);
+    }
+
+    public static void sendHold(EntityPlayerMP player, boolean held) {
+        if (channel == null || vanilla(player)) { return; }
+        channel.sendTo(new MessageHold(held), player);
     }
 
     public static void sendHardnessSalt(EntityPlayerMP player, long salt) {

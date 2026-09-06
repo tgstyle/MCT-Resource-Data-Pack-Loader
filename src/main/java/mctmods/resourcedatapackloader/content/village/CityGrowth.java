@@ -383,6 +383,8 @@ public final class CityGrowth {
         return Math.min(box.maxX - box.minX, box.maxZ - box.minZ) + 1 > BeardRoads.pathFullWidth();
     }
 
+    public static int verge() { return VERGE; }
+
     private static boolean seated(World world, StructureComponent road, boolean alongX, int end, int discX, int discZ, int radius) {
         BeardRoads.Grade grade = BeardRoads.chainGrade(world, road, alongX);
         int level = grade == null ? Integer.MIN_VALUE : grade.at(end);

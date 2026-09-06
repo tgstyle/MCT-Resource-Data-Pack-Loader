@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -183,6 +184,26 @@ public final class BeardPlots {
                     if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
                     StructureBoundingBox box = other.getBoundingBox();
                     if (x >= box.minX - reach && x <= box.maxX + reach && z >= box.minZ - reach && z <= box.maxZ + reach) { return true; }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean vergeSpot(StructureStart start, int x, int z, int step) {
+        Index held = index(start);
+        for (int cx = (x - 1) >> 4; cx <= (x + 1) >> 4; cx++) {
+            for (int cz = (z - 1) >> 4; cz <= (z + 1) >> 4; cz++) {
+                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
+                    if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+                    StructureBoundingBox box = other.getBoundingBox();
+                    boolean alongX = roadAlongX(box);
+                    int row = alongX ? x : z;
+                    int across = alongX ? z : x;
+                    if (row < (alongX ? box.minX : box.minZ) || row > (alongX ? box.maxX : box.maxZ) || Math.floorMod(row, step) != 0) { continue; }
+                    if (across != (alongX ? box.minZ : box.minX) - 1 && across != (alongX ? box.maxZ : box.maxX) + 1) { continue; }
+                    if (BeardRoads.tunnelAt(other instanceof IRoadLayout ? ((IRoadLayout) other).rdpl$layout() : null, row)) { continue; }
+                    return true;
                 }
             }
         }

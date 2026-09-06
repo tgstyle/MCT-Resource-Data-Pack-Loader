@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -138,6 +139,7 @@ public final class BeardGround {
         int spared = 0;
         int notGround = 0;
         int hangingOver = 0;
+        int planted = 0;
         List<BlockPos> overhangs = new ArrayList<>();
         boolean roadway = piece instanceof StructureVillagePieces.Path;
         int courses = ContentBeard.groundCourse(piece);
@@ -165,7 +167,10 @@ public final class BeardGround {
                         opened += BeardBlocks.clearAt(world, at);
                     }
                     else if (roadway && material == Material.VINE) { opened += BeardBlocks.clearAt(world, at); }
-                    else if (roadway && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && BeardBlocks.overhang(held)) { opened += BeardBlocks.clearAt(world, at); }
+                    else if (roadway && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && BeardBlocks.overhang(held)) {
+                        if (decorated(world, at)) { planted++; }
+                        else { opened += BeardBlocks.clearAt(world, at); }
+                    }
                     else if (BeardBlocks.overhang(held)) { overhangs.add(at.toImmutable()); }
                     else if (material != Material.AIR) { notGround++; }
                 }
@@ -215,6 +220,10 @@ public final class BeardGround {
                 continue;
             }
             if (felledLogs.contains(trunk)) { continue; }
+            if (ContentVillageDecor.plantedAt(world, trunk.getX(), trunk.getZ())) {
+                planted++;
+                continue;
+            }
             TreeCollector.Tree tree = TreeCollector.collect(world, trunk, mctmods.blastplaster.Config.view(world).getMaxTreeSize(), within);
             for (BlockPos log : tree.logs) {
                 felledLogs.add(log);
@@ -226,7 +235,13 @@ public final class BeardGround {
                 opened += BeardBlocks.clearAt(world, at);
             }
         }
+        if (planted > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Left {} leaf block(s) of verge plantings over or beside the road at {}, {} alone", planted, box.minX, box.minZ); }
         return new int[] {opened, spared, notGround, hangingOver};
+    }
+
+    private static boolean decorated(World world, BlockPos leaf) {
+        BlockPos trunk = sustainer(world, leaf, unused -> true);
+        return trunk != null && ContentVillageDecor.plantedAt(world, trunk.getX(), trunk.getZ());
     }
 
     public static int sweepOrphanedLeaves(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {

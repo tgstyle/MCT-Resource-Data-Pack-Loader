@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
@@ -181,6 +182,10 @@ public final class ContentBeard {
                     if (piece instanceof StructureVillagePieces.Path) {
                         int[] ring = BeardGround.openOver(start, piece, event.getWorld(), box, clip, at);
                         if (ring[0] > 0) { ContentLog.LOGGER.debug("Opened {} block(s) over the roadway of Path at {}, {}", ring[0], box.minX, box.minZ); }
+                        if (CityGrowth.bulbWide(piece)) {
+                            int banked = BeardRoads.bulbShoulder(piece, event.getWorld(), clip, at);
+                            if (banked > 0) { ContentLog.LOGGER.debug("Banked {} block(s) of the shoulder around the cul-de-sac at {}, {} up to its pad", banked, box.minX, box.minZ); }
+                        }
                         lampPosts(start, piece, event.getWorld(), box, clip, at);
                     }
                     else if (!box.intersectsWith(clip)) {
@@ -222,7 +227,7 @@ public final class ContentBeard {
                     if (!clip.isVecInside(at)) { continue; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getBlock() == Blocks.AIR || BeardPlots.insideAnother(start, piece, at)) { continue; }
-                    if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { seeds.add(at.toImmutable()); }
+                    if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { if (!ContentVillageDecor.plantedAt(world, x, z)) { seeds.add(at.toImmutable()); } }
                     else if (held.getMaterial() == Material.LEAVES) { canopy.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.VINE) { felled += BeardBlocks.clearAt(world, at); }
                 }

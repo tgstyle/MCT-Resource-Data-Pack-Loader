@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
@@ -23,6 +22,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.Collection;
 import java.util.Random;
@@ -36,7 +36,7 @@ public final class ContentVillageDecor {
 
     private ContentVillageDecor() {}
 
-    @SubscribeEvent public static void onDecorated(PopulateChunkEvent.Post event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onDecorated(PopulateChunkEvent.Post event) {
         World world = event.getWorld();
         if (world.isRemote) { return; }
         if (CHOICES.stale()) { load(); }
@@ -96,7 +96,7 @@ public final class ContentVillageDecor {
         if (bed <= 1 || BeardKeep.holds(x, bed, z)) { return 2; }
         if (!world.isAirBlock(origin) || !world.getBlockState(origin.down()).getMaterial().isSolid()) { return 3; }
         if (!world.isAreaLoaded(origin, SPREAD + 1)) { return 4; }
-        if (ContentBeard.beforeADoor(world, clip, at, x, bed, z)) { return 5; }
+        if (ContentBeard.beforeADoor(world, new StructureBoundingBox(x - 2, 0, z - 2, x + 2, 255, z + 2), at, x, bed, z)) { return 5; }
         Random random = SeededRandom.at(world, x, z);
         WeightedPicks.Pick chosen = CHOICES.pick(random);
         if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return 6; }
@@ -105,31 +105,27 @@ public final class ContentVillageDecor {
         StructureBoundingBox area = new StructureBoundingBox(x - SPREAD, bed - 1, z - SPREAD, x + SPREAD, bed + RISE, z + SPREAD);
         if (!ContentBeard.wanted()) {
             figure.generate(world, random, origin);
-            openOverRoads(world, villages, at, area, x, z);
             return 8;
         }
         BeardKeep.watchArea(world, area, NAME);
         figure.generate(world, random, origin);
-        openOverRoads(world, villages, at, area, x, z);
         BeardKeep.learn(world);
         return 8;
     }
 
-    private static void openOverRoads(World world, Collection<StructureStart> villages, BlockPos.MutableBlockPos at, StructureBoundingBox area, int x, int z) {
-        int cleared = 0;
-        for (int over = area.minX; over <= area.maxX; over++) {
-            for (int along = area.minZ; along <= area.maxZ; along++) {
-                boolean road = false;
-                for (StructureStart village : villages) { if (BeardPlots.overRoad(village, over, along)) { road = true; break; } }
-                if (!road) { continue; }
-                for (int y = area.minY; y <= area.maxY; y++) {
-                    at.setPos(over, y, along);
-                    if (!BeardBlocks.overhang(world.getBlockState(at))) { continue; }
-                    cleared += BeardBlocks.clearAt(world, at);
-                }
+    public static boolean plantedAt(World world, int x, int z) {
+        if (CHOICES.stale()) { load(); }
+        if (CHOICES.isEmpty()) { return false; }
+        boolean spot = false;
+        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
+            if (village != null && BeardPlots.vergeSpot(village, x, z, STEP)) {
+                spot = true;
+                break;
             }
         }
-        if (cleared > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Cleared {} leaf block(s) the verge planting at {}, {} had reached over a roadway with", cleared, x, z); }
+        if (!spot) { return false; }
+        WeightedPicks.Pick chosen = CHOICES.pick(SeededRandom.at(world, x, z));
+        return chosen != null && !WeightedPicks.EMPTY.equals(chosen.name) && ContentWorldgen.shapeFor(chosen.name) != null;
     }
 
     private static void load() {

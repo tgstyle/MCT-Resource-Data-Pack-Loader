@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdo
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunk;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IWorldProviderEnd;
+import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -331,6 +332,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         Held held = new Held(player, before);
         HELD.put(player.getUniqueID(), held);
         player.setGameType(GameType.SPECTATOR);
+        RDPLNetwork.sendHold(player, true);
         flash(held);
         startFlashing();
     }
@@ -431,6 +433,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void release(EntityPlayerMP player, Held held) {
         modeBack(player, held.before);
         player.timeUntilPortal = 100;
+        RDPLNetwork.sendHold(player, false);
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.CLEAR, null, -1, -1, -1));
     }
 

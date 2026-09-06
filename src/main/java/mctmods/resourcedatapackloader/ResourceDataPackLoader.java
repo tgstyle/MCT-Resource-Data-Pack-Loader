@@ -194,6 +194,7 @@ public class ResourceDataPackLoader {
             }
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CardOverlay.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.HoldView.class);
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
         }
     }

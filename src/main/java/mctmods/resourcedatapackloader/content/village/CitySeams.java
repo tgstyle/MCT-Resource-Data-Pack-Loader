@@ -144,9 +144,11 @@ public final class CitySeams {
         found.add(new int[] { x, z });
     }
 
-    @Nullable private static StructureStart villageAt(World world, StructureStart own, int x, int z) {
+    @Nullable private static StructureStart villageAt(World world, StructureStart own, int x, int z) { return villageAt(world, own.getComponents(), x, z); }
+
+    @Nullable private static StructureStart villageAt(World world, List<StructureComponent> own, int x, int z) {
         for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
-            if (other == own || other.getComponents().isEmpty()) { continue; }
+            if (other.getComponents() == own || other.getComponents().isEmpty()) { continue; }
             StructureBoundingBox well = other.getComponents().get(0).getBoundingBox();
             if (well.minX + 2 == x && well.minZ + 2 == z) { return other; }
         }
@@ -423,7 +425,10 @@ public final class CitySeams {
         for (int[] site : neighbors(world, well.minX + 2, well.minZ + 2)) {
             int siteAt = alongX ? site[0] : site[1];
             int siteRow = alongX ? site[1] : site[0];
-            if ((siteAt - end) * dir > 0 && Math.abs(row - siteRow) <= reach) { return true; }
+            if ((siteAt - end) * dir <= 0 || Math.abs(row - siteRow) > reach) { continue; }
+            StructureStart neighbor = villageAt(world, own, site[0], site[1]);
+            if (neighbor != null && meets(own, neighbor.getComponents())) { continue; }
+            return true;
         }
         return false;
     }
