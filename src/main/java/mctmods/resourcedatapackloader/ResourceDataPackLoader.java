@@ -1,13 +1,16 @@
 package mctmods.resourcedatapackloader;
 
+import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentClient;
 import mctmods.resourcedatapackloader.content.ContentEvents;
+import mctmods.resourcedatapackloader.content.ContentExposures;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentWelcome;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -18,6 +21,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.loot.LootFunctions;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackFinder;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackRequirements;
@@ -81,6 +85,10 @@ import java.util.Set;
         modBus.addListener(ContentEntities::extraAttributes);
         modBus.addListener(ContentEntities::placements);
         NeoForge.EVENT_BUS.addListener(ContentEvents::onDetonate);
+        modBus.addListener(RDPLNetwork::register);
+        if (ContentExposures.enabled()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
+        NeoForge.EVENT_BUS.addListener(ContentWelcome::onLogin);
+        NeoForge.EVENT_BUS.addListener(ContentWelcome::onDimensionChange);
         modBus.addListener(this::onConfig);
         modBus.addListener(this::onCommonSetup);
         modBus.addListener(this::onAddPackFinders);
@@ -94,6 +102,9 @@ import java.util.Set;
         if (FMLEnvironment.dist == Dist.CLIENT) {
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
             NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
+            NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
+            NeoForge.EVENT_BUS.addListener(CardOverlay::onHud);
+            NeoForge.EVENT_BUS.addListener(CardOverlay::onScreen);
             ContentClient.register(modBus);
             if (Config.worldgen.worldgenDebug()) {
                 NeoForge.EVENT_BUS.addListener(ContentHardnessCheck::onLevelLoad);

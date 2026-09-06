@@ -133,6 +133,7 @@ public final class ContentEvents {
         if (count > 0) { Summary.info("content.items", "Registered " + count + " item(s) from packs"); }
         ContentGenerated.generate();
         ContentEntities.generate();
+        ContentExposures.generate();
     }
 
     private static void resolveSoils() {

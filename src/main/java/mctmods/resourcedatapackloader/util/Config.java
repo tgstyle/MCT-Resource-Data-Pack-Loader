@@ -13,7 +13,9 @@ public final class Config {
     public static final Data data;
     public static final Worldgen worldgen;
     public static final Tweaks tweaks;
+    public static final Chunks chunks;
     public static final Control control;
+    public static final String WELCOME = "Welcome to your World!";
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -23,6 +25,7 @@ public final class Config {
         data = new Data(builder);
         worldgen = new Worldgen(builder);
         tweaks = new Tweaks(builder);
+        chunks = new Chunks(builder);
         control = new Control(builder);
         SPEC = builder.build();
     }
@@ -245,15 +248,47 @@ public final class Config {
         public String worldGameMode() { return loaded() ? worldGameMode.get() : ConfigCore.text("worldgen.worldGameMode", ""); }
     }
 
+    public static final class Chunks {
+        private final ModConfigSpec.BooleanValue saysCard;
+        private final ModConfigSpec.ConfigValue<String> saysIcon;
+        private final ModConfigSpec.ConfigValue<String> saysColor;
+        private final ModConfigSpec.ConfigValue<String> saysImage;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> welcomeSays;
+
+        private Chunks(ModConfigSpec.Builder builder) {
+            builder.comment("What this mod says to players and how it shows it. The chunk loading and land-making keys of the 1.12.2 line arrive with the worldgen layer").push("chunks");
+            saysCard = builder.comment("Show the lines this mod says, the welcome and later the land-making progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too [Default=false]").define("saysCard", false);
+            saysIcon = builder.comment("An item drawn on the card, e.g. minecraft:compass. Empty draws none [Default=]").define("saysIcon", "");
+            saysColor = builder.comment("The card's background color as hex, e.g. 1E2630. Empty uses a dark slate [Default=]").define("saysColor", "");
+            saysImage = builder.comment("A PNG from the pack's client assets stretched over the card as its background, e.g. rubyworld:textures/gui/card.png, drawn over the color. Empty draws none [Default=]").define("saysImage", "");
+            welcomeSays = builder.comment("Welcome lines, shown in green on every login. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. minecraft:the_nether=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]").defineList("welcomeSays", List.of(WELCOME), () -> "", each -> each instanceof String);
+            builder.pop();
+        }
+
+        public boolean saysCard() { return loaded() ? saysCard.get() : ConfigCore.flag("chunks.saysCard", false); }
+
+        public String saysIcon() { return loaded() ? saysIcon.get() : ConfigCore.text("chunks.saysIcon", ""); }
+
+        public String saysColor() { return loaded() ? saysColor.get() : ConfigCore.text("chunks.saysColor", ""); }
+
+        public String saysImage() { return loaded() ? saysImage.get() : ConfigCore.text("chunks.saysImage", ""); }
+
+        public List<String> welcomeSays() { return loaded() ? List.copyOf(welcomeSays.get()) : List.of(WELCOME); }
+    }
+
     public static final class Control {
         private final ModConfigSpec.ConfigValue<String> terrain;
+        private final ModConfigSpec.ConfigValue<String> chunks;
 
         private Control(ModConfigSpec.Builder builder) {
             builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
             terrain = builder.comment("The world's name, seed and game mode at creation, and the rest of the terrain group as it is ported [default|global|off]").define("terrain", "default");
+            chunks = builder.comment("The welcome lines and the says card, and the rest of the chunks group as it is ported [default|global|off]").define("chunks", "default");
             builder.pop();
         }
 
         public String terrain() { return loaded() ? terrain.get() : ConfigCore.text("control.terrain", "default"); }
+
+        public String chunks() { return loaded() ? chunks.get() : ConfigCore.text("control.chunks", "default"); }
     }
 }
