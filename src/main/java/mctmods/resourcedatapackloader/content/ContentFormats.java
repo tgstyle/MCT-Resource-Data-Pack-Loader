@@ -12,6 +12,7 @@ public final class ContentFormats {
     public static final String LOOT_FOLDER = "loot_tables";
     public static final String BLOCK_TAGS = "tags/blocks";
     public static final String ITEM_TAGS = "tags/items";
+    public static final String BIOME_TAGS = "tags/worldgen/biome";
     public static final String BIOME_MODIFIERS = "forge/biome_modifier";
     public static final String ADD_SPAWNS = "forge:add_spawns";
     public static final String ADD_FEATURES = "forge:add_features";

@@ -18,6 +18,10 @@ import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpreadPlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
@@ -64,7 +68,13 @@ public final class ContentEvents {
         else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
         else if (event.getRegistryKey().equals(Registries.POINT_OF_INTEREST_TYPE)) { event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites); }
         else if (event.getRegistryKey().equals(Registries.VILLAGER_PROFESSION)) { event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions); }
-        else if (event.getRegistryKey().equals(Registries.FEATURE)) { event.register(Registries.FEATURE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE)); }
+        else if (event.getRegistryKey().equals(Registries.FEATURE)) {
+            event.register(Registries.FEATURE, helper -> {
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
+            });
+        }
+        else if (event.getRegistryKey().equals(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC)); }
         else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
     }
 
@@ -138,6 +148,9 @@ public final class ContentEvents {
         ContentGenerated.generate();
         ContentEntities.generate();
         ContentExposures.generate();
+        ContentBiomes.generate();
+        ContentCaveRegions.generate();
+        ContentOreControl.generate();
         ContentWorldShape.generate();
         ContentWorldgen.generate();
     }

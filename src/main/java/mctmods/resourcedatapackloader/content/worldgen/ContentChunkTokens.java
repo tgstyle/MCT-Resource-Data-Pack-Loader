@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 
 public final class ContentChunkTokens {
     public static final Capability<Held> TOKENS = CapabilityManager.get(new CapabilityToken<>() {});
-    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "retrogen");
+    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS);
     private static final String TAG = "tokens";
 
     private ContentChunkTokens() {}

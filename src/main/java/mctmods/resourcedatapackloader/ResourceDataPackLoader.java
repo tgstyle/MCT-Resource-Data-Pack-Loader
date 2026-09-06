@@ -20,8 +20,12 @@ import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldScreen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.loot.LootFunctions;
@@ -72,6 +76,8 @@ import java.util.Set;
         ContentRegistry.load();
         ContentEntities.load();
         ContentWorldTemplates.load();
+        ContentBiomes.load();
+        ContentCaveRegions.load();
         ContentWorldgen.load();
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
@@ -93,6 +99,8 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(ContentEvents::onDetonate);
         RDPLNetwork.register();
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
+        MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);
+        MinecraftForge.EVENT_BUS.addListener(ContentOreControl::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onChunkLoad);
         MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onLevelUnload);
         MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onLevelTick);
@@ -176,6 +184,7 @@ import java.util.Set;
         RegistryRemaps.reload();
         ContentOverrides.reload();
         ContentWorldTemplates.load();
+        ContentSpawning.applyCaps();
     }
 
     private void onServerStopped(ServerStoppedEvent event) {

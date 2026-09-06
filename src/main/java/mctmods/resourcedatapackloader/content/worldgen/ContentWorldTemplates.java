@@ -55,7 +55,7 @@ public final class ContentWorldTemplates {
             return null;
         }
         JsonObject settings = json.has("settings") ? GsonHelper.getAsJsonObject(json, "settings") : null;
-        return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"));
+        return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), GsonHelper.getAsString(json, "fallback", "").trim(), Json.map(json, "roles"));
     }
 
     @Nullable private static WorldTemplateDef select() {

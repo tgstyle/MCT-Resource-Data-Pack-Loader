@@ -255,6 +255,28 @@ public final class Config {
         private final ForgeConfigSpec.BooleanValue adoptExistingChunks;
         private final ForgeConfigSpec.ConfigValue<String> retrogenKey;
         private final ForgeConfigSpec.IntValue retrogenChunksPerTick;
+        private final ForgeConfigSpec.BooleanValue blockOres;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> oreWhitelist;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> oreTypes;
+        private final ForgeConfigSpec.BooleanValue oreTypesAreBlacklist;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> blockOreDimensions;
+        private final ForgeConfigSpec.BooleanValue blockOreDimensionsAreBlacklist;
+        private final ForgeConfigSpec.BooleanValue blockBiomes;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> biomeWhitelist;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> biomeNames;
+        private final ForgeConfigSpec.BooleanValue biomeNamesAreBlacklist;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> blockBiomeDimensions;
+        private final ForgeConfigSpec.BooleanValue blockBiomeDimensionsAreBlacklist;
+        private final ForgeConfigSpec.DoubleValue surfaceDayMonsterRate;
+        private final ForgeConfigSpec.DoubleValue surfaceNightMonsterRate;
+        private final ForgeConfigSpec.DoubleValue undergroundDayMonsterRate;
+        private final ForgeConfigSpec.DoubleValue undergroundNightMonsterRate;
+        private final ForgeConfigSpec.IntValue monsterCap;
+        private final ForgeConfigSpec.IntValue creatureCap;
+        private final ForgeConfigSpec.IntValue ambientCap;
+        private final ForgeConfigSpec.IntValue waterCreatureCap;
+        private final ForgeConfigSpec.IntValue monsterSpawnLight;
+        private final ForgeConfigSpec.IntValue caveRegionPlainWeight;
 
         private Worldgen(ForgeConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
@@ -292,6 +314,28 @@ public final class Config {
             adoptExistingChunks = builder.comment("Treat chunks that already exist as if this pack generated them, marking them instead of leaving them for retrogen. Turn this on when replacing a mod that already generated the same ore, so retrogen never doubles it. Worldgen entries added later still retrogen into them [Default=false]").define("adoptExistingChunks", false);
             retrogenKey = builder.comment("Change this to make every chunk eligible for retrogen again, for every worldgen entry. New veins are added on top of what is already there [Default=0000]").define("retrogenKey", "0000");
             retrogenChunksPerTick = builder.comment("How many already generated chunks to catch up per tick. Higher is faster but stutters more [Default=2]").defineInRange("retrogenChunksPerTick", 2, 1, 64);
+            blockOres = builder.comment("Stop every mod, and Minecraft itself, from generating ores. Only the mods in oreWhitelist still generate. An ore is a placed feature with ore in its id, which is Minecraft's and most mods' [Default=false]").define("blockOres", false);
+            oreWhitelist = builder.comment("Mod ids allowed to generate ores while blockOres is on. Ores a pack defines belong to that pack's namespace [Default=[minecraft]]").defineList("oreWhitelist", List.of("minecraft"), each -> each instanceof String);
+            oreTypes = builder.comment("Ore types this applies to, whoever generates them and whatever the whitelist says. Known types: COAL, IRON, COPPER, GOLD, REDSTONE, DIAMOND, LAPIS, EMERALD, QUARTZ, DIRT, GRAVEL, DIORITE, GRANITE, ANDESITE, TUFF, CLAY, SILVERFISH, CUSTOM for any other ore [Default=[]]").defineList("oreTypes", List.of(), each -> each instanceof String);
+            oreTypesAreBlacklist = builder.comment("On, oreTypes are blocked. Off, only oreTypes generate [Default=true]").define("oreTypesAreBlacklist", true);
+            blockOreDimensions = builder.comment("Dimensions ore blocking applies to, by id such as minecraft:the_nether; read as the overworld, nether and end biome tags. Empty means every dimension [Default=[]]").defineList("blockOreDimensions", List.of(), each -> each instanceof String);
+            blockOreDimensionsAreBlacklist = builder.comment("Treat blockOreDimensions as the dimensions to leave alone instead [Default=false]").define("blockOreDimensionsAreBlacklist", false);
+            blockBiomes = builder.comment("Stop every biome from generating except the mods in biomeWhitelist. Blocked biomes become the void biome, or what the world template's roles and fallback name. Blocking every biome makes the overworld a void world [Default=false]").define("blockBiomes", false);
+            biomeWhitelist = builder.comment("Mod ids whose biomes still generate while blockBiomes is on. A pack biome uses the pack's namespace [Default=[minecraft]]").defineList("biomeWhitelist", List.of("minecraft"), each -> each instanceof String);
+            biomeNames = builder.comment("Biomes this applies to, whoever owns them and whatever the whitelist says, by id such as minecraft:birch_forest [Default=[]]").defineList("biomeNames", List.of(), each -> each instanceof String);
+            biomeNamesAreBlacklist = builder.comment("On, biomeNames are blocked. Off, only biomeNames generate [Default=true]").define("biomeNamesAreBlacklist", true);
+            blockBiomeDimensions = builder.comment("Dimensions biome blocking applies to, by id. Empty means every dimension whose biomes are placed by climate, the overworld and the nether [Default=[minecraft:overworld]]").defineList("blockBiomeDimensions", List.of("minecraft:overworld"), each -> each instanceof String);
+            blockBiomeDimensionsAreBlacklist = builder.comment("On, biome blocking skips these dimensions. Off, it applies only to them [Default=false]").define("blockBiomeDimensionsAreBlacklist", false);
+            surfaceDayMonsterRate = builder.comment("How often hostile mobs spawn on the surface during the day, where the sky can be seen. 0 stops them, 1 is vanilla, above 1 forces spawns vanilla would refuse [Default=1.0]").defineInRange("surfaceDayMonsterRate", 1.0D, 0.0D, 4.0D);
+            surfaceNightMonsterRate = builder.comment("The same for the surface at night [Default=1.0]").defineInRange("surfaceNightMonsterRate", 1.0D, 0.0D, 4.0D);
+            undergroundDayMonsterRate = builder.comment("The same for underground during the day, where the sky cannot be seen [Default=1.0]").defineInRange("undergroundDayMonsterRate", 1.0D, 0.0D, 4.0D);
+            undergroundNightMonsterRate = builder.comment("The same for underground at night [Default=1.0]").defineInRange("undergroundNightMonsterRate", 1.0D, 0.0D, 4.0D);
+            monsterCap = builder.comment("How many hostile mobs may be loaded at once across the world, before the count is scaled by how many chunks are loaded. Vanilla is 70. -1 leaves it alone [Default=-1]").defineInRange("monsterCap", -1, -1, 1000);
+            creatureCap = builder.comment("The same cap for passive animals. Vanilla is 10. -1 leaves it alone [Default=-1]").defineInRange("creatureCap", -1, -1, 1000);
+            ambientCap = builder.comment("The same cap for ambient mobs such as bats. Vanilla is 15. -1 leaves it alone [Default=-1]").defineInRange("ambientCap", -1, -1, 1000);
+            waterCreatureCap = builder.comment("The same cap for water mobs such as squid. Vanilla is 5. -1 leaves it alone [Default=-1]").defineInRange("waterCreatureCap", -1, -1, 1000);
+            monsterSpawnLight = builder.comment("The brightest block light a hostile mob may still spawn in, on top of the vanilla checks. -1 keeps the vanilla rule alone. Spawners are not affected [Default=-1]").defineInRange("monsterSpawnLight", -1, -1, 15);
+            caveRegionPlainWeight = builder.comment("The weight of plain, region-less underground against the cave regions' own weights. Higher leaves more of the underground without any region [Default=4]").defineInRange("caveRegionPlainWeight", 4, 0, 1000);
             builder.pop();
         }
 
@@ -362,6 +406,50 @@ public final class Config {
         public String retrogenKey() { return loaded() ? retrogenKey.get() : ConfigCore.text("worldgen.retrogenKey", "0000"); }
 
         public int retrogenChunksPerTick() { return loaded() ? retrogenChunksPerTick.get() : 2; }
+
+        public boolean blockOres() { return loaded() ? blockOres.get() : ConfigCore.flag("worldgen.blockOres", false); }
+
+        public List<String> oreWhitelist() { return loaded() ? List.copyOf(oreWhitelist.get()) : List.of("minecraft"); }
+
+        public List<String> oreTypes() { return loaded() ? List.copyOf(oreTypes.get()) : List.of(); }
+
+        public boolean oreTypesAreBlacklist() { return !loaded() || oreTypesAreBlacklist.get(); }
+
+        public List<String> blockOreDimensions() { return loaded() ? List.copyOf(blockOreDimensions.get()) : List.of(); }
+
+        public boolean blockOreDimensionsAreBlacklist() { return loaded() && blockOreDimensionsAreBlacklist.get(); }
+
+        public boolean blockBiomes() { return loaded() ? blockBiomes.get() : ConfigCore.flag("worldgen.blockBiomes", false); }
+
+        public List<String> biomeWhitelist() { return loaded() ? List.copyOf(biomeWhitelist.get()) : List.of("minecraft"); }
+
+        public List<String> biomeNames() { return loaded() ? List.copyOf(biomeNames.get()) : List.of(); }
+
+        public boolean biomeNamesAreBlacklist() { return !loaded() || biomeNamesAreBlacklist.get(); }
+
+        public List<String> blockBiomeDimensions() { return loaded() ? List.copyOf(blockBiomeDimensions.get()) : List.of("minecraft:overworld"); }
+
+        public boolean blockBiomeDimensionsAreBlacklist() { return loaded() && blockBiomeDimensionsAreBlacklist.get(); }
+
+        public float surfaceDayMonsterRate() { return loaded() ? surfaceDayMonsterRate.get().floatValue() : 1.0F; }
+
+        public float surfaceNightMonsterRate() { return loaded() ? surfaceNightMonsterRate.get().floatValue() : 1.0F; }
+
+        public float undergroundDayMonsterRate() { return loaded() ? undergroundDayMonsterRate.get().floatValue() : 1.0F; }
+
+        public float undergroundNightMonsterRate() { return loaded() ? undergroundNightMonsterRate.get().floatValue() : 1.0F; }
+
+        public int monsterCap() { return loaded() ? monsterCap.get() : -1; }
+
+        public int creatureCap() { return loaded() ? creatureCap.get() : -1; }
+
+        public int ambientCap() { return loaded() ? ambientCap.get() : -1; }
+
+        public int waterCreatureCap() { return loaded() ? waterCreatureCap.get() : -1; }
+
+        public int monsterSpawnLight() { return loaded() ? monsterSpawnLight.get() : -1; }
+
+        public int caveRegionPlainWeight() { return loaded() ? caveRegionPlainWeight.get() : 4; }
     }
 
     public static final class Chunks {
@@ -397,6 +485,9 @@ public final class Config {
         private final ForgeConfigSpec.ConfigValue<String> chunks;
         private final ForgeConfigSpec.ConfigValue<String> bedrock;
         private final ForgeConfigSpec.ConfigValue<String> voidWorld;
+        private final ForgeConfigSpec.ConfigValue<String> ores;
+        private final ForgeConfigSpec.ConfigValue<String> biomes;
+        private final ForgeConfigSpec.ConfigValue<String> spawning;
 
         private Control(ForgeConfigSpec.Builder builder) {
             builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
@@ -404,6 +495,9 @@ public final class Config {
             chunks = builder.comment("The welcome lines and the says card, and the rest of the chunks group as it is ported [default|global|off]").define("chunks", "default");
             bedrock = builder.comment("Flat bedrock and its dimension and biome lists [default|global|off]").define("bedrock", "default");
             voidWorld = builder.comment("Void world generation and its platform [default|global|off]").define("voidWorld", "default");
+            ores = builder.comment("Blocking ore generation by mod and by ore type [default|global|off]").define("ores", "default");
+            biomes = builder.comment("Blocking biomes by mod and by name, and what replaces them [default|global|off]").define("biomes", "default");
+            spawning = builder.comment("Mob spawn caps, hostile spawn rates and the light cap [default|global|off]").define("spawning", "default");
             builder.pop();
         }
 
@@ -414,5 +508,11 @@ public final class Config {
         public String bedrock() { return loaded() ? bedrock.get() : ConfigCore.text("control.bedrock", "default"); }
 
         public String voidWorld() { return loaded() ? voidWorld.get() : ConfigCore.text("control.voidWorld", "default"); }
+
+        public String ores() { return loaded() ? ores.get() : ConfigCore.text("control.ores", "default"); }
+
+        public String biomes() { return loaded() ? biomes.get() : ConfigCore.text("control.biomes", "default"); }
+
+        public String spawning() { return loaded() ? spawning.get() : ConfigCore.text("control.spawning", "default"); }
     }
 }
