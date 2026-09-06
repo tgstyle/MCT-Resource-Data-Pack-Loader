@@ -42,17 +42,16 @@ the path inside the jar, so nothing ever needs renaming or moving.
 KEEPING THINGS TIDY
 -------------------
 
-You can group files into a named pack instead, as a folder or a zip:
+You can group files into a named pack instead, as a zip:
 
-    rdploader/MyTextures/assets/minecraft/textures/block/iron_ore.png
     rdploader/MyTextures.zip        (with 'assets' or 'data' at the top level of the zip)
 
 When zipping, select the contents and zip those, not the folder holding them.
 A zip whose top level is a single folder wrapping 'assets' or 'data' is
 skipped, and the log says so.
 
-Folders are easier to edit while you work, zips are easier to hand to someone
-else. They behave the same.
+A folder in rdploader is not a pack and is skipped, and the log says so. Keep
+loose files under assets or data, and zip a pack up before you put it here.
 
 If the same file exists in two places, a named pack wins over loose files, and
 /rdpl which tells you which one won.
@@ -62,11 +61,11 @@ PACK PRIORITY
 -------------
 
 If two named packs contain the same file, control which one wins by prepending
-RDPL and a number to the folder or zip name. RDPL0 loads first, higher numbers
+RDPL and a number to the zip name. RDPL0 loads first, higher numbers
 load later, and the pack loaded last wins:
 
     rdploader/RDPL0 BaseTextures.zip
-    rdploader/RDPL1 SeasonalTextures
+    rdploader/RDPL1 SeasonalTextures.zip
 
 Upper or lower case both work, and a space, dash or underscore after the number
 is optional. The prefix is stripped from the pack's name in the log and in
@@ -184,8 +183,8 @@ stone.png, it still loads, but a warning tells you to rename it. Do rename it,
 because anywhere other than this mod the file will not be found at all.
 Language files trip people up most often: they are en_us.json, not en_US.json.
 
-Check your files sit inside an 'assets' or 'data' folder. A pack folder or zip
-without either is skipped, and the log says so.
+Check your files sit inside an 'assets' or 'data' folder. A zip without either
+is skipped, and the log says so.
 
 
 The rdploader folder itself can be moved or renamed with the rootDirectory option

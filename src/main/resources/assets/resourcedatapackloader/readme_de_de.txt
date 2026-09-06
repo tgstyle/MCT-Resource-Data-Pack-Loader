@@ -43,18 +43,17 @@ wie der Pfad im Jar, es muss also nie etwas umbenannt oder verschoben werden.
 ORDNUNG HALTEN
 --------------
 
-Du kannst Dateien stattdessen zu einem benannten Pack bündeln, als Ordner oder
-als Zip:
+Du kannst Dateien stattdessen zu einem benannten Pack bündeln, als Zip:
 
-    rdploader/MyTextures/assets/minecraft/textures/block/iron_ore.png
     rdploader/MyTextures.zip        (mit 'assets' oder 'data' auf oberster Ebene des Zips)
 
 Beim Zippen wählst du den Inhalt aus und zippst diesen, nicht den Ordner darum.
 Ein Zip, dessen oberste Ebene ein einzelner Ordner um 'assets' oder 'data' ist,
 wird übersprungen, und das Log sagt es.
 
-Ordner lassen sich beim Arbeiten leichter bearbeiten, Zips leichter
-weitergeben. Sie verhalten sich gleich.
+Ein Ordner in rdploader ist kein Pack und wird übersprungen, und das Log sagt
+es. Lose Dateien bleiben unter assets oder data, und ein Pack wird gezippt,
+bevor es hierher kommt.
 
 Liegt dieselbe Datei an zwei Stellen, gewinnt ein benanntes Pack über lose
 Dateien, und /rdpl which sagt dir, welches gewonnen hat.
@@ -64,11 +63,11 @@ PACK-VORRANG
 ------------
 
 Enthalten zwei benannte Packs dieselbe Datei, entscheidest du mit RDPL und einer
-Zahl vor dem Ordner- oder Zip-Namen, welches gewinnt. RDPL0 lädt zuerst, höhere
+Zahl vor dem Zip-Namen, welches gewinnt. RDPL0 lädt zuerst, höhere
 Zahlen laden später, und das zuletzt geladene Pack gewinnt:
 
     rdploader/RDPL0 BaseTextures.zip
-    rdploader/RDPL1 SeasonalTextures
+    rdploader/RDPL1 SeasonalTextures.zip
 
 Groß- und Kleinschreibung funktionieren beide, und ein Leerzeichen, Bindestrich
 oder Unterstrich nach der Zahl ist optional. Das Präfix wird im Log und in
@@ -193,9 +192,8 @@ umbenennen sollst. Tu das auch, denn überall außer in dieser Mod wird die Date
 gar nicht gefunden. Sprachdateien sind die häufigste Stolperfalle: Sie heißen
 en_us.json, nicht en_US.json.
 
-Prüfe, ob deine Dateien in einem 'assets'- oder 'data'-Ordner liegen. Ein
-Pack-Ordner oder Zip ohne einen von beiden wird übersprungen, und das Log sagt
-es.
+Prüfe, ob deine Dateien in einem 'assets'- oder 'data'-Ordner liegen. Ein Zip
+ohne einen von beiden wird übersprungen, und das Log sagt es.
 
 
 Der Ordner rdploader selbst lässt sich mit der Option rootDirectory in

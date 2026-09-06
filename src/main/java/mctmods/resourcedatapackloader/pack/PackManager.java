@@ -141,8 +141,8 @@ public final class PackManager {
             for (Path entry : entries) {
                 String fileName = entry.getFileName().toString();
                 if (RDPLPack.ASSETS.equals(fileName) || RDPLPack.DATA.equals(fileName) || README.equals(fileName) || CONFIG.equals(fileName)) { continue; }
-                if (ROOT_DIRECTORY.equalsIgnoreCase(fileName)) {
-                    ContentLog.LOGGER.warn("Skipping '{}': a folder named '{}' inside the pack folder is never loaded, since that is the pack folder's own name. Put its contents straight into {} or rename the pack", fileName, ROOT_DIRECTORY, packRoot);
+                if (Files.isDirectory(entry)) {
+                    ContentLog.LOGGER.warn("Skipping the folder '{}': a pack is a zip file. Loose files go under {}/{}/<namespace> or {}/{}/<namespace>, and a pack in a folder is zipped up", fileName, packRoot, RDPLPack.ASSETS, packRoot, RDPLPack.DATA);
                     continue;
                 }
                 if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED)) {
@@ -219,13 +219,6 @@ public final class PackManager {
 
     @Nullable private RDPLPack load(Path entry) {
         String fileName = entry.getFileName().toString();
-        if (Files.isDirectory(entry)) {
-            if (RDPLPack.lacksContent(entry)) {
-                ContentLog.LOGGER.warn("Skipping '{}': a pack folder must contain an '{}' or '{}' directory", fileName, RDPLPack.ASSETS, RDPLPack.DATA);
-                return null;
-            }
-            return create(fileName, entry, null);
-        }
         if (!fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) { return null; }
         FileSystem zip = null;
         try {
