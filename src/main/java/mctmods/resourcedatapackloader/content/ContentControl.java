@@ -25,6 +25,9 @@ public final class ContentControl {
     public static final String CHUNKS = "chunks";
     public static final String BEDROCK = "bedrock";
     public static final String VOID = "void";
+    public static final String ORES = "ores";
+    public static final String BIOMES = "biomes";
+    public static final String SPAWNING = "spawning";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -91,6 +94,13 @@ public final class ContentControl {
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
         return value.getAsInt();
+    }
+
+    public static float decimal(String group, String key, float fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) { return value.getAsFloat(); }
+        return rejected(key, "a number", fallback);
     }
 
     public static String text(String group, String key, String fallback) {
@@ -168,6 +178,9 @@ public final class ContentControl {
         if (CHUNKS.equals(group)) { return Config.control.chunks(); }
         if (BEDROCK.equals(group)) { return Config.control.bedrock(); }
         if (VOID.equals(group)) { return Config.control.voidWorld(); }
+        if (ORES.equals(group)) { return Config.control.ores(); }
+        if (BIOMES.equals(group)) { return Config.control.biomes(); }
+        if (SPAWNING.equals(group)) { return Config.control.spawning(); }
         return DEFAULT;
     }
 }

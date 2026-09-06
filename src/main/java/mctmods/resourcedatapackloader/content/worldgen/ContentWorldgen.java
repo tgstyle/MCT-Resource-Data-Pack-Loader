@@ -83,8 +83,16 @@ public final class ContentWorldgen {
 
     public static boolean allows(Entry entry, WorldGenLevel level, BlockPos pos) {
         Holder<Biome> biome = level.getBiome(pos);
+        if (!entry.def().caveRegions().isEmpty() && !inRegion(entry, biome)) { return false; }
         if (entry.def().hasBiomeFilter() && matches(entry, biome) == entry.def().biomesAreBlacklist()) { return false; }
         return entry.def().climateAllows(biome.value().getBaseTemperature(), biome.value().getModifiedClimateSettings().downfall());
+    }
+
+    private static boolean inRegion(Entry entry, Holder<Biome> biome) {
+        for (ResourceLocation region : entry.def().caveRegions()) {
+            if (biome.is(region)) { return true; }
+        }
+        return false;
     }
 
     private static boolean matches(Entry entry, Holder<Biome> biome) {
@@ -100,10 +108,6 @@ public final class ContentWorldgen {
     @Nullable private static Entry resolve(WorldgenDef def) {
         ResourceLocation key = def.key();
         if (!ContentRegistry.available(def.requires(), key)) { return null; }
-        if (!def.caveRegions().isEmpty()) {
-            ContentLog.LOGGER.error("Worldgen {} only generates inside cave regions, which this line does not have yet, so it is left out", key);
-            return null;
-        }
         Set<Block> targets = new LinkedHashSet<>();
         Set<BlockState> exact = new LinkedHashSet<>();
         bind(def, def.replaces(), "replace", targets, exact);
@@ -207,7 +211,7 @@ public final class ContentWorldgen {
         if (block == null) { return null; }
         if (properties.isEmpty()) { return block.defaultBlockState(); }
         List<BlockState> found = ContentStates.matching(block, properties, key);
-        return found.isEmpty() ? block.defaultBlockState() : found.get(0);
+        return found.isEmpty() ? block.defaultBlockState() : found.getFirst();
     }
 
     @Nullable private static BlockState state(String name, ResourceLocation key) {

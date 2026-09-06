@@ -13,6 +13,7 @@
         "common.IPotion",
         "common.MixinBlockStateBase",
         "common.IMob",
+        "common.IMobCategory",
         "common.MixinExplosionDamageCalculator",
         "common.MixinLivingEntity",
         "common.MixinMob",

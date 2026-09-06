@@ -6,20 +6,19 @@ import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import net.minecraft.core.SectionPos;
 
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -29,9 +28,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.VanillaPackResources;
-import net.minecraft.server.packs.repository.ServerPacksSource;
-import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
@@ -46,11 +42,6 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -75,12 +66,10 @@ public final class ContentWorldShape {
             "amplified", new String[] { "amplified", "amplified" });
     private static final String BEDROCK_FLOOR = "bedrock_floor";
     private static final String BEDROCK_ROOF = "bedrock_roof";
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Set<String> WARNED = new HashSet<>();
     private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
     @Nullable private static ResourceLocation presetId;
     @Nullable private static String presetName;
-    @Nullable private static VanillaPackResources vanilla;
 
     private ContentWorldShape() {}
 
@@ -97,7 +86,7 @@ public final class ContentWorldShape {
         presetName = null;
         MADE.clear();
         Shape shape = shape();
-        boolean anything = shape.shapesOverworld() || !"normal".equals(shape.base()[0]);
+        boolean anything = shape.shapesOverworld() || !"normal".equals(shape.base()[0]) || ContentBiomes.placesBiomes(OVERWORLD) || ContentBiomes.placesBiomes(NETHER) || ContentOreControl.veinsBlocked();
         JsonObject dimensions = new JsonObject();
         for (String dimension : DIMENSIONS) {
             boolean flatBedrock = bedrockApplies(dimension);
@@ -105,7 +94,7 @@ public final class ContentWorldShape {
             anything |= flatBedrock || isVoid;
             dimensions.add(dimension, dimension(shape, dimension, flatBedrock, isVoid));
         }
-        vanilla = null;
+        GameData.release();
         if (!anything) {
             MADE.clear();
             return;
@@ -172,7 +161,7 @@ public final class ContentWorldShape {
         boolean overworld = OVERWORLD.equals(dimension);
         String typeId = dimension;
         if (overworld && shape.tall()) {
-            JsonObject type = vanilla("dimension_type/overworld.json");
+            JsonObject type = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "dimension_type/overworld.json"));
             if (type != null) {
                 type.addProperty("min_y", shape.minY());
                 type.addProperty("height", shape.maxY() - shape.minY());
@@ -199,15 +188,24 @@ public final class ContentWorldShape {
         if (END.equals(dimension)) { source.addProperty("type", "minecraft:the_end"); }
         else {
             source.addProperty("type", "minecraft:multi_noise");
-            source.addProperty("preset", overworld ? OVERWORLD : "minecraft:nether");
+            if (ContentBiomes.placesBiomes(dimension)) { source.add("biomes", ContentBiomes.biomes(dimension)); }
+            else { source.addProperty("preset", overworld ? OVERWORLD : "minecraft:nether"); }
         }
         generator.add("biome_source", source);
         String vanillaSettings = overworld ? shape.base()[1] : NETHER.equals(dimension) ? "nether" : "end";
         String settingsId = "minecraft:" + vanillaSettings;
-        if ((overworld && shape.shapesOverworld()) || flatBedrock) {
-            JsonObject settings = vanilla("worldgen/noise_settings/" + vanillaSettings + ".json");
+        if ((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked())) || flatBedrock) {
+            JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
             if (settings != null) {
                 if (overworld) { shapeNoise(settings, shape); }
+                if (overworld && ContentOreControl.veinsBlocked()) {
+                    settings.addProperty("ore_veins_enabled", false);
+                    ContentLog.LOGGER.debug("The overworld's iron and copper ore veins are turned off by the ores group");
+                }
+                if (overworld && ContentBiomes.any()) {
+                    ContentBiomes.surface(settings);
+                    ContentBiomes.spawnTargets(settings);
+                }
                 if (flatBedrock) { flattenBedrock(settings, dimension); }
                 settingsId = made(shape, path + "_noise", "worldgen/noise_settings", settings);
             }
@@ -241,15 +239,15 @@ public final class ContentWorldShape {
         JsonObject gradient = new JsonObject();
         gradient.addProperty("type", "minecraft:vertical_gradient");
         gradient.addProperty("random_name", shape.id().getNamespace() + ":deep_stone");
-        gradient.add("true_at_and_below", anchor("absolute", VANILLA_MIN));
-        gradient.add("false_at_and_above", anchor("absolute", VANILLA_MIN + BLEND));
-        JsonArray sequence = sequence(settings);
-        sequence.asList().add(1, condition(gradient, block(shape.deepStone())));
+        gradient.add("true_at_and_below", WorldgenJson.anchor("absolute", VANILLA_MIN));
+        gradient.add("false_at_and_above", WorldgenJson.anchor("absolute", VANILLA_MIN + BLEND));
+        JsonArray sequence = WorldgenJson.sequenceOf(settings);
+        sequence.asList().add(1, WorldgenJson.condition(gradient, WorldgenJson.block(shape.deepStone())));
     }
 
     private static void flattenBedrock(JsonObject settings, String dimension) {
         int layers = layers();
-        JsonArray sequence = sequence(settings);
+        JsonArray sequence = WorldgenJson.sequenceOf(settings);
         for (int index = 0; index < sequence.size(); index++) {
             JsonElement element = sequence.get(index);
             if (!element.isJsonObject()) { continue; }
@@ -259,36 +257,21 @@ public final class ContentWorldShape {
             boolean roof = gradient.endsWith(BEDROCK_ROOF);
             if (roof && !roofWanted()) { continue; }
             if (!roof && !gradient.endsWith(BEDROCK_FLOOR)) { continue; }
-            JsonObject bedrock = block("minecraft:bedrock");
+            JsonObject bedrock = WorldgenJson.block("minecraft:bedrock");
             JsonObject flat;
-            if (roof) { flat = condition(yAbove(anchor("below_top", layers - 1)), bedrock); }
+            if (roof) { flat = WorldgenJson.condition(WorldgenJson.yAbove(WorldgenJson.anchor("below_top", layers - 1)), bedrock); }
             else {
-                JsonObject not = new JsonObject();
-                not.addProperty("type", "minecraft:not");
-                not.add("invert", yAbove(anchor("above_bottom", layers)));
-                flat = condition(not, bedrock);
+                flat = WorldgenJson.condition(WorldgenJson.not(WorldgenJson.yAbove(WorldgenJson.anchor("above_bottom", layers))), bedrock);
             }
             List<String> biomes = bedrockBiomes();
             if (biomes.isEmpty()) {
                 sequence.set(index, flat);
                 continue;
             }
-            JsonObject inBiomes = new JsonObject();
-            inBiomes.addProperty("type", "minecraft:biome");
-            JsonArray names = new JsonArray();
-            for (String biome : biomes) { names.add(biome); }
-            inBiomes.add("biome_is", names);
-            JsonObject outside = new JsonObject();
-            outside.addProperty("type", "minecraft:not");
-            outside.add("invert", inBiomes);
+            JsonObject inBiomes = WorldgenJson.biomeIs(biomes);
+            JsonObject outside = WorldgenJson.not(inBiomes);
             boolean blacklist = ContentControl.flag(ContentControl.BEDROCK, "flatBedrockBiomesAreBlacklist", Config.worldgen.flatBedrockBiomesAreBlacklist());
-            JsonObject both = new JsonObject();
-            both.addProperty("type", "minecraft:sequence");
-            JsonArray pair = new JsonArray();
-            pair.add(condition(blacklist ? outside : inBiomes, flat));
-            pair.add(condition(blacklist ? inBiomes : outside, entry));
-            both.add("sequence", pair);
-            sequence.set(index, both);
+            sequence.set(index, WorldgenJson.sequence(List.of(WorldgenJson.condition(blacklist ? outside : inBiomes, flat), WorldgenJson.condition(blacklist ? inBiomes : outside, entry))));
         }
         ContentLog.LOGGER.debug("Flattened the bedrock of {} to {} layer(s){}", dimension, layers, roofWanted() ? " including the roof" : "");
     }
@@ -299,65 +282,6 @@ public final class ContentWorldShape {
         if ("minecraft:not".equals(GsonHelper.getAsString(test, "type", ""))) { test = GsonHelper.getAsJsonObject(test, "invert", new JsonObject()); }
         if (!"minecraft:vertical_gradient".equals(GsonHelper.getAsString(test, "type", ""))) { return null; }
         return GsonHelper.getAsString(test, "random_name", "");
-    }
-
-    private static JsonArray sequence(JsonObject settings) {
-        JsonObject rule = GsonHelper.getAsJsonObject(settings, "surface_rule");
-        if ("minecraft:sequence".equals(GsonHelper.getAsString(rule, "type", ""))) { return GsonHelper.getAsJsonArray(rule, "sequence"); }
-        JsonObject wrapped = new JsonObject();
-        wrapped.addProperty("type", "minecraft:sequence");
-        JsonArray sequence = new JsonArray();
-        sequence.add(rule);
-        wrapped.add("sequence", sequence);
-        settings.add("surface_rule", wrapped);
-        return sequence;
-    }
-
-    private static JsonObject anchor(String kind, int value) {
-        JsonObject anchor = new JsonObject();
-        anchor.addProperty(kind, value);
-        return anchor;
-    }
-
-    private static JsonObject yAbove(JsonObject anchor) {
-        JsonObject test = new JsonObject();
-        test.addProperty("type", "minecraft:y_above");
-        test.add("anchor", anchor);
-        test.addProperty("surface_depth_multiplier", 0);
-        test.addProperty("add_stone_depth", false);
-        return test;
-    }
-
-    private static JsonObject condition(JsonObject test, JsonObject then) {
-        JsonObject out = new JsonObject();
-        out.addProperty("type", "minecraft:condition");
-        out.add("if_true", test);
-        out.add("then_run", then);
-        return out;
-    }
-
-    private static JsonObject block(String name) {
-        JsonObject state = new JsonObject();
-        state.addProperty("Name", name);
-        JsonObject out = new JsonObject();
-        out.addProperty("type", "minecraft:block");
-        out.add("result_state", state);
-        return out;
-    }
-
-    @Nullable private static JsonObject vanilla(String path) {
-        if (vanilla == null) { vanilla = ServerPacksSource.createVanillaPackSource(); }
-        ResourceLocation at = ResourceLocation.fromNamespaceAndPath("minecraft", path);
-        IoSupplier<InputStream> supplier = vanilla.getResource(PackType.SERVER_DATA, at);
-        if (supplier == null) {
-            ContentLog.LOGGER.error("The game's own {} could not be found, so that part of the world shape is left as the game makes it", at);
-            return null;
-        }
-        try (InputStream in = supplier.get(); Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) { return GSON.fromJson(reader, JsonObject.class); }
-        catch (IOException | JsonParseException ex) {
-            ContentLog.LOGGER.error("The game's own {} could not be read, so that part of the world shape is left as the game makes it", at, ex);
-            return null;
-        }
     }
 
     private static boolean bedrockAsked() {
