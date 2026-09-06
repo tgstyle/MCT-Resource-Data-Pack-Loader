@@ -25,6 +25,7 @@
     "client": [
         "client.IEntityRenderers",
         "client.IWeightedBakedModel",
+        "client.MixinChatScreen",
         "client.MixinHumanoidArmorLayer",
         "client.MixinItemInHandLayer",
         "client.MixinLivingEntityRenderer",
