@@ -24,7 +24,8 @@ import javax.annotation.Nullable;
 
 public final class ModPacks {
     static final String IN_JAR = PackManager.ROOT_DIRECTORY;
-    static final String CONTROL_FILE = "mods.json";
+    static final String CONTROL_STEM = "mods";
+    static final String CONTROL_FILE = CONTROL_STEM + "." + PackManager.JSON;
     private static final String MODS_TOML = "META-INF/mods.toml";
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";

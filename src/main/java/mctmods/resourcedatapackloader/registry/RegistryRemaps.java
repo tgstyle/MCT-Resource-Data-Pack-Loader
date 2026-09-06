@@ -15,7 +15,9 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
+import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.MissingMappingsEvent;
+import net.minecraftforge.registries.RegistryManager;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -80,14 +82,16 @@ public final class RegistryRemaps {
     }
 
     private static <T> void remap(MissingMappingsEvent event, ResourceKey<? extends Registry<T>> key, Map<ResourceLocation, ResourceLocation> target) {
+        IForgeRegistry<T> pool = RegistryManager.ACTIVE.getRegistry(key.location());
+        if (pool == null) { return; }
         for (MissingMappingsEvent.Mapping<T> mapping : event.getAllMappings(key)) {
             ResourceLocation renamed = follow(target, mapping.getKey());
             if (renamed == null) { continue; }
-            if (!mapping.getRegistry().containsKey(renamed)) {
+            if (!pool.containsKey(renamed)) {
                 ContentLog.LOGGER.warn("Registry remap sends {} to {} in {}, but nothing is registered under that name", mapping.getKey(), renamed, key.location());
                 continue;
             }
-            mapping.remap(mapping.getRegistry().getValue(renamed));
+            mapping.remap(pool.getValue(renamed));
             ContentLog.LOGGER.debug("Remapped {} to {} in {}", mapping.getKey(), renamed, key.location());
         }
     }
