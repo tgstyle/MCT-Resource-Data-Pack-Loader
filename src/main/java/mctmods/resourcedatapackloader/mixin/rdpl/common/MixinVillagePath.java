@@ -41,13 +41,24 @@ import javax.annotation.Nullable;
     @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$backOff(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
         StructureBoundingBox box = cir.getReturnValue();
         if (box == null || facing == null || !ContentBeard.wanted()) { return; }
+        if (BeardRoads.crossesHill(p_175848_1_, box)) {
+            ContentLog.LOGGER.debug("A road from {}, {} facing {} would start against or run beside a tunnel through a hill, so it is not laid", p_175848_3_, p_175848_5_, facing);
+            cir.setReturnValue(null);
+            return;
+        }
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
         List<StructureComponent> held = ContentBeard.laid();
         int kept;
         ContentBeard.laying(p_175848_1_);
-        try { kept = BeardRoads.roadReach(box, facing); }
+        try { kept = BeardRoads.roadReach(box, facing, BeardRoads.throughRoom(p_175848_1_, box, facing)); }
         finally { ContentBeard.laying(held); }
+        if (kept == Integer.MAX_VALUE) { return; }
+        if (kept > rows) {
+            BeardLayout.trim(box, alongX, facing, kept);
+            ContentLog.LOGGER.debug("A road from {}, {} facing {} is lengthened from {} to {} block(s) to bore through the hill in its way and come out the other side", p_175848_3_, p_175848_5_, facing, rows, kept);
+            return;
+        }
         int room = ContentBeard.roomFor(p_175848_1_, box, facing);
         if (room < kept) {
             ContentLog.LOGGER.debug("A road from {}, {} facing {} runs into another village's piece after {} row(s), so it stops short of it", p_175848_3_, p_175848_5_, facing, room);
@@ -146,12 +157,10 @@ import javax.annotation.Nullable;
 
     @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$alleyStops(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
         CityGrowth.alleyLaying(BeardRoads.roadNarrow(getBoundingBox(), BeardPlots.roadAlongX(this)));
-        BeardRoads.building(this);
     }
 
     @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
         CityGrowth.alleyLaying(false);
-        BeardRoads.building(null);
     }
 
     @SuppressWarnings("ConstantConditions") @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$branchAtBlocks(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {

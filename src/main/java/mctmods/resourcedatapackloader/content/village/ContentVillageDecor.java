@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
@@ -101,15 +102,34 @@ public final class ContentVillageDecor {
         if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return 6; }
         IContentShape figure = ContentWorldgen.shapeFor(chosen.name);
         if (figure == null) { return 7; }
+        StructureBoundingBox area = new StructureBoundingBox(x - SPREAD, bed - 1, z - SPREAD, x + SPREAD, bed + RISE, z + SPREAD);
         if (!ContentBeard.wanted()) {
             figure.generate(world, random, origin);
+            openOverRoads(world, villages, at, area, x, z);
             return 8;
         }
-        StructureBoundingBox area = new StructureBoundingBox(x - SPREAD, bed - 1, z - SPREAD, x + SPREAD, bed + RISE, z + SPREAD);
         BeardKeep.watchArea(world, area, NAME);
         figure.generate(world, random, origin);
+        openOverRoads(world, villages, at, area, x, z);
         BeardKeep.learn(world);
         return 8;
+    }
+
+    private static void openOverRoads(World world, Collection<StructureStart> villages, BlockPos.MutableBlockPos at, StructureBoundingBox area, int x, int z) {
+        int cleared = 0;
+        for (int over = area.minX; over <= area.maxX; over++) {
+            for (int along = area.minZ; along <= area.maxZ; along++) {
+                boolean road = false;
+                for (StructureStart village : villages) { if (BeardPlots.overRoad(village, over, along)) { road = true; break; } }
+                if (!road) { continue; }
+                for (int y = area.minY; y <= area.maxY; y++) {
+                    at.setPos(over, y, along);
+                    if (!BeardBlocks.overhang(world.getBlockState(at))) { continue; }
+                    cleared += BeardBlocks.clearAt(world, at);
+                }
+            }
+        }
+        if (cleared > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Cleared {} leaf block(s) the verge planting at {}, {} had reached over a roadway with", cleared, x, z); }
     }
 
     private static void load() {

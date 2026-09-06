@@ -69,10 +69,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 
 @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(World.class) public abstract class MixinWorld implements IRubicWorldInternal, IRubicWorld {
     @Unique private static boolean rdpl$told;
-    @Unique private static ChunkPos rdpl$during;
-    @Unique private static int rdpl$lastX = Integer.MIN_VALUE;
-    @Unique @Nullable private static Chunk rdpl$lastChunk;
-    @Unique private static int rdpl$lastZ = Integer.MIN_VALUE;
+    @Unique private ChunkPos rdpl$during;
+    @Unique private int rdpl$lastX = Integer.MIN_VALUE;
+    @Unique @Nullable private Chunk rdpl$lastChunk;
+    @Unique private int rdpl$lastZ = Integer.MIN_VALUE;
     @Unique private static final int rdpl$NOTIFY_NEIGHBORS = 1;
     @Unique private static final int rdpl$SUPPRESS_OBSERVERS = 16;
 
@@ -107,6 +107,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 
     @Redirect(method = "getBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getChunk(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;"))
     private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
+        if (isRemote) { return self.getChunk(pos); }
         ChunkPos populating = IChunk.rdpl$getPopulating();
         if (populating == null) { return self.getChunk(pos); }
         if (pos.getX() >> 4 == populating.x && pos.getZ() >> 4 == populating.z) { return self.getChunk(pos); }
@@ -158,7 +159,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     }
 
     @ModifyVariable(method = "markAndNotifyBlock", at = @At("HEAD"), argsOnly = true, index = 5, remap = false) private int rdpl$suppressObserverScan(int flags) {
-        if (IChunk.rdpl$getPopulating() == null) { return flags; }
+        if (isRemote || IChunk.rdpl$getPopulating() == null) { return flags; }
         return (flags | rdpl$SUPPRESS_OBSERVERS) & ~rdpl$NOTIFY_NEIGHBORS;
     }
 

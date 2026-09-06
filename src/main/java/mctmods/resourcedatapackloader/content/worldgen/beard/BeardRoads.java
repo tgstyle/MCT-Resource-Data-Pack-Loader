@@ -49,19 +49,25 @@ public final class BeardRoads {
     private BeardRoads() {}
 
     private static final int BORE = 4;
+    private static final int VERGE_WET = 8;
     private static final Map<World, Map<StructureBoundingBox, boolean[]>> HILLS = new WeakHashMap<>();
-    @Nullable private static StructureComponent building;
 
-    public static void building(@Nullable StructureComponent road) { building = road; }
+    public static boolean crossesHill(@Nullable List<StructureComponent> own, StructureBoundingBox box) {
+        if (tunnelDepth() <= 0 || ContentBeard.samplerWorld == null) { return false; }
+        for (StructureComponent other : ContentBeard.everyone(own)) {
+            if (other instanceof StructureVillagePieces.Path && !CityGrowth.bulbWide(other) && frontsHill(other, box)) { return true; }
+        }
+        return false;
+    }
 
-    public static boolean frontsHill(StructureBoundingBox plot) {
-        StructureComponent road = building;
+    public static boolean frontsHill(@Nullable StructureComponent road, StructureBoundingBox plot) {
         World world = ContentBeard.samplerWorld;
-        if (road == null || world == null || !(road instanceof StructureVillagePieces.Path) || tunnelDepth() <= 0) { return false; }
+        if (world == null || !(road instanceof StructureVillagePieces.Path) || tunnelDepth() <= 0) { return false; }
         StructureBoundingBox box = road.getBoundingBox();
         boolean alongX = BeardPlots.roadAlongX(box);
         if ((alongX ? plot.minZ : plot.minX) > (alongX ? box.maxZ : box.maxX) + 3 || (alongX ? plot.maxZ : plot.maxX) < (alongX ? box.minZ : box.minX) - 3) { return false; }
-        boolean[] hill = HILLS.computeIfAbsent(world, held -> new HashMap<>()).computeIfAbsent(box, held -> hillRows(world, held, alongX));
+        EnumFacing facing = road.getCoordBaseMode();
+        boolean[] hill = HILLS.computeIfAbsent(world, held -> new HashMap<>()).computeIfAbsent(box, held -> hillRows(world, held, alongX, facing));
         int start = alongX ? box.minX : box.minZ;
         for (int row = Math.max(start, (alongX ? plot.minX : plot.minZ) - 1); row <= Math.min(start + hill.length - 1, (alongX ? plot.maxX : plot.maxZ) + 1); row++) {
             if (hill[row - start]) { return true; }
@@ -69,7 +75,7 @@ public final class BeardRoads {
         return false;
     }
 
-    private static boolean[] hillRows(World world, StructureBoundingBox box, boolean alongX) {
+    private static boolean[] hillRows(World world, StructureBoundingBox box, boolean alongX, @Nullable EnumFacing facing) {
         int rowLeast = alongX ? box.minX : box.minZ;
         int rowMost = alongX ? box.maxX : box.maxZ;
         int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX);
@@ -80,7 +86,7 @@ public final class BeardRoads {
         boolean[] bridged = BeardGrade.smooth(profile);
         boolean[] none = new boolean[profile.length];
         BeardGrade.settle(profile, none);
-        BeardGrade.bore(profile, ground, none, bridged, tunnelDepth());
+        BeardGrade.bore(profile, ground, none, bridged, tunnelDepth(), farLow(facing, alongX), farHigh(facing, alongX));
         Grade grade = new Grade(profile, ground, bridged, none, rowLeast, 0);
         int depth = tunnelDepth();
         for (int i = 0; i < hill.length; i++) { hill[i] = grade.tunneledAt(rowLeast + i, depth); }
@@ -154,6 +160,8 @@ public final class BeardRoads {
 
         private boolean buried(int i, int depth) { return profile[i] != Integer.MIN_VALUE && !bridged[i] && ground[i] != Integer.MIN_VALUE && ground[i] - profile[i] >= depth; }
 
+        public boolean buriedAt(int row, int depth) { return row >= start && row < start + profile.length && buried(row - start, depth); }
+
         public boolean sameAs(Grade other) { return start == other.start && Arrays.equals(profile, other.profile) && Arrays.equals(deck, other.deck) && Arrays.equals(bridged, other.bridged) && Arrays.equals(held, other.held); }
 
         public void write(NBTTagCompound tag) {
@@ -211,6 +219,14 @@ public final class BeardRoads {
     }
 
     @Nullable public static Grade roadProfile(World world, @Nullable StructureComponent piece, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost, boolean junctions) {
+        return roadProfile(world, piece, piece == null ? null : piece.getCoordBaseMode(), alongX, rowLeast, rowMost, acrossLeast, acrossMost, junctions);
+    }
+
+    private static boolean farHigh(@Nullable EnumFacing facing, boolean alongX) { return facing != null && (alongX ? facing.getXOffset() : facing.getZOffset()) > 0; }
+
+    private static boolean farLow(@Nullable EnumFacing facing, boolean alongX) { return facing != null && (alongX ? facing.getXOffset() : facing.getZOffset()) < 0; }
+
+    @Nullable public static Grade roadProfile(World world, @Nullable StructureComponent piece, @Nullable EnumFacing facing, boolean alongX, int rowLeast, int rowMost, int acrossLeast, int acrossMost, boolean junctions) {
         int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, acrossLeast, acrossMost);
         if (profile == null) { return null; }
         int[] ground = profile.clone();
@@ -232,7 +248,7 @@ public final class BeardRoads {
             int ramped = BeardGrade.ramp(profile, pinned, keep);
             if (ramped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} had held rows meeting with a step of more than one block, so {} row(s) beside the step(s) are let go to ramp between the levels", alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast, ramped); }
             BeardGrade.settle(profile, pinned);
-            boolean[] bored = BeardGrade.bore(profile, ground, pinned, bridged, tunnelDepth());
+            boolean[] bored = BeardGrade.bore(profile, ground, pinned, bridged, tunnelDepth(), farLow(facing, alongX), farHigh(facing, alongX));
             if (ContentLog.LOGGER.debugEnabled()) {
                 int level = 0;
                 for (boolean row : bored) { if (row) { level++; } }
@@ -295,9 +311,30 @@ public final class BeardRoads {
             if (piers > 0) { ContentLog.LOGGER.debug("Held {} pier row(s) of the road at {}, {} up to the water line, so they meet the decks either side", piers, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             int filled = piece == null ? 0 : BeardGrade.fillDips(profile, authority);
             if (filled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Lifted {} row(s) of the road at {}, {} out of a dip, so it carries across at the level it meets on either side", filled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            if (!BeardGrade.walkable(profile, bridged) || steppedOntoDeck(profile, bridged)) {
+                boolean[] standing = new boolean[profile.length];
+                for (int i = 0; i < standing.length; i++) { standing[i] = hold[i] || bridged[i]; }
+                int freed = 0;
+                for (int round = 0; round < 4; round++) {
+                    int let = BeardGrade.rampSteps(profile, standing, keep);
+                    if (let == 0) { break; }
+                    freed += let;
+                    BeardGrade.settle(profile, standing);
+                    if (BeardGrade.walkable(profile, bridged) && !steppedOntoDeck(profile, bridged)) { break; }
+                }
+                if (freed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} met its held rows with a step of more than one block after every pin was known, so {} held row(s) beside the step(s) are let go to ramp between the levels, and it {}", alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast, freed, BeardGrade.walkable(profile, bridged) && !steppedOntoDeck(profile, bridged) ? "walks now" : "still steps"); }
+            }
         }
         else { capped = BeardGrade.capEmbankment(profile, ground, bridged, plaza); }
         return new Grade(profile, ground, bridged, footed, rowLeast, capped);
+    }
+
+    private static boolean steppedOntoDeck(int[] profile, boolean[] bridged) {
+        for (int i = 1; i < profile.length; i++) {
+            if (profile[i] == Integer.MIN_VALUE || profile[i - 1] == Integer.MIN_VALUE || bridged[i] == bridged[i - 1]) { continue; }
+            if (Math.abs(profile[i] - profile[i - 1]) > 1) { return true; }
+        }
+        return false;
     }
 
     private static boolean attachedAt(@Nullable StructureComponent piece, boolean alongX, int row, int acrossLeast, int acrossMost) {
@@ -334,7 +371,9 @@ public final class BeardRoads {
         }
     }
 
-    public static int roadReach(StructureBoundingBox box, EnumFacing facing) {
+    public static int roadReach(StructureBoundingBox box, EnumFacing facing) { return roadReach(box, facing, 0); }
+
+    public static int roadReach(StructureBoundingBox box, EnumFacing facing, int extra) {
         World world = ContentBeard.samplerWorld;
         if (world == null || facing == null || ContentBeard.samplerFor(world) == null) {
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The reach test for a road at {}, {} cannot run: world {}, facing {}, ContentBeard.sampler {}", box.minX, box.minZ, world == null ? "none" : "held", facing, world == null || ContentBeard.samplerFor(world) == null ? "none" : "held"); }
@@ -346,28 +385,87 @@ public final class BeardRoads {
         int from = step > 0 ? (alongX ? box.minX : box.minZ) : (alongX ? box.maxX : box.maxZ);
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
+        int depth = tunnelDepth();
         for (int length = rows; length >= 7; length -= 7) {
-            int far = from + step * (length - 1);
-            int rowLeast = Math.min(from, far);
-            int rowMost = Math.max(from, far);
-            Grade grade = roadProfile(world, null, alongX, rowLeast, rowMost, acrossLeast, acrossMost, true);
+            Grade grade = reachGrade(world, box, facing, alongX, from, step, length, acrossLeast, acrossMost);
             if (grade == null) {
                 if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The reach test for a road at {}, {} along {} has no profile at length {}, so its full {} rows stand", box.minX, box.minZ, alongX ? "x" : "z", length, rows); }
                 return rows;
             }
-            if (ContentLog.LOGGER.debugEnabled()) {
-                StringBuilder trace = new StringBuilder();
-                for (int i = 0; i < grade.profile.length; i++) {
-                    trace.append(' ').append(rowLeast + i).append(':');
-                    trace.append(grade.ground[i] == Integer.MIN_VALUE ? "-" : String.valueOf(grade.ground[i])).append('/');
-                    trace.append(grade.profile[i] == Integer.MIN_VALUE ? "-" : String.valueOf(grade.profile[i]));
-                    if (grade.bridged[i]) { trace.append('b'); }
-                }
-                ContentLog.LOGGER.debug("The reach test for a road at {}, {} along {} at length {} is {}, capped {} row(s), as row:ground/graded:{}", box.minX, box.minZ, alongX ? "x" : "z", length, BeardGrade.walkable(grade.profile, grade.bridged) ? "walkable" : "too steep", grade.capped, trace);
+            if (!BeardGrade.walkable(grade.profile, grade.bridged)) { continue; }
+            int buried = depth > 0 ? deadEnd(grade, step > 0, depth) : 0;
+            if (buried == 0) { return length; }
+            for (int longer = length + 7; longer <= rows + extra; longer += 7) {
+                Grade through = reachGrade(world, box, facing, alongX, from, step, longer, acrossLeast, acrossMost);
+                if (through == null) { break; }
+                if (!BeardGrade.walkable(through.profile, through.bridged) || deadEnd(through, step > 0, depth) > 0) { continue; }
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A road from {}, {} facing {} runs into a hill {} row(s) before its end at {} rows and comes out the other side at {} rows, so it is lengthened to bore through", box.minX, box.minZ, facing, buried, length, longer); }
+                return longer;
             }
-            if (BeardGrade.walkable(grade.profile, grade.bridged)) { return length; }
+            int foot = length - buried;
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A road from {}, {} facing {} runs into a hill {} row(s) before its end at {} rows and finds no other side within {} more row(s), so it stops at the foot after {} row(s)", box.minX, box.minZ, facing, buried, length, extra, foot); }
+            if (foot >= 7) { return foot; }
         }
         return 0;
+    }
+
+    @Nullable private static Grade reachGrade(World world, StructureBoundingBox box, EnumFacing facing, boolean alongX, int from, int step, int length, int acrossLeast, int acrossMost) {
+        int far = from + step * (length - 1);
+        int rowLeast = Math.min(from, far);
+        int rowMost = Math.max(from, far);
+        Grade grade = roadProfile(world, null, facing, alongX, rowLeast, rowMost, acrossLeast, acrossMost, true);
+        if (grade != null && ContentLog.LOGGER.debugEnabled()) {
+            StringBuilder trace = new StringBuilder();
+            for (int i = 0; i < grade.profile.length; i++) {
+                trace.append(' ').append(rowLeast + i).append(':');
+                trace.append(grade.ground[i] == Integer.MIN_VALUE ? "-" : String.valueOf(grade.ground[i])).append('/');
+                trace.append(grade.profile[i] == Integer.MIN_VALUE ? "-" : String.valueOf(grade.profile[i]));
+                if (grade.bridged[i]) { trace.append('b'); }
+            }
+            ContentLog.LOGGER.debug("The reach test for a road at {}, {} along {} at length {} is {}, capped {} row(s), as row:ground/graded:{}", box.minX, box.minZ, alongX ? "x" : "z", length, BeardGrade.walkable(grade.profile, grade.bridged) ? "walkable" : "too steep", grade.capped, trace);
+        }
+        return grade;
+    }
+
+    private static int deadEnd(Grade grade, boolean farHigh, int depth) {
+        int rows = grade.profile.length;
+        int last = farHigh ? rows - 1 : 0;
+        if (!grade.buriedAt(grade.start + last, depth)) { return 0; }
+        int back = farHigh ? -1 : 1;
+        int at = last;
+        while (at + back >= 0 && at + back < rows) {
+            int next = at + back;
+            if (grade.profile[next] == Integer.MIN_VALUE || grade.ground[next] == Integer.MIN_VALUE || grade.ground[next] - grade.profile[next] <= BeardGrade.CAP) { break; }
+            at = next;
+        }
+        return farHigh ? rows - at : at + 1;
+    }
+
+    private static boolean standsOn(List<StructureComponent> own, StructureBoundingBox strip) {
+        for (StructureComponent other : own) {
+            if (other.getBoundingBox().intersectsWith(strip.minX, strip.minZ, strip.maxX, strip.maxZ)) { return true; }
+        }
+        return false;
+    }
+
+    public static int throughRoom(List<StructureComponent> own, StructureBoundingBox box, EnumFacing facing) {
+        if (tunnelDepth() <= 0) { return 0; }
+        boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+        int step = (alongX ? facing.getXOffset() : facing.getZOffset()) >= 0 ? 1 : -1;
+        int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
+        int room = 0;
+        for (int extra = 7; extra <= BeardGrade.TUNNEL_REACH; extra += 7) {
+            StructureBoundingBox longer = new StructureBoundingBox(box);
+            BeardLayout.trim(longer, alongX, facing, rows + extra);
+            StructureBoundingBox added = new StructureBoundingBox(longer);
+            if (alongX && step > 0) { added.minX = box.maxX + 1; }
+            else if (alongX) { added.maxX = box.minX - 1; }
+            else if (step > 0) { added.minZ = box.maxZ + 1; }
+            else { added.maxZ = box.minZ - 1; }
+            if (standsOn(own, added) || ContentBeard.roomFor(own, longer, facing) < rows + extra) { break; }
+            room = extra;
+        }
+        return room;
     }
 
     public static void pave(StructureComponent piece, World world, StructureBoundingBox clip, IBlockState path, IBlockState gravel, IBlockState planks, boolean chosenSurface) {
@@ -451,9 +549,13 @@ public final class BeardRoads {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         Pier dock = pierFor(world, piece, alongX, box, graded);
         List<StructureBoundingBox> crossed = crossings(nearby, piece, box);
+        List<StructureBoundingBox> touching = new ArrayList<>();
+        for (StructureBoundingBox other : crossed) {
+            if (other.maxX >= box.minX - 1 && other.minX <= box.maxX + 1 && other.maxZ >= box.minZ - 1 && other.minZ <= box.maxZ + 1) { touching.add(other); }
+        }
         boolean[] tunnels = new boolean[profile.length];
         int center = (acrossLeast + acrossMost) / 2;
-        for (int i = 0; i < tunnels.length; i++) { tunnels[i] = graded.tunneledAt(start + i, depth) && !crossedRow(crossed, alongX, start + i) && !insidePlaza(alongX ? start + i : center, alongX ? center : start + i); }
+        for (int i = 0; i < tunnels.length; i++) { tunnels[i] = graded.tunneledAt(start + i, depth) && !crossedRow(touching, alongX, start + i) && !insidePlaza(alongX ? start + i : center, alongX ? center : start + i); }
         dropShortRuns(tunnels);
         boolean[] lit = tunnelLights(tunnels, start, lightRun);
         if (ContentLog.LOGGER.debugEnabled()) {
@@ -1005,13 +1107,25 @@ public final class BeardRoads {
         if (BeardKeep.holds(x, level, z)) { return 0; }
         at.setPos(x, level, z);
         IBlockState verge = world.getBlockState(at);
-        if (verge.getMaterial().isLiquid()) { return 0; }
         if (verge.getMaterial().isSolid()) {
             at.setPos(x, level - 1, z);
             if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { return 0; }
             return BeardBlocks.fillBank(world, at, x, z, level - 1, level - 6, false);
         }
+        int bed = wetBed(world, at, x, z, level);
+        if (bed != Integer.MIN_VALUE) { return BeardBlocks.fillUnder(world, at, x, z, level, bed + 1); }
         return BeardBlocks.fillBank(world, at, x, z, level, level - 5, false);
+    }
+
+    private static int wetBed(World world, BlockPos.MutableBlockPos at, int x, int z, int level) {
+        boolean wet = false;
+        for (int y = level; y >= level - VERGE_WET; y--) {
+            at.setPos(x, y, z);
+            IBlockState stood = world.getBlockState(at);
+            if (stood.getMaterial().isLiquid()) { wet = true; }
+            else if (stood.getMaterial().isSolid()) { return wet ? y : Integer.MIN_VALUE; }
+        }
+        return Integer.MIN_VALUE;
     }
 
     private static final Map<World, Map<Long, Boolean>> SQUARE_DECK = new WeakHashMap<>();

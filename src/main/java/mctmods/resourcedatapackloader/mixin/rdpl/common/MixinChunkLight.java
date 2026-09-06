@@ -11,6 +11,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -23,6 +24,7 @@ import net.minecraft.util.math.ChunkPos;
 
 @Mixin(Chunk.class) public abstract class MixinChunkLight {
     @Shadow private boolean isLightPopulated;
+    @Shadow @Final private World world;
     @Shadow private boolean isTerrainPopulated;
     @Shadow private boolean isGapLightingUpdated;
     @Unique private static final ThreadLocal<long[]> rdpl$litStart = ThreadLocal.withInitial(() -> new long[1]);
@@ -105,7 +107,7 @@ import net.minecraft.util.math.ChunkPos;
     }
 
     @Unique private boolean rdpl$dressingThis(int x, int z) {
-        if (isLightPopulated) { return false; }
+        if (isLightPopulated || world.isRemote) { return false; }
         ChunkPos dressing = IChunk.rdpl$getPopulating();
         return dressing != null && (x >> 4) == dressing.x && (z >> 4) == dressing.z;
     }

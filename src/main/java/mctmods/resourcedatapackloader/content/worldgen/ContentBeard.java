@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
+import mctmods.resourcedatapackloader.content.village.ContentVillagePiece;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGround;
@@ -499,7 +500,9 @@ public final class ContentBeard {
 
     public static int lowestIn(World worldIn, int minX, int minZ, int maxX, int maxZ, StructureBoundingBox clip) { return BeardSite.lowestIn(worldIn, minX, minZ, maxX, maxZ, clip); }
 
-    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink) { return BeardSite.footingMisfit(box, pieces, sink, CityGrowth.give()); }
+    public static int footingMisfit(StructureBoundingBox box, List<StructureComponent> pieces, int sink, int allow) { return BeardSite.footingMisfit(box, pieces, sink, CityGrowth.give(), allow); }
+
+    public static int footingAllow(StructureComponent piece) { return piece instanceof ContentVillagePiece ? ((ContentVillagePiece) piece).apron() : 2; }
 
     public static int footingSink(StructureComponent piece) {
         if (piece instanceof RecurrentVillagePiece) { return ((RecurrentVillagePiece) piece).footingSink(); }
@@ -807,6 +810,10 @@ public final class ContentBeard {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot reach the road at {}, {}: it would run beside the road at {}, {}", endX, endZ, bestMet.minX, bestMet.minZ, beside.minX, beside.minZ);
             return;
         }
+        if (BeardRoads.frontsHill(bestOther, strip(box, alongX, from, to))) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot close into the road at {}, {}: it would meet it inside its tunnel through a hill", endX, endZ, bestMet.minX, bestMet.minZ);
+            return;
+        }
         if (!overlaps) {
             int metFrom = metAlongLo > acrossHi ? acrossHi + 1 : metAlongHi + 1;
             int metTo = metAlongLo > acrossHi ? metAlongLo - 1 : acrossLo - 1;
@@ -864,6 +871,10 @@ public final class ContentBeard {
         StructureBoundingBox avenue = alongX
                 ? new StructureBoundingBox(conLo, box.minY, unionLo, conHi, box.maxY, unionHi)
                 : new StructureBoundingBox(unionLo, box.minY, conLo, unionHi, box.maxY, conHi);
+        if (BeardRoads.crossesHill(pieces, avenue)) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would meet a tunnel through a hill", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ);
+            return;
+        }
         List<StructureComponent> making = standing(everyone, pieces, piece, other, avenue.minX, avenue.minZ, avenue.maxX, avenue.maxZ);
         if (making == null) {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street's ground is held", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ);
@@ -962,11 +973,11 @@ public final class ContentBeard {
             int behind = alongX ? box.minX - met.maxX : box.minZ - met.maxZ;
             int from = (alongX ? Math.min(box.maxX, met.maxX) : Math.min(box.maxZ, met.maxZ)) + 1;
             int to = (alongX ? Math.max(box.minX, met.minX) : Math.max(box.minZ, met.minZ)) - 1;
-            if (ahead > 1 && ahead <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX, piece) == null) {
+            if (ahead > 1 && ahead <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX, piece) == null && !BeardRoads.frontsHill(other, strip(box, alongX, from, to))) {
                 if (alongX) { box.maxX = met.minX - 1; }
                 else { box.maxZ = met.minZ - 1; }
             }
-            else if (behind > 1 && behind <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX, piece) == null) {
+            else if (behind > 1 && behind <= attachGap() && free(everyone, piece, box, alongX, from, to) && uncrossed(everyone, piece, other, alongX, from, to, box) && beside(everyone, strip(box, alongX, from, to), alongX, piece) == null && !BeardRoads.frontsHill(other, strip(box, alongX, from, to))) {
                 if (alongX) { box.minX = met.maxX + 1; }
                 else { box.minZ = met.maxZ + 1; }
             }
@@ -999,7 +1010,7 @@ public final class ContentBeard {
         }
         if (gap <= 1) { return true; }
         if (gap > attachGap()) { return false; }
-        return free(pieces, piece, box, alongX, from, to) && uncrossed(pieces, piece, other, alongX, from, to, box);
+        return free(pieces, piece, box, alongX, from, to) && uncrossed(pieces, piece, other, alongX, from, to, box) && !BeardRoads.frontsHill(other, strip(box, alongX, from, to));
     }
 
     private static boolean closable(List<StructureComponent> pieces, StructureComponent piece, StructureComponent other, StructureBoundingBox box, boolean alongX, int from, int to) {

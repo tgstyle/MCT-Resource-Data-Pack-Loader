@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 public final class BeardGrade {
     public static final int CAP = 2;
     public static final int TUNNEL_LEAST = 12;
+    public static final int TUNNEL_REACH = 98;
 
     private BeardGrade() {}
 
@@ -167,6 +168,39 @@ public final class BeardGrade {
         return freed;
     }
 
+    public static int rampSteps(int[] profile, boolean[] held, boolean[] keep) {
+        int rows = profile.length;
+        int freed = 0;
+        for (int i = 1; i < rows; i++) {
+            if (!joined(profile, i) || Math.abs(profile[i] - profile[i - 1]) <= 1) { continue; }
+            int lo = i;
+            int hi = i - 1;
+            boolean leftTurn = true;
+            while (true) {
+                int a = profile[lo - 1];
+                int b = profile[hi + 1];
+                if (Math.abs(b - a) <= hi - lo + 2) { break; }
+                boolean leftOpen = lo - 2 >= 0 && !keep[lo - 1] && profile[lo - 2] != Integer.MIN_VALUE;
+                boolean rightOpen = hi + 2 < rows && !keep[hi + 1] && profile[hi + 2] != Integer.MIN_VALUE;
+                if (!leftOpen && !rightOpen) { break; }
+                if ((leftTurn && leftOpen) || !rightOpen) { lo--; }
+                else { hi++; }
+                leftTurn = !leftTurn;
+            }
+            int a = profile[lo - 1];
+            int b = profile[hi + 1];
+            if (Math.abs(b - a) > hi - lo + 2) { continue; }
+            int step = b > a ? 1 : -1;
+            for (int k = lo; k <= hi; k++) {
+                profile[k] = a + step * Math.min(k - lo + 1, Math.abs(b - a));
+                held[k] = false;
+                freed++;
+            }
+            i = hi + 1;
+        }
+        return freed;
+    }
+
     public static int fillDips(int[] profile, boolean[] keep) {
         int rows = profile.length;
         int lifted = 0;
@@ -280,7 +314,7 @@ public final class BeardGrade {
             if (profile[i2 - 1] == profile[i2 + 1] && Math.abs(profile[i2] - profile[i2 - 1]) == 1) { profile[i2] = profile[i2 - 1]; }
         }
     }
-    public static boolean[] bore(int[] profile, int[] ground, boolean[] held, boolean[] bridged, int depth) {
+    public static boolean[] bore(int[] profile, int[] ground, boolean[] held, boolean[] bridged, int depth, boolean openLow, boolean openHigh) {
         int rows = profile.length;
         boolean[] bored = new boolean[rows];
         if (depth <= 0) { return bored; }
@@ -292,26 +326,15 @@ public final class BeardGrade {
             }
             int end = i;
             while (end + 1 < rows && free(profile, held, bridged, end + 1)) { end++; }
-            int[] leftFloor = new int[end - i + 1];
-            int running = Integer.MAX_VALUE;
-            for (int k = i; k <= end; k++) {
-                running = Math.min(running, profile[k]);
-                leftFloor[k - i] = running;
-            }
-            int[] rightFloor = new int[end - i + 1];
-            running = Integer.MAX_VALUE;
-            for (int k = end; k >= i; k--) {
-                running = Math.min(running, profile[k]);
-                rightFloor[k - i] = running;
-            }
+            int[] cut = cutLine(profile, i, end, openLow && i == 0, openHigh && end == rows - 1);
             int high = -1;
             for (int k = i; k <= end + 1; k++) {
-                boolean raised = k <= end && Math.max(leftFloor[k - i], rightFloor[k - i]) < profile[k];
+                boolean raised = k <= end && cut[k - i] < profile[k];
                 if (raised && high < 0) { high = k; }
                 if (!raised && high >= 0) {
-                    if (buried(ground, leftFloor, rightFloor, i, high, k, depth) >= TUNNEL_LEAST) {
+                    if (buried(ground, cut, i, high, k, depth) >= TUNNEL_LEAST) {
                         for (int at = high; at < k; at++) {
-                            profile[at] = Math.max(leftFloor[at - i], rightFloor[at - i]);
+                            profile[at] = cut[at - i];
                             bored[at] = true;
                         }
                     }
@@ -323,13 +346,35 @@ public final class BeardGrade {
         return bored;
     }
 
+    private static int[] cutLine(int[] profile, int from, int to, boolean openLow, boolean openHigh) {
+        int[] leftFloor = new int[to - from + 1];
+        int running = from > 0 && profile[from - 1] != Integer.MIN_VALUE ? profile[from - 1] : Integer.MAX_VALUE;
+        for (int k = from; k <= to; k++) {
+            running = Math.min(running, profile[k]);
+            leftFloor[k - from] = running;
+        }
+        int[] rightFloor = new int[to - from + 1];
+        running = to + 1 < profile.length && profile[to + 1] != Integer.MIN_VALUE ? profile[to + 1] : Integer.MAX_VALUE;
+        for (int k = to; k >= from; k--) {
+            running = Math.min(running, profile[k]);
+            rightFloor[k - from] = running;
+        }
+        int[] cut = new int[to - from + 1];
+        for (int k = 0; k < cut.length; k++) {
+            if (openHigh && !openLow) { cut[k] = leftFloor[k]; }
+            else if (openLow && !openHigh) { cut[k] = rightFloor[k]; }
+            else { cut[k] = Math.max(leftFloor[k], rightFloor[k]); }
+        }
+        return cut;
+    }
+
     private static boolean free(int[] profile, boolean[] held, boolean[] bridged, int i) { return profile[i] != Integer.MIN_VALUE && !held[i] && !bridged[i]; }
 
-    private static int buried(int[] ground, int[] leftFloor, int[] rightFloor, int from, int lo, int hi, int depth) {
+    private static int buried(int[] ground, int[] cut, int from, int lo, int hi, int depth) {
         int longest = 0;
         int run = 0;
         for (int at = lo; at < hi; at++) {
-            boolean deep = ground[at] != Integer.MIN_VALUE && ground[at] - Math.max(leftFloor[at - from], rightFloor[at - from]) >= depth;
+            boolean deep = ground[at] != Integer.MIN_VALUE && ground[at] - cut[at - from] >= depth;
             run = deep ? run + 1 : 0;
             longest = Math.max(longest, run);
         }

@@ -1190,6 +1190,7 @@ public final class ContentParser {
                 Math.max(3, JsonUtils.getInt(json, "width", 7)),
                 Math.max(1, JsonUtils.getInt(json, "height", 4)),
                 Math.max(3, JsonUtils.getInt(json, "depth", 9)),
+                Math.max(0, JsonUtils.getInt(json, "apron", 2)),
                 strings(json, "crops"),
                 JsonUtils.getString(json, "edge", "minecraft:log"),
                 JsonUtils.getString(json, "soil", "minecraft:farmland"),

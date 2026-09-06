@@ -14,6 +14,7 @@ public final class VillageDef {
     public final int width;
     public final int height;
     public final int depth;
+    public final int apron;
     public final List<String> crops;
     public final String edge;
     public final String soil;
@@ -30,7 +31,7 @@ public final class VillageDef {
     public final int villagerZ;
     public final List<String> requires;
 
-    public VillageDef(ResourceLocation registryName, String type, int weight, int leastCount, int mostCount, int width, int height, int depth, List<String> crops, String edge, String soil, boolean water, int rowWidth, String structure, String ground, int integrity, int villagers, String villagerEntity, int villagerX, int villagerY, int villagerZ, List<String> requires, String lootTable) {
+    public VillageDef(ResourceLocation registryName, String type, int weight, int leastCount, int mostCount, int width, int height, int depth, int apron, List<String> crops, String edge, String soil, boolean water, int rowWidth, String structure, String ground, int integrity, int villagers, String villagerEntity, int villagerX, int villagerY, int villagerZ, List<String> requires, String lootTable) {
         this.registryName = registryName;
         this.type = type;
         this.weight = weight;
@@ -39,6 +40,7 @@ public final class VillageDef {
         this.width = width;
         this.height = height;
         this.depth = depth;
+        this.apron = apron;
         this.crops = crops;
         this.edge = edge;
         this.soil = soil;

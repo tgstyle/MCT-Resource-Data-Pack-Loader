@@ -37,6 +37,11 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
 
     @SuppressWarnings("unused") public ContentVillagePiece() {}
 
+    public int apron() {
+        VillageDef def = plot == null ? null : ContentVillages.byName(plot);
+        return def == null ? 2 : def.apron;
+    }
+
     public ContentVillagePiece(StructureVillagePieces.Start start, int type, StructureBoundingBox box, EnumFacing facing, VillageDef def) {
         super(start, type);
         setCoordBaseMode(facing);

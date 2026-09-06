@@ -78,8 +78,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         StructureComponent placed = cir.getReturnValue();
         if (placed == null || placed instanceof StructureVillagePieces.Path || !ContentBeard.wanted()) { return; }
         StructureBoundingBox box = placed.getBoundingBox();
-        if (!BeardRoads.frontsHill(box)) { return; }
-        ContentLog.LOGGER.debug("{} at {}, {} would front the tunnel through the hill on its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
+        if (!BeardRoads.crossesHill(structureComponents, box)) { return; }
+        ContentLog.LOGGER.debug("{} at {}, {} would front a tunnel through a hill, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
         structureComponents.remove(placed);
         cir.setReturnValue(null);
     }

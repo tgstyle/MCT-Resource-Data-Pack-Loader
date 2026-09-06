@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.village;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGrade;
@@ -31,6 +33,7 @@ public final class CityGrowth {
     private static final int VERGE = 6;
     private static final int JOIN = 4;
     private static final int PER_MARCH = 96;
+    private static final int TIE_REACH = 112;
     private static boolean laying;
     private static boolean bulbLaying;
     private static boolean alleyLaying;
@@ -230,7 +233,7 @@ public final class CityGrowth {
                             break;
                         }
                     }
-                    if (onPlaza) {
+                    if (onPlaza || BeardRoads.crossesHill(components, alley)) {
                         row += 7;
                         continue;
                     }
@@ -503,6 +506,7 @@ public final class CityGrowth {
             return false;
         }
         int rounds = 0;
+        boolean tied = false;
         while (!connected(components, mark)) {
             int before = components.size();
             if (rounds < JOIN) {
@@ -517,6 +521,10 @@ public final class CityGrowth {
                 }
                 finally { laying = false; }
             }
+            if (components.size() == before && !tied && ContentControl.flag(ContentControl.VILLAGES, "villageTieStreets", Config.worldgen.villageTieStreets)) {
+                tied = true;
+                if (tieStreet(components, mark, district, rand, wellX, wellZ)) { continue; }
+            }
             if (components.size() == before) {
                 ContentLog.LOGGER.debug("The district at {}, {} could not join its streets to the standing village, so it is taken back down", wellX, wellZ);
                 components.subList(mark, components.size()).clear();
@@ -529,6 +537,99 @@ public final class CityGrowth {
             for (int i = mark; i < components.size(); i++) { components.get(i).getBoundingBox().offset(0, shift, 0); }
         }
         return true;
+    }
+
+    private static boolean tieStreet(List<StructureComponent> components, int mark, StructureVillagePieces.Start district, Random rand, int wellX, int wellZ) {
+        StructureBoundingBox best = null;
+        StructureComponent bestStreet = null;
+        StructureBoundingBox bestMet = null;
+        EnumFacing bestFacing = null;
+        int bestLength = Integer.MAX_VALUE;
+        int[] refused = new int[5];
+        for (int i = mark; i < components.size(); i++) {
+            StructureComponent street = components.get(i);
+            if (!(street instanceof StructureVillagePieces.Path) || bulbWide(street)) { continue; }
+            StructureBoundingBox box = street.getBoundingBox();
+            boolean alongX = BeardPlots.roadAlongX(street);
+            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
+            int acrossLo = alongX ? box.minZ : box.minX;
+            int acrossHi = alongX ? box.maxZ : box.maxX;
+            int center = (acrossLo + acrossHi) / 2;
+            for (int dir = -1; dir <= 1; dir += 2) {
+                int end = dir > 0 ? (alongX ? box.maxX : box.maxZ) : (alongX ? box.minX : box.minZ);
+                for (int j = 0; j < mark; j++) {
+                    StructureComponent other = components.get(j);
+                    if (!(other instanceof StructureVillagePieces.Path) || bulbWide(other)) { continue; }
+                    StructureBoundingBox met = other.getBoundingBox();
+                    boolean otherAlongX = BeardPlots.roadAlongX(other);
+                    if (BeardRoads.roadNarrow(met, otherAlongX)) { continue; }
+                    if (otherAlongX != alongX) {
+                        int metAlongLo = alongX ? met.minZ : met.minX;
+                        int metAlongHi = alongX ? met.maxZ : met.maxX;
+                        if (center < metAlongLo || center > metAlongHi) { continue; }
+                    }
+                    else {
+                        int metAcrossLo = alongX ? met.minZ : met.minX;
+                        int metAcrossHi = alongX ? met.maxZ : met.maxX;
+                        if ((metAcrossLo + metAcrossHi) / 2 != center) { continue; }
+                    }
+                    int near = dir > 0 ? (alongX ? met.minX : met.minZ) : (alongX ? met.maxX : met.maxZ);
+                    if ((near - end) * dir <= 1) { continue; }
+                    int from = dir > 0 ? end + 1 : near + 1;
+                    int to = dir > 0 ? near - 1 : end - 1;
+                    int length = to - from + 1;
+                    if (length >= bestLength) { continue; }
+                    if (length <= BeardRoads.pathFullWidth() || length > TIE_REACH) {
+                        refused[0]++;
+                        continue;
+                    }
+                    StructureBoundingBox tie = alongX ? new StructureBoundingBox(from, box.minY, acrossLo, to, box.maxY, acrossHi) : new StructureBoundingBox(acrossLo, box.minY, from, acrossHi, box.maxY, to);
+                    if (standsOn(components, tie) || ContentBeard.taken(components, tie)) {
+                        refused[1]++;
+                        continue;
+                    }
+                    if (ContentBeard.beside(components, tie, alongX, street) != null) {
+                        refused[2]++;
+                        continue;
+                    }
+                    if (BeardRoads.crossesHill(components, tie)) {
+                        refused[3]++;
+                        continue;
+                    }
+                    EnumFacing facing = alongX ? (dir > 0 ? EnumFacing.EAST : EnumFacing.WEST) : (dir > 0 ? EnumFacing.SOUTH : EnumFacing.NORTH);
+                    List<StructureComponent> held = ContentBeard.laid();
+                    int kept;
+                    ContentBeard.laying(components);
+                    try { kept = BeardRoads.roadReach(tie, facing); }
+                    finally { ContentBeard.laying(held); }
+                    if (kept < length) {
+                        refused[4]++;
+                        continue;
+                    }
+                    best = tie;
+                    bestStreet = street;
+                    bestMet = met;
+                    bestFacing = facing;
+                    bestLength = length;
+                }
+            }
+        }
+        if (best == null) {
+            ContentLog.LOGGER.debug("The district at {}, {} has no straight, level and free line from any of its street ends to a standing street within {} blocks, so no tie street can join it: {} too short or long, {} across a piece, {} beside a road, {} through a tunnel, {} too steep", wellX, wellZ, TIE_REACH, refused[0], refused[1], refused[2], refused[3], refused[4]);
+            return false;
+        }
+        StructureVillagePieces.Path lane = new StructureVillagePieces.Path(district, 0, rand, best, bestFacing);
+        components.add(lane);
+        ContentLog.LOGGER.debug("The district at {}, {} could not grow to the standing village, so a tie street of {} row(s) is laid from the end of its street at {}, {} to the standing street at {}, {}", wellX, wellZ, bestLength, bestStreet.getBoundingBox().minX, bestStreet.getBoundingBox().minZ, bestMet.minX, bestMet.minZ);
+        return true;
+    }
+
+    private static boolean standsOn(List<StructureComponent> components, StructureBoundingBox tie) {
+        for (StructureComponent held : ContentBeard.everyone(components)) {
+            StructureBoundingBox met = held.getBoundingBox();
+            if (met.intersectsWith(tie.minX, tie.minZ, tie.maxX, tie.maxZ)) { return true; }
+        }
+        return false;
     }
 
     private static void drain(StructureVillagePieces.Start start, List<StructureComponent> components, Random rand) {

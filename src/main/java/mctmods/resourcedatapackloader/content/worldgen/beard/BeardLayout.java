@@ -244,7 +244,8 @@ public final class BeardLayout {
         StructureBoundingBox box = placed.getBoundingBox();
         structureComponents.remove(placed);
         int sink = ContentBeard.footingSink(placed);
-        int misfit = ContentBeard.taken(structureComponents, box) ? Integer.MAX_VALUE : ContentBeard.footingMisfit(box, structureComponents, sink);
+        int allow = ContentBeard.footingAllow(placed);
+        int misfit = ContentBeard.taken(structureComponents, box) ? Integer.MAX_VALUE : ContentBeard.footingMisfit(box, structureComponents, sink, allow);
         if (misfit == 0) {
             structureComponents.add(placed);
             return true;
@@ -261,7 +262,7 @@ public final class BeardLayout {
             tried.offset(alongX * slide, 0, (1 - alongX) * slide);
             if (BeardPlots.nearWell(tried, well, reach)) { continue; }
             if (StructureComponent.findIntersecting(structureComponents, tried) != null || ContentBeard.taken(structureComponents, tried)) { continue; }
-            int triedMisfit = ContentBeard.footingMisfit(tried, structureComponents, sink);
+            int triedMisfit = ContentBeard.footingMisfit(tried, structureComponents, sink, allow);
             if (triedMisfit < bestMisfit) {
                 bestMisfit = triedMisfit;
                 bestSlide = slide;
@@ -269,7 +270,7 @@ public final class BeardLayout {
             }
         }
         if (bestMisfit == Integer.MAX_VALUE) {
-            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than {} block(s) or on another village's piece, and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, 2 + sink);
+            ContentLog.LOGGER.debug("{} at {}, {} would stand on an apron deeper than {} block(s) or on another village's piece, and found no better fit within 12 along its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, allow + sink);
             return false;
         }
         structureComponents.add(placed);

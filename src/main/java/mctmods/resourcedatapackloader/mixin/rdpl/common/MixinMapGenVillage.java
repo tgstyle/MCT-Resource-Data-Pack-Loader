@@ -18,6 +18,8 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.MapGenStructureData;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureStart;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.StructureComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -47,6 +49,16 @@ import java.util.List;
         CityGrowth.roadsFirst(cir.getReturnValue());
         BeardSite.gradeRoads(world, cir.getReturnValue(), "once every road of the village is laid");
         ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
+        rdpl$sizeUp(cir.getReturnValue());
+    }
+
+    @Unique private static void rdpl$sizeUp(StructureStart grown) {
+        if (!(grown instanceof MapGenVillage.Start)) { return; }
+        int pieces = 0;
+        for (StructureComponent piece : grown.getComponents()) { if (!(piece instanceof StructureVillagePieces.Road)) { pieces++; } }
+        boolean sizeable = pieces > 2;
+        if (sizeable != grown.isSizeableStructure()) { ContentLog.LOGGER.debug("The village at chunk {}, {} stands at {} piece(s) beside its roads once grown, where its first layout {}, so it is {}", grown.getChunkPosX(), grown.getChunkPosZ(), pieces, grown.isSizeableStructure() ? "had more" : "had two or fewer", sizeable ? "kept" : "dropped as too small"); }
+        ((IMapGenVillageStart) grown).rdpl$setSizeable(sizeable);
     }
 
     @Inject(method = "<init>()V", at = @At("RETURN"))

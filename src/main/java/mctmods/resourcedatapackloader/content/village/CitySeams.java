@@ -343,7 +343,7 @@ public final class CitySeams {
         List<StructureComponent> making = new ArrayList<>();
         for (StructureBoundingBox tie : ties) {
             List<StructureComponent> found = crossable(world, everyone, components, m.street, !alongX, tie);
-            if (found == null || ContentBeard.beside(components, tie, !alongX, m.street) != null) {
+            if (found == null || ContentBeard.beside(components, tie, !alongX, m.street) != null || BeardRoads.crossesHill(components, tie)) {
                 ContentLog.LOGGER.debug("The tie road at {} {} between the village at {}, {} and the site at {}, {} has no room", axis, seam, wx, wz, bx, bz);
                 return false;
             }
@@ -460,7 +460,7 @@ public final class CitySeams {
                 int to = dir > 0 ? (alongX ? best.minX : best.minZ) - 1 : end - 1;
                 StructureBoundingBox stub = alongX ? new StructureBoundingBox(from, box.minY, acrossLo, to, box.maxY, acrossHi) : new StructureBoundingBox(acrossLo, box.minY, from, acrossHi, box.maxY, to);
                 List<StructureComponent> making = crossable(world, everyone, components, piece, alongX, stub);
-                if (making == null || ContentBeard.beside(components, stub, alongX, piece) != null) {
+                if (making == null || ContentBeard.beside(components, stub, alongX, piece) != null || BeardRoads.crossesHill(components, stub)) {
                     ContentLog.LOGGER.debug("The dead end at {}, {} of the neighboring village cannot be reached from the street at {}, {}: the strip is held", endX, endZ, best.minX, best.minZ);
                     continue;
                 }
