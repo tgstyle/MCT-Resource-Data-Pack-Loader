@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.PackOptionsButton;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentClient;
@@ -105,6 +106,9 @@ import java.util.Set;
             NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onHud);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onScreen);
+            NeoForge.EVENT_BUS.addListener(PackOptionsButton::onInit);
+            NeoForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPre);
+            NeoForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPost);
             ContentClient.register(modBus);
             if (Config.worldgen.worldgenDebug()) {
                 NeoForge.EVENT_BUS.addListener(ContentHardnessCheck::onLevelLoad);

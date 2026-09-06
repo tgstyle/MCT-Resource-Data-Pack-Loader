@@ -27,5 +27,9 @@
     "rdpl.command.unused": "%s Datei(en) wurden nie angefragt:",
     "rdpl.command.unusednote": "Manche laden nur bei Bedarf, etwa andere Sprachen. Prüfe die Pfade, bevor du löschst",
     "rdpl.pack.source": "Resource Data Pack Loader",
-    "rdpl.pregen.welcome": "Willkommen in deiner Welt!"
+    "rdpl.pregen.welcome": "Willkommen in deiner Welt!",
+    "rdpl.gui.packOptions": "Pack-Optionen...",
+    "rdpl.gui.packOptions.title": "RDPL-Pack-Optionen",
+    "rdpl.gui.packOptions.restart": "Änderungen greifen nach einem Neustart des Spiels",
+    "rdpl.gui.packOptions.restartRequired": "Starte das Spiel neu, bevor du eine Welt startest, die Pack-Optionen haben sich geändert!"
 }

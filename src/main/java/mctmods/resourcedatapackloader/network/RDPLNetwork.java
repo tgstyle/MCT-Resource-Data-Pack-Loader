@@ -21,7 +21,7 @@ public final class RDPLNetwork {
         });
     }
 
-    public static boolean reaches(ServerPlayer player) { return player.connection != null && player.connection.hasChannel(MessageCard.TYPE); }
+    public static boolean reaches(ServerPlayer player) { return player.connection.hasChannel(MessageCard.TYPE); }
 
     public static void sendCard(ServerPlayer player, MessageCard card) {
         if (reaches(player)) { PacketDistributor.sendToPlayer(player, card); }
