@@ -30,7 +30,7 @@ public final class RDPLNetwork {
     }
 
     public static boolean reaches(ServerPlayer player) {
-        return channel != null && player.connection != null && !NetworkHooks.isVanillaConnection(player.connection.connection) && channel.isRemotePresent(player.connection.connection);
+        return channel != null && !NetworkHooks.isVanillaConnection(player.connection.connection) && channel.isRemotePresent(player.connection.connection);
     }
 
     public static void sendCard(ServerPlayer player, MessageCard card) {

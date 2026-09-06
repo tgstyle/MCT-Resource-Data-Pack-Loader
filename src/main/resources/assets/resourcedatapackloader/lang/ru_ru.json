@@ -27,5 +27,9 @@
     "rdpl.command.unused": "Файлов, которые ни разу не запрашивались: %s",
     "rdpl.command.unusednote": "Часть загружается только по необходимости, например другие языки. Проверьте пути, прежде чем удалять",
     "rdpl.pack.source": "Resource Data Pack Loader",
-    "rdpl.pregen.welcome": "Добро пожаловать в ваш мир!"
+    "rdpl.pregen.welcome": "Добро пожаловать в ваш мир!",
+    "rdpl.gui.packOptions": "Настройки паков...",
+    "rdpl.gui.packOptions.title": "Настройки паков RDPL",
+    "rdpl.gui.packOptions.restart": "Изменения применятся после перезапуска игры",
+    "rdpl.gui.packOptions.restartRequired": "Перезапустите игру перед входом в мир: настройки паков изменились!"
 }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.PackOptionsButton;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentClient;
@@ -104,6 +105,9 @@ import java.util.Set;
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onHud);
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onScreen);
+            MinecraftForge.EVENT_BUS.addListener(PackOptionsButton::onInit);
+            MinecraftForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPre);
+            MinecraftForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPost);
             ContentClient.register(modBus);
             if (Config.worldgen.worldgenDebug()) {
                 MinecraftForge.EVENT_BUS.addListener(ContentHardnessCheck::onLevelLoad);

@@ -27,5 +27,9 @@
     "rdpl.command.unused": "%s file(s) have never been requested:",
     "rdpl.command.unusednote": "Some only load when needed, such as other languages. Check the paths before deleting",
     "rdpl.pack.source": "Resource Data Pack Loader",
-    "rdpl.pregen.welcome": "Welcome to your World!"
+    "rdpl.pregen.welcome": "Welcome to your World!",
+    "rdpl.gui.packOptions": "Pack Options...",
+    "rdpl.gui.packOptions.title": "RDPL Pack Options",
+    "rdpl.gui.packOptions.restart": "Changes apply after restarting the game",
+    "rdpl.gui.packOptions.restartRequired": "Restart the game before starting a world, pack options have changed!"
 }
