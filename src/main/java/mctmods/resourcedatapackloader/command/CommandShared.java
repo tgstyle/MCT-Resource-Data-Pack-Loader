@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentOverrides;
+import mctmods.resourcedatapackloader.content.ContentPixelMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
@@ -21,6 +23,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public final class CommandShared {
@@ -38,6 +41,12 @@ public final class CommandShared {
                     String target = StringArgumentType.getString(context, "file");
                     ran(context.getSource(), name, "which " + target);
                     which(context.getSource(), target);
+                    return 1;
+                })))
+                .then(Commands.literal("pixelmap").then(Commands.argument("map", StringArgumentType.greedyString()).executes(context -> {
+                    String target = StringArgumentType.getString(context, "map");
+                    ran(context.getSource(), name, "pixelmap " + target);
+                    pixelmap(context.getSource(), target);
                     return 1;
                 })))
                 .then(Commands.literal("unused").executes(context -> {
@@ -86,6 +95,7 @@ public final class CommandShared {
         PackManager.get().scan(root);
         PackManager.get().report();
         ContentOverrides.reload();
+        ContentWorldTemplates.load();
         return false;
     }
 
@@ -141,6 +151,35 @@ public final class CommandShared {
             for (int i = holders.size() - 2; i >= 0; i--) { send(source, ChatFormatting.GRAY, tr("rdpl.command.shadows", holders.get(i).getName())); }
         }
         if (!found) { send(source, ChatFormatting.YELLOW, tr("rdpl.command.unprovided", namespace + ":" + path)); }
+    }
+
+    static void pixelmap(CommandSourceStack source, String target) {
+        int colon = target.indexOf(':');
+        if (colon < 1) {
+            source.sendFailure(tr("rdpl.command.pixelmapname"));
+            return;
+        }
+        String namespace = target.substring(0, colon);
+        String path = target.substring(colon + 1);
+        if (!path.startsWith("textures/")) { path = "textures/" + path; }
+        if (!path.endsWith(ContentPixelMaps.PNG)) { path = path + ContentPixelMaps.PNG; }
+        ContentPixelMaps.Resolved resolved = null;
+        for (boolean overriding : new boolean[] { false, true }) {
+            if (!ContentPixelMaps.exists(namespace, path, overriding)) { continue; }
+            resolved = ContentPixelMaps.resolve(namespace, path, overriding);
+            break;
+        }
+        if (resolved == null) {
+            source.sendFailure(tr("rdpl.command.pixelmapnone", namespace + ":" + path));
+            return;
+        }
+        send(source, ChatFormatting.GREEN, tr("rdpl.command.pixelmapis", namespace + ":" + path, resolved.size()[0], resolved.size()[1]));
+        for (String held : resolved.chain()) { send(source, ChatFormatting.GRAY, tr("rdpl.command.pixelmapfrom", held)); }
+        if (resolved.rowsFrom() != null) { send(source, ChatFormatting.GRAY, tr("rdpl.command.pixelmaprows", resolved.rowsFrom())); }
+        for (Map.Entry<String, String> entry : resolved.palette().entrySet()) {
+            String note = resolved.notes().get(entry.getKey());
+            send(source, ChatFormatting.WHITE, tr("rdpl.command.pixelmapkey", entry.getKey(), entry.getValue(), resolved.used(entry.getKey()), resolved.from().getOrDefault(entry.getKey(), "?"), note == null ? "" : note));
+        }
     }
 
     static void unused(CommandSourceStack source, String note) {

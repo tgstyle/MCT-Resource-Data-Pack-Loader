@@ -1,21 +1,37 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.item.ContentBannerItem;
+import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import javax.annotation.Nonnull;
 
 public final class ContentClient {
@@ -34,7 +50,22 @@ public final class ContentClient {
         modBus.addListener(ContentClient::extensions);
         modBus.addListener(ContentClient::blockColors);
         modBus.addListener(ContentClient::itemColors);
+        modBus.addListener(ContentClient::renderers);
     }
+
+    private static void renderers(EntityRenderersEvent.RegisterRenderers event) {
+        BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.registered();
+        if (type != null) { event.registerBlockEntityRenderer(type, ContentBannerRenderer::new); }
+        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$providers();
+        for (EntityType<Mob> variant : ContentEntities.types().values()) {
+            EntityType<?> base = ContentEntities.base(variant);
+            EntityRendererProvider<?> provider = base == null ? null : providers.get(base);
+            if (provider == null) { ContentLog.LOGGER.error("Entity variant {} has no renderer to borrow from {}", variant, base); }
+            else { event.registerEntityRenderer(variant, provider(provider)); }
+        }
+    }
+
+    @SuppressWarnings("unchecked") private static EntityRendererProvider<Mob> provider(EntityRendererProvider<?> provider) { return (EntityRendererProvider<Mob>) provider; }
 
     private static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
@@ -55,6 +86,14 @@ public final class ContentClient {
                 @Override public int getTintColor() { return made.def.color() | OPAQUE; }
             }, made.type);
         }
+        List<Item> banners = new ArrayList<>();
+        for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+            if (entry.item() instanceof ContentBannerItem) { banners.add(entry.item()); }
+        }
+        if (banners.isEmpty()) { return; }
+        event.registerItem(new IClientItemExtensions() {
+            @Override @Nonnull public BlockEntityWithoutLevelRenderer getCustomRenderer() { return ContentBannerItemRenderer.get(); }
+        }, banners.toArray(Item[]::new));
     }
 
     private static void blockColors(RegisterColorHandlersEvent.Block event) {

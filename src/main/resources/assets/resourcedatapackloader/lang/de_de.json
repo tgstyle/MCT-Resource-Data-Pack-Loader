@@ -1,5 +1,4 @@
 {
-    "rdpl.pack.source": "Resource Data Pack Loader",
     "rdpl.command.allused": "Jede Datei in deinem Pack wurde mindestens einmal angefragt",
     "rdpl.command.clickhint": "Klicken, um eine Datei in diesem Namespace nachzuschlagen",
     "rdpl.command.clientonly": "Es wurden nur deine eigenen Ressourcen neu geladen",
@@ -12,6 +11,12 @@
     "rdpl.command.noroot": "Das Pack-Wurzelverzeichnis ist noch nicht bekannt",
     "rdpl.command.overriding": " (überschreibt)",
     "rdpl.command.packs": "%s Pack(s), niedrigste Priorität zuerst:",
+    "rdpl.command.pixelmapfrom": "  gebaut aus %s",
+    "rdpl.command.pixelmapis": "%s ist %sx%s",
+    "rdpl.command.pixelmapkey": "  %s  %s  %s Pixel  gesetzt von %s  %s",
+    "rdpl.command.pixelmapname": "Nenn sie als namespace:pfad, etwa meinpack:block/panel",
+    "rdpl.command.pixelmapnone": "Unter %s liegt keine Pixelkarte, oder sie war nicht lesbar. Warum, steht im Log",
+    "rdpl.command.pixelmaprows": "  Zeilen kommen aus %s",
     "rdpl.command.provided": "%s liefert das Pack '%s'%s",
     "rdpl.command.providednote": "Das ist, was deine Packs anbieten, nicht das, wonach das Spiel gefragt hat",
     "rdpl.command.reloaded": "%s Pack(s) neu eingelesen und Ressourcen in %s neu geladen",
@@ -20,5 +25,6 @@
     "rdpl.command.shadows": "  verdeckt '%s'",
     "rdpl.command.unprovided": "%s liefert kein Pack, also übernimmt das Minecraft oder ein Mod",
     "rdpl.command.unused": "%s Datei(en) wurden nie angefragt:",
-    "rdpl.command.unusednote": "Manche laden nur bei Bedarf, etwa andere Sprachen. Prüfe die Pfade, bevor du löschst"
+    "rdpl.command.unusednote": "Manche laden nur bei Bedarf, etwa andere Sprachen. Prüfe die Pfade, bevor du löschst",
+    "rdpl.pack.source": "Resource Data Pack Loader"
 }

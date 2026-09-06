@@ -9,6 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,7 +25,7 @@ public final class ContentDrops {
 
     public static void release(ServerLevel level, BlockPos pos, BlockState state) {
         ContentRegistry.BlockEntry entry = ContentRegistry.entry(state.getBlock());
-        if (entry == null) { return; }
+        if (entry == null || entry.def().opensWith() != null) { return; }
         release(level, pos, entry.variant());
     }
 
@@ -36,6 +38,31 @@ public final class ContentDrops {
         }
         DropDef chosen = pick(pool, level.getRandom());
         if (chosen != null) { spawn(level, pos, chosen); }
+    }
+
+    public static List<ItemStack> roll(BlockVariant variant, RandomSource random, int fortune) {
+        List<ItemStack> made = new ArrayList<>();
+        List<DropDef> pool = new ArrayList<>();
+        for (DropDef drop : variant.drops()) {
+            if (drop.isEntity()) { continue; }
+            if (drop.weighted()) { pool.add(drop); }
+            else { give(made, drop, random, fortune); }
+        }
+        DropDef chosen = pick(pool, random);
+        if (chosen != null) { give(made, chosen, random, fortune); }
+        return made;
+    }
+
+    private static void give(List<ItemStack> made, DropDef drop, RandomSource random, int fortune) {
+        Item item = ContentStacks.item(drop.item());
+        if (item == null) { return; }
+        int roll = 1 + random.nextInt(100);
+        int amount = drop.amount().pick(random);
+        if (amount <= 0) { return; }
+        ItemStack stack = new ItemStack(item, amount);
+        if (stack.isEmpty()) { return; }
+        if (roll <= drop.chance()) { made.add(stack.copy()); }
+        if (roll <= drop.chanceFor(fortune)) { made.add(stack.copy()); }
     }
 
     @Nullable public static DropDef pick(List<DropDef> pool, RandomSource random) {

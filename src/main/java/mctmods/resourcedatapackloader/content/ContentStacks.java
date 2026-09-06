@@ -29,6 +29,8 @@ public final class ContentStacks {
         return item;
     }
 
+    @Nullable public static Item item(@Nullable ResourceLocation name) { return Registered.find(BuiltInRegistries.ITEM, name); }
+
     public static boolean registered(ResourceLocation name) { return BuiltInRegistries.ITEM.containsKey(name); }
 
     public static String namespaceOf(Item item) { return BuiltInRegistries.ITEM.getKey(item).getNamespace(); }
