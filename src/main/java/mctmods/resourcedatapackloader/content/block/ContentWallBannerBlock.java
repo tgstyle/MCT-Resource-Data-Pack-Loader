@@ -27,7 +27,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentWallBannerBlock extends Block implements EntityBlock, IContentBanner {
+public final class ContentWallBannerBlock extends Block implements EntityBlock, IContentBanner {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
     private final BlockDef def;
@@ -57,7 +57,7 @@ public class ContentWallBannerBlock extends Block implements EntityBlock, IConte
 
     @Override public boolean isPossibleToRespawnInThis(@Nonnull BlockState state) { return true; }
 
-    @Override @Nullable public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBannerBlockEntity(pos, state); }
+    @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBannerBlockEntity(pos, state); }
 
     @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) {
         Direction facing = state.getValue(FACING);

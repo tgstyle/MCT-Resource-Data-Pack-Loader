@@ -31,5 +31,6 @@
     "rdpl.gui.packOptions": "Настройки паков...",
     "rdpl.gui.packOptions.title": "Настройки паков RDPL",
     "rdpl.gui.packOptions.restart": "Изменения применятся после перезапуска игры",
-    "rdpl.gui.packOptions.restartRequired": "Перезапустите игру перед входом в мир: настройки паков изменились!"
+    "rdpl.gui.packOptions.restartRequired": "Перезапустите игру перед входом в мир: настройки паков изменились!",
+    "rdpl.world.type": "Это мир типа %s"
 }

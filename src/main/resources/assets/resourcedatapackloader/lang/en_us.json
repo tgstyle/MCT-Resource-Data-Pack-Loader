@@ -31,5 +31,6 @@
     "rdpl.gui.packOptions": "Pack Options...",
     "rdpl.gui.packOptions.title": "RDPL Pack Options",
     "rdpl.gui.packOptions.restart": "Changes apply after restarting the game",
-    "rdpl.gui.packOptions.restartRequired": "Restart the game before starting a world, pack options have changed!"
+    "rdpl.gui.packOptions.restartRequired": "Restart the game before starting a world, pack options have changed!",
+    "rdpl.world.type": "This is a %s world"
 }

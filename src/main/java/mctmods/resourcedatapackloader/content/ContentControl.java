@@ -11,6 +11,8 @@ import java.util.List;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -21,6 +23,8 @@ import javax.annotation.Nullable;
 public final class ContentControl {
     public static final String TERRAIN = "terrain";
     public static final String CHUNKS = "chunks";
+    public static final String BEDROCK = "bedrock";
+    public static final String VOID = "void";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -109,6 +113,21 @@ public final class ContentControl {
         return found;
     }
 
+    @Nullable public static JsonObject object(String group, String key, String fallback) {
+        JsonElement value = setting(group, key);
+        if (value != null && value.isJsonObject()) { return value.getAsJsonObject(); }
+        if (value != null && !value.isJsonPrimitive()) { return rejected(key, "an object or the text of one", null); }
+        String text = value == null ? fallback : value.getAsString();
+        if (text.trim().isEmpty()) { return null; }
+        try {
+            JsonElement parsed = JsonParser.parseString(text);
+            if (parsed.isJsonObject()) { return parsed.getAsJsonObject(); }
+        }
+        catch (JsonParseException ignored) {}
+        if (WARNED.add(key)) { ContentLog.LOGGER.error("'{}' is not written as a JSON object, so it does nothing: {}", key, text); }
+        return null;
+    }
+
     private static <T> T rejected(String key, String wanted, T fallback) {
         if (WARNED.add(key)) { ContentLog.LOGGER.error("The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted); }
         return fallback;
@@ -147,6 +166,8 @@ public final class ContentControl {
     private static String raw(String group) {
         if (TERRAIN.equals(group)) { return Config.control.terrain(); }
         if (CHUNKS.equals(group)) { return Config.control.chunks(); }
+        if (BEDROCK.equals(group)) { return Config.control.bedrock(); }
+        if (VOID.equals(group)) { return Config.control.voidWorld(); }
         return DEFAULT;
     }
 }

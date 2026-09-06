@@ -24,9 +24,8 @@ import net.minecraft.world.level.block.state.properties.RotationSegment;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
-public class ContentBannerBlock extends Block implements EntityBlock, IContentBanner {
+public final class ContentBannerBlock extends Block implements EntityBlock, IContentBanner {
     public static final IntegerProperty ROTATION = BlockStateProperties.ROTATION_16;
     private static final VoxelShape SHAPE = Block.box(4.0D, 0.0D, 4.0D, 12.0D, 16.0D, 12.0D);
     private final BlockDef def;
@@ -47,7 +46,7 @@ public class ContentBannerBlock extends Block implements EntityBlock, IContentBa
 
     @Override public boolean isPossibleToRespawnInThis(@Nonnull BlockState state) { return true; }
 
-    @Override @Nullable public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBannerBlockEntity(pos, state); }
+    @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBannerBlockEntity(pos, state); }
 
     @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return canSupportCenter(level, pos.below(), Direction.UP); }
 

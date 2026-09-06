@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.block.ContentBushBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCaneBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
@@ -18,6 +19,11 @@ import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
+import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
+import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpreadPlacement;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -62,6 +68,9 @@ public final class ContentEvents {
         else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
         else if (event.getRegistryKey().equals(Registries.POINT_OF_INTEREST_TYPE)) { event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites); }
         else if (event.getRegistryKey().equals(Registries.VILLAGER_PROFESSION)) { event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions); }
+        else if (event.getRegistryKey().equals(Registries.FEATURE)) { event.register(Registries.FEATURE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE)); }
+        else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
+        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
     }
 
     private static void registerBlocks(RegisterEvent.RegisterHelper<Block> helper) {
@@ -134,6 +143,8 @@ public final class ContentEvents {
         ContentGenerated.generate();
         ContentEntities.generate();
         ContentExposures.generate();
+        ContentWorldShape.generate();
+        ContentWorldgen.generate();
     }
 
     private static void resolveSoils() {
