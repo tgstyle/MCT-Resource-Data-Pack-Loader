@@ -107,7 +107,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -649,7 +648,7 @@ public final class ContentEntities {
             targets.add(biomes);
         }
         for (String type : def.biomeTypes()) {
-            String tag = biomeTag(type);
+            String tag = ContentFormats.biomeTag(type);
             if (tag == null) { ContentLog.LOGGER.error("Entity variant {} names biome type '{}', which no biome tag on this line answers to", def.key(), type); }
             else { targets.add(new JsonPrimitive("#" + tag)); }
         }
@@ -664,48 +663,5 @@ public final class ContentEntities {
             GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), ContentFormats.BIOME_MODIFIERS + "/" + def.key().getPath() + "_spawns" + (index == 0 ? "" : "_" + index) + ".json", modifier.toString());
             index++;
         }
-    }
-
-    @Nullable private static String biomeTag(String type) {
-        String wanted = type.trim().toLowerCase(Locale.ROOT);
-        return switch (wanted) {
-            case "ocean" -> "minecraft:is_ocean";
-            case "deepocean", "deep_ocean" -> "minecraft:is_deep_ocean";
-            case "beach" -> "minecraft:is_beach";
-            case "river" -> "minecraft:is_river";
-            case "mountain", "mountains" -> "minecraft:is_mountain";
-            case "mesa", "badlands" -> "minecraft:is_badlands";
-            case "hills", "hill" -> "minecraft:is_hill";
-            case "coniferous" -> "minecraft:is_taiga";
-            case "jungle" -> "minecraft:is_jungle";
-            case "forest" -> "minecraft:is_forest";
-            case "savanna" -> "minecraft:is_savanna";
-            case "overworld" -> "minecraft:is_overworld";
-            case "nether" -> "minecraft:is_nether";
-            case "end" -> "minecraft:is_end";
-            case "hot" -> ContentFormats.CONVENTION + ":is_hot";
-            case "cold" -> ContentFormats.CONVENTION + ":is_cold";
-            case "sparse" -> ContentFormats.CONVENTION + ":" + ContentFormats.SPARSE_TAG;
-            case "dense" -> ContentFormats.CONVENTION + ":" + ContentFormats.DENSE_TAG;
-            case "wet" -> ContentFormats.CONVENTION + ":is_wet";
-            case "dry" -> ContentFormats.CONVENTION + ":is_dry";
-            case "spooky" -> ContentFormats.CONVENTION + ":is_spooky";
-            case "dead" -> ContentFormats.CONVENTION + ":is_dead";
-            case "lush" -> ContentFormats.CONVENTION + ":is_lush";
-            case "mushroom" -> ContentFormats.CONVENTION + ":is_mushroom";
-            case "magical" -> ContentFormats.CONVENTION + ":is_magical";
-            case "rare" -> ContentFormats.CONVENTION + ":is_rare";
-            case "plateau" -> ContentFormats.CONVENTION + ":is_plateau";
-            case "modified" -> ContentFormats.CONVENTION + ":is_modified";
-            case "water" -> ContentFormats.CONVENTION + ":" + ContentFormats.WATER_TAG;
-            case "desert" -> ContentFormats.CONVENTION + ":is_desert";
-            case "plains" -> ContentFormats.CONVENTION + ":is_plains";
-            case "swamp" -> ContentFormats.CONVENTION + ":is_swamp";
-            case "sandy" -> ContentFormats.CONVENTION + ":is_sandy";
-            case "snowy" -> ContentFormats.CONVENTION + ":is_snowy";
-            case "wasteland" -> ContentFormats.CONVENTION + ":is_wasteland";
-            case "void" -> ContentFormats.CONVENTION + ":is_void";
-            default -> wanted.contains(":") ? wanted : null;
-        };
     }
 }

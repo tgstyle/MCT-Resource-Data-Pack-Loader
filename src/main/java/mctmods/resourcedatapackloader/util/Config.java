@@ -226,6 +226,35 @@ public final class Config {
         private final ForgeConfigSpec.ConfigValue<String> worldSeed;
         private final ForgeConfigSpec.ConfigValue<String> worldName;
         private final ForgeConfigSpec.ConfigValue<String> worldGameMode;
+        private final ForgeConfigSpec.ConfigValue<String> worldType;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldTypeExceptions;
+        private final ForgeConfigSpec.BooleanValue tellWorldType;
+        private final ForgeConfigSpec.ConfigValue<String> generatorOptions;
+        private final ForgeConfigSpec.IntValue worldMinHeight;
+        private final ForgeConfigSpec.IntValue worldMaxHeight;
+        private final ForgeConfigSpec.ConfigValue<String> deepStone;
+        private final ForgeConfigSpec.ConfigValue<String> worldSpawn;
+        private final ForgeConfigSpec.IntValue worldBorder;
+        private final ForgeConfigSpec.IntValue worldBorderLimit;
+        private final ForgeConfigSpec.IntValue worldTime;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldDifficulty;
+        private final ForgeConfigSpec.BooleanValue flatBedrock;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> flatBedrockDimensions;
+        private final ForgeConfigSpec.BooleanValue flatBedrockDimensionsAreBlacklist;
+        private final ForgeConfigSpec.IntValue bedrockLayers;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> flatBedrockBiomes;
+        private final ForgeConfigSpec.BooleanValue flatBedrockBiomesAreBlacklist;
+        private final ForgeConfigSpec.BooleanValue flatBedrockRoof;
+        private final ForgeConfigSpec.BooleanValue voidWorld;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> voidWorldDimensions;
+        private final ForgeConfigSpec.BooleanValue voidWorldDimensionsAreBlacklist;
+        private final ForgeConfigSpec.ConfigValue<String> voidPlatformBlock;
+        private final ForgeConfigSpec.IntValue voidPlatformHeight;
+        private final ForgeConfigSpec.IntValue voidPlatformSize;
+        private final ForgeConfigSpec.BooleanValue retrogen;
+        private final ForgeConfigSpec.BooleanValue adoptExistingChunks;
+        private final ForgeConfigSpec.ConfigValue<String> retrogenKey;
+        private final ForgeConfigSpec.IntValue retrogenChunksPerTick;
 
         private Worldgen(ForgeConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
@@ -234,6 +263,35 @@ public final class Config {
             worldSeed = builder.comment("The seed every new world is made with, whatever was typed when it was made, written the same way it would be typed. Empty leaves the choice alone [Default=empty]").define("worldSeed", "");
             worldGameMode = builder.comment("Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose [Default=empty]").define("worldGameMode", "");
             worldName = builder.comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=empty]").define("worldName", "");
+            worldType = builder.comment("The world type the shaped world is built on, one of default, largebiomes or amplified. The shape below (heights, deep stone, sea level, bedrock, void) is generated as a world preset of its own, listed under World Type on the world screen and chosen there whatever was picked. Empty builds on default [Default=empty]").define("worldType", "");
+            worldTypeExceptions = builder.comment("World types a player picks that the generated preset leaves alone, such as flat or debug_all_block_states. Empty means every choice is replaced [Default=[flat, debug_all_block_states]]").defineList("worldTypeExceptions", List.of("flat", "debug_all_block_states"), each -> each instanceof String);
+            tellWorldType = builder.comment("Tell a player in chat, as they join a world made with the generated preset, which template shaped it. A pack cannot set this [Default=true]").define("tellWorldType", true);
+            generatorOptions = builder.comment("The overworld's terrain settings as a JSON object, the keys the 1.12.2 customized world type wrote. Read here: seaLevel and useLavaOceans. Only applied to a world as it is created. Empty leaves the terrain as the world type makes it [Default=empty]").define("generatorOptions", "");
+            worldMinHeight = builder.comment("The lowest block of the overworld, a multiple of 16 down to -2032. The game's own bottom is -64; lower makes a deep world under the vanilla terrain, solid stone until the worldgen layer carves it. Only applied through the generated preset [Default=-64]").defineInRange("worldMinHeight", -64, -2032, 2016);
+            worldMaxHeight = builder.comment("The block above the overworld's top, a multiple of 16 up to 2032, at most 4064 above worldMinHeight. The game's own top is 320; higher leaves open sky above the vanilla terrain [Default=320]").defineInRange("worldMaxHeight", 320, -2016, 2032);
+            deepStone = builder.comment("The block the world below the vanilla terrain is made of when worldMinHeight goes under -64, such as a pack's own deepslate. It blends into deepslate across the eight layers under -64 the way deepslate blends into stone. Empty keeps stone [Default=empty]").define("deepStone", "");
+            worldSpawn = builder.comment("Where every new world spawns, written as x,z or x,y,z. Without a y the ground at that spot is used. Only applied to a world as it is created. Empty leaves the choice to the game [Default=empty]").define("worldSpawn", "");
+            worldBorder = builder.comment("How far across, in blocks, the world border stands in every new world. Only applied to a world as it is created. 0 leaves the border where the game puts it [Default=0]").defineInRange("worldBorder", 0, 0, 60000000);
+            worldBorderLimit = builder.comment("The widest border a pack is allowed to ask for through worldBorder. A pack asking for more is refused and the border is left where the game puts it. A pack cannot set this [Default=60000000]").defineInRange("worldBorderLimit", 60000000, 1, 60000000);
+            worldTime = builder.comment("Lock the overworld's time of day, in ticks, the same figure /time set takes, so 18000 is midnight. The clock stops and never moves. -1 leaves time running [Default=-1]").defineInRange("worldTime", -1, -1, 23999);
+            worldDifficulty = builder.comment("Lock the difficulty, one of peaceful, easy, normal or hard, for the whole world. Difficulty is save wide on this version, so an entry written as dimension=difficulty is read for the overworld alone. Empty leaves it as chosen [Default=empty]").defineList("worldDifficulty", List.of(), each -> each instanceof String);
+            flatBedrock = builder.comment("Replace the jagged bedrock at the bottom of the world with flat layers, through the generated preset, so it shapes new worlds made with it [Default=false]").define("flatBedrock", false);
+            flatBedrockDimensions = builder.comment("Dimensions to flatten bedrock in, by id such as minecraft:the_nether. Leave empty for every dimension [Default=[minecraft:overworld]]").defineList("flatBedrockDimensions", List.of("minecraft:overworld"), each -> each instanceof String);
+            flatBedrockDimensionsAreBlacklist = builder.comment("On, flattening skips these dimensions. Off, it applies only to them [Default=false]").define("flatBedrockDimensionsAreBlacklist", false);
+            bedrockLayers = builder.comment("How many layers of bedrock to leave at the bottom [Default=1]").defineInRange("bedrockLayers", 1, 1, 5);
+            flatBedrockBiomes = builder.comment("Biomes to flatten bedrock in, by id such as minecraft:birch_forest. Empty means every biome; elsewhere the bedrock stays as the game makes it").defineList("flatBedrockBiomes", List.of(), each -> each instanceof String);
+            flatBedrockBiomesAreBlacklist = builder.comment("On, flattening skips these biomes. Off, it applies only to them [Default=false]").define("flatBedrockBiomesAreBlacklist", false);
+            flatBedrockRoof = builder.comment("Flatten the bedrock ceiling too, where a dimension has one, such as the Nether roof [Default=false]").define("flatBedrockRoof", false);
+            voidWorld = builder.comment("Generate the listed dimensions as empty space with a platform at the spawn point and nothing living, through the generated preset [Default=false]").define("voidWorld", false);
+            voidWorldDimensions = builder.comment("Which dimensions are made void, by id. Empty means the overworld alone [Default=[minecraft:overworld]]").defineList("voidWorldDimensions", List.of("minecraft:overworld"), each -> each instanceof String);
+            voidWorldDimensionsAreBlacklist = builder.comment("Treat voidWorldDimensions as the dimensions to leave alone instead [Default=false]").define("voidWorldDimensionsAreBlacklist", false);
+            voidPlatformBlock = builder.comment("The block the void world platform is made of [Default=minecraft:stone]").define("voidPlatformBlock", "minecraft:stone");
+            voidPlatformHeight = builder.comment("The y the void world platform sits at [Default=64]").defineInRange("voidPlatformHeight", 64, -2032, 2031);
+            voidPlatformSize = builder.comment("How wide the void world platform is, in blocks. Rounded down to an odd number so it centers on the spawn point [Default=9]").defineInRange("voidPlatformSize", 9, 1, 255);
+            retrogen = builder.comment("Catch existing chunks up on worldgen entries with \"retrogen\": true. Off, chunks that already exist are left alone. Chunks are marked as they generate either way, so turning this on later only touches chunks older than the pack [Default=false]").define("retrogen", false);
+            adoptExistingChunks = builder.comment("Treat chunks that already exist as if this pack generated them, marking them instead of leaving them for retrogen. Turn this on when replacing a mod that already generated the same ore, so retrogen never doubles it. Worldgen entries added later still retrogen into them [Default=false]").define("adoptExistingChunks", false);
+            retrogenKey = builder.comment("Change this to make every chunk eligible for retrogen again, for every worldgen entry. New veins are added on top of what is already there [Default=0000]").define("retrogenKey", "0000");
+            retrogenChunksPerTick = builder.comment("How many already generated chunks to catch up per tick. Higher is faster but stutters more [Default=2]").defineInRange("retrogenChunksPerTick", 2, 1, 64);
             builder.pop();
         }
 
@@ -246,6 +304,64 @@ public final class Config {
         public String worldName() { return loaded() ? worldName.get() : ConfigCore.text("worldgen.worldName", ""); }
 
         public String worldGameMode() { return loaded() ? worldGameMode.get() : ConfigCore.text("worldgen.worldGameMode", ""); }
+
+        public String worldType() { return loaded() ? worldType.get() : ConfigCore.text("worldgen.worldType", ""); }
+
+        public List<String> worldTypeExceptions() { return loaded() ? List.copyOf(worldTypeExceptions.get()) : List.of("flat", "debug_all_block_states"); }
+
+        public boolean tellWorldType() { return loaded() ? tellWorldType.get() : ConfigCore.flag("worldgen.tellWorldType", true); }
+
+        public String generatorOptions() { return loaded() ? generatorOptions.get() : ConfigCore.text("worldgen.generatorOptions", ""); }
+
+        public int worldMinHeight() { return loaded() ? worldMinHeight.get() : -64; }
+
+        public int worldMaxHeight() { return loaded() ? worldMaxHeight.get() : 320; }
+
+        public String deepStone() { return loaded() ? deepStone.get() : ConfigCore.text("worldgen.deepStone", ""); }
+
+        public String worldSpawn() { return loaded() ? worldSpawn.get() : ConfigCore.text("worldgen.worldSpawn", ""); }
+
+        public int worldBorder() { return loaded() ? worldBorder.get() : 0; }
+
+        public int worldBorderLimit() { return loaded() ? worldBorderLimit.get() : 60000000; }
+
+        public int worldTime() { return loaded() ? worldTime.get() : -1; }
+
+        public List<String> worldDifficulty() { return loaded() ? List.copyOf(worldDifficulty.get()) : List.of(); }
+
+        public boolean flatBedrock() { return loaded() ? flatBedrock.get() : ConfigCore.flag("worldgen.flatBedrock", false); }
+
+        public List<String> flatBedrockDimensions() { return loaded() ? List.copyOf(flatBedrockDimensions.get()) : List.of("minecraft:overworld"); }
+
+        public boolean flatBedrockDimensionsAreBlacklist() { return loaded() && flatBedrockDimensionsAreBlacklist.get(); }
+
+        public int bedrockLayers() { return loaded() ? bedrockLayers.get() : 1; }
+
+        public List<String> flatBedrockBiomes() { return loaded() ? List.copyOf(flatBedrockBiomes.get()) : List.of(); }
+
+        public boolean flatBedrockBiomesAreBlacklist() { return loaded() && flatBedrockBiomesAreBlacklist.get(); }
+
+        public boolean flatBedrockRoof() { return loaded() ? flatBedrockRoof.get() : ConfigCore.flag("worldgen.flatBedrockRoof", false); }
+
+        public boolean voidWorld() { return loaded() ? voidWorld.get() : ConfigCore.flag("worldgen.voidWorld", false); }
+
+        public List<String> voidWorldDimensions() { return loaded() ? List.copyOf(voidWorldDimensions.get()) : List.of("minecraft:overworld"); }
+
+        public boolean voidWorldDimensionsAreBlacklist() { return loaded() && voidWorldDimensionsAreBlacklist.get(); }
+
+        public String voidPlatformBlock() { return loaded() ? voidPlatformBlock.get() : ConfigCore.text("worldgen.voidPlatformBlock", "minecraft:stone"); }
+
+        public int voidPlatformHeight() { return loaded() ? voidPlatformHeight.get() : 64; }
+
+        public int voidPlatformSize() { return loaded() ? voidPlatformSize.get() : 9; }
+
+        public boolean retrogen() { return loaded() ? retrogen.get() : ConfigCore.flag("worldgen.retrogen", false); }
+
+        public boolean adoptExistingChunks() { return loaded() ? adoptExistingChunks.get() : ConfigCore.flag("worldgen.adoptExistingChunks", false); }
+
+        public String retrogenKey() { return loaded() ? retrogenKey.get() : ConfigCore.text("worldgen.retrogenKey", "0000"); }
+
+        public int retrogenChunksPerTick() { return loaded() ? retrogenChunksPerTick.get() : 2; }
     }
 
     public static final class Chunks {
@@ -279,16 +395,24 @@ public final class Config {
     public static final class Control {
         private final ForgeConfigSpec.ConfigValue<String> terrain;
         private final ForgeConfigSpec.ConfigValue<String> chunks;
+        private final ForgeConfigSpec.ConfigValue<String> bedrock;
+        private final ForgeConfigSpec.ConfigValue<String> voidWorld;
 
         private Control(ForgeConfigSpec.Builder builder) {
             builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
             terrain = builder.comment("The world's name, seed and game mode at creation, and the rest of the terrain group as it is ported [default|global|off]").define("terrain", "default");
             chunks = builder.comment("The welcome lines and the says card, and the rest of the chunks group as it is ported [default|global|off]").define("chunks", "default");
+            bedrock = builder.comment("Flat bedrock and its dimension and biome lists [default|global|off]").define("bedrock", "default");
+            voidWorld = builder.comment("Void world generation and its platform [default|global|off]").define("voidWorld", "default");
             builder.pop();
         }
 
         public String terrain() { return loaded() ? terrain.get() : ConfigCore.text("control.terrain", "default"); }
 
         public String chunks() { return loaded() ? chunks.get() : ConfigCore.text("control.chunks", "default"); }
+
+        public String bedrock() { return loaded() ? bedrock.get() : ConfigCore.text("control.bedrock", "default"); }
+
+        public String voidWorld() { return loaded() ? voidWorld.get() : ConfigCore.text("control.voidWorld", "default"); }
     }
 }

@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.content.def.ItemDef;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.List;
+import java.util.Locale;
+import javax.annotation.Nullable;
 
 public final class ContentFormats {
     public static final String LOOT_FOLDER = "loot_tables";
@@ -12,6 +14,10 @@ public final class ContentFormats {
     public static final String ITEM_TAGS = "tags/items";
     public static final String BIOME_MODIFIERS = "forge/biome_modifier";
     public static final String ADD_SPAWNS = "forge:add_spawns";
+    public static final String ADD_FEATURES = "forge:add_features";
+    public static final String ANY_HOLDER_SET = "forge:any";
+    public static final String CONFIGURED_FEATURES = "worldgen/configured_feature";
+    public static final String PLACED_FEATURES = "worldgen/placed_feature";
     public static final String CONVENTION = "forge";
     public static final String SPARSE_TAG = "is_sparse";
     public static final String DENSE_TAG = "is_dense";
@@ -43,6 +49,65 @@ public final class ContentFormats {
                 default -> List.of();
             };
             default -> List.of();
+        };
+    }
+
+    public static JsonObject anyBiomes() {
+        JsonObject any = new JsonObject();
+        any.addProperty("type", ANY_HOLDER_SET);
+        return any;
+    }
+
+    @Nullable public static String biomeTag(String type) {
+        String wanted = type.trim().toLowerCase(Locale.ROOT);
+        return switch (wanted) {
+            case "ocean" -> "minecraft:is_ocean";
+            case "deepocean", "deep_ocean" -> "minecraft:is_deep_ocean";
+            case "beach" -> "minecraft:is_beach";
+            case "river" -> "minecraft:is_river";
+            case "mountain", "mountains" -> "minecraft:is_mountain";
+            case "mesa", "badlands" -> "minecraft:is_badlands";
+            case "hills", "hill" -> "minecraft:is_hill";
+            case "coniferous" -> "minecraft:is_taiga";
+            case "jungle" -> "minecraft:is_jungle";
+            case "forest" -> "minecraft:is_forest";
+            case "savanna" -> "minecraft:is_savanna";
+            case "overworld" -> "minecraft:is_overworld";
+            case "nether" -> "minecraft:is_nether";
+            case "end" -> "minecraft:is_end";
+            case "hot" -> CONVENTION + ":is_hot";
+            case "cold" -> CONVENTION + ":is_cold";
+            case "sparse" -> CONVENTION + ":" + SPARSE_TAG;
+            case "dense" -> CONVENTION + ":" + DENSE_TAG;
+            case "wet" -> CONVENTION + ":is_wet";
+            case "dry" -> CONVENTION + ":is_dry";
+            case "spooky" -> CONVENTION + ":is_spooky";
+            case "dead" -> CONVENTION + ":is_dead";
+            case "lush" -> CONVENTION + ":is_lush";
+            case "mushroom" -> CONVENTION + ":is_mushroom";
+            case "magical" -> CONVENTION + ":is_magical";
+            case "rare" -> CONVENTION + ":is_rare";
+            case "plateau" -> CONVENTION + ":is_plateau";
+            case "modified" -> CONVENTION + ":is_modified";
+            case "water" -> CONVENTION + ":" + WATER_TAG;
+            case "desert" -> CONVENTION + ":is_desert";
+            case "plains" -> CONVENTION + ":is_plains";
+            case "swamp" -> CONVENTION + ":is_swamp";
+            case "sandy" -> CONVENTION + ":is_sandy";
+            case "snowy" -> CONVENTION + ":is_snowy";
+            case "wasteland" -> CONVENTION + ":is_wasteland";
+            case "void" -> CONVENTION + ":is_void";
+            default -> wanted.contains(":") ? wanted : null;
+        };
+    }
+
+    public static String dimensionId(String named) {
+        String wanted = named.trim();
+        return switch (wanted) {
+            case "0" -> "minecraft:overworld";
+            case "-1" -> "minecraft:the_nether";
+            case "1" -> "minecraft:the_end";
+            default -> wanted;
         };
     }
 }

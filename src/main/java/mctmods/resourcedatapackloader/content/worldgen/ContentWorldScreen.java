@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.ScreenEvent;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,21 +27,43 @@ public final class ContentWorldScreen {
         String named = ContentTerrain.worldName();
         String seed = ContentTerrain.worldSeed();
         String mode = ContentTerrain.worldGameMode();
-        if (named.isEmpty() && seed.isEmpty() && mode.isEmpty()) { return; }
+        WorldCreationUiState.WorldTypeEntry preset = presetEntry(state);
+        if (named.isEmpty() && seed.isEmpty() && mode.isEmpty() && preset == null) { return; }
         String fresh = I18n.get("selectWorld.newWorld");
         ContentLog.LOGGER.debug("The screen for making a world opened. A pack asks for the name '{}', the seed '{}' and the game mode '{}'. The box says '{}' and the game calls a new world '{}', so the name {} be filled in",
                 named, seed, mode, state.getName(), fresh, state.getName().equals(fresh) ? "will" : "will not");
         if (!named.isEmpty() && state.getName().equals(fresh)) { state.setName(named); }
         WorldCreationUiState.SelectedGameMode asked = selected(mode);
-        hold(state, seed, asked);
-        if ((seed.isEmpty() && asked == null) || !HOOKED.add(state)) { return; }
-        state.addListener(changed -> hold(changed, seed, asked));
+        hold(state, seed, asked, preset);
+        if ((seed.isEmpty() && asked == null && preset == null) || !HOOKED.add(state)) { return; }
+        state.addListener(changed -> hold(changed, seed, asked, preset));
     }
 
-    private static void hold(WorldCreationUiState state, String seed, @Nullable WorldCreationUiState.SelectedGameMode asked) {
+    private static void hold(WorldCreationUiState state, String seed, @Nullable WorldCreationUiState.SelectedGameMode asked, @Nullable WorldCreationUiState.WorldTypeEntry preset) {
         if (state.isDebug()) { return; }
         if (!seed.isEmpty() && !seed.equals(state.getSeed())) { state.setSeed(seed); }
         if (asked != null && state.getGameMode() != asked) { state.setGameMode(asked); }
+        if (preset != null && state.getWorldType() != preset && !kept(state.getWorldType())) { state.setWorldType(preset); }
+    }
+
+    @Nullable private static WorldCreationUiState.WorldTypeEntry presetEntry(WorldCreationUiState state) {
+        ResourceLocation wanted = ContentWorldShape.presetId();
+        if (wanted == null) { return null; }
+        for (WorldCreationUiState.WorldTypeEntry entry : state.getNormalPresetList()) {
+            if (entry.preset() != null && entry.preset().unwrapKey().map(key -> key.location().equals(wanted)).orElse(false)) { return entry; }
+        }
+        if (WARNED.add(wanted.toString())) { ContentLog.LOGGER.error("The generated world preset {} is not in the world screen's list, so the world type is left as chosen", wanted); }
+        return null;
+    }
+
+    private static boolean kept(WorldCreationUiState.WorldTypeEntry current) {
+        ResourceLocation chosen = current.preset() == null ? null : current.preset().unwrapKey().map(ResourceKey::location).orElse(null);
+        if (chosen == null) { return true; }
+        for (String exception : ContentTerrain.worldTypeExceptions()) {
+            String named = exception.trim();
+            if (named.equalsIgnoreCase(chosen.toString()) || named.equalsIgnoreCase(chosen.getPath())) { return true; }
+        }
+        return false;
     }
 
     @Nullable private static WorldCreationUiState.SelectedGameMode selected(String mode) {
