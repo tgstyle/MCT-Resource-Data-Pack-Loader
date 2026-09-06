@@ -49,6 +49,43 @@ public final class BeardRoads {
     private BeardRoads() {}
 
     private static final int BORE = 4;
+    private static final Map<World, Map<StructureBoundingBox, boolean[]>> HILLS = new WeakHashMap<>();
+    @Nullable private static StructureComponent building;
+
+    public static void building(@Nullable StructureComponent road) { building = road; }
+
+    public static boolean frontsHill(StructureBoundingBox plot) {
+        StructureComponent road = building;
+        World world = ContentBeard.samplerWorld;
+        if (road == null || world == null || !(road instanceof StructureVillagePieces.Path) || tunnelDepth() <= 0) { return false; }
+        StructureBoundingBox box = road.getBoundingBox();
+        boolean alongX = BeardPlots.roadAlongX(box);
+        if ((alongX ? plot.minZ : plot.minX) > (alongX ? box.maxZ : box.maxX) + 3 || (alongX ? plot.maxZ : plot.maxX) < (alongX ? box.minZ : box.minX) - 3) { return false; }
+        boolean[] hill = HILLS.computeIfAbsent(world, held -> new HashMap<>()).computeIfAbsent(box, held -> hillRows(world, held, alongX));
+        int start = alongX ? box.minX : box.minZ;
+        for (int row = Math.max(start, (alongX ? plot.minX : plot.minZ) - 1); row <= Math.min(start + hill.length - 1, (alongX ? plot.maxX : plot.maxZ) + 1); row++) {
+            if (hill[row - start]) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean[] hillRows(World world, StructureBoundingBox box, boolean alongX) {
+        int rowLeast = alongX ? box.minX : box.minZ;
+        int rowMost = alongX ? box.maxX : box.maxZ;
+        int[] profile = BeardGrade.noiseProfile(world, alongX, rowLeast, rowMost, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX);
+        boolean[] hill = new boolean[rowMost - rowLeast + 1];
+        if (profile == null) { return hill; }
+        int[] ground = profile.clone();
+        BeardGrade.flatRuns(world, alongX, rowLeast, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, profile);
+        boolean[] bridged = BeardGrade.smooth(profile);
+        boolean[] none = new boolean[profile.length];
+        BeardGrade.settle(profile, none);
+        BeardGrade.bore(profile, ground, none, bridged, tunnelDepth());
+        Grade grade = new Grade(profile, ground, bridged, none, rowLeast, 0);
+        int depth = tunnelDepth();
+        for (int i = 0; i < hill.length; i++) { hill[i] = grade.tunneledAt(rowLeast + i, depth); }
+        return hill;
+    }
 
     public static final class Grade {
         final int[] profile;
@@ -195,7 +232,7 @@ public final class BeardRoads {
             int ramped = BeardGrade.ramp(profile, pinned, keep);
             if (ramped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} had held rows meeting with a step of more than one block, so {} row(s) beside the step(s) are let go to ramp between the levels", alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast, ramped); }
             BeardGrade.settle(profile, pinned);
-            boolean[] bored = BeardGrade.bore(profile, ground, pinned, bridged, piece == null ? 0 : tunnelDepth());
+            boolean[] bored = BeardGrade.bore(profile, ground, pinned, bridged, tunnelDepth());
             if (ContentLog.LOGGER.debugEnabled()) {
                 int level = 0;
                 for (boolean row : bored) { if (row) { level++; } }

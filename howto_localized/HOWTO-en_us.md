@@ -205,10 +205,10 @@ The path after `assets` is always identical to the path inside the jar. Nothing 
 
 ## Organizing packs
 
-Loose files work. Grouping works too, as a folder or a zip, and the two behave identically:
+Loose files work under `rdploader/assets/<namespace>/`. Grouping works too, as a zip. A folder in `rdploader` is never a pack: it is skipped with a warning in the log, so zip a pack up before it goes there.
 
 ```
-rdploader/MyTextures/assets/...
+rdploader/assets/minecraft/textures/blocks/iron_ore.png
 rdploader/MyTextures.zip
 ```
 
@@ -349,7 +349,7 @@ An option can also be an object carrying a description, shown under its name in 
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start. Options belong to named packs only, a folder or a zip, since the generated file is named after the pack; loose files under `rdploader/assets` have no pack name and carry no options, so wrap loose content in a named folder if it needs a switch.
+On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start. Options belong to named packs only, that is zips, since the generated file is named after the pack; loose files under `rdploader/assets` have no pack name and carry no options, so zip loose content into a named pack if it needs a switch.
 
 Any definition's `requires` list can then name an option with a `config:` entry: `"requires": ["config:enableTestingContent"]` registers that content only while the option is true, exactly as a missing mod would skip it. A bare name checks every pack's file and every pack defining it must agree; `"config:PackA:enableTestingContent"` names one pack. An option no pack defines counts as false and is warned about once.
 
@@ -3791,7 +3791,7 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathBridgeBarrierHeight": 1,
     "villagePathBridgeSidewalkBlock": "minecraft:planks",
     "villagePathTunnelBlock": "minecraft:stonebrick",
-    "villagePathTunnelDepth": 6,
+    "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
     "villagePathTunnelLightRun": 8,
     "villagePathCenterBlock": "minecraft:quartz_block",
@@ -3830,7 +3830,7 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 | `villagePathBridgeBarrierHeight` | number | `1` | How many blocks tall those barriers stand |
 | `villagePathBridgeSidewalkBlock` | block | empty | Decks the sidewalk where a road crosses water. Empty carries the normal sidewalk block across |
 | `villagePathTunnelBlock` | block | empty | Lines a road where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels, and a road cuts through a hill as before |
-| `villagePathTunnelDepth` | number | `6` | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
+| `villagePathTunnelDepth` | number | `10` | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
 | `villagePathTunnelLightBlock` | block | empty | A light set into the tunnel roof down its center line. Empty lights none |
 | `villagePathTunnelLightRun` | number | `8` | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next; a tunnel too short to reach one of those spots is lit once, in its middle |
 | `villagePathCenterBlock` | block | empty | A center line down the middle of the road. Empty draws none |
@@ -3859,7 +3859,7 @@ A road is dressed from the middle out: center line, then road, then edge lines, 
 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
 
-**Tunnels.** Without a tunnel block a road that meets a hill climbs it, one block a row at most, and cuts no deeper than two blocks into a short rise. Once `villagePathTunnelBlock` names a block, a rise that stands `villagePathTunnelDepth` or more over the road for at least twelve rows is bored instead: the road holds the level of the higher side through the whole rise, every row with that much ground over it gets a bore four blocks high with the lining block for walls and roof, and the shallower rows before the portals are cut open as the approach. The whole street runs through, lanes, lines and sidewalks alike, lit from the roof by `villagePathTunnelLightBlock` every `villagePathTunnelLightRun` blocks, while lamp posts and verge decoration stop at the portals. A junction is never bored, so a crossing street always meets the road in the open. A house never fronts a tunnel, since the rows its doorstep holds bound the bore.
+**Tunnels.** Without a tunnel block a road that meets a hill climbs it, one block a row at most, and cuts no deeper than two blocks into a short rise. Once `villagePathTunnelBlock` names a block, a rise that stands `villagePathTunnelDepth` or more over the road for at least twelve rows is bored instead: the road holds the level of the higher side through the whole rise, every row with that much ground over it gets a bore four blocks high with the lining block for walls and roof, and the shallower rows before the portals are cut open as the approach. The whole street runs through, lanes, lines and sidewalks alike, lit from the roof by `villagePathTunnelLightBlock` every `villagePathTunnelLightRun` blocks, while lamp posts and verge decoration stop at the portals. A junction is never bored, so a crossing street always meets the road in the open. No plot is seated along a stretch the road will bore, so a house never fronts a tunnel; a district that finds no room for its plots elsewhere lays fewer streets there.
 
 **Lamp blocks carry data.** The three lamp blocks take a plain name, a name with metadata, or a name with block entity data in braces, `minecraft:skull:1{SkullType:3}`. The braces are read as NBT and applied to the block entity after the block is placed, which is how a lamp from another mod keeps the settings it needs. Bad NBT is reported and ignored rather than stopping the lamp being built.
 
@@ -4665,7 +4665,7 @@ These sit in the `commands` group, so `control.commands` in the config decides w
 
 **Textures and other assets are different.** They're requested far too often to log individually, so instead `/rdpl unused` lists the files in your packs that nothing has asked for. Run it once the game has finished loading. A file with the right path is always requested, so anything listed is usually a typo, but bear in mind some files only load when they're needed, such as languages other than the one you play in.
 
-**A pack folder or zip without an `assets` directory inside it is skipped,** and the log says so.
+**A zip without an `assets` directory inside it is skipped,** and so is any folder in `rdploader`, and the log says so.
 
 **`/rdpl which minecraft:textures/blocks/stone.png`** tells you exactly which pack is serving a file and what it's shadowing.
 

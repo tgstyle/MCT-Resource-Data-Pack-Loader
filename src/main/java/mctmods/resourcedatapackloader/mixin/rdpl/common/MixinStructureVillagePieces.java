@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -71,6 +72,16 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
             cir.setReturnValue(null);
             return;
         }
+    }
+
+    @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$offTheHill(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        StructureComponent placed = cir.getReturnValue();
+        if (placed == null || placed instanceof StructureVillagePieces.Path || !ContentBeard.wanted()) { return; }
+        StructureBoundingBox box = placed.getBoundingBox();
+        if (!BeardRoads.frontsHill(box)) { return; }
+        ContentLog.LOGGER.debug("{} at {}, {} would front the tunnel through the hill on its road, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
+        structureComponents.remove(placed);
+        cir.setReturnValue(null);
     }
 
     @SuppressWarnings("ConstantConditions") @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$flatterFooting(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {

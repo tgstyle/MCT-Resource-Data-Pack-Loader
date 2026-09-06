@@ -205,10 +205,10 @@ Der Pfad nach `assets` ist immer identisch mit dem Pfad im Jar. Nichts wird umbe
 
 ## Packs organisieren
 
-Lose Dateien funktionieren. Bündeln funktioniert auch, als Ordner oder als Zip, und beide verhalten sich identisch:
+Lose Dateien funktionieren unter `rdploader/assets/<namespace>/`. Bündeln funktioniert auch, als Zip. Ein Ordner in `rdploader` ist nie ein Pack: er wird mit einer Warnung im Log übersprungen, also zippe ein Pack, bevor es dorthin kommt.
 
 ```
-rdploader/MyTextures/assets/...
+rdploader/assets/minecraft/textures/blocks/iron_ore.png
 rdploader/MyTextures.zip
 ```
 
@@ -349,7 +349,7 @@ Eine Option kann auch ein Objekt mit einer Beschreibung sein, die im Optionsmen�
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-Beim Start werden die Optionsdateien eines Packs zu einer echten Config-Datei, die dem Nutzer gehört, benannt nach dem Pack: `rdploader/config/PackA.json`. Sie wird mit den Standardwerten des Packs angelegt und bei Pack-Updates zusammengeführt, sodass neue Optionen ankommen, ohne anzurühren, was der Nutzer schon eingestellt hat. Änderungen greifen beim nächsten Spielstart. Optionen gehören nur benannten Packs, einem Ordner oder einer Zip, weil die erzeugte Datei nach dem Pack benannt ist; lose Dateien unter `rdploader/assets` haben keinen Pack-Namen und tragen keine Optionen – pack losen Inhalt also in einen benannten Ordner, wenn er einen Schalter braucht.
+Beim Start werden die Optionsdateien eines Packs zu einer echten Config-Datei, die dem Nutzer gehört, benannt nach dem Pack: `rdploader/config/PackA.json`. Sie wird mit den Standardwerten des Packs angelegt und bei Pack-Updates zusammengeführt, sodass neue Optionen ankommen, ohne anzurühren, was der Nutzer schon eingestellt hat. Änderungen greifen beim nächsten Spielstart. Optionen gehören nur benannten Packs, also Zips, weil die erzeugte Datei nach dem Pack benannt ist; lose Dateien unter `rdploader/assets` haben keinen Pack-Namen und tragen keine Optionen – zippe losen Inhalt also zu einem benannten Pack, wenn er einen Schalter braucht.
 
 Die `requires`-Liste jeder Definition kann dann mit einem `config:`-Eintrag eine Option nennen: `"requires": ["config:enableTestingContent"]` registriert diesen Inhalt nur, solange die Option true ist, genau wie ein fehlender Mod ihn überspringen ließe. Ein bloßer Name prüft die Datei jedes Packs, und jedes Pack, das ihn definiert, muss zustimmen; `"config:PackA:enableTestingContent"` nennt ein bestimmtes Pack. Eine Option, die kein Pack definiert, gilt als false und wird einmal im Log vermerkt.
 
@@ -3791,7 +3791,7 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathBridgeBarrierHeight": 1,
     "villagePathBridgeSidewalkBlock": "minecraft:planks",
     "villagePathTunnelBlock": "minecraft:stonebrick",
-    "villagePathTunnelDepth": 6,
+    "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
     "villagePathTunnelLightRun": 8,
     "villagePathCenterBlock": "minecraft:quartz_block",
@@ -3830,7 +3830,7 @@ Alles Folgende greift nur, solange `terrainAdaptation` an ist. Jede dieser Einst
 | `villagePathBridgeBarrierHeight` | Zahl | `1` | Wie viele Blöcke hoch diese Geländer stehen |
 | `villagePathBridgeSidewalkBlock` | Block | leer | Deckt den Gehweg dort, wo ein Weg Wasser überquert. Leer führt den normalen Gehwegblock hinüber |
 | `villagePathTunnelBlock` | Block | leer | Kleidet eine Straße dort aus, wo sie einen Hügel durchbohrt, statt ihn aufzuschneiden: die Wände zu beiden Seiten der Röhre und die Decke darüber. Leer bohrt keine Tunnel, und eine Straße schneidet wie bisher durch den Hügel |
-| `villagePathTunnelDepth` | Zahl | `6` | Wie viel Boden über der Fahrbahn stehen muss, bevor ein Abschnitt gebohrt statt aufgeschnitten wird. Eine Erhebung, die über zwölf Reihen oder mehr so tief über der Straße liegt, wird eben gehalten und durchbohrt, ihre flacheren Zufahrten werden aufgeschnitten; eine kürzere Kuppe wird wie bisher aufgeschnitten. Zählt erst, wenn `villagePathTunnelBlock` einen Block nennt |
+| `villagePathTunnelDepth` | Zahl | `10` | Wie viel Boden über der Fahrbahn stehen muss, bevor ein Abschnitt gebohrt statt aufgeschnitten wird. Eine Erhebung, die über zwölf Reihen oder mehr so tief über der Straße liegt, wird eben gehalten und durchbohrt, ihre flacheren Zufahrten werden aufgeschnitten; eine kürzere Kuppe wird wie bisher aufgeschnitten. Zählt erst, wenn `villagePathTunnelBlock` einen Block nennt |
 | `villagePathTunnelLightBlock` | Block | leer | Ein Licht, das entlang der Mittellinie in die Tunneldecke gesetzt wird. Leer setzt keins |
 | `villagePathTunnelLightRun` | Zahl | `8` | Wie viele Blöcke diese Lichter auseinander sitzen. An Weltkoordinaten verankert, damit die Lichter eines Straßenstücks im nächsten weiterlaufen; ein Tunnel, der zu kurz ist, um eine dieser Stellen zu erreichen, wird einmal beleuchtet, in seiner Mitte |
 | `villagePathCenterBlock` | Block | leer | Eine Mittellinie den Weg entlang. Leer zeichnet keine |
@@ -3859,7 +3859,7 @@ Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Ra
 
 `villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
 
-**Tunnel.** Ohne Tunnelblock steigt eine Straße, die auf einen Hügel trifft, höchstens einen Block je Reihe hinauf und schneidet höchstens zwei Blöcke tief in eine kurze Erhebung. Nennt `villagePathTunnelBlock` einen Block, wird eine Erhebung, die über mindestens zwölf Reihen `villagePathTunnelDepth` oder mehr über der Straße steht, stattdessen durchbohrt: Die Straße hält durch die ganze Erhebung die Höhe der höheren Seite, jede Reihe mit so viel Boden darüber bekommt eine vier Blöcke hohe Röhre mit dem Auskleidungsblock als Wände und Decke, und die flacheren Reihen vor den Portalen werden als Zufahrt aufgeschnitten. Die ganze Straße läuft hindurch, Fahrbahn, Linien und Gehwege gleichermaßen, aus der Decke beleuchtet von `villagePathTunnelLightBlock` alle `villagePathTunnelLightRun` Blöcke, während Laternen und Randbewuchs an den Portalen enden. Eine Kreuzung wird nie gebohrt, eine querende Straße trifft die Straße also immer im Freien. Kein Haus steht vor einem Tunnel, weil die Reihen, die seine Türschwelle hält, die Röhre begrenzen.
+**Tunnel.** Ohne Tunnelblock steigt eine Straße, die auf einen Hügel trifft, höchstens einen Block je Reihe hinauf und schneidet höchstens zwei Blöcke tief in eine kurze Erhebung. Nennt `villagePathTunnelBlock` einen Block, wird eine Erhebung, die über mindestens zwölf Reihen `villagePathTunnelDepth` oder mehr über der Straße steht, stattdessen durchbohrt: Die Straße hält durch die ganze Erhebung die Höhe der höheren Seite, jede Reihe mit so viel Boden darüber bekommt eine vier Blöcke hohe Röhre mit dem Auskleidungsblock als Wände und Decke, und die flacheren Reihen vor den Portalen werden als Zufahrt aufgeschnitten. Die ganze Straße läuft hindurch, Fahrbahn, Linien und Gehwege gleichermaßen, aus der Decke beleuchtet von `villagePathTunnelLightBlock` alle `villagePathTunnelLightRun` Blöcke, während Laternen und Randbewuchs an den Portalen enden. Eine Kreuzung wird nie gebohrt, eine querende Straße trifft die Straße also immer im Freien. Entlang eines Abschnitts, den die Straße durchbohren wird, wird kein Grundstück gesetzt, kein Haus steht also vor einem Tunnel; ein Viertel, das anderswo keinen Platz für seine Grundstücke findet, legt dort weniger Straßen an.
 
 **Laternenblöcke tragen Daten.** Die drei Laternenblöcke nehmen einen einfachen Namen, einen Namen mit Metadaten oder einen Namen mit Blockobjektdaten in geschweiften Klammern, `minecraft:skull:1{SkullType:3}`. Die Klammern werden als NBT gelesen und nach dem Setzen auf das Blockobjekt angewandt, womit eine Laterne aus einem anderen Mod die Einstellungen behält, die sie braucht. Fehlerhaftes NBT wird gemeldet und übergangen, statt den Bau der Laterne zu verhindern.
 
@@ -4665,7 +4665,7 @@ Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der 
 
 **Bei Texturen und anderen Assets ist es anders.** Nach ihnen wird viel zu oft gefragt, um sie einzeln zu protokollieren – stattdessen listet `/rdpl unused` die Dateien in deinen Packs auf, nach denen nichts gefragt hat. Führ ihn aus, wenn das Spiel fertig geladen hat. Nach einer Datei mit dem richtigen Pfad wird immer gefragt, alles Aufgelistete ist also meist ein Tippfehler – bedenke aber, dass manche Dateien nur bei Bedarf laden, etwa andere Sprachen als die, in der du spielst.
 
-**Ein Pack-Ordner oder eine Zip ohne `assets`-Verzeichnis darin wird übersprungen**, und das Log sagt es.
+**Eine Zip ohne `assets`-Verzeichnis darin wird übersprungen**, ebenso jeder Ordner in `rdploader`, und das Log sagt es.
 
 **`/rdpl which minecraft:textures/blocks/stone.png`** sagt dir genau, welches Pack eine Datei liefert und was es dabei verdeckt.
 

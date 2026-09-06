@@ -146,9 +146,13 @@ import javax.annotation.Nullable;
 
     @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$alleyStops(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
         CityGrowth.alleyLaying(BeardRoads.roadNarrow(getBoundingBox(), BeardPlots.roadAlongX(this)));
+        BeardRoads.building(this);
     }
 
-    @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) { CityGrowth.alleyLaying(false); }
+    @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
+        CityGrowth.alleyLaying(false);
+        BeardRoads.building(null);
+    }
 
     @SuppressWarnings("ConstantConditions") @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$branchAtBlocks(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
         if (!ContentBeard.wanted() || !(componentIn instanceof StructureVillagePieces.Start) || !(this instanceof IVillageBlock) || CityLayout.drawn()) { return; }
