@@ -21,6 +21,7 @@ public final class ContentFormats {
     public static final String CONFIGURED_FEATURES = "worldgen/configured_feature";
     public static final String PLACED_FEATURES = "worldgen/placed_feature";
     public static final String CONVENTION = "c";
+    public static final String CONVENTION_HOLDER_SETS = "neoforge";
     public static final String SPARSE_TAG = "is_sparse_vegetation";
     public static final String DENSE_TAG = "is_dense_vegetation";
     public static final String WATER_TAG = "is_aquatic";

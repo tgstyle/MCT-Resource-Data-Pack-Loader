@@ -6,4 +6,4 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public record WorldTemplateDef(ResourceLocation key, String name, @Nullable JsonObject settings, List<String> requires, String fallback, Map<String, String> roles) {}
+public record WorldTemplateDef(ResourceLocation key, String name, @Nullable JsonObject settings, List<String> requires, String fallback, Map<String, String> roles, Map<String, Boolean> structures, List<String> dimensions) {}

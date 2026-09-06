@@ -277,6 +277,14 @@ public final class Config {
         private final ModConfigSpec.IntValue waterCreatureCap;
         private final ModConfigSpec.IntValue monsterSpawnLight;
         private final ModConfigSpec.IntValue caveRegionPlainWeight;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureSpacing;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureSeparation;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureMinDistanceFromSpawn;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureBiomes;
+        private final ModConfigSpec.BooleanValue structureBiomesAreBlacklist;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureSpawns;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureAt;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureAdaptation;
 
         private Worldgen(ModConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
@@ -336,6 +344,14 @@ public final class Config {
             waterCreatureCap = builder.comment("The same cap for water mobs such as squid. Vanilla is 5. -1 leaves it alone [Default=-1]").defineInRange("waterCreatureCap", -1, -1, 1000);
             monsterSpawnLight = builder.comment("The brightest block light a hostile mob may still spawn in, on top of the vanilla checks. -1 keeps the vanilla rule alone. Spawners are not affected [Default=-1]").defineInRange("monsterSpawnLight", -1, -1, 15);
             caveRegionPlainWeight = builder.comment("The weight of plain, region-less underground against the cave regions' own weights. Higher leaves more of the underground without any region [Default=4]").defineInRange("caveRegionPlainWeight", 4, 0, 1000);
+            structureSpacing = builder.comment("How far apart vanilla structures are seeded, in chunks, as structure=chunks entries: the 1.12.2 names temples, monuments, mansions, mineshafts, strongholds, netherbridges, endcities and villages, or any structure set id such as pillager_outposts. For mineshafts the number is one chunk in that many; for strongholds it is the ring distance [Default=[]]").defineList("structureSpacing", List.of(), () -> "", each -> each instanceof String);
+            structureSeparation = builder.comment("The closest two of a structure may be, in chunks, as structure=chunks entries; for strongholds it is the ring spread [Default=[]]").defineList("structureSeparation", List.of(), () -> "", each -> each instanceof String);
+            structureMinDistanceFromSpawn = builder.comment("How far from the world spawn a structure starts, in blocks, as structure=blocks entries. Measured from the pack's worldSpawn when one is set, else from the world origin, since placement is decided before any spawn exists [Default=[]]").defineList("structureMinDistanceFromSpawn", List.of(), () -> "", each -> each instanceof String);
+            structureBiomes = builder.comment("Where a structure may generate, as structure=biome,biome entries naming biome ids or biome types such as SANDY [Default=[]]").defineList("structureBiomes", List.of(), () -> "", each -> each instanceof String);
+            structureBiomesAreBlacklist = builder.comment("On, structureBiomes names the biomes to keep a structure out of. Off, only those biomes get it [Default=false]").define("structureBiomesAreBlacklist", false);
+            structureSpawns = builder.comment("The mobs a structure spawns whatever the biome says, as structure=namespace:entity:weight:least:most entries, comma separated; an empty list after the = spawns nothing [Default=[]]").defineList("structureSpawns", List.of(), () -> "", each -> each instanceof String);
+            structureAt = builder.comment("Structures pinned to exact spots, as structure=x,z entries in block coordinates, one per wanted instance. A pinned structure generates in that chunk and nowhere else [Default=[]]").defineList("structureAt", List.of(), () -> "", each -> each instanceof String);
+            structureAdaptation = builder.comment("How the terrain adapts to a structure, as structure=mode entries with the modes none, bury, beard_thin, beard_box and encapsulate [Default=[]]").defineList("structureAdaptation", List.of(), () -> "", each -> each instanceof String);
             builder.pop();
         }
 
@@ -450,6 +466,22 @@ public final class Config {
         public int monsterSpawnLight() { return loaded() ? monsterSpawnLight.get() : -1; }
 
         public int caveRegionPlainWeight() { return loaded() ? caveRegionPlainWeight.get() : 4; }
+
+        public List<String> structureSpacing() { return loaded() ? List.copyOf(structureSpacing.get()) : List.of(); }
+
+        public List<String> structureSeparation() { return loaded() ? List.copyOf(structureSeparation.get()) : List.of(); }
+
+        public List<String> structureMinDistanceFromSpawn() { return loaded() ? List.copyOf(structureMinDistanceFromSpawn.get()) : List.of(); }
+
+        public List<String> structureBiomes() { return loaded() ? List.copyOf(structureBiomes.get()) : List.of(); }
+
+        public boolean structureBiomesAreBlacklist() { return loaded() && structureBiomesAreBlacklist.get(); }
+
+        public List<String> structureSpawns() { return loaded() ? List.copyOf(structureSpawns.get()) : List.of(); }
+
+        public List<String> structureAt() { return loaded() ? List.copyOf(structureAt.get()) : List.of(); }
+
+        public List<String> structureAdaptation() { return loaded() ? List.copyOf(structureAdaptation.get()) : List.of(); }
     }
 
     public static final class Chunks {
@@ -488,6 +520,7 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> ores;
         private final ModConfigSpec.ConfigValue<String> biomes;
         private final ModConfigSpec.ConfigValue<String> spawning;
+        private final ModConfigSpec.ConfigValue<String> structures;
 
         private Control(ModConfigSpec.Builder builder) {
             builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
@@ -498,6 +531,7 @@ public final class Config {
             ores = builder.comment("Blocking ore generation by mod and by ore type [default|global|off]").define("ores", "default");
             biomes = builder.comment("Blocking biomes by mod and by name, and what replaces them [default|global|off]").define("biomes", "default");
             spawning = builder.comment("Mob spawn caps, hostile spawn rates and the light cap [default|global|off]").define("spawning", "default");
+            structures = builder.comment("Vanilla structures switched off, their spacing, separation, spawn distance, biomes, spawns, pins and terrain adaptation [default|global|off]").define("structures", "default");
             builder.pop();
         }
 
@@ -514,5 +548,7 @@ public final class Config {
         public String biomes() { return loaded() ? biomes.get() : ConfigCore.text("control.biomes", "default"); }
 
         public String spawning() { return loaded() ? spawning.get() : ConfigCore.text("control.spawning", "default"); }
+
+        public String structures() { return loaded() ? structures.get() : ConfigCore.text("control.structures", "default"); }
     }
 }

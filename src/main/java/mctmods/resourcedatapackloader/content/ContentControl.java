@@ -28,6 +28,7 @@ public final class ContentControl {
     public static final String ORES = "ores";
     public static final String BIOMES = "biomes";
     public static final String SPAWNING = "spawning";
+    public static final String STRUCTURES = "structures";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -181,6 +182,7 @@ public final class ContentControl {
         if (ORES.equals(group)) { return Config.control.ores(); }
         if (BIOMES.equals(group)) { return Config.control.biomes(); }
         if (SPAWNING.equals(group)) { return Config.control.spawning(); }
+        if (STRUCTURES.equals(group)) { return Config.control.structures(); }
         return DEFAULT;
     }
 }

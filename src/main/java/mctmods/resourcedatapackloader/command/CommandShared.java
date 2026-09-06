@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
@@ -14,6 +15,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -47,6 +49,15 @@ public final class CommandShared {
                     String target = StringArgumentType.getString(context, "map");
                     ran(context.getSource(), name, "pixelmap " + target);
                     pixelmap(context.getSource(), target);
+                    return 1;
+                })))
+                .then(Commands.literal("locate").then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
+                    for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
+                    return suggestions.buildFuture();
+                }).executes(context -> {
+                    String target = StringArgumentType.getString(context, "name");
+                    ran(context.getSource(), name, "locate " + target);
+                    locate(context.getSource(), target);
                     return 1;
                 })))
                 .then(Commands.literal("unused").executes(context -> {
@@ -133,6 +144,17 @@ public final class CommandShared {
             for (String namespace : pack.getNamespaces(type)) { return namespace; }
         }
         return "minecraft";
+    }
+
+    static void locate(CommandSourceStack source, String target) {
+        BlockPos from = BlockPos.containing(source.getPosition());
+        BlockPos found = ContentLocate.nearest(source.getLevel(), target, from);
+        if (found == null) {
+            source.sendFailure(tr("rdpl.command.locatenone", target));
+            return;
+        }
+        int away = (int) Math.sqrt(found.distSqr(from));
+        source.sendSuccess(() -> tr("rdpl.command.located", target, found.getX(), found.getY(), found.getZ(), away), false);
     }
 
     static void which(CommandSourceStack source, String target) {
