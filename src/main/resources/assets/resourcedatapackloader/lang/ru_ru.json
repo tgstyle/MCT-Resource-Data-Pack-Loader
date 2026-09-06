@@ -26,5 +26,6 @@
     "rdpl.command.unprovided": "%s не даёт ни один пак, так что его отдаст Minecraft или мод",
     "rdpl.command.unused": "Файлов, которые ни разу не запрашивались: %s",
     "rdpl.command.unusednote": "Часть загружается только по необходимости, например другие языки. Проверьте пути, прежде чем удалять",
-    "rdpl.pack.source": "Resource Data Pack Loader"
+    "rdpl.pack.source": "Resource Data Pack Loader",
+    "rdpl.pregen.welcome": "Добро пожаловать в ваш мир!"
 }

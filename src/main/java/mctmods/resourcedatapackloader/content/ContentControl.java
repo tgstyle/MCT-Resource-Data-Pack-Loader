@@ -5,6 +5,9 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -17,6 +20,7 @@ import javax.annotation.Nullable;
 
 public final class ContentControl {
     public static final String TERRAIN = "terrain";
+    public static final String CHUNKS = "chunks";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -92,6 +96,19 @@ public final class ContentControl {
         return value.getAsString();
     }
 
+    public static List<String> list(String group, String key, List<String> fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (value.isJsonPrimitive()) { return List.of(value.getAsString()); }
+        if (!value.isJsonArray()) { return rejected(key, "a list of text values", fallback); }
+        List<String> found = new ArrayList<>();
+        for (JsonElement entry : value.getAsJsonArray()) {
+            if (!entry.isJsonPrimitive()) { return rejected(key, "a list of text values", fallback); }
+            found.add(entry.getAsString());
+        }
+        return found;
+    }
+
     private static <T> T rejected(String key, String wanted, T fallback) {
         if (WARNED.add(key)) { ContentLog.LOGGER.error("The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted); }
         return fallback;
@@ -127,5 +144,9 @@ public final class ContentControl {
         return value;
     }
 
-    private static String raw(String group) { return TERRAIN.equals(group) ? Config.control.terrain() : DEFAULT; }
+    private static String raw(String group) {
+        if (TERRAIN.equals(group)) { return Config.control.terrain(); }
+        if (CHUNKS.equals(group)) { return Config.control.chunks(); }
+        return DEFAULT;
+    }
 }

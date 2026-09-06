@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
+import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
@@ -40,6 +41,7 @@ public final class ContentRegistry {
     private static final Map<ResourceLocation, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, MaterialDef> MATERIAL_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, TabDef> TAB_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, ExposureDef> EXPOSURE_DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, BlockEntry> BLOCKS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ItemEntry> ITEMS = new LinkedHashMap<>();
     private static final Map<Block, BlockEntry> BY_BLOCK = new LinkedHashMap<>();
@@ -82,9 +84,14 @@ public final class ContentRegistry {
             TabDef def = ContentParser.tab(key, contents);
             if (def != null) { TAB_DEFS.put(key, def); }
         });
+        Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
+            ExposureDef def = ContentParser.exposure(key, contents);
+            if (def != null) { EXPOSURE_DEFS.put(key, def); }
+        });
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !MATERIAL_DEFS.isEmpty() || !TAB_DEFS.isEmpty()) {
             Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid, " + MATERIAL_DEFS.size() + " material and " + TAB_DEFS.size() + " creative tab definition(s)");
         }
+        if (!EXPOSURE_DEFS.isEmpty()) { Summary.info("exposures", "Loaded " + EXPOSURE_DEFS.size() + " exposure definition(s)"); }
     }
 
     public static boolean reserved(ResourceLocation key) {
@@ -132,6 +139,8 @@ public final class ContentRegistry {
     public static Collection<FluidDef> fluidDefs() { return Collections.unmodifiableCollection(FLUID_DEFS.values()); }
 
     public static Collection<TabDef> tabDefs() { return Collections.unmodifiableCollection(TAB_DEFS.values()); }
+
+    public static Collection<ExposureDef> exposures() { return Collections.unmodifiableCollection(EXPOSURE_DEFS.values()); }
 
     @Nullable public static MaterialDef material(String name, Object context) {
         if (name == null || name.isEmpty()) {

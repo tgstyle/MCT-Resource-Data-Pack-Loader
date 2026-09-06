@@ -26,5 +26,6 @@
     "rdpl.command.unprovided": "%s liefert kein Pack, also übernimmt das Minecraft oder ein Mod",
     "rdpl.command.unused": "%s Datei(en) wurden nie angefragt:",
     "rdpl.command.unusednote": "Manche laden nur bei Bedarf, etwa andere Sprachen. Prüfe die Pfade, bevor du löschst",
-    "rdpl.pack.source": "Resource Data Pack Loader"
+    "rdpl.pack.source": "Resource Data Pack Loader",
+    "rdpl.pregen.welcome": "Willkommen in deiner Welt!"
 }
