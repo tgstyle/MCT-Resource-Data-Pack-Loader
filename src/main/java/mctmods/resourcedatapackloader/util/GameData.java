@@ -32,6 +32,8 @@ public final class GameData {
         return found;
     }
 
+    public static boolean has(ResourceLocation at) { return (MINECRAFT.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at)) != null; }
+
     public static void release() { vanilla = null; }
 
     @Nullable private static JsonObject fromVanilla(ResourceLocation at) {

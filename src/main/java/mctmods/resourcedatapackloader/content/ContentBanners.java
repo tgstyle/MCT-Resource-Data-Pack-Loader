@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
-import mctmods.resourcedatapackloader.content.block.IContentBanner;
+import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.datafixers.DSL;

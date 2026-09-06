@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Mirror;
@@ -59,7 +60,7 @@ public final class ContentImprint implements IContentShape {
         BlockPos fitted = new BlockPos(cornerX + backX(rotation, span), origin.getY(), cornerZ + backZ(rotation, span));
         if (!loaded.placeInWorld(level, fitted, fitted, settings, random, FLAGS)) { return false; }
         stock(placer, random, cornerX, origin.getY(), cornerZ, span);
-        if (!shape.locateAs().isEmpty()) { ContentLog.LOGGER.debug("Worldgen {} names locateAs '{}', which needs the structure layer, so nothing is recorded for /locate", key, shape.locateAs()); }
+        if (!shape.locateAs().isEmpty()) { ContentLocate.record(level.getLevel(), shape.locateAs(), fitted); }
         return true;
     }
 
@@ -108,6 +109,6 @@ public final class ContentImprint implements IContentShape {
     private static int within(int origin, int start, int span) {
         if (span >= 16) { return start; }
         int corner = (origin >> 4) * 16;
-        return Math.max(corner, Math.min(start, corner + 16 - span));
+        return Mth.clamp(start, corner, corner + 16 - span);
     }
 }

@@ -20,6 +20,7 @@ public final class ContentFormats {
     public static final String CONFIGURED_FEATURES = "worldgen/configured_feature";
     public static final String PLACED_FEATURES = "worldgen/placed_feature";
     public static final String CONVENTION = "forge";
+    public static final String CONVENTION_HOLDER_SETS = "forge";
     public static final String SPARSE_TAG = "is_sparse";
     public static final String DENSE_TAG = "is_dense";
     public static final String WATER_TAG = "is_water";

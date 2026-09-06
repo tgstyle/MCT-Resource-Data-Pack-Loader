@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content.block;
+package mctmods.resourcedatapackloader.content.interfaces;
 
 import net.minecraft.resources.ResourceLocation;
 

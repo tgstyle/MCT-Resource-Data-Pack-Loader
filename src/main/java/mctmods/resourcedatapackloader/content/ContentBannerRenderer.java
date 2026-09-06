@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentWallBannerBlock;
-import mctmods.resourcedatapackloader.content.block.IContentBanner;
+import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

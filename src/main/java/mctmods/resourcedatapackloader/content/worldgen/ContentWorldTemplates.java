@@ -10,12 +10,14 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -55,7 +57,16 @@ public final class ContentWorldTemplates {
             return null;
         }
         JsonObject settings = json.has("settings") ? GsonHelper.getAsJsonObject(json, "settings") : null;
-        return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), GsonHelper.getAsString(json, "fallback", "").trim(), Json.map(json, "roles"));
+        return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), GsonHelper.getAsString(json, "fallback", "").trim(), Json.map(json, "roles"), switches(json), Json.strings(json, "dimensions"));
+    }
+
+    private static Map<String, Boolean> switches(JsonObject json) {
+        if (!json.has("structures")) { return Map.of(); }
+        Map<String, Boolean> out = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "structures").entrySet()) {
+            if (entry.getValue().isJsonPrimitive()) { out.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue().getAsBoolean()); }
+        }
+        return Map.copyOf(out);
     }
 
     @Nullable private static WorldTemplateDef select() {

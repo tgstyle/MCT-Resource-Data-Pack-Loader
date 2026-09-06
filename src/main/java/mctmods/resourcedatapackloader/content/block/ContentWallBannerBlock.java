@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

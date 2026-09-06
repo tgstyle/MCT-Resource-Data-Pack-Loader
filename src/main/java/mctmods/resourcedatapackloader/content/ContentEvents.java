@@ -23,7 +23,12 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
+import mctmods.resourcedatapackloader.content.worldgen.ContentMapPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentMapStructure;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpreadPlacement;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSpread;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
 import mctmods.resourcedatapackloader.util.Config;
@@ -75,6 +80,9 @@ public final class ContentEvents {
             });
         }
         else if (event.getRegistryKey().equals(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC)); }
+        else if (event.getRegistryKey().equals(Registries.STRUCTURE_TYPE)) { event.register(Registries.STRUCTURE_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE)); }
+        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PIECE)) { event.register(Registries.STRUCTURE_PIECE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE)); }
+        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) { event.register(Registries.STRUCTURE_PLACEMENT, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE)); }
         else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
     }
 
@@ -151,6 +159,8 @@ public final class ContentEvents {
         ContentBiomes.generate();
         ContentCaveRegions.generate();
         ContentOreControl.generate();
+        ContentStructureControl.generate();
+        ContentStructureMaps.generate();
         ContentWorldShape.generate();
         ContentWorldgen.generate();
     }
