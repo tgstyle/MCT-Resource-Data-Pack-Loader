@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
@@ -51,6 +52,8 @@ public final class ContentEvents {
         else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
         else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
         else if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) { event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs); }
+        else if (event.getRegistryKey().equals(Registries.ENTITY_TYPE)) { event.register(Registries.ENTITY_TYPE, ContentEntities::registerTypes); }
+        else if (event.getRegistryKey().equals(Registries.BLOCK_ENTITY_TYPE)) { event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register); }
         else if (event.getRegistryKey().equals(Registries.SOUND_EVENT)) { event.register(Registries.SOUND_EVENT, ContentSounds::register); }
         else if (event.getRegistryKey().equals(Registries.MOB_EFFECT)) { event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions); }
         else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
@@ -91,6 +94,7 @@ public final class ContentEvents {
 
     private static void registerItems(RegisterEvent.RegisterHelper<Item> helper) {
         int count = 0;
+        ContentEntities.registerEggs(helper);
         for (ContentRegistry.BlockEntry entry : new ArrayList<>(ContentRegistry.blocks())) {
             Item item = ContentBlockTypes.item(entry);
             if (item == null || ForgeRegistries.ITEMS.containsKey(entry.id())) { continue; }
@@ -125,6 +129,7 @@ public final class ContentEvents {
         resolveSoils();
         if (count > 0) { Summary.info("content.items", "Registered " + count + " item(s) from packs"); }
         ContentGenerated.generate();
+        ContentEntities.generate();
     }
 
     private static void resolveSoils() {

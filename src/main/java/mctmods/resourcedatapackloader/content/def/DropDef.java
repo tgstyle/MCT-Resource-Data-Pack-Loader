@@ -9,4 +9,10 @@ public record DropDef(@Nullable ResourceLocation item, @Nullable ResourceLocatio
     public boolean weighted() { return weight > 0; }
 
     public boolean hasBonus() { return bonusChance.length > 0; }
+
+    public int chanceFor(int fortune) {
+        if (bonusChance.length == 0) { return 0; }
+        if (fortune < 0) { return bonusChance[0]; }
+        return fortune >= bonusChance.length ? bonusChance[bonusChance.length - 1] : bonusChance[fortune];
+    }
 }

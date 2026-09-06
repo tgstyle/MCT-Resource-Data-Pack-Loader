@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.types;
 
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
+import mctmods.resourcedatapackloader.content.block.ContentBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBushBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCaneBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
@@ -10,8 +11,10 @@ import mctmods.resourcedatapackloader.content.block.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.content.block.ContentLogBlock;
 import mctmods.resourcedatapackloader.content.block.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.content.block.ContentTorchBlock;
+import mctmods.resourcedatapackloader.content.block.ContentWallBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentWallTorchBlock;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.item.ContentBannerItem;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -67,8 +70,8 @@ public final class ContentBlockTypes {
     public static final String VINE = "vine";
     public static final String BANNER = "banner";
     public static final String PORTAL = "portal";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE);
-    private static final Set<String> LATER = Set.of(BANNER, PORTAL);
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER);
+    private static final Set<String> LATER = Set.of(PORTAL);
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
 
     private ContentBlockTypes() {}
@@ -112,6 +115,11 @@ public final class ContentBlockTypes {
             case TRAPDOOR -> List.of(new Created(id, new TrapDoorBlock(properties.noOcclusion(), setType(def)), ContentRegistry.MAIN));
             case FENCE_GATE -> List.of(new Created(id, new FenceGateBlock(properties, WoodType.OAK), ContentRegistry.MAIN));
             case LADDER -> List.of(new Created(id, new LadderBlock(properties.noOcclusion().noCollission()), ContentRegistry.MAIN));
+            case BANNER -> {
+                ContentBannerBlock standing = new ContentBannerBlock(def, id, properties.noCollission().forceSolidOn());
+                ContentWallBannerBlock wall = new ContentWallBannerBlock(def, id, ContentTypes.properties(def, variant, false).noCollission().forceSolidOn());
+                yield List.of(new Created(id, standing, ContentRegistry.MAIN), new Created(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_wall"), wall, ContentRegistry.WALL));
+            }
             case TORCH -> {
                 ContentTorchBlock torch = new ContentTorchBlock(def, properties.noCollission().instabreak().lightLevel(state -> Math.max(variant.light(), 14)));
                 ContentWallTorchBlock wall = new ContentWallTorchBlock(def, ContentTypes.properties(def, variant, false).noCollission().instabreak().lightLevel(state -> Math.max(variant.light(), 14)));
@@ -150,6 +158,11 @@ public final class ContentBlockTypes {
                 if (!entry.isMain()) { yield null; }
                 ContentRegistry.BlockEntry wall = ContentRegistry.block(ResourceLocation.fromNamespaceAndPath(entry.id().getNamespace(), entry.id().getPath() + "_wall"));
                 yield wall == null ? new BlockItem(entry.block(), properties) : new StandingAndWallBlockItem(entry.block(), wall.block(), properties, Direction.DOWN);
+            }
+            case BANNER -> {
+                if (!entry.isMain()) { yield null; }
+                ContentRegistry.BlockEntry wall = ContentRegistry.block(ResourceLocation.fromNamespaceAndPath(entry.id().getNamespace(), entry.id().getPath() + "_wall"));
+                yield wall == null ? new BlockItem(entry.block(), properties.stacksTo(16)) : new ContentBannerItem(entry.block(), wall.block(), properties.stacksTo(16));
             }
             case DOOR -> new DoubleHighBlockItem(entry.block(), properties);
             default -> new BlockItem(entry.block(), properties);

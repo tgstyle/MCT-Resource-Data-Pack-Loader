@@ -13,6 +13,7 @@ public final class Config {
     public static final Data data;
     public static final Worldgen worldgen;
     public static final Tweaks tweaks;
+    public static final Control control;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -22,6 +23,7 @@ public final class Config {
         data = new Data(builder);
         worldgen = new Worldgen(builder);
         tweaks = new Tweaks(builder);
+        control = new Control(builder);
         SPEC = builder.build();
     }
 
@@ -67,6 +69,7 @@ public final class Config {
         private final ForgeConfigSpec.BooleanValue potions;
         private final ForgeConfigSpec.BooleanValue brewing;
         private final ForgeConfigSpec.BooleanValue villagers;
+        private final ForgeConfigSpec.BooleanValue entities;
         private final ForgeConfigSpec.BooleanValue overrides;
         private final ForgeConfigSpec.BooleanValue hardness;
         private final ForgeConfigSpec.BooleanValue shovelPaths;
@@ -84,6 +87,7 @@ public final class Config {
             potions = builder.comment("Register the potion effects and potion types described by potions/*.json and potion_types/*.json in packs. Requires a restart [Default=true]").worldRestart().define("potions", true);
             brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
             villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
+            entities = builder.comment("Register the entity variants described by entities/*.json in packs. Requires a restart [Default=true]").worldRestart().define("entities", true);
             overrides = builder.comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]").define("overrides", true);
             hardness = builder.comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]").define("hardness", true);
             shovelPaths = builder.comment("Let a shovel turn blocks marked behavesAs path into a path, and revert a path while sneaking [Default=true]").define("shovelPaths", true);
@@ -107,6 +111,8 @@ public final class Config {
         public boolean brewing() { return loaded() ? brewing.get() : ConfigCore.flag("content.brewing", true); }
 
         public boolean villagers() { return loaded() ? villagers.get() : ConfigCore.flag("content.villagers", true); }
+
+        public boolean entities() { return loaded() ? entities.get() : ConfigCore.flag("content.entities", true); }
 
         public boolean overrides() { return loaded() ? overrides.get() : ConfigCore.flag("content.overrides", true); }
 
@@ -197,25 +203,57 @@ public final class Config {
 
     public static final class Tweaks {
         private final ForgeConfigSpec.BooleanValue lenientPaths;
+        private final ForgeConfigSpec.BooleanValue experimentalWarning;
 
         private Tweaks(ForgeConfigSpec.Builder builder) {
             builder.comment("Small changes to how vanilla behaves").push("tweaks");
             lenientPaths = builder.comment("Paths and tilled ground can be made under a block and stay there when one is placed above [Default=true]").define("lenientPaths", true);
+            experimentalWarning = builder.comment("Show the game's experimental settings warning when a world is made or opened. Off answers it as if you had clicked proceed [Default=false]").define("experimentalWarning", false);
             builder.pop();
         }
 
         public boolean lenientPaths() { return loaded() ? lenientPaths.get() : ConfigCore.flag("tweaks.lenientPaths", true); }
+
+        public boolean experimentalWarning() { return loaded() ? experimentalWarning.get() : ConfigCore.flag("tweaks.experimentalWarning", false); }
     }
 
     public static final class Worldgen {
         private final ForgeConfigSpec.BooleanValue worldgenDebug;
+        private final ForgeConfigSpec.ConfigValue<String> worldTemplate;
+        private final ForgeConfigSpec.ConfigValue<String> worldSeed;
+        private final ForgeConfigSpec.ConfigValue<String> worldName;
+        private final ForgeConfigSpec.ConfigValue<String> worldGameMode;
 
         private Worldgen(ForgeConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
             worldgenDebug = builder.comment("Write the debug lines other messages refer to into logs/rdpl.log, such as which pack served a file and what each command did. Very verbose [Default=false]").define("worldgenDebug", false);
+            worldTemplate = builder.comment("Which world template's settings apply. A pack adds one in worldtemplates/*.json and you name it here as namespace:name. 'auto' picks the template from the highest priority pack. Empty uses none [Default=auto]").define("worldTemplate", "auto");
+            worldSeed = builder.comment("The seed every new world is made with, whatever was typed when it was made, written the same way it would be typed. Empty leaves the choice alone [Default=empty]").define("worldSeed", "");
+            worldGameMode = builder.comment("Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose [Default=empty]").define("worldGameMode", "");
+            worldName = builder.comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=empty]").define("worldName", "");
             builder.pop();
         }
 
         public boolean worldgenDebug() { return loaded() ? worldgenDebug.get() : ConfigCore.flag("worldgen.worldgenDebug", false); }
+
+        public String worldTemplate() { return loaded() ? worldTemplate.get() : ConfigCore.text("worldgen.worldTemplate", "auto"); }
+
+        public String worldSeed() { return loaded() ? worldSeed.get() : ConfigCore.text("worldgen.worldSeed", ""); }
+
+        public String worldName() { return loaded() ? worldName.get() : ConfigCore.text("worldgen.worldName", ""); }
+
+        public String worldGameMode() { return loaded() ? worldGameMode.get() : ConfigCore.text("worldgen.worldGameMode", ""); }
+    }
+
+    public static final class Control {
+        private final ForgeConfigSpec.ConfigValue<String> terrain;
+
+        private Control(ForgeConfigSpec.Builder builder) {
+            builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
+            terrain = builder.comment("The world's name, seed and game mode at creation, and the rest of the terrain group as it is ported [default|global|off]").define("terrain", "default");
+            builder.pop();
+        }
+
+        public String terrain() { return loaded() ? terrain.get() : ConfigCore.text("control.terrain", "default"); }
     }
 }

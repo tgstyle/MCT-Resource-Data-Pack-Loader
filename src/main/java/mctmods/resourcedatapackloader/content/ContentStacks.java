@@ -29,6 +29,8 @@ public final class ContentStacks {
         return item;
     }
 
+    @Nullable public static Item item(@Nullable ResourceLocation name) { return Registered.find(ForgeRegistries.ITEMS, name); }
+
     public static boolean registered(ResourceLocation name) { return ForgeRegistries.ITEMS.containsKey(name); }
 
     public static String namespaceOf(Item item) {

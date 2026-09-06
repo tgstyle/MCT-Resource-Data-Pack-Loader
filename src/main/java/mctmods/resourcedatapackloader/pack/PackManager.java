@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -10,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.server.packs.PackType;
 import net.minecraftforge.fml.loading.FMLPaths;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -142,6 +144,7 @@ public final class PackManager {
                 String fileName = entry.getFileName().toString();
                 if (RDPLPack.ASSETS.equals(fileName) || RDPLPack.DATA.equals(fileName) || README.equals(fileName) || CONFIG.equals(fileName)) { continue; }
                 if (Files.isDirectory(entry)) {
+                    if (ContentPixelMaps.CACHE_DIRECTORY.equals(fileName)) { continue; }
                     ContentLog.LOGGER.warn("Skipping the folder '{}': a pack is a zip file. Loose files go under {}/{}/<namespace> or {}/{}/<namespace>, and a pack in a folder is zipped up", fileName, packRoot, RDPLPack.ASSETS, packRoot, RDPLPack.DATA);
                     continue;
                 }
@@ -161,6 +164,7 @@ public final class PackManager {
         buildIndex();
         description = resolveDescription();
         PackOptions.reload(packRoot, packs);
+        ContentPixelMaps.tidy();
         generation.incrementAndGet();
     }
 
@@ -334,12 +338,20 @@ public final class PackManager {
         ContentLog.LOGGER.warn("Pack '{}': loading {}/{}/{} from '{}', the filename case does not match. Rename it to '{}' so it also works outside this mod.", entry.pack().getName(), type.getDirectory(), namespace, requested, entry.actual(), requested);
     }
 
-    public boolean existsRaw(PackType type, String namespace, String path, boolean overriding) { return resolve(type, namespace, path, overriding) != null; }
+    public boolean existsRaw(PackType type, String namespace, String path, boolean overriding) {
+        if (resolve(type, namespace, path, overriding) != null) { return true; }
+        return drawable(type, path) && ContentPixelMaps.exists(namespace, path, overriding);
+    }
 
     @Nullable public InputStream openRaw(PackType type, String namespace, String path, boolean overriding) throws IOException {
         Entry entry = resolve(type, namespace, path, overriding);
-        return entry == null ? null : entry.pack().open(type, namespace, entry.actual());
+        if (entry != null) { return entry.pack().open(type, namespace, entry.actual()); }
+        if (!drawable(type, path)) { return null; }
+        byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
+        return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
+
+    private static boolean drawable(PackType type, String path) { return type == PackType.CLIENT_RESOURCES && ContentPixelMaps.couldBeDrawn(path); }
 
     public void list(PackType type, String namespace, boolean overriding, String prefix, Consumer<String> out) {
         Map<String, Entry> paths = (overriding ? mergedOverride : mergedNormal).get(type).get(namespace);
@@ -349,6 +361,7 @@ public final class PackManager {
             if (!held.getKey().startsWith(head)) { continue; }
             served.add(key(type, namespace, held.getValue().actual()));
             out.accept(held.getKey());
+            if (type == PackType.CLIENT_RESOURCES && held.getKey().endsWith(ContentPixelMaps.PNG + ContentPixelMaps.SUFFIX)) { out.accept(held.getKey().substring(0, held.getKey().length() - ContentPixelMaps.SUFFIX.length())); }
         }
     }
 
@@ -364,6 +377,11 @@ public final class PackManager {
         }
         Collections.sort(unused);
         return unused;
+    }
+
+    public boolean provides(PackType type, String namespace, String path) {
+        if (lookup(type, namespace, path) != null) { return true; }
+        return drawable(type, path) && lookup(type, namespace, path + ContentPixelMaps.SUFFIX) != null;
     }
 
     public List<RDPLPack> holders(PackType type, String namespace, String path) {
@@ -499,6 +517,7 @@ public final class PackManager {
         }
         warned.clear();
         served.clear();
+        ContentPixelMaps.forget();
         description = null;
     }
 

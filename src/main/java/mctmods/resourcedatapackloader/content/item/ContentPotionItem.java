@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.PotionItem;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ContentPotionItem extends PotionItem {
@@ -24,6 +26,8 @@ public class ContentPotionItem extends PotionItem {
         this.def = def;
         this.id = id;
     }
+
+    @Override @Nonnull public Component getName(@Nonnull ItemStack stack) { return Component.translatable(getDescriptionId()); }
 
     public List<ItemStack> stacks() {
         if (stacks == null) { stacks = resolve(); }

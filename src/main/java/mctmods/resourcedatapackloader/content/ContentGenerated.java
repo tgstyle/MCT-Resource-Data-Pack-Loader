@@ -90,6 +90,9 @@ public final class ContentGenerated {
         if (entry.variant() != null) {
             for (String tag : entry.variant().tags()) { tag(itemTags, tag, entry.id()); }
         }
+        if (def != null) {
+            for (String tag : ContentFormats.equipmentTags(def)) { tag(itemTags, tag, entry.id()); }
+        }
     }
 
     private static void models(ContentRegistry.BlockEntry entry, String namespace, String name, String type) {
@@ -140,8 +143,8 @@ public final class ContentGenerated {
                 JsonArray parts = arr(obj("when", obj("up", "true"), "apply", obj("model", main + "_post")));
                 for (int i = 0; i < 4; i++) {
                     String side = FACINGS[(i + 3) % 4];
-                    parts.add(obj("when", obj(side, "low"), "apply", rotated(main + "_side", FACING_Y[i] == 0 ? 0 : (FACING_Y[i] + 270) % 360, true)));
-                    parts.add(obj("when", obj(side, "tall"), "apply", rotated(main + "_side_tall", FACING_Y[i] == 0 ? 0 : (FACING_Y[i] + 270) % 360, true)));
+                    parts.add(obj("when", obj(side, "low"), "apply", rotated(main + "_side", i * 90, true)));
+                    parts.add(obj("when", obj(side, "tall"), "apply", rotated(main + "_side_tall", i * 90, true)));
                 }
                 blockstate(namespace, name, obj("multipart", parts));
             }
@@ -217,6 +220,10 @@ public final class ContentGenerated {
                         "facing=east", obj("model", main, "y", 90),
                         "facing=south", obj("model", main, "y", 180),
                         "facing=west", obj("model", main, "y", 270))));
+            }
+            case ContentBlockTypes.BANNER -> {
+                model(def, namespace, name, obj("parent", BLOCK + "banner"));
+                blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
             }
             case ContentBlockTypes.TORCH -> {
                 if (entry.isMain()) {
@@ -324,6 +331,7 @@ public final class ContentGenerated {
         JsonObject model = switch (type) {
             case ContentBlockTypes.FENCE, ContentBlockTypes.WALL -> obj("parent", main + "_inventory");
             case ContentBlockTypes.TRAPDOOR -> obj("parent", main + "_bottom");
+            case ContentBlockTypes.BANNER -> obj("parent", "minecraft:item/template_banner");
             case ContentBlockTypes.DOOR, ContentBlockTypes.LADDER, ContentBlockTypes.TORCH, ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE, ContentBlockTypes.PANE -> {
                 String flat = provided(PackType.CLIENT_RESOURCES, namespace, "textures/item/" + name + ".png") ? namespace + ":item/" + name : texture(namespace, name);
                 yield flat == null ? obj("parent", main) : obj("parent", ITEM_GENERATED, "textures", obj("layer0", flat));
@@ -564,7 +572,7 @@ public final class ContentGenerated {
         return found == null ? fallback : found;
     }
 
-    private static boolean provided(PackType type, String namespace, String path) { return !PackManager.get().holders(type, namespace, path).isEmpty(); }
+    private static boolean provided(PackType type, String namespace, String path) { return PackManager.get().provides(type, namespace, path); }
 
     private static void blockstate(String namespace, String name, JsonObject json) { asset(namespace, "blockstates/" + name + ".json", json); }
 

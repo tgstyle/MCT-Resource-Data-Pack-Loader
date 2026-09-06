@@ -1,5 +1,4 @@
 {
-    "rdpl.pack.source": "Resource Data Pack Loader",
     "rdpl.command.allused": "Every file in your pack has been requested at least once",
     "rdpl.command.clickhint": "Click to look up a file in this namespace",
     "rdpl.command.clientonly": "Only your own resources were reloaded",
@@ -12,6 +11,12 @@
     "rdpl.command.noroot": "Pack root is not known yet",
     "rdpl.command.overriding": " (overriding)",
     "rdpl.command.packs": "%s pack(s), lowest priority first:",
+    "rdpl.command.pixelmapfrom": "  built from %s",
+    "rdpl.command.pixelmapis": "%s is %sx%s",
+    "rdpl.command.pixelmapkey": "  %s  %s  %s pixel(s)  set by %s  %s",
+    "rdpl.command.pixelmapname": "Name it as namespace:path, such as mypack:block/panel",
+    "rdpl.command.pixelmapnone": "No pixel map at %s, or it could not be read. The log says why",
+    "rdpl.command.pixelmaprows": "  rows come from %s",
     "rdpl.command.provided": "%s is provided by '%s'%s",
     "rdpl.command.providednote": "This is what your packs offer, not what the game asked for",
     "rdpl.command.reloaded": "Rescanned %s pack(s) and reloaded resources in %s",
@@ -20,5 +25,6 @@
     "rdpl.command.shadows": "  shadows '%s'",
     "rdpl.command.unprovided": "%s is not provided by any pack, so Minecraft or a mod will serve it",
     "rdpl.command.unused": "%s file(s) have never been requested:",
-    "rdpl.command.unusednote": "Some only load when needed, such as other languages. Check the paths before deleting"
+    "rdpl.command.unusednote": "Some only load when needed, such as other languages. Check the paths before deleting",
+    "rdpl.pack.source": "Resource Data Pack Loader"
 }

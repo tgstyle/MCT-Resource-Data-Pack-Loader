@@ -8,18 +8,27 @@
         "common.IBiomeManager",
         "common.IBlockBehaviour",
         "common.IBlockStateBase",
+        "common.IEntityType",
         "common.IFireBlock",
         "common.IItem",
         "common.ILootTable",
         "common.IPotion",
         "common.IPotionBrewing",
         "common.MixinBlockStateBase",
+        "common.IMob",
         "common.MixinExplosionDamageCalculator",
+        "common.MixinLivingEntity",
+        "common.MixinMob",
         "common.MixinPackRepository",
         "common.MixinRecipeManager"
     ],
     "client": [
-        "client.IWeightedBakedModel"
+        "client.IEntityRenderers",
+        "client.IWeightedBakedModel",
+        "client.MixinHumanoidArmorLayer",
+        "client.MixinItemInHandLayer",
+        "client.MixinLivingEntityRenderer",
+        "client.MixinWorldOpenFlows"
     ],
     "server": [],
     "injectors": {

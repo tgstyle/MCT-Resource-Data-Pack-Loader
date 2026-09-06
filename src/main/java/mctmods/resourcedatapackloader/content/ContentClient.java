@@ -1,20 +1,28 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
-import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import java.util.Locale;
+import java.util.Map;
 
 public final class ContentClient {
     private static final int WHITE = 0xFFFFFF;
@@ -30,7 +38,22 @@ public final class ContentClient {
         modBus.addListener(ContentClient::setup);
         modBus.addListener(ContentClient::blockColors);
         modBus.addListener(ContentClient::itemColors);
+        modBus.addListener(ContentClient::renderers);
     }
+
+    private static void renderers(EntityRenderersEvent.RegisterRenderers event) {
+        BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.registered();
+        if (type != null) { event.registerBlockEntityRenderer(type, ContentBannerRenderer::new); }
+        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$providers();
+        for (EntityType<Mob> variant : ContentEntities.types().values()) {
+            EntityType<?> base = ContentEntities.base(variant);
+            EntityRendererProvider<?> provider = base == null ? null : providers.get(base);
+            if (provider == null) { ContentLog.LOGGER.error("Entity variant {} has no renderer to borrow from {}", variant, base); }
+            else { event.registerEntityRenderer(variant, provider(provider)); }
+        }
+    }
+
+    @SuppressWarnings("unchecked") private static EntityRendererProvider<Mob> provider(EntityRendererProvider<?> provider) { return (EntityRendererProvider<Mob>) provider; }
 
     private static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
