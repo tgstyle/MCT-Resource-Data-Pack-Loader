@@ -40,6 +40,7 @@ public final class BeardRails {
     private static final int CLEAR = 4;
     private static final int CANOPY = 14;
     private static final int BESIDE = 2;
+    private static final int TOGETHER = 16;
     private static final int LEG = 4;
     private static final int FILL_UNDER = 8;
     private static final int STRETCH = 32;
@@ -50,9 +51,35 @@ public final class BeardRails {
 
     public static int lines() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailLines", Config.worldgen.villageRailLines)); }
 
-    public static int spacing() { return Math.max(8, ContentControl.number(ContentControl.VILLAGES, "villageRailSpacing", Config.worldgen.villageRailSpacing)); }
+    public static int spacing() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailSpacing", Config.worldgen.villageRailSpacing)); }
 
-    public static int width() { return Math.max(3, ContentControl.number(ContentControl.VILLAGES, "villageRailWidth", Config.worldgen.villageRailWidth)); }
+    public static int width() { return bed() + 2 * shoulderWidth(); }
+
+    private static int askedWidth() { return Math.max(3, ContentControl.number(ContentControl.VILLAGES, "villageRailWidth", Config.worldgen.villageRailWidth)); }
+
+    private static int bed() { return Math.max(askedWidth(), (tracks() - 1) * trackGap() + 3); }
+
+    private static int shoulderWidth() {
+        if (BeardRoads.pathBlock("villageRailShoulderBlock", Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState()).getBlock() == Blocks.AIR) { return 0; }
+        return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailShoulderWidth", Config.worldgen.villageRailShoulderWidth));
+    }
+
+    private static int tracks() {
+        int asked = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailTracks", Config.worldgen.villageRailTracks));
+        if (asked > 0) { return asked; }
+        return askedWidth() >= 5 ? 2 : 1;
+    }
+
+    private static int trackGap() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailTrackGap", Config.worldgen.villageRailTrackGap)); }
+
+    private static boolean trackInBed(IBlockState track) {
+        String named = ContentControl.text(ContentControl.VILLAGES, "villageRailTrackSeat", Config.worldgen.villageRailTrackSeat).trim().toLowerCase(Locale.ROOT);
+        if (named.isEmpty() || "auto".equals(named)) { return !(track.getBlock() instanceof BlockRailBase); }
+        if (named.startsWith("i")) { return true; }
+        if (named.startsWith("o")) { return false; }
+        ContentLog.LOGGER.error("villageRailTrackSeat '{}' is not auto, on or in, so the track is seated the way its block asks for", named);
+        return !(track.getBlock() instanceof BlockRailBase);
+    }
 
     public static int climb() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailClimb", Config.worldgen.villageRailClimb)); }
 
@@ -63,6 +90,8 @@ public final class BeardRails {
     private static int powerRun() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailPowerRun", Config.worldgen.villageRailPowerRun)); }
 
     private static IBlockState tunnelBlock() { return BeardRoads.pathBlock("villageRailTunnelBlock", Config.worldgen.villageRailTunnelBlock, Blocks.AIR.getDefaultState()); }
+
+    private static int tunnelLightRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelLightRun", Config.worldgen.villageRailTunnelLightRun)); }
 
     public static int tunnelDepth() {
         if (tunnelBlock().getBlock() == Blocks.AIR) { return 0; }
@@ -88,20 +117,20 @@ public final class BeardRails {
         int wellX = (wellBox.minX + wellBox.maxX) / 2;
         int wellZ = (wellBox.minZ + wellBox.maxZ) / 2;
         int nominal = BeardSite.wellNominal(wellBox);
-        int spacing = spacing();
+        int apart = width() + spacing();
         int half = (width() - 1) / 2;
         int clear = ContentBeard.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + BeardRoads.pathFullWidth() + half + 2;
         int reach = CityGrowth.march() + tail() + STRETCH;
         List<Integer> placed = new ArrayList<>();
         for (int line = 0; line < lines; line++) {
             int side = line % 2 == 0 ? 1 : -1;
-            int candidate = side * (clear + (line / 2) * spacing + rand.nextInt(Math.max(1, spacing / 2)));
+            int candidate = side * (clear + (line / 2) * apart + rand.nextInt(Math.max(1, spacing() / 2)));
             boolean moved = true;
             while (moved) {
                 moved = false;
                 for (int other : placed) {
-                    if (Math.abs(candidate - other) >= spacing) { continue; }
-                    candidate += side * spacing;
+                    if (Math.abs(candidate - other) >= apart) { continue; }
+                    candidate += side * apart;
                     moved = true;
                 }
             }
@@ -111,7 +140,7 @@ public final class BeardRails {
                     ? new StructureBoundingBox(wellX - reach, nominal - BELOW, center - half, wellX + reach, nominal + ABOVE, center + half)
                     : new StructureBoundingBox(center - half, nominal - BELOW, wellZ - reach, center + half, nominal + ABOVE, wellZ + reach);
             components.add(new RailPiece(well, box, alongX, line));
-            ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} is laid {} at {} {}, {} wide, before any street of the village", line, wellX, wellZ, alongX ? "east to west" : "north to south", alongX ? "z" : "x", center, width());
+            ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} is laid {} at {} {}, {} wide, at least {} block(s) of ground from any other line of this village, before any street of the village", line, wellX, wellZ, alongX ? "east to west" : "north to south", alongX ? "z" : "x", center, width(), spacing());
         }
     }
 
@@ -301,7 +330,32 @@ public final class BeardRails {
     @Nullable public static BeardRoads.Grade profile(World world, RailPiece rail) {
         boolean alongX = rail.alongX();
         int rowLeast = rail.rowLeast();
-        int[] ground = BeardGrade.noiseProfile(world, alongX, rowLeast, rail.rowMost(), rail.acrossLeast(), rail.acrossMost());
+        int acrossLeast = rail.acrossLeast();
+        int acrossMost = rail.acrossMost();
+        List<StructureComponent> pieces = ContentBeard.components();
+        if (pieces != null) {
+            boolean grew = true;
+            while (grew) {
+                grew = false;
+                for (StructureComponent other : pieces) {
+                    if (other == rail || !(other instanceof RailPiece) || ((RailPiece) other).alongX() != alongX) { continue; }
+                    RailPiece met = (RailPiece) other;
+                    if (met.acrossLeast() > acrossMost + TOGETHER || met.acrossMost() < acrossLeast - TOGETHER) { continue; }
+                    if (met.acrossLeast() < acrossLeast) {
+                        acrossLeast = met.acrossLeast();
+                        grew = true;
+                    }
+                    if (met.acrossMost() > acrossMost) {
+                        acrossMost = met.acrossMost();
+                        grew = true;
+                    }
+                }
+            }
+            if (acrossLeast != rail.acrossLeast() || acrossMost != rail.acrossMost()) {
+                ContentLog.LOGGER.debug("Railway line {} at {}, {} grades with the {} block(s) of formation it stands in, {} to {} across, so every line of it lies at one level", rail.line(), rail.getBoundingBox().minX, rail.getBoundingBox().minZ, acrossMost - acrossLeast + 1, acrossLeast, acrossMost);
+            }
+        }
+        int[] ground = BeardGrade.noiseProfile(world, alongX, rowLeast, rail.rowMost(), acrossLeast, acrossMost);
         if (ground == null) { return null; }
         int rows = ground.length;
         int sea = world.getSeaLevel();
@@ -368,14 +422,22 @@ public final class BeardRails {
         boolean[] fixed = new boolean[rows];
         int crossings = level(rail, rowLeast, profile, fixed);
         if (crossings > 0) {
+            rein(profile, fixed);
+            int since = -climb;
             for (int at = 1; at < rows; at++) {
-                if (fixed[at]) { continue; }
-                profile[at] = Math.max(profile[at - 1] - 1, Math.min(profile[at - 1] + 1, profile[at]));
+                if (profile[at] == profile[at - 1]) { continue; }
+                if (at - since >= climb) {
+                    since = at;
+                    continue;
+                }
+                int back = at;
+                while (back < rows && !fixed[back] && profile[back] != profile[at - 1]) {
+                    profile[back] = profile[at - 1];
+                    back++;
+                }
+                if (back == at) { since = at; }
             }
-            for (int at = rows - 2; at >= 0; at--) {
-                if (fixed[at]) { continue; }
-                profile[at] = Math.max(profile[at + 1] - 1, Math.min(profile[at + 1] + 1, profile[at]));
-            }
+            rein(profile, fixed);
         }
         boolean[] bridged = new boolean[rows];
         for (int at = 0; at < rows; at++) { bridged[at] = ground[at] == Integer.MIN_VALUE || profile[at] > ground[at] + FILL; }
@@ -389,6 +451,17 @@ public final class BeardRails {
             ContentLog.LOGGER.debug("Railway line {} at {}, {} grades {} row(s) from y {} to y {}, climbing a block every {} row(s) at most, {} on trestle and {} in cut", rail.line(), rail.getBoundingBox().minX, rail.getBoundingBox().minZ, rows, profile[0], profile[rows - 1], climb, trestle, cut);
         }
         return new BeardRoads.Grade(profile, ground, bridged, new boolean[rows], rowLeast, 0);
+    }
+
+    private static void rein(int[] profile, boolean[] fixed) {
+        for (int at = 1; at < profile.length; at++) {
+            if (fixed[at]) { continue; }
+            profile[at] = Math.max(profile[at - 1] - 1, Math.min(profile[at - 1] + 1, profile[at]));
+        }
+        for (int at = profile.length - 2; at >= 0; at--) {
+            if (fixed[at]) { continue; }
+            profile[at] = Math.max(profile[at + 1] - 1, Math.min(profile[at + 1] + 1, profile[at]));
+        }
     }
 
     private static int level(RailPiece rail, int rowLeast, int[] profile, boolean[] fixed) {
@@ -427,17 +500,24 @@ public final class BeardRails {
         int acrossLeast = rail.acrossLeast();
         int acrossMost = rail.acrossMost();
         int center = (acrossLeast + acrossMost) / 2;
-        boolean twin = acrossMost - acrossLeast + 1 >= 5;
+        int tracks = tracks();
+        int gap = trackGap();
+        int shoulder = shoulderWidth();
         IBlockState bed = BeardRoads.pathBlock("villageRailBedBlock", Config.worldgen.villageRailBedBlock, Blocks.GRAVEL.getDefaultState());
         IBlockState tie = BeardRoads.pathBlock("villageRailTieBlock", Config.worldgen.villageRailTieBlock, Blocks.PLANKS.getDefaultState());
         IBlockState track = oriented(BeardRoads.pathBlock("villageRailBlock", Config.worldgen.villageRailBlock, Blocks.RAIL.getDefaultState()), alongX);
-        IBlockState powered = powered(oriented(Blocks.GOLDEN_RAIL.getDefaultState(), alongX));
+        IBlockState powered = powered(oriented(BeardRoads.pathBlock("villageRailPowerBlock", Config.worldgen.villageRailPowerBlock, Blocks.GOLDEN_RAIL.getDefaultState()), alongX));
+        IBlockState powerBase = BeardRoads.pathBlock("villageRailPowerBase", Config.worldgen.villageRailPowerBase, Blocks.REDSTONE_BLOCK.getDefaultState());
+        IBlockState shoulderBlock = BeardRoads.pathBlock("villageRailShoulderBlock", Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState());
+        IBlockState light = BeardRoads.pathBlock("villageRailTunnelLightBlock", Config.worldgen.villageRailTunnelLightBlock, Blocks.AIR.getDefaultState());
         IBlockState support = BeardRoads.pathBlock("villageRailSupportBlock", Config.worldgen.villageRailSupportBlock, Blocks.LOG.getDefaultState());
         IBlockState deck = BeardRoads.pathBlock("villageRailDeckBlock", Config.worldgen.villageRailDeckBlock, Blocks.PLANKS.getDefaultState());
         IBlockState barrier = BeardRoads.pathBlock("villageRailBarrierBlock", Config.worldgen.villageRailBarrierBlock, Blocks.AIR.getDefaultState());
         IBlockState lining = tunnelBlock();
         int tieRun = tieRun();
-        int powerRun = track.getBlock() == Blocks.RAIL ? powerRun() : 0;
+        boolean inBed = trackInBed(track);
+        int powerRun = powered.getBlock() == Blocks.AIR || inBed ? 0 : powerRun();
+        int lightRun = tunnelLightRun();
         int depth = tunnelDepth();
         List<StructureComponent> roads = new ArrayList<>();
         for (StructureComponent other : ContentBeard.everyone(world, ContentBeard.components())) {
@@ -460,6 +540,7 @@ public final class BeardRails {
             boolean tunnel = !trestle && grade.tunneledAt(row, depth) && !crossedAt(world, roads, alongX, row, center, level);
             boolean tieRow = Math.floorMod(row, tieRun) == 0;
             boolean powerRow = powerRun > 0 && Math.floorMod(row, powerRun) == 0;
+            boolean litRow = light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
             boolean legRow = Math.floorMod(row, LEG) == 0;
             for (int across = acrossLeast - 1; across <= acrossMost + 1; across++) {
                 int x = alongX ? row : across;
@@ -467,8 +548,9 @@ public final class BeardRails {
                 at.setPos(x, level, z);
                 if (!clip.isVecInside(at)) { continue; }
                 boolean verge = across < acrossLeast || across > acrossMost;
-                boolean onRail = twin ? Math.abs(across - center) == 1 : across == center;
+                boolean onRail = onTrack(across, center, tracks, gap);
                 boolean edge = across == acrossLeast || across == acrossMost;
+                boolean onShoulder = shoulder > 0 && (across < acrossLeast + shoulder || across > acrossMost - shoulder);
                 if (verge) {
                     if (trestle) { continue; }
                     if (tunnel) { lined += BeardRoads.tunnelWall(world, rail, at, x, z, level, lining); }
@@ -480,27 +562,28 @@ public final class BeardRails {
                     if (onRail) {
                         int atRoad = grade.at(alongX ? (road.getBoundingBox().minX + road.getBoundingBox().maxX) / 2 : (road.getBoundingBox().minZ + road.getBoundingBox().maxZ) / 2);
                         if (atRoad == Integer.MIN_VALUE) { atRoad = level; }
-                        BeardKeep.letGo(x, atRoad + 1, z);
-                        set(world, at, x, atRoad + 1, z, track);
+                        int seat = inBed ? atRoad : atRoad + 1;
+                        BeardKeep.letGo(x, seat, z);
+                        set(world, at, x, seat, z, track);
                         crossed++;
                     }
                     continue;
                 }
                 if (trestle) {
                     clearAbove(world, at, x, z, level + 1, level + CLEAR, within, seeds);
-                    laid += set(world, at, x, level, z, deck);
+                    laid += set(world, at, x, level, z, onRail && inBed ? track : deck);
                     if (edge && legRow) { trestled += BeardRoads.piling(world, alongX, row, across, level - 1, support, at); }
-                    if (onRail) { set(world, at, x, level + 1, z, track); }
+                    if (onRail && !inBed) { set(world, at, x, level + 1, z, track); }
                     else if (edge && barrier.getBlock() != Blocks.AIR) { set(world, at, x, level + 1, z, barrier); }
                     continue;
                 }
                 BlockPos top = GroundLevel.inWindow(world, new BlockPos(x, 64, z)).down();
                 clearAbove(world, at, x, z, level + 1, tunnel ? level + CLEAR : Math.max(level + CLEAR, top.getY() + 2), within, seeds);
                 BeardBlocks.fillUnder(world, at, x, z, level - 1, level - FILL_UNDER);
-                IBlockState base = powerRow && onRail ? Blocks.REDSTONE_BLOCK.getDefaultState() : tieRow ? tie : bed;
+                IBlockState base = onRail && inBed ? track : powerRow && onRail ? powerBase : onShoulder ? shoulderBlock : tieRow ? tie : bed;
                 laid += set(world, at, x, level, z, base);
-                if (onRail) { set(world, at, x, level + 1, z, powerRow ? powered : track); }
-                if (tunnel) { lined += BeardRoads.roofCell(world, at, x, z, level + CLEAR + 1, lining); }
+                if (onRail && !inBed) { set(world, at, x, level + 1, z, powerRow ? powered : track); }
+                if (tunnel) { lined += BeardRoads.roofCell(world, at, x, z, level + CLEAR + 1, litRow && across == center ? light : lining); }
             }
         }
         int felled = seeds.isEmpty() ? 0 : ContentBeard.fellTrees(world, seeds, within, at);
@@ -540,6 +623,13 @@ public final class BeardRails {
             }
         }
         return seeds.isEmpty() ? 0 : ContentBeard.fellTrees(world, seeds, within, at);
+    }
+
+    private static boolean onTrack(int across, int center, int tracks, int gap) {
+        if (tracks <= 1) { return across == center; }
+        int first = center - (tracks - 1) * gap / 2;
+        for (int i = 0; i < tracks; i++) { if (across == first + i * gap) { return true; } }
+        return false;
     }
 
     @Nullable private static StructureComponent roadAt(List<StructureComponent> roads, int x, int z) {

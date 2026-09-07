@@ -4056,9 +4056,18 @@ Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kre
     "villageRailDirection": "ew",
     "villageRailWidth": 3,
     "villageRailBlock": "minecraft:rail",
+    "villageRailTrackSeat": "auto",
     "villageRailBedBlock": "minecraft:gravel",
     "villageRailTieBlock": "minecraft:planks:1",
     "villageRailTieRun": 2,
+    "villageRailTracks": 2,
+    "villageRailTrackGap": 2,
+    "villageRailShoulderBlock": "minecraft:gravel",
+    "villageRailShoulderWidth": 1,
+    "villageRailPowerBlock": "minecraft:golden_rail",
+    "villageRailPowerBase": "minecraft:redstone_block",
+    "villageRailTunnelLightBlock": "minecraft:glowstone",
+    "villageRailTunnelLightRun": 8,
     "villageRailPowerRun": 16,
     "villageRailSupportBlock": "minecraft:log",
     "villageRailDeckBlock": "minecraft:planks",
@@ -4076,10 +4085,11 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
 | `villageRailLines` | Zahl | `0` | Wie viele Linien durch jedes Dorf laufen. `0` legt keine |
-| `villageRailSpacing` | Zahl | `48` | Der geringste Abstand zweier Linien eines Dorfes, Mitte zu Mitte |
+| `villageRailSpacing` | Zahl | `48` | Wie viele Blöcke freier Boden zwischen dem Bett einer Linie und dem der nächsten desselben Dorfes mindestens liegen. `1` legt sie einen Block auseinander, so baut ein Pack einen Bahnhof aus parallelen Linien |
 | `villageRailDirection` | Text | `any` | In welche Richtung die Linien laufen: `ew` von Ost nach West, `ns` von Nord nach Süd, `any` würfelt es je Dorf. `e`, `w`, `n` und `s` werden genauso gelesen |
-| `villageRailWidth` | Zahl | `3` | Wie breit das Gleisbett ist. `3` trägt ein Gleis in der Mitte, `5` oder mehr zwei |
+| `villageRailWidth` | Zahl | `3` | Wie breit das Gleisbett mindestens ist. `3` trägt ein Gleis in der Mitte und `5` zwei; ein Bett, dem mehr Gleise abverlangt werden, als daraufpassen, wird breiter, um sie zu tragen |
 | `villageRailBlock` | Block | leer | Das Gleis. Leer legt Vanilla-Schienen, auf denen Loren fahren; jeder andere Block wird gelegt, wie er ist |
+| `villageRailTrackSeat` | `auto`, `on` oder `in` | `auto` | Wo das Gleis sitzt. `auto` setzt ein Schienenblock auf das Bett und jeden anderen Block bündig in die Bettoberfläche; `on` legt es immer auf das Bett; `in` setzt es immer hinein. Ein ins Bett gesetztes Gleis ist der Weg, mit dem ein Pack einen Bahn-Look aus Eisenblöcken oder Stufen statt aus Loren-Schienen legt, und ein Bahnübergang läuft dann bündig durch das Pflaster |
 | `villageRailBedBlock` | Block | leer | Das Bett unter dem Gleis. Leer legt Kies |
 | `villageRailTieBlock` | Block | leer | Die Schwelle, die alle `villageRailTieRun` Reihen quer über das Bett gelegt wird. Leer legt Bretter |
 | `villageRailTieRun` | Zahl | `2` | Wie viele Reihen die Schwellen auseinanderliegen |
@@ -4091,8 +4101,16 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageRailTunnelDepth` | Zahl | `6` | Wie viel Boden über dem Bett stehen muss, ehe ein Abschnitt gebohrt statt aufgeschnitten wird. Braucht `villageRailTunnelBlock` |
 | `villageRailClimb` | Zahl | `8` | Wie viele Reihen die Linie eben läuft für jeden Block, den sie steigt oder fällt. `1` legt sie so steil wie eine Straße an |
 | `villageRailTail` | Zahl | `48` | Wie weit die Linie an beiden Enden über das letzte Teil des Dorfes hinausläuft |
+| `villageRailTracks` | Zahl | `0` | Wie viele Gleise das eine Bett trägt, nebeneinander und `villageRailTrackGap` auseinander. **Das Bett wird breiter, um sie alle zu tragen**, drei Gleise teilen sich also ein Gleisbett, statt zu drei Linien zu werden. `0` legt ein Gleis auf ein Bett unter fünf Blöcken Breite und zwei auf ein breiteres |
+| `villageRailTrackGap` | Zahl | `2` | Wie viele Blöcke die Gleise auf einem Bett auseinanderliegen, Mitte zu Mitte. `2`, das Mindeste, lässt einen Block Bett zwischen ihnen, und genau das hält sie davon ab, ineinander zu schwenken, wie berührende Schienen es tun |
+| `villageRailShoulderBlock` | Block | leer | Kleidet die äußersten Spalten des Bettes, ein Wartungspfad neben dem Gleis und die Antwort der Eisenbahn auf einen Gehweg. Leer legt keinen |
+| `villageRailShoulderWidth` | Zahl | `1` | Wie viele Spalten breit diese Schulter je Seite ist, außerhalb von `villageRailWidth` hinzugefügt |
+| `villageRailPowerBlock` | Block | leer | Das Antriebsgleis, das alle `villageRailPowerRun` Reihen in die Linie gesetzt wird. Leer nimmt eine Vanilla-Antriebsschiene; ein Block, der kein Gleis ist, wird einfach dorthin gelegt |
+| `villageRailPowerBase` | Block | leer | Was unter einem Antriebsgleis liegt, um es zu speisen. Leer nimmt einen Redstone-Block |
+| `villageRailTunnelLightBlock` | Block | leer | Ein Licht, das in die Decke eines Eisenbahntunnels entlang seiner Mittellinie gesetzt wird. Leer setzt keines |
+| `villageRailTunnelLightRun` | Zahl | `8` | Wie viele Blöcke diese Tunnellichter auseinanderstehen, an Weltkoordinaten verankert, damit die Teile übereinstimmen |
 
-**Wo eine Linie verläuft.** Die Linien laufen parallel, auf der Achse, die `villageRailDirection` nennt, und werden vom Brunnenplatz aus abwechselnd verteilt, erst auf die eine Seite, dann auf die andere, jede mindestens `villageRailSpacing` von jeder anderen entfernt. Eine Linie führt nie durch den Platz oder ein Grundstück: Sie wird vor der ersten Straße gelegt, sodass jede Straße und jedes Haus des Dorfes um sie herum gesetzt wird, und sie wird auf das gewachsene Dorf plus `villageRailTail` an beiden Enden zurechtgeschnitten, sobald das Dorf angelegt ist.
+**Wo eine Linie verläuft.** Die Linien laufen parallel, auf der Achse, die `villageRailDirection` nennt, und werden vom Brunnenplatz aus abwechselnd verteilt, erst auf die eine Seite, dann auf die andere, jede mit mindestens `villageRailSpacing` Blöcken Boden zwischen ihrem Bett und dem der nächsten Linie. Eine Linie führt nie durch den Platz oder ein Grundstück: Sie wird vor der ersten Straße gelegt, sodass jede Straße und jedes Haus des Dorfes um sie herum gesetzt wird, und sie wird auf das gewachsene Dorf plus `villageRailTail` an beiden Enden zurechtgeschnitten, sobald das Dorf angelegt ist.
 
 **Gefälle.** Eine Eisenbahn steigt nicht wie eine Straße. Ihr Bett folgt dem über eine lange Strecke geglätteten Boden und ändert die Höhe höchstens alle `villageRailClimb` Reihen um einen Block. Wo der Boden um mehr als drei Blöcke abfällt, läuft die Linie auf einer Trestle-Brücke, `villageRailDeckBlock` auf Pfosten aus `villageRailSupportBlock` alle vier Reihen, über Wasser genauso wie über eine Schlucht. Wo der Boden ansteigt, wird die Linie aufgeschnitten oder mit `villageRailTunnelBlock` durchbohrt, sobald der Boden über dem Bett auf zwölf Reihen oder mehr `villageRailTunnelDepth` tief steht. Über dem Bett bleiben entlang der ganzen Linie vier Blöcke frei.
 

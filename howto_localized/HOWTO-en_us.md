@@ -4056,9 +4056,18 @@ Which design a junction gets is worked out from the world seed and the junction'
     "villageRailDirection": "ew",
     "villageRailWidth": 3,
     "villageRailBlock": "minecraft:rail",
+    "villageRailTrackSeat": "auto",
     "villageRailBedBlock": "minecraft:gravel",
     "villageRailTieBlock": "minecraft:planks:1",
     "villageRailTieRun": 2,
+    "villageRailTracks": 2,
+    "villageRailTrackGap": 2,
+    "villageRailShoulderBlock": "minecraft:gravel",
+    "villageRailShoulderWidth": 1,
+    "villageRailPowerBlock": "minecraft:golden_rail",
+    "villageRailPowerBase": "minecraft:redstone_block",
+    "villageRailTunnelLightBlock": "minecraft:glowstone",
+    "villageRailTunnelLightRun": 8,
     "villageRailPowerRun": 16,
     "villageRailSupportBlock": "minecraft:log",
     "villageRailDeckBlock": "minecraft:planks",
@@ -4076,10 +4085,11 @@ A railway line is a straight run of track that crosses the whole village on one 
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `villageRailLines` | number | `0` | How many lines run through each village. `0` lays none |
-| `villageRailSpacing` | number | `48` | The fewest blocks between two lines of one village, center to center |
+| `villageRailSpacing` | number | `48` | The fewest blocks of clear ground between one line's bed and the next of the same village. `1` lays them a block apart, which is how a pack builds a yard of parallel lines |
 | `villageRailDirection` | text | `any` | Which way the lines run: `ew` east to west, `ns` north to south, `any` rolls it per village. `e`, `w`, `n` and `s` are read the same way |
-| `villageRailWidth` | number | `3` | How wide the bed is. `3` carries one track down the middle, `5` or more carries two |
+| `villageRailWidth` | number | `3` | The least the railbed is. `3` carries one track down the middle and `5` carries two; a bed asked for more tracks than that fits widens to hold them |
 | `villageRailBlock` | block | empty | The track. Empty lays vanilla rails, which minecarts ride; any other block is laid as it stands |
+| `villageRailTrackSeat` | `auto`, `on` or `in` | `auto` | Where the track sits. `auto` seats a rail block on the bed and sets any other block flush into the bed surface; `on` always lays it on the bed; `in` always sets it into the bed. A track set into the bed is how a pack lays a rail look out of iron blocks or slabs rather than minecart rails, and a level crossing then runs flush through the pavement |
 | `villageRailBedBlock` | block | empty | The bed under the track. Empty lays gravel |
 | `villageRailTieBlock` | block | empty | The sleeper laid across the bed every `villageRailTieRun` rows. Empty lays planks |
 | `villageRailTieRun` | number | `2` | How many rows apart the sleepers lie |
@@ -4091,8 +4101,16 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageRailTunnelDepth` | number | `6` | How much ground must stand over the bed before a stretch is bored rather than cut. Needs `villageRailTunnelBlock` |
 | `villageRailClimb` | number | `8` | How many rows the line runs level for every block it climbs or falls. `1` grades it as steep as a road |
 | `villageRailTail` | number | `48` | How far the line runs on past the last piece of the village at either end |
+| `villageRailTracks` | number | `0` | How many tracks the one bed carries, side by side and `villageRailTrackGap` apart. **The bed widens to hold them all**, so three tracks share one railbed rather than becoming three lines. `0` lays one track on a bed under five wide and two on a wider one |
+| `villageRailTrackGap` | number | `2` | How many blocks apart the tracks on a bed sit, center to center. `2`, the least allowed, leaves one block of bed between them, which is what keeps them from curving into one another the way touching rails do |
+| `villageRailShoulderBlock` | block | empty | Dresses the outermost columns of the bed, a maintenance path beside the track and the railway's answer to a road sidewalk. Empty lays none |
+| `villageRailShoulderWidth` | number | `1` | How many columns wide that shoulder is on each side, added outside `villageRailWidth` |
+| `villageRailPowerBlock` | block | empty | The powered track set into the line every `villageRailPowerRun` rows. Empty uses a vanilla powered rail; a block that is not a rail is simply laid there |
+| `villageRailPowerBase` | block | empty | What sits under a powered track to feed it. Empty uses a redstone block |
+| `villageRailTunnelLightBlock` | block | empty | A light set into a railway tunnel's roof down its center line. Empty lights none |
+| `villageRailTunnelLightRun` | number | `8` | How many blocks apart those tunnel lights sit, anchored to world coordinates so pieces agree |
 
-**Where a line goes.** The lines run parallel, on the axis `villageRailDirection` names, and are spaced out from the well plaza in turn, first one side then the other, each at least `villageRailSpacing` from every other. A line never passes through the plaza or a plot: it is laid before the first street, so every street and house of the village is placed around it, and it is trimmed to the grown village plus `villageRailTail` at either end once the village is laid out.
+**Where a line goes.** The lines run parallel, on the axis `villageRailDirection` names, and are spaced out from the well plaza in turn, first one side then the other, each keeping at least `villageRailSpacing` blocks of ground between its bed and the next line's. A line never passes through the plaza or a plot: it is laid before the first street, so every street and house of the village is placed around it, and it is trimmed to the grown village plus `villageRailTail` at either end once the village is laid out.
 
 **Grade.** A railway does not climb like a road. Its bed follows the ground smoothed out over a long run and changes level by one block at most every `villageRailClimb` rows. Where the ground drops away by more than three blocks the line runs on a trestle, `villageRailDeckBlock` on `villageRailSupportBlock` posts every four rows, over water as much as over a gully. Where the ground rises the line is cut open, or bored through with `villageRailTunnelBlock` once the ground over the bed stands `villageRailTunnelDepth` deep for twelve rows or more. Four blocks are kept clear over the bed along the whole line.
 
