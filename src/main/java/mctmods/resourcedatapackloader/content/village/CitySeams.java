@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentSites;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
@@ -385,6 +386,10 @@ public final class CitySeams {
         for (StructureComponent held : everyone) {
             if (held == piece || !held.getBoundingBox().intersectsWith(strip.minX, strip.minZ, strip.maxX, strip.maxZ)) { continue; }
             if (held instanceof StructureVillagePieces.Well) { return null; }
+            if (held instanceof RailPiece) {
+                if (own.contains(held) && BeardRails.crosses(held.getBoundingBox(), strip)) { continue; }
+                return null;
+            }
             if (held instanceof StructureVillagePieces.Path) {
                 StructureBoundingBox met = held.getBoundingBox();
                 if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(held))) { continue; }
@@ -495,7 +500,7 @@ public final class CitySeams {
             List<StructureComponent> fronting = new ArrayList<>();
             boolean standing = false;
             for (StructureComponent other : theirs) {
-                if (other == piece || other instanceof StructureVillagePieces.Path || !other.getBoundingBox().intersectsWith(bulb.minX - 1, bulb.minZ - 1, bulb.maxX + 1, bulb.maxZ + 1)) { continue; }
+                if (other == piece || other instanceof StructureVillagePieces.Path || other instanceof RailPiece || !other.getBoundingBox().intersectsWith(bulb.minX - 1, bulb.minZ - 1, bulb.maxX + 1, bulb.maxZ + 1)) { continue; }
                 if (built(world, other.getBoundingBox())) {
                     standing = true;
                     break;

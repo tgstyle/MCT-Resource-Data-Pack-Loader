@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -47,6 +48,7 @@ import java.util.List;
         CityGrowth.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
         CityGrowth.alleyFill(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand());
         CityGrowth.roadsFirst(cir.getReturnValue());
+        BeardRails.fit(world, cir.getReturnValue());
         BeardSite.gradeRoads(world, cir.getReturnValue(), "once every road of the village is laid");
         ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
         rdpl$sizeUp(cir.getReturnValue());

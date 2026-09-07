@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.ContentVillagePiece;
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGround;
@@ -15,6 +16,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardOpen;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlaza;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
@@ -177,6 +179,11 @@ public final class ContentBeard {
                     StructureBoundingBox box = piece.getBoundingBox();
                     int near = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece) ? 6 : 2;
                     if (box.minX - near > clip.maxX || box.maxX + near < clip.minX || box.minZ - near > clip.maxZ || box.maxZ + near < clip.minZ) { continue; }
+                    if (BeardRails.isRail(piece)) {
+                        int opened = BeardRails.open((RailPiece) piece, event.getWorld(), start, clip);
+                        if (opened > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) whole that had grown over railway line {} at {}, {} after it was laid", opened, ((RailPiece) piece).line(), box.minX, box.minZ); }
+                        continue;
+                    }
                     int felled = fellAround(event.getWorld(), start, piece, box, clip, at, false);
                     if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) crowding {} at {}, {}", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
                     if (piece instanceof StructureVillagePieces.Path) {
@@ -234,6 +241,20 @@ public final class ContentBeard {
             }
         }
         Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, !bare && !bulb, top);
+        felled += fellTrees(world, seeds, within, at);
+        for (BlockPos leaf : canopy) {
+            IBlockState held = world.getBlockState(leaf);
+            if (held.getMaterial() != Material.LEAVES) { continue; }
+            if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
+            if (sustained(world, leaf, within)) { continue; }
+            at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
+            felled += BeardBlocks.clearAt(world, at);
+        }
+        return felled;
+    }
+
+    public static int fellTrees(World world, List<BlockPos> seeds, Predicate<BlockPos> within, BlockPos.MutableBlockPos at) {
+        int felled = 0;
         Set<BlockPos> felledLogs = new HashSet<>();
         for (BlockPos seed : seeds) {
             if (felledLogs.contains(seed)) { continue; }
@@ -262,14 +283,6 @@ public final class ContentBeard {
                     }
                 }
             }
-        }
-        for (BlockPos leaf : canopy) {
-            IBlockState held = world.getBlockState(leaf);
-            if (held.getMaterial() != Material.LEAVES) { continue; }
-            if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
-            if (sustained(world, leaf, within)) { continue; }
-            at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
-            felled += BeardBlocks.clearAt(world, at);
         }
         return felled;
     }
@@ -534,7 +547,7 @@ public final class ContentBeard {
             settleFeature(start, piece, world, clip, "mansions");
             return;
         }
-        if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path) { return; }
+        if (!(piece instanceof StructureVillagePieces.Village) || piece instanceof StructureVillagePieces.Path || BeardRails.isRail(piece)) { return; }
         BeardOpen.around(start, piece, world, clip);
     }
 
@@ -945,6 +958,12 @@ public final class ContentBeard {
             StructureBoundingBox met = held.getBoundingBox();
             if (!met.intersectsWith(minX, minZ, maxX, maxZ)) { continue; }
             if (held instanceof StructureVillagePieces.Well) { return null; }
+            if (BeardRails.isRail(held)) {
+                StructureBoundingBox road = piece.getBoundingBox();
+                StructureBoundingBox whole = new StructureBoundingBox(Math.min(road.minX, minX), 0, Math.min(road.minZ, minZ), Math.max(road.maxX, maxX), 0, Math.max(road.maxZ, maxZ));
+                if (own.contains(held) && BeardRails.crosses(met, whole)) { continue; }
+                return null;
+            }
             if (held instanceof StructureVillagePieces.Path) {
                 if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(held))) { continue; }
                 return null;
@@ -1086,7 +1105,7 @@ public final class ContentBeard {
         int[] backRows = cornerRows(box, alongX, met, true, abutting);
         if (backRows != null && plazaHeld(pieces, box, alongX, backRows[0], backRows[1])) { backRows = null; }
         if (backRows != null) {
-            if (free(pieces, piece, box, alongX, backRows[0], backRows[1]) && beside(pieces, strip(box, alongX, backRows[0], backRows[1]), alongX, piece) == null) {
+            if (free(pieces, piece, box, alongX, backRows[0], backRows[1]) && beside(pieces, strip(box, alongX, backRows[0], backRows[1]), alongX, piece) == null && !taken(pieces, strip(box, alongX, backRows[0], backRows[1]))) {
                 if (alongX) { box.minX = backRows[0]; }
                 else { box.minZ = backRows[0]; }
                 grew = true;
@@ -1097,7 +1116,7 @@ public final class ContentBeard {
         int[] outRows = cornerRows(box, alongX, met, false, abutting);
         if (outRows != null && plazaHeld(pieces, box, alongX, outRows[0], outRows[1])) { outRows = null; }
         if (outRows != null) {
-            if (free(pieces, piece, box, alongX, outRows[0], outRows[1]) && beside(pieces, strip(box, alongX, outRows[0], outRows[1]), alongX, piece) == null) {
+            if (free(pieces, piece, box, alongX, outRows[0], outRows[1]) && beside(pieces, strip(box, alongX, outRows[0], outRows[1]), alongX, piece) == null && !taken(pieces, strip(box, alongX, outRows[0], outRows[1]))) {
                 if (alongX) { box.maxX = outRows[1]; }
                 else { box.maxZ = outRows[1]; }
                 grew = true;

@@ -131,6 +131,8 @@ public final class BeardRoads {
 
         public int rows() { return profile.length; }
 
+        public int start() { return start; }
+
         public int deckAt(int row) { return deck[MathHelper.clamp(row - start, 0, deck.length - 1)]; }
 
         public boolean bridgedAt(int row) { return row >= start && row < start + bridged.length && bridged[row - start]; }
@@ -243,6 +245,8 @@ public final class BeardRoads {
             roadApron(world, piece, alongX, rowLeast, rowMost, acrossLeast, acrossMost, profile, ground, pinned, footed, plaza, bridged, square);
             boolean[] aproned = plaza.clone();
             clampToWell(world, alongX, rowLeast, acrossLeast, acrossMost, profile, plaza);
+            int railed = BeardRails.hold(world, piece, alongX, rowLeast, acrossLeast, acrossMost, profile, ground, plaza);
+            if (railed > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Held {} row(s) of the road at {}, {} to the level of the railway line it crosses", railed, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             for (int i = 0; i < pinned.length; i++) { if (plaza[i]) { pinned[i] = true; } }
             frontHold(piece, alongX, rowLeast, acrossLeast, acrossMost, profile, pinned);
             boolean[] keep = new boolean[profile.length];
@@ -658,7 +662,7 @@ public final class BeardRoads {
                     IBlockState above = world.getBlockState(at);
                     Block up = above.getBlock();
                     if (up == Blocks.AIR) { continue; }
-                    if (BeardKeep.holds(x, y, z)) { continue; }
+                    if (BeardKeep.holds(x, y, z) || BeardRails.railBlock(above)) { continue; }
                     if (above.getMaterial().isLiquid()) { break; }
                     if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
                         BeardBlocks.note(world, at, "Paving the road");
@@ -1048,7 +1052,7 @@ public final class BeardRoads {
         return filled;
     }
 
-    private static int tunnelWall(World world, StructureComponent piece, BlockPos.MutableBlockPos at, int x, int z, int level, IBlockState lining) {
+    static int tunnelWall(World world, StructureComponent piece, BlockPos.MutableBlockPos at, int x, int z, int level, IBlockState lining) {
         if (insidePlaza(x, z)) { return 0; }
         StructureStart holder = ContentBeard.current();
         if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }
@@ -1093,7 +1097,7 @@ public final class BeardRoads {
         return lit;
     }
 
-    private static int roofCell(World world, BlockPos.MutableBlockPos at, int x, int z, int y, IBlockState block) {
+    static int roofCell(World world, BlockPos.MutableBlockPos at, int x, int z, int y, IBlockState block) {
         if (BeardKeep.holds(x, y, z)) { return 0; }
         at.setPos(x, y, z);
         world.setBlockState(at, block, 2);
@@ -1116,7 +1120,7 @@ public final class BeardRoads {
 
     public static boolean tunnelAt(@Nullable Grade grade, int row) { return grade != null && grade.tunneledAt(row, tunnelDepth()); }
 
-    private static int vergeFill(World world, StructureComponent piece, int x, int z, int level, BlockPos.MutableBlockPos at) {
+    static int vergeFill(World world, StructureComponent piece, int x, int z, int level, BlockPos.MutableBlockPos at) {
         if (insidePlaza(x, z)) { return 0; }
         StructureStart holder = ContentBeard.current();
         if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }
@@ -1238,7 +1242,7 @@ public final class BeardRoads {
         return false;
     }
 
-    private static int piling(World world, boolean alongX, int row, int across, int fromY, IBlockState support, BlockPos.MutableBlockPos at) {
+    static int piling(World world, boolean alongX, int row, int across, int fromY, IBlockState support, BlockPos.MutableBlockPos at) {
         int laid = 0;
         for (int y = fromY; y >= fromY - PILING_REACH && y >= 1; y--) {
             at.setPos(alongX ? row : across, y, alongX ? across : row);
@@ -1949,7 +1953,7 @@ public final class BeardRoads {
         if (pieces == null) { return; }
         int rowMost = start + profile.length - 1;
         for (StructureComponent other : pieces) {
-            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
+            if (other == piece || other instanceof StructureVillagePieces.Path || BeardRails.isRail(other)) { continue; }
             StructureBoundingBox front = other.getBoundingBox();
             if ((alongX ? front.maxZ : front.maxX) < acrossLeast - 3 || (alongX ? front.minZ : front.minX) > acrossMost + 3) { continue; }
             int otherLeast = alongX ? front.minX : front.minZ;

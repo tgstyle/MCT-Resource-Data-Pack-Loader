@@ -325,7 +325,7 @@ public final class BeardSite {
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
         for (StructureComponent other : pieces) {
-            if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
+            if (other == piece || other instanceof StructureVillagePieces.Path || BeardRails.isRail(other)) { continue; }
             StructureBoundingBox front = other.getBoundingBox();
             if ((alongX ? front.maxZ : front.maxX) < acrossLeast - 3 || (alongX ? front.minZ : front.minX) > acrossMost + 3) { continue; }
             int least = alongX ? box.minX : box.minZ;

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenVillage;
@@ -32,7 +33,10 @@ import java.util.List;
 
     @Redirect(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;buildComponent(Lnet/minecraft/world/gen/structure/StructureComponent;Ljava/util/List;Ljava/util/Random;)V"))
     private void rdpl$sizeThenBuild(StructureVillagePieces.Start start, StructureComponent componentIn, List<StructureComponent> listIn, Random building, World worldIn, Random rand, int x, int z, int size) {
-        if (ContentBeard.wanted()) { ContentVillages.sizeBlock(worldIn, start); }
+        if (ContentBeard.wanted()) {
+            ContentVillages.sizeBlock(worldIn, start);
+            BeardRails.found(worldIn, StructureStart.class.cast(this), start, rand);
+        }
         start.buildComponent(componentIn, listIn, building);
     }
 

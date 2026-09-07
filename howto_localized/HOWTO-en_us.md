@@ -3953,6 +3953,64 @@ Five characters are roles rather than blocks, so they follow whatever the road i
 
 Which design a junction gets is worked out from the world seed and the junction's own position, so the same world always paints the same junctions. A design is painted only where three or more streets meet, at a junction or at a well's plaza; two streets meeting render as a plain elbow.
 
+#### Village railways
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageRailLines": 1,
+    "villageRailSpacing": 48,
+    "villageRailDirection": "ew",
+    "villageRailWidth": 3,
+    "villageRailBlock": "minecraft:rail",
+    "villageRailBedBlock": "minecraft:gravel",
+    "villageRailTieBlock": "minecraft:planks:1",
+    "villageRailTieRun": 2,
+    "villageRailPowerRun": 16,
+    "villageRailSupportBlock": "minecraft:log",
+    "villageRailDeckBlock": "minecraft:planks",
+    "villageRailBarrierBlock": "minecraft:oak_fence",
+    "villageRailTunnelBlock": "minecraft:stonebrick",
+    "villageRailTunnelDepth": 6,
+    "villageRailClimb": 8,
+    "villageRailTail": 48
+  }
+}
+```
+
+A railway line is a straight run of track that crosses the whole village on one axis and runs on past its last piece at either end. It is laid before the first street, so the town grows around it: no house stands on the line, a street may only cross it straight through, and nothing branches from it. Like the roads it needs `terrainAdaptation`. `villageRailLines` is `0` by default, which lays none and leaves a village exactly as it was.
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `villageRailLines` | number | `0` | How many lines run through each village. `0` lays none |
+| `villageRailSpacing` | number | `48` | The fewest blocks between two lines of one village, center to center |
+| `villageRailDirection` | text | `any` | Which way the lines run: `ew` east to west, `ns` north to south, `any` rolls it per village. `e`, `w`, `n` and `s` are read the same way |
+| `villageRailWidth` | number | `3` | How wide the bed is. `3` carries one track down the middle, `5` or more carries two |
+| `villageRailBlock` | block | empty | The track. Empty lays vanilla rails, which minecarts ride; any other block is laid as it stands |
+| `villageRailBedBlock` | block | empty | The bed under the track. Empty lays gravel |
+| `villageRailTieBlock` | block | empty | The sleeper laid across the bed every `villageRailTieRun` rows. Empty lays planks |
+| `villageRailTieRun` | number | `2` | How many rows apart the sleepers lie |
+| `villageRailPowerRun` | number | `0` | Every so many rows a powered rail over a redstone block is set into a vanilla rail track, so a cart keeps rolling. `0` powers none, and any track but vanilla rails ignores it |
+| `villageRailSupportBlock` | block | empty | The posts under a trestle. Empty uses logs |
+| `villageRailDeckBlock` | block | empty | The deck a trestle carries the bed on. Empty uses planks |
+| `villageRailBarrierBlock` | block | empty | Barriers along both edges of a trestle deck. Empty stands none |
+| `villageRailTunnelBlock` | block | empty | Lines the walls and roof where the line bores through a hill. Empty bores no tunnels and cuts every hill open |
+| `villageRailTunnelDepth` | number | `6` | How much ground must stand over the bed before a stretch is bored rather than cut. Needs `villageRailTunnelBlock` |
+| `villageRailClimb` | number | `8` | How many rows the line runs level for every block it climbs or falls. `1` grades it as steep as a road |
+| `villageRailTail` | number | `48` | How far the line runs on past the last piece of the village at either end |
+
+**Where a line goes.** The lines run parallel, on the axis `villageRailDirection` names, and are spaced out from the well plaza in turn, first one side then the other, each at least `villageRailSpacing` from every other. A line never passes through the plaza or a plot: it is laid before the first street, so every street and house of the village is placed around it, and it is trimmed to the grown village plus `villageRailTail` at either end once the village is laid out.
+
+**Grade.** A railway does not climb like a road. Its bed follows the ground smoothed out over a long run and changes level by one block at most every `villageRailClimb` rows. Where the ground drops away by more than three blocks the line runs on a trestle, `villageRailDeckBlock` on `villageRailSupportBlock` posts every four rows, over water as much as over a gully. Where the ground rises the line is cut open, or bored through with `villageRailTunnelBlock` once the ground over the bed stands `villageRailTunnelDepth` deep for twelve rows or more. Four blocks are kept clear over the bed along the whole line.
+
+**Crossings.** A street crosses a line straight through and runs clear past both edges of the bed by seven blocks or more. A street that would end on the line or within those seven blocks is carried on across it when its grade allows, and otherwise stopped seven blocks short of the bed; a street that would start on the line or run along it is refused. At a crossing the street is graded to the line, never the other way around, and ramps to that level at its own walkable slope on either side. The pavement keeps the surface and the track runs across it one block up, so a cart crosses the road and a villager crosses the track. A line bored through a hill is not crossed at all: the street passes over the tunnel.
+
+**Doorsteps.** With `terrainAdaptation` on, no village building lays a stair block outside its own box: the doorstep stairs vanilla sets before a door are left out, since the road frontage and the plot apron carry the ground to the door themselves.
+
+**Track.** With `villageRailBlock` empty the track is vanilla rail turned along the line, and `villageRailPowerRun` sets a powered rail over a redstone block every so many rows so a cart rides the whole line. A pack that wants iron blocks, bars or anything else names them instead, and the line is dressed with that block as it is.
+
 #### Village decoration
 
 `<namespace>/worldtemplates/*.json`

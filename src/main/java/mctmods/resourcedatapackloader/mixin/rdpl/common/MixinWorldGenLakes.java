@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
@@ -39,7 +40,7 @@ import java.util.Random;
         for (StructureStart start : ContentStructureSearch.villageStarts(worldIn)) {
             if (!start.getBoundingBox().intersectsWith(least, leastZ, most, mostZ)) { continue; }
             for (StructureComponent piece : start.getComponents()) {
-                if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
+                if (!(piece instanceof StructureVillagePieces.Path) && !(piece instanceof RailPiece)) { continue; }
                 StructureBoundingBox box = piece.getBoundingBox();
                 if (position.getY() + 8 < box.minY - 12 || position.getY() - 4 > box.maxY + 12) { continue; }
                 if (box.intersectsWith(least, leastZ, most, mostZ)) {

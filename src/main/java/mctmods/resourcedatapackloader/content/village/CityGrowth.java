@@ -343,7 +343,7 @@ public final class CityGrowth {
         List<StructureComponent> plots = new ArrayList<>();
         for (StructureComponent other : held.getComponents()) {
             if (other == piece || !other.getBoundingBox().intersectsWith(bulb.minX, bulb.minZ, bulb.maxX, bulb.maxZ)) { continue; }
-            if (other instanceof StructureVillagePieces.Well) { return null; }
+            if (other instanceof StructureVillagePieces.Well || other instanceof RailPiece) { return null; }
             if (other instanceof StructureVillagePieces.Path) {
                 if (BeardRoads.roadNarrow(other.getBoundingBox(), BeardPlots.roadAlongX(other))) { continue; }
                 return null;

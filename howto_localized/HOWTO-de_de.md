@@ -3953,6 +3953,64 @@ Fünf Zeichen sind Rollen statt Blöcke und folgen damit dem, womit die Straße 
 
 Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kreuzung berechnet, dieselbe Welt malt ihre Kreuzungen also immer gleich. Gemalt wird ein Muster nur dort, wo drei oder mehr Straßen zusammentreffen, an einer Kreuzung wie am Platz eines Brunnens; wo sich nur zwei Straßen treffen, entsteht eine schlichte Ecke.
 
+#### Dorfeisenbahnen
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageRailLines": 1,
+    "villageRailSpacing": 48,
+    "villageRailDirection": "ew",
+    "villageRailWidth": 3,
+    "villageRailBlock": "minecraft:rail",
+    "villageRailBedBlock": "minecraft:gravel",
+    "villageRailTieBlock": "minecraft:planks:1",
+    "villageRailTieRun": 2,
+    "villageRailPowerRun": 16,
+    "villageRailSupportBlock": "minecraft:log",
+    "villageRailDeckBlock": "minecraft:planks",
+    "villageRailBarrierBlock": "minecraft:oak_fence",
+    "villageRailTunnelBlock": "minecraft:stonebrick",
+    "villageRailTunnelDepth": 6,
+    "villageRailClimb": 8,
+    "villageRailTail": 48
+  }
+}
+```
+
+Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Achse durchquert und an beiden Enden über das letzte Teil hinausläuft. Sie wird vor der ersten Straße gelegt, sodass der Ort um sie herum wächst: Kein Haus steht auf der Linie, eine Straße darf sie nur gerade durchqueren, und nichts zweigt von ihr ab. Wie die Straßen braucht sie `terrainAdaptation`. `villageRailLines` ist standardmäßig `0`, legt also keine und lässt ein Dorf genau, wie es war.
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `villageRailLines` | Zahl | `0` | Wie viele Linien durch jedes Dorf laufen. `0` legt keine |
+| `villageRailSpacing` | Zahl | `48` | Der geringste Abstand zweier Linien eines Dorfes, Mitte zu Mitte |
+| `villageRailDirection` | Text | `any` | In welche Richtung die Linien laufen: `ew` von Ost nach West, `ns` von Nord nach Süd, `any` würfelt es je Dorf. `e`, `w`, `n` und `s` werden genauso gelesen |
+| `villageRailWidth` | Zahl | `3` | Wie breit das Gleisbett ist. `3` trägt ein Gleis in der Mitte, `5` oder mehr zwei |
+| `villageRailBlock` | Block | leer | Das Gleis. Leer legt Vanilla-Schienen, auf denen Loren fahren; jeder andere Block wird gelegt, wie er ist |
+| `villageRailBedBlock` | Block | leer | Das Bett unter dem Gleis. Leer legt Kies |
+| `villageRailTieBlock` | Block | leer | Die Schwelle, die alle `villageRailTieRun` Reihen quer über das Bett gelegt wird. Leer legt Bretter |
+| `villageRailTieRun` | Zahl | `2` | Wie viele Reihen die Schwellen auseinanderliegen |
+| `villageRailPowerRun` | Zahl | `0` | Alle so viele Reihen wird eine Antriebsschiene über einem Redstone-Block in ein Vanilla-Gleis gesetzt, damit eine Lore weiterrollt. `0` setzt keine, und jedes andere Gleis als Vanilla-Schienen übergeht es |
+| `villageRailSupportBlock` | Block | leer | Die Pfosten unter einer Trestle-Brücke. Leer nimmt Stämme |
+| `villageRailDeckBlock` | Block | leer | Das Deck, auf dem eine Trestle-Brücke das Bett trägt. Leer nimmt Bretter |
+| `villageRailBarrierBlock` | Block | leer | Geländer entlang beider Kanten eines Brückendecks. Leer stellt keine auf |
+| `villageRailTunnelBlock` | Block | leer | Verkleidet Wände und Decke, wo sich die Linie durch einen Hügel bohrt. Leer bohrt keine Tunnel und schneidet jeden Hügel auf |
+| `villageRailTunnelDepth` | Zahl | `6` | Wie viel Boden über dem Bett stehen muss, ehe ein Abschnitt gebohrt statt aufgeschnitten wird. Braucht `villageRailTunnelBlock` |
+| `villageRailClimb` | Zahl | `8` | Wie viele Reihen die Linie eben läuft für jeden Block, den sie steigt oder fällt. `1` legt sie so steil wie eine Straße an |
+| `villageRailTail` | Zahl | `48` | Wie weit die Linie an beiden Enden über das letzte Teil des Dorfes hinausläuft |
+
+**Wo eine Linie verläuft.** Die Linien laufen parallel, auf der Achse, die `villageRailDirection` nennt, und werden vom Brunnenplatz aus abwechselnd verteilt, erst auf die eine Seite, dann auf die andere, jede mindestens `villageRailSpacing` von jeder anderen entfernt. Eine Linie führt nie durch den Platz oder ein Grundstück: Sie wird vor der ersten Straße gelegt, sodass jede Straße und jedes Haus des Dorfes um sie herum gesetzt wird, und sie wird auf das gewachsene Dorf plus `villageRailTail` an beiden Enden zurechtgeschnitten, sobald das Dorf angelegt ist.
+
+**Gefälle.** Eine Eisenbahn steigt nicht wie eine Straße. Ihr Bett folgt dem über eine lange Strecke geglätteten Boden und ändert die Höhe höchstens alle `villageRailClimb` Reihen um einen Block. Wo der Boden um mehr als drei Blöcke abfällt, läuft die Linie auf einer Trestle-Brücke, `villageRailDeckBlock` auf Pfosten aus `villageRailSupportBlock` alle vier Reihen, über Wasser genauso wie über eine Schlucht. Wo der Boden ansteigt, wird die Linie aufgeschnitten oder mit `villageRailTunnelBlock` durchbohrt, sobald der Boden über dem Bett auf zwölf Reihen oder mehr `villageRailTunnelDepth` tief steht. Über dem Bett bleiben entlang der ganzen Linie vier Blöcke frei.
+
+**Kreuzungen.** Eine Straße durchquert eine Linie gerade und läuft an beiden Bettkanten sieben Blöcke oder mehr darüber hinaus. Eine Straße, die auf der Linie oder innerhalb dieser sieben Blöcke enden würde, wird darüber hinweggeführt, wenn ihr Gefälle es zulässt, und sonst sieben Blöcke vor dem Bett angehalten; eine Straße, die auf der Linie beginnen oder an ihr entlanglaufen würde, wird abgelehnt. An einer Kreuzung wird die Straße auf die Linie eingeebnet, nie umgekehrt, und steigt beiderseits mit ihrer eigenen begehbaren Steigung auf diese Höhe. Das Pflaster behält die Oberfläche, und das Gleis läuft einen Block höher darüber, sodass eine Lore die Straße quert und ein Dorfbewohner das Gleis. Eine durch einen Hügel gebohrte Linie wird gar nicht gekreuzt: Die Straße führt über den Tunnel hinweg.
+
+**Gleis.** Mit leerem `villageRailBlock` ist das Gleis eine entlang der Linie gedrehte Vanilla-Schiene, und `villageRailPowerRun` setzt alle so viele Reihen eine Antriebsschiene über einem Redstone-Block, damit eine Lore die ganze Linie fährt. Ein Paket, das Eisenblöcke, Gitter oder etwas anderes will, nennt sie stattdessen, und die Linie wird mit diesem Block so ausgestattet, wie er ist.
+
+**Türschwellen.** Bei eingeschaltetem `terrainAdaptation` legt kein Dorfgebäude einen Treppenblock außerhalb seines eigenen Kastens: Die Schwellentreppe, die Vanilla vor eine Tür setzt, entfällt, weil die Straßenfront und die Grundstücksschürze den Boden selbst bis zur Tür tragen.
+
 #### Dorfschmuck
 
 `<namespace>/worldtemplates/*.json`
