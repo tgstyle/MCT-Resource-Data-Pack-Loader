@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.WorldIntroScreen;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -19,7 +22,26 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageCard.TYPE, MessageCard.CODEC, (message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         });
+        registrar.playToClient(MessageHold.TYPE, MessageHold.CODEC, (message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held()); }
+        });
+        registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
+        });
+        registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (message, context) -> {
+            if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); }
+        });
     }
+
+    public static void sendHold(ServerPlayer player, boolean held) {
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held)); }
+    }
+
+    public static void playIntro(ServerPlayer player, boolean landBeingMade) {
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageIntroPlay(landBeingMade)); }
+    }
+
+    public static void introDone() { PacketDistributor.sendToServer(new MessageIntroDone()); }
 
     public static boolean reaches(ServerPlayer player) { return player.connection.hasChannel(MessageCard.TYPE); }
 

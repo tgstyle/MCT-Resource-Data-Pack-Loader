@@ -8,6 +8,7 @@ import java.util.List;
 public final class Config {
     public static final ModConfigSpec SPEC;
     public static final Content content;
+    public static final Entities entities;
     public static final Packs packs;
     public static final Recipes recipes;
     public static final Data data;
@@ -16,10 +17,15 @@ public final class Config {
     public static final Chunks chunks;
     public static final Control control;
     public static final String WELCOME = "Welcome to your World!";
+    public static final String PREGEN_RUNNING = "World pregeneration running, %d%% done";
+    public static final String PREGEN_FINISHED = "World pregeneration finished";
+    public static final String PREGEN_STOPPED = "World pregeneration stopped";
+    public static final String PREGEN_SPECTATING = "Spectating until the world is ready";
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
         content = new Content(builder);
+        entities = new Entities(builder);
         packs = new Packs(builder);
         recipes = new Recipes(builder);
         data = new Data(builder);
@@ -300,6 +306,13 @@ public final class Config {
         private final ModConfigSpec.DoubleValue threatSpawnRate;
         private final ModConfigSpec.DoubleValue threatNotice;
         private final ModConfigSpec.ConfigValue<List<? extends String>> threatSays;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> blockReplacements;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> blockReplacementDimensions;
+        private final ModConfigSpec.BooleanValue blockReplacementDimensionsAreBlacklist;
+        private final ModConfigSpec.IntValue blockReplacementMinHeight;
+        private final ModConfigSpec.IntValue blockReplacementMaxHeight;
+        private final ModConfigSpec.ConfigValue<String> blockReplacementKey;
+        private final ModConfigSpec.BooleanValue logBlockReplacements;
 
         private Worldgen(ModConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
@@ -382,6 +395,13 @@ public final class Config {
             threatSpawnRate = builder.comment("Multiplied into the hostile spawn rate near carriers in the top band, scaled down through the lower bands. 1.0 changes nothing, 2.0 doubles spawns at the top [Default=1.0]").defineInRange("threatSpawnRate", 1.0D, 0.0D, 100.0D);
             threatNotice = builder.comment("How many blocks farther hostile mobs notice a carrier in the top band, scaled down through the lower bands. 0 changes nothing [Default=0.0]").defineInRange("threatNotice", 0.0D, 0.0D, 256.0D);
             threatSays = builder.comment("Lines said to a player entering a band, as band=message entries [Default=[]]").defineList("threatSays", List.of(), () -> "", each -> each instanceof String);
+            blockReplacements = builder.comment("Blocks swapped out of chunks as they load, written as block=block with an optional state on either side, such as minecraft:andesite=minecraft:stone or minecraft:oak_log[axis=y]=minecraft:spruce_log[axis=y]. Every chunk is done once, new ones included [Default=[]]").defineList("blockReplacements", List.of(), () -> "", each -> each instanceof String);
+            blockReplacementDimensions = builder.comment("Dimensions block replacement applies to, by id. Empty means every dimension [Default=[]]").defineList("blockReplacementDimensions", List.of(), () -> "", each -> each instanceof String);
+            blockReplacementDimensionsAreBlacklist = builder.comment("On, block replacement skips these dimensions. Off, it applies only to them [Default=false]").define("blockReplacementDimensionsAreBlacklist", false);
+            blockReplacementMinHeight = builder.comment("Lowest y block replacement looks at [Default=-64]").defineInRange("blockReplacementMinHeight", -64, -2032, 2031);
+            blockReplacementMaxHeight = builder.comment("Highest y block replacement looks at [Default=319]").defineInRange("blockReplacementMaxHeight", 319, -2032, 2031);
+            blockReplacementKey = builder.comment("Change this to make every chunk go through block replacement again [Default=0000]").define("blockReplacementKey", "0000");
+            logBlockReplacements = builder.comment("Log the first time each replacement is made, and a total when a world catches up [Default=true]").define("logBlockReplacements", true);
             builder.pop();
         }
 
@@ -527,6 +547,13 @@ public final class Config {
         public float threatSpawnRate() { return loaded() ? threatSpawnRate.get().floatValue() : 1.0F; }
         public float threatNotice() { return loaded() ? threatNotice.get().floatValue() : 0.0F; }
         public List<String> threatSays() { return loaded() ? List.copyOf(threatSays.get()) : List.of(); }
+        public List<String> blockReplacements() { return loaded() ? List.copyOf(blockReplacements.get()) : List.of(); }
+        public List<String> blockReplacementDimensions() { return loaded() ? List.copyOf(blockReplacementDimensions.get()) : List.of(); }
+        public boolean blockReplacementDimensionsAreBlacklist() { return loaded() && blockReplacementDimensionsAreBlacklist.get(); }
+        public int blockReplacementMinHeight() { return loaded() ? blockReplacementMinHeight.get() : -64; }
+        public int blockReplacementMaxHeight() { return loaded() ? blockReplacementMaxHeight.get() : 319; }
+        public String blockReplacementKey() { return loaded() ? blockReplacementKey.get() : "0000"; }
+        public boolean logBlockReplacements() { return !loaded() || logBlockReplacements.get(); }
     }
 
     public static final class Chunks {
@@ -535,16 +562,72 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> saysColor;
         private final ModConfigSpec.ConfigValue<String> saysImage;
         private final ModConfigSpec.ConfigValue<List<? extends String>> welcomeSays;
+        private final ModConfigSpec.IntValue pregenOnNewWorld;
+        private final ModConfigSpec.BooleanValue pregenToBorder;
+        private final ModConfigSpec.IntValue pregenBorderLimit;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> pregenDimensions;
+        private final ModConfigSpec.BooleanValue pregenAllDimensions;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> pregenDimensionsWhenEntered;
+        private final ModConfigSpec.BooleanValue pregenResume;
+        private final ModConfigSpec.IntValue pregenChunksInFlight;
+        private final ModConfigSpec.ConfigValue<String> pregenRunningSays;
+        private final ModConfigSpec.ConfigValue<String> pregenFinishedSays;
+        private final ModConfigSpec.ConfigValue<String> pregenStoppedSays;
+        private final ModConfigSpec.ConfigValue<String> pregenSpectatingSays;
+        private final ModConfigSpec.ConfigValue<String> pregenLogo;
+        private final ModConfigSpec.IntValue spawnChunkRadius;
 
         private Chunks(ModConfigSpec.Builder builder) {
-            builder.comment("What this mod says to players and how it shows it. The chunk loading and land-making keys of the 1.12.2 line arrive with the worldgen layer").push("chunks");
+            builder.comment("What this mod says to players and how it shows it, and the land made before anybody plays").push("chunks");
             saysCard = builder.comment("Show the lines this mod says, the welcome and later the land-making progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too [Default=false]").define("saysCard", false);
             saysIcon = builder.comment("An item drawn on the card, e.g. minecraft:compass. Empty draws none [Default=]").define("saysIcon", "");
             saysColor = builder.comment("The card's background color as hex, e.g. 1E2630. Empty uses a dark slate [Default=]").define("saysColor", "");
             saysImage = builder.comment("A PNG from the pack's client assets stretched over the card as its background, e.g. rubyworld:textures/gui/card.png, drawn over the color. Empty draws none [Default=]").define("saysImage", "");
             welcomeSays = builder.comment("Welcome lines, shown in green on every login. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. minecraft:the_nether=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]").defineList("welcomeSays", List.of(WELCOME), () -> "", each -> each instanceof String);
+            pregenOnNewWorld = builder.comment("How far around the spawn, in chunks, a world has its land made before anybody plays it. The game makes 12 chunks around the spawn on its own, so 12 is the floor and 0 means nothing beyond that. Raise it to reach further than the game does [Default=0]").defineInRange("pregenOnNewWorld", 0, 0, 8192);
+            pregenToBorder = builder.comment("Whether a new world has its land made out to its world border instead of a set number of chunks, centered on the border rather than the spawn. A world whose border was never moved in has no border to reach and is passed over [Default=false]").define("pregenToBorder", false);
+            pregenBorderLimit = builder.comment("The furthest a border may reach, in chunks either way, before making land out to it is refused. This is here to stop a mistake running for weeks, not to be turned up, and a pack cannot set it. A square of 8192 holds 268 million chunks [Default=8192]").defineInRange("pregenBorderLimit", 8192, 1, 1875000);
+            pregenDimensions = builder.comment("Which dimensions a new world has its land made in, by id, in the order given, one after another [Default=[minecraft:overworld]]").defineList("pregenDimensions", List.of("minecraft:overworld"), () -> "", each -> each instanceof String);
+            pregenAllDimensions = builder.comment("Make the land of every dimension the server holds, modded ones included, the overworld first and the rest in id order, instead of only those in pregenDimensions. Ones named in pregenDimensionsWhenEntered are still left for their first visitor [Default=false]").define("pregenAllDimensions", false);
+            pregenDimensionsWhenEntered = builder.comment("Dimensions whose land is made not up front but the first time anybody sets foot in them, to the same reach, holding everybody the same way until it is done. One named here and in pregenDimensions is simply made up front [Default=[]]").defineList("pregenDimensionsWhenEntered", List.of(), () -> "", each -> each instanceof String);
+            pregenResume = builder.comment("Whether a run that was stopped or cut short picks up where it left off next time the world is loaded, rather than starting again [Default=false]").define("pregenResume", false);
+            pregenChunksInFlight = builder.comment("How many chunks a land-making run asks the game for at once. More keeps the generation threads busier and the server less responsive to whoever is held watching [Default=32]").defineInRange("pregenChunksInFlight", 32, 1, 512);
+            pregenRunningSays = builder.comment("The progress message players see while the world generates, where %d is the percentage and a second %s the dimension. Empty tells them nothing. Left at this default it speaks each player's language [Default=" + PREGEN_RUNNING + "]").define("pregenRunningSays", PREGEN_RUNNING);
+            pregenFinishedSays = builder.comment("The message players see when generation finishes. Empty tells them nothing. Left at this default it speaks each player's language [Default=" + PREGEN_FINISHED + "]").define("pregenFinishedSays", PREGEN_FINISHED);
+            pregenStoppedSays = builder.comment("The message players see when generation is stopped early. Empty tells them nothing. Left at this default it speaks each player's language [Default=" + PREGEN_STOPPED + "]").define("pregenStoppedSays", PREGEN_STOPPED);
+            pregenSpectatingSays = builder.comment("The mid-screen message players see while held in spectator during world generation. Empty shows nothing. Left at this default it speaks each player's language [Default=" + PREGEN_SPECTATING + "]").define("pregenSpectatingSays", PREGEN_SPECTATING);
+            pregenLogo = builder.comment("Where the logo stands when pregeneration finishes: left, center or right, above the mid-screen text. It is always shown; an unknown word is read as center [Default=center]").define("pregenLogo", "center");
+            spawnChunkRadius = builder.comment("How far from the spawn point, in chunks, chunks are held loaded whether or not a player is there, applied as the spawnChunkRadius game rule when a world starts. -1 leaves the game's own value [Default=-1]").defineInRange("spawnChunkRadius", -1, -1, 32);
             builder.pop();
         }
+
+        public int pregenOnNewWorld() { return loaded() ? pregenOnNewWorld.get() : 0; }
+
+        public boolean pregenToBorder() { return loaded() && pregenToBorder.get(); }
+
+        public int pregenBorderLimit() { return loaded() ? pregenBorderLimit.get() : 8192; }
+
+        public List<String> pregenDimensions() { return loaded() ? List.copyOf(pregenDimensions.get()) : List.of("minecraft:overworld"); }
+
+        public boolean pregenAllDimensions() { return loaded() && pregenAllDimensions.get(); }
+
+        public List<String> pregenDimensionsWhenEntered() { return loaded() ? List.copyOf(pregenDimensionsWhenEntered.get()) : List.of(); }
+
+        public boolean pregenResume() { return loaded() && pregenResume.get(); }
+
+        public int pregenChunksInFlight() { return loaded() ? pregenChunksInFlight.get() : 32; }
+
+        public String pregenRunningSays() { return loaded() ? pregenRunningSays.get() : PREGEN_RUNNING; }
+
+        public String pregenFinishedSays() { return loaded() ? pregenFinishedSays.get() : PREGEN_FINISHED; }
+
+        public String pregenStoppedSays() { return loaded() ? pregenStoppedSays.get() : PREGEN_STOPPED; }
+
+        public String pregenSpectatingSays() { return loaded() ? pregenSpectatingSays.get() : PREGEN_SPECTATING; }
+
+        public String pregenLogo() { return loaded() ? pregenLogo.get() : "center"; }
+
+        public int spawnChunkRadius() { return loaded() ? spawnChunkRadius.get() : -1; }
 
         public boolean saysCard() { return loaded() ? saysCard.get() : ConfigCore.flag("chunks.saysCard", false); }
 
@@ -557,8 +640,42 @@ public final class Config {
         public List<String> welcomeSays() { return loaded() ? List.copyOf(welcomeSays.get()) : List.of(WELCOME); }
     }
 
+    public static final class Entities {
+        private final ModConfigSpec.BooleanValue slowDistantEntities;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> slowedKinds;
+        private final ModConfigSpec.IntValue slowDistance;
+        private final ModConfigSpec.IntValue slowRate;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> neverSlowed;
+        private final ModConfigSpec.IntValue slowRecheck;
+
+        private Entities(ModConfigSpec.Builder builder) {
+            builder.comment("How entities far from every player are ticked").push("entities");
+            slowDistantEntities = builder.comment("Tick entities far from every player less often. Nothing is ever left unticked, only ticked at a slower pace [Default=true]").define("slowDistantEntities", true);
+            slowedKinds = builder.comment("Which kinds are given fewer ticks: items, experience, projectiles. Anything that thinks for itself is always given a slower pace instead, without being named here, and machines are never slowed [Default=[items, experience]]").defineList("slowedKinds", List.of("items", "experience"), () -> "", each -> each instanceof String);
+            slowDistance = builder.comment("How far from the nearest player, in blocks, before a chunk is slowed. The game stops telling a player about most entities beyond 64, so nothing below that [Default=192]").defineInRange("slowDistance", 192, 64, 4096);
+            slowRate = builder.comment("One tick in this many is given to a slowed chunk. 1 is no slowing at all, 20 is once a second [Default=4]").defineInRange("slowRate", 4, 1, 20);
+            neverSlowed = builder.comment("Entities left alone however far away they are, as namespace:name [Default=[]]").defineList("neverSlowed", List.of(), () -> "", each -> each instanceof String);
+            slowRecheck = builder.comment("How often, in ticks, the distance to the nearest player is worked out again. Every player counts for themselves, so someone alone far away still has their own quiet space around them [Default=20]").defineInRange("slowRecheck", 20, 1, 100);
+            builder.pop();
+        }
+
+        public boolean slowDistantEntities() { return !loaded() || slowDistantEntities.get(); }
+
+        public List<String> slowedKinds() { return loaded() ? List.copyOf(slowedKinds.get()) : List.of("items", "experience"); }
+
+        public int slowDistance() { return loaded() ? slowDistance.get() : 192; }
+
+        public int slowRate() { return loaded() ? slowRate.get() : 4; }
+
+        public List<String> neverSlowed() { return loaded() ? List.copyOf(neverSlowed.get()) : List.of(); }
+
+        public int slowRecheck() { return loaded() ? slowRecheck.get() : 20; }
+    }
+
     public static final class Control {
         private final ModConfigSpec.ConfigValue<String> terrain;
+        private final ModConfigSpec.ConfigValue<String> replacements;
+        private final ModConfigSpec.ConfigValue<String> entities;
         private final ModConfigSpec.ConfigValue<String> chunks;
         private final ModConfigSpec.ConfigValue<String> bedrock;
         private final ModConfigSpec.ConfigValue<String> voidWorld;
@@ -576,6 +693,8 @@ public final class Config {
             ores = builder.comment("Blocking ore generation by mod and by ore type [default|global|off]").define("ores", "default");
             biomes = builder.comment("Blocking biomes by mod and by name, and what replaces them [default|global|off]").define("biomes", "default");
             spawning = builder.comment("Mob spawn caps, hostile spawn rates and the light cap [default|global|off]").define("spawning", "default");
+            replacements = builder.comment("Block replacement in chunks that already exist [default|global|off]").define("replacements", "default");
+            entities = builder.comment("The slower pace of entities far from every player [default|global|off]").define("entities", "default");
             structures = builder.comment("Vanilla structures switched off, their spacing, separation, spawn distance, biomes, spawns, pins and terrain adaptation [default|global|off]").define("structures", "default");
             builder.pop();
         }
@@ -595,5 +714,9 @@ public final class Config {
         public String spawning() { return loaded() ? spawning.get() : ConfigCore.text("control.spawning", "default"); }
 
         public String structures() { return loaded() ? structures.get() : ConfigCore.text("control.structures", "default"); }
+
+        public String replacements() { return loaded() ? replacements.get() : ConfigCore.text("control.replacements", "default"); }
+
+        public String entities() { return loaded() ? entities.get() : ConfigCore.text("control.entities", "default"); }
     }
 }

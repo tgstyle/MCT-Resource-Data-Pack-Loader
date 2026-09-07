@@ -53,6 +53,7 @@ public final class PackManager {
     public static final String BIOMES = "biomes";
     public static final String CAVEREGIONS = "caveregions";
     public static final String GAMERULES = "gamerules";
+    public static final String WORLDINTRO = "worldintro";
     public static final String WORLDGEN = "worldgen";
     public static final String DIMENSIONS = "dimensions";
     public static final String WORLDTEMPLATES = "worldtemplates";

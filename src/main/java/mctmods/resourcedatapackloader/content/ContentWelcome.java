@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
@@ -23,7 +24,7 @@ public final class ContentWelcome {
     private ContentWelcome() {}
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { welcome(player); }
+        if (event.getEntity() instanceof ServerPlayer player && !ContentPregen.welcomesLater(player)) { welcome(player); }
     }
 
     public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
@@ -34,7 +35,7 @@ public final class ContentWelcome {
 
     private static List<String> entries() { return ContentControl.list(ContentControl.CHUNKS, KEY, Config.chunks.welcomeSays()); }
 
-    private static void welcome(ServerPlayer player) {
+    public static void welcome(ServerPlayer player) {
         List<String> entries = entries();
         boolean atDefault = entries.size() == 1 && entries.getFirst().trim().equals(Config.WELCOME);
         String greeting = atDefault ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player, player.level().dimension(), true);

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -13,6 +14,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Mob.class) public abstract class MixinMob {
@@ -46,5 +48,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private void rdpl$leashable(CallbackInfoReturnable<Boolean> cir) {
         EntityVariantDef def = ContentEntities.def((Mob) (Object) this);
         if (def != null && def.flags().leashable()) { cir.setReturnValue(true); }
+    }
+
+    @Inject(method = "serverAiStep", at = @At("HEAD"), cancellable = true)
+    private void rdpl$slowThinking(CallbackInfo ci) {
+        if (ContentEntityTicks.thinksSlower((Mob) (Object) this)) { ci.cancel(); }
     }
 }
