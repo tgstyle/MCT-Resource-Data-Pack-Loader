@@ -137,6 +137,7 @@ public final class ContentDimensions {
                     JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
                     noise.addProperty("min_y", def.minHeight());
                     noise.addProperty("height", def.maxHeight() - def.minHeight());
+                    if ("overworld".equals(vanillaSettings) && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight()); }
                 }
                 if (def.seaLevel() >= 0) { settings.addProperty("sea_level", def.seaLevel()); }
                 if (def.lavaOceans()) {

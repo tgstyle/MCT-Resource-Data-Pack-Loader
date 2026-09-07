@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
@@ -233,7 +234,7 @@ public final class ContentBiomes {
             for (String category : new ArrayList<>(out.keySet())) { out.add(category, new JsonArray()); }
         }
         for (BiomeSpawnDef spawn : def.spawns()) {
-            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(spawn.entity())) {
+            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(spawn.entity()) && !ContentEntities.defines(spawn.entity())) {
                 ContentLog.LOGGER.error("Biome {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
                 continue;
             }

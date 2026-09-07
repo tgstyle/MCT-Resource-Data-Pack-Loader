@@ -13,6 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameRules;
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
 
 public final class ContentGameRules {
     private static final Gson GSON = new Gson();
-    private static final Map<String, Map<String, String>> BY_DIMENSION = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, Map<String, String>> BY_DIMENSION = new LinkedHashMap<>();
     private static final Map<Level, GameRules> BUILT = new WeakHashMap<>();
     private static final Set<String> KNOWN = new LinkedHashSet<>();
     private static boolean loaded;
@@ -46,7 +47,11 @@ public final class ContentGameRules {
                     ContentLog.LOGGER.error("Game rule file {} maps dimension {} to something that is not a set of rules, ignoring it", key, entry.getKey());
                     continue;
                 }
-                String dimension = ContentFormats.dimensionId(entry.getKey());
+                ResourceLocation dimension = ResourceLocation.tryParse(ContentFormats.dimensionId(entry.getKey()));
+                if (dimension == null) {
+                    ContentLog.LOGGER.error("Game rule file {} names dimension '{}', which is not a dimension id, ignoring it", key, entry.getKey());
+                    continue;
+                }
                 Map<String, String> rules = BY_DIMENSION.computeIfAbsent(dimension, id -> new LinkedHashMap<>());
                 for (Map.Entry<String, JsonElement> rule : entry.getValue().getAsJsonObject().entrySet()) {
                     if (!rule.getValue().isJsonPrimitive()) { continue; }
@@ -56,13 +61,13 @@ public final class ContentGameRules {
         });
         for (DimensionDef def : ContentDimensions.all()) {
             if (def.gameRules().isEmpty()) { continue; }
-            BY_DIMENSION.computeIfAbsent(def.key().toString(), id -> new LinkedHashMap<>()).putAll(def.gameRules());
+            BY_DIMENSION.computeIfAbsent(def.key(), id -> new LinkedHashMap<>()).putAll(def.gameRules());
         }
         if (BY_DIMENSION.isEmpty()) { return; }
         GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
             @Override public <T extends GameRules.Value<T>> void visit(@Nonnull GameRules.Key<T> key, @Nonnull GameRules.Type<T> type) { KNOWN.add(key.getId()); }
         });
-        for (Map.Entry<String, Map<String, String>> entry : BY_DIMENSION.entrySet()) {
+        for (Map.Entry<ResourceLocation, Map<String, String>> entry : BY_DIMENSION.entrySet()) {
             entry.getValue().keySet().removeIf(rule -> {
                 if (KNOWN.contains(rule)) { return false; }
                 ContentLog.LOGGER.error("Dimension {} sets game rule '{}', which does not exist, ignoring it", entry.getKey(), rule);
@@ -75,10 +80,10 @@ public final class ContentGameRules {
 
     @Nullable public static GameRules forLevel(Level level) {
         if (BY_DIMENSION.isEmpty() || !(level instanceof ServerLevel)) { return null; }
-        Map<String, String> wanted = BY_DIMENSION.get(level.dimension().location().toString());
-        if (wanted == null) { return null; }
         GameRules held = BUILT.get(level);
         if (held != null) { return held; }
+        Map<String, String> wanted = BY_DIMENSION.get(level.dimension().location());
+        if (wanted == null) { return null; }
         CompoundTag tag = level.getLevelData().getGameRules().createTag();
         for (Map.Entry<String, String> rule : wanted.entrySet()) { tag.putString(rule.getKey(), rule.getValue()); }
         held = new GameRules(new Dynamic<>(NbtOps.INSTANCE, tag));

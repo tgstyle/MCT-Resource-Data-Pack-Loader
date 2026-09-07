@@ -33,6 +33,7 @@ public final class WorldIntroScreen extends Screen {
     private static final int TEXT_WIDTH = 274;
     private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
+    private static final int FOOTER = 36;
     private static final float DERIVED_SPEED = 0.25F;
     private final List<IntroPageDef> pages;
     private final List<FormattedCharSequence> lines = new ArrayList<>();
@@ -97,16 +98,18 @@ public final class WorldIntroScreen extends Screen {
         float scale = def.textScale();
         float step = LINE_HEIGHT * scale;
         float y = offset(partialTick);
+        graphics.enableScissor(0, 0, width, height - FOOTER);
         graphics.pose().pushPose();
         graphics.pose().scale(scale, scale, 1.0F);
         for (FormattedCharSequence line : lines) {
             if (y > -step && y < height) {
                 float x = def.still() ? (width - font.width(line) * scale) / 2.0F : (width - wrapWidth * scale) / 2.0F;
-                graphics.drawString(font, line, Math.round(x / scale), Math.round(y / scale), 0xFFFFFF, true);
+                graphics.drawString(font, line, x / scale, y / scale, 0xFFFFFF, true);
             }
             y += step;
         }
         graphics.pose().popPose();
+        graphics.disableScissor();
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
@@ -155,7 +156,7 @@ public final class ContentCaveRegions {
             for (String category : new ArrayList<>(spawners.keySet())) { spawners.add(category, new JsonArray()); }
         }
         for (BiomeSpawnDef spawn : def.spawns()) {
-            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(spawn.entity())) {
+            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(spawn.entity()) && !ContentEntities.defines(spawn.entity())) {
                 ContentLog.LOGGER.error("Cave region {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
                 continue;
             }

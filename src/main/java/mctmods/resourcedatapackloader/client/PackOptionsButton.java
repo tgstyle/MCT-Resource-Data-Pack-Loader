@@ -19,6 +19,7 @@ public final class PackOptionsButton {
     private static final int CORNER_WIDTH = 100;
     private static final int CORNER_HEIGHT = 20;
     private static final int CORNER_INSET = 8;
+    private static final int TAB_BAR = 24;
     private static final int FLASH_ABOVE_FOOTER = 40;
     private static final int FLASH_ABOVE_LIST_FOOTER = 62;
     private static final long FLASH_MILLIS = 500L;
@@ -45,7 +46,7 @@ public final class PackOptionsButton {
             if (selecting && PLAY_KEY.equals(key)) { play = button; }
             if (!selecting && CREATE_KEY.equals(key)) { create = button; }
         }
-        int y = selecting ? CORNER_INSET - 2 : screen.height - CORNER_INSET - CORNER_HEIGHT;
+        int y = selecting ? CORNER_INSET - 2 : TAB_BAR + 4;
         Button made = Button.builder(Component.translatable("rdpl.gui.packOptions"), button -> Minecraft.getInstance().setScreen(new PackOptionsScreen(screen)))
                 .bounds(screen.width - CORNER_WIDTH - CORNER_INSET, y, CORNER_WIDTH, CORNER_HEIGHT).build();
         made.visible = !selecting;

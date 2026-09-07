@@ -145,6 +145,14 @@ public final class ContentEntities {
         if (!DEFS.isEmpty()) { Summary.info("entities", "Loaded " + DEFS.size() + " entity variant(s) from packs"); }
     }
 
+    public static boolean defines(ResourceLocation id) { return DEFS.containsKey(id); }
+
+    public static String categoryOf(ResourceLocation id) {
+        EntityVariantDef def = DEFS.get(id);
+        EntityType<?> base = def == null ? null : Registered.find(BuiltInRegistries.ENTITY_TYPE, def.base());
+        return base == null ? "monster" : base.getCategory().getName();
+    }
+
     public static Map<ResourceLocation, EntityType<Mob>> types() { return Collections.unmodifiableMap(TYPES); }
 
     @Nullable public static EntityVariantDef def(Entity entity) { return BY_TYPE.get(entity.getType()); }

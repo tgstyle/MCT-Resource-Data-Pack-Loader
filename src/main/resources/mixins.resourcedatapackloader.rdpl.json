@@ -21,6 +21,7 @@
         "common.MixinProjectile",
         "common.MixinEntity",
         "common.MixinLevel",
+        "common.MixinNoiseBasedChunkGenerator",
         "common.MixinNearestAttackableTargetGoal",
         "common.MixinTargetGoal",
         "common.MixinExplosionDamageCalculator",

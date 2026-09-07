@@ -239,6 +239,7 @@ public final class Config {
         private final ModConfigSpec.IntValue worldMinHeight;
         private final ModConfigSpec.IntValue worldMaxHeight;
         private final ModConfigSpec.ConfigValue<String> deepStone;
+        private final ModConfigSpec.ConfigValue<String> noiseCaves;
         private final ModConfigSpec.ConfigValue<String> worldSpawn;
         private final ModConfigSpec.IntValue worldBorder;
         private final ModConfigSpec.IntValue worldBorderLimit;
@@ -325,9 +326,10 @@ public final class Config {
             worldTypeExceptions = builder.comment("World types a player picks that the generated preset leaves alone, such as flat or debug_all_block_states. Empty means every choice is replaced [Default=[flat, debug_all_block_states]]").defineList("worldTypeExceptions", List.of("flat", "debug_all_block_states"), () -> "", each -> each instanceof String);
             tellWorldType = builder.comment("Tell a player in chat, as they join a world made with the generated preset, which template shaped it. A pack cannot set this [Default=true]").define("tellWorldType", true);
             generatorOptions = builder.comment("The overworld's terrain settings as a JSON object, the keys the 1.12.2 customized world type wrote. Read here: seaLevel and useLavaOceans. Only applied to a world as it is created. Empty leaves the terrain as the world type makes it [Default=empty]").define("generatorOptions", "");
-            worldMinHeight = builder.comment("The lowest block of the overworld, a multiple of 16 down to -2032. The game's own bottom is -64; lower makes a deep world under the vanilla terrain, solid stone until the worldgen layer carves it. Only applied through the generated preset [Default=-64]").defineInRange("worldMinHeight", -64, -2032, 2016);
+            worldMinHeight = builder.comment("The lowest block of the overworld, a multiple of 16 down to -2032. The game's own bottom is -64; lower makes a deep world under the vanilla terrain, solid stone until the worldgen layer carves it or noiseCaves carries the game's caves down. Only applied through the generated preset [Default=-64]").defineInRange("worldMinHeight", -64, -2032, 2016);
             worldMaxHeight = builder.comment("The block above the overworld's top, a multiple of 16 up to 2032, at most 4064 above worldMinHeight. The game's own top is 320; higher leaves open sky above the vanilla terrain [Default=320]").defineInRange("worldMaxHeight", 320, -2016, 2032);
             deepStone = builder.comment("The block the world below the vanilla terrain is made of when worldMinHeight goes under -64, such as a pack's own deepslate. It blends into deepslate across the eight layers under -64 the way deepslate blends into stone. Empty keeps stone [Default=empty]").define("deepStone", "");
+            noiseCaves = builder.comment("Where the game's caves, tunnels, noodles and aquifers carry on when worldMinHeight goes under -64: off keeps the world under the vanilla terrain solid deep stone for the worldgen layer to carve, deep carries them down to the floor with the lava lakes moved to its bottom ten layers, world means the same on this version because the vanilla terrain has them already [Default=off]").define("noiseCaves", "off");
             worldSpawn = builder.comment("Where every new world spawns, written as x,z or x,y,z. Without a y the ground at that spot is used. Only applied to a world as it is created. Empty leaves the choice to the game [Default=empty]").define("worldSpawn", "");
             worldBorder = builder.comment("How far across, in blocks, the world border stands in every new world. Only applied to a world as it is created. 0 leaves the border where the game puts it [Default=0]").defineInRange("worldBorder", 0, 0, 60000000);
             worldBorderLimit = builder.comment("The widest border a pack is allowed to ask for through worldBorder. A pack asking for more is refused and the border is left where the game puts it. A pack cannot set this [Default=60000000]").defineInRange("worldBorderLimit", 60000000, 1, 60000000);
@@ -428,6 +430,8 @@ public final class Config {
         public int worldMaxHeight() { return loaded() ? worldMaxHeight.get() : 320; }
 
         public String deepStone() { return loaded() ? deepStone.get() : ConfigCore.text("worldgen.deepStone", ""); }
+
+        public String noiseCaves() { return loaded() ? noiseCaves.get() : ConfigCore.text("worldgen.noiseCaves", "off"); }
 
         public String worldSpawn() { return loaded() ? worldSpawn.get() : ConfigCore.text("worldgen.worldSpawn", ""); }
 

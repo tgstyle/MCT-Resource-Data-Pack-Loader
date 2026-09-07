@@ -17,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.resources.ResourceKey;
@@ -46,11 +47,15 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.IllegalFormatException;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 
 public final class ContentPregen {
@@ -61,16 +66,19 @@ public final class ContentPregen {
     private static final String HELD_MODE = "rdplPregenHeldMode";
     private static final String OVERWORLD = "minecraft:overworld";
     private static final Deque<ResourceLocation> PENDING = new ArrayDeque<>();
-    private static final Map<UUID, Held> HELD = new LinkedHashMap<>();
+    private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
+    @Nullable private static ScheduledExecutorService flasher;
     @Nullable private static ContentPregen running;
     private static long stillUntil;
     private static long chainBegun;
     private static int wantedRadius;
     private static boolean chaining;
-    private static String progress = "";
-    private static String lastSaid = "";
-    private static long beats;
+    private static volatile String progress = "";
+    private static volatile String lastSaid = "";
+    private static final AtomicLong BEATS = new AtomicLong();
     private static long heldDayTime = -1L;
+    @Nullable private static Runnable pendingStart;
+    private static int startTick = -1;
     @Nullable private final ServerPlayer asked;
     private final MinecraftServer server;
     private final ResourceKey<Level> dimension;
@@ -110,6 +118,7 @@ public final class ContentPregen {
     }
 
     private static final class Held {
+        private final ServerPlayer player;
         private final GameType before;
         private final String warning;
         private ResourceKey<Level> dimension;
@@ -120,6 +129,7 @@ public final class ContentPregen {
         private float pitch;
 
         private Held(ServerPlayer player, GameType before) {
+            this.player = player;
             this.before = before;
             this.warning = defaulted("pregenSpectatingSays", Config.chunks.pregenSpectatingSays(), Config.PREGEN_SPECTATING, "rdpl.pregen.spectating", player);
             rebase(player);
@@ -214,7 +224,7 @@ public final class ContentPregen {
                 chaining = !PENDING.isEmpty();
             }
             ContentLog.LOGGER.info("Land was still being made in {} when the last session ended, so it is picked up again", dimension);
-            start(null, server, ResourceKey.create(Registries.DIMENSION, dimension), run.getInt("middleX"), run.getInt("middleZ"), run.getInt("reach"));
+            later(server, () -> start(null, server, ResourceKey.create(Registries.DIMENSION, dimension), run.getInt("middleX"), run.getInt("middleZ"), run.getInt("reach")));
             return;
         }
         if (!asksForLand() || !PENDING.isEmpty()) { return; }
@@ -223,7 +233,16 @@ public final class ContentPregen {
         }
         wantedRadius = radius;
         chaining = true;
-        nextDimension(server, radius);
+        later(server, () -> nextDimension(server, radius));
+    }
+
+    private static void later(MinecraftServer server, Runnable starter) {
+        if (server.isDedicatedServer()) {
+            starter.run();
+            return;
+        }
+        pendingStart = starter;
+        startTick = -1;
     }
 
     private static void startWhenEntered(MinecraftServer server, ResourceKey<Level> entered) {
@@ -343,10 +362,17 @@ public final class ContentPregen {
     }
 
     public static void onServerTick(ServerTickEvent.Post event) {
+        if (pendingStart != null && startTick >= 0 && (event.getServer().getTickCount() >= startTick || playersLoaded(event.getServer()))) {
+            Runnable starter = pendingStart;
+            pendingStart = null;
+            startTick = -1;
+            starter.run();
+        }
         ContentPregen worker = running;
         if (worker != null) {
             worker.work();
             event.getServer().overworld().setDayTime(heldDayTime);
+            if (event.getServer().getTickCount() % 20 == 0) { freezeSky(event.getServer()); }
         }
         holdTick(event.getServer());
     }
@@ -360,9 +386,15 @@ public final class ContentPregen {
         }
         watch();
         ServerChunkCache chunks = level.getChunkSource();
-        while (flying < inFlight && order.hasNext()) {
+        for (ServerPlayer player : level.players()) {
+            if (!level.hasChunk(player.chunkPosition().x, player.chunkPosition().z)) { return; }
+        }
+        int burst = Math.max(1, inFlight / 4);
+        int issued = 0;
+        while (flying < inFlight && order.hasNext() && issued < burst) {
             ChunkPos next = order.next();
             flying++;
+            issued++;
             CompletableFuture<ChunkResult<ChunkAccess>> future = chunks.getChunkFuture(next.x, next.z, ChunkStatus.FULL, true);
             future.whenCompleteAsync((result, thrown) -> landed(result != null && result.isSuccess(), thrown), server);
         }
@@ -482,6 +514,20 @@ public final class ContentPregen {
         return String.format("Made %d of %d chunk(s) in %s, %d of them new or loaded, %d refused, at %d a second with %d asked for at once", done, order.total(), dimension.location(), made, failed, rate, inFlight);
     }
 
+    private static boolean playersLoaded(MinecraftServer server) {
+        List<ServerPlayer> players = server.getPlayerList().getPlayers();
+        if (players.isEmpty()) { return false; }
+        for (ServerPlayer player : players) {
+            if (!player.serverLevel().hasChunk(player.chunkPosition().x, player.chunkPosition().z)) { return false; }
+        }
+        return true;
+    }
+
+    private static void freezeSky(MinecraftServer server) {
+        ClientboundSetTimePacket still = new ClientboundSetTimePacket(server.overworld().getGameTime(), heldDayTime, false);
+        for (Held held : HELD.values()) { held.player.connection.send(still); }
+    }
+
     private static void holdEveryone(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) { hold(player); }
     }
@@ -494,10 +540,43 @@ public final class ContentPregen {
         Held held = new Held(player, before);
         HELD.put(player.getUUID(), held);
         player.setGameMode(GameType.SPECTATOR);
-        RDPLNetwork.sendHold(player, true);
-        flash(player, held);
-        beats = 0L;
+        RDPLNetwork.sendHold(player, true, held.warning);
+        if (!RDPLNetwork.reaches(player)) { flash(player, held); }
+        player.connection.send(new ClientboundSetTimePacket(player.serverLevel().getGameTime(), heldDayTime, false));
+        startFlashing();
+    }
+
+    private static synchronized void startFlashing() {
+        if (flasher != null) { return; }
+        BEATS.set(0L);
         lastSaid = "";
+        flasher = Executors.newSingleThreadScheduledExecutor(run -> {
+            Thread beat = new Thread(run, "RDPL pregen spectator titles");
+            beat.setDaemon(true);
+            return beat;
+        });
+        flasher.scheduleAtFixedRate(ContentPregen::flashHeld, 250L, 250L, TimeUnit.MILLISECONDS);
+    }
+
+    private static synchronized void stopFlashing() {
+        if (flasher == null) { return; }
+        flasher.shutdown();
+        flasher = null;
+    }
+
+    private static void flashHeld() {
+        ContentPregen live = running;
+        String said = live == null ? progress : live.sofar();
+        if (!said.isEmpty()) { progress = said; }
+        long beat = BEATS.getAndIncrement();
+        boolean titles = beat % 6L == 0L;
+        boolean keepAlive = beat % 8L == 0L;
+        boolean changed = !said.isEmpty() && !said.equals(lastSaid);
+        if (changed) { lastSaid = said; }
+        for (Held held : HELD.values()) {
+            if (titles && !RDPLNetwork.reaches(held.player)) { flash(held.player, held); }
+            if (changed || (keepAlive && !said.isEmpty())) { held.player.displayClientMessage(Component.literal(said).withStyle(ChatFormatting.YELLOW), true); }
+        }
     }
 
     private static void holdTick(MinecraftServer server) {
@@ -513,21 +592,11 @@ public final class ContentPregen {
                 return;
             }
         }
-        ContentPregen live = running;
-        String said = live == null ? progress : live.sofar();
-        if (!said.isEmpty()) { progress = said; }
-        boolean titles = beats % 30L == 0L;
-        boolean keepAlive = beats % 40L == 0L;
-        beats++;
-        boolean changed = !said.isEmpty() && !said.equals(lastSaid);
-        if (changed) { lastSaid = said; }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUUID());
             if (held == null) { continue; }
             if (!player.level().dimension().equals(held.dimension)) { held.rebase(player); }
             else if (held.strayed(player)) { player.connection.teleport(held.x, held.y, held.z, held.yaw, held.pitch); }
-            if (titles) { flash(player, held); }
-            if (changed || (keepAlive && !said.isEmpty())) { player.displayClientMessage(Component.literal(said).withStyle(ChatFormatting.YELLOW), true); }
         }
     }
 
@@ -540,6 +609,7 @@ public final class ContentPregen {
 
     private static void releaseEveryone(MinecraftServer server, boolean welcomed) {
         if (HELD.isEmpty()) { return; }
+        stopFlashing();
         int released = 0;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUUID());
@@ -553,12 +623,13 @@ public final class ContentPregen {
         if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentTerrain.worldGameMode().isEmpty() ? "the mode they had" : ContentTerrain.worldGameMode()); }
     }
 
-    public static void releaseAfterIntro(ServerPlayer player) {
-        if (busy()) { return; }
+    public static boolean releaseAfterIntro(ServerPlayer player) {
+        if (busy()) { return false; }
         Held held = HELD.remove(player.getUUID());
-        if (held == null) { return; }
+        if (held == null) { return false; }
         release(player, held);
         ContentWelcome.welcome(player);
+        return true;
     }
 
     private static void release(ServerPlayer player, Held held) {
@@ -567,13 +638,21 @@ public final class ContentPregen {
         player.setGameMode(asked == null ? held.before : asked);
         player.getPersistentData().remove(HELD_MODE);
         player.setPortalCooldown();
-        RDPLNetwork.sendHold(player, false);
+        ServerLevel level = player.serverLevel();
+        player.connection.send(new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)));
+        RDPLNetwork.sendHold(player, false, "");
         player.connection.send(new ClientboundClearTitlesPacket(true));
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         startWhenEntered(player.server, player.level().dimension());
+        if (pendingStart != null) {
+            if (startTick < 0) { startTick = player.server.getTickCount() + 60; }
+            heldDayTime = player.server.overworld().getDayTime();
+            hold(player);
+            return;
+        }
         ContentPregen worker = running;
         if (worker == null) { return; }
         hold(player);
@@ -584,6 +663,7 @@ public final class ContentPregen {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         Held held = HELD.remove(player.getUUID());
+        if (HELD.isEmpty()) { stopFlashing(); }
         if (held != null) { release(player, held); }
     }
 
@@ -609,11 +689,14 @@ public final class ContentPregen {
             PregenMemory.of(event.getServer()).setRun(runRecord(worker.dimension, worker.middleX, worker.middleZ, worker.reach));
         }
         releaseEveryone(event.getServer(), false);
+        pendingStart = null;
+        startTick = -1;
         PENDING.clear();
         chaining = false;
         chainBegun = 0L;
         wantedRadius = 0;
         HELD.clear();
+        stopFlashing();
     }
 
     public static boolean welcomesLater(ServerPlayer player) { return busy() || HELD.containsKey(player.getUUID()); }

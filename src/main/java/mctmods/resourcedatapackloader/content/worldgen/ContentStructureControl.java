@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
@@ -207,7 +208,7 @@ public final class ContentStructureControl {
             }
             ResourceLocation id = ResourceLocation.tryParse(fields[0].trim() + ":" + fields[1].trim());
             EntityType<?> type = id == null ? null : Registered.find(BuiltInRegistries.ENTITY_TYPE, id);
-            if (type == null) {
+            if (type == null && (id == null || !ContentEntities.defines(id))) {
                 ContentLog.LOGGER.error("structureSpawns entry '{}' names entity {}, which is not registered", entry, fields[0] + ":" + fields[1]);
                 continue;
             }
@@ -218,7 +219,7 @@ public final class ContentStructureControl {
                 int least = Math.max(1, Integer.parseInt(fields[3].trim()));
                 spawner.addProperty("minCount", least);
                 spawner.addProperty("maxCount", Math.max(least, Integer.parseInt(fields[4].trim())));
-                byCategory.computeIfAbsent(type.getCategory().getName(), key -> new JsonArray()).add(spawner);
+                byCategory.computeIfAbsent(type == null ? ContentEntities.categoryOf(id) : type.getCategory().getName(), key -> new JsonArray()).add(spawner);
             }
             catch (NumberFormatException notNumbers) { ContentLog.LOGGER.error("structureSpawns entry '{}' holds '{}', whose weight or counts are not numbers", entry, spawn); }
         }

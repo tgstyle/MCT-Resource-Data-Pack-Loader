@@ -23,7 +23,7 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         });
         registrar.playToClient(MessageHold.TYPE, MessageHold.CODEC, (message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning()); }
         });
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
@@ -33,8 +33,8 @@ public final class RDPLNetwork {
         });
     }
 
-    public static void sendHold(ServerPlayer player, boolean held) {
-        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held)); }
+    public static void sendHold(ServerPlayer player, boolean held, String warning) {
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held, warning)); }
     }
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {
