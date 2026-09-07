@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import java.util.List;
@@ -34,6 +35,10 @@ public final class Says {
         int background = colorName.isEmpty() ? CARD_BACKGROUND : ContentParser.color(colorName, "saysColor") & 0xFFFFFF;
         String image = ContentControl.text(ContentControl.CHUNKS, "saysImage", Config.chunks.saysImage()).trim();
         RDPLNetwork.sendCard(player, new MessageCard("", List.of(said), icon, image, background, rgb(color), CARD_TICKS));
+    }
+
+    public static void tellAll(MinecraftServer server, String said, ChatFormatting color) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, said, color); }
     }
 
     public static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard()); }

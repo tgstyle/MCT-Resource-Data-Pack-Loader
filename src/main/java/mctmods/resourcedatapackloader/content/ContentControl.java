@@ -29,6 +29,8 @@ public final class ContentControl {
     public static final String BIOMES = "biomes";
     public static final String SPAWNING = "spawning";
     public static final String STRUCTURES = "structures";
+    public static final String REPLACEMENTS = "replacements";
+    public static final String ENTITIES = "entities";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -64,7 +66,7 @@ public final class ContentControl {
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villagePathPiers", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
             "villagePlotsMost", "villageBlockSizes", "villageLayout", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
-            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions");
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions");
     private static final Map<String, String[]> MODES = new HashMap<>();
     private static final Map<String, JsonElement> SETTINGS = new HashMap<>();
     @Nullable private static WorldTemplateDef settingsFrom;
@@ -183,6 +185,8 @@ public final class ContentControl {
         if (BIOMES.equals(group)) { return Config.control.biomes(); }
         if (SPAWNING.equals(group)) { return Config.control.spawning(); }
         if (STRUCTURES.equals(group)) { return Config.control.structures(); }
+        if (REPLACEMENTS.equals(group)) { return Config.control.replacements(); }
+        if (ENTITIES.equals(group)) { return Config.control.entities(); }
         return DEFAULT;
     }
 }

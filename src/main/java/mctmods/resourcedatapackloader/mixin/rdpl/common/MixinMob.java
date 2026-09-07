@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -11,6 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Mob.class) public abstract class MixinMob {
@@ -38,6 +40,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private void rdpl$maxFall(CallbackInfoReturnable<Integer> cir) {
         EntityVariantDef def = ContentEntities.def((Mob) (Object) this);
         if (def != null && def.physics().maxFallHeight() >= 0) { cir.setReturnValue(def.physics().maxFallHeight()); }
+    }
+
+    @Inject(method = "serverAiStep", at = @At("HEAD"), cancellable = true)
+    private void rdpl$slowThinking(CallbackInfo ci) {
+        if (ContentEntityTicks.thinksSlower((Mob) (Object) this)) { ci.cancel(); }
     }
 
     @Inject(method = "canBeLeashed", at = @At("HEAD"), cancellable = true)

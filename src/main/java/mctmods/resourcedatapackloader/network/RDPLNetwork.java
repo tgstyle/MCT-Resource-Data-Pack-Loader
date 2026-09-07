@@ -2,6 +2,9 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.WorldIntroScreen;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,6 +30,28 @@ public final class RDPLNetwork {
         channel.messageBuilder(MessageCard.class, 0, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageCard::write).decoder(MessageCard::read).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         }).add();
+        channel.messageBuilder(MessageHold.class, 1, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHold::write).decoder(MessageHold::read).consumerMainThread((message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held()); }
+        }).add();
+        channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
+        }).add();
+        channel.messageBuilder(MessageIntroDone.class, 3, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroDone()).consumerMainThread((message, context) -> {
+            ServerPlayer player = context.get().getSender();
+            if (player != null) { ContentIntroPlay.finished(player); }
+        }).add();
+    }
+
+    public static void sendHold(ServerPlayer player, boolean held) {
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held)); }
+    }
+
+    public static void playIntro(ServerPlayer player, boolean landBeingMade) {
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageIntroPlay(landBeingMade)); }
+    }
+
+    public static void introDone() {
+        if (channel != null) { channel.sendToServer(new MessageIntroDone()); }
     }
 
     public static boolean reaches(ServerPlayer player) {
