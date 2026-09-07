@@ -50,6 +50,8 @@ public final class ContentTerrain {
 
     public static String deepStone() { return text("deepStone", Config.worldgen.deepStone()); }
 
+    public static String noiseCaves() { return text("noiseCaves", Config.worldgen.noiseCaves()); }
+
     public static String worldSpawn() { return text("worldSpawn", Config.worldgen.worldSpawn()); }
 
     public static int worldBorder() {

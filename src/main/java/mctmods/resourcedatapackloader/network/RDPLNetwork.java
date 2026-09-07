@@ -31,7 +31,7 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         }).add();
         channel.messageBuilder(MessageHold.class, 1, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHold::write).decoder(MessageHold::read).consumerMainThread((message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning()); }
         }).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
@@ -42,8 +42,8 @@ public final class RDPLNetwork {
         }).add();
     }
 
-    public static void sendHold(ServerPlayer player, boolean held) {
-        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held)); }
+    public static void sendHold(ServerPlayer player, boolean held, String warning) {
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held, warning)); }
     }
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {

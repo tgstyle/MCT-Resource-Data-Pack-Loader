@@ -112,7 +112,7 @@ public final class ContentReplacements {
         LevelChunkSection[] sections = chunk.getSections();
         for (int index = 0; index < sections.length; index++) {
             LevelChunkSection section = sections[index];
-            if (section == null || section.hasOnlyAir()) { continue; }
+            if (section == null || section.hasOnlyAir() || !section.maybeHas(state -> replacementFor(state) != null)) { continue; }
             int bottom = chunk.getSectionYFromSectionIndex(index) << 4;
             if (bottom > maxHeight || bottom + 15 < minHeight) { continue; }
             for (int y = 0; y < 16; y++) {

@@ -75,7 +75,7 @@ public final class ContentWorldShape {
 
     @Nullable public static ResourceLocation presetId() { return presetId; }
 
-    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans) {
+    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves) {
         boolean tall() { return minY != VANILLA_MIN || maxY != VANILLA_MAX; }
 
         boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans; }
@@ -115,7 +115,7 @@ public final class ContentWorldShape {
         presetId = shape.id();
         presetName = shape.name();
         Summary.info("worldshape", "Generated world preset " + shape.id() + " (" + shape.name() + ") on " + shape.base()[0] + ": overworld " + shape.minY() + ".." + shape.maxY()
-                + (shape.deepStone() == null ? "" : ", deep stone " + shape.deepStone()) + (shape.seaLevel() >= 0 ? ", sea level " + shape.seaLevel() : "") + (shape.lavaOceans() ? ", lava oceans" : "")
+                + (shape.deepStone() == null ? "" : ", deep stone " + shape.deepStone()) + (shape.deepCaves() ? ", caves to the floor" : "") + (shape.seaLevel() >= 0 ? ", sea level " + shape.seaLevel() : "") + (shape.lavaOceans() ? ", lava oceans" : "")
                 + (bedrockAsked() ? ", flat bedrock " + layers() + " layer(s)" : "") + (voidAsked() ? ", void " + voidDimensions() : ""));
     }
 
@@ -152,7 +152,8 @@ public final class ContentWorldShape {
                 if (!key.equals("seaLevel") && !key.equals("useLavaOceans") && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read; seaLevel and useLavaOceans are the keys read here", key); }
             }
         }
-        return new Shape(id, name, base, minY, maxY, deepStone.isEmpty() ? null : deepStone, seaLevel, lavaOceans);
+        boolean deepCaves = ContentDeepCaves.carves(minY, "The overworld");
+        return new Shape(id, name, base, minY, maxY, deepStone.isEmpty() ? null : deepStone, seaLevel, lavaOceans, deepCaves);
     }
 
     private static JsonObject dimension(Shape shape, String dimension, boolean flatBedrock, boolean isVoid) {
@@ -207,8 +208,8 @@ public final class ContentWorldShape {
                     ContentBiomes.surface(settings);
                     ContentBiomes.spawnTargets(settings);
                 }
-                if (flatBedrock) { flattenBedrock(settings, dimension); }
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
+                if (flatBedrock) { flattenBedrock(settings, dimension); }
                 settingsId = made(shape, path + "_noise", "worldgen/noise_settings", settings);
             }
         }
@@ -228,6 +229,7 @@ public final class ContentWorldShape {
         JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
         noise.addProperty("min_y", shape.minY());
         noise.addProperty("height", shape.maxY() - shape.minY());
+        if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, ResourceLocation.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_overworld"), shape.minY()); }
         if (shape.seaLevel() >= 0) { settings.addProperty("sea_level", shape.seaLevel()); }
         if (shape.lavaOceans()) {
             JsonObject lava = new JsonObject();

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.content.ContentWelcome;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
@@ -17,10 +18,13 @@ public final class ContentIntroPlay {
 
     public static boolean enabled() { return !ContentWorldIntro.pages().isEmpty(); }
 
+    public static boolean skips(ServerPlayer player) {
+        if (!enabled() || !RDPLNetwork.reaches(player)) { return true; }
+        return ContentWorldIntro.once() && player.getPersistentData().getBoolean(SEEN);
+    }
+
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !enabled()) { return; }
-        if (ContentWorldIntro.once() && player.getPersistentData().getBoolean(SEEN)) { return; }
-        if (!RDPLNetwork.reaches(player)) { return; }
+        if (!(event.getEntity() instanceof ServerPlayer player) || skips(player)) { return; }
         PLAYING.add(player.getUUID());
         RDPLNetwork.playIntro(player, ContentPregen.busy());
     }
@@ -32,7 +36,8 @@ public final class ContentIntroPlay {
     public static void finished(ServerPlayer player) {
         if (!PLAYING.remove(player.getUUID())) { return; }
         if (ContentWorldIntro.once()) { player.getPersistentData().putBoolean(SEEN, true); }
-        ContentPregen.releaseAfterIntro(player);
+        if (ContentPregen.busy() || ContentPregen.releaseAfterIntro(player)) { return; }
+        ContentWelcome.welcome(player);
     }
 
     public static void replay(ServerPlayer player) { player.getPersistentData().remove(SEEN); }

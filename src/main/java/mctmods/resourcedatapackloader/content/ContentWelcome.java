@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -24,7 +25,7 @@ public final class ContentWelcome {
     private ContentWelcome() {}
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && !ContentPregen.welcomesLater(player)) { welcome(player); }
+        if (event.getEntity() instanceof ServerPlayer player && !ContentPregen.welcomesLater(player) && ContentIntroPlay.skips(player)) { welcome(player); }
     }
 
     public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {

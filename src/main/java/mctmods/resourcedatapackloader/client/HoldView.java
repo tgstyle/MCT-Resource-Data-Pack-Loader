@@ -24,12 +24,16 @@ public final class HoldView {
     private static final int SUBTITLE_TOP = 10;
     private static final String KEY = "pregenLogo";
     private static String warnedAbout = "";
+    private static final int TEXT_ABOVE_MIDDLE = 36;
+    private static final float TEXT_SCALE = 1.5F;
+    private static String warning = "";
     private static boolean held;
     private static int showing;
 
     private HoldView() {}
 
-    public static void set(boolean holding) {
+    public static void set(boolean holding, String said) {
+        warning = said;
         if (holding == held) { return; }
         held = holding;
         showing = holding ? 0 : SHOW + FADE;
@@ -44,15 +48,21 @@ public final class HoldView {
     public static void onFog(ViewportEvent.RenderFog event) {
         float strength = strength((float) event.getPartialTick());
         if (strength <= 0.0F) { return; }
-        float far = Math.min(event.getFarPlaneDistance(), FOG_REACH + (1.0F - strength) * event.getFarPlaneDistance());
-        event.setNearPlaneDistance(0.0F);
+        float eased = strength * strength * (3.0F - 2.0F * strength);
+        float near = event.getNearPlaneDistance() * (1.0F - eased);
+        float far = Math.min(event.getFarPlaneDistance(), FOG_REACH * eased + event.getFarPlaneDistance() * (1.0F - eased));
+        event.setNearPlaneDistance(near);
         event.setFarPlaneDistance(far);
         event.setCanceled(true);
     }
 
     public static void onHud(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen != null || held) { return; }
+        if (mc.screen != null) { return; }
+        if (held) {
+            warn(event.getGuiGraphics());
+            return;
+        }
         float strength = strength(event.getPartialTick());
         if (strength <= 0.0F) { return; }
         GuiGraphics graphics = event.getGuiGraphics();
@@ -66,6 +76,20 @@ public final class HoldView {
         graphics.blit(LOGO, left, top, 0.0F, 0.0F, width, height, width, height);
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
+    }
+
+    private static void warn(GuiGraphics graphics) {
+        if (warning.isEmpty()) { return; }
+        Minecraft mc = Minecraft.getInstance();
+        int width = mc.font.width(warning);
+        float x = (graphics.guiWidth() - width * TEXT_SCALE) / 2.0F;
+        float y = graphics.guiHeight() / 2.0F - TEXT_ABOVE_MIDDLE;
+        int pad = 4;
+        graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * TEXT_SCALE) + pad, Math.round(y + mc.font.lineHeight * TEXT_SCALE) + pad, 0x99000000);
+        graphics.pose().pushPose();
+        graphics.pose().scale(TEXT_SCALE, TEXT_SCALE, 1.0F);
+        graphics.drawString(mc.font, warning, x / TEXT_SCALE, y / TEXT_SCALE, 0xFF5555, true);
+        graphics.pose().popPose();
     }
 
     private static int leftFor(int screenWidth, int width) {
