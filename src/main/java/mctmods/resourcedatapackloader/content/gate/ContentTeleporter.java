@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.block.ContentPortalBlock;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
@@ -131,7 +132,7 @@ public final class ContentTeleporter implements ITeleporter {
     }
 
     private static BlockPos landing(ServerLevel level, BlockPos from) {
-        BlockPos ground = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(from.getX(), 0, from.getZ()));
+        BlockPos ground = ContentDimensions.landing(level, new BlockPos(from.getX(), 0, from.getZ()), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
         if (ground.getY() > level.getMinBuildHeight() + 1) { return ground; }
         return new BlockPos(from.getX(), Mth.clamp(from.getY(), level.getMinBuildHeight() + SEARCH_LOW, level.getMaxBuildHeight() - 4), from.getZ());
     }

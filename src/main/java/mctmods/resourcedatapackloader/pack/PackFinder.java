@@ -8,6 +8,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -19,6 +20,7 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 public final class PackFinder implements RepositorySource {
+    private static final String KUBEJS = "dev.latvian.mods.kubejs.";
     private static final PackSource SOURCE = PackSource.create(name -> Component.translatable("pack.nameAndSource", name, Component.translatable("rdpl.pack.source")).withStyle(ChatFormatting.GRAY), true);
     private final PackType type;
 
@@ -84,6 +86,23 @@ public final class PackFinder implements RepositorySource {
         if (normal != null) { seated.add(at, normal); }
         if (overriding != null) { seated.add(overriding); }
         return ImmutableList.copyOf(seated);
+    }
+
+    public static List<PackResources> beforeOwn(List<PackResources> opened) {
+        List<PackResources> scripted = new ArrayList<>();
+        int own = -1;
+        for (int i = 0; i < opened.size(); i++) {
+            PackResources pack = opened.get(i);
+            if (pack.getClass().getName().startsWith(KUBEJS)) { scripted.add(pack); }
+            else if (own < 0 && (pack instanceof RDPLResourcePack || pack instanceof GeneratedPack)) { own = i; }
+        }
+        if (scripted.isEmpty() || own < 0) { return opened; }
+        List<PackResources> ordered = new ArrayList<>(opened);
+        ordered.removeAll(scripted);
+        int at = 0;
+        while (at < ordered.size() && !(ordered.get(at) instanceof RDPLResourcePack) && !(ordered.get(at) instanceof GeneratedPack)) { at++; }
+        ordered.addAll(at, scripted);
+        return ordered;
     }
 
     private static int lastBase(List<Pack> packs) {

@@ -39,6 +39,8 @@ public final class HoldView {
         showing = holding ? 0 : SHOW + FADE;
     }
 
+    public static boolean showing() { return held || showing > 0; }
+
     private static float strength(float partialTicks) {
         if (held || showing > FADE) { return 1.0F; }
         if (showing <= 0) { return 0.0F; }

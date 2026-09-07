@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
@@ -56,6 +57,10 @@ public final class ContentGenerated {
             try { item(entry, itemTags); }
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for item {}", entry.id(), ex); }
         }
+        for (ContentFluids.Made made : ContentFluids.made()) {
+            try { fluidBlock(made); }
+            catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for fluid {}", made.def.id(), ex); }
+        }
         blockTags(blockTags);
         tags(itemTags, Map.of(), ContentFormats.ITEM_TAGS);
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
@@ -76,6 +81,18 @@ public final class ContentGenerated {
             if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && !sapling.usesStructure() && !provided(PackType.SERVER_DATA, namespace, "worldgen/configured_feature/" + name + "_tree.json")) {
                 data(namespace, "worldgen/configured_feature/" + name + "_tree.json", tree(sapling));
             }
+        }
+    }
+
+    private static void fluidBlock(ContentFluids.Made made) {
+        if (made.block == null) { return; }
+        String namespace = made.def.id().getNamespace();
+        String name = made.def.id().getPath();
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) {
+            blockstate(namespace, name, obj("variants", obj("", obj("model", namespace + ":block/" + name))));
+        }
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/block/" + name + ".json")) {
+            asset(namespace, "models/block/" + name + ".json", obj("textures", obj("particle", made.def.still().toString())));
         }
     }
 

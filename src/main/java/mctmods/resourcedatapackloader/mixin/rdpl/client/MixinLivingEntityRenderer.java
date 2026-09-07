@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
+import mctmods.resourcedatapackloader.client.EntityTint;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 
@@ -37,11 +38,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Redirect(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"))
     private void rdpl$tinted(EntityModel<T> model, PoseStack pose, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha, T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        int tint = ContentEntities.tint(entity, EntityVariantDef.BODY);
-        if (tint == 0) {
-            model.renderToBuffer(pose, consumer, light, overlay, red, green, blue, alpha);
-            return;
-        }
-        model.renderToBuffer(pose, consumer, light, overlay, red * ((tint >> 16 & 255) / 255.0F), green * ((tint >> 8 & 255) / 255.0F), blue * ((tint & 255) / 255.0F), alpha);
+        model.renderToBuffer(pose, EntityTint.wrap(consumer, ContentEntities.tint(entity, EntityVariantDef.BODY)), light, overlay, red, green, blue, alpha);
     }
 }

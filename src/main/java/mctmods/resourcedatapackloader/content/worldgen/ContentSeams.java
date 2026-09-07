@@ -176,7 +176,7 @@ public final class ContentSeams {
         if (down) {
             BlockPos feet = stood(player);
             if (feet == null) { feet = footing(player, floor, Math.min(ceiling - 1, floor + RESCUE_BAND)); }
-            if (feet == null) { feet = player.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, player.level().getSharedSpawnPos()); }
+            if (feet == null) { feet = ContentDimensions.landing((ServerLevel) player.level(), player.level().getSharedSpawnPos(), Heightmap.Types.MOTION_BLOCKING); }
             player.teleportTo(feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D);
         }
         else { player.teleportTo(player.getX(), ceiling - INSET_DOWN, player.getZ()); }
@@ -309,7 +309,7 @@ public final class ContentSeams {
         }
 
         private BlockPos surface(ServerLevel level, int blockX, int blockZ) {
-            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(blockX, 0, blockZ));
+            BlockPos top = ContentDimensions.landing(level, new BlockPos(blockX, 0, blockZ), Heightmap.Types.MOTION_BLOCKING);
             int feet = Mth.clamp(top.getY(), floor + 1, ceiling - 1);
             return new BlockPos(blockX, feet, blockZ);
         }

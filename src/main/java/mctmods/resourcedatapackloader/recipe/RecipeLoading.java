@@ -13,7 +13,9 @@ import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class RecipeLoading {
@@ -28,10 +30,13 @@ public final class RecipeLoading {
     private static int furnaceRemoved;
     private static int furnaceAdded;
     @Nullable private static IRecipeFilter attached;
+    private static final Set<String> SCRIPTED = Set.of("crafttweaker", "kubejs", "groovyscript");
+    private static boolean rebuilt;
 
     private RecipeLoading() {}
 
     public static void begin(Map<ResourceLocation, JsonElement> recipes) {
+        rebuilt = false;
         RecipeRemovals.reload();
         FurnaceRecipes.reload();
         RecipeBlocking.reload();
@@ -54,7 +59,7 @@ public final class RecipeLoading {
                 removedByFile++;
                 continue;
             }
-            if (RecipeRemovals.removesName(id)) {
+            if (!scripted(id) && RecipeRemovals.removesName(id)) {
                 iterator.remove();
                 removedByName++;
                 continue;
@@ -69,6 +74,7 @@ public final class RecipeLoading {
     }
 
     public static boolean doomed(ResourceLocation id, Recipe<?> recipe, ItemStack result) {
+        if (scripted(id)) { return false; }
         if (RecipeRemovals.removesOutput(result)) {
             removedByOutput++;
             return true;
@@ -83,13 +89,24 @@ public final class RecipeLoading {
         return RecipeBlocking.blocks(id, result);
     }
 
-    public static boolean late(Recipe<?> recipe, ItemStack result) {
-        if (!(recipe instanceof AbstractCookingRecipe cooking) || !FurnaceRecipes.removes(cooking.getIngredients(), result, true)) { return false; }
+    public static boolean late(ResourceLocation id, Recipe<?> recipe, ItemStack result) {
+        if (scripted(id) || !(recipe instanceof AbstractCookingRecipe cooking) || !FurnaceRecipes.removes(cooking.getIngredients(), result, true)) { return false; }
         furnaceRemoved++;
         return true;
     }
 
-    public static void attach(IRecipeFilter filter) { attached = filter; }
+    public static void attach(IRecipeFilter filter) {
+        attached = filter;
+        rebuilt = true;
+    }
+
+    public static boolean scripted(ResourceLocation id) { return SCRIPTED.contains(id.getNamespace().toLowerCase(Locale.ROOT)); }
+
+    public static void afterReload(IRecipeFilter filter) {
+        if (rebuilt) { return; }
+        ContentLog.LOGGER.info("The recipe pass did not run inside RecipeManager.apply (another mod took the method over), running it after the reload instead");
+        filter.rdpl$filterSkipped();
+    }
 
     public static void onTagsBound() {
         IRecipeFilter filter = attached;

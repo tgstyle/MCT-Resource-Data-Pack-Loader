@@ -42,6 +42,7 @@ import javax.annotation.Nullable;
 
 public final class ContentCaveRegions {
     public static final String COVER_FEATURE = "cover";
+    public static final String STRUCTURE_FEATURE = "cave_structures";
     private static final ResourceLocation DRIPSTONE = ResourceLocation.fromNamespaceAndPath("minecraft", "dripstone_caves");
     private static final String OVERWORLD = "minecraft:overworld";
     private static final String NETHER = "minecraft:the_nether";
@@ -81,6 +82,7 @@ public final class ContentCaveRegions {
         int total = plain;
         for (CaveRegionDef def : active) { total += def.weight(); }
         float low = -1.0F;
+        int structured = 0;
         for (CaveRegionDef def : active) {
             float width = total <= 0 ? 0.0F : 2.0F * def.weight() / total;
             JsonObject point = point(def, low, low + width);
@@ -99,13 +101,22 @@ public final class ContentCaveRegions {
             if (ceiling != null) { states.add(ceiling); }
             ContentPalette palette = states.isEmpty() ? null : new ContentPalette(states, List.of(1, 1), Set.of(), Set.of(), Set.of(), Set.of(), Set.of());
             MADE.put(def.key(), new Made(def, point, cover, palette));
-            if (cover != null) { writeCover(def); }
+            if (cover != null) { writeFeature(def, COVER_FEATURE, "_cover", "top_layer_modification"); }
+            if (def.hasStructures()) {
+                writeFeature(def, STRUCTURE_FEATURE, "_structures", "underground_structures");
+                structured++;
+            }
             ContentLog.LOGGER.debug("Cave region {} takes the underground at humidity {} and depth {}", def.key(), point.get("humidity"), point.get("depth"));
         }
-        if (!MADE.isEmpty()) { Summary.info("caveregions.generated", "Generated " + MADE.size() + " cave biome(s) from cave regions, " + plain + " parts in " + total + " of the underground left plain"); }
+        if (!MADE.isEmpty()) { Summary.info("caveregions.generated", "Generated " + MADE.size() + " cave biome(s) from cave regions, " + plain + " parts in " + total + " of the underground left plain" + (structured > 0 ? ", " + structured + " placing structures" : "")); }
     }
 
     public static boolean any() { return !MADE.isEmpty(); }
+
+    @Nullable public static CaveRegionDef def(ResourceLocation region) {
+        Made made = MADE.get(region);
+        return made == null ? null : made.def();
+    }
 
     @Nullable public static ContentCover cover(ResourceLocation region) {
         Made made = MADE.get(region);
@@ -188,13 +199,13 @@ public final class ContentCaveRegions {
         return point;
     }
 
-    private static void writeCover(CaveRegionDef def) {
+    private static void writeFeature(CaveRegionDef def, String feature, String suffix, String step) {
         String namespace = def.key().getNamespace();
-        String path = def.key().getPath() + "_cover";
+        String path = def.key().getPath() + suffix;
         JsonObject config = new JsonObject();
         config.addProperty("region", def.key().toString());
         JsonObject configured = new JsonObject();
-        configured.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + COVER_FEATURE);
+        configured.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + feature);
         configured.add("config", config);
         GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + path + ".json", configured.toString());
         JsonObject placed = new JsonObject();
@@ -205,7 +216,7 @@ public final class ContentCaveRegions {
         modifier.addProperty("type", ContentFormats.ADD_FEATURES);
         modifier.addProperty("biomes", def.key().toString());
         modifier.addProperty("features", namespace + ":" + path);
-        modifier.addProperty("step", "top_layer_modification");
+        modifier.addProperty("step", step);
         GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.BIOME_MODIFIERS + "/" + path + ".json", modifier.toString());
     }
 
@@ -229,7 +240,6 @@ public final class ContentCaveRegions {
             if (json.has(rubic)) { ContentLog.LOGGER.info("Cave region {} sets '{}', which was the rubic world's and is not read on this line", key, rubic); }
         }
         if (json.has("waterLevel")) { ContentLog.LOGGER.info("Cave region {} sets waterLevel, which this line does not read: aquifers are the noise settings' and cannot be pinned per biome", key); }
-        if (json.has("structures")) { ContentLog.LOGGER.info("Cave region {} names structures, which wait for the structure layer", key); }
         int minHeight = json.has("minHeight") ? GsonHelper.getAsInt(json, "minHeight") : CaveRegionDef.WORLD_FLOOR;
         int maxHeight = GsonHelper.getAsInt(json, "maxHeight", 48);
         if (maxHeight < minHeight) {

@@ -286,6 +286,8 @@ public final class Config {
         private final ForgeConfigSpec.IntValue caveRegionPlainWeight;
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureSpacing;
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureSeparation;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureMost;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureSpawners;
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureMinDistanceFromSpawn;
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureBiomes;
         private final ForgeConfigSpec.BooleanValue structureBiomesAreBlacklist;
@@ -376,6 +378,8 @@ public final class Config {
             caveRegionPlainWeight = builder.comment("The weight of plain, region-less underground against the cave regions' own weights. Higher leaves more of the underground without any region [Default=4]").defineInRange("caveRegionPlainWeight", 4, 0, 1000);
             structureSpacing = builder.comment("How far apart vanilla structures are seeded, in chunks, as structure=chunks entries: the 1.12.2 names temples, monuments, mansions, mineshafts, strongholds, netherbridges, endcities and villages, or any structure set id such as pillager_outposts. For mineshafts the number is one chunk in that many; for strongholds it is the ring distance [Default=[]]").defineList("structureSpacing", List.of(), each -> each instanceof String);
             structureSeparation = builder.comment("The closest two of a structure may be, in chunks, as structure=chunks entries; for strongholds it is the ring spread [Default=[]]").defineList("structureSeparation", List.of(), each -> each instanceof String);
+            structureMost = builder.comment("The most of a structure a dimension may hold, as structure=count entries such as villages=100: once that many have been founded no chunk founds another, chunks pinned with structureAt aside. 0 or an absent entry sets no ceiling [Default=[]]").defineList("structureMost", List.of(), each -> each instanceof String);
+            structureSpawners = builder.comment("What the mob spawner inside a vanilla structure spawns, as structure=namespace:entity entries, comma separated for a random pick. Only dungeons, mineshafts, netherbridges and strongholds build one; spawners other mods place are left alone [Default=[]]").defineList("structureSpawners", List.of(), each -> each instanceof String);
             structureMinDistanceFromSpawn = builder.comment("How far from the world spawn a structure starts, in blocks, as structure=blocks entries. Measured from the pack's worldSpawn when one is set, else from the world origin, since placement is decided before any spawn exists [Default=[]]").defineList("structureMinDistanceFromSpawn", List.of(), each -> each instanceof String);
             structureBiomes = builder.comment("Where a structure may generate, as structure=biome,biome entries naming biome ids or biome types such as SANDY [Default=[]]").defineList("structureBiomes", List.of(), each -> each instanceof String);
             structureBiomesAreBlacklist = builder.comment("On, structureBiomes names the biomes to keep a structure out of. Off, only those biomes get it [Default=false]").define("structureBiomesAreBlacklist", false);
@@ -524,6 +528,8 @@ public final class Config {
         public List<String> structureSpacing() { return loaded() ? List.copyOf(structureSpacing.get()) : List.of(); }
 
         public List<String> structureSeparation() { return loaded() ? List.copyOf(structureSeparation.get()) : List.of(); }
+        public List<String> structureMost() { return loaded() ? List.copyOf(structureMost.get()) : List.of(); }
+        public List<String> structureSpawners() { return loaded() ? List.copyOf(structureSpawners.get()) : List.of(); }
 
         public List<String> structureMinDistanceFromSpawn() { return loaded() ? List.copyOf(structureMinDistanceFromSpawn.get()) : List.of(); }
 

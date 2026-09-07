@@ -82,6 +82,8 @@ public final class ContentWorldgen {
     }
 
     public static boolean allows(Entry entry, WorldGenLevel level, BlockPos pos) {
+        if (!entry.def().needsBiome()) { return true; }
+        if (!ContentPlacer.loaded(level, pos)) { return false; }
         Holder<Biome> biome = level.getBiome(pos);
         if (!entry.def().caveRegions().isEmpty() && !inRegion(entry, biome)) { return false; }
         if (entry.def().hasBiomeFilter() && matches(entry, biome) == entry.def().biomesAreBlacklist()) { return false; }

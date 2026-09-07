@@ -50,9 +50,6 @@ public final class ContentDimensionParser {
             ContentLog.LOGGER.error("Dimension {} asks for biome source '{}', which is not {} or {}, using {}", key, source, DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.INHERIT);
             source = DimensionDef.INHERIT;
         }
-        if (!GsonHelper.getAsBoolean(terrain, "structures", true)) { ContentLog.LOGGER.error("Dimension {} turns structures off, which this line only does per structure through the structures group, so they stay on", key); }
-        if (sky.has("groundLevel")) { ContentLog.LOGGER.debug("Dimension {} names a groundLevel, which nothing on this line reads", key); }
-        if (sky.has("respawn")) { ContentLog.LOGGER.debug("Dimension {} names respawn, which this line decides by respawnDimension and beds alone", key); }
         int minHeight = terrain.has("minHeight") ? GsonHelper.getAsInt(terrain, "minHeight") : DimensionDef.UNSET;
         int maxHeight = terrain.has("maxHeight") ? GsonHelper.getAsInt(terrain, "maxHeight") : DimensionDef.UNSET;
         if ((minHeight == DimensionDef.UNSET) != (maxHeight == DimensionDef.UNSET)) {
@@ -86,7 +83,8 @@ public final class ContentDimensionParser {
                 GsonHelper.getAsBoolean(sky, "sunriseColors", true), GsonHelper.getAsBoolean(sky, "nether", false), GsonHelper.getAsBoolean(sky, "beds", true),
                 GsonHelper.getAsBoolean(sky, "waterVaporizes", false), GsonHelper.getAsBoolean(sky, "showFog", false), Mth.clamp(GsonHelper.getAsFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
                 GsonHelper.getAsFloat(sky, "starBrightness", -1.0F), GsonHelper.getAsBoolean(sky, "renderSky", true), GsonHelper.getAsBoolean(sky, "renderClouds", true),
-                GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, gameRules(key, json), Json.strings(json, "requires"), portal(key, json));
+                GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, GsonHelper.getAsBoolean(sky, "respawn", true),
+                sky.has("groundLevel") ? GsonHelper.getAsInt(sky, "groundLevel") : DimensionDef.UNSET, gameRules(key, json), Json.strings(json, "requires"), portal(key, json));
     }
 
     @Nullable private static DimensionPortalDef portal(ResourceLocation key, JsonObject json) {

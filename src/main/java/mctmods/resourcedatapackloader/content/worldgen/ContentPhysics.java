@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.DimensionValues;
 
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -34,6 +35,18 @@ public final class ContentPhysics {
         double factor = GRAVITY.factor(event.getLevel());
         gravity.removeModifier(GRAVITY_ID);
         if (factor != 1.0D) { gravity.addTransientModifier(new AttributeModifier(GRAVITY_ID, "rdpl:worldGravity", factor - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL)); }
+    }
+
+    public static double gravity(Level level) { return GRAVITY.factor(level); }
+
+    public static double scaledFall(Entity entity, double vanilla) {
+        double factor = gravity(entity.level());
+        return factor == 1.0D ? vanilla : vanilla * factor;
+    }
+
+    public static float scaledFall(Entity entity, float vanilla) {
+        double factor = gravity(entity.level());
+        return factor == 1.0D ? vanilla : (float) (vanilla * factor);
     }
 
     public static void onFall(LivingFallEvent event) {

@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Mixin(RecipeManager.class) public abstract class MixinRecipeManager implements IRecipeFilter {
+@Mixin(value = RecipeManager.class, priority = 1200) public abstract class MixinRecipeManager implements IRecipeFilter {
     @Unique private static final RegistryAccess RDPL_REGISTRIES = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
     @Unique private static final int RDPL_COOKING_TIME = 200;
     @Shadow private Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> recipes;
@@ -44,12 +44,17 @@ import java.util.Map;
 
     @Override public void rdpl$filterLate() { rdpl$rebuild(true); }
 
+    @Override public void rdpl$filterSkipped() {
+        rdpl$rebuild(false);
+        RecipeLoading.attach(this);
+    }
+
     @Unique private void rdpl$rebuild(boolean late) {
         Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> kept = new LinkedHashMap<>();
         Map<ResourceLocation, Recipe<?>> named = new LinkedHashMap<>();
         for (Recipe<?> recipe : byName.values()) {
             ItemStack result = rdpl$result(recipe);
-            if (late ? RecipeLoading.late(recipe, result) : RecipeLoading.doomed(recipe.getId(), recipe, result)) { continue; }
+            if (late ? RecipeLoading.late(recipe.getId(), recipe, result) : RecipeLoading.doomed(recipe.getId(), recipe, result)) { continue; }
             rdpl$keep(kept, named, recipe);
         }
         int added = 0;

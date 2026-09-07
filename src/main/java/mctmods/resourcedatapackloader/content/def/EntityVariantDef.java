@@ -11,6 +11,9 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
                                Combat combat, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
                                List<String> requires, List<TaskDef> tasks) {
     public static final String BODY = "body";
+    public static final String ARMOR = "armor";
+    public static final String HELD = "held";
+    public static final List<String> PARTS = List.of(BODY, ARMOR, HELD);
 
     public record Sounds(String ambient, String hurt, String death, float volume, float pitch) {}
 
@@ -28,5 +31,5 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
         public boolean any() { return explodes || throwsItems || charges || pounces || sniffs > 0 || fleesWhenHurt > 0.0F || patrols || swoops || gusts; }
     }
 
-    public boolean resizes() { return scale != 1.0F || angryScale != scale; }
+    public boolean keepsSize() { return scale == 1.0F && angryScale == scale; }
 }
