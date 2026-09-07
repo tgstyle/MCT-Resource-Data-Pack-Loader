@@ -3084,6 +3084,13 @@ Beschreibt etwas, das generiert. Jeder Eintrag ist eine **Form**, gesetzt von ei
   "caveRegions": ["dripstone"],
   "snap": "floor",
   "snapDepth": 0,
+  "indicators": ["mypack:iron_rock=3", "minecraft:gravel=1", "empty=4"],
+  "indicatorCount": { "min": 1, "max": 3 },
+  "indicatorSpread": 2,
+  "then": ["mypack:quartz_halo=2", "empty=1", { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }],
+  "thenCount": 1,
+  "thenSpread": 6,
+  "thenDepth": { "min": -8, "max": -2 },
   "requires": ["quark"],
   "shape": { "type": "cluster" },
   "spread": { "type": "even" }
@@ -3122,6 +3129,14 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 | `caveRegions` | nein | Liste von Regionsnamen | keine | Generiert nur innerhalb dieser [Höhlenregionen](#höhlenregionen) |
 | `snap` | nein | `floor` oder `ceiling` | keiner | Verschiebt jeden Versuch erst senkrecht zum nächsten Höhlenboden oder zur nächsten Höhlendecke |
 | `snapDepth` | nein | int | `0` | Wie weit `snap` danach über die Oberfläche hinaus geht, vom Boden nach unten und von der Decke nach oben. `0` bleibt im freien Raum an der Oberfläche, `1` ist der Oberflächenblock selbst, `2` der dahinter. Was überschrieben werden darf, regelt weiterhin `replace`, so legt ein Pack ein Band knapp unter den Boden statt darauf |
+| `indicators` | nein | Liste von `block=gewicht` | keine | Blöcke, die über einer erzeugten Ader verstreut auf der Oberfläche liegen bleiben, damit ein Spieler ahnt, was unter dem Boden liegt; wähle sie passend zum Inhalt der Ader. `empty=gewicht` lässt eine Stelle leer |
+| `indicatorCount` | nein | int oder Bereich | `1` | Wie viele Oberflächenstellen jede erzeugte Ader bekommt |
+| `indicatorSpread` | nein | int, Blöcke | `0` | Wie weit über den Fußabdruck der Ader hinaus ein Hinweis landen darf |
+| `then` | nein | Liste von `name=gewicht` oder Objekten | keine | Worldgen-Einträge, die direkt nach diesem aus ihm herauswachsen, an ihm angesetzt: der Ursprung des Nachfolgers liegt knapp außerhalb des Randes dieser Ader, in der Richtung, die `thenSpread` und `thenDepth` vorgeben, so dass sich beide berühren. Ein Eintrag ist `name=gewicht` oder ein Objekt mit `name`, `weight` und eigenem `spread` und `depth` (int oder Bereich), die für diesen Nachfolger allein die Werte der Ader ersetzen, so dass eine Liste eine Diamantspitze nach unten und einen Ast zur Seite schicken kann. Ein bloßer Name wird im Namespace dieses Packs gelesen, `empty=gewicht` reiht nichts ein. Ein Nachfolger behält seine eigene Form, Blöcke, Größe und `replace`, überspringt aber seine eigenen Versuche, Chance, Höhenband und Biomfilter, und darf selbst `then` tragen, so tief das Pack will; ein Eintrag, der in derselben Kette schon erzeugt wurde, beendet sie |
+| `thenCount` | nein | int oder Bereich | `1` | Wie viele verschiedene Nachfolger pro erzeugter Ader aus dieser Liste gewählt werden, jeder Eintrag höchstens einmal, so dass eine Zahl gleich der Listenlänge alle wachsen lässt |
+| `thenSpread` | nein | int, Blöcke | der Radius der Form | Wie weit die Richtung, in die ein Nachfolger wächst, seitlich kippen darf, gewürfelt von minus bis plus diesem Wert |
+| `thenDepth` | nein | int oder Bereich | `0` | Wie weit die Richtung nach unten (negativ) oder oben kippt. `0` ohne seitliches Kippen hängt den Nachfolger gerade nach unten |
+| `prospectAs` | nein | Zeichenkette | der Dateiname | Wie ein Schürfgegenstand diesen Eintrag in seiner Lesung nennt, z. B. `Hämatit` |
 
 ### Gewichtete Blöcke
 
@@ -3228,6 +3243,10 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
     "field": { "type": "speckle", "spread": 0.15 },
     "threshold": 0.5,
     "fade": 0,
+    "pattern": "banded",
+    "density": 0.8,
+    "rich": "mypack:rich_ruby_ore",
+    "poor": "mypack:poor_ruby_ore",
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -3258,6 +3277,7 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
 | `imprint` | Eine deiner `.nbt`-Vorlagen. Eine, die in einen Chunk passt, wird so verschoben, dass sie ganz im gerade gebauten Chunk landet, statt in einen Nachbarn zu ragen, den es noch nicht gibt – egal, wie herum sie gedreht ist; eine, die größer als ein Chunk ist, wird nur dort gesetzt, wo der Boden ringsum schon existiert |
 | `belt` | Ein Cluster über mehrere Chunks hinweg, für Gesteinsregionen |
 | `field` | Adern, die für jeden Block auf einmal ermittelt werden, mit derselben Form wie Härtegruppen |
+| `vein` | Eine Lagerstätte, als geseedetes Rauschfeld um einen Ursprung errechnet, wie Immersive Geology es macht: jeder Chunk schreibt seine eigene Scheibe jeder Ader, deren Reichweite von 24 Blöcken ihn berührt, also kaskadiert nichts, und `/rdplserver vein` kann sagen, wo eine Ader liegen wird, bevor das Land gebaut ist. Nutzt `size`, `attempts`, `rarity` und das Höhenband; `pattern` wählt das Aussehen |
 
 | Schlüssel | Genutzt von | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
@@ -3290,10 +3310,14 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
 | `at` | imprint | zwei Ints, x und z | keine | Genau einmal an diesen Blockkoordinaten an der Oberfläche setzen, wenn dieser Chunk generiert, statt nach Zufall. Siehe [Strukturen an genauen Stellen](#strukturen-an-genauen-stellen) |
 | `locateAs` | imprint | String | keiner | Jede Struktur, die dieser Eintrag setzt, unter diesem Namen eintragen, sodass `/locate <Name>` die nächste findet. Siehe [Gesetzte Strukturen finden](#platzierte-strukturen-finden) |
 | `field` | field | Objekt | `{ "type": "speckle" }` | Wie das Feld errechnet wird. Dieselben Schlüssel wie das `field` einer Härtegruppe, beschrieben unter [Das Feld](#das-feld): `speckle` mit `chances` und `spread`, oder `seeded` mit `cell`, `seeds`, `reach`, `arms` und `armReach` |
-| `threshold` | field | 0,0 bis 1,0 | `0,5` | Wie stark das Feld an einem Block sein muss, bevor dort gesetzt wird. Niedriger füllt mehr |
+| `threshold` | field, vein | 0,0 bis 1,0 | `0,5` (`0,4` bei vein) | Wie stark das Feld an einem Block sein muss, bevor dort gesetzt wird. Niedriger füllt mehr |
 | `fade` | field | int | `0` | Lässt das Band oben ausfransen statt glatt zu enden: über die obersten so vielen Blöcke des Höhenbereichs sinkt die Chance jedes Blocks Stufe für Stufe, derselbe Look, den die Engine `deepStone` am Übergang zur Welt darüber gibt |
 | `rarity` | alle | int | keiner (`400` für belt) | Eine Platzierung pro so viele Chunks. Bei einem belt bestimmt das den Abstand der Gürtel; bei jeder anderen Form lässt es nur einen Chunk von so vielen überhaupt seine `attempts` würfeln. `field` ignoriert es |
 | `rarityIsPerChunk` | alle | boolean | `false` | Macht aus `rarity` stattdessen die Anzahl Platzierungen pro Chunk |
+| `pattern` | vein | `default`, `banded` oder `tube` | `default` | Das Aussehen der Lagerstätte: ein verzerrter Klumpen, alle paar Blöcke gestapelte Schichten oder hohle Röhren, die sich durchs Gestein winden |
+| `density` | vein | 0,0 bis 1,0 | `1,0` | Der Anteil der passenden Blöcke, die wirklich gesetzt werden, eine Münze pro Block |
+| `rich` | vein | Blockname | keiner | Gesetzt im obersten Fünftel des Feldbereichs über `threshold`, dem Herz der Lagerstätte, statt der Blöcke des Eintrags |
+| `poor` | vein | Blockname | keiner | Gesetzt in den unteren zwei Fünfteln dieses Bereichs, dem Rand, statt der Blöcke des Eintrags; die Mitte sind die Blöcke des Eintrags selbst. Eine weggelassene Stufe setzt dort die Blöcke des Eintrags |
 
 Ein `field`-Gang ist die eine Form, die du beschreibst statt auswählst. Er nutzt dasselbe Gitter wie die Härtegruppen: `seeded` mit ein paar Armen ergibt Knoten mit Ranken, die zu ihren Nachbarn hinüberreichen, also einen Gang statt eines Klumpens, und `threshold` entscheidet, wie viel davon fest genug zum Setzen ist:
 
@@ -3645,10 +3669,17 @@ Steht die Steuerung einer Gruppe auf `default`, gewinnen diese Werte, auf `globa
     "oreTypes": ["COAL", "IRON"],
     "oreTypesAreBlacklist": true,
     "blockOreDimensions": [0, -1],
-    "blockOreDimensionsAreBlacklist": false
+    "blockOreDimensionsAreBlacklist": false,
+    "prospectItems": ["minecraft:compass=iron_vein|coal_seam", "mypack:dowsing_rod=*,12"],
+    "prospectItemsAreBlacklist": false,
+    "prospectWear": 2,
+    "prospectSlow": 2,
+    "prospectDrops": false
   }
 }
 ```
+
+`prospectItems` macht Gegenstände zu Schürfwerkzeugen für Worldgen-Einträge der Form `vein`: `item=eintrag|eintrag[,Radius in Chunks]` oder `item=*[,Radius]` für jeden vein-Eintrag, Radius standardmäßig 8. Wer schleichend mit so einem Gegenstand in der Hand einen Block abbaut, erfährt für jeden Eintrag, den er liest, `Möglicher Fund von <Erz> <Richtung> von hier, <weiter unten | weiter oben | etwa auf dieser Tiefe>` — eine von acht Himmelsrichtungen vom abgebauten Block zur nächsten angelegten Ader, nie eine Position; `genau hier`, wenn der Block schon in der Reichweite der Ader liegt, und `Hier deutet nichts auf etwas hin`, wenn im Radius nichts angelegt ist. Das Erz heißt nach dem `prospectAs` des Eintrags, sonst nach seinem Dateinamen. `prospectItemsAreBlacklist` macht aus der Liste jedes Gegenstands die Einträge, die er nicht liest. Die Lesung spielt dieselben Würfe nach, die die Generierung macht, und stimmt darum auch für noch nicht gebautes Land. Ein markierter Gegenstand sagt in seinem Tooltip, wonach er schürft. Eine Lesung hat ihren Preis: `prospectWear` ist, wie viele Male die normale Abnutzung das Werkzeug für diesen Abbau nimmt, standardmäßig `2` (doppelt) und das Mindeste; ein Gegenstand ohne Haltbarkeit zahlt nichts. Schürfen ist außerdem langsame Arbeit: `prospectSlow` ist, wie viele Male länger ein schleichender Spieler mit einem markierten Gegenstand zum Abbau eines Blocks braucht, standardmäßig `2`, `1` für normale Geschwindigkeit. Und die Probe ist verbraucht: ein im Schürfmodus abgebauter Block droppt nichts und gibt keine Erfahrung, solange `prospectDrops` nicht `true` ist.
 
 `blockOres` hindert jeden Mod und Minecraft daran, Erz zu generieren, außer den Mods in `oreWhitelist`. `oreTypes` nennt die Erztypen, für die das gilt, und `oreTypesAreBlacklist` entscheidet die Richtung: an werden die genannten Typen blockiert, aus generieren nur die genannten Typen. Erreichbar ist nur Generierung, die über Forges Ore-Generation-Event läuft, also Minecraft und die meisten, aber nicht alle Mods. `blockOreDimensions` beschränkt das Blockieren von Erz auf bestimmte Dimensionen – leer heißt jede –, und `blockOreDimensionsAreBlacklist` macht aus dieser Liste die Dimensionen, die in Ruhe gelassen werden. Eine Dimension außerhalb des Geltungsbereichs wird gar nicht angefasst, die Erze eines anderen Mods generieren dort also unbehelligt, während die Oberwelt blockiert bleibt.
 
@@ -4609,6 +4640,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver pregen <radius>` | 3 | Jeden Chunk in so vielen Chunks Umkreis erzeugen. Siehe [Vorgenerierung](#vorgenerierung) |
 | `/rdplserver pregen <radius> relight` | 3 | Nur den Lichtdurchlauf über bereits vorhandenes Land laufen lassen |
 | `/rdplserver pregen status` | 3 | Wie weit ein Lauf ist |
+| `/rdplserver vein <Eintrag> [Radius]` | 3 | Wo ein Worldgen-Eintrag der Form `vein` seine Adern in so vielen Chunks (Standard 8) um die Stelle angelegt hat, an der er ausgeführt wird, die nächste zuerst, ob diese Chunks schon da sind oder nicht. `/rdpl vein` leitet dorthin weiter |
 | `/rdplserver pregen stop` | 3 | Ihn beenden |
 | `/rdplserver intro` | 0 | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen. Jeder Spieler darf ihn ausführen, und er löscht immer nur sein eigenes |
 | `/rdplserver goto <struktur>` | `gotoLevel`, `3` | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen |

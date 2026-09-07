@@ -28,7 +28,6 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.oredict.OreDictionary;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,7 +70,7 @@ public final class ContentThreat {
             this.batch = batch;
         }
 
-        boolean matches(ItemStack stack) { return stack.getItem() == item && (meta == OreDictionary.WILDCARD_VALUE || stack.getMetadata() == meta); }
+        boolean matches(ItemStack stack) { return ContentStacks.matches(stack, item, meta); }
     }
 
     private static final class Carrier {

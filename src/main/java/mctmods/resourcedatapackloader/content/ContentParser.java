@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
@@ -46,7 +47,7 @@ public final class ContentParser {
             DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
     private static final Set<String> KNOWN_SHAPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
             ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES,
-            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD)));
+            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN)));
     public static final String PLACEHOLDER = "open";
     public static final String DEFAULT_STILL = "minecraft:blocks/water_still";
     public static final String DEFAULT_FLOW = "minecraft:blocks/water_flow";
@@ -877,6 +878,46 @@ public final class ContentParser {
             regions.add(name.indexOf(':') >= 0 ? new ResourceLocation(name) : new ResourceLocation(key.getNamespace(), name));
         }
         if (!regions.isEmpty()) { made.caveRegions = regions; }
+        made.indicators.load(strings(json, "indicators").toArray(new String[0]));
+        made.indicatorCount = amount(json, "indicatorCount", 1, 0);
+        made.indicatorSpread = Math.max(0, JsonUtils.getInt(json, "indicatorSpread", 0));
+        List<FollowDef> followers = new ArrayList<>();
+        if (json.has("then") && json.get("then").isJsonArray()) {
+            for (JsonElement element : json.getAsJsonArray("then")) {
+                String name;
+                int weight = 1;
+                int spread = -1;
+                AmountDef depth = null;
+                if (element.isJsonObject()) {
+                    JsonObject follow = element.getAsJsonObject();
+                    name = JsonUtils.getString(follow, "name", "");
+                    weight = JsonUtils.getInt(follow, "weight", 1);
+                    spread = follow.has("spread") ? Math.max(0, JsonUtils.getInt(follow, "spread", 0)) : -1;
+                    depth = follow.has("depth") ? amount(follow, "depth", 0, Integer.MIN_VALUE) : null;
+                }
+                else {
+                    String entry = element.getAsString();
+                    int at = entry.indexOf('=');
+                    name = at < 0 ? entry : entry.substring(0, at);
+                    if (at >= 0) {
+                        try { weight = Integer.parseInt(entry.substring(at + 1).trim()); }
+                        catch (NumberFormatException bad) { ContentLog.LOGGER.error("Worldgen definition {} has a then entry '{}' whose weight is not a number, reading it as 1", key, entry); }
+                    }
+                }
+                name = name.trim();
+                if (name.isEmpty()) {
+                    ContentLog.LOGGER.error("Worldgen definition {} has a then entry with no name, ignoring it", key);
+                    continue;
+                }
+                if (!WeightedPicks.EMPTY.equals(name) && name.indexOf(':') < 0) { name = key.getNamespace() + ":" + name; }
+                followers.add(new FollowDef(name, weight, spread, depth));
+            }
+        }
+        made.then = Collections.unmodifiableList(followers);
+        made.thenCount = amount(json, "thenCount", 1, 0);
+        made.thenSpread = json.has("thenSpread") ? Math.max(0, JsonUtils.getInt(json, "thenSpread", 0)) : -1;
+        made.thenDepth = amount(json, "thenDepth", 0, Integer.MIN_VALUE);
+        made.prospectAs = JsonUtils.getString(json, "prospectAs", "").trim();
         String snap = JsonUtils.getString(json, "snap", "").trim().toLowerCase(Locale.ROOT);
         if (!snap.isEmpty() && !"floor".equals(snap) && !"ceiling".equals(snap)) {
             ContentLog.LOGGER.error("Worldgen {} asks for snap '{}', which is not floor or ceiling, so it does not snap", key, snap);
@@ -1248,10 +1289,19 @@ public final class ContentParser {
                 Math.max(0, JsonUtils.getInt(entry, "rarity", 0)),
                 JsonUtils.getBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(JsonUtils.getJsonObject(entry, "field", new JsonObject())) : null,
-                JsonUtils.getFloat(entry, "threshold", 0.5F),
+                JsonUtils.getFloat(entry, "threshold", ShapeDef.VEIN.equals(type) ? 0.4F : 0.5F),
                 JsonUtils.getString(entry, "lootTable", ""));
         made.locateAs = JsonUtils.getString(entry, "locateAs", "");
         made.fade = Math.max(0, JsonUtils.getInt(entry, "fade", 0));
+        String pattern = JsonUtils.getString(entry, "pattern", "default").trim().toLowerCase(Locale.ROOT);
+        if (!"default".equals(pattern) && !"banded".equals(pattern) && !"tube".equals(pattern)) {
+            ContentLog.LOGGER.error("Worldgen {} asks for vein pattern '{}', which is not default, banded or tube, using default", key, pattern);
+            pattern = "default";
+        }
+        made.pattern = pattern;
+        made.density = MathHelper.clamp(JsonUtils.getFloat(entry, "density", 1.0F), 0.0F, 1.0F);
+        made.rich = JsonUtils.getString(entry, "rich", "");
+        made.poor = JsonUtils.getString(entry, "poor", "");
         if (entry.has("at")) {
             JsonArray pinned = JsonUtils.getJsonArray(entry, "at");
             if (pinned.size() == 2) { made.at = new int[] { pinned.get(0).getAsInt(), pinned.get(1).getAsInt() }; }

@@ -141,6 +141,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentThreat.class);
         }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
+        MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentProspect.class);
         if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
         if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
@@ -195,6 +196,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CardOverlay.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.HoldView.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.ProspectTooltip.class);
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
         }
     }

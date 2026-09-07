@@ -76,6 +76,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static ScheduledExecutorService flasher;
     private static volatile String progress = "";
     private static final Set<Long> DRESS_LATER = new LinkedHashSet<>();
+    private static volatile World dressingIn;
     private static long watchedDone = -1L;
     private static long watchedAt;
     private static long chainBegun;
@@ -631,13 +632,33 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (DRESS_LATER.isEmpty()) { return; }
         ChunkProviderServer provider = world.getChunkProvider();
         int dressed = 0;
-        for (long key : DRESS_LATER) {
-            Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
-            if (chunk == null || chunk.isTerrainPopulated()) { continue; }
-            chunk.populate(provider, provider.chunkGenerator);
-            dressed++;
+        dressingIn = world;
+        try {
+            for (long key : DRESS_LATER) {
+                Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
+                if (chunk == null || chunk.isTerrainPopulated()) { continue; }
+                chunk.populate(provider, provider.chunkGenerator);
+                dressed++;
+            }
         }
-        ContentLog.LOGGER.info("Dressed {} of the {} chunk(s) that were loaded while the light was being seen to, the rest having been let go in the meantime", dressed, DRESS_LATER.size());
+        finally { dressingIn = null; }
+        int relit = 0;
+        Set<Long> around = new LinkedHashSet<>();
+        for (long key : DRESS_LATER) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) { around.add(ChunkPos.asLong((int) key + dx, (int) (key >> 32) + dz)); }
+            }
+        }
+        for (long key : around) {
+            Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
+            if (chunk == null || chunk.isLightPopulated() || !chunk.isTerrainPopulated()) { continue; }
+            chunk.checkLight();
+            if (chunk.isLightPopulated()) {
+                relit++;
+                chunk.markDirty();
+            }
+        }
+        ContentLog.LOGGER.info("Dressed {} of the {} chunk(s) that were loaded while the light was being seen to, the rest having been let go in the meantime, with the light held off while they were dressed and {} chunk(s) lit again afterwards in one go", dressed, DRESS_LATER.size(), relit);
         DRESS_LATER.clear();
     }
 
@@ -652,6 +673,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     public static boolean quenches(World world, int chunkX, int chunkZ) {
+        if (dressingIn == world) { return !ContentLightArea.inside(world); }
         ContentPregen worker = running;
         if (worker == null || worker.lightOnly) { return false; }
         if (world.provider.getDimension() != worker.dimension) { return false; }

@@ -3084,6 +3084,13 @@ Describes something that generates. Every entry is a **shape** placed by a **spr
   "caveRegions": ["dripstone"],
   "snap": "floor",
   "snapDepth": 0,
+  "indicators": ["mypack:iron_rock=3", "minecraft:gravel=1", "empty=4"],
+  "indicatorCount": { "min": 1, "max": 3 },
+  "indicatorSpread": 2,
+  "then": ["mypack:quartz_halo=2", "empty=1", { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }],
+  "thenCount": 1,
+  "thenSpread": 6,
+  "thenDepth": { "min": -8, "max": -2 },
   "requires": ["quark"],
   "shape": { "type": "cluster" },
   "spread": { "type": "even" }
@@ -3122,6 +3129,14 @@ Only `block` is required; everything else may be left out and takes its default.
 | `caveRegions` | no | list of region names | none | Only generate inside these [cave regions](#cave-regions) |
 | `snap` | no | `floor` or `ceiling` | none | Move each attempt vertically to the nearest cave floor or ceiling first |
 | `snapDepth` | no | int | `0` | How far past the surface `snap` then moves, down from a floor and up from a ceiling. `0` stays in the open space against the surface, `1` is the surface block itself, `2` the one behind it. What it may overwrite is still governed by `replace`, so this is how a pack bands a block just under the ground rather than on top of it |
+| `indicators` | no | list of `block=weight` | none | Blocks left scattered on the surface over a vein that generated, so a player can tell what lies under the ground; pick them to match the vein's contents. `empty=weight` leaves a spot bare |
+| `indicatorCount` | no | int or range | `1` | How many surface spots each generated vein gets |
+| `indicatorSpread` | no | int, blocks | `0` | How far past the vein's footprint an indicator may land |
+| `then` | no | list of `name=weight` or objects | none | Worldgen entries that grow out of this one right after it generates, attached to it: the follower's origin is set just outside this vein's edge, in the direction `thenSpread` and `thenDepth` give, so the two touch. An entry is `name=weight`, or an object with `name`, `weight` and its own `spread` and `depth` (int or range) that override the vein's for that follower alone, so one list can send a diamond tip down and a branch sideways. A bare name is read in this pack's namespace, `empty=weight` queues nothing. A follower keeps its own shape, blocks, size and `replace` but skips its own attempts, chance, height band and biome gates, and may carry `then` itself, as deep as the pack wants; an entry that already generated in the same chain stops it |
+| `thenCount` | no | int or range | `1` | How many different followers are picked from that list per generated vein, each entry at most once, so a count equal to the list's length grows every one of them |
+| `thenSpread` | no | int, blocks | the shape's radius | How far sideways the direction a follower grows in may lean, rolled from minus this to plus this |
+| `thenDepth` | no | int or range | `0` | How far down (negative) or up the direction leans. `0` with no sideways lean hangs the follower straight down |
+| `prospectAs` | no | string | the file name | How a prospecting item names this entry in its reading, e.g. `Hematite` |
 
 ### Weighted blocks
 
@@ -3228,6 +3243,10 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
     "field": { "type": "speckle", "spread": 0.15 },
     "threshold": 0.5,
     "fade": 0,
+    "pattern": "banded",
+    "density": 0.8,
+    "rich": "mypack:rich_ruby_ore",
+    "poor": "mypack:poor_ruby_ore",
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -3258,6 +3277,7 @@ A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
 | `imprint` | One of your `.nbt` templates. One that fits inside a chunk is nudged so it lands whole in the chunk being built rather than reaching into a neighbor that has not been made yet, whichever way it is turned; one larger than a chunk is placed only where the ground around it already exists |
 | `belt` | A cluster spanning several chunks, for stone regions |
 | `field` | Veins worked out for every block at once, sharing their shape with hardness groups |
+| `vein` | A deposit worked out as a seeded noise field around an origin, the way Immersive Geology does it: every chunk writes its own slice of every vein whose 24-block reach touches it, so nothing cascades, and `/rdplserver vein` can tell where a vein will be before the land is made. Uses `size`, `attempts`, `rarity` and the height band; `pattern` picks the look |
 
 | Key | Used by | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
@@ -3290,10 +3310,14 @@ A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
 | `at` | imprint | two ints, x and z | none | Place exactly once at those block coordinates on the surface, when that chunk generates, instead of by chance. See [Structures at exact places](#structures-at-exact-places) |
 | `locateAs` | imprint | string | none | Register every structure this entry places under that name, so `/locate <name>` finds the nearest. See [Finding placed structures](#finding-placed-structures) |
 | `field` | field | object | `{ "type": "speckle" }` | How the field is worked out. Same keys as a hardness group's `field`, described under [The field](#the-field): `speckle` with `chances` and `spread`, or `seeded` with `cell`, `seeds`, `reach`, `arms` and `armReach` |
-| `threshold` | field | 0.0 to 1.0 | `0.5` | How strong the field must be at a block before it is placed. Lower fills more |
+| `threshold` | field, vein | 0.0 to 1.0 | `0.5` (`0.4` for vein) | How strong the field must be at a block before it is placed. Lower fills more |
 | `fade` | field | int | `0` | Speckle out the top of the band instead of ending it flat: over the top this many blocks of the height range, each block's odds of placing thin out step by step, the same look the engine gives `deepStone` where it meets the world above |
 | `rarity` | any | int | none (`400` for belt) | One placement per this many chunks. On a belt this spaces the belts out; on any other shape it gates the whole entry so only one chunk in this many rolls its `attempts` at all. `field` ignores it |
 | `rarityIsPerChunk` | any | boolean | `false` | Turn `rarity` into how many placements each chunk gets instead |
+| `pattern` | vein | `default`, `banded` or `tube` | `default` | The deposit's look: a warped blob, layers stacked every few blocks, or hollow tubes winding through the rock |
+| `density` | vein | 0.0 to 1.0 | `1.0` | The share of qualifying blocks that are actually placed, a per-block coin |
+| `rich` | vein | block name | none | Placed in the top fifth of the field's range above `threshold`, the heart of the deposit, instead of the entry's blocks |
+| `poor` | vein | block name | none | Placed in the bottom two fifths of that range, the fringe, instead of the entry's blocks; the middle is the entry's own blocks. Either tier left out places the entry's blocks there |
 
 A `field` vein is the one shape you describe rather than pick. It runs the same lattice the hardness groups use, so `seeded` with a few arms gives knots with tendrils reaching toward their neighbors, which is a vein rather than a blob, and `threshold` decides how much of it is solid enough to place:
 
@@ -3645,10 +3669,17 @@ With a group's control at `default` these win, at `global` they are ignored, and
     "oreTypes": ["COAL", "IRON"],
     "oreTypesAreBlacklist": true,
     "blockOreDimensions": [0, -1],
-    "blockOreDimensionsAreBlacklist": false
+    "blockOreDimensionsAreBlacklist": false,
+    "prospectItems": ["minecraft:compass=iron_vein|coal_seam", "mypack:dowsing_rod=*,12"],
+    "prospectItemsAreBlacklist": false,
+    "prospectWear": 2,
+    "prospectSlow": 2,
+    "prospectDrops": false
   }
 }
 ```
+
+`prospectItems` turns items into prospecting tools for the `vein` shaped worldgen entries: `item=entry|entry[,radius in chunks]`, or `item=*[,radius]` for every vein entry, the radius defaulting to 8. A sneaking player breaking a block with such an item in hand is told, for each entry it reads, `Possible hit on <ore> <direction> of this location, <deeper down | higher up | at about this depth>` — one of eight compass points from the broken block to the nearest seeded vein, and never a position; `at this location` when the block already lies within the vein's reach, and `No sign of anything here` when nothing is seeded in the radius. The ore is named by the entry's `prospectAs`, else by its file name. `prospectItemsAreBlacklist` turns each item's list into the entries it does not read. The reading replays the same rolls generation makes, so it is right about land not yet made. A tagged item says what it prospects for in its tooltip. A reading has a price: `prospectWear` is how many times the normal wear the tool takes for that break, `2` (double) by default and the least allowed; an item with no durability pays nothing. Prospecting is also slow work: `prospectSlow` is how many times longer a sneaking player with a tagged item takes to break a block, `2` by default, `1` for normal speed. And the sample is spent: a block broken in prospecting mode drops nothing and gives no experience unless `prospectDrops` is `true`.
 
 `blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all. `blockOreDimensions` limits ore blocking to certain dimensions, empty meaning every one, with `blockOreDimensionsAreBlacklist` turning that list into the dimensions to leave alone. A dimension outside the scope is not touched at all, so another mod's ores generate there untouched while the overworld stays blocked.
 
@@ -4609,6 +4640,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver pregen <radius>` | 3 | Make every chunk within that many chunks of where it is run. See [Pregeneration](#pregeneration) |
 | `/rdplserver pregen <radius> relight` | 3 | Run only the lighting pass over land that already exists |
 | `/rdplserver pregen status` | 3 | How far along a run is |
+| `/rdplserver vein <entry> [radius]` | 3 | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it |
 | `/rdplserver pregen stop` | 3 | End it |
 | `/rdplserver intro` | 0 | Let the world intro play again on your next join. Any player may run it, and it only ever clears their own |
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | Take you to the nearest one nobody has been to yet, looking without generating the land on the way |

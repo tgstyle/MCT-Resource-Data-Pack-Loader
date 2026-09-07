@@ -13,6 +13,8 @@ import javax.annotation.Nullable;
 public final class ContentStacks {
     private ContentStacks() {}
 
+    public static boolean matches(ItemStack stack, Item item, int meta) { return !stack.isEmpty() && stack.getItem() == item && (meta == OreDictionary.WILDCARD_VALUE || item.isDamageable() || stack.getMetadata() == meta); }
+
     public static ItemStack parse(ResourceLocation key, String value, int count) {
         if (value == null || value.isEmpty()) { return ItemStack.EMPTY; }
         String[] parts = value.split(":");

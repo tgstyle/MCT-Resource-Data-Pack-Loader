@@ -45,7 +45,7 @@ public final class ContentControl {
             "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof", "flatBedrockRetrogen", "retrogen", "adoptExistingChunks",
             "furnaceWhitelist", "generatorOptions", "generatorTypeMap", "generatorTypes", "generatorTypesAreBlacklist",
             "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
-            "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
+            "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "prospectItems", "prospectItemsAreBlacklist", "prospectWear", "prospectSlow", "prospectDrops", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
             "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
             "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",

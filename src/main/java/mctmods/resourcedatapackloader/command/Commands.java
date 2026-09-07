@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
     private static final List<String> CONFIG_SUBCOMMANDS = Arrays.asList("unused", "prune");
     private static final Map<String, IResourceType> GROUPS = groups();
     private static final List<String> BIOME_SUBCOMMANDS = Arrays.asList("list", "here", "find");
-    private static final List<String> FORWARDED = Arrays.asList("oregen", "generators", "gate", "dimensions", "pregen", "intro", "goto");
+    private static final List<String> FORWARDED = Arrays.asList("oregen", "generators", "gate", "dimensions", "pregen", "intro", "goto", "vein");
 
     private static Map<String, IResourceType> groups() {
         Map<String, IResourceType> map = new LinkedHashMap<>();

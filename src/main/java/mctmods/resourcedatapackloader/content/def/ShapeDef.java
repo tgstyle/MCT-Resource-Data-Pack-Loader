@@ -21,6 +21,7 @@ public final class ShapeDef {
     public static final String IMPRINT = "imprint";
     public static final String BELT = "belt";
     public static final String FIELD = "field";
+    public static final String VEIN = "vein";
     public static final String CIRCLE = "circle";
     public static final String SQUARE = "square";
     public static final String STRAIGHT = "straight";
@@ -54,6 +55,10 @@ public final class ShapeDef {
     public String locateAs = "";
     public int[] at = null;
     public int fade = 0;
+    public String pattern = "default";
+    public float density = 1.0F;
+    public String rich = "";
+    public String poor = "";
     public final List<PickDef> structures;
     public final List<PickDef> turns;
     public final List<PickDef> mirrors;

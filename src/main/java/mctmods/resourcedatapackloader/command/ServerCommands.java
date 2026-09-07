@@ -14,6 +14,7 @@ import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GateDef;
+import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
@@ -21,8 +22,10 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -45,6 +48,7 @@ import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +57,7 @@ import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
     private static final int OPERATOR = 3;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
@@ -126,6 +130,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
+        if (args.length == 2 && "vein".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentWorldgen.veinNames()); }
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_ACTIONS); }
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_ACTIONS); }
         if (args.length == 3 && "biome".equals(args[0]) && "list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("all")); }
@@ -169,6 +174,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.servernote"); }
         else if (args.length == 2 && "goto".equals(args[0])) { goTo(sender, args[1], false); }
+        else if ((args.length == 2 || args.length == 3) && "vein".equals(args[0])) { vein(sender, args[1], args.length == 3 ? parseInt(args[2], 1, 64) : 8); }
         else if (args.length == 3 && "goto".equals(args[0]) && "next".equals(args[2])) { goTo(sender, args[1], true); }
         else if (args.length == 3 && "goto".equals(args[0]) && "back".equals(args[2])) { goBack(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
@@ -254,6 +260,31 @@ public class ServerCommands extends CommandBase {
     private void generators(ICommandSender sender) { blockedReport(sender, ContentGeneratorControl.blocked(), "rdpl.command.gennone", "rdpl.command.genblocked"); }
 
     private void which(ICommandSender sender, String target) { CommandShared.which(sender, target, false); }
+
+    private void vein(ICommandSender sender, String asked, int radius) throws CommandException {
+        WorldgenDef def = ContentWorldgen.byName(asked);
+        if (def == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.veinunknown", asked)); }
+        if (!(def.getShape() instanceof ContentOreVein)) { throw new CommandException(Lang.tr(sender, "rdpl.command.veinnotvein", def.registryName)); }
+        ContentOreVein shape = (ContentOreVein) def.getShape();
+        World world = sender.getEntityWorld();
+        BlockPos here = sender.getPosition();
+        int chunkX = here.getX() >> 4;
+        int chunkZ = here.getZ() >> 4;
+        List<ContentOreVein.Vein> found = new ArrayList<>();
+        for (int cx = chunkX - radius; cx <= chunkX + radius; cx++) {
+            for (int cz = chunkZ - radius; cz <= chunkZ + radius; cz++) {
+                for (ContentOreVein.Vein vein : shape.veinsOf(world, cx, cz)) {
+                    if (ContentWorldgen.allowsAt(def, world, new BlockPos(vein.x, vein.y, vein.z))) { found.add(vein); }
+                }
+            }
+        }
+        if (found.isEmpty()) { throw new CommandException(Lang.tr(sender, "rdpl.command.veinnone", def.registryName, radius)); }
+        found.sort(Comparator.comparingDouble(vein -> here.distanceSq(vein.x, vein.y, vein.z)));
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.veinfound", found.size(), def.registryName, radius));
+        for (ContentOreVein.Vein vein : found.subList(0, Math.min(5, found.size()))) {
+            send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.veinat", vein.x, vein.y, vein.z, (int) Math.sqrt(here.distanceSq(vein.x, vein.y, vein.z))));
+        }
+    }
 
     private void gate(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (!ContentGates.enabled()) {

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBasin;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBelt;
@@ -9,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentGeode;
 import mctmods.resourcedatapackloader.content.worldgen.ContentImprint;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLargeVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentNodule;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlacer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpire;
@@ -64,6 +66,14 @@ public final class WorldgenDef {
     public List<ResourceLocation> caveRegions = Collections.emptyList();
     public String snap = "";
     public int snapDepth;
+    public WeightedPicks indicators = new WeightedPicks("indicators");
+    public AmountDef indicatorCount = AmountDef.of(1);
+    public int indicatorSpread;
+    public List<FollowDef> then = Collections.emptyList();
+    public AmountDef thenCount = AmountDef.of(1);
+    public int thenSpread = -1;
+    public AmountDef thenDepth = AmountDef.of(0);
+    public String prospectAs = "";
     private String token;
     @Nullable private IContentShape figure;
     private Set<Biome> biomeSet = Collections.emptySet();
@@ -137,6 +147,7 @@ public final class WorldgenDef {
         if (ShapeDef.IMPRINT.equals(shape.type)) { return new ContentImprint(placer, shape, registryName, replacesGiven); }
         if (ShapeDef.BELT.equals(shape.type)) { return new ContentBelt(placer, shape, minHeight, maxHeight, registryName); }
         if (ShapeDef.FIELD.equals(shape.type) && shape.field != null) { return new ContentFieldShape(placer, shape, minHeight, maxHeight, registryName); }
+        if (ShapeDef.VEIN.equals(shape.type)) { return new ContentOreVein(placer, shape, size, attempts, minHeight, maxHeight, registryName); }
         return new ContentVein(placer, size, sparse);
     }
 
