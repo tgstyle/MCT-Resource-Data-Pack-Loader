@@ -412,6 +412,10 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 
 Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. **x und z sind Blockkoordinaten, keine Chunkkoordinaten**, und die Struktur generiert in dem Chunk, in dem dieser Block liegt. Ein Eintrag pro gewünschtem Exemplar. Ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs, und zwei Pins näher als einen Chunk beieinander setzen zwei Strukturen in denselben Chunk. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden.
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `structureAt` | Liste von `structure=x,z` | keine | Nagelt eine Vanilla-Struktur an eine genaue Stelle, ein Eintrag je gewünschtem Vorkommen. x und z sind Blockkoordinaten, und die Struktur generiert in dem Chunk, der diesen Block enthält; ihr Raster, ihr Abstand, ihre Mindestentfernung vom Spawn und ihre Prüfung auf ebenen Boden treten alle zurück |
+
 Ein `imprint`-Eintrag nagelt genauso fest, mit `"at": [x, z]` in seiner Form, und setzt sie genau einmal an diesen Koordinaten an der Oberfläche, sobald dieser Chunk generiert, statt nach Zufall. Das lässt sich mit `locateAs` kombinieren, eine festgenagelte Struktur ist also auch per /locate auffindbar.
 
 ### Platzierte Strukturen finden
@@ -767,7 +771,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `variants` | ja | Objekt aus Variantenname zu Variante |, | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
+| `variants` | ja | Objekt aus Variantenname zu Variante | | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
 | `type` | nein | einer der Typen oben | `basic` | Welche Form der Block annimmt |
 | `material` | nein | eines der [Blockmaterialien](#wertelisten) | `rock` | Abbauverhalten, Kolben, Feuer und Flüssigkeiten |
 | `soundType` | nein | einer der [Sound-Typen](#wertelisten) | vom Material | Schritte, Abbauen und Setzen |
@@ -811,7 +815,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `meta` | ja | 0 bis 15 |, | Der Metadatenwert, den diese Variante beansprucht |
+| `meta` | ja | 0 bis 15 | | Der Metadatenwert, den diese Variante beansprucht |
 | `hardness` | nein | float | `1.0` | Wie lange das Abbauen dauert. Obsidian ist `50`, `-1` ist unzerstörbar |
 | `resistance` | nein | float | `5.0` | Explosionswiderstand |
 | `light` | nein | 0 bis 15 | `0` | Abgegebenes Licht |
@@ -841,8 +845,8 @@ Ein `basic`-Block fasst sechzehn Varianten, ein `slab` acht, `log` und `leaves` 
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `block` | eines von beiden | Block- oder Itemname |, | Was gedroppt wird |
-| `entity` | eines von beiden | Entity-Name |, | Eine Entity, die beim Brechen des Blocks frei wird, statt eines Items |
+| `block` | eines von beiden | Block- oder Itemname | | Was gedroppt wird |
+| `entity` | eines von beiden | Entity-Name | | Eine Entity, die beim Brechen des Blocks frei wird, statt eines Items |
 | `meta` | nein | int | `0` | Welche Variante davon |
 | `amount` | nein | int oder Bereich | `1` | Wie viele |
 | `chance` | nein | 0 bis 100 | `100`, bzw. `0` wenn `guaranteed` aus ist | Wie oft der Drop überhaupt kommt |
@@ -882,7 +886,7 @@ Für `crop`, `flower`, `cane` und `vine`.
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
 | `stages` | nein | int | `16` | Wachstumsstufen, bis es fertig ist |
-| `growth` | nein | int |, | Chance von eins zu N pro Random-Tick, eine Stufe weiterzukommen |
+| `growth` | nein | int | | Chance von eins zu N pro Random-Tick, eine Stufe weiterzukommen |
 | `spread` | nein | int | `0` | Wie weit es sich auf Nachbarblöcke ausbreitet |
 | `maxHeight` | nein | int | `3` | Nur `cane`. Wie hoch die Säule wächst |
 | `drop` | nein | Itemname | keiner | Was es beim Abbauen droppt |
@@ -1359,7 +1363,7 @@ Ein `potion_bottle` listet mit `potionTypes` auf, was es fassen kann, als Array 
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `variants` | ja | Objekt aus Variantenname zu Variante |, | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
+| `variants` | ja | Objekt aus Variantenname zu Variante | | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
 | `type` | nein | einer der Typen oben | `basic` | Welchen Typ das Item annimmt |
 | `creativeTab` | nein | Tab-Name | keiner | Der Tab, in dem es auftaucht |
 | `material` | tool, armor | Materialname | keiner | Aus welchem deiner Materialien es gemacht ist |
@@ -1379,7 +1383,7 @@ Variantenschlüssel:
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `meta` | ja | 0 bis 15 |, | Der Metadatenwert, den diese Variante beansprucht |
+| `meta` | ja | 0 bis 15 | | Der Metadatenwert, den diese Variante beansprucht |
 | `maxSize` | nein | 1 bis 64 | `64` | Stapelgröße |
 | `rarity` | nein | `common`, `uncommon`, `rare`, `epic` | `common` | Farbe des Namens im Tooltip |
 | `healAmount` | food | int, halbe Hähnchenkeulen | `0` | Wiederhergestellter Hunger |
@@ -1430,7 +1434,7 @@ Der Pfad der Datei ist der Registry-Name der Flüssigkeit, sofern `name` ihn nic
 | `viscosity` | nein | int | `1000` | Wie träge sie fließt. Wasser ist 1000, Lava 6000 |
 | `gaseous` | nein | boolean | `false` | Wird als Gas behandelt |
 | `creativeTab` | nein | Tab-Name | keiner | Der Tab, in dem der Eimer auftaucht |
-| `block` | nein | Objekt |, | Der Flüssigkeitsblock. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (keine, eine Liste von Effekten für alles, was darin steht, je geschrieben als `potion,duration,amplifier`, mit einem optionalen vierten Teil `true` für einen umgebenden) |
+| `block` | nein | Objekt | | Der Flüssigkeitsblock. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (keine, eine Liste von Effekten für alles, was darin steht, je geschrieben als `potion,duration,amplifier`, mit einem optionalen vierten Teil `true` für einen umgebenden) |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 
 ## Materialien, Tabs, Sounds, Ore Dictionary
@@ -1462,7 +1466,7 @@ Der Pfad der Datei ist der Name des Materials, das ein Werkzeug- oder Rüstungsi
 | `damage` | nein | float | `2.0` | Bonus auf den Angriffsschaden |
 | `enchantability` | nein | int | `14` | Wie gut die Verzauberungen ausfallen. Gold ist 22 |
 | `repairItem` | nein | Itemname | keiner | Was es im Amboss repariert |
-| `reduction` | nein | Liste aus vier Ints |, | Rüstungspunkte, in der Reihenfolge Füße, Beine, Brust, Kopf |
+| `reduction` | nein | Liste aus vier Ints | | Rüstungspunkte, in der Reihenfolge Füße, Beine, Brust, Kopf |
 | `toughness` | nein | float | `0.0` | Rüstungshärte, wie Diamant sie hat |
 | `equipSound` | nein | Soundname | `item.armor.equip_iron` | Sound beim Anlegen der Rüstung |
 | `armorTexture` | nein | Texturpräfix | der Dateiname | Die Textur der getragenen Rüstung |
@@ -1608,7 +1612,7 @@ Der Pfad der Datei ist der Registry-Name des Tranktyps, den ein `potion_bottle`-
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
 | `baseName` | nein | string | Namespace und Name | Der Name, aus dem die Flasche gebaut wird |
-| `effects` | ja | Liste von Objekten |, | Siehe unten |
+| `effects` | ja | Liste von Objekten | | Siehe unten |
 
 Jeder Effekt nimmt `potion` (Pflicht), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) und `showParticles` (`true`).
 
@@ -1717,8 +1721,8 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `profession` | ja | Berufsname |, | Wessen Handel das ist |
-| `career` | ja | Laufbahnname |, | Welche Laufbahn darin |
+| `profession` | ja | Berufsname | | Wessen Handel das ist |
+| `career` | ja | Laufbahnname | | Welche Laufbahn darin |
 | `level` | nein | int | `1` | Auf welcher Handelsstufe er auftaucht |
 | `maxUses` | nein | int | `12` | Wie oft er genutzt werden kann, bevor er sperrt |
 
@@ -2357,7 +2361,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `id` | ja | int |, | Die Dimensions-ID. Darf mit keinem anderen Mod kollidieren |
+| `id` | ja | int | | Die Dimensions-ID. Darf mit keinem anderen Mod kollidieren |
 | `suffix` | nein | string | `DIM_<name>` | Der Speicherordner |
 | `keepLoaded` | nein | boolean | `false` | Geladen halten, auch wenn niemand darin ist |
 | `gameRules` | nein | Objekt | keines | Regeln, die nur hier gelten |
@@ -2435,7 +2439,7 @@ Ein `portal`-Block trägt einen `portal`-Abschnitt:
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `dimension` | ja | int |, | Wohin es dich schickt |
+| `dimension` | ja | int | | Wohin es dich schickt |
 | `returnDimension` | nein | int | `0` | Wohin es dich zurückschickt |
 | `gate` | nein | Torname | keiner | Ein Tor, das offen sein muss, um durchzukommen |
 | `cooldown` | nein | int, Ticks | `60` | Bis derselbe Spieler es wieder benutzen kann |
@@ -2563,11 +2567,11 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `dimension` | ja | int |, | Die Dimension, die es bewacht |
+| `dimension` | ja | int | | Die Dimension, die es bewacht |
 | `name` | nein | string | der Dateiname | Wird dem Spieler angezeigt |
 | `scope` | nein | `player`, `global` | `player` | Ein Spieler nach dem anderen oder die ganze Welt auf einmal |
 | `open` | nein | boolean | `false` | Ob es offen startet |
-| `unlock` | nein | Objekt |, | Was es öffnet. Siehe unten |
+| `unlock` | nein | Objekt | | Was es öffnet. Siehe unten |
 | `unlockedMessage` | nein | string | `%dim% is now open` | Wird beim Öffnen angezeigt |
 | `blockedMessage` | nein | string | `You need %item% to enter %dim%` | Wird bei der Abweisung angezeigt |
 | `safeReturn` | nein | boolean | `false` | Ein abgewiesener Rückweg landet trotzdem sicher irgendwo, statt abgelehnt zu werden |
@@ -2738,6 +2742,12 @@ Der Umfang `deep` lässt das Vanilla-Band, wie es ist, samt Lavafenster, und dic
 Der Pfad der Datei ist der Name der Region, den ein Worldgen-Eintrag dann in `caveRegions` nennt. Ein bloßer Name dort nimmt den Namespace dieses Eintrags.
 
 Malt benannte Regionen über den Untergrund, das Pack-Gegenstück zu modernen Höhlenbiomen. Der Untergrund wird in gerundete Zellen geteilt — `caveRegionCells` Blöcke breit und `caveRegionCellsY` hoch, beides `terrain`-Schlüssel — und jede Zelle würfelt nach Gewicht eine Region, oder keine. Alles, was eine Region tut, folgt deterministisch aus dem Seed, Chunks stimmen also überein, ohne je über eine Grenze zu schreiben.
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `caveRegionCells` | Zahl, Blöcke | `128` | Wie breit eine Regionszelle ist |
+| `caveRegionCellsY` | Zahl, Blöcke | `64` | Wie hoch eine Regionszelle ist |
+| `caveRegionPlainWeight` | Zahl | `4` | Das Gewicht des schlichten, regionslosen Untergrunds im Wurf jeder Zelle. Höher lässt mehr Untergrund ohne Region: Mit einer einzigen Region vom Gewicht 1 bekommt etwa ein Fünftel der Zellen die Region |
 
 Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
@@ -2939,7 +2949,7 @@ Gibt einer Gruppe von Blöcken einen Faktor für die Abbauzeit, der pro Blockpos
 
 | Schlüssel | Pflicht | Wert | Standard | Was er tut |
 | --- | --- | --- | --- | --- |
-| `blocks` | ja | Liste von Blocknamen oder Objekten |, | Die Gruppe. Dieselben drei Formen wie `replace` bei der Weltgenerierung |
+| `blocks` | ja | Liste von Blocknamen oder Objekten | | Die Gruppe. Dieselben drei Formen wie `replace` bei der Weltgenerierung |
 | `except` | nein | Liste von Blocknamen oder Objekten | keine | Wieder aus der Gruppe genommen, was auch immer `blocks` sagt |
 | `miningTime` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Um wie viel länger der Block zum Abbauen braucht |
 | `blastResistance` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Multipliziert den Explosionswiderstand des Blocks |
@@ -3101,7 +3111,7 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `block` | ja | Blockname |, | Was gesetzt wird |
+| `block` | ja | Blockname | | Was gesetzt wird |
 | `meta` | nein | int | `0` | Welche Variante dieses Blocks |
 | `blocks` | nein | Liste von Objekten | keine | Eine gewichtete Liste, genutzt statt eines einzelnen Blocks. Siehe unten |
 | `size` | nein | int oder Bereich | `8` | Wie viele Blöcke ein Versuch setzt, oder wie groß eine Form mit Radius ausfällt |
@@ -3153,7 +3163,7 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `block` | ja | Blockname |, | Was gesetzt wird |
+| `block` | ja | Blockname | | Was gesetzt wird |
 | `meta` | nein | int | `0` | Welche Variante |
 | `weight` | nein | int | `1` | Wie oft dieser gegenüber den anderen gezogen wird |
 | `properties` | nein | Objekt aus Eigenschaft zu Wert | keines | Blockstate-Eigenschaften nach Namen, für Zustände ohne eigene Metadaten |
@@ -3200,6 +3210,29 @@ Das setzt Schwefel nur dort in Sandstein, wo er ohnehin schon zu einer Höhle od
 Jede Form hält sich daran, weil es dazugehört zu entscheiden, ob ein einzelner Block genommen werden darf. Eine `geode` nennt ihre Kruste und ihre Füllung getrennt, und diese beiden werden ohne die Prüfung gesetzt.
 
 Ein Eintrag, der nur Blöcke nennt, die nicht registriert sind, wird mit einem Fehler übersprungen, statt überall zu generieren.
+
+### Folgeeinträge
+
+Ein Eintrag in der `then`-Liste eines Worldgen-Eintrags ist ein Name mit Gewicht, oder ein Objekt, wenn dieser Folger eine eigene Richtung braucht.
+
+```json
+{
+  "then": [
+    "mypack:quartz_halo=2",
+    "empty=1",
+    { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }
+  ]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er macht |
+| --- | --- | --- | --- | --- |
+| `name` | ja | Eintragsname | | Der Worldgen-Eintrag, der aus diesem herauswächst. Ein bloßer Name wird im Namensraum dieses Pakets gelesen |
+| `weight` | nein | Zahl | `1` | Wie oft dieser Folger gegenüber den anderen der Liste gewählt wird |
+| `spread` | nein | Zahl, Blöcke | das `thenSpread` des Eintrags | Wie weit die Richtung dieses Folgers seitlich ausschert, nur für diesen einen Eintrag |
+| `depth` | nein | Zahl oder Bereich | das `thenDepth` des Eintrags | Wie weit die Richtung nach unten, negativ, oder nach oben neigt, nur für diesen einen Eintrag |
+
+`name=Gewicht` ist die Kurzform eines Objekts mit nur diesen beiden, und `empty=Gewicht` reiht nichts ein. Weil `spread` und `depth` pro Eintrag gelten, kann eine Liste eine Diamantspitze senkrecht nach unten und einen Zweig zur Seite aus derselben Ader schicken.
 
 ## Formen
 
@@ -3510,6 +3543,11 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `retrogen` | boolean | `false` | Holt Chunks, die vor einem Eintrag gespeichert wurden, bei jedem mit `"retrogen": true` markierten Worldgen-Eintrag nach. Aus bleiben schon vorhandene Chunks unangetastet |
+| `adoptExistingChunks` | boolean | `false` | Was beim ersten Sehen eines alten Chunks passiert: an wird er so gestempelt, als hätte dieses Pack ihn schon generiert, und nie nachgeholt; aus wird er wie jeder andere nachgeholt. Um eine bestehende Welt zu füllen, `retrogen` an und dies aus |
+
 Ein Eintrag mit `"retrogen": true` wird auch in Chunks generiert, die gespeichert wurden, bevor du ihn hinzugefügt hast. Jeder Chunk merkt sich, was er schon bekommen hat, nichts wird also zweimal gemacht.
 
 Das Flag am Eintrag markiert ihn nur als infrage kommend. Das Nachholen selbst schaltet die Einstellung `retrogen` ein, die ein Pack in seinem `settings`-Block oder ein Spieler in der Config setzen kann, und sie ist standardmäßig aus. Daneben entscheidet `adoptExistingChunks`, was beim ersten Sehen eines alten Chunks passiert: an wird der Chunk so gestempelt, als hätte dieses Pack ihn schon generiert, und nie nachgeholt; aus wird er wie jeder andere nachgeholt. `retrogen` einzuschalten, während auch `adoptExistingChunks` an ist, bewirkt nichts, weil jeder alte Chunk abgehakt wird, bevor er in die Warteschlange kommen kann. Um eine bestehende Welt zu füllen, setzt du `retrogen` an und `adoptExistingChunks` aus, beides zusammen.
@@ -3679,9 +3717,21 @@ Steht die Steuerung einer Gruppe auf `default`, gewinnen diese Werte, auf `globa
 }
 ```
 
-`prospectItems` macht Gegenstände zu Schürfwerkzeugen für Worldgen-Einträge der Form `vein`: `item=eintrag|eintrag[,Radius in Chunks]` oder `item=*[,Radius]` für jeden vein-Eintrag, Radius standardmäßig 8. Wer schleichend mit so einem Gegenstand in der Hand einen Block abbaut, erfährt für jeden Eintrag, den er liest, `Möglicher Fund von <Erz> <Richtung> von hier, <weiter unten | weiter oben | etwa auf dieser Tiefe>` — eine von acht Himmelsrichtungen vom abgebauten Block zur nächsten angelegten Ader, nie eine Position; `genau hier`, wenn der Block schon in der Reichweite der Ader liegt, und `Hier deutet nichts auf etwas hin`, wenn im Radius nichts angelegt ist. Das Erz heißt nach dem `prospectAs` des Eintrags, sonst nach seinem Dateinamen. `prospectItemsAreBlacklist` macht aus der Liste jedes Gegenstands die Einträge, die er nicht liest. Die Lesung spielt dieselben Würfe nach, die die Generierung macht, und stimmt darum auch für noch nicht gebautes Land. Ein markierter Gegenstand sagt in seinem Tooltip, wonach er schürft. Eine Lesung hat ihren Preis: `prospectWear` ist, wie viele Male die normale Abnutzung das Werkzeug für diesen Abbau nimmt, standardmäßig `2` (doppelt) und das Mindeste; ein Gegenstand ohne Haltbarkeit zahlt nichts. Schürfen ist außerdem langsame Arbeit: `prospectSlow` ist, wie viele Male länger ein schleichender Spieler mit einem markierten Gegenstand zum Abbau eines Blocks braucht, standardmäßig `2`, `1` für normale Geschwindigkeit. Und die Probe ist verbraucht: ein im Schürfmodus abgebauter Block droppt nichts und gibt keine Erfahrung, solange `prospectDrops` nicht `true` ist.
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `blockOres` | boolean | `false` | Hindert jeden Mod und Minecraft daran, Erz zu generieren, außer den Mods in `oreWhitelist`. Erreichbar ist nur Generierung, die über Forges Ore-Generation-Event läuft, also Minecraft und die meisten, aber nicht alle Mods |
+| `oreWhitelist` | Liste von Mod-Ids | keine | Die Mods, die trotz `blockOres` weiter Erz generieren dürfen |
+| `oreTypes` | Liste von Erztypen | keine | Für welche Erztypen das gilt, in Forges Schreibweise `COAL`, `IRON`. Leer heißt jeder Typ |
+| `oreTypesAreBlacklist` | boolean | `false` | An werden die in `oreTypes` genannten Typen blockiert, aus generieren nur diese Typen |
+| `blockOreDimensions` | Liste von Zahlen | keine | Die Dimensionen, in denen Erz blockiert wird, leer heißt jede. Eine Dimension außerhalb wird gar nicht angefasst, die Erze eines anderen Mods generieren dort also unbehelligt, während die Oberwelt blockiert bleibt |
+| `blockOreDimensionsAreBlacklist` | boolean | `false` | An sind die genannten Dimensionen die, die in Ruhe gelassen werden |
+| `prospectItems` | Liste von `item=Einträgen` | keine | Gegenstände, die nach Worldgen-Einträgen der Form `vein` schürfen, wenn ein schleichender Spieler mit einem davon in der Hand einen Block abbaut. Die Schreibweise steht im Absatz darunter |
+| `prospectItemsAreBlacklist` | boolean | `false` | An ist die Liste jedes Gegenstands die Einträge, die er nicht liest |
+| `prospectWear` | Zahl | `2` | Wie viele Male die normale Abnutzung ein Schürfabbau das Werkzeug kostet. `2`, doppelt, ist das Mindeste, und ein Gegenstand ohne Haltbarkeit zahlt nichts |
+| `prospectSlow` | Zahl | `2` | Wie viele Male länger ein schleichender Spieler mit einem markierten Gegenstand zum Abbau eines Blocks braucht. `1` ist normale Geschwindigkeit |
+| `prospectDrops` | boolean | `false` | An droppt ein im Schürfmodus abgebauter Block weiterhin und gibt Erfahrung. Aus ist die Probe verbraucht |
 
-`blockOres` hindert jeden Mod und Minecraft daran, Erz zu generieren, außer den Mods in `oreWhitelist`. `oreTypes` nennt die Erztypen, für die das gilt, und `oreTypesAreBlacklist` entscheidet die Richtung: an werden die genannten Typen blockiert, aus generieren nur die genannten Typen. Erreichbar ist nur Generierung, die über Forges Ore-Generation-Event läuft, also Minecraft und die meisten, aber nicht alle Mods. `blockOreDimensions` beschränkt das Blockieren von Erz auf bestimmte Dimensionen – leer heißt jede –, und `blockOreDimensionsAreBlacklist` macht aus dieser Liste die Dimensionen, die in Ruhe gelassen werden. Eine Dimension außerhalb des Geltungsbereichs wird gar nicht angefasst, die Erze eines anderen Mods generieren dort also unbehelligt, während die Oberwelt blockiert bleibt.
+**Die Lesung.** Ein `prospectItems`-Eintrag wird `item=eintrag|eintrag[,Radius in Chunks]` geschrieben, oder `item=*[,Radius]` für jeden vein-Eintrag, Radius standardmäßig 8. Wer schleichend mit so einem Gegenstand in der Hand einen Block abbaut, erfährt für jeden Eintrag, den er liest, `Möglicher Fund von <Erz> <Richtung> von hier, <weiter unten | weiter oben | etwa auf dieser Tiefe>` — eine von acht Himmelsrichtungen vom abgebauten Block zur nächsten angelegten Ader, nie eine Position; `genau hier`, wenn der Block schon in der Reichweite der Ader liegt, und `Hier deutet nichts auf etwas hin`, wenn im Radius nichts angelegt ist. Das Erz heißt nach dem `prospectAs` des Eintrags, sonst nach seinem Dateinamen. Die Lesung spielt dieselben Würfe nach, die die Generierung macht, stimmt also auch für noch nicht gebautes Land, und ein markierter Gegenstand sagt in seinem Tooltip, wonach er schürft.
 
 ### Biome
 
@@ -3699,6 +3749,15 @@ Steht die Steuerung einer Gruppe auf `default`, gewinnen diese Werte, auf `globa
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `blockBiomes` | boolean | `false` | Hindert jedes Biom am Generieren außer denen der Mods in `biomeWhitelist`. Blockierte Biome werden auf der fertigen Biomkarte ersetzt, der einzige Weg zu Ozeanen, Pilzinseln, Mesa-Varianten, Dschungel, Hügeln und Küsten. Blockiere alle, und die Oberwelt wird von selbst zur Void-Welt |
+| `biomeWhitelist` | Liste von Mod-Ids | `minecraft` | Die Mods, deren Biome trotz `blockBiomes` weiter generieren. Ein Pack-Biom nutzt den Namespace des Packs |
+| `biomeNames` | Liste von Biomnamen | keine | Biome, für die das gilt, nach Namen, wem sie auch gehören und was die Whitelist auch sagt. Ein sprechender Name wie `Birch Forest` oder ein Registrierungsname |
+| `biomeNamesAreBlacklist` | boolean | `true` | An werden die Namen in `biomeNames` blockiert. Aus generieren nur diese Namen |
+| `blockBiomeDimensions` | Liste von Zahlen | `0`, die Oberwelt | Die Dimensionen, in denen Biome blockiert werden. Leer heißt jede |
+| `blockBiomeDimensionsAreBlacklist` | boolean | `false` | An überspringt das Blockieren die genannten Dimensionen. Aus gilt es nur für sie |
 
 `blockBiomes` und `biomeWhitelist` arbeiten nach Mod, `biomeNames` mit `biomeNamesAreBlacklist` nach Namen. Blockierte Biome werden auf der fertigen Biomkarte ersetzt, und nur so kommt man an Ozeane, Pilzinseln, Mesa-Varianten, Dschungel, Hügel und Küsten heran: Die werden außerhalb der Listen ausgewählt, die ein Mod bearbeiten kann. Blockier jedes Biom, und die Oberwelt wird von selbst zur Void-Welt. `blockBiomeDimensions` beschränkt das Ganze auf bestimmte Dimensionen – leer heißt jede –, und `blockBiomeDimensionsAreBlacklist` macht aus dieser Liste einen Ausschluss.
 
@@ -3721,6 +3780,18 @@ Steht die Steuerung einer Gruppe auf `default`, gewinnen diese Werte, auf `globa
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `blockWorldGenerators` | boolean | `false` | Hindert andere Mods daran, über ihre eigenen Weltgeneratoren zu generieren — so fügen Mods hinzu, was Forges Events nie sehen: Schleiminseln, Höhlenkristalle und dergleichen. Die eigene Pack-Generierung dieses Mods wird nie blockiert |
+| `generatorWhitelist` | Liste von Mod-Ids | `minecraft` | Die Mods, die ihre eigenen Generatoren weiter laufen lassen dürfen |
+| `blockedGenerators` | Liste von Mod-Ids oder Klassennamenteilen | keine | Einzelne Generatoren, die rundweg blockiert werden, was die Whitelist auch sagt |
+| `blockGeneratorDimensions` | Liste von Zahlen | `0`, die Oberwelt | Die Dimensionen, für die das gilt. Leer heißt jede |
+| `blockGeneratorDimensionsAreBlacklist` | boolean | `false` | An überspringt das Blockieren die genannten Dimensionen. Aus gilt es nur für sie |
+| `generatorTypes` | Liste von Typen | keine | Blockiert danach, was ein Generator macht, statt danach, wem er gehört: `ores`, `structures`, `flora`, `lakes`, `terrain` oder `unknown` für die, auf die nichts passte |
+| `generatorTypesAreBlacklist` | boolean | `true` | An werden die genannten Typen blockiert. Aus generieren nur diese Typen |
+| `generatorTypeMap` | Liste von `muster=typ` | keine | Typen für Generatoren, die der Klassenname nicht beschreibt; das Muster ist eine Mod-Id oder ein Teil eines Generator-Klassennamens. Zugeordnete Einträge werden vor den eingebauten Wörtern geprüft und korrigieren so auch einen, den die Wörter falsch lesen |
+| `logBlockedGenerators` | boolean | `true` | Protokolliert jeden Generator beim ersten Blockieren mit dem Typ, den er bekommen hat. `/rdplserver generators` zeigt die laufenden Summen nach Mod und Typ |
 
 `blockWorldGenerators` hindert andere Mods daran, über ihre eigenen Weltgeneratoren zu generieren – so fügen Mods das hinzu, was Forges Events nie zu sehen bekommen: Schleiminseln, Höhlenkristalle und dergleichen. `generatorWhitelist` behält die genannten Mods, `blockedGenerators` nennt einzelne, und die Pack-Generierung dieses Mods wird nie blockiert. `blockGeneratorDimensions` beschränkt es auf bestimmte Dimensionen, `blockGeneratorDimensionsAreBlacklist` dreht die Liste um.
 
@@ -3755,6 +3826,15 @@ Zugeordnete Einträge werden vor den eingebauten Wörtern geprüft, sie korrigie
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `blockReplacements` | Liste von `block=block` | keine | Blöcke, die aus schon vorhandenen Chunks getauscht werden, mit optionaler Metadaten-Angabe auf beiden Seiten. Jeder Chunk wird einmal beim Laden bearbeitet und in seinen eigenen Daten markiert, also nie zweimal |
+| `blockReplacementDimensions` | Liste von Zahlen | keine | Die Dimensionen, für die das gilt. Leer heißt jede |
+| `blockReplacementDimensionsAreBlacklist` | boolean | `false` | An überspringt das Ersetzen die genannten Dimensionen. Aus gilt es nur für sie |
+| `blockReplacementMinHeight` | Zahl | `0` | Das niedrigste y, das betrachtet wird |
+| `blockReplacementMaxHeight` | Zahl | `255` | Das höchste y, das betrachtet wird |
+| `blockReplacementKey` | Text | `0000` | Ändere ihn, und jeder Chunk durchläuft das Ersetzen erneut |
+
 `blockReplacements` tauscht Blöcke aus Chunks heraus, die es schon gibt, ein `block=block` pro Zeile, mit optionalen Metadaten auf beiden Seiten:
 
 ```
@@ -3787,6 +3867,17 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `villageBlocks` | Liste von `original=ersatz` | keine | Die Blöcke, aus denen Dorfteile gebaut werden, angewandt, nachdem jeder andere Mod sein Wort hatte. Ein Paar kann eine Chance und eine Bedingung tragen und ist dann eine Regel; die Felder stehen in der Tabelle darunter |
+| `villagePieces` | Liste von Teilnamen | keine | Vanilla-Dorfteile, einer pro Zeile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1`, `field2`. Ein Pack-Grundstück wird nach seiner eigenen Vorlage benannt, ebenso Teile, die andere Mods hinzufügen |
+| `villagePiecesAreBlacklist` | boolean | `true` | An werden die genannten Teile blockiert. Aus generieren nur diese Teile, und eine Whitelist entfernt immer nur Vanillas eigene Teile |
+| `villagePlotsLeast` | Zahl | `0` | Die wenigsten gebauten Grundstücke, mit denen sich ein Dorf zufriedengibt — Häuser, Felder und Pack-Grundstücke, nie Wege, Fackeln oder der Brunnen. Ein kleiner ausgelegtes Dorf wird ein paar Mal neu gezogen, und die größte Auslegung gewinnt. `0` behält Vanilla |
+| `villagePlotsMost` | Zahl | `0` | Die meisten, die es haben darf; beim Höchstwert hört es rundweg auf zu wachsen, keine Gebäude und keine Wege mehr. `0` behält Vanilla |
+| `villageTieStreets` | boolean | `false` | An bekommt ein Viertel, das seine Straßen nicht bis zum stehenden Dorf wachsen lassen kann, eine gerade Verbindungsstraße zur nächsten Straße, mit der es fluchtet. Aus wird ein solches Viertel wieder abgeräumt |
+| `villageBlockSizes` | Liste von `größe=gewicht` | keine | Wie tief die Blocks zwischen den parallelen Straßen einer Stadt sind, je Viertel einmal aus seiner Platzlage gewürfelt. Leer bemisst jeden Block nach dem größten Grundstück, das das Pack mitbringt |
+| `villageLayout` | Text | leer | Nennt eine [Stadtplan](#stadtpläne), nach der das Dorf ausgelegt wird, statt es wachsen zu lassen |
 
 Dörfer nutzen dieselben `structure=wert`-Listen wie jede andere Struktur, unter dem Namen `villages`, `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` und `structureBiomesAreBlacklist` erreichen sie also alle. Eine `structureBiomes`-Liste, die keine Blacklist ist, fügt außerdem jedes genannte Biom hinzu, das die eigene Liste der Struktur nie enthielt – so lassen sich Dörfer ins Gebirge schicken; nenne sie dafür beim Registry-Namen, denn nur Registry-Namen können hinzufügen. Ihr Abstand hat eine Untergrenze von 9, weil Vanilla 8 davon abzieht. `villagePieces` gehört zur selben Gruppe, ein Schalter deckt also alles darüber ab, wo Dörfer hinkommen und woraus sie gebaut sind, während die Gruppe `villages` nur die Grundstücke abdeckt, die ein Pack hinzufügt.
 
@@ -4023,6 +4114,10 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `villageDecor` | Liste von `name=Gewicht` | keine | Streut die eigene Weltgenerierung des Packs an die Ränder der Dorfwege. Der Name ist ein Worldgen-Registrierungsschlüssel, das Gewicht der Anteil dieses Eintrags an den Plätzen, und `empty=Gewicht` der Anteil der Plätze, die leer bleiben |
+
 `villageDecor` streut die eigene Weltgenerierung eines Packs an die Ränder der Dorfwege, und genau das nimmt einem Dorf den Eindruck, seine Häuser stünden in blankem Gras. Jeder Eintrag lautet `name=gewicht`: Der Name ist ein Registry-Schlüssel aus der Weltgenerierung, `meinpack:street_flowers`, das Gewicht ist der Anteil dieses Eintrags an den Plätzen. Der Name `empty` ist der Anteil der Plätze, die leer bleiben, und auf ihn kommt es an, denn eine Liste ohne ihn füllt jeden Platz an jedem Wegrand, und das Dorf gerät zur Gärtnerei statt zur Straße.
 
 Jeder dritte Block entlang beider Wegseiten ist ein Platz, gezählt nach Weltkoordinaten, damit der Abstand von einem Wegstück ins nächste durchläuft. Ein Platz wird übergangen, wo er in ein Teil des Dorfes fällt, auf den Weg selbst, vor eine Tür, oder wo der Boden nicht offene Luft über etwas Festem ist. Was auf einem Platz wächst, ergibt sich aus dem Weltseed und dem Platz selbst, dieselbe Welt streut also immer gleich.
@@ -4054,6 +4149,18 @@ Was nach einer Explosion geschieht, aus `<namespace>/blastplaster/*.json`. `defa
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `structureSpacing` | Liste von `structure=chunks` | Vanilla | Wie weit auseinander eine Struktur gesät wird. Erreicht Tempel, Monumente, Herrenhäuser, Endstädte und Festungen; bei `mineshafts` bedeutet die Zahl einen Chunk von so vielen, denn so setzt Vanilla sie |
+| `structureSeparation` | Liste von `structure=chunks` | Vanilla | Wie nah zwei einer Struktur einander kommen dürfen. Erreicht Monumente, Herrenhäuser, Endstädte, Festungen und Dörfer, für die es die wenigsten Chunks zwischen einem Dorf und dem nächsten sind, was das Raster auch erlauben würde |
+| `structureMinDistanceFromSpawn` | Liste von `structure=blöcke` | Vanilla | Wie weit vom Weltspawn eine Struktur zu generieren beginnt |
+| `structureBiomes` | Liste von `structure=biom,biom` | Vanilla | In welchen Biomen eine Struktur generiert, nach Registrierungsname oder Biome-Dictionary-Typ. Erreicht jede Struktur außer Endstädten, denn das Ende ist in dieser Version ein einziges Biom |
+| `structureBiomesAreBlacklist` | Liste von `structure=true` oder `structure=false` | `false` | Die Richtung der Biomliste je Struktur |
+| `structureSpawns` | Liste von `structure=entity:gewicht:mindestens:höchstens` | Vanilla | Die Mobs, die eine Struktur spawnt, was das Biom ringsum auch sagt. Nur Tempel, Monumente und Netherfestungen führen so eine Liste; eine leere Zeile nach dem Gleichheitszeichen hält diese Struktur davon ab, überhaupt etwas Eigenes zu spawnen |
+| `structureSpawners` | Liste von `structure=entity` | Vanilla | Was der Spawner in einer Vanilla-Struktur spawnt, mit Komma getrennt für eine zufällige Wahl je Spawner. Die vier, die einen setzen, sind Verliese, Minen, Netherfestungen und Festungen |
+| `structureAt` | Liste von `structure=x,z` | keine | Nagelt eine Struktur an eine genaue Stelle. Siehe [Strukturen an genauen Stellen](#strukturen-an-genauen-stellen) |
+| `structureMost` | Liste von `structure=anzahl` | keine | Wie viele einer Struktur eine Dimension höchstens haben darf. Nur Dörfer lesen es, und ein mit `structureAt` festgenageltes wird trotzdem gegründet |
 
 Vanilla-Strukturen, nach Namen und pro Dimension abgeschaltet. Die Platzierung steuern vier Listen in der Form `structure=wert`, eine pro Zeile: `structureSpacing` für den Abstand, in dem sie gesät werden, `structureSeparation` dafür, wie nah zwei einander kommen dürfen, `structureMinDistanceFromSpawn` dafür, wie weit draußen sie anfangen, und `structureBiomes` mit `structureBiomesAreBlacklist` dafür, wo sie erlaubt sind.
 
@@ -4120,6 +4227,25 @@ Der Abstand entscheidet, wo eine Struktur gesät wird, ihn in einer bestehenden 
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `surfaceDayMonsterRate` | Kommazahl | `1.0` | Faktor auf feindliches Spawnen an der Oberfläche bei Tag, `1.0` ist Vanilla, sodass Tagesspawnen an der Oberfläche abgeschaltet werden kann, ohne die Höhlen anzurühren |
+| `surfaceNightMonsterRate` | Kommazahl | `1.0` | Dasselbe für die Oberfläche bei Nacht |
+| `undergroundDayMonsterRate` | Kommazahl | `1.0` | Dasselbe unter Tage bei Tag |
+| `undergroundNightMonsterRate` | Kommazahl | `1.0` | Dasselbe unter Tage bei Nacht |
+| `monsterCap` | Zahl | `-1` | Wie viele Feindliche zugleich geladen sein dürfen. Vanilla ist 70, und `-1` lässt es in Ruhe |
+| `creatureCap` | Zahl | `-1` | Dasselbe für friedliche Tiere. Vanilla ist 10 |
+| `ambientCap` | Zahl | `-1` | Dasselbe für Fledermäuse und dergleichen. Vanilla ist 15 |
+| `waterCreatureCap` | Zahl | `-1` | Dasselbe für Tintenfische. Vanilla ist 5 |
+| `monsterSpawnLight` | Zahl | `-1` | Wie viel Blocklicht ein feindliches Spawnen höchstens verträgt, zusätzlich zu den Vanilla-Prüfungen. `0` ist die moderne Regel, bei der eine Fackel eine Höhle ganz schützt; `-1` behält Vanillas Würfel |
+| `skyAnimals` | boolean | `true` | Ob friedliche Mobs sich auf dem Land niederlassen, das eine Rubic-Welt über ihrem Geländefenster generiert, vor allem den Himmelsinseln. Aus bleiben Tiere und Fledermäuse auf dem Boden darunter. Spawner übergehen beides |
+| `threatItems` | Liste von `item=stufe,anzahl` | keine | Die Gegenstände, die die Bedrohungspunkte eines Trägers heben, mit optionalem `,each` oder `,batch`: `each`, der Standard, zählt die Stufe für jedes gehaltene Stück bis `anzahl`; `batch` zählt sie einmal je vollen `anzahl` |
+| `threatLevels` | Liste von Zahlen | keine | Die Punktzahlen, ab denen ein Band beginnt, aufsteigend, sodass `10, 25, 50` drei Bänder macht. Leer schaltet die Bedrohungsstufe ab |
+| `threatMost` | Zahl | `-1` | Deckelt die Punktzahl. `-1` lässt sie ungedeckelt |
+| `threatSpawnRate` | Kommazahl | `1.0` | Skaliert feindliches Spawnen im Umkreis von 128 Blöcken um einen Träger im obersten Band, zusätzlich zu den anderen Faktoren; niedrigere Bänder nehmen einen anteiligen Teil |
+| `threatNotice` | Kommazahl, Blöcke | `0.0` | Wie viele Blöcke weiter feindliche Mobs, Vanilla-Mobs eingeschlossen, einen Träger im obersten Band sehen, wieder anteilig über die niedrigeren Bänder verteilt |
+| `threatSays` | Liste von `band=nachricht` | keine | Die Zeilen, die in Gelb erscheinen, wenn das eigene Band eines Spielers wechselt; Band `0` ist die Zeile für den Rückfall unter das erste Band |
+
 Spawnraten und Obergrenzen für Mobs, pro Biom. Das Spawnen feindlicher Mobs wird über `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` und `undergroundNightMonsterRate` skaliert, jeweils ein Faktor, bei dem `1.0` Vanilla ist – Spawnen bei Tageslicht an der Oberfläche lässt sich also abschalten, ohne die Höhlen anzurühren. Die Obergrenzen sind `monsterCap`, `creatureCap` für friedliche Tiere, `ambientCap` für Fledermäuse und Ähnliches und `waterCreatureCap` für Tintenfische; Vanillas Werte sind 70, 10, 15 und 5, und `-1` lässt eine davon unangetastet. `monsterSpawnLight` begrenzt zusätzlich zu den Vanilla-Prüfungen das Blocklicht, das ein feindlicher Spawn verträgt: `0` ist die moderne Regel, bei der eine Fackel eine Höhle vollständig schützt, und `-1`, der Standard, behält Vanillas Würfeln bei. `skyAnimals` entscheidet, ob sich friedliche Mobs auf dem Land ansiedeln, das eine Rubic-Welt über ihrem Terrainfenster erzeugt, allen voran auf den schwebenden Inseln: `true`, der Standard, lässt Vanillas Herden dort, wo der oberste Block liegt, `false` hält Tiere und Fledermäuse auf dem Boden darunter. Spawner ignorieren beides.
 
 Die Bedrohungsstufe bewertet, was jeder Spieler bei sich trägt, und lässt die Welt darauf antworten. `threatItems` listet die zählenden Gegenstände als `item=level,count`-Einträge mit einem optionalen `,each` oder `,batch` am Ende: `each`, der Standard, addiert die Stufe für jedes getragene Stück, zählt aber höchstens `count` davon, und `batch` addiert die Stufe einmal je `count` getragener Stücke, nur ganze Sätze. Ein `count` über der Stapelgröße des Gegenstands wird auf die Stapelgröße gekürzt, ein voller Stapel ist also das Meiste, was ein Eintrag zählen kann, und der Gegenstand darf Metadaten tragen wie `minecraft:dye:4`. Jede geladene Entity, die Gegenstände hält, ist ein Träger, nicht nur Spieler: Hauptinventar, Rüstung und Zweithand eines Spielers, ein fallen gelassener Stapel, alles mit einem Gegenstandsinventar wie ein Maultier mit Kiste oder eine Güterlore, und die gehaltenen Gegenstände und die Rüstung jedes anderen Mobs, sodass ein Gebiet gefährlich bleibt um das, was dort liegt, reitet oder läuft. Spieler im Kreativ- oder Zuschauermodus erreichen nichts. `threatLevels` sind die Punktzahlen, mit denen jede Stufe beginnt, aufsteigend, `[10, 25, 50]` ergibt also drei Stufen, und `threatMost` deckelt die Punktzahl, `-1` lässt sie ungedeckelt. Die Punktzahl wird alle fünf Sekunden erhoben. `threatSpawnRate` skaliert das Spawnen feindlicher Mobs im Umkreis von 128 Blöcken um einen Träger in der obersten Stufe, zusätzlich zu den anderen Raten, und niedrigere Stufen bekommen einen anteiligen Teil der Änderung: `2.0` verdoppelt es ganz oben und legt auf Stufe eins von drei ein Drittel drauf. `threatNotice` ist, um wie viele Blöcke weiter feindliche Mobs, Vanilla-Mobs eingeschlossen, einen Träger in der obersten Stufe sehen, wieder anteilig über die niedrigeren Stufen verteilt. `threatSays` sind die Zeilen, die gelb erscheinen, wenn sich die eigene Stufe eines Spielers ändert, als `band=message`-Einträge, wobei Stufe `0` die Zeile für das Zurückfallen unter die erste Stufe ist. Eine Entity-Variante kann `threatLeast` setzen, um nur dann natürlich zu spawnen, solange ein Träger im Umkreis von 128 Blöcken in dieser Stufe oder darüber steht. Bleibt eine der beiden Listen leer, ist die Bedrohungsstufe aus.
@@ -4136,6 +4262,10 @@ Die Bedrohungsstufe bewertet, was jeder Spieler bei sich trägt, und lässt die 
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `structureAdaptation` | Liste von `structure=modus` | Dörfer `beard_thin`, der Rest `none` | An welche Strukturen sich das Gelände anpasst und wie, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser. Die Modi sind `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate` |
+
 `structureAdaptation` entscheidet, an welche Strukturen sich das Gelände anpasst und wie, als `structure=modus`-Einträge, `"mansions=bury"`, `"monuments=none"`, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser, mit den fünf Modi, die moderne Versionen nutzen: `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate`. Dörfer sind `beard_thin`, wenn nichts anderes gesetzt ist, und alles andere ist `none`, solange es nicht genannt wird – genau das, was moderne Versionen für sich selbst wählen. Tempel lassen sich noch nicht nennen, weil sie sich erst beim Bauen selbst platzieren, es gibt also rechtzeitig nichts, woran das Gelände sich anpassen könnte.
 
 ### Dörfer aufsetzen
@@ -4149,6 +4279,10 @@ Die Bedrohungsstufe bewertet, was jeder Spieler bei sich trägt, und lässt die 
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | boolean | `false` | Ändert, wie Dörfer ihren Boden wählen und darauf sitzen: abgestufte Wege, aufgesetzte Gebäude, angeböschte Ringe und alles Weitere, was dieser Abschnitt beschreibt. Was es hinlegt, bleibt liegen |
 
 **Was sie legt, ist endgültig.** Sie formt das Gelände schon beim Erzeugen der Welt um, alles, was sie in einen Spielstand setzt, bleibt dort. Ein Dorf aus einem älteren Build wird von einem neueren weder erneut besucht noch ausgebessert. Zwei Welten aus demselben Seed, aber mit unterschiedlichen Mod-Versionen erzeugt, sehen deshalb nicht gleich aus, und die Dörfer einer Welt zeigen den Stand des Tages, an dem diese Chunks entstanden sind.
 
@@ -4183,6 +4317,20 @@ Es formt das Gelände selbst beim Entstehen um, eine Welt, die damit generiert w
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `flatBedrock` | boolean | `false` | Ersetzt das zerklüftete Grundgestein am Weltboden durch flache Schichten. Nur neue Chunks, solange `flatBedrockRetrogen` aus ist |
+| `flatBedrockRetrogen` | boolean | `false` | Ebnet das Grundgestein auch in schon vorhandenen Chunks. Jeder Chunk wird einmal bearbeitet und merkt es sich, und es lässt sich nicht rückgängig machen: Das ursprüngliche Muster ist nirgends festgehalten |
+| `bedrockLayers` | Zahl | `1` | Wie viele Schichten Grundgestein bleiben |
+| `flatBedrockRoof` | boolean | `false` | Ebnet auch die Grundgesteinsdecke, wo eine Dimension eine hat, etwa das Netherdach |
+| `flatBedrockFiller` | Block | leer | Was das weggenommene Grundgestein ersetzt. Leer wählt je Dimension: Stein, Netherrack, Endstein |
+| `flatBedrockFillers` | Liste von `dimension=block` | die Vorgaben für Nether und Ende | Ein Füller je Dimension, der `flatBedrockFiller` für die genannten Dimensionen überschreibt |
+| `flatBedrockDimensions` | Liste von Zahlen | `0`, die Oberwelt | Die Dimensionen, in denen geebnet wird. Leer heißt jede |
+| `flatBedrockDimensionsAreBlacklist` | boolean | `false` | An überspringt das Ebnen die genannten Dimensionen. Aus gilt es nur für sie |
+| `flatBedrockBiomes` | Liste von Biomnamen | keine | Die Biome, in denen geebnet wird, nach sprechendem oder Registrierungsnamen. Leer heißt jedes Biom |
+| `flatBedrockBiomeTypes` | Liste von Dictionary-Typen | keine | Biome-Dictionary-Typen, in denen geebnet wird, neben `flatBedrockBiomes`. `OCEAN`, `RIVER`, `MOUNTAIN` und die übrigen |
+| `flatBedrockBiomesAreBlacklist` | boolean | `false` | An überspringt das Ebnen die genannten Biome. Aus gilt es nur für sie |
 
 `flatBedrock` ersetzt die zerklüftete Schicht durch flache, pro Dimension und pro Biom, mit einem Füllblock deiner Wahl. `flatBedrockRetrogen` macht das auch mit Chunks, die es schon gibt. Es lässt sich nicht rückgängig machen, das ursprüngliche Muster wird nirgends festgehalten. `bedrockLayers` legt fest, wie viele Schichten bleiben, `flatBedrockRoof` macht auch die Decke, wo eine Dimension eine hat, und `flatBedrockFiller` ist das, was das weggenommene Grundgestein ersetzt, leer gelassen wird pro Dimension gewählt, und `flatBedrockFillers` nennt stattdessen einen pro Dimension. Welche Dimensionen und Biome es erreicht, bestimmen `flatBedrockDimensions`, `flatBedrockBiomes` und `flatBedrockBiomeTypes`, wobei `flatBedrockDimensionsAreBlacklist` und `flatBedrockBiomesAreBlacklist` diese Listen zu Ausschlüssen machen.
 
@@ -4256,6 +4404,10 @@ Bevor ein Chunk geschrieben werden kann, wird er in die Form gebracht, die auf d
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `hurryWritesAbove` | Zahl, Chunks | `100` | Wie viele fertige Chunks auf das Schreiben warten dürfen, bevor der Schreiber aufhört, nach jedem eine Hundertstelsekunde zu ruhen, und einfach so schnell schreibt, wie er kann. `0` lässt ihn immer ruhen, wie das Spiel es tut |
+
 Das Spiel schreibt fertige Chunks auf einem eigenen Thread, einen nach dem anderen, und ruht nach jedem eine hundertstel Sekunde. Das hält es bei etwa hundert Chunks pro Sekunde, egal wie schnell die Platte ist, was beim Spielen reichlich und beim Bau von Land in großen Mengen bei Weitem nicht genug ist – die ungeschriebenen Chunks stapeln sich stattdessen im Speicher. `hurryWritesAbove` sagt, wie viele warten dürfen, bevor es aufhört zu ruhen und einfach so schnell schreibt, wie es kann. `100` ist der Standard und trifft den Punkt, an dem das Spiel selbst die Generierung zu bremsen beginnt; `0` lässt es immer ruhen, so wie das Spiel es tut. Solange die Zahl der Wartenden klein ist, ändert sich nichts, und das ist jeder gewöhnliche Moment des Spielens.
 
 Jedes Mal, wenn das Aufräumen läuft, wird dafür eine Zeile geschrieben, während es passiert: welcher Sammler lief, wie lange er brauchte, was vorher und nachher gehalten wurde und wie viel Platz das Spiel zu diesem Zeitpunkt hatte. Ändert sich dieser Platz, wird das gesagt, denn der wachsende Platz ist selbst die Ursache der längsten dieser Pausen: Ein Spiel, das mit weniger Platz startet, als es am Ende braucht, hält an, um ihn zu vergrößern, immer wieder, in Momenten, die nichts mit dem zu tun haben, was es gerade tut. Es mit so viel Platz zu starten, wie es haben darf, vermeidet das vollständig.
@@ -4274,6 +4426,11 @@ Eine letzte Zeile sagt, wie viel Arbeitsabfall seit dem letzten Blick weggeworfe
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `spawnChunkRadius` | Zahl, Blöcke | `128` | Wie weit vom Spawnpunkt einer Welt Chunks geladen gehalten werden, ob jemand da ist oder nicht. `128` ist, was das Spiel tut, und `0` hält gar keine |
+| `spawnChunkRadii` | Liste von `dimension=blöcke` | keine | Ein Radius für einzelne Dimensionen, der `spawnChunkRadius` für die genannten Dimensionen überschreibt |
 
 Das Spiel hält die Chunks um den Spawnpunkt einer Welt geladen, ob jemand da ist oder nicht, damit Mods irgendwo etwas haben, das immer tickt. Das sind 128 Blöcke in jede Richtung, etwa 289 Chunks, und im Spiel lässt sich das nicht einstellen. `spawnChunkRadius` setzt diese Entfernung. `128` ist das, was das Spiel macht, und der Standard, eine kleinere Zahl hält einen kleineren Anker, und `0` hält gar keine, der Spawnbereich entlädt also wie überall sonst. `spawnChunkRadii` setzt einen Radius für einzelne Dimensionen, geschrieben als `dimension=blöcke`, einer pro Zeile, und überschreibt `spawnChunkRadius` für die genannten Dimensionen.
 
@@ -4296,6 +4453,15 @@ Nur eine Dimension, die dafür registriert wurde, ihren Spawn zu halten, hält e
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `voidWorld` | boolean | `false` | Generiert eine leere Welt mit einer Plattform am Spawnpunkt und hält Mobs, Tiere, Strukturen und alles ab, was ein Mod dort sonst generieren würde |
+| `voidPlatformBlock` | Block | `minecraft:stone` | Woraus die Plattform besteht |
+| `voidPlatformSize` | Zahl, Blöcke | `9` | Wie breit die Plattform ist, auf eine ungerade Zahl abgerundet, damit sie mittig auf dem Spawn sitzt |
+| `voidPlatformHeight` | Zahl | `64` | Wie hoch über dem Weltboden die Plattform sitzt |
+| `voidWorldDimensions` | Liste von Zahlen | `0`, die Oberwelt | Welche Dimensionen geleert werden. Nur die Oberwelt bekommt eine Plattform |
+| `voidWorldDimensionsAreBlacklist` | boolean | `false` | An sind die genannten Dimensionen die, die in Ruhe gelassen werden |
+
 `voidWorld` generiert eine leere Welt mit einer Plattform am Spawnpunkt und unterbindet Mobs, Tiere, Strukturen und alles, was ein Mod dort sonst generieren würde. Block, Größe und Höhe der Plattform sind `voidPlatformBlock`, `voidPlatformSize` und `voidPlatformHeight`; die Größe wird auf eine ungerade Blockzahl abgerundet, damit die Plattform mittig auf dem Spawn sitzt. `voidWorldDimensions` wählt, welche Welten geleert werden, standardmäßig allein die Oberwelt, und `voidWorldDimensionsAreBlacklist` macht aus dieser Liste die, die in Ruhe gelassen werden. Der Nether und das Ende werden genauso geleert wie die Oberwelt, ob es die sind, die diese Version baut, oder solche, die ein Mod an ihre Stelle gesetzt hat. Nur die Oberwelt bekommt eine Plattform, einen Weg in einen geleerten Nether oder ein geleertes Ende liefert ein Pack also selbst. Ein geleertes Ende hat außerdem keinen Drachen, keine Kristalle und keinen Grundgestein-Brunnen, weil der Kampf, der sie baut, nie beginnt.
 
 ### Der Drache
@@ -4309,6 +4475,10 @@ Nur eine Dimension, die dafür registriert wurde, ihren Spawn zu halten, hält e
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `dragonFight` | boolean | `true` | Ob das Ganze überhaupt stattfindet: der Drache, seine Leiste, die Kristalle, der Brunnen, auf dem er steht, und das Wiederbeleben, das ein Spieler mit Enderkristallen starten würde. Gehört zur Gruppe `structures` |
 
 `dragonFight` gehört zur Gruppe `structures` und entscheidet, ob das Ganze überhaupt stattfindet: der Drache, seine Leiste, die Kristalle, der Brunnen, auf dem er steht, und das Wiederbeleben, das ein Spieler mit Enderkristallen starten würde. Ein geleertes Ende lässt ihn weg, solange ein Pack nicht darum bittet, und ein gewöhnliches Ende hat ihn, solange ein Pack nicht etwas anderes sagt – `dragonFight` lohnt sich also in beide Richtungen.
 
@@ -4328,6 +4498,14 @@ Nur eine Dimension, die dafür registriert wurde, ihren Spawn zu halten, hält e
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `worldType` | Text | leer | Der Welttyp, mit dem jede neue Welt gemacht wird, was auf dem Erstellungsbildschirm auch gewählt wurde: `default`, `largebiomes`, `amplified`, `customized` oder einer, den ein Mod hinzufügt. Leer überlässt die Wahl dem, der die Welt macht |
+| `worldTypeExceptions` | Liste von Welttypen | `flat`, `debug_all_block_states` | Die Wahlen, die `worldType` stehen lässt |
+| `worldSeed` | Text | leer | Der Seed, mit dem jede neue Welt gemacht wird, so geschrieben, wie er getippt würde: eine Zahl wird genommen, wie sie ist, alles andere wird in eine verwandelt, wie das Spiel es tut |
+| `terrainWorldTypes` | Liste von Welttypen | keine | Welchen Welttypen die Geländeeinstellungen überhaupt gegeben werden. Leer heißt jedem |
+| `terrainWorldTypesAreBlacklist` | boolean | `false` | An sind die genannten Welttypen die, die in Ruhe gelassen werden |
 
 `worldType` entscheidet, welche Art Welt eine neue Welt ist, ganz gleich, was im Bildschirm beim Erstellen ausgewählt wurde: `default`, `largebiomes`, `amplified`, `customized` oder ein Typ, den ein Mod hinzufügt, etwa `biomesop` oder `realistic`. Ein Pack, das um einen Welttyp herum gebaut ist, nennt ihn hier, und jede neue Welt wird so gebaut. Leer, der Standard, überlässt die Wahl dem, der die Welt erstellt. Eine Welt, die es schon gibt, behält den Typ, mit dem sie gebaut wurde, und ein Name, den niemand bereitstellt, wird protokolliert und ignoriert. `worldTypeExceptions` nennt die Auswahlen, die stehen bleiben, zunächst Superflach und die Debug-Welt, denn ein Pack, das einen Welttyp will, will jemandem beim Testen selten Superflach wegnehmen; und wer eine Welt erstellt, erfährt im Chat, sobald er drin ist, dass das Pack den Typ gewählt hat. Diese Meldung entscheidet die Config-Datei über `tellWorldType`, nicht ein Pack, wer spielt, kann sie also für sich abschalten, und kein Pack kann sie wieder einschalten. Einstellungen, mit denen die Welt erstellt wurde, fallen beim Wechsel des Typs weg, weil sie für den gewählten Typ geschrieben waren.
 
@@ -4363,6 +4541,14 @@ Alles andere, was ein Pack tut – Biome und Erze blockieren, Blöcke ersetzen, 
 }
 ```
 
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `logBlockedOres` | boolean | `true` | Protokolliert, wenn ein Mod und ein Erztyp zum ersten Mal abgewiesen wird |
+| `logBlockedBiomes` | boolean | `true` | Protokolliert je Mod, welche Biome blockiert wurden |
+| `logBlockedGenerators` | boolean | `true` | Protokolliert, wenn ein Mod und ein Generator zum ersten Mal blockiert wird |
+| `logBlockedRecipes` | boolean | `true` | Protokolliert je Mod, was blockiert wurde |
+| `logBlockReplacements` | boolean | `true` | Protokolliert die erste Ersetzung jeder Art und eine Summe, wenn eine Welt aufholt |
+
 `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` und `logBlockReplacements` protokollieren jeweils das erste Mal, dass etwas abgewiesen wird, du siehst also, was eine Sperrregel tatsächlich erwischt hat, statt es aus dem zu erraten, was fehlt. Sie sind das Erste, was man einschaltet, wenn eine Regel nichts oder zu viel zu tun scheint.
 
 ### Rezepte
@@ -4382,6 +4568,16 @@ Alles andere, was ein Pack tut – Biome und Erze blockieren, Blöcke ersetzen, 
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `blockRecipes` | boolean | `false` | Entfernt jedes Handwerksrezept außer denen der Mods in `recipeWhitelist`. Nichts ist von Haus aus ausgenommen, also nimm den eigenen Namespace des Packs auf, um seine Rezepte zu behalten. Ergänzungen von CraftTweaker und GroovyScript überleben immer |
+| `recipeWhitelist` | Liste von Mod-Ids | `minecraft` | Die Mods, deren Handwerksrezepte überleben |
+| `blockedRecipeMods` | Liste von Mod-Ids | keine | Mods, deren Handwerksrezepte rundweg entfernt werden, was die Whitelist auch sagt |
+| `blockFurnaceRecipes` | boolean | `false` | Dasselbe für Ofenrezepte; der Mod wird aus dem hergestellten Gegenstand gelesen |
+| `furnaceWhitelist` | Liste von Mod-Ids | `minecraft` | Die Mods, deren Ofenrezepte überleben |
+| `blockedFurnaceMods` | Liste von Mod-Ids | keine | Mods, deren Ofenrezepte rundweg entfernt werden |
+| `recipeMatch` | `recipe`, `output` oder `both` | `recipe` | Woraus die Mod-Id beim Blockieren von Handwerksrezepten gelesen wird: aus dem Namen des Rezepts, aus dem hergestellten Gegenstand, oder aus beidem, was blockiert, wenn eines passt, und verschont, wenn eines auf der Whitelist steht |
 
 `blockRecipes` und `blockFurnaceRecipes` entfernen alles außer den Mods in ihren Whitelists. Nichts ist standardmäßig ausgenommen, trag also den Namespace deines eigenen Packs ein, um seine Rezepte zu behalten. Ergänzungen von CraftTweaker und GroovyScript überleben immer, egal was die Whitelist sagt. Die Whitelists sind `recipeWhitelist` und `furnaceWhitelist`; `blockedRecipeMods` und `blockedFurnaceMods` gehen in die andere Richtung und entfernen die Rezepte eines genannten Mods, egal was die Whitelist sagt. `recipeMatch` entscheidet, woher die Mod-ID gelesen wird, wenn Handwerksrezepte blockiert werden: `recipe`, der Standard, nimmt den Namen des Rezepts, `output` nimmt das Item, das es herstellt, und `both` blockiert, wenn eines von beiden passt, und verschont, wenn eines von beiden auf der Whitelist steht.
 
@@ -4565,6 +4761,17 @@ Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
   }
 }
 ```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `worldName` | Text | leer | Füllt das Namensfeld des Erstellungsbildschirms vor; der Speicherordner folgt daraus. Es füllt das Feld nur, solange dort noch die Vorgabe des Spiels steht, und wird anders als Seed und Spielmodus danach nicht erneut gesetzt |
+| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` oder `spectator` | leer | Der Modus, in dem jede neue Welt startet, nur bei der Erstellung angewandt. `hardcore` ist Survival plus dem weltweiten Hardcore-Flag, und `creative` schaltet zusätzlich Cheats ein |
+| `worldSpawn` | `x,z` oder `x,y,z` | leer | Wo jede neue Welt spawnt, nur bei der Erstellung angewandt. Ohne y wird die Oberfläche auf Bodenhöhe des Welttyps genommen |
+| `worldBorder` | Zahl, Blöcke | `0` | Der Durchmesser der Weltgrenze jeder neuen Welt, die Zahl, die `/worldborder set` nimmt. `0` lässt die Grenze in Ruhe |
+| `worldTime` | Zahl, Ticks | `-1` | Die Tageszeit, mit der jede neue Welt beginnt. `-1` lässt sie in Ruhe |
+| `worldDifficulty` | Liste | keine | Legt den Schwierigkeitsgrad auf `peaceful`, `easy`, `normal` oder `hard` fest. Ein bloßer Grad gilt für jede Dimension, eine Zeile `dimension=grad` überschreibt ihn für diese |
+| `weatherCeiling` | Liste von `dimension=y` | keine | Das höchste y, das Regen und Schnee erreichen. Eine bloße Zahl gilt für jede Dimension |
+| `cloudHeight` | Liste von `dimension=y` | keine | Das y, auf dem Wolken gezeichnet werden. Eine bloße Zahl gilt für jede Dimension, leer behält die Höhe des Spiels |
 
 **`worldName`** (Gruppe `terrain`) füllt das Namensfeld des Erstellungsbildschirms vor; der Speicherordner folgt daraus wie üblich. Es füllt das Feld nur, solange dort noch der Spielstandard steht – ein vom Spieler getippter Name wird nie überschrieben –, und wird anders als Seed und Spielmodus hinterher nicht erneut gesetzt: Was beim Erstellen im Feld steht, ist der Name.
 

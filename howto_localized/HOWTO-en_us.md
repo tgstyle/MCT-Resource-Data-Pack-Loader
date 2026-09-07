@@ -412,6 +412,10 @@ The template never registers, while `jacks_ore` registers with the template's ma
 
 Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. **The x and z are block coordinates, not chunk coordinates**, and the structure generates in the chunk that holds that block. One entry per wanted instance. Its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility, and two pins closer than a chunk apart put two structures in the same chunk. The structure seats to the ground at its chunk by the usual rules once founded.
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `structureAt` | list of `structure=x,z` | none | Pins a vanilla structure to an exact spot, one entry per wanted instance. The x and z are block coordinates, and the structure generates in the chunk that holds that block; its spacing, separation, minimum spawn distance and flat-ground checks all stand aside |
+
 An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing exactly once at those coordinates on the surface when that chunk generates, instead of by chance. It composes with `locateAs`, so a pinned structure can also be found with /locate.
 
 ### Finding placed structures
@@ -767,7 +771,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `variants` | yes | object of variant name to variant |, | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
+| `variants` | yes | object of variant name to variant | | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
 | `type` | no | one of the types above | `basic` | Which shape the block takes |
 | `material` | no | one of the [block materials](#value-lists) | `rock` | Mining behavior, pistons, fire and liquids |
 | `soundType` | no | one of the [sound types](#value-lists) | from the material | Footsteps, breaking and placing |
@@ -811,7 +815,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `meta` | yes | 0 to 15 |, | The metadata value this variant claims |
+| `meta` | yes | 0 to 15 | | The metadata value this variant claims |
 | `hardness` | no | float | `1.0` | How long it takes to break. Obsidian is `50`, `-1` is unbreakable |
 | `resistance` | no | float | `5.0` | Blast resistance |
 | `light` | no | 0 to 15 | `0` | Light emitted |
@@ -841,8 +845,8 @@ A `basic` block can hold sixteen variants; a `slab` eight; `log` and `leaves` fo
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `block` | one of the two | block or item name |, | What is dropped |
-| `entity` | one of the two | entity name |, | An entity let out when the block breaks, instead of an item |
+| `block` | one of the two | block or item name | | What is dropped |
+| `entity` | one of the two | entity name | | An entity let out when the block breaks, instead of an item |
 | `meta` | no | int | `0` | Which variant of it |
 | `amount` | no | int or range | `1` | How many |
 | `chance` | no | 0 to 100 | `100`, or `0` when `guaranteed` is off | How often the drop happens at all |
@@ -882,7 +886,7 @@ For `crop`, `flower`, `cane` and `vine`.
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `stages` | no | int | `16` | Growth stages before it is done |
-| `growth` | no | int |, | One in N chance per random tick to advance |
+| `growth` | no | int | | One in N chance per random tick to advance |
 | `spread` | no | int | `0` | How far it spreads to neighboring blocks |
 | `maxHeight` | no | int | `3` | Cane only. How tall the column grows |
 | `drop` | no | item name | none | What it drops when broken |
@@ -1359,7 +1363,7 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `variants` | yes | object of variant name to variant |, | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
+| `variants` | yes | object of variant name to variant | | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
 | `type` | no | one of the types above | `basic` | Which type the item takes |
 | `creativeTab` | no | tab name | none | The tab it appears in |
 | `material` | tool, armor | material name | none | Which of your materials it is made from |
@@ -1379,7 +1383,7 @@ Variant keys:
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `meta` | yes | 0 to 15 |, | The metadata value this variant claims |
+| `meta` | yes | 0 to 15 | | The metadata value this variant claims |
 | `maxSize` | no | 1 to 64 | `64` | Stack size |
 | `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip |
 | `healAmount` | food | int, half drumsticks | `0` | Hunger restored |
@@ -1430,7 +1434,7 @@ The file's path is the fluid's registry name unless `name` overrides it.
 | `viscosity` | no | int | `1000` | How slowly it flows. Water is 1000, lava 6000 |
 | `gaseous` | no | boolean | `false` | Treated as a gas |
 | `creativeTab` | no | tab name | none | The tab the bucket appears in |
-| `block` | no | object |, | The fluid block. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (none, a list of effects given to whatever stands in it, each written `potion,duration,amplifier` with an optional fourth part `true` for an ambient one) |
+| `block` | no | object | | The fluid block. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (none, a list of effects given to whatever stands in it, each written `potion,duration,amplifier` with an optional fourth part `true` for an ambient one) |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
 
 ## Materials, tabs, sounds, ore dictionary
@@ -1462,7 +1466,7 @@ The file's path is the material's name, which a tool or armor item then names in
 | `damage` | no | float | `2.0` | Attack damage bonus |
 | `enchantability` | no | int | `14` | How good enchantments are. Gold is 22 |
 | `repairItem` | no | item name | none | What repairs it in an anvil |
-| `reduction` | no | list of four ints |, | Armor points, in the order feet, legs, chest, head |
+| `reduction` | no | list of four ints | | Armor points, in the order feet, legs, chest, head |
 | `toughness` | no | float | `0.0` | Armor toughness, as diamond has |
 | `equipSound` | no | sound name | `item.armor.equip_iron` | Sound when armor is put on |
 | `armorTexture` | no | texture prefix | the file name | The worn armor texture |
@@ -1608,7 +1612,7 @@ The file's path is the potion type's registry name, which a `potion_bottle` item
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
 | `baseName` | no | string | the namespace and name | The name the bottle is built from |
-| `effects` | yes | list of objects |, | See below |
+| `effects` | yes | list of objects | | See below |
 
 Each effect takes `potion` (required), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) and `showParticles` (`true`).
 
@@ -1717,8 +1721,8 @@ The file name is yours to choose, only the folder is read, and several files sta
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `profession` | yes | profession name |, | Whose trade this is |
-| `career` | yes | career name |, | Which career within it |
+| `profession` | yes | profession name | | Whose trade this is |
+| `career` | yes | career name | | Which career within it |
 | `level` | no | int | `1` | Which trade tier it appears at |
 | `maxUses` | no | int | `12` | Times it can be used before locking |
 
@@ -2357,7 +2361,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `id` | yes | int |, | The dimension id. Must not clash with another mod |
+| `id` | yes | int | | The dimension id. Must not clash with another mod |
 | `suffix` | no | string | `DIM_<name>` | The save folder |
 | `keepLoaded` | no | boolean | `false` | Keep it loaded when nobody is in it |
 | `gameRules` | no | object | none | Rules that apply only here |
@@ -2435,7 +2439,7 @@ A `portal` block carries a `portal` section:
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `dimension` | yes | int |, | Where it sends you |
+| `dimension` | yes | int | | Where it sends you |
 | `returnDimension` | no | int | `0` | Where it sends you back to |
 | `gate` | no | gate name | none | A gate that must be open to pass |
 | `cooldown` | no | int, ticks | `60` | Before the same player can use it again |
@@ -2563,11 +2567,11 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `dimension` | yes | int |, | The dimension it guards |
+| `dimension` | yes | int | | The dimension it guards |
 | `name` | no | string | the file name | Shown to the player |
 | `scope` | no | `player`, `global` | `player` | One player at a time, or the whole world at once |
 | `open` | no | boolean | `false` | Whether it starts open |
-| `unlock` | no | object |, | What opens it. See below |
+| `unlock` | no | object | | What opens it. See below |
 | `unlockedMessage` | no | string | `%dim% is now open` | Shown when it opens |
 | `blockedMessage` | no | string | `You need %item% to enter %dim%` | Shown when it refuses |
 | `safeReturn` | no | boolean | `false` | A blocked return still lands somewhere safe rather than refusing |
@@ -2738,6 +2742,12 @@ The `deep` scope leaves the vanilla band as it is, lava window included, and onl
 The file's path is the region's name, which a worldgen entry then names in `caveRegions`. A bare name there takes that entry's own namespace.
 
 Paints named regions over the underground, the pack counterpart of modern cave biomes. The underground is divided into rounded cells — `caveRegionCells` blocks wide and `caveRegionCellsY` tall, both `terrain` keys — and each cell rolls one region, or none, by weight. Everything a region does comes deterministically from the seed, so chunks agree with each other without ever writing across a border.
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `caveRegionCells` | int, blocks | `128` | How wide a region cell is |
+| `caveRegionCellsY` | int, blocks | `64` | How tall a region cell is |
+| `caveRegionPlainWeight` | int | `4` | The weight of plain, region-less underground in each cell's roll. Higher leaves more of the underground without any region: with a single region of weight 1, about a fifth of the cells get it |
 
 Every key, shown at once. A real file writes only the ones it needs.
 
@@ -2939,7 +2949,7 @@ Gives a group of blocks a mining time multiplier, rolled per block position. The
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `blocks` | yes | list of block names or objects |, | The group. Same three forms as a worldgen `replace` |
+| `blocks` | yes | list of block names or objects | | The group. Same three forms as a worldgen `replace` |
 | `except` | no | list of block names or objects | none | Taken back out of the group, whatever `blocks` says |
 | `miningTime` | no | number, or object with `min` and `max` | `1.0` | How many times longer the block takes to break |
 | `blastResistance` | no | number, or object with `min` and `max` | `1.0` | Multiplies the block's blast resistance |
@@ -3101,7 +3111,7 @@ Only `block` is required; everything else may be left out and takes its default.
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `block` | yes | block name |, | What is placed |
+| `block` | yes | block name | | What is placed |
 | `meta` | no | int | `0` | Which variant of that block |
 | `blocks` | no | list of objects | none | A weighted list, used instead of one block. See below |
 | `size` | no | int or range | `8` | How many blocks one attempt places, or how large a shape with a radius is |
@@ -3153,7 +3163,7 @@ Only `block` is required; everything else may be left out and takes its default.
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `block` | yes | block name |, | What is placed |
+| `block` | yes | block name | | What is placed |
 | `meta` | no | int | `0` | Which variant |
 | `weight` | no | int | `1` | How often this one is chosen against the others |
 | `properties` | no | object of property to value | none | Block state properties by name, for states with no metadata of their own |
@@ -3200,6 +3210,29 @@ That places sulfur in sandstone only where it is already open to a cave or the s
 Every shape honors it, since it is part of deciding whether a single block may be taken. A `geode` names its crust and filling separately, and those two are placed without the check.
 
 An entry naming only blocks that are not registered is skipped with an error rather than generating everywhere.
+
+### Follower entries
+
+An entry in a worldgen entry's `then` list is a name with a weight, or an object when that follower needs a direction of its own.
+
+```json
+{
+  "then": [
+    "mypack:quartz_halo=2",
+    "empty=1",
+    { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }
+  ]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `name` | yes | entry name | | The worldgen entry that grows out of this one. A bare name is read in this pack's namespace |
+| `weight` | no | int | `1` | How often this follower is picked against the others in the list |
+| `spread` | no | int, blocks | the entry's `thenSpread` | How far sideways this follower's direction may lean, for this entry alone |
+| `depth` | no | int or range | the entry's `thenDepth` | How far down, negative, or up this follower's direction leans, for this entry alone |
+
+`name=weight` is the short form of an object with only those two, and `empty=weight` queues nothing. Because `spread` and `depth` are per entry, one list can send a diamond tip straight down and a branch sideways off the same vein.
 
 ## Shapes
 
@@ -3510,6 +3543,11 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `retrogen` | boolean | `false` | Catches chunks saved before an entry existed up on every worldgen entry marked `"retrogen": true`. Off, chunks that already exist are left alone |
+| `adoptExistingChunks` | boolean | `false` | What happens the first time an old chunk is seen: on, it is stamped as though this pack had already generated it and is never caught up; off, it is caught up like any other. To fill an existing world, set `retrogen` on and this off |
+
 An entry with `"retrogen": true` is generated into chunks that were saved before you added it. Each chunk records what it has had, so nothing is done twice.
 
 The entry flag only marks an entry as eligible. Catching up is switched on by the `retrogen` setting, which a pack can set in its `settings` block or a player can set in the config, and it is off by default. Alongside it, `adoptExistingChunks` decides what happens the first time an old chunk is seen: on, the chunk is stamped as though this pack had already generated it and is never caught up; off, it is caught up like any other. Turning `retrogen` on while `adoptExistingChunks` is also on does nothing, because every old chunk is written off before it can be queued. To fill an existing world, set `retrogen` on and `adoptExistingChunks` off together.
@@ -3679,9 +3717,21 @@ With a group's control at `default` these win, at `global` they are ignored, and
 }
 ```
 
-`prospectItems` turns items into prospecting tools for the `vein` shaped worldgen entries: `item=entry|entry[,radius in chunks]`, or `item=*[,radius]` for every vein entry, the radius defaulting to 8. A sneaking player breaking a block with such an item in hand is told, for each entry it reads, `Possible hit on <ore> <direction> of this location, <deeper down | higher up | at about this depth>` — one of eight compass points from the broken block to the nearest seeded vein, and never a position; `at this location` when the block already lies within the vein's reach, and `No sign of anything here` when nothing is seeded in the radius. The ore is named by the entry's `prospectAs`, else by its file name. `prospectItemsAreBlacklist` turns each item's list into the entries it does not read. The reading replays the same rolls generation makes, so it is right about land not yet made. A tagged item says what it prospects for in its tooltip. A reading has a price: `prospectWear` is how many times the normal wear the tool takes for that break, `2` (double) by default and the least allowed; an item with no durability pays nothing. Prospecting is also slow work: `prospectSlow` is how many times longer a sneaking player with a tagged item takes to break a block, `2` by default, `1` for normal speed. And the sample is spent: a block broken in prospecting mode drops nothing and gives no experience unless `prospectDrops` is `true`.
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `blockOres` | boolean | `false` | Stops every mod and Minecraft generating ore, except the mods named in `oreWhitelist`. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all |
+| `oreWhitelist` | list of mod ids | none | The mods still allowed to generate ore while `blockOres` is on |
+| `oreTypes` | list of ore types | none | Which ore types the blocking applies to, written as Forge names, `COAL`, `IRON`. Empty means every type |
+| `oreTypesAreBlacklist` | boolean | `false` | On, the types in `oreTypes` are the ones blocked. Off, only those types generate |
+| `blockOreDimensions` | list of ints | none | The dimensions ore blocking applies to, empty meaning every one. A dimension outside the scope is not touched at all, so another mod's ores generate there while the overworld stays blocked |
+| `blockOreDimensionsAreBlacklist` | boolean | `false` | On, the dimensions listed are the ones left alone |
+| `prospectItems` | list of `item=entries` | none | Items that prospect for `vein` shaped worldgen entries when a sneaking player breaks a block with one in hand. The form is in the paragraph below |
+| `prospectItemsAreBlacklist` | boolean | `false` | On, each item's list is the entries it does not read |
+| `prospectWear` | int | `2` | How many times the normal wear a prospecting break costs the tool. `2`, double, is the least allowed, and an item with no durability pays nothing |
+| `prospectSlow` | int | `2` | How many times longer a sneaking player with a tagged item takes to break a block. `1` is normal speed |
+| `prospectDrops` | boolean | `false` | On, a block broken in prospecting mode still drops and gives experience. Off, the sample is spent |
 
-`blockOres` stops every mod and Minecraft generating ore except the mods in `oreWhitelist`. `oreTypes` names ore types this applies to, and `oreTypesAreBlacklist` decides the direction, on, the listed types are blocked; off, only the listed types generate. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all. `blockOreDimensions` limits ore blocking to certain dimensions, empty meaning every one, with `blockOreDimensionsAreBlacklist` turning that list into the dimensions to leave alone. A dimension outside the scope is not touched at all, so another mod's ores generate there untouched while the overworld stays blocked.
+**The reading.** A `prospectItems` entry is written `item=entry|entry[,radius in chunks]`, or `item=*[,radius]` for every vein entry, the radius defaulting to 8. A sneaking player breaking a block with such an item in hand is told, for each entry it reads, `Possible hit on <ore> <direction> of this location, <deeper down | higher up | at about this depth>` — one of eight compass points from the broken block to the nearest seeded vein, and never a position; `at this location` when the block already lies within the vein's reach, and `No sign of anything here` when nothing is seeded in the radius. The ore is named by the entry's `prospectAs`, else by its file name. The reading replays the same rolls generation makes, so it is right about land not yet made, and a tagged item says what it prospects for in its tooltip.
 
 ### Biomes
 
@@ -3699,6 +3749,15 @@ With a group's control at `default` these win, at `global` they are ignored, and
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `blockBiomes` | boolean | `false` | Stops every biome generating except those of the mods in `biomeWhitelist`. Blocked biomes are replaced on the finished biome map, the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores. Block every one and the overworld becomes a void world by itself |
+| `biomeWhitelist` | list of mod ids | `minecraft` | The mods whose biomes still generate while `blockBiomes` is on. A pack biome uses the pack's namespace |
+| `biomeNames` | list of biome names | none | Biomes this applies to by name, whoever owns them and whatever the whitelist says. A friendly name such as `Birch Forest` or a registry name |
+| `biomeNamesAreBlacklist` | boolean | `true` | On, the names in `biomeNames` are blocked. Off, only those names generate |
+| `blockBiomeDimensions` | list of ints | `0`, the overworld | The dimensions biome blocking applies to. Empty means every one |
+| `blockBiomeDimensionsAreBlacklist` | boolean | `false` | On, blocking skips the dimensions listed. Off, it applies only to them |
 
 `blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself. `blockBiomeDimensions` limits all of it to certain dimensions, empty meaning every one, and `blockBiomeDimensionsAreBlacklist` turns that list into an exclusion.
 
@@ -3721,6 +3780,18 @@ With a group's control at `default` these win, at `global` they are ignored, and
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `blockWorldGenerators` | boolean | `false` | Stops other mods generating through their own world generators, which is how mods add what Forge's events never see: slime islands, cave crystals and the like. This mod's own pack generation is never blocked |
+| `generatorWhitelist` | list of mod ids | `minecraft` | The mods still allowed to run their own generators |
+| `blockedGenerators` | list of mod ids or class-name parts | none | Individual generators blocked outright, whatever the whitelist says |
+| `blockGeneratorDimensions` | list of ints | `0`, the overworld | The dimensions this applies to. Empty means every one |
+| `blockGeneratorDimensionsAreBlacklist` | boolean | `false` | On, blocking skips the dimensions listed. Off, it applies only to them |
+| `generatorTypes` | list of types | none | Blocks by what a generator makes instead of by who owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched |
+| `generatorTypesAreBlacklist` | boolean | `true` | On, the types listed are blocked. Off, only those types generate |
+| `generatorTypeMap` | list of `pattern=type` | none | Types for generators the class name does not describe, the pattern being a mod id or part of a generator class name. Mapped entries are checked before the built-in words, so they also correct one the words read the wrong way |
+| `logBlockedGenerators` | boolean | `true` | Logs each generator with the type it was given the first time it is blocked. `/rdplserver generators` shows the running totals by mod and type |
 
 `blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see, slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked. `blockGeneratorDimensions` limits it to certain dimensions, with `blockGeneratorDimensionsAreBlacklist` to invert the list.
 
@@ -3755,6 +3826,15 @@ Mapped entries are checked before the built in words, so they also correct a gen
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `blockReplacements` | list of `block=block` | none | Blocks swapped out of chunks that already exist, with an optional meta on either side. Each chunk is done once as it loads and marked in its own data, so it is never done twice |
+| `blockReplacementDimensions` | list of ints | none | The dimensions this applies to. Empty means every one |
+| `blockReplacementDimensionsAreBlacklist` | boolean | `false` | On, replacement skips the dimensions listed. Off, it applies only to them |
+| `blockReplacementMinHeight` | int | `0` | The lowest y it looks at |
+| `blockReplacementMaxHeight` | int | `255` | The highest y it looks at |
+| `blockReplacementKey` | string | `0000` | Change it and every chunk goes through replacement again |
+
 `blockReplacements` swaps blocks out of chunks that already exist, one `block=block` per line, with an optional meta on either side:
 
 ```
@@ -3787,6 +3867,17 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `villageBlocks` | list of `original=replacement` | none | The blocks village pieces are built from, applied after every other mod has had its say. A pair may carry a chance and a condition, and is then a rule; the fields are in the table below |
+| `villagePieces` | list of piece names | none | Vanilla village pieces named one per line: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1`, `field2`. A pack plot is named by its own template, and so are pieces other mods add |
+| `villagePiecesAreBlacklist` | boolean | `true` | On, the pieces listed are blocked. Off, only those pieces generate, and a whitelist only ever removes vanilla's own pieces |
+| `villagePlotsLeast` | int | `0` | The fewest built plots a village settles for, counting houses, farms and pack plots but never roads, torches or the well. A village that lays out smaller is regrown a few times and the largest layout wins. `0` keeps vanilla |
+| `villagePlotsMost` | int | `0` | The most it may have; at the maximum it stops growing outright, no more buildings and no more roads. `0` keeps vanilla |
+| `villageTieStreets` | boolean | `false` | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down |
+| `villageBlockSizes` | list of `size=weight` | none | How deep the blocks between a city's parallel streets are, rolled once per district from its plaza position. Empty sizes every block to the largest plot the pack ships |
+| `villageLayout` | string | empty | Names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it |
 
 Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
@@ -4023,6 +4114,10 @@ A railway line is a straight run of track that crosses the whole village on one 
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `villageDecor` | list of `name=weight` | none | Scatters this pack's own worldgen along the verges of village roads. The name is a worldgen registry key, the weight is that entry's share of the spots, and `empty=weight` is the share of spots left bare |
+
 `villageDecor` scatters a pack's own worldgen along the verges of village roads, which is what stops a village reading as houses standing in bare grass. Each entry is `name=weight`: the name is a worldgen registry key, `mypack:street_flowers`, and the weight is that entry's share of the spots. The name `empty` is the share of spots left bare, and it is the one to get right, because a list without it fills every spot on every verge and the village comes out a nursery rather than a street.
 
 Every third block along each side of a road is a spot, counted from world coordinates so the spacing carries from one road piece into the next. A spot is passed over where it falls inside any piece of the village, on the road itself, in front of a door, or where the ground is not open air standing on something solid. What grows at a spot is worked out from the world seed and the spot itself, so the same world always scatters the same way.
@@ -4054,6 +4149,18 @@ What happens after an explosion, from `<namespace>/blastplaster/*.json`. `defaul
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `structureSpacing` | list of `structure=chunks` | vanilla | How far apart a structure is seeded. Reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many, since that is how vanilla places them |
+| `structureSeparation` | list of `structure=chunks` | vanilla | The closest two of a structure may be. Reaches monuments, mansions, end cities, strongholds and villages, for which it is the fewest chunks between one village and the next whatever the grid would allow |
+| `structureMinDistanceFromSpawn` | list of `structure=blocks` | vanilla | How far from world spawn a structure starts generating |
+| `structureBiomes` | list of `structure=biome,biome` | vanilla | Which biomes a structure generates in, by registry name or biome dictionary type. Reaches every structure except end cities, since the End is one biome in this version |
+| `structureBiomesAreBlacklist` | list of `structure=true` or `structure=false` | `false` | The direction of each structure's biome list |
+| `structureSpawns` | list of `structure=entity:weight:least:most` | vanilla | The mobs a structure spawns whatever the biome around it says. Only temples, monuments and nether fortresses keep such a list; an empty line after the equals sign stops that structure spawning anything of its own |
+| `structureSpawners` | list of `structure=entity` | vanilla | What the mob spawner inside a vanilla structure spawns, comma separated for a random pick per spawner. The four that place one are dungeons, mineshafts, nether fortresses and strongholds |
+| `structureAt` | list of `structure=x,z` | none | Pins a structure to an exact spot. See [Structures at exact places](#structures-at-exact-places) |
+| `structureMost` | list of `structure=count` | none | The most of a structure a dimension may hold. Only villages read it, and one pinned with `structureAt` is founded regardless |
 
 Vanilla structures switched off by name, per dimension. Placement is controlled with four lists written as `structure=value`, one per line: `structureSpacing` for how far apart they are seeded, `structureSeparation` for the closest two may be, `structureMinDistanceFromSpawn` for how far out they start, and `structureBiomes` with `structureBiomesAreBlacklist` for where they are allowed.
 
@@ -4120,6 +4227,25 @@ Spacing decides where a structure is seeded, so changing it in a world that alre
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `surfaceDayMonsterRate` | float | `1.0` | Multiplier on hostile spawning on the surface by day, `1.0` being vanilla, so daylight surface spawning can be turned off without touching the caves |
+| `surfaceNightMonsterRate` | float | `1.0` | The same for the surface at night |
+| `undergroundDayMonsterRate` | float | `1.0` | The same underground by day |
+| `undergroundNightMonsterRate` | float | `1.0` | The same underground at night |
+| `monsterCap` | int | `-1` | How many hostiles may be loaded at once. Vanilla is 70, and `-1` leaves it alone |
+| `creatureCap` | int | `-1` | The same for passive animals. Vanilla is 10 |
+| `ambientCap` | int | `-1` | The same for bats and the like. Vanilla is 15 |
+| `waterCreatureCap` | int | `-1` | The same for squid. Vanilla is 5 |
+| `monsterSpawnLight` | int | `-1` | The most block light a hostile spawn tolerates, on top of the vanilla checks. `0` is the modern rule, where a torch fully protects a cave; `-1` keeps vanilla's dice |
+| `skyAnimals` | boolean | `true` | Whether passive mobs settle on the land a rubic world generates above its terrain window, the sky islands above all. Off keeps animals and bats on the ground below. Spawners ignore both |
+| `threatItems` | list of `item=level,count` | none | The items that raise a carrier's threat score, with an optional `,each` or `,batch`: `each`, the default, adds the level for every one held up to `count`; `batch` adds it once per whole `count` held |
+| `threatLevels` | list of ints | none | The scores that enter each band, rising, so `10, 25, 50` makes three bands. Empty turns the threat level off |
+| `threatMost` | int | `-1` | Caps the score. `-1` leaves it uncapped |
+| `threatSpawnRate` | float | `1.0` | Scales hostile spawning within 128 blocks of a carrier in the top band, on top of the other rates, with lower bands taking a proportional share |
+| `threatNotice` | float, blocks | `0.0` | How many blocks farther hostile mobs, vanilla ones included, see a carrier in the top band, again shared out over the lower bands |
+| `threatSays` | list of `band=message` | none | The lines shown in yellow when a player's own band changes, band `0` being the line for dropping back below the first band |
+
 Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone. `monsterSpawnLight` caps the block light a hostile spawn tolerates on top of the vanilla checks: `0` is the modern rule, where a torch fully protects a cave, and `-1`, the default, keeps vanilla's dice. `skyAnimals` decides whether passive mobs settle on the land a rubic world generates above its terrain window, the sky islands above all: `true`, the default, leaves vanilla's herds wherever the top block is, and `false` keeps animals and bats on the ground below. Spawners ignore both.
 
 The threat level scores what each player carries and lets the world answer. `threatItems` lists the items that count, as `item=level,count` entries with an optional `,each` or `,batch` at the end: `each`, the default, adds the level for every one held, counting no more than `count` of them, and `batch` adds the level once for every `count` held, whole batches only. A count above the item's stack size is cut to the stack size, so a full stack is the most one entry can count, and the item may carry metadata as `minecraft:dye:4`. Every loaded entity that holds items is a carrier, not only players: a player's main inventory, armor and off hand, a dropped stack, anything with an item inventory such as a chest mule or a chest minecart, and the held items and armor of any other mob, so an area stays dangerous around what lies, rides or walks there. Creative and spectator players score nothing. `threatLevels` are the scores that enter each band, rising, so `[10, 25, 50]` makes three bands, and `threatMost` caps the score, `-1` leaving it uncapped. The score is taken every five seconds. `threatSpawnRate` scales hostile spawning within 128 blocks of a carrier in the top band, on top of the other rates, and lower bands take a proportional share of the change: `2.0` doubles it at the top and adds a third at band one of three. `threatNotice` is how many blocks farther hostile mobs, vanilla ones included, see a carrier in the top band, again shared out proportionally over the lower bands. `threatSays` are the lines shown in yellow when a player's own band changes, as `band=message` entries, band `0` being the line for dropping back below the first band. An entity variant can set `threatLeast` to spawn naturally only while a carrier within 128 blocks stands in that band or above. Either list left empty turns the threat level off.
@@ -4136,6 +4262,10 @@ The threat level scores what each player carries and lets the world answer. `thr
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `structureAdaptation` | list of `structure=mode` | villages `beard_thin`, the rest `none` | Which structures the terrain adapts to and how, over villages, strongholds, mineshafts, monuments and mansions. The modes are `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate` |
+
 `structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages are `beard_thin` unless overridden and everything else is `none` unless named, matching what modern versions choose for themselves. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
 
 ### Seating villages
@@ -4149,6 +4279,10 @@ The threat level scores what each player carries and lets the world answer. `thr
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | boolean | `false` | Reworks how villages choose their ground and sit on it: graded roads, seated buildings, banked rings and everything else this section describes. What it lays down is permanent |
 
 **What it lays down is permanent.** It reshapes the terrain as the world is made, so whatever it puts in a save stays there. A village laid down by an older build is never revisited or repaired by a newer one, so two worlds made from the same seed on two different versions of the mod will not match, and the villages in a world are a snapshot of the day those chunks generated.
 
@@ -4183,6 +4317,20 @@ It reshapes the terrain itself as it is made, so a world generated with it on di
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `flatBedrock` | boolean | `false` | Replaces the jagged bedrock at the bottom of the world with flat layers. New chunks only, unless `flatBedrockRetrogen` is on |
+| `flatBedrockRetrogen` | boolean | `false` | Flattens the bedrock in chunks that already exist too. Each chunk is done once and remembers it, and it cannot be undone: the original pattern is not recorded anywhere |
+| `bedrockLayers` | int | `1` | How many layers of bedrock are left |
+| `flatBedrockRoof` | boolean | `false` | Flattens the bedrock ceiling too, where a dimension has one, such as the Nether roof |
+| `flatBedrockFiller` | block | empty | What replaces the bedrock that is taken away. Empty picks per dimension: stone, netherrack, end stone |
+| `flatBedrockFillers` | list of `dimension=block` | the nether and end defaults | A filler per dimension, which overrides `flatBedrockFiller` for the dimensions named |
+| `flatBedrockDimensions` | list of ints | `0`, the overworld | The dimensions to flatten in. Empty means every one |
+| `flatBedrockDimensionsAreBlacklist` | boolean | `false` | On, flattening skips the dimensions listed. Off, it applies only to them |
+| `flatBedrockBiomes` | list of biome names | none | The biomes to flatten in, by friendly or registry name. Empty means every biome |
+| `flatBedrockBiomeTypes` | list of dictionary types | none | Biome dictionary types to flatten in, alongside `flatBedrockBiomes`. `OCEAN`, `RIVER`, `MOUNTAIN` and the rest |
+| `flatBedrockBiomesAreBlacklist` | boolean | `false` | On, flattening skips the biomes listed. Off, it applies only to them |
 
 `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone, the original pattern is not recorded anywhere. `bedrockLayers` sets how many layers are left, `flatBedrockRoof` does the ceiling too where a dimension has one, and `flatBedrockFiller` is what replaces the bedrock taken away, left empty to pick per dimension, with `flatBedrockFillers` naming one per dimension instead. Which dimensions and biomes it reaches is `flatBedrockDimensions`, `flatBedrockBiomes` and `flatBedrockBiomeTypes`, with `flatBedrockDimensionsAreBlacklist` and `flatBedrockBiomesAreBlacklist` turning those lists into exclusions.
 
@@ -4256,6 +4404,10 @@ Before a chunk can be written it is turned into the form that goes on the disk, 
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `hurryWritesAbove` | int, chunks | `100` | How many finished chunks may be waiting to be written before the writer stops resting a hundredth of a second after each one and simply writes as fast as it can. `0` leaves it resting always, as the game does |
+
 The game writes finished chunks on a thread of its own, one at a time, resting a hundredth of a second after each. That holds it to about a hundred chunks a second no matter how quick the disk is, which is plenty while somebody plays and nowhere near enough while land is being made in bulk, so the unwritten chunks pile up in memory instead. `hurryWritesAbove` says how many may be waiting before it stops resting and simply writes as fast as it can. `100` is the default and matches the point at which the game itself starts holding generation back; `0` leaves it resting always, as the game does. Nothing changes while the number waiting is small, which is every ordinary moment of play.
 
 Each time the tidying runs a line is written for it as it happens, naming which sweeper ran, how long it took, what was held before and after, and how much room the game had at the time. If that room changes it is said so, because the room growing is itself what causes the longest of these pauses: a game started with less room than it ends up needing will stop to grow it, repeatedly, at moments that have nothing to do with what it is doing. Starting it with as much room as it is allowed avoids that entirely.
@@ -4274,6 +4426,11 @@ A last line says how much working scrap was thrown away since the last look, how
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `spawnChunkRadius` | int, blocks | `128` | How far from a world's spawn point chunks are held loaded whether or not anyone is there. `128` is what the game does, and `0` holds none at all |
+| `spawnChunkRadii` | list of `dimension=blocks` | none | A radius for one dimension at a time, which overrides `spawnChunkRadius` for the dimensions named |
 
 The game holds the chunks around a world's spawn point loaded whether or not anyone is there, so mods have somewhere that always ticks. It is 128 blocks in every direction, about 289 chunks, and it is not adjustable in the game. `spawnChunkRadius` sets that distance. `128` is what the game does and is the default, a smaller number keeps a smaller anchor, and `0` holds none at all, so the spawn area unloads like anywhere else. `spawnChunkRadii` sets a radius for one dimension at a time, written as `dimension=blocks`, one per line, and overrides `spawnChunkRadius` for the dimensions named.
 
@@ -4296,6 +4453,15 @@ Only a dimension that was registered to hold its spawn keeps one, which in the g
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `voidWorld` | boolean | `false` | Generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there |
+| `voidPlatformBlock` | block | `minecraft:stone` | What the platform is made of |
+| `voidPlatformSize` | int, blocks | `9` | How wide the platform is, rounded down to an odd number so it sits centered on spawn |
+| `voidPlatformHeight` | int | `64` | How high above the bottom of the world the platform sits |
+| `voidWorldDimensions` | list of ints | `0`, the overworld | Which dimensions are emptied. Only the overworld is given a platform |
+| `voidWorldDimensionsAreBlacklist` | boolean | `false` | On, the dimensions listed are the ones left alone |
+
 `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are `voidPlatformBlock`, `voidPlatformSize` and `voidPlatformHeight`; the size is rounded down to an odd number of blocks so the platform sits centered on spawn. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
 
 ### The dragon
@@ -4309,6 +4475,10 @@ Only a dimension that was registered to hold its spawn keeps one, which in the g
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `dragonFight` | boolean | `true` | Whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. Belongs to the `structures` group |
 
 `dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
 
@@ -4328,6 +4498,14 @@ Only a dimension that was registered to hold its spawn keeps one, which in the g
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `worldType` | string | empty | The world type every new world is made with, whatever was chosen on the screen where it was made: `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds. Empty leaves the choice to whoever makes the world |
+| `worldTypeExceptions` | list of world types | `flat`, `debug_all_block_states` | The choices `worldType` leaves standing |
+| `worldSeed` | string | empty | The seed every new world is made with, written the way it would be typed: a number is used as it is, and anything else is turned into one the way the game does |
+| `terrainWorldTypes` | list of world types | none | Which world types the terrain settings are given to at all. Empty means every one |
+| `terrainWorldTypesAreBlacklist` | boolean | `false` | On, the world types listed are the ones left alone |
 
 `worldType` decides what kind of world a new world is, whatever was chosen on the screen where it was made, `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds such as `biomesop` or `realistic`. A pack that is built around one world type names it here and every new world is made that way. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the type it was made with, and a name nothing provides is logged and ignored. `worldTypeExceptions` names the choices that are left to stand, flat and the debug world to begin with, since a pack that wants one world type rarely means to take superflat away from someone testing, and whoever makes a world is told in chat, once they are in it, that the pack chose its type. That message is the config file's to decide with `tellWorldType`, not a pack's, so someone playing can turn it off for themselves and no pack can turn it back on. Settings the world was made with are dropped when the type is changed, since they were written for the type that was chosen.
 
@@ -4363,6 +4541,14 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 }
 ```
 
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `logBlockedOres` | boolean | `true` | Logs the first time each mod and ore type is turned away |
+| `logBlockedBiomes` | boolean | `true` | Logs a per-mod count of which biomes were blocked |
+| `logBlockedGenerators` | boolean | `true` | Logs the first time each mod and generator is blocked |
+| `logBlockedRecipes` | boolean | `true` | Logs a per-mod count of what was blocked |
+| `logBlockReplacements` | boolean | `true` | Logs the first time each replacement is made, and a total when a world catches up |
+
 `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` and `logBlockReplacements` each log the first time something is turned away, so you can see what a blocking rule actually caught rather than guessing from what is missing. They are the first thing to turn on when a rule seems to be doing nothing, or too much.
 
 ### Recipes
@@ -4382,6 +4568,16 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `blockRecipes` | boolean | `false` | Removes every crafting recipe except those of the mods in `recipeWhitelist`. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive |
+| `recipeWhitelist` | list of mod ids | `minecraft` | The mods whose crafting recipes survive |
+| `blockedRecipeMods` | list of mod ids | none | Mods whose crafting recipes are removed outright, whatever the whitelist says |
+| `blockFurnaceRecipes` | boolean | `false` | The same for furnace recipes, the mod being read from the item produced |
+| `furnaceWhitelist` | list of mod ids | `minecraft` | The mods whose furnace recipes survive |
+| `blockedFurnaceMods` | list of mod ids | none | Mods whose furnace recipes are removed outright |
+| `recipeMatch` | `recipe`, `output` or `both` | `recipe` | Where the mod id is read from when crafting recipes are blocked: the recipe's own name, the item it makes, or either, which blocks when either matches and spares when either is whitelisted |
 
 `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says. The whitelists are `recipeWhitelist` and `furnaceWhitelist`; `blockedRecipeMods` and `blockedFurnaceMods` go the other way and remove a named mod's recipes whatever the whitelist says. `recipeMatch` decides where the mod id is read from when crafting recipes are blocked: `recipe`, the default, uses the recipe's own name, `output` uses the item it makes, and `both` blocks when either matches and spares when either is whitelisted.
 
@@ -4565,6 +4761,17 @@ The `terrain` keys below, together in a world template's `settings` block:
   }
 }
 ```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `worldName` | string | empty | Prefills the create-world screen's name box, and the save folder follows from it. It only fills the box while the box still holds the game's default, and unlike the seed and game mode it is not reapplied afterward |
+| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` or `spectator` | empty | The mode every new world is started in, applied at creation only. `hardcore` is survival plus the save-wide hardcore flag, and `creative` also enables cheats |
+| `worldSpawn` | `x,z` or `x,y,z` | empty | Where every new world spawns, applied at creation only. Without a y the surface at the world type's ground level is used |
+| `worldBorder` | int, blocks | `0` | The border diameter every new world is given, the figure `/worldborder set` takes. `0` leaves the border alone |
+| `worldTime` | int, ticks | `-1` | The time of day every new world starts at. `-1` leaves it alone |
+| `worldDifficulty` | list | none | Locks the difficulty to `peaceful`, `easy`, `normal` or `hard`. A bare difficulty covers every dimension, and a `dimension=difficulty` line overrides it for that one |
+| `weatherCeiling` | list of `dimension=y` | none | The highest y rain and snow reach. A bare number covers every dimension |
+| `cloudHeight` | list of `dimension=y` | none | The y clouds are drawn at. A bare number covers every dimension, and empty keeps the game's own height |
 
 **`worldName`** (`terrain` group) prefills the create-world screen's name box; the save folder follows from it as usual. It only fills the box while the box still holds the game's default, so a player-typed name is never overwritten, and unlike the seed and game mode it is not reapplied afterward — whatever is in the box at creation is the name.
 
