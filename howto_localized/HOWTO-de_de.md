@@ -3918,6 +3918,12 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathBridgeBarrierBlock": "minecraft:oak_fence",
     "villagePathBridgeBarrierHeight": 1,
     "villagePathBridgeSidewalkBlock": "minecraft:planks",
+    "villagePathBridgeDrop": 3,
+    "villagePathBridgeFrameBlock": "minecraft:stonebrick",
+    "villagePathBridgeFrameTopBlock": "minecraft:stone_slab",
+    "villagePathBridgeFrameHeight": 4,
+    "villagePathBridgeFrameRun": 24,
+    "villagePathBridgeFrameLeast": 24,
     "villagePathTunnelBlock": "minecraft:stonebrick",
     "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
@@ -3957,6 +3963,12 @@ Alles Folgende greift nur, solange `terrainAdaptation` an ist. Jede dieser Einst
 | `villagePathBridgeBarrierBlock` | Block | leer | Geländer, an beiden Kanten eines Brückendecks aufgestapelt. Leer baut keine |
 | `villagePathBridgeBarrierHeight` | Zahl | `1` | Wie viele Blöcke hoch diese Geländer stehen |
 | `villagePathBridgeSidewalkBlock` | Block | leer | Deckt den Gehweg dort, wo ein Weg Wasser überquert. Leer führt den normalen Gehwegblock hinüber |
+| `villagePathBridgeDrop` | Zahl | `0` | Wie weit die Trasse einer Straße frei über dem Boden stehen muss, ehe der Abgrund darunter überbrückt statt aufgefüllt wird. `0` hält Straßen am Boden: sie überbrücken nur Wasser. `3` ist die Regel, der eine Eisenbahn-Trestle folgt. Das ändert die Trasse, nicht nur die Ausstattung |
+| `villagePathBridgeFrameBlock` | Block | leer | Ein Portalrahmen über einer langen Brücke: je ein Pfosten neben dem Deck und ein Querbalken darüber. Jeder Rahmen trägt unter dem Deck einen Pfeiler bis zum Grund, und in seiner Reihe wird keine Laterne aufgestellt. Leer baut keinen |
+| `villagePathBridgeFrameTopBlock` | Block | leer | Der Querbalken oben auf diesem Rahmen. Leer nimmt `villagePathBridgeFrameBlock` |
+| `villagePathBridgeFrameHeight` | Zahl | `4` | Wie viele Blöcke lichte Höhe der Rahmen über dem Deck lässt; der Balken liegt einen Block darüber |
+| `villagePathBridgeFrameRun` | Zahl | `24` | Wie viele Reihen die Rahmen auseinanderstehen, wenn eine Brücke für mehrere lang genug ist |
+| `villagePathBridgeFrameLeast` | Zahl | `24` | Der kürzeste überbrückte Lauf, der überhaupt einen Rahmen bekommt. Eine kürzere Brücke bleibt schlicht |
 | `villagePathTunnelBlock` | Block | leer | Kleidet eine Straße dort aus, wo sie einen Hügel durchbohrt, statt ihn aufzuschneiden: die Wände zu beiden Seiten der Röhre und die Decke darüber. Leer bohrt keine Tunnel, und eine Straße schneidet wie bisher durch den Hügel |
 | `villagePathTunnelDepth` | Zahl | `10` | Wie viel Boden über der Fahrbahn stehen muss, bevor ein Abschnitt gebohrt statt aufgeschnitten wird. Eine Erhebung, die über zwölf Reihen oder mehr so tief über der Straße liegt, wird eben gehalten und durchbohrt, ihre flacheren Zufahrten werden aufgeschnitten; eine kürzere Kuppe wird wie bisher aufgeschnitten. Zählt erst, wenn `villagePathTunnelBlock` einen Block nennt |
 | `villagePathTunnelLightBlock` | Block | leer | Ein Licht, das entlang der Mittellinie in die Tunneldecke gesetzt wird. Leer setzt keins |
@@ -3997,6 +4009,12 @@ Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Ra
 | --- | --- |
 | `sidewalk` | Pflastert die Endreihe mit dem Gehwegblock |
 | `barrier` | Stellt den Geländerblock entlang der Endreihe auf, `villagePathBridgeBarrierHeight` hoch |
+
+**Ein ebenes Deck.** Jede Brücke liegt von Anfang bis Ende auf einer Höhe, wie auch immer ihre beiden Ufer stehen; die Straße zu beiden Seiten steigt darauf zu.
+
+**Ein trockener Abgrund.** Eine Straße füllt eine Senke auf und überbrückt nur Wasser, solange `villagePathBridgeDrop` keine Höhe nennt: eine Reihe, deren Trasse dann mehr als so viele Blöcke frei über dem Boden steht, bekommt stattdessen ein Deck auf Pfosten, so wie eine Eisenbahn-Trestle eine Schlucht quert. Das ändert die Trasse und nicht nur die Ausstattung, ein damit angelegtes Dorf gleicht also keinem ohne.
+
+**Portalrahmen.** Ein überbrückter Lauf von `villagePathBridgeFrameLeast` Reihen oder mehr trägt Rahmen über dem Deck, sobald `villagePathBridgeFrameBlock` einen Block nennt: je einen Pfosten an den Seiten und einen Balken darüber, mit `villagePathBridgeFrameHeight` Blöcken lichter Höhe darunter. Auf einer langen Brücke stehen mehrere, `villagePathBridgeFrameRun` Reihen auseinander und symmetrisch um die Mitte des Laufs verteilt, sodass dieselbe Brücke immer dieselben Rahmen trägt. Eine Reihe, in der eine andere Straße die Brücke kreuzt, bleibt frei, und ein Steg trägt überhaupt keinen Rahmen — ein Steg ist keine Brücke.
 
 **Stege.** Eine Straße, die aufs Wasser hinausläuft und auf nichts endet, wird zum Steg statt zur Brücke ins Nirgendwo, sobald `villagePathPiers` mindestens eine Form nennt. Mehrere Einträge losen je Steg eine Form aus, aus dem Weltseed und dem Stegende, dieselbe Welt baut also immer denselben Steg. Jeder Steg steht auf Pfählen aus dem Unterbaublock, an beiden Deckkanten in jeder vierten Reihe bis hinab zum Grund gerammt, ganz gleich welcher Form. Das Deck ist der Brückenblock, Geländer und Pfosten der Geländerblock, die Pfähle der Unterbaublock.
 
@@ -4072,6 +4090,11 @@ Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kre
     "villageRailSupportBlock": "minecraft:log",
     "villageRailDeckBlock": "minecraft:planks",
     "villageRailBarrierBlock": "minecraft:oak_fence",
+    "villageRailBridgeFrameBlock": "minecraft:stonebrick",
+    "villageRailBridgeFrameTopBlock": "minecraft:stone_slab",
+    "villageRailBridgeFrameHeight": 4,
+    "villageRailBridgeFrameRun": 24,
+    "villageRailBridgeFrameLeast": 24,
     "villageRailTunnelBlock": "minecraft:stonebrick",
     "villageRailTunnelDepth": 6,
     "villageRailClimb": 8,
@@ -4097,6 +4120,11 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageRailSupportBlock` | Block | leer | Die Pfosten unter einer Trestle-Brücke. Leer nimmt Stämme |
 | `villageRailDeckBlock` | Block | leer | Das Deck, auf dem eine Trestle-Brücke das Bett trägt. Leer nimmt Bretter |
 | `villageRailBarrierBlock` | Block | leer | Geländer entlang beider Kanten eines Brückendecks. Leer stellt keine auf |
+| `villageRailBridgeFrameBlock` | Block | leer | Ein Portalrahmen über einer langen Trestle-Brücke: je ein Pfosten an den Deckkanten und ein Balken darüber. Jede Reihe, die einen trägt, bekommt auch ihre Pfosten bis auf den Grund. Leer baut keine |
+| `villageRailBridgeFrameTopBlock` | Block | leer | Der Balken oben auf dem Rahmen. Leer nimmt `villageRailBridgeFrameBlock` |
+| `villageRailBridgeFrameHeight` | Zahl | `4` | Wie viele Blöcke lichte Höhe der Rahmen über dem Deck lässt; der Balken liegt einen Block darüber |
+| `villageRailBridgeFrameRun` | Zahl | `24` | Wie viele Reihen die Rahmen auseinanderstehen, wenn eine Brücke für mehrere lang genug ist |
+| `villageRailBridgeFrameLeast` | Zahl | `24` | Die kürzeste Trestle-Brücke, die überhaupt einen Rahmen bekommt. Eine kürzere bleibt schlicht |
 | `villageRailTunnelBlock` | Block | leer | Verkleidet Wände und Decke, wo sich die Linie durch einen Hügel bohrt. Leer bohrt keine Tunnel und schneidet jeden Hügel auf |
 | `villageRailTunnelDepth` | Zahl | `6` | Wie viel Boden über dem Bett stehen muss, ehe ein Abschnitt gebohrt statt aufgeschnitten wird. Braucht `villageRailTunnelBlock` |
 | `villageRailClimb` | Zahl | `8` | Wie viele Reihen die Linie eben läuft für jeden Block, den sie steigt oder fällt. `1` legt sie so steil wie eine Straße an |
@@ -4112,7 +4140,7 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 
 **Wo eine Linie verläuft.** Die Linien laufen parallel, auf der Achse, die `villageRailDirection` nennt, und werden vom Brunnenplatz aus abwechselnd verteilt, erst auf die eine Seite, dann auf die andere, jede mit mindestens `villageRailSpacing` Blöcken Boden zwischen ihrem Bett und dem der nächsten Linie. Eine Linie führt nie durch den Platz oder ein Grundstück: Sie wird vor der ersten Straße gelegt, sodass jede Straße und jedes Haus des Dorfes um sie herum gesetzt wird, und sie wird auf das gewachsene Dorf plus `villageRailTail` an beiden Enden zurechtgeschnitten, sobald das Dorf angelegt ist.
 
-**Gefälle.** Eine Eisenbahn steigt nicht wie eine Straße. Ihr Bett folgt dem über eine lange Strecke geglätteten Boden und ändert die Höhe höchstens alle `villageRailClimb` Reihen um einen Block. Wo der Boden um mehr als drei Blöcke abfällt, läuft die Linie auf einer Trestle-Brücke, `villageRailDeckBlock` auf Pfosten aus `villageRailSupportBlock` alle vier Reihen, über Wasser genauso wie über eine Schlucht. Wo der Boden ansteigt, wird die Linie aufgeschnitten oder mit `villageRailTunnelBlock` durchbohrt, sobald der Boden über dem Bett auf zwölf Reihen oder mehr `villageRailTunnelDepth` tief steht. Über dem Bett bleiben entlang der ganzen Linie vier Blöcke frei.
+**Gefälle.** Eine Eisenbahn steigt nicht wie eine Straße. Ihr Bett folgt dem über eine lange Strecke geglätteten Boden und ändert die Höhe höchstens alle `villageRailClimb` Reihen um einen Block. Wo der Boden um mehr als drei Blöcke abfällt, läuft die Linie auf einer Trestle-Brücke, `villageRailDeckBlock` auf Pfosten aus `villageRailSupportBlock` alle vier Reihen, über Wasser genauso wie über eine Schlucht. Wo der Boden ansteigt, wird die Linie aufgeschnitten oder mit `villageRailTunnelBlock` durchbohrt, sobald der Boden über dem Bett auf zwölf Reihen oder mehr `villageRailTunnelDepth` tief steht. Über dem Bett bleiben entlang der ganzen Linie vier Blöcke frei. Eine Trestle-Brücke liegt von Anfang bis Ende auf einer Höhe, und das Bett zu beiden Seiten steigt darauf zu; wo die eine Höhe und die Steigungsrate sich widersprechen, gewinnt die Höhe, und die Rampe daneben darf früher als `villageRailClimb` eine Stufe nehmen. Eine Trestle-Brücke von `villageRailBridgeFrameLeast` Reihen oder mehr trägt Portalrahmen, sobald `villageRailBridgeFrameBlock` einen Block nennt, `villageRailBridgeFrameRun` Reihen auseinander und symmetrisch um die Mitte der Brücke verteilt, und jede Reihe, die einen trägt, bekommt ihre Pfosten bis auf den Grund dazu. Eine Reihe, in der eine Straße die Linie kreuzt, bleibt frei.
 
 **Kreuzungen.** Eine Straße durchquert eine Linie gerade und läuft an beiden Bettkanten sieben Blöcke oder mehr darüber hinaus. Eine Straße, die auf der Linie oder innerhalb dieser sieben Blöcke enden würde, wird darüber hinweggeführt, wenn ihr Gefälle es zulässt, und sonst sieben Blöcke vor dem Bett angehalten; eine Straße, die auf der Linie beginnen oder an ihr entlanglaufen würde, wird abgelehnt. An einer Kreuzung wird die Straße auf die Linie eingeebnet, nie umgekehrt, und steigt beiderseits mit ihrer eigenen begehbaren Steigung auf diese Höhe. Das Pflaster behält die Oberfläche, und das Gleis läuft einen Block höher darüber, sodass eine Lore die Straße quert und ein Dorfbewohner das Gleis. Eine durch einen Hügel gebohrte Linie wird gar nicht gekreuzt: Die Straße führt über den Tunnel hinweg.
 

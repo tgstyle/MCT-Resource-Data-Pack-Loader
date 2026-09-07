@@ -45,7 +45,7 @@ public final class RecipeRemovals {
         if (NAMES.isEmpty() && PREFIXES.isEmpty() && OUTPUTS.isEmpty()) { return; }
         List<ResourceLocation> doomed = new ArrayList<>();
         for (ResourceLocation key : registry.getKeys()) {
-            if (matches(key, registry.getValue(key))) { doomed.add(key); }
+            if (!RecipeSpared.spares(key) && matches(key, registry.getValue(key))) { doomed.add(key); }
         }
         IForgeRegistryModifiable<IRecipe> modifiable = (IForgeRegistryModifiable<IRecipe>) registry;
         for (ResourceLocation key : doomed) { modifiable.remove(key); }

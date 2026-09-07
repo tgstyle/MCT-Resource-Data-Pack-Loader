@@ -11,9 +11,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public final class RecipeEvents {
     private RecipeEvents() {}
 
-    @SubscribeEvent public static void onRegisterRecipes(RegistryEvent.Register<IRecipe> event) { RecipeOverrides.registerAdditions(event.getRegistry()); }
+    @SubscribeEvent public static void onRegisterRecipes(RegistryEvent.Register<IRecipe> event) {
+        RecipeOverrides.registerAdditions(event.getRegistry());
+        RecipeSpared.snapshot(event.getRegistry());
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onRemoveRecipes(RegistryEvent.Register<IRecipe> event) {
+        RecipeSpared.settle(event.getRegistry());
         RecipeRemovals.apply(event.getRegistry());
         RecipeBlocking.apply(event.getRegistry());
     }

@@ -201,6 +201,95 @@ public final class BeardGrade {
         return freed;
     }
 
+    public static int levelDecks(int[] profile, boolean[] bridged, boolean[] keep, int run) {
+        int rows = profile.length;
+        int levelled = 0;
+        int i = 0;
+        while (i < rows) {
+            if (!bridged[i] || keep[i] || profile[i] == Integer.MIN_VALUE) {
+                i++;
+                continue;
+            }
+            int end = i;
+            while (end + 1 < rows && bridged[end + 1] && !keep[end + 1] && profile[end + 1] != Integer.MIN_VALUE) { end++; }
+            int most = Integer.MIN_VALUE;
+            int least = Integer.MAX_VALUE;
+            for (int k = i; k <= end; k++) {
+                most = Math.max(most, profile[k]);
+                least = Math.min(least, profile[k]);
+            }
+            int[] before = profile.clone();
+            boolean laidOut = false;
+            for (int spacing = run; spacing >= 1 && !laidOut; spacing = spacing == 1 ? 0 : 1) {
+                for (int deck = most; deck >= least; deck--) {
+                    int laid = layDeck(profile, keep, i, end, deck, run);
+                    if (!stepped(profile, before, spacing, run)) {
+                        levelled += laid;
+                        laidOut = true;
+                        break;
+                    }
+                    System.arraycopy(before, 0, profile, 0, rows);
+                }
+            }
+            i = end + 1;
+        }
+        return levelled;
+    }
+
+    private static int layDeck(int[] profile, boolean[] keep, int first, int last, int deck, int run) {
+        int laid = 0;
+        for (int k = first; k <= last; k++) {
+            if (profile[k] == deck) { continue; }
+            profile[k] = deck;
+            laid++;
+        }
+        for (int k = first - 1, away = 1; k >= 0 && !keep[k] && profile[k] != Integer.MIN_VALUE; k--, away++) {
+            int want = deck - (away + run - 1) / run;
+            if (profile[k] >= want) { break; }
+            profile[k] = want;
+        }
+        for (int k = last + 1, away = 1; k < profile.length && !keep[k] && profile[k] != Integer.MIN_VALUE; k++, away++) {
+            int want = deck - (away + run - 1) / run;
+            if (profile[k] >= want) { break; }
+            profile[k] = want;
+        }
+        return laid;
+    }
+
+    private static boolean stepped(int[] profile, int[] before, int spacing, int run) {
+        int lo = -1;
+        int hi = -1;
+        for (int k = 0; k < profile.length; k++) {
+            if (profile[k] == before[k]) { continue; }
+            if (lo < 0) { lo = k; }
+            hi = k;
+        }
+        if (lo < 0) { return false; }
+        int from = Math.max(1, lo - run);
+        int to = Math.min(profile.length - 1, hi + run);
+        int last = Integer.MIN_VALUE;
+        for (int k = from; k <= to; k++) {
+            if (profile[k] == Integer.MIN_VALUE || profile[k - 1] == Integer.MIN_VALUE) { continue; }
+            if (Math.abs(profile[k] - profile[k - 1]) > 1) { return true; }
+            if (profile[k] == profile[k - 1]) { continue; }
+            if (last != Integer.MIN_VALUE && k - last < spacing) { return true; }
+            last = k;
+        }
+        return false;
+    }
+
+    public static int deckDrops(int[] profile, int[] ground, boolean[] bridged, boolean[] keep, int drop) {
+        if (drop <= 0) { return 0; }
+        int decked = 0;
+        for (int i = 0; i < profile.length; i++) {
+            if (keep[i] || bridged[i] || profile[i] == Integer.MIN_VALUE || ground[i] == Integer.MIN_VALUE) { continue; }
+            if (profile[i] <= ground[i] + drop) { continue; }
+            bridged[i] = true;
+            decked++;
+        }
+        return decked;
+    }
+
     public static int fillDips(int[] profile, boolean[] keep) {
         int rows = profile.length;
         int lifted = 0;

@@ -3918,6 +3918,12 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathBridgeBarrierBlock": "minecraft:oak_fence",
     "villagePathBridgeBarrierHeight": 1,
     "villagePathBridgeSidewalkBlock": "minecraft:planks",
+    "villagePathBridgeDrop": 3,
+    "villagePathBridgeFrameBlock": "minecraft:stonebrick",
+    "villagePathBridgeFrameTopBlock": "minecraft:stone_slab",
+    "villagePathBridgeFrameHeight": 4,
+    "villagePathBridgeFrameRun": 24,
+    "villagePathBridgeFrameLeast": 24,
     "villagePathTunnelBlock": "minecraft:stonebrick",
     "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
@@ -3957,6 +3963,12 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 | `villagePathBridgeBarrierBlock` | block | empty | Barriers stacked along both edges of a bridge deck. Empty builds none |
 | `villagePathBridgeBarrierHeight` | number | `1` | How many blocks tall those barriers stand |
 | `villagePathBridgeSidewalkBlock` | block | empty | Decks the sidewalk where a road crosses water. Empty carries the normal sidewalk block across |
+| `villagePathBridgeDrop` | number | `0` | How far a road's grade must stand clear of the ground before the drop under it is bridged rather than filled solid. `0` keeps roads on the ground: they bridge water and nothing else. `3` is the rule a railway trestle follows. This moves the grade, not only the dress |
+| `villagePathBridgeFrameBlock` | block | empty | An overhead frame over a long bridge: a post up each side of the deck and a beam across the top. Each frame carries a pier down to the ground under the deck, and no lamp post is raised on the row it stands on. Empty builds none |
+| `villagePathBridgeFrameTopBlock` | block | empty | The beam across the top of that frame. Empty uses `villagePathBridgeFrameBlock` |
+| `villagePathBridgeFrameHeight` | number | `4` | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that |
+| `villagePathBridgeFrameRun` | number | `24` | How many rows apart the frames stand when a bridge is long enough for several |
+| `villagePathBridgeFrameLeast` | number | `24` | The shortest bridged run that gets a frame at all. A shorter bridge is left plain |
 | `villagePathTunnelBlock` | block | empty | Lines a road where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels, and a road cuts through a hill as before |
 | `villagePathTunnelDepth` | number | `10` | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
 | `villagePathTunnelLightBlock` | block | empty | A light set into the tunnel roof down its center line. Empty lights none |
@@ -3997,6 +4009,12 @@ A road is dressed from the middle out: center line, then road, then edge lines, 
 | --- | --- |
 | `sidewalk` | Paves the end row with the sidewalk block |
 | `barrier` | Stands the barrier block along the end row, `villagePathBridgeBarrierHeight` tall |
+
+**A level deck.** Every bridge lies at one height from end to end, however its two banks stand; the road either side ramps to meet it.
+
+**A dry drop.** A road fills a dip solid and bridges water only, unless `villagePathBridgeDrop` names a height: a row whose grade stands more than that many blocks clear of the ground is then decked on legs instead, the way a railway trestle crosses a gully. It changes the grade rather than the dress, so a village laid with it does not match one laid without.
+
+**Overhead frames.** A bridged run of `villagePathBridgeFrameLeast` rows or more carries frames over the deck once `villagePathBridgeFrameBlock` names a block: a post up each side and a beam across the top, `villagePathBridgeFrameHeight` blocks of headroom under it. Several stand on a long bridge, `villagePathBridgeFrameRun` rows apart and spread symmetrically about the middle of the run, so the same bridge always carries the same frames. A row where another road crosses the bridge is left open, and a pier carries no frame at all — a jetty is not a bridge.
 
 **Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. Several entries roll one style per pier, from the world seed and the pier's end, so the same world always builds the same pier. Every pier stands on pilings of the support block, driven to the bed below at both edges of the deck every fourth row, whatever its style. The deck is the bridge block, rails and posts the barrier block, and pilings the support block.
 
@@ -4072,6 +4090,11 @@ Which design a junction gets is worked out from the world seed and the junction'
     "villageRailSupportBlock": "minecraft:log",
     "villageRailDeckBlock": "minecraft:planks",
     "villageRailBarrierBlock": "minecraft:oak_fence",
+    "villageRailBridgeFrameBlock": "minecraft:stonebrick",
+    "villageRailBridgeFrameTopBlock": "minecraft:stone_slab",
+    "villageRailBridgeFrameHeight": 4,
+    "villageRailBridgeFrameRun": 24,
+    "villageRailBridgeFrameLeast": 24,
     "villageRailTunnelBlock": "minecraft:stonebrick",
     "villageRailTunnelDepth": 6,
     "villageRailClimb": 8,
@@ -4097,6 +4120,11 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageRailSupportBlock` | block | empty | The posts under a trestle. Empty uses logs |
 | `villageRailDeckBlock` | block | empty | The deck a trestle carries the bed on. Empty uses planks |
 | `villageRailBarrierBlock` | block | empty | Barriers along both edges of a trestle deck. Empty stands none |
+| `villageRailBridgeFrameBlock` | block | empty | An overhead frame over a long trestle: a post up each side of the deck and a beam across the top. Every row that carries one also carries its support posts down to the bed. Empty builds none |
+| `villageRailBridgeFrameTopBlock` | block | empty | The beam across the top of that frame. Empty uses `villageRailBridgeFrameBlock` |
+| `villageRailBridgeFrameHeight` | number | `4` | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that |
+| `villageRailBridgeFrameRun` | number | `24` | How many rows apart the frames stand when a trestle is long enough for several |
+| `villageRailBridgeFrameLeast` | number | `24` | The shortest trestle that gets a frame at all. A shorter trestle is left plain |
 | `villageRailTunnelBlock` | block | empty | Lines the walls and roof where the line bores through a hill. Empty bores no tunnels and cuts every hill open |
 | `villageRailTunnelDepth` | number | `6` | How much ground must stand over the bed before a stretch is bored rather than cut. Needs `villageRailTunnelBlock` |
 | `villageRailClimb` | number | `8` | How many rows the line runs level for every block it climbs or falls. `1` grades it as steep as a road |
@@ -4112,7 +4140,7 @@ A railway line is a straight run of track that crosses the whole village on one 
 
 **Where a line goes.** The lines run parallel, on the axis `villageRailDirection` names, and are spaced out from the well plaza in turn, first one side then the other, each keeping at least `villageRailSpacing` blocks of ground between its bed and the next line's. A line never passes through the plaza or a plot: it is laid before the first street, so every street and house of the village is placed around it, and it is trimmed to the grown village plus `villageRailTail` at either end once the village is laid out.
 
-**Grade.** A railway does not climb like a road. Its bed follows the ground smoothed out over a long run and changes level by one block at most every `villageRailClimb` rows. Where the ground drops away by more than three blocks the line runs on a trestle, `villageRailDeckBlock` on `villageRailSupportBlock` posts every four rows, over water as much as over a gully. Where the ground rises the line is cut open, or bored through with `villageRailTunnelBlock` once the ground over the bed stands `villageRailTunnelDepth` deep for twelve rows or more. Four blocks are kept clear over the bed along the whole line.
+**Grade.** A railway does not climb like a road. Its bed follows the ground smoothed out over a long run and changes level by one block at most every `villageRailClimb` rows. Where the ground drops away by more than three blocks the line runs on a trestle, `villageRailDeckBlock` on `villageRailSupportBlock` posts every four rows, over water as much as over a gully. Where the ground rises the line is cut open, or bored through with `villageRailTunnelBlock` once the ground over the bed stands `villageRailTunnelDepth` deep for twelve rows or more. Four blocks are kept clear over the bed along the whole line. A trestle lies at one height from end to end, and the bed either side of it ramps to meet that height; where holding a trestle level and the climb rate disagree, the level wins and the ramp beside it may step sooner than `villageRailClimb` says. A trestle of `villageRailBridgeFrameLeast` rows or more carries overhead frames once `villageRailBridgeFrameBlock` names a block, `villageRailBridgeFrameRun` rows apart and spread symmetrically about the middle of the trestle, and every row that carries one carries its support posts down to the bed with it. A row where a road crosses the line is left open.
 
 **Crossings.** A street crosses a line straight through and runs clear past both edges of the bed by seven blocks or more. A street that would end on the line or within those seven blocks is carried on across it when its grade allows, and otherwise stopped seven blocks short of the bed; a street that would start on the line or run along it is refused. At a crossing the street is graded to the line, never the other way around, and ramps to that level at its own walkable slope on either side. The pavement keeps the surface and the track runs across it one block up, so a cart crosses the road and a villager crosses the track. A line bored through a hill is not crossed at all: the street passes over the tunnel.
 

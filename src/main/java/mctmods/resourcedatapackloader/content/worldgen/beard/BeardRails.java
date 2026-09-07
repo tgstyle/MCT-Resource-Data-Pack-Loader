@@ -89,6 +89,14 @@ public final class BeardRails {
 
     private static int powerRun() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailPowerRun", Config.worldgen.villageRailPowerRun)); }
 
+    private static IBlockState frameBlock() { return BeardRoads.pathBlock("villageRailBridgeFrameBlock", Config.worldgen.villageRailBridgeFrameBlock, Blocks.AIR.getDefaultState()); }
+
+    private static int frameHeight() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameHeight", Config.worldgen.villageRailBridgeFrameHeight)); }
+
+    private static int frameRun() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameRun", Config.worldgen.villageRailBridgeFrameRun)); }
+
+    private static int frameLeast() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameLeast", Config.worldgen.villageRailBridgeFrameLeast)); }
+
     private static IBlockState tunnelBlock() { return BeardRoads.pathBlock("villageRailTunnelBlock", Config.worldgen.villageRailTunnelBlock, Blocks.AIR.getDefaultState()); }
 
     private static int tunnelLightRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelLightRun", Config.worldgen.villageRailTunnelLightRun)); }
@@ -292,7 +300,7 @@ public final class BeardRails {
 
     public static boolean railBlock(IBlockState state) { return state.getBlock() instanceof BlockRailBase; }
 
-    public static int hold(World world, @Nullable StructureComponent piece, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile, int[] ground, boolean[] held) {
+    public static int hold(World world, @Nullable StructureComponent piece, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile, boolean[] held) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return 0; }
         int rowMost = start + profile.length - 1;
@@ -441,6 +449,8 @@ public final class BeardRails {
         }
         boolean[] bridged = new boolean[rows];
         for (int at = 0; at < rows; at++) { bridged[at] = ground[at] == Integer.MIN_VALUE || profile[at] > ground[at] + FILL; }
+        int levelled = BeardGrade.levelDecks(profile, bridged, fixed, climb);
+        if (levelled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Levelled {} row(s) of railway line {} so each of its trestles lies at one height end to end", levelled, rail.line()); }
         if (ContentLog.LOGGER.debugEnabled()) {
             int trestle = 0;
             int cut = 0;
@@ -529,19 +539,23 @@ public final class BeardRails {
         StructureStart holder = ContentBeard.current();
         Predicate<BlockPos> within = holder != null ? BeardPlots.outside(world, holder, rail, box, false, 0) : spot -> world.isChunkGeneratedAt(spot.getX() >> 4, spot.getZ() >> 4);
         List<BlockPos> seeds = new ArrayList<>();
+        boolean[] frames = bridgeFrames(grade);
         int laid = 0;
         int trestled = 0;
         int lined = 0;
         int crossed = 0;
+        int framed = 0;
         for (int row = least; row <= most; row++) {
             int level = grade.at(row);
             if (level == Integer.MIN_VALUE) { continue; }
             boolean trestle = grade.bridgedAt(row);
-            boolean tunnel = !trestle && grade.tunneledAt(row, depth) && !crossedAt(world, roads, alongX, row, center, level);
+            boolean tunnel = !trestle && grade.tunneledAt(row, depth) && uncrossedAt(roads, alongX, row, center, level);
             boolean tieRow = Math.floorMod(row, tieRun) == 0;
             boolean powerRow = powerRun > 0 && Math.floorMod(row, powerRun) == 0;
             boolean litRow = light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
-            boolean legRow = Math.floorMod(row, LEG) == 0;
+            int mark = row - grade.start();
+            boolean frameRow = trestle && mark >= 0 && mark < frames.length && frames[mark] && uncrossedAt(roads, alongX, row, center, level);
+            boolean legRow = Math.floorMod(row, LEG) == 0 || frameRow;
             for (int across = acrossLeast - 1; across <= acrossMost + 1; across++) {
                 int x = alongX ? row : across;
                 int z = alongX ? across : row;
@@ -585,9 +599,10 @@ public final class BeardRails {
                 if (onRail && !inBed) { set(world, at, x, level + 1, z, powerRow ? powered : track); }
                 if (tunnel) { lined += BeardRoads.roofCell(world, at, x, z, level + CLEAR + 1, litRow && across == center ? light : lining); }
             }
+            if (frameRow) { framed += bridgeFrame(world, at, clip, alongX, row, acrossLeast, acrossMost, level); }
         }
         int felled = seeds.isEmpty() ? 0 : ContentBeard.fellTrees(world, seeds, within, at);
-        if (laid + crossed + felled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Laid railway line {} at {}, {} within its chunk: {} bed column(s), {} support block(s) under trestles, {} tunnel block(s), {} rail(s) across roads, {} tree block(s) felled whole where a tree stood over the bed", rail.line(), box.minX, box.minZ, laid, trestled, lined, crossed, felled); }
+        if (laid + crossed + felled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Laid railway line {} at {}, {} within its chunk: {} bed column(s), {} support block(s) under trestles, {} tunnel block(s), {} rail(s) across roads, {} overhead frame block(s), {} tree block(s) felled whole where a tree stood over the bed", rail.line(), box.minX, box.minZ, laid, trestled, lined, crossed, framed, felled); }
     }
 
     public static int open(RailPiece rail, World world, StructureStart start, StructureBoundingBox clip) {
@@ -640,17 +655,47 @@ public final class BeardRails {
         return null;
     }
 
-    private static boolean crossedAt(World world, List<StructureComponent> roads, boolean alongX, int row, int center, int level) {
+    private static boolean uncrossedAt(List<StructureComponent> roads, boolean alongX, int row, int center, int level) {
         for (StructureComponent road : roads) {
             StructureBoundingBox box = road.getBoundingBox();
             if (row < (alongX ? box.minX : box.minZ) - 1 || row > (alongX ? box.maxX : box.maxZ) + 1) { continue; }
             if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
             BeardRoads.Grade grade = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
-            if (grade == null) { return true; }
+            if (grade == null) { return false; }
             int at = grade.at(center);
-            return at == Integer.MIN_VALUE || at < level + OVER;
+            return at != Integer.MIN_VALUE && at >= level + OVER;
         }
-        return false;
+        return true;
+    }
+
+    private static boolean[] bridgeFrames(BeardRoads.Grade grade) {
+        int rows = grade.rows();
+        boolean[] frames = new boolean[rows];
+        if (frameBlock().getBlock() == Blocks.AIR) { return frames; }
+        for (int i = 0; i < rows; i++) { frames[i] = decking(grade, i); }
+        return BeardRoads.frameRows(frames, frameLeast(), frameRun());
+    }
+
+    private static boolean decking(BeardRoads.Grade grade, int i) {
+        int row = grade.start() + i;
+        return grade.bridgedAt(row) && grade.at(row) != Integer.MIN_VALUE;
+    }
+
+    private static int bridgeFrame(World world, BlockPos.MutableBlockPos at, StructureBoundingBox clip, boolean alongX, int row, int acrossLeast, int acrossMost, int level) {
+        IBlockState post = frameBlock();
+        IBlockState beam = BeardRoads.pathBlock("villageRailBridgeFrameTopBlock", Config.worldgen.villageRailBridgeFrameTopBlock, post);
+        int height = frameHeight();
+        int laid = 0;
+        for (int across = acrossLeast; across <= acrossMost; across++) {
+            int x = alongX ? row : across;
+            int z = alongX ? across : row;
+            if (!clip.isVecInside(at.setPos(x, level, z))) { continue; }
+            if (across == acrossLeast || across == acrossMost) {
+                for (int y = level + 1; y <= level + height; y++) { laid += set(world, at, x, y, z, post); }
+            }
+            laid += set(world, at, x, level + height + 1, z, beam);
+        }
+        return laid;
     }
 
     private static int set(World world, BlockPos.MutableBlockPos at, int x, int y, int z, IBlockState state) {

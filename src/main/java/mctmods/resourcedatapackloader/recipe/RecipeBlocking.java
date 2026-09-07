@@ -45,6 +45,7 @@ public final class RecipeBlocking {
         String match = ContentControl.text(ContentControl.RECIPES, "recipeMatch", Config.recipes.recipeMatch).toLowerCase(Locale.ROOT);
         List<ResourceLocation> doomed = new ArrayList<>();
         for (ResourceLocation key : registry.getKeys()) {
+            if (RecipeSpared.spares(key)) { continue; }
             Set<String> owners = owners(key, registry.getValue(key), match);
             String reason = reason(owners, whitelist, blocked);
             if (reason == null) { continue; }

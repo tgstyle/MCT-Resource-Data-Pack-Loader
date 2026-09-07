@@ -35,6 +35,8 @@ public final class FurnaceBlocking {
 
     public static void endTrusted() { TRUSTED.remove(); }
 
+    public static void trustOutput(ItemStack output) { TRUSTED_OUTPUTS.add(output); }
+
     public static boolean rejects(ItemStack result) {
         if (disabled()) { return false; }
         if (Boolean.TRUE.equals(TRUSTED.get())) {

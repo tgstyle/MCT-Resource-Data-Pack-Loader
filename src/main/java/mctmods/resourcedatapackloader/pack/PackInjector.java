@@ -47,10 +47,10 @@ import javax.annotation.Nullable;
 
     private static int beforeSelectedPacks(List<IResourcePack> list) {
         Set<IResourcePack> selected = selectedPacks();
-        for (int index = list.size() - 1; index >= 0; index--) {
-            if (!selected.contains(list.get(index))) { return index + 1; }
+        for (int index = 0; index < list.size(); index++) {
+            if (selected.contains(list.get(index))) { return index; }
         }
-        return 0;
+        return list.size();
     }
 
     private static Set<IResourcePack> selectedPacks() {
