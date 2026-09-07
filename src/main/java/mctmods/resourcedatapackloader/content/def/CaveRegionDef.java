@@ -8,4 +8,6 @@ public record CaveRegionDef(ResourceLocation key, int weight, int minHeight, int
         float ceilingChance, List<BlockMatchDef> coverReplace, List<BiomeSpawnDef> spawns, boolean keepDefaultSpawns, List<PickDef> structures, float structureChance,
         String structureLoot, @Nullable ResourceLocation biome, List<String> requires) {
     public static final int WORLD_FLOOR = Integer.MIN_VALUE;
+
+    public boolean hasStructures() { return !structures.isEmpty(); }
 }

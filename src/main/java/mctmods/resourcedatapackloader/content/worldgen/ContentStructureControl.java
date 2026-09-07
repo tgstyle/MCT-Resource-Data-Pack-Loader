@@ -79,6 +79,8 @@ public final class ContentStructureControl {
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureBiomes", Config.worldgen.structureBiomes())) { biomes(entry, touched); }
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureSpawns", Config.worldgen.structureSpawns())) { spawns(entry, touched); }
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAdaptation", Config.worldgen.structureAdaptation())) { adaptation(entry, touched); }
+        ContentStructureMost.load(ContentControl.list(ContentControl.STRUCTURES, "structureMost", Config.worldgen.structureMost()), touched);
+        ContentStructureSpawners.load(ContentControl.list(ContentControl.STRUCTURES, "structureSpawners", Config.worldgen.structureSpawners()), touched);
         for (Map.Entry<ResourceLocation, JsonObject> set : SET_JSON.entrySet()) { GeneratedResources.put(PackType.SERVER_DATA, set.getKey().getNamespace(), SETS + "/" + set.getKey().getPath() + ".json", set.getValue().toString()); }
         for (Map.Entry<ResourceLocation, JsonObject> structure : STRUCTURE_JSON.entrySet()) { GeneratedResources.put(PackType.SERVER_DATA, structure.getKey().getNamespace(), STRUCTURES + "/" + structure.getKey().getPath() + ".json", structure.getValue().toString()); }
         if (!touched.isEmpty()) { Summary.info("structures", "Controlling vanilla structures: " + String.join(", ", touched) + " (" + SET_JSON.size() + " structure set(s) and " + STRUCTURE_JSON.size() + " structure(s) rewritten)"); }
@@ -314,7 +316,7 @@ public final class ContentStructureControl {
         return false;
     }
 
-    @Nullable private static String[] split(String entry, String key) {
+    @Nullable static String[] split(String entry, String key) {
         int at = entry.indexOf('=');
         if (at <= 0) {
             ContentLog.LOGGER.error("{} entry '{}' is not written as structure=value", key, entry);
@@ -351,7 +353,7 @@ public final class ContentStructureControl {
         return out;
     }
 
-    private static List<ResourceLocation> structures(String name) {
+    static List<ResourceLocation> structures(String name) {
         String wanted = name.trim().toLowerCase(Locale.ROOT);
         List<ResourceLocation> out = new ArrayList<>();
         ResourceLocation id = wanted.contains(":") ? ResourceLocation.tryParse(wanted) : ResourceLocation.fromNamespaceAndPath(MINECRAFT, wanted);

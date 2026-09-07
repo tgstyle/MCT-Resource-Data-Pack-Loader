@@ -9,7 +9,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.loot.LootTable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -53,5 +55,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "serverAiStep", at = @At("HEAD"), cancellable = true)
     private void rdpl$slowThinking(CallbackInfo ci) {
         if (ContentEntityTicks.thinksSlower((Mob) (Object) this)) { ci.cancel(); }
+    }
+
+    @Inject(method = "getControllingPassenger", at = @At("RETURN"), cancellable = true)
+    private void rdpl$steered(CallbackInfoReturnable<LivingEntity> cir) {
+        Mob self = (Mob) (Object) this;
+        if (cir.getReturnValue() == null && ContentEntities.steerable(self) && self.getFirstPassenger() instanceof Player player) { cir.setReturnValue(player); }
     }
 }

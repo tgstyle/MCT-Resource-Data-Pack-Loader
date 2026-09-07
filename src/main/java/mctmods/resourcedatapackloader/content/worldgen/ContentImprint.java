@@ -73,6 +73,10 @@ public final class ContentImprint implements IContentShape {
             ContentLog.LOGGER.error("Worldgen {} names loot table '{}', which is not a valid id, so the containers are left as the template holds them", key, shape.lootTable());
             return;
         }
+        stock(placer, random, table, cornerX, baseY, cornerZ, span);
+    }
+
+    public static void stock(ContentPlacer placer, RandomSource random, ResourceLocation table, int cornerX, int baseY, int cornerZ, Vec3i span) {
         WorldGenLevel level = placer.level();
         BoundingBox box = new BoundingBox(cornerX, baseY, cornerZ, cornerX + span.getX() - 1, baseY + span.getY() - 1, cornerZ + span.getZ() - 1);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();

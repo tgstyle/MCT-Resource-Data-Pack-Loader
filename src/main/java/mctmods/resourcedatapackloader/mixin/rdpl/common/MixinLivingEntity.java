@@ -11,6 +11,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(LivingEntity.class) public abstract class MixinLivingEntity {
     @Unique private EntityVariantDef rdpl$def() { return ContentEntities.def((LivingEntity) (Object) this); }
@@ -49,5 +52,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private void rdpl$waterSlowDown(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null) { cir.setReturnValue(def.physics().waterSlowdown()); }
+    }
+
+    @Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true)
+    private void rdpl$riddenInput(Player player, Vec3 travel, CallbackInfoReturnable<Vec3> cir) {
+        if (!ContentEntities.steerable((LivingEntity) (Object) this)) { return; }
+        float forward = player.zza;
+        if (forward <= 0.0F) { forward *= 0.25F; }
+        cir.setReturnValue(new Vec3(player.xxa * 0.5F, 0.0D, forward));
+    }
+
+    @Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true)
+    private void rdpl$riddenSpeed(Player player, CallbackInfoReturnable<Float> cir) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        if (ContentEntities.steerable(self)) { cir.setReturnValue((float) self.getAttributeValue(Attributes.MOVEMENT_SPEED)); }
     }
 }

@@ -10,8 +10,13 @@ public record WorldgenDef(ResourceLocation key, ResourceLocation block, List<Blo
         boolean retrogen, String retrogenKey, List<ResourceLocation> caveRegions, String snap, int snapDepth, SpreadDef spread, ShapeDef shape) {
     public static final String FLOOR = "floor";
     public static final String CEILING = "ceiling";
+    public static final float NO_LIMIT = 100.0F;
 
     public boolean hasBiomeFilter() { return !biomes.isEmpty() || !biomeTypes.isEmpty(); }
+
+    public boolean hasClimateFilter() { return leastTemperature > -NO_LIMIT || mostTemperature < NO_LIMIT || leastRainfall > -NO_LIMIT || mostRainfall < NO_LIMIT; }
+
+    public boolean needsBiome() { return !caveRegions.isEmpty() || hasBiomeFilter() || hasClimateFilter(); }
 
     public boolean climateAllows(float temperature, float rainfall) {
         return temperature >= leastTemperature && temperature <= mostTemperature && rainfall >= leastRainfall && rainfall <= mostRainfall;

@@ -18,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,6 +37,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentDimensions {
+    private static final ResourceLocation OVERWORLD = ResourceLocation.fromNamespaceAndPath("minecraft", "overworld");
     private static final Map<ResourceLocation, DimensionDef> DEFS = new LinkedHashMap<>();
     private static final Map<UUID, ResourceLocation> DIED_IN = new HashMap<>();
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
@@ -200,20 +202,40 @@ public final class ContentDimensions {
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         ResourceLocation diedIn = DIED_IN.remove(player.getUUID());
-        if (diedIn == null || event.isEndConquered() || player.getRespawnPosition() != null) { return; }
+        if (diedIn == null || event.isEndConquered()) { return; }
         DimensionDef def = DEFS.get(diedIn);
-        if (def == null || def.respawnDimension() == null || def.respawnDimension().equals(player.level().dimension().location())) { return; }
+        if (def == null) { return; }
+        ResourceLocation sentTo = def.respawnDimension() != null ? def.respawnDimension() : def.respawn() ? null : OVERWORLD;
+        if (sentTo == null || sentTo.equals(player.level().dimension().location())) { return; }
+        if (player.getRespawnPosition() != null && (def.respawn() || !player.getRespawnDimension().location().equals(diedIn))) { return; }
         MinecraftServer server = player.getServer();
-        ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, def.respawnDimension()));
+        ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, sentTo));
         if (target == null) {
-            ContentLog.LOGGER.error("Dimension {} sends respawns to {}, which is not a loaded dimension, so the player respawns where the game put them", diedIn, def.respawnDimension());
+            ContentLog.LOGGER.error("Dimension {} sends respawns to {}, which is not a loaded dimension, so the player respawns where the game put them", diedIn, sentTo);
             return;
         }
-        BlockPos spawn = target.getSharedSpawnPos();
-        BlockPos feet = target.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn);
+        BlockPos feet = landing(target, target.getSharedSpawnPos(), net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
         player.teleportTo(target, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, target.getSharedSpawnAngle(), 0.0F);
-        ContentLog.LOGGER.debug("Player {} died in {} and respawns in {} at {}", player.getName().getString(), diedIn, def.respawnDimension(), feet);
+        ContentLog.LOGGER.debug("Player {} died in {}, which {}, and respawns in {} at {}", player.getName().getString(), diedIn, def.respawn() ? "sends respawns on" : "allows no respawn", sentTo, feet);
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { DIED_IN.remove(event.getEntity().getUUID()); }
+
+    public static boolean structuresOff(ServerLevel level) {
+        DimensionDef def = DEFS.get(level.dimension().location());
+        return def != null && !def.structures();
+    }
+
+    public static boolean anyStructuresOff() {
+        for (DimensionDef def : DEFS.values()) { if (!def.structures()) { return true; } }
+        return false;
+    }
+
+    public static BlockPos landing(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {
+        BlockPos top = level.getHeightmapPos(type, column);
+        if (top.getY() > level.getMinBuildHeight() + 1) { return top; }
+        DimensionDef def = DEFS.get(level.dimension().location());
+        if (def == null || !def.namesGround()) { return top; }
+        return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - 2), column.getZ());
+    }
 }

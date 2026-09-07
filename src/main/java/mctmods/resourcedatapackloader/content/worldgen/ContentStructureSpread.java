@@ -14,6 +14,8 @@ import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Optional;
 
 public final class ContentStructureSpread extends RandomSpreadStructurePlacement {
@@ -29,6 +31,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
             Codec.INT.optionalFieldOf("min_distance_from_spawn", 0).forGetter(ContentStructureSpread::minDistanceFromSpawn),
             Codec.INT.listOf().optionalFieldOf("spawn", List.of(0, 0)).forGetter(ContentStructureSpread::spawn)).apply(instance, ContentStructureSpread::new));
     public static final StructurePlacementType<ContentStructureSpread> TYPE = () -> CODEC;
+    private static final Set<Long> PINNED = ConcurrentHashMap.newKeySet();
     private final List<List<Integer>> pins;
     private final int minDistanceFromSpawn;
     private final List<Integer> spawn;
@@ -37,6 +40,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
             int spacing, int separation, RandomSpreadType spreadType, List<List<Integer>> pins, int minDistanceFromSpawn, List<Integer> spawn) {
         super(locateOffset, reduction, frequency, salt, Optional.empty(), spacing, separation, spreadType);
         this.pins = pins;
+        for (List<Integer> pin : pins) { if (pin.size() == 2) { PINNED.add(chunkOf(pin).toLong()); } }
         this.minDistanceFromSpawn = minDistanceFromSpawn;
         this.spawn = spawn;
     }
@@ -72,6 +76,8 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
     }
 
     @Override @Nonnull public StructurePlacementType<?> type() { return TYPE; }
+
+    public static boolean pinned(ChunkPos chunk) { return !PINNED.isEmpty() && PINNED.contains(chunk.toLong()); }
 
     public static ChunkPos chunkOf(List<Integer> pin) { return new ChunkPos(pin.get(0) >> 4, pin.get(1) >> 4); }
 }

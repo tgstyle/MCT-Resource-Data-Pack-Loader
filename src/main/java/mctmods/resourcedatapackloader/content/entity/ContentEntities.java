@@ -42,6 +42,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AgeableMob;
@@ -83,6 +84,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
@@ -99,6 +101,7 @@ import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -116,6 +119,7 @@ public final class ContentEntities {
     private static final Map<ResourceLocation, EntityType<Mob>> TYPES = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
     private static final List<String> PLAYER_ONLY = List.of("minecraft:player");
+    private static final String SPAWN_EGG_MODEL = "{\"parent\":\"minecraft:item/template_spawn_egg\"}";
     private static final String DRESSED = "rdplDressed";
     private static final String HOME_X = "rdplHomeX";
     private static final String HOME_Y = "rdplHomeY";
@@ -506,7 +510,7 @@ public final class ContentEntities {
             return;
         }
         if (def.baby() > 0.0F && mob.getPersistentData().getBoolean(YOUNG) && mob instanceof AgeableMob ageable && ageable.getAge() >= 0) { ageable.setAge(-24000); }
-        if (!def.resizes()) { return; }
+        if (def.keepsSize()) { return; }
         boolean angry = stillRoused(mob);
         if (angry != mob.isSprinting()) { mob.setSprinting(angry); }
         AttributeInstance size = mob.getAttribute(Attributes.SCALE);
@@ -569,6 +573,20 @@ public final class ContentEntities {
         EntityVariantDef def = BY_TYPE.get(entity.getType());
         if (def == null || def.tint() == 0 || !def.tintParts().contains(part)) { return 0; }
         return def.tint();
+    }
+
+    public static boolean steerable(Entity entity) {
+        EntityVariantDef def = BY_TYPE.get(entity.getType());
+        return def != null && def.flags().steerable();
+    }
+
+    public static void onInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getTarget() instanceof Mob mob) || !steerable(mob)) { return; }
+        Player player = event.getEntity();
+        if (!event.getItemStack().isEmpty() || player.isSecondaryUseActive() || mob.isVehicle() || player.isPassenger()) { return; }
+        if (!event.getLevel().isClientSide()) { player.startRiding(mob); }
+        event.setCancellationResult(InteractionResult.sidedSuccess(event.getLevel().isClientSide()));
+        event.setCanceled(true);
     }
 
     public static boolean hidesArmor(Entity entity) {
@@ -642,12 +660,24 @@ public final class ContentEntities {
 
     public static void generate() {
         MODIFIERS = 0;
+        int eggs = 0;
         for (EntityVariantDef def : DEFS.values()) {
             if (!def.spawns().isEmpty()) { spawnModifiers(def); }
             creatureTags(def);
+            if (eggModel(def)) { eggs++; }
         }
         writeTags();
         if (MODIFIERS > 0) { Summary.info("entities.spawns", "Generated " + MODIFIERS + " spawn modifier(s) for entity variants"); }
+        if (eggs > 0) { Summary.info("entities.eggs", "Generated " + eggs + " spawn egg model(s) that the packs did not ship themselves"); }
+    }
+
+    private static boolean eggModel(EntityVariantDef def) {
+        if (!def.egg().wanted()) { return false; }
+        String namespace = def.key().getNamespace();
+        String path = "models/item/" + def.key().getPath() + "_spawn_egg.json";
+        if (PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, path)) { return false; }
+        GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, SPAWN_EGG_MODEL);
+        return true;
     }
 
     private static int MODIFIERS;

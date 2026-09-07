@@ -43,7 +43,11 @@ public final class ContentEntityParser {
             return null;
         }
         List<String> tintParts = new ArrayList<>();
-        for (String part : Json.strings(json, "tintParts")) { tintParts.add(part.trim().toLowerCase(Locale.ROOT)); }
+        for (String part : Json.strings(json, "tintParts")) {
+            String named = part.trim().toLowerCase(Locale.ROOT);
+            if (EntityVariantDef.PARTS.contains(named)) { tintParts.add(named); }
+            else { ContentLog.LOGGER.error("Entity variant {} tints part '{}', which is not one of {}, leaving it out", key, part, EntityVariantDef.PARTS); }
+        }
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
         JsonObject sounds = GsonHelper.getAsJsonObject(json, "sounds", new JsonObject());
         JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? GsonHelper.getAsJsonObject(json, "egg") : null;

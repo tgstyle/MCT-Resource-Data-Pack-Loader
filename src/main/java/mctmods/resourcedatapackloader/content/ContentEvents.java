@@ -21,6 +21,7 @@ import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCaveStructureFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
@@ -82,6 +83,7 @@ public final class ContentEvents {
             event.register(Registries.FEATURE, helper -> {
                 helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
                 helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.STRUCTURE_FEATURE), ContentCaveStructureFeature.INSTANCE);
             });
         }
         else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC)); }

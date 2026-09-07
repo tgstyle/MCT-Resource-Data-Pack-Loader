@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 public record DimensionDef(ResourceLocation key, String terrain, List<String> flatLayers, boolean structures, String biomeSource, String biome, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
-                           @Nullable ResourceLocation respawnDimension, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal) {
+                           @Nullable ResourceLocation respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal) {
     public static final String OVERWORLD = "overworld";
     public static final String FLAT = "flat";
     public static final String VOID = "void";
@@ -17,6 +17,8 @@ public record DimensionDef(ResourceLocation key, String terrain, List<String> fl
     public static final String SINGLE = "single";
     public static final String INHERIT = "inherit";
     public static final int UNSET = Integer.MIN_VALUE;
+
+    public boolean namesGround() { return groundLevel != UNSET; }
 
     public boolean shapesHeight() { return minHeight != UNSET && maxHeight != UNSET; }
 

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -115,7 +116,7 @@ public final class GateEvents {
             level = player.server.overworld();
             target = level.getSharedSpawnPos();
         }
-        BlockPos feet = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, target);
+        BlockPos feet = ContentDimensions.landing(level, target, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
         player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, player.getYRot(), player.getXRot());
     }
 

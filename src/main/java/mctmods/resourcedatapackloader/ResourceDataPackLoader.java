@@ -28,6 +28,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
+import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.content.portal.ContentPortalFrames;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.portal.PortalEvents;
@@ -52,11 +53,13 @@ import mctmods.resourcedatapackloader.pack.PackFinder;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackRequirements;
 import mctmods.resourcedatapackloader.recipe.RecipeLoading;
+import mctmods.resourcedatapackloader.recipe.interfaces.IRecipeFilter;
 import mctmods.resourcedatapackloader.registry.RegistryRemaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
+import net.minecraft.util.Unit;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -72,6 +75,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
@@ -114,6 +118,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentEvents::onBreak);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onJoin);
+        NeoForge.EVENT_BUS.addListener(ContentEntities::onInteract);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onFall);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onExperience);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onBreathe);
@@ -134,6 +139,9 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(GateEvents::onCraft);
         NeoForge.EVENT_BUS.addListener(GateEvents::onRightClick);
         NeoForge.EVENT_BUS.addListener(GateEvents::onAdvancement);
+        NeoForge.EVENT_BUS.addListener(VanillaPortalLink::onTravel);
+        NeoForge.EVENT_BUS.addListener(VanillaPortalLink::onDimensionChange);
+        NeoForge.EVENT_BUS.addListener(VanillaPortalLink::onJoin);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onBroken);
         NeoForge.EVENT_BUS.addListener(PortalEvents::onLit);
@@ -182,6 +190,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
         NeoForge.EVENT_BUS.addListener(this::onTagsUpdated);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::beforeServerStart);
         NeoForge.EVENT_BUS.addListener(this::onServerStopped);
@@ -229,6 +238,12 @@ import java.util.Set;
         String message = "Packs require mods that are not installed: " + String.join(", ", missing) + ". Install them or remove the packs that need them";
         ContentLog.LOGGER.fatal(message);
         throw new IllegalStateException(message);
+    }
+
+    private void onAddReloadListeners(AddReloadListenerEvent event) {
+        event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
+            if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); }
+        }, executor2));
     }
 
     private void onTagsUpdated(TagsUpdatedEvent event) {
