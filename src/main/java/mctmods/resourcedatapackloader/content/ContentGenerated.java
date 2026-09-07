@@ -267,6 +267,13 @@ public final class ContentGenerated {
                 model(def, namespace, name, cube(def, texture, "leaves"));
                 blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
             }
+            case ContentBlockTypes.PORTAL -> {
+                String face = texture == null ? "minecraft:block/nether_portal" : texture;
+                model(def, namespace, name + "_x", portal(face, arr(0, 0, 6), arr(16, 16, 10), "north", "south"));
+                model(def, namespace, name + "_z", portal(face, arr(6, 0, 0), arr(10, 16, 16), "east", "west"));
+                model(def, namespace, name + "_flat", portal(face, arr(0, 6, 0), arr(16, 10, 16), "up", "down"));
+                blockstate(namespace, name, obj("variants", obj("axis=x", obj("model", main + "_x"), "axis=z", obj("model", main + "_z"), "axis=y", obj("model", main + "_flat"))));
+            }
             default -> {
                 model(def, namespace, name, cube(def, texture, "cube_all"));
                 blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
@@ -292,6 +299,11 @@ public final class ContentGenerated {
             }
         }
         return variants;
+    }
+
+    private static JsonObject portal(String texture, JsonArray from, JsonArray to, String first, String second) {
+        JsonObject face = obj("uv", arr(0, 0, 16, 16), "texture", "#portal", "tintindex", 0);
+        return obj("textures", obj("particle", texture, "portal", texture), "elements", arr(obj("from", from, "to", to, "faces", obj(first, face, second, face.deepCopy()))));
     }
 
     private static JsonObject rotated(String model, int y, boolean uvlock) {
@@ -331,6 +343,7 @@ public final class ContentGenerated {
             case ContentBlockTypes.FENCE, ContentBlockTypes.WALL -> obj("parent", main + "_inventory");
             case ContentBlockTypes.TRAPDOOR -> obj("parent", main + "_bottom");
             case ContentBlockTypes.BANNER -> obj("parent", "minecraft:item/template_banner");
+            case ContentBlockTypes.PORTAL -> obj("parent", main + "_x");
             case ContentBlockTypes.DOOR, ContentBlockTypes.LADDER, ContentBlockTypes.TORCH, ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE, ContentBlockTypes.PANE -> {
                 String flat = provided(PackType.CLIENT_RESOURCES, namespace, "textures/item/" + name + ".png") ? namespace + ":item/" + name : texture(namespace, name);
                 yield flat == null ? obj("parent", main) : obj("parent", ITEM_GENERATED, "textures", obj("layer0", flat));

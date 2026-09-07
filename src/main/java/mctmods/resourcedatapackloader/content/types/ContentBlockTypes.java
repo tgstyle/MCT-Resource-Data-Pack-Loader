@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
 import mctmods.resourcedatapackloader.content.block.ContentFallingBlock;
 import mctmods.resourcedatapackloader.content.block.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.content.block.ContentLogBlock;
+import mctmods.resourcedatapackloader.content.block.ContentPortalBlock;
 import mctmods.resourcedatapackloader.content.block.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.content.block.ContentTorchBlock;
 import mctmods.resourcedatapackloader.content.block.ContentWallBannerBlock;
@@ -70,8 +71,8 @@ public final class ContentBlockTypes {
     public static final String VINE = "vine";
     public static final String BANNER = "banner";
     public static final String PORTAL = "portal";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER);
-    private static final Set<String> LATER = Set.of(PORTAL);
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL);
+    private static final Set<String> LATER = Set.of();
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
 
     private ContentBlockTypes() {}
@@ -144,6 +145,13 @@ public final class ContentBlockTypes {
                 yield List.of(new Created(id, new ContentCaneBlock(def, def.growth(), properties), ContentRegistry.MAIN));
             }
             case VINE -> List.of(new Created(id, new VineBlock(properties.noOcclusion()), ContentRegistry.MAIN));
+            case PORTAL -> {
+                if (def.portal() == null) {
+                    ContentLog.LOGGER.error("Block {} is a portal but has no 'portal' section, so it has nowhere to lead", variant.id());
+                    yield List.of();
+                }
+                yield List.of(new Created(id, new ContentPortalBlock(def, def.portal(), properties.noOcclusion().lightLevel(state -> Math.max(variant.light(), 11))), ContentRegistry.MAIN));
+            }
             default -> List.of(new Created(id, new ContentBlock(def, properties), ContentRegistry.MAIN));
         };
     }

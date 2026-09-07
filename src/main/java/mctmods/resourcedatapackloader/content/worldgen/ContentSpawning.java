@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
+import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMobCategory;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -37,16 +38,24 @@ public final class ContentSpawning {
 
     public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
         if (ContentControl.off(ContentControl.SPAWNING) || event.getSpawner() != null || event.getSpawnType() != MobSpawnType.NATURAL) { return; }
-        Mob mob = event.getEntity();
-        if (!(mob instanceof Enemy)) { return; }
         ServerLevel level = event.getLevel().getLevel();
+        if (!ContentDimensions.spawns(level)) {
+            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+            return;
+        }
+        Mob mob = event.getEntity();
+        if (!ContentThreat.allowed(mob)) {
+            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+            return;
+        }
+        if (!(mob instanceof Enemy)) { return; }
         BlockPos pos = mob.blockPosition();
         int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight());
         if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
             event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
             return;
         }
-        float rate = rateFor(level, pos);
+        float rate = rateFor(level, pos) * ContentThreat.spawnRate(level, pos);
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {
             event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
