@@ -18,6 +18,7 @@
   "rdpl.command.pixelmapnone": "No pixel map at %s, or it could not be read. The log says why",
   "rdpl.command.locatenone": "No %s has been placed in this world yet",
   "rdpl.command.located": "The nearest %s is at %s, %s, %s (%s blocks away)",
+  "rdpl.portal.owned": "This portal belongs to someone else",
   "rdpl.command.pixelmaprows": "  rows come from %s",
   "rdpl.command.provided": "%s is provided by '%s'%s",
   "rdpl.command.providednote": "This is what your packs offer, not what the game asked for",

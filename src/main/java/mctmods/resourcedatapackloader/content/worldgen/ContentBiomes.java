@@ -233,6 +233,10 @@ public final class ContentBiomes {
             for (String category : new ArrayList<>(out.keySet())) { out.add(category, new JsonArray()); }
         }
         for (BiomeSpawnDef spawn : def.spawns()) {
+            if (!ForgeRegistries.ENTITY_TYPES.containsKey(spawn.entity())) {
+                ContentLog.LOGGER.error("Biome {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
+                continue;
+            }
             JsonArray list = out.has(spawn.category()) ? GsonHelper.getAsJsonArray(out, spawn.category()) : new JsonArray();
             JsonObject entry = new JsonObject();
             entry.addProperty("type", spawn.entity().toString());

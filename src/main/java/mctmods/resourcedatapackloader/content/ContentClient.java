@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
@@ -39,6 +40,7 @@ public final class ContentClient {
         modBus.addListener(ContentClient::blockColors);
         modBus.addListener(ContentClient::itemColors);
         modBus.addListener(ContentClient::renderers);
+        modBus.addListener(ContentDimensionEffects::register);
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers event) {

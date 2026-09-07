@@ -285,6 +285,21 @@ public final class Config {
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureSpawns;
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureAt;
         private final ForgeConfigSpec.ConfigValue<List<? extends String>> structureAdaptation;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldGravity;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldFallDamage;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldJumpStrength;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldTerminalVelocity;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> cloudHeight;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldBelow;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> worldAbove;
+        private final ForgeConfigSpec.BooleanValue worldSeamEntities;
+        private final ForgeConfigSpec.BooleanValue worldSeamBedrock;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> threatItems;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> threatLevels;
+        private final ForgeConfigSpec.IntValue threatMost;
+        private final ForgeConfigSpec.DoubleValue threatSpawnRate;
+        private final ForgeConfigSpec.DoubleValue threatNotice;
+        private final ForgeConfigSpec.ConfigValue<List<? extends String>> threatSays;
 
         private Worldgen(ForgeConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
@@ -352,6 +367,21 @@ public final class Config {
             structureSpawns = builder.comment("The mobs a structure spawns whatever the biome says, as structure=namespace:entity:weight:least:most entries, comma separated; an empty list after the = spawns nothing [Default=[]]").defineList("structureSpawns", List.of(), each -> each instanceof String);
             structureAt = builder.comment("Structures pinned to exact spots, as structure=x,z entries in block coordinates, one per wanted instance. A pinned structure generates in that chunk and nowhere else [Default=[]]").defineList("structureAt", List.of(), each -> each instanceof String);
             structureAdaptation = builder.comment("How the terrain adapts to a structure, as structure=mode entries with the modes none, bury, beard_thin, beard_box and encapsulate [Default=[]]").defineList("structureAdaptation", List.of(), each -> each instanceof String);
+            worldGravity = builder.comment("Scale gravity, as a multiplier of vanilla where 1.0 is unchanged and 0.17 is moon-like, for players and mobs. A bare value covers every dimension, and an entry written as dimension=value covers that dimension alone and wins over the bare one. Empty leaves gravity alone [Default=[]]").defineList("worldGravity", List.of(), each -> each instanceof String);
+            worldFallDamage = builder.comment("Scale fall damage the same way, 0.5 halving it and 2.0 doubling it [Default=[]]").defineList("worldFallDamage", List.of(), each -> each instanceof String);
+            worldJumpStrength = builder.comment("Scale jump strength the same way, 1.5 jumping half again as high [Default=[]]").defineList("worldJumpStrength", List.of(), each -> each instanceof String);
+            worldTerminalVelocity = builder.comment("Scale the fastest a mob or player falls the same way, 0.5 falling at half vanilla's top speed [Default=[]]").defineList("worldTerminalVelocity", List.of(), each -> each instanceof String);
+            cloudHeight = builder.comment("The y clouds are drawn at, as dimension=y entries. A bare number covers every dimension. Empty keeps the game's own cloud height, 192 in the overworld [Default=[]]").defineList("cloudHeight", List.of(), each -> each instanceof String);
+            worldBelow = builder.comment("Stack another dimension under this one: falling out of the bottom of the world carries you into the named dimension, arriving under its ceiling at the same x and z, still falling. Entries are written as dimension=target, such as minecraft:overworld=minecraft:the_nether to hang the nether under the overworld; a bare id covers every dimension. Digging through needs the floor's bedrock left out, which worldSeamBedrock decides. Empty means the floor stays the floor [Default=[]]").defineList("worldBelow", List.of(), each -> each instanceof String);
+            worldAbove = builder.comment("The same for the ceiling: rising past the top of the world carries you into the named dimension, arriving above its floor. Written the same way as worldBelow [Default=[]]").defineList("worldAbove", List.of(), each -> each instanceof String);
+            worldSeamEntities = builder.comment("Whether dropped items, mobs and other entities ride the world seams too, or only players. Riders and mounts cross one at a time [Default=true]").define("worldSeamEntities", true);
+            worldSeamBedrock = builder.comment("Keep the bedrock at a seam boundary anyway. Off, a dimension whose floor or ceiling carries a worldBelow or worldAbove seam generates no bedrock there, so the way through can be dug. Already generated chunks keep whatever they have [Default=false]").define("worldSeamBedrock", false);
+            threatItems = builder.comment("Items that raise a player's threat level, as item=level,count entries with an optional ,each or ,batch at the end, e.g. minecraft:diamond_sword=5,1 or minecraft:diamond=1,16,batch. Each, the default, adds the level for every one held, counting no more than count of them; batch adds the level once for every count held. A count above the item's stack size is cut to the stack size. Every loaded entity holding items is a carrier: a player's main inventory, armor and off hand, a dropped stack, anything with an item inventory such as a chest mule or a chest minecart, and the held items and armor of other mobs. Empty turns the threat level off [Default=[]]").defineList("threatItems", List.of(), each -> each instanceof String);
+            threatLevels = builder.comment("Rising scores that open each threat band, e.g. 5, 15, 40 for three bands. A player below the first is in band 0. Empty turns the threat level off [Default=[]]").defineList("threatLevels", List.of(), each -> each instanceof String);
+            threatMost = builder.comment("The highest score a carrier can reach, -1 for no cap [Default=-1]").defineInRange("threatMost", -1, -1, Integer.MAX_VALUE);
+            threatSpawnRate = builder.comment("Multiplied into the hostile spawn rate near carriers in the top band, scaled down through the lower bands. 1.0 changes nothing, 2.0 doubles spawns at the top [Default=1.0]").defineInRange("threatSpawnRate", 1.0D, 0.0D, 100.0D);
+            threatNotice = builder.comment("How many blocks farther hostile mobs notice a carrier in the top band, scaled down through the lower bands. 0 changes nothing [Default=0.0]").defineInRange("threatNotice", 0.0D, 0.0D, 256.0D);
+            threatSays = builder.comment("Lines said to a player entering a band, as band=message entries [Default=[]]").defineList("threatSays", List.of(), each -> each instanceof String);
             builder.pop();
         }
 
@@ -482,6 +512,21 @@ public final class Config {
         public List<String> structureAt() { return loaded() ? List.copyOf(structureAt.get()) : List.of(); }
 
         public List<String> structureAdaptation() { return loaded() ? List.copyOf(structureAdaptation.get()) : List.of(); }
+        public List<String> worldGravity() { return loaded() ? List.copyOf(worldGravity.get()) : List.of(); }
+        public List<String> worldFallDamage() { return loaded() ? List.copyOf(worldFallDamage.get()) : List.of(); }
+        public List<String> worldJumpStrength() { return loaded() ? List.copyOf(worldJumpStrength.get()) : List.of(); }
+        public List<String> worldTerminalVelocity() { return loaded() ? List.copyOf(worldTerminalVelocity.get()) : List.of(); }
+        public List<String> cloudHeight() { return loaded() ? List.copyOf(cloudHeight.get()) : List.of(); }
+        public List<String> worldBelow() { return loaded() ? List.copyOf(worldBelow.get()) : List.of(); }
+        public List<String> worldAbove() { return loaded() ? List.copyOf(worldAbove.get()) : List.of(); }
+        public boolean worldSeamEntities() { return !loaded() || worldSeamEntities.get(); }
+        public boolean worldSeamBedrock() { return loaded() && worldSeamBedrock.get(); }
+        public List<String> threatItems() { return loaded() ? List.copyOf(threatItems.get()) : List.of(); }
+        public List<String> threatLevels() { return loaded() ? List.copyOf(threatLevels.get()) : List.of(); }
+        public int threatMost() { return loaded() ? threatMost.get() : -1; }
+        public float threatSpawnRate() { return loaded() ? threatSpawnRate.get().floatValue() : 1.0F; }
+        public float threatNotice() { return loaded() ? threatNotice.get().floatValue() : 0.0F; }
+        public List<String> threatSays() { return loaded() ? List.copyOf(threatSays.get()) : List.of(); }
     }
 
     public static final class Chunks {

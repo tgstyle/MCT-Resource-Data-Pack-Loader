@@ -21,6 +21,7 @@ import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapPiece;
@@ -162,6 +163,7 @@ public final class ContentEvents {
         ContentStructureControl.generate();
         ContentStructureMaps.generate();
         ContentWorldShape.generate();
+        ContentDimensions.generate();
         ContentWorldgen.generate();
     }
 

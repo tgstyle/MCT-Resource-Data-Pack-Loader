@@ -17,6 +17,8 @@ public final class ContentStacks {
         return item == null ? ItemStack.EMPTY : new ItemStack(item, count);
     }
 
+    public static boolean matches(ItemStack found, ItemStack wanted) { return wanted.hasTag() ? ItemStack.isSameItemSameTags(found, wanted) : ItemStack.isSameItem(found, wanted); }
+
     @Nullable public static Item find(ResourceLocation key, @Nullable String value) {
         if (value == null || value.isEmpty()) { return null; }
         ResourceLocation name = value.indexOf(':') < 0 ? null : ResourceLocation.tryParse(value);

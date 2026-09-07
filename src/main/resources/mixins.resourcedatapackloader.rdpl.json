@@ -17,6 +17,9 @@
         "common.MixinBlockStateBase",
         "common.IMob",
         "common.IMobCategory",
+        "common.MixinLevel",
+        "common.MixinNearestAttackableTargetGoal",
+        "common.MixinTargetGoal",
         "common.MixinExplosionDamageCalculator",
         "common.MixinLivingEntity",
         "common.MixinMob",
@@ -26,6 +29,7 @@
     "client": [
         "client.IEntityRenderers",
         "client.IWeightedBakedModel",
+        "client.MixinClientLevel",
         "client.MixinChatScreen",
         "client.MixinHumanoidArmorLayer",
         "client.MixinItemInHandLayer",

@@ -194,7 +194,8 @@ public final class ContentWorldShape {
         generator.add("biome_source", source);
         String vanillaSettings = overworld ? shape.base()[1] : NETHER.equals(dimension) ? "nether" : "end";
         String settingsId = "minecraft:" + vanillaSettings;
-        if ((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked())) || flatBedrock) {
+        boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
+        if ((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked())) || flatBedrock || seamed) {
             JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
             if (settings != null) {
                 if (overworld) { shapeNoise(settings, shape); }
@@ -207,6 +208,7 @@ public final class ContentWorldShape {
                     ContentBiomes.spawnTargets(settings);
                 }
                 if (flatBedrock) { flattenBedrock(settings, dimension); }
+                if (seamed) { ContentSeams.openBedrock(settings, dimension); }
                 settingsId = made(shape, path + "_noise", "worldgen/noise_settings", settings);
             }
         }

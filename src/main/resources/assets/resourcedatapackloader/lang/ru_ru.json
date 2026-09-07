@@ -18,6 +18,7 @@
   "rdpl.command.pixelmapnone": "По адресу %s карты пикселей нет либо её не удалось прочитать. Причина в логе",
   "rdpl.command.locatenone": "В этом мире ещё не размещено ни одного %s",
   "rdpl.command.located": "Ближайший %s находится в %s, %s, %s (%s блоков отсюда)",
+  "rdpl.portal.owned": "Этот портал принадлежит кому-то другому",
   "rdpl.command.pixelmaprows": "  строки взяты из %s",
   "rdpl.command.provided": "%s даёт пак '%s'%s",
   "rdpl.command.providednote": "Это то, что предлагают ваши паки, а не то, что запросила игра",

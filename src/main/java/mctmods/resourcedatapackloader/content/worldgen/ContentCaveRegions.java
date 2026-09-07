@@ -155,6 +155,10 @@ public final class ContentCaveRegions {
             for (String category : new ArrayList<>(spawners.keySet())) { spawners.add(category, new JsonArray()); }
         }
         for (BiomeSpawnDef spawn : def.spawns()) {
+            if (!ForgeRegistries.ENTITY_TYPES.containsKey(spawn.entity())) {
+                ContentLog.LOGGER.error("Cave region {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
+                continue;
+            }
             JsonArray list = spawners.has(spawn.category()) ? GsonHelper.getAsJsonArray(spawners, spawn.category()) : new JsonArray();
             JsonObject entry = new JsonObject();
             entry.addProperty("type", spawn.entity().toString());

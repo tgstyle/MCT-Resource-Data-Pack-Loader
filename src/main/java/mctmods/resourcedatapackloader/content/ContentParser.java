@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
+import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
@@ -103,7 +104,28 @@ public final class ContentParser {
                 GsonHelper.getAsString(json, "leafSapling", "").trim(),
                 Mth.clamp(GsonHelper.getAsInt(json, "leafSaplingChance", 5), 0, 100),
                 location(GsonHelper.getAsString(json, "opensWith", "")),
-                GsonHelper.getAsString(json, "openSound", "").trim());
+                GsonHelper.getAsString(json, "openSound", "").trim(),
+                portal(key, json, null, true, false));
+    }
+
+    @Nullable public static PortalDef portal(ResourceLocation key, JsonObject json, @Nullable ResourceLocation ownDimension, boolean ownedDefault, boolean walkInDefault) {
+        if (!json.has("portal")) { return null; }
+        JsonObject entry = GsonHelper.getAsJsonObject(json, "portal");
+        String named = GsonHelper.getAsString(entry, "dimension", ownDimension == null ? "" : ownDimension.toString()).trim();
+        ResourceLocation dimension = named.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(named));
+        if (dimension == null) {
+            ContentLog.LOGGER.error("The portal of {} names dimension '{}', which is not a dimension id, so it leads nowhere", key, named);
+            return null;
+        }
+        String backNamed = GsonHelper.getAsString(entry, "returnDimension", "minecraft:overworld").trim();
+        ResourceLocation back = ResourceLocation.tryParse(ContentFormats.dimensionId(backNamed));
+        if (back == null) {
+            ContentLog.LOGGER.error("The portal of {} names return dimension '{}', which is not a dimension id, returning to the overworld", key, backNamed);
+            back = ResourceLocation.parse("minecraft:overworld");
+        }
+        return new PortalDef(dimension, back, GsonHelper.getAsString(entry, "gate", "").trim(), Math.max(0, GsonHelper.getAsInt(entry, "cooldown", 60)),
+                GsonHelper.getAsBoolean(entry, "platform", true), GsonHelper.getAsString(entry, "platformBlock", "").trim(), GsonHelper.getAsString(entry, "sound", "").trim(),
+                GsonHelper.getAsBoolean(entry, "owned", ownedDefault), GsonHelper.getAsBoolean(entry, "walkIn", walkInDefault));
     }
 
     @Nullable private static ResourceLocation variantId(ResourceLocation key, String name, String kind) {

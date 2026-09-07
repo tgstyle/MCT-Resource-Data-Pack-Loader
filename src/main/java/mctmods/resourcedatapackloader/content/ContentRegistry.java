@@ -132,6 +132,8 @@ public final class ContentRegistry {
         return true;
     }
 
+    public static void addDef(BlockDef def) { BLOCK_DEFS.put(def.key(), def); }
+
     public static Collection<BlockDef> blockDefs() { return Collections.unmodifiableCollection(BLOCK_DEFS.values()); }
 
     public static Collection<ItemDef> itemDefs() { return Collections.unmodifiableCollection(ITEM_DEFS.values()); }

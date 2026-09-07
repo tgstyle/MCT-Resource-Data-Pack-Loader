@@ -18,6 +18,7 @@
   "rdpl.command.pixelmapnone": "Unter %s liegt keine Pixelkarte, oder sie war nicht lesbar. Warum, steht im Log",
   "rdpl.command.locatenone": "In dieser Welt wurde noch kein %s platziert",
   "rdpl.command.located": "Das nächste %s ist bei %s, %s, %s (%s Blöcke entfernt)",
+  "rdpl.portal.owned": "Dieses Portal gehört jemand anderem",
   "rdpl.command.pixelmaprows": "  Zeilen kommen aus %s",
   "rdpl.command.provided": "%s liefert das Pack '%s'%s",
   "rdpl.command.providednote": "Das ist, was deine Packs anbieten, nicht das, wonach das Spiel gefragt hat",
