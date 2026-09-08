@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.core;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
 import java.util.Arrays;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @SuppressWarnings("unused") public class MCTLateMixin implements ILateMixinLoader {
     private static Boolean tinkersFix;
+    private static Boolean pulsar;
 
     @Override public List<String> getMixinConfigs() {
         return Arrays.asList(
@@ -34,7 +36,8 @@ import java.util.List;
                 "mixins.resourcedatapackloader.vanillaportals.json",
                 "mixins.resourcedatapackloader.betterf3.json",
                 "mixins.resourcedatapackloader.galacticraft.json",
-                "mixins.resourcedatapackloader.vintagefix.json");
+                "mixins.resourcedatapackloader.vintagefix.json",
+                "mixins.resourcedatapackloader.pulsar.json");
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
@@ -60,11 +63,17 @@ import java.util.List;
         if (mixinConfig.endsWith(".betterf3.json")) { return Loader.isModLoaded("betterf3reborn"); }
         if (mixinConfig.endsWith(".galacticraft.json")) { return Loader.isModLoaded("galacticraftcore"); }
         if (mixinConfig.endsWith(".vintagefix.json")) { return Loader.isModLoaded("vintagefix"); }
+        if (mixinConfig.endsWith(".pulsar.json")) { return pulsarPresent(); }
         return true;
     }
 
     private static boolean tinkersFixEnabled() {
         if (tinkersFix == null) { tinkersFix = ConfigCore.read(ConfigLate.COMPAT, "fixTinkersModelErrors"); }
         return tinkersFix;
+    }
+
+    private static boolean pulsarPresent() {
+        if (pulsar == null) { pulsar = Launch.classLoader.getResource("com/sumirelabs/pulsar/proxy/IProxy.class") != null; }
+        return pulsar;
     }
 }

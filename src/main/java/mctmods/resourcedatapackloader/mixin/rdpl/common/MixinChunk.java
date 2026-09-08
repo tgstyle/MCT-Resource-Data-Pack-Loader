@@ -156,6 +156,8 @@ public abstract class MixinChunk {
 
     @Shadow public abstract byte[] getBiomeArray();
 
+    @Shadow protected abstract void relightBlock(int x, int y, int z);
+
     @Unique @SuppressWarnings("unchecked") public <T extends World & IRubicWorldInternal> T rdpl$getRubicWorld() { return (T) this.world; }
 
     @Unique private boolean rdpl$cubeLoadedAt(int blockY) {
@@ -318,12 +320,13 @@ public abstract class MixinChunk {
         return false;
     }
 
-    @Inject(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;relightBlock(III)V"))
-    private void setBlockState_Rubic_relightBlockReplace(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir,
-                                                         @Local(name = "i") int i, @Local(name = "j") int j, @Local(name = "k") int k, @Local(name = "i1") int i1) {
-        if (rdpl$isColumn && !rdpl$compatGenerating() && ((IColumn) this).getCube(blockToCube(j)).isInitialLightingDone()) {
-            if (i1 == j + 1) { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, i, getHeightValue(i, k), j, k); }
-            else { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, i, i1, j, k); }
+    @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;relightBlock(III)V"))
+    private void setBlockState_Rubic_relightBlockReplace(Chunk chunk, int x, int y, int z,
+                                                         @Local(name = "j") int j, @Local(name = "i1") int i1) {
+        if (!rdpl$isColumn) { relightBlock(x, y, z); }
+        else if (!rdpl$compatGenerating() && ((IColumn) this).getCube(blockToCube(j)).isInitialLightingDone()) {
+            if (i1 == j + 1) { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, x, getHeightValue(x, z), j, z); }
+            else { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, x, i1, j, z); }
         }
     }
 

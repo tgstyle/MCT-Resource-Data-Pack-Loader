@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "mctmods.resourcedatapackloader.mixin.pulsar",
+  "refmap": "mixins.resourcedatapackloader.refmap.json",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "MixinPulsarCommonProxy"
+  ],
+  "client": [
+    "MixinPulsarClientProxy"
+  ],
+  "server": []
+}

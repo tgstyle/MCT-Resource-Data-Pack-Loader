@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class WorldgenHangWatchdog {
     private static final int worldgenWatchdogTimeLimit = 60000;
+    private static final int SAMPLES_KEPT = 40;
     public static final boolean ENABLED = "true".equalsIgnoreCase(System.getProperty("rdpl.rubic.wgen_hang_watchdog", "true"));
     private static final WorldgenHangWatchdog INSTANCE = new WorldgenHangWatchdog();
 
@@ -67,19 +68,19 @@ public class WorldgenHangWatchdog {
         }
     }
 
-    @SuppressWarnings("deprecation") private void watch() {
+    private void watch() {
             synchronized (entries) {
                 for (Iterator<Map.Entry<Thread, Entry>> iterator = entries.entrySet().iterator(); iterator.hasNext(); ) {
                     Map.Entry<Thread, Entry> entry = iterator.next();
                     Thread t = entry.getKey();
                     Entry e = entry.getValue();
-                    e.samples.add(t.getStackTrace());
+                    if (e.samples.size() < SAMPLES_KEPT) { e.samples.add(t.getStackTrace()); }
                     long currentTime = System.nanoTime();
                     long dt = currentTime - e.startTime;
                     if (dt > TimeUnit.MILLISECONDS.toNanos(worldgenWatchdogTimeLimit)) {
                         StringBuilder sb = new StringBuilder();
                         sb.append("World generation taking ").append(dt / (double) TimeUnit.SECONDS.toNanos(1))
-                                .append(" seconds, should be less than 50ms. Stopping the server.\n");
+                                .append(" seconds, should be less than 50ms.\n");
                         sb.append("Samples collected during world generation:\n");
                         int i = 1;
                         for (StackTraceElement[] stacktrace : e.samples) {
@@ -95,12 +96,19 @@ public class WorldgenHangWatchdog {
                         }
                         String msg = sb.toString();
                         crashInfo = msg;
-                        Rubic.LOGGER.fatal(msg);
-                        t.stop();
                         iterator.remove();
+                        Rubic.LOGGER.fatal(msg);
+                        stop(t);
                     }
                 }
             }
+    }
+
+    @SuppressWarnings("deprecation") private static void stop(Thread t) {
+        try { t.stop(); }
+        catch (UnsupportedOperationException | LinkageError gone) {
+            Rubic.LOGGER.fatal("This Java cannot stop a thread, so the hung world generation above is left to run and the watchdog stops watching it. Close the world; the samples are the report");
+        }
     }
 
     private static class Entry {

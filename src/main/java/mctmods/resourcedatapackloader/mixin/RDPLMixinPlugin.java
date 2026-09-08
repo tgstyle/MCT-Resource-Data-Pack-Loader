@@ -144,7 +144,8 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if (!mixinClassName.endsWith(".MixinWorldLight") && !mixinClassName.endsWith(".MixinChunkLight")) { return true; }
         if (lightingReplaced == null) {
             lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null
-                    || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null;
+                    || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null
+                    || Launch.classLoader.getResource("com/sumirelabs/pulsar/light/WorldLightManager.class") != null;
             if (lightingReplaced) { LogManager.getLogger("RDPL").info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
         }
         return !lightingReplaced;

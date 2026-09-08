@@ -74,7 +74,7 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
 
     @SuppressWarnings("unchecked") @Nullable public T get(int x, int z) {
         IXZAddressable[] slots = this.buckets;
-        int wrap = this.mask;
+        int wrap = slots.length - 1;
         int index = hash(x, z) & wrap;
         for (IXZAddressable bucket = slots[index]; bucket != null; bucket = slots[index]) {
             if (bucket.getX() == x && bucket.getZ() == z) { return (T) bucket; }

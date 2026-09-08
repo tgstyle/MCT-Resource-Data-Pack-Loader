@@ -92,7 +92,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
 
     @SuppressWarnings("unchecked") @Nullable public T get(int x, int y, int z) {
         IXYZAddressable[] buckets = this.bucketsByHash;
-        int slots = this.mask;
+        int slots = buckets.length - 1;
         int index = hash(x, y, z) & slots;
         for (IXYZAddressable bucket = buckets[index]; bucket != null; bucket = buckets[index]) {
             if (bucket.getX() == x && bucket.getY() == y && bucket.getZ() == z) { return (T) bucket; }
