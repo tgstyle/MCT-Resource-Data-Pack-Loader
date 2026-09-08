@@ -11,6 +11,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
+import java.util.ArrayList;
 
 public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup> {
     public static final ContentShapeFeature INSTANCE = new ContentShapeFeature();
@@ -29,7 +30,9 @@ public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup
             chunked.generateChunk(placer, center, pos -> ContentWorldgen.allows(entry, placer.level(), pos));
             return true;
         }
-        return entry.shape().generate(placer, random, origin);
+        boolean placed = entry.shape().generate(placer, random, origin);
+        if (placed && entry.def().follows()) { ContentWorldgen.after(entry, placer, random, origin, new ArrayList<>()); }
+        return placed;
     }
 
     public record Setup(ResourceLocation entry) implements FeatureConfiguration {

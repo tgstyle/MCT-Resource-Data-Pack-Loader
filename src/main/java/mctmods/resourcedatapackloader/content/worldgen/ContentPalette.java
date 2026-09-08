@@ -44,6 +44,8 @@ public final class ContentPalette {
         return states.get(states.size() - 1);
     }
 
+    public boolean places(BlockState state) { return states.contains(state); }
+
     public boolean replaceable(BlockState state) { return targets.contains(state.getBlock()) || exact.contains(state); }
 
     public boolean wantsNearby() { return wantsNearby; }

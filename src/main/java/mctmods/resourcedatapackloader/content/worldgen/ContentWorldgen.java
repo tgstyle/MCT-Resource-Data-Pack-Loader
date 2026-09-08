@@ -6,8 +6,10 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.BlockWeightDef;
+import mctmods.resourcedatapackloader.content.def.FollowDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
+import mctmods.resourcedatapackloader.content.interfaces.IContentChunkShape;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -25,12 +27,15 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,6 +53,8 @@ public final class ContentWorldgen {
     private static final Map<ResourceLocation, WorldgenDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Entry> ENTRIES = new LinkedHashMap<>();
     private static boolean loaded;
+    private static final Set<String> CHAIN_WARNED = new LinkedHashSet<>();
+    private static final int EDGE_REACH = 16;
 
     private ContentWorldgen() {}
 
@@ -64,6 +71,7 @@ public final class ContentWorldgen {
 
     public static void generate() {
         ENTRIES.clear();
+        CHAIN_WARNED.clear();
         for (WorldgenDef def : DEFS.values()) {
             Entry entry = resolve(def);
             if (entry == null) { continue; }
@@ -75,6 +83,79 @@ public final class ContentWorldgen {
     }
 
     @Nullable public static Entry entry(ResourceLocation key) { return ENTRIES.get(key); }
+
+    @Nullable public static Entry byName(String name) {
+        ResourceLocation key = ResourceLocation.tryParse(name);
+        if (key != null && ENTRIES.containsKey(key)) { return ENTRIES.get(key); }
+        if (name.indexOf(':') >= 0) { return null; }
+        for (Map.Entry<ResourceLocation, Entry> held : ENTRIES.entrySet()) {
+            if (held.getKey().getPath().equals(name)) { return held.getValue(); }
+        }
+        return null;
+    }
+
+    public static List<String> veinNames() {
+        List<String> names = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, Entry> held : ENTRIES.entrySet()) {
+            if (held.getValue().shape() instanceof ContentOreVein) { names.add(held.getKey().toString()); }
+        }
+        Collections.sort(names);
+        return names;
+    }
+
+    public static void after(Entry entry, ContentPlacer placer, RandomSource random, BlockPos origin, List<WorldgenDef> chain) {
+        WorldgenDef def = entry.def();
+        ContentOreSigns.place(placer, def, random, origin);
+        if (def.then().isEmpty()) { return; }
+        chain.add(def);
+        int rolls = def.thenCount().pick(random);
+        List<FollowDef> left = new ArrayList<>(def.then());
+        for (int roll = 0; roll < rolls && !left.isEmpty(); roll++) {
+            FollowDef chosen = FollowDef.pick(left, random);
+            if (chosen == null) { break; }
+            left.remove(chosen);
+            if (FollowDef.EMPTY.equals(chosen.name())) { continue; }
+            Entry next = byName(chosen.name());
+            if (next == null) {
+                ContentLog.LOGGER.error("Worldgen entry {} queues {}, which no pack registers as worldgen, so nothing follows it", def.key(), chosen.name());
+                continue;
+            }
+            if (chain.contains(next.def())) {
+                if (CHAIN_WARNED.add(def.key() + ">" + chosen.name())) { ContentLog.LOGGER.error("Worldgen entry {} queues {}, which already generated earlier in this chain, so the chain stops here rather than running forever", def.key(), chosen.name()); }
+                continue;
+            }
+            if (next.shape() instanceof IContentChunkShape) {
+                ContentLog.LOGGER.error("Worldgen entry {} queues {}, whose shape cannot follow another entry, so nothing follows it", def.key(), chosen.name());
+                continue;
+            }
+            int spread = chosen.spreadOr(def.thenSpread() >= 0 ? def.thenSpread() : Math.max(0, def.shape().radius().most()));
+            int dx = random.nextInt(2 * spread + 1) - spread;
+            int dz = random.nextInt(2 * spread + 1) - spread;
+            int dy = chosen.depthOr(def.thenDepth(), random);
+            if (dx == 0 && dy == 0 && dz == 0) { dy = -1; }
+            BlockPos pos = edgeOf(placer, entry, origin, dx, dy, dz);
+            if (pos.getY() < placer.floorY() || pos.getY() >= placer.ceilingY() || !ContentPlacer.loaded(placer.level(), pos)) { continue; }
+            ContentLog.LOGGER.debug("The {} at {}, {}, {} queues {} at {}, {}, {}, off its edge", def.key(), origin.getX(), origin.getY(), origin.getZ(), chosen.name(), pos.getX(), pos.getY(), pos.getZ());
+            ContentPlacer follower = placer.rebound(next.palette());
+            if (next.shape().generate(follower, random, pos)) { after(next, follower, random, pos, chain); }
+        }
+        chain.remove(chain.size() - 1);
+    }
+
+    private static BlockPos edgeOf(ContentPlacer placer, Entry entry, BlockPos origin, int dx, int dy, int dz) {
+        double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        double ux = dx / length;
+        double uy = dy / length;
+        double uz = dz / length;
+        int edge = 0;
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int step = 1; step <= EDGE_REACH; step++) {
+            at.set(origin.getX() + (int) Math.round(ux * step), origin.getY() + (int) Math.round(uy * step), origin.getZ() + (int) Math.round(uz * step));
+            if (ContentPlacer.loaded(placer.level(), at) && entry.palette().places(placer.level().getBlockState(at))) { edge = step; }
+        }
+        int out = edge + 1;
+        return new BlockPos(Mth.clamp(origin.getX() + (int) Math.round(ux * out), placer.lowX(), placer.highX()), origin.getY() + (int) Math.round(uy * out), Mth.clamp(origin.getZ() + (int) Math.round(uz * out), placer.lowZ(), placer.highZ()));
+    }
 
     public static boolean dimensionAllows(Entry entry, WorldGenLevel level) {
         if (entry.dimensions().isEmpty()) { return true; }
@@ -184,6 +265,7 @@ public final class ContentWorldgen {
             case ShapeDef.VENT: return new ContentVent(shape);
             case ShapeDef.IMPRINT: return new ContentImprint(shape, def.key(), def.replacesGiven());
             case ShapeDef.BELT: return new ContentBelt(shape, def.minHeight(), def.maxHeight(), def.key());
+            case ShapeDef.VEIN: return new ContentOreVein(shape, def.size(), def.attempts(), def.minHeight(), def.maxHeight(), def.key(), tier(def, shape.rich(), "rich"), tier(def, shape.poor(), "poor"));
             case ShapeDef.GEODE:
                 if (outline != null) { return new ContentGeode(shape, outline, fill); }
                 ContentLog.LOGGER.error("Worldgen {} makes a geode but names no registered outline block, so it generates as a cluster", def.key());
@@ -194,6 +276,13 @@ public final class ContentWorldgen {
                 return new ContentVein(def.size(), def.sparse());
             default: return new ContentVein(def.size(), def.sparse());
         }
+    }
+
+    @Nullable private static BlockState tier(WorldgenDef def, String named, String which) {
+        if (named.isEmpty()) { return null; }
+        BlockState state = state(named, def.key());
+        if (state == null) { ContentLog.LOGGER.error("Worldgen {} names {} as its {} block, which is not a registered block, so that tier places the normal block", def.key(), named, which); }
+        return state;
     }
 
     private static void bind(WorldgenDef def, List<BlockMatchDef> names, String where, Set<Block> whole, Set<BlockState> exact) {

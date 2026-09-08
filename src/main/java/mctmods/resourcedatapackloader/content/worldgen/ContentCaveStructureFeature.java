@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Hashes;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -58,7 +59,7 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         for (int cellX = Math.floorDiv(qx0 + 3 - (spanXZ - 1), spanXZ); cellX <= Math.floorDiv(qx0 + 3, spanXZ); cellX++) {
             for (int cellZ = Math.floorDiv(qz0 + 3 - (spanXZ - 1), spanXZ); cellZ <= Math.floorDiv(qz0 + 3, spanXZ); cellZ++) {
                 for (int cellY = cellY0; cellY <= cellY1; cellY++) {
-                    long cellHash = mix(level.getSeed(), cellX, cellY, cellZ);
+                    long cellHash = Hashes.mix(level.getSeed(), cellX, cellY, cellZ);
                     int wx = (int) ((cellX * (long) spanXZ + Math.floorMod(cellHash, spanXZ)) << 2);
                     int wz = (int) ((cellZ * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ)) << 2);
                     if (wx < blockX0 || wx > blockX0 + 15 || wz < blockZ0 || wz > blockZ0 + 15) { continue; }
@@ -124,16 +125,6 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         return true;
     }
 
-    private static long mix(long seed, int x, int y, int z) {
-        long h = seed ^ 0x28B7BD766A05068BL;
-        h ^= x * 0x2545F4914F6CDD1DL;
-        h ^= (long) y * 0x6C62272E07BB0142L;
-        h ^= (long) z * 0xCBF29CE484222325L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        return h;
-    }
 
     public record Setup(ResourceLocation region) implements FeatureConfiguration {
         public static final Codec<Setup> CODEC = RecordCodecBuilder.create(instance -> instance.group(

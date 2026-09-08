@@ -47,14 +47,17 @@
         "common.MixinMob",
         "common.MixinPackRepository",
         "common.MixinWorldLoaderPackConfig",
-        "common.MixinWorldLoaderPackConfig",
-        "common.MixinRecipeManager"
+        "common.MixinRecipeManager",
+        "common.MixinCactusBlock",
+        "common.MixinSugarCaneBlock",
+        "common.MixinLeavesBlock",
+        "common.MixinDirtPathBlock",
+        "common.MixinFarmBlock"
     ],
     "client": [
         "client.IEntityRenderers",
         "client.IWeightedBakedModel",
         "client.MixinGameRenderer",
-        "client.MixinMinecraft",
         "client.MixinMinecraft",
         "client.MixinClientLevel",
         "client.MixinChatScreen",
