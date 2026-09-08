@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockSapling extends BlockBush implements IGrowable, IContentBlock {
     public static final int MAX_VARIANTS = 1;
-    private static final int WORLDGEN_FLAGS = 16;
+    private static final int GROWTH_FLAGS = 3;
     private static final ThreadLocal<PropertyInteger> PENDING = new ThreadLocal<>();
     private final BlockDef def;
     private final SaplingDef sapling;
@@ -109,7 +109,7 @@ import javax.annotation.Nullable;
 
     private void generate(World world, BlockPos pos, Random rand) {
         if (sapling.usesStructure()) {
-            placeStructure(world, pos);
+            placeStructure(world, pos, rand);
             return;
         }
         IBlockState log = ContentStates.parse(sapling.log, def.registryName);
@@ -120,19 +120,21 @@ import javax.annotation.Nullable;
         if (!tree.generate(world, rand, pos)) { world.setBlockState(pos, getDefaultState(), 4); }
     }
 
-    private void placeStructure(World world, BlockPos pos) {
+    private void placeStructure(World world, BlockPos pos, Random rand) {
         if (!(world instanceof WorldServer)) { return; }
+        String named = sapling.growsInto(rand);
+        if (named == null || named.isEmpty()) { return; }
         WorldServer server = (WorldServer) world;
         MinecraftServer host = server.getMinecraftServer();
-        Template template = server.getStructureTemplateManager().get(host, new ResourceLocation(sapling.structure));
+        Template template = server.getStructureTemplateManager().get(host, new ResourceLocation(named));
         if (template == null) {
-            ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.registryName, sapling.structure);
+            ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.registryName, named);
             return;
         }
         BlockPos size = template.getSize();
         BlockPos origin = pos.add(-(size.getX() / 2), 0, -(size.getZ() / 2));
         world.setBlockToAir(pos);
-        template.addBlocksToWorld(world, origin, new PlacementSettings(), WORLDGEN_FLAGS);
+        template.addBlocksToWorld(world, origin, new PlacementSettings(), GROWTH_FLAGS);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }

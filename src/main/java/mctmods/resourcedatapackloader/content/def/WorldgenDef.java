@@ -138,7 +138,7 @@ public final class WorldgenDef {
         if (ShapeDef.GEODE.equals(shape.type) && outline != null) { return new ContentGeode(placer, shape, outline, fill); }
         if (ShapeDef.LARGEVEIN.equals(shape.type)) { return new ContentLargeVein(placer, size, sparse, shape.slim); }
         if (ShapeDef.DECORATION.equals(shape.type)) { return new ContentDecoration(placer, size, shape, surface); }
-        if (ShapeDef.TREE.equals(shape.type)) { return new ContentTree(size, shape, surface, registryName); }
+        if (ShapeDef.TREE.equals(shape.type)) { return new ContentTree(size, shape, surface, registryName, new ContentImprint(placer, shape, registryName, replacesGiven)); }
         if (ShapeDef.VINES.equals(shape.type)) { return new ContentVines(placer, size, shape); }
         if (ShapeDef.BASIN.equals(shape.type)) { return new ContentBasin(placer, shape); }
         if (ShapeDef.SPIRE.equals(shape.type)) { return new ContentSpire(placer, shape); }

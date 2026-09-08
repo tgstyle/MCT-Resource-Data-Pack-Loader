@@ -918,7 +918,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 }
 ```
 
-A `structure` replaces the generated tree with one of your templates, which is the way to build something a generator cannot, and nothing else in the block needs writing:
+A `structure` replaces the generated tree with one of your templates, which is the way to build something a generator cannot, and nothing else in the block needs writing. Name several under `structures` instead and the sapling picks one every time it grows, so a wood is not the same tree over and over:
 
 ```json
 {
@@ -937,6 +937,7 @@ A `structure` replaces the generated tree with one of your templates, which is t
 | `height` | no | int | `4` | Trunk height |
 | `vines` | no | boolean | `false` | Hang vines from the leaves |
 | `structure` | no | `namespace:name` | none | Grow into this template instead of a generated tree |
+| `structures` | no | list | none | Several templates to grow into, one chosen each time it grows. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
 
 ## Models, blockstates and textures
 
@@ -3292,7 +3293,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 }
 ```
 
-A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
+A `tree` with no `log` or `leaves` generates nothing, and says so in the log. Naming a `structure`, or several under `structures`, plants that template at each spot instead of growing one, and then no `log` or `leaves` is needed; a templated tree reads `turns`, `mirrors`, `integrity`, `lootTable` and `locateAs` exactly as an `imprint` does.
 
 | Type | What it makes |
 | --- | --- |
@@ -3334,14 +3335,14 @@ A `tree` with no `log` or `leaves` generates nothing, and says so in the log.
 | `log` | tree | block name | none | The trunk block |
 | `leaves` | tree | block name | none | The leaf block |
 | `vines` | tree | boolean | `false` | Hang vines from the leaves |
-| `structure` | imprint | `namespace:name` | none | The template to place |
-| `integrity` | imprint | 1 to 100 | `100` | Percentage of the template's blocks that actually appear |
-| `lootTable` | imprint | `namespace:path` | none | The loot table every chest inside the placed template is filled from the first time it is opened, and any other container that takes one, a shulker box or a mod's crate among them. Covers `structure` and every entry of `structures`; each chest rolls its own seed |
-| `structures` | imprint | list | none | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
-| `turns` | imprint | list | any | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely |
-| `mirrors` | imprint | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight`. An entry naming its own weight is written `{ "mirror": "leftright", "weight": 2 }`, and a `turns` entry the same with `turn` |
+| `structure` | imprint, tree | `namespace:name` | none | The template to place |
+| `integrity` | imprint, tree | 1 to 100 | `100` | Percentage of the template's blocks that actually appear |
+| `lootTable` | imprint, tree | `namespace:path` | none | The loot table every chest inside the placed template is filled from the first time it is opened, and any other container that takes one, a shulker box or a mod's crate among them. Covers `structure` and every entry of `structures`; each chest rolls its own seed |
+| `structures` | imprint, tree | list | none | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
+| `turns` | imprint, tree | list | any | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely |
+| `mirrors` | imprint, tree | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight`. An entry naming its own weight is written `{ "mirror": "leftright", "weight": 2 }`, and a `turns` entry the same with `turn` |
 | `at` | imprint | two ints, x and z | none | Place exactly once at those block coordinates on the surface, when that chunk generates, instead of by chance. See [Structures at exact places](#structures-at-exact-places) |
-| `locateAs` | imprint | string | none | Register every structure this entry places under that name, so `/locate <name>` finds the nearest. See [Finding placed structures](#finding-placed-structures) |
+| `locateAs` | imprint, tree | string | none | Register every structure this entry places under that name, so `/locate <name>` finds the nearest. See [Finding placed structures](#finding-placed-structures) |
 | `field` | field | object | `{ "type": "speckle" }` | How the field is worked out. Same keys as a hardness group's `field`, described under [The field](#the-field): `speckle` with `chances` and `spread`, or `seeded` with `cell`, `seeds`, `reach`, `arms` and `armReach` |
 | `threshold` | field, vein | 0.0 to 1.0 | `0.5` (`0.4` for vein) | How strong the field must be at a block before it is placed. Lower fills more |
 | `fade` | field | int | `0` | Speckle out the top of the band instead of ending it flat: over the top this many blocks of the height range, each block's odds of placing thin out step by step, the same look the engine gives `deepStone` where it meets the world above |

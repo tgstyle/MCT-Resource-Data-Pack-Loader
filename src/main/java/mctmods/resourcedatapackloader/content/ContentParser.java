@@ -616,6 +616,7 @@ public final class ContentParser {
                 Math.max(1, JsonUtils.getInt(entry, "chance", 7)),
                 Math.max(0, JsonUtils.getInt(entry, "light", 9)),
                 JsonUtils.getString(entry, "structure", ""),
+                picks(entry, "structures", "structure"),
                 JsonUtils.getString(entry, "log", "minecraft:log"),
                 JsonUtils.getString(entry, "leaves", "minecraft:leaves"),
                 Math.max(1, JsonUtils.getInt(entry, "height", 4)));

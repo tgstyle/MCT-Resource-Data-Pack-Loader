@@ -24,21 +24,25 @@ public final class ContentTree implements IContentShape {
     private final int drift;
     @Nullable private final IBlockState log;
     @Nullable private final IBlockState leaves;
+    private final boolean templated;
+    private final ContentImprint imprint;
 
-    public ContentTree(AmountDef count, ShapeDef shape, Set<Block> surface, ResourceLocation key) {
+    public ContentTree(AmountDef count, ShapeDef shape, Set<Block> surface, ResourceLocation key, ContentImprint imprint) {
         this.count = count;
         this.height = shape.height;
         this.surface = surface;
         this.scatterX = shape.scatterX;
         this.scatterZ = shape.scatterZ;
         this.drift = Math.max(1, shape.scatterY);
+        this.templated = !shape.structures.isEmpty() || !shape.structure.isEmpty();
+        this.imprint = imprint;
         this.log = ContentStates.parse(shape.log, key);
         this.leaves = ContentStates.parse(shape.leaves, key);
-        if (this.log == null || this.leaves == null) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log, shape.leaves); }
+        if (!templated && (this.log == null || this.leaves == null)) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log, shape.leaves); }
     }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
-        if (log == null || leaves == null) { return false; }
+        if (!templated && (log == null || leaves == null)) { return false; }
         boolean placed = false;
         int attempts = count.pick(random);
         for (int attempt = 0; attempt < attempts; attempt++) {
@@ -49,8 +53,11 @@ public final class ContentTree implements IContentShape {
             if (Math.abs(top.getY() - origin.getY()) > drift) { continue; }
             if (!surface.isEmpty() && !surface.contains(world.getBlockState(top.down()).getBlock())) { continue; }
             if (!world.isAirBlock(top)) { continue; }
-            ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, height.pick(random)), log, leaves, surface);
-            placed |= tree.generate(world, random, top);
+            if (templated) { placed |= imprint.generate(world, random, top); }
+            else {
+                ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, height.pick(random)), log, leaves, surface);
+                placed |= tree.generate(world, random, top);
+            }
         }
         return placed;
     }

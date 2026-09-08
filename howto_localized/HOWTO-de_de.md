@@ -918,7 +918,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 }
 ```
 
-Ein `structure` ersetzt den generierten Baum durch eine deiner Vorlagen, und das ist der Weg, etwas zu bauen, was ein Generator nicht hinbekommt; sonst muss nichts im Block stehen:
+Ein `structure` ersetzt den generierten Baum durch eine deiner Vorlagen, und das ist der Weg, etwas zu bauen, was ein Generator nicht hinbekommt; sonst muss nichts im Block stehen. Nennst du stattdessen mehrere unter `structures`, wählt der Setzling bei jedem Wachsen eine davon aus, damit ein Wald nicht immer derselbe Baum ist:
 
 ```json
 {
@@ -937,6 +937,7 @@ Ein `structure` ersetzt den generierten Baum durch eine deiner Vorlagen, und das
 | `height` | nein | int | `4` | Stammhöhe |
 | `vines` | nein | boolean | `false` | Ranken von den Blättern hängen lassen |
 | `structure` | nein | `namespace:name` | keine | Wächst zu dieser Vorlage statt zu einem generierten Baum |
+| `structures` | nein | Liste | keine | Mehrere Vorlagen, aus denen bei jedem Wachsen eine gewählt wird. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
 
 ## Modelle, Blockstates und Texturen
 
@@ -3292,7 +3293,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 }
 ```
 
-Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
+Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log. Nennst du ein `structure` oder mehrere unter `structures`, wird an jeder Stelle diese Vorlage gesetzt, statt einen Baum zu generieren, und dann braucht es weder `log` noch `leaves`; ein Baum aus einer Vorlage liest `turns`, `mirrors`, `integrity`, `lootTable` und `locateAs` genau wie ein `imprint`.
 
 | Typ | Was daraus wird |
 | --- | --- |
@@ -3334,14 +3335,14 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log.
 | `log` | tree | Blockname | keiner | Der Stammblock |
 | `leaves` | tree | Blockname | keiner | Der Blätterblock |
 | `vines` | tree | boolean | `false` | Ranken von den Blättern hängen lassen |
-| `structure` | imprint | `namespace:name` | keine | Die Vorlage, die gesetzt wird |
-| `integrity` | imprint | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die tatsächlich erscheinen |
-| `lootTable` | imprint | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird, und jeder andere Behälter, der eine annimmt, eine Shulkerkiste oder die Kiste eines Mods darunter. Gilt für `structure` und jeden Eintrag von `structures`; jede Truhe würfelt ihren eigenen Seed |
-| `structures` | imprint | Liste | keine | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
-| `turns` | imprint | Liste | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich |
-| `mirrors` | imprint | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight`. Ein Eintrag mit eigenem Gewicht wird `{ "mirror": "leftright", "weight": 2 }` geschrieben, ein `turns`-Eintrag genauso mit `turn` |
+| `structure` | imprint, tree | `namespace:name` | keine | Die Vorlage, die gesetzt wird |
+| `integrity` | imprint, tree | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die tatsächlich erscheinen |
+| `lootTable` | imprint, tree | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird, und jeder andere Behälter, der eine annimmt, eine Shulkerkiste oder die Kiste eines Mods darunter. Gilt für `structure` und jeden Eintrag von `structures`; jede Truhe würfelt ihren eigenen Seed |
+| `structures` | imprint, tree | Liste | keine | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
+| `turns` | imprint, tree | Liste | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich |
+| `mirrors` | imprint, tree | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight`. Ein Eintrag mit eigenem Gewicht wird `{ "mirror": "leftright", "weight": 2 }` geschrieben, ein `turns`-Eintrag genauso mit `turn` |
 | `at` | imprint | zwei Ints, x und z | keine | Genau einmal an diesen Blockkoordinaten an der Oberfläche setzen, wenn dieser Chunk generiert, statt nach Zufall. Siehe [Strukturen an genauen Stellen](#strukturen-an-genauen-stellen) |
-| `locateAs` | imprint | String | keiner | Jede Struktur, die dieser Eintrag setzt, unter diesem Namen eintragen, sodass `/locate <Name>` die nächste findet. Siehe [Gesetzte Strukturen finden](#platzierte-strukturen-finden) |
+| `locateAs` | imprint, tree | String | keiner | Jede Struktur, die dieser Eintrag setzt, unter diesem Namen eintragen, sodass `/locate <Name>` die nächste findet. Siehe [Gesetzte Strukturen finden](#platzierte-strukturen-finden) |
 | `field` | field | Objekt | `{ "type": "speckle" }` | Wie das Feld errechnet wird. Dieselben Schlüssel wie das `field` einer Härtegruppe, beschrieben unter [Das Feld](#das-feld): `speckle` mit `chances` und `spread`, oder `seeded` mit `cell`, `seeds`, `reach`, `arms` und `armReach` |
 | `threshold` | field, vein | 0,0 bis 1,0 | `0,5` (`0,4` bei vein) | Wie stark das Feld an einem Block sein muss, bevor dort gesetzt wird. Niedriger füllt mehr |
 | `fade` | field | int | `0` | Lässt das Band oben ausfransen statt glatt zu enden: über die obersten so vielen Blöcke des Höhenbereichs sinkt die Chance jedes Blocks Stufe für Stufe, derselbe Look, den die Engine `deepStone` am Übergang zur Welt darüber gibt |
