@@ -249,11 +249,13 @@ public final class ContentStructureControl {
     private static void adaptation(String entry, List<String> touched) {
         String[] parts = split(entry, "structureAdaptation");
         if (parts == null) { return; }
-        String mode = parts[1].trim().toLowerCase(Locale.ROOT);
-        if (!ADAPTATIONS.contains(mode)) {
-            ContentLog.LOGGER.error("structureAdaptation entry '{}' asks for '{}', which is not one of {}", entry, mode, ADAPTATIONS);
+        String asked = parts[1].trim().toLowerCase(Locale.ROOT);
+        if (!ADAPTATIONS.contains(asked)) {
+            ContentLog.LOGGER.error("structureAdaptation entry '{}' asks for '{}', which is not one of {}", entry, asked, ADAPTATIONS);
             return;
         }
+        String mode = ContentFormats.adaptation(asked);
+        if (!mode.equals(asked) && WARNED.add(entry)) { ContentLog.LOGGER.warn("structureAdaptation entry '{}' asks for '{}', which this line does not carry, so '{}' stands in", entry, asked, mode); }
         for (ResourceLocation structure : structures(parts[0])) {
             JsonObject json = structure(structure);
             if (json == null) { continue; }

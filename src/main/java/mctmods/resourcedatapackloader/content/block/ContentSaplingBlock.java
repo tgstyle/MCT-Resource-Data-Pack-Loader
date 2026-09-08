@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +34,6 @@ public class ContentSaplingBlock extends SaplingBlock {
         super(new TreeGrower(id.toString(), Optional.empty(), Optional.of(ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), Optional.empty()), properties);
         this.def = def;
         this.sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
-        if (this.sapling.usesStructure()) { ContentLog.LOGGER.warn("Sapling {} grows into structure '{}', which this line does not carry yet, so it grows a generated tree instead", id, this.sapling.structure()); }
     }
 
     public BlockDef getDef() { return def; }
@@ -47,5 +49,30 @@ public class ContentSaplingBlock extends SaplingBlock {
         if (level.getMaxLocalRawBrightness(pos.above()) < sapling.light()) { return; }
         if (random.nextInt(Math.max(1, sapling.chance())) != 0) { return; }
         advanceTree(level, pos, state, random);
+    }
+
+    @Override public void advanceTree(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull RandomSource random) {
+        if (!sapling.usesStructure()) {
+            super.advanceTree(level, pos, state, random);
+            return;
+        }
+        if (state.getValue(STAGE) == 0) {
+            level.setBlock(pos, state.cycle(STAGE), 4);
+            return;
+        }
+        placeStructure(level, pos, random);
+    }
+
+    private void placeStructure(ServerLevel level, BlockPos pos, RandomSource random) {
+        ResourceLocation named = ResourceLocation.tryParse(sapling.structure());
+        Optional<StructureTemplate> held = named == null ? Optional.empty() : level.getStructureManager().get(named);
+        if (held.isEmpty()) {
+            ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.key(), sapling.structure());
+            return;
+        }
+        Vec3i size = held.get().getSize();
+        BlockPos origin = pos.offset(-(size.getX() / 2), 0, -(size.getZ() / 2));
+        level.removeBlock(pos, false);
+        held.get().placeInWorld(level, origin, origin, new StructurePlaceSettings(), random, Block.UPDATE_ALL);
     }
 }

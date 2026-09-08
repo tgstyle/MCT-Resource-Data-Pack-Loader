@@ -58,6 +58,8 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> shovelPathReverts;
         private final ModConfigSpec.BooleanValue hoeTilling;
         private final ModConfigSpec.ConfigValue<String> hoeTillsInto;
+        private final ModConfigSpec.IntValue caneMaxHeight;
+        private final ModConfigSpec.IntValue cactusMaxHeight;
 
         private Content(ModConfigSpec.Builder builder) {
             builder.comment("Blocks, items, fluids and everything else packs define").push("content");
@@ -76,6 +78,8 @@ public final class Config {
             shovelPathReverts = builder.comment("What sneaking with a shovel turns a path back into. Empty uses dirt").define("shovelPathReverts", "");
             hoeTilling = builder.comment("Let a hoe till blocks marked behavesAs till [Default=true]").define("hoeTilling", true);
             hoeTillsInto = builder.comment("What a hoe turns those blocks into. Empty uses farmland").define("hoeTillsInto", "");
+            caneMaxHeight = builder.comment("How tall vanilla sugar cane grows. Vanilla is 3. Pack defined cane blocks use their own growth section and ignore this [Default=3]").defineInRange("caneMaxHeight", 3, 1, 255);
+            cactusMaxHeight = builder.comment("The same for vanilla cactus [Default=3]").defineInRange("cactusMaxHeight", 3, 1, 255);
             builder.pop();
         }
 
@@ -108,6 +112,10 @@ public final class Config {
         public boolean hoeTilling() { return loaded() ? hoeTilling.get() : ConfigCore.flag("content.hoeTilling", true); }
 
         public String hoeTillsInto() { return loaded() ? hoeTillsInto.get() : ConfigCore.text("content.hoeTillsInto", ""); }
+
+        public int caneMaxHeight() { return loaded() ? caneMaxHeight.get() : 3; }
+
+        public int cactusMaxHeight() { return loaded() ? cactusMaxHeight.get() : 3; }
     }
 
     public static final class Packs {
@@ -211,17 +219,25 @@ public final class Config {
     }
 
     public static final class Tweaks {
+        private final ModConfigSpec.BooleanValue promptLeafDecay;
         private final ModConfigSpec.BooleanValue lenientPaths;
+        private final ModConfigSpec.BooleanValue unbreakableSpawners;
         private final ModConfigSpec.BooleanValue experimentalWarning;
 
         private Tweaks(ModConfigSpec.Builder builder) {
             builder.comment("Small changes to how vanilla behaves").push("tweaks");
+            promptLeafDecay = builder.comment("Leaves that lose their tree decay within a second instead of waiting on random ticks [Default=true]").define("promptLeafDecay", true);
             lenientPaths = builder.comment("Paths and tilled ground can be made under a block and stay there when one is placed above [Default=true]").define("lenientPaths", true);
+            unbreakableSpawners = builder.comment("Mob spawners cannot be mined or blown up. Creative mode still removes them. Requires a restart [Default=false]").define("unbreakableSpawners", false);
             experimentalWarning = builder.comment("Show the game's experimental settings warning when a world is made or opened. Off answers it as if you had clicked proceed [Default=false]").define("experimentalWarning", false);
             builder.pop();
         }
 
+        public boolean promptLeafDecay() { return loaded() ? promptLeafDecay.get() : ConfigCore.flag("tweaks.promptLeafDecay", true); }
+
         public boolean lenientPaths() { return loaded() ? lenientPaths.get() : ConfigCore.flag("tweaks.lenientPaths", true); }
+
+        public boolean unbreakableSpawners() { return loaded() ? unbreakableSpawners.get() : ConfigCore.flag("tweaks.unbreakableSpawners", false); }
 
         public boolean experimentalWarning() { return loaded() ? experimentalWarning.get() : ConfigCore.flag("tweaks.experimentalWarning", false); }
     }
@@ -264,6 +280,11 @@ public final class Config {
         private final ModConfigSpec.IntValue retrogenChunksPerTick;
         private final ModConfigSpec.BooleanValue blockOres;
         private final ModConfigSpec.ConfigValue<List<? extends String>> oreWhitelist;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> prospectItems;
+        private final ModConfigSpec.BooleanValue prospectItemsAreBlacklist;
+        private final ModConfigSpec.BooleanValue prospectDrops;
+        private final ModConfigSpec.IntValue prospectSlow;
+        private final ModConfigSpec.IntValue prospectWear;
         private final ModConfigSpec.ConfigValue<List<? extends String>> oreTypes;
         private final ModConfigSpec.BooleanValue oreTypesAreBlacklist;
         private final ModConfigSpec.ConfigValue<List<? extends String>> blockOreDimensions;
@@ -356,6 +377,11 @@ public final class Config {
             retrogenChunksPerTick = builder.comment("How many already generated chunks to catch up per tick. Higher is faster but stutters more [Default=2]").defineInRange("retrogenChunksPerTick", 2, 1, 64);
             blockOres = builder.comment("Stop every mod, and Minecraft itself, from generating ores. Only the mods in oreWhitelist still generate. An ore is a placed feature with ore in its id, which is Minecraft's and most mods' [Default=false]").define("blockOres", false);
             oreWhitelist = builder.comment("Mod ids allowed to generate ores while blockOres is on. Ores a pack defines belong to that pack's namespace [Default=[minecraft]]").defineList("oreWhitelist", List.of("minecraft"), () -> "", each -> each instanceof String);
+            prospectItems = builder.comment("Items that prospect for vein shaped worldgen entries when a sneaking player breaks a block with one, as item=entry|entry[,radius in chunks] or item=*[,radius], e.g. minecraft:compass=iron_vein|coal_seam or mypack:rod=*,12. The reading names the ore and a compass direction [Default=[]]").defineList("prospectItems", List.of(), () -> "", each -> each instanceof String);
+            prospectItemsAreBlacklist = builder.comment("On, the entries named after an item in prospectItems are the ones it does NOT read, and every other vein shaped entry is [Default=false]").define("prospectItemsAreBlacklist", false);
+            prospectDrops = builder.comment("Whether a block broken in prospecting mode drops anything. Off, the sample is destroyed: no drops, no experience [Default=false]").define("prospectDrops", false);
+            prospectSlow = builder.comment("How many times slower a block breaks in prospecting mode [Default=2]").defineInRange("prospectSlow", 2, 1, 100);
+            prospectWear = builder.comment("How much durability a prospecting break costs the item, at least 2 [Default=2]").defineInRange("prospectWear", 2, 2, 1000);
             oreTypes = builder.comment("Ore types this applies to, whoever generates them and whatever the whitelist says. Known types: COAL, IRON, COPPER, GOLD, REDSTONE, DIAMOND, LAPIS, EMERALD, QUARTZ, DIRT, GRAVEL, DIORITE, GRANITE, ANDESITE, TUFF, CLAY, SILVERFISH, CUSTOM for any other ore [Default=[]]").defineList("oreTypes", List.of(), () -> "", each -> each instanceof String);
             oreTypesAreBlacklist = builder.comment("On, oreTypes are blocked. Off, only oreTypes generate [Default=true]").define("oreTypesAreBlacklist", true);
             blockOreDimensions = builder.comment("Dimensions ore blocking applies to, by id such as minecraft:the_nether; read as the overworld, nether and end biome tags. Empty means every dimension [Default=[]]").defineList("blockOreDimensions", List.of(), () -> "", each -> each instanceof String);
@@ -484,6 +510,15 @@ public final class Config {
         public boolean blockOres() { return loaded() ? blockOres.get() : ConfigCore.flag("worldgen.blockOres", false); }
 
         public List<String> oreWhitelist() { return loaded() ? List.copyOf(oreWhitelist.get()) : List.of("minecraft"); }
+        public List<String> prospectItems() { return loaded() ? List.copyOf(prospectItems.get()) : List.of(); }
+
+        public boolean prospectItemsAreBlacklist() { return loaded() && prospectItemsAreBlacklist.get(); }
+
+        public boolean prospectDrops() { return loaded() && prospectDrops.get(); }
+
+        public int prospectSlow() { return loaded() ? prospectSlow.get() : 2; }
+
+        public int prospectWear() { return loaded() ? prospectWear.get() : 2; }
 
         public List<String> oreTypes() { return loaded() ? List.copyOf(oreTypes.get()) : List.of(); }
 

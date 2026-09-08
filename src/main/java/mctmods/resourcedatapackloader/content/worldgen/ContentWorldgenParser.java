@@ -2,8 +2,10 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.BlockWeightDef;
+import mctmods.resourcedatapackloader.content.def.FollowDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.SpreadDef;
@@ -28,7 +30,7 @@ import javax.annotation.Nullable;
 public final class ContentWorldgenParser {
     private static final Gson GSON = new Gson();
     private static final Set<String> KNOWN_SHAPES = Set.of(ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION,
-            ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD);
+            ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN);
     private static final Set<String> KNOWN_SPREADS = Set.of(SpreadDef.EVEN, SpreadDef.CENTERED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED);
 
     private ContentWorldgenParser() {}
@@ -88,7 +90,62 @@ public final class ContentWorldgenParser {
                 GsonHelper.getAsBoolean(json, "retrogen", false),
                 GsonHelper.getAsString(json, "retrogenKey", "").trim(),
                 List.copyOf(regions), snap, snap.isEmpty() ? 0 : depth,
-                spread(key, json, minHeight, maxHeight), shape(key, json));
+                spread(key, json, minHeight, maxHeight), shape(key, json),
+                indicators(key, json), ContentParser.amount(json, "indicatorCount", 1, 0), Math.max(0, GsonHelper.getAsInt(json, "indicatorSpread", 0)),
+                followers(key, json), ContentParser.amount(json, "thenCount", 1, 0),
+                json.has("thenSpread") ? Math.max(0, GsonHelper.getAsInt(json, "thenSpread", 0)) : -1,
+                ContentParser.amount(json, "thenDepth", 0, Integer.MIN_VALUE),
+                GsonHelper.getAsString(json, "prospectAs", "").trim());
+    }
+
+    private static List<PickDef> indicators(ResourceLocation key, JsonObject json) {
+        List<PickDef> picked = new ArrayList<>();
+        for (String entry : Json.strings(json, "indicators")) {
+            int at = entry.indexOf('=');
+            String name = (at < 0 ? entry : entry.substring(0, at)).trim().toLowerCase(Locale.ROOT);
+            int weight = 1;
+            if (at >= 0) {
+                try { weight = Integer.parseInt(entry.substring(at + 1).trim()); }
+                catch (NumberFormatException bad) { ContentLog.LOGGER.error("Worldgen definition {} has an indicators entry '{}' whose weight is not a number, reading it as 1", key, entry); }
+            }
+            if (!name.isEmpty()) { picked.add(new PickDef(name, Math.max(1, weight))); }
+        }
+        return List.copyOf(picked);
+    }
+
+    private static List<FollowDef> followers(ResourceLocation key, JsonObject json) {
+        if (!json.has("then") || !json.get("then").isJsonArray()) { return List.of(); }
+        List<FollowDef> followers = new ArrayList<>();
+        for (JsonElement element : json.getAsJsonArray("then")) {
+            String name;
+            int weight = 1;
+            int spread = -1;
+            AmountDef depth = null;
+            if (element.isJsonObject()) {
+                JsonObject follow = element.getAsJsonObject();
+                name = GsonHelper.getAsString(follow, "name", "");
+                weight = GsonHelper.getAsInt(follow, "weight", 1);
+                spread = follow.has("spread") ? Math.max(0, GsonHelper.getAsInt(follow, "spread", 0)) : -1;
+                depth = follow.has("depth") ? ContentParser.amount(follow, "depth", 0, Integer.MIN_VALUE) : null;
+            }
+            else {
+                String entry = element.getAsString();
+                int at = entry.indexOf('=');
+                name = at < 0 ? entry : entry.substring(0, at);
+                if (at >= 0) {
+                    try { weight = Integer.parseInt(entry.substring(at + 1).trim()); }
+                    catch (NumberFormatException bad) { ContentLog.LOGGER.error("Worldgen definition {} has a then entry '{}' whose weight is not a number, reading it as 1", key, entry); }
+                }
+            }
+            name = name.trim();
+            if (name.isEmpty()) {
+                ContentLog.LOGGER.error("Worldgen definition {} has a then entry with no name, ignoring it", key);
+                continue;
+            }
+            if (!FollowDef.EMPTY.equals(name) && name.indexOf(':') < 0) { name = key.getNamespace() + ":" + name; }
+            followers.add(new FollowDef(name, weight, spread, depth));
+        }
+        return List.copyOf(followers);
     }
 
     private static List<BlockWeightDef> weights(ResourceLocation key, JsonObject json) {
@@ -194,11 +251,22 @@ public final class ContentWorldgenParser {
                 Math.max(0, GsonHelper.getAsInt(entry, "rarity", 0)),
                 GsonHelper.getAsBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(GsonHelper.getAsJsonObject(entry, "field", new JsonObject())) : null,
-                GsonHelper.getAsFloat(entry, "threshold", 0.5F),
+                GsonHelper.getAsFloat(entry, "threshold", ShapeDef.VEIN.equals(type) ? 0.4F : 0.5F),
                 Math.max(0, GsonHelper.getAsInt(entry, "fade", 0)),
                 GsonHelper.getAsString(entry, "lootTable", "").trim(),
                 GsonHelper.getAsString(entry, "locateAs", "").trim(),
-                pinned(key, entry));
+                pinned(key, entry),
+                pattern(key, entry),
+                Mth.clamp(GsonHelper.getAsFloat(entry, "density", 1.0F), 0.0F, 1.0F),
+                GsonHelper.getAsString(entry, "rich", "").trim(),
+                GsonHelper.getAsString(entry, "poor", "").trim());
+    }
+
+    private static String pattern(ResourceLocation key, JsonObject entry) {
+        String named = GsonHelper.getAsString(entry, "pattern", ShapeDef.DEFAULT).trim().toLowerCase(Locale.ROOT);
+        if (ShapeDef.DEFAULT.equals(named) || ShapeDef.BANDED.equals(named) || ShapeDef.TUBE.equals(named)) { return named; }
+        ContentLog.LOGGER.error("Worldgen {} asks for vein pattern '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.DEFAULT, ShapeDef.BANDED, ShapeDef.TUBE, ShapeDef.DEFAULT);
+        return ShapeDef.DEFAULT;
     }
 
     @Nullable private static int[] pinned(ResourceLocation key, JsonObject entry) {

@@ -98,8 +98,9 @@ import javax.annotation.Nonnull;
 
     private boolean crowded(LevelReader level, BlockPos pos) {
         for (Direction facing : Direction.Plane.HORIZONTAL) {
-            BlockState side = level.getBlockState(pos.relative(facing));
-            if (side.isSolid() || side.is(Blocks.LAVA)) { return true; }
+            BlockPos side = pos.relative(facing);
+            BlockState held = level.getBlockState(side);
+            if (!held.getCollisionShape(level, side).isEmpty() || held.is(Blocks.LAVA)) { return true; }
         }
         return false;
     }

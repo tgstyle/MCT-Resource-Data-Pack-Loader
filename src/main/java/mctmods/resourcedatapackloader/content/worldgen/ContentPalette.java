@@ -36,13 +36,15 @@ public final class ContentPalette {
     }
 
     public BlockState choose(RandomSource random) {
-        if (states.size() < 2) { return states.get(0); }
+        if (states.size() < 2) { return states.getFirst(); }
         int roll = random.nextInt(weight);
         for (int index = 0; index < ladder.length; index++) {
             if (roll < ladder[index]) { return states.get(index); }
         }
-        return states.get(states.size() - 1);
+        return states.getLast();
     }
+
+    public boolean places(BlockState state) { return states.contains(state); }
 
     public boolean replaceable(BlockState state) { return targets.contains(state.getBlock()) || exact.contains(state); }
 

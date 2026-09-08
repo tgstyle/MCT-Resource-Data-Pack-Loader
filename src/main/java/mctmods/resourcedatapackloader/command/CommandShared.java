@@ -3,24 +3,32 @@ package mctmods.resourcedatapackloader.command;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import java.util.ArrayList;
+import java.util.Comparator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
 import java.nio.file.Path;
@@ -60,6 +68,19 @@ public final class CommandShared {
                     locate(context.getSource(), target);
                     return 1;
                 })))
+                .then(Commands.literal("vein").then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
+                    for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
+                    return suggestions.buildFuture();
+                }).executes(context -> {
+                    ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
+                    ran(context.getSource(), name, "vein " + asked);
+                    return vein(context.getSource(), asked, 8);
+                }).then(Commands.argument("radius", IntegerArgumentType.integer(1, 64)).executes(context -> {
+                    ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
+                    int radius = IntegerArgumentType.getInteger(context, "radius");
+                    ran(context.getSource(), name, "vein " + asked + " " + radius);
+                    return vein(context.getSource(), asked, radius);
+                }))))
                 .then(Commands.literal("unused").executes(context -> {
                     ran(context.getSource(), name, "unused");
                     unused(context.getSource(), unusedNote);
@@ -76,6 +97,41 @@ public final class CommandShared {
                             config(context.getSource(), true, configNote);
                             return 1;
                         })));
+    }
+
+    private static int vein(CommandSourceStack source, ResourceLocation asked, int radius) {
+        ContentWorldgen.Entry found = ContentWorldgen.entry(asked);
+        if (found == null && "minecraft".equals(asked.getNamespace())) { found = ContentWorldgen.byName(asked.getPath()); }
+        if (found == null) {
+            send(source, ChatFormatting.RED, tr("rdpl.command.veinunknown", "minecraft".equals(asked.getNamespace()) ? asked.getPath() : asked.toString()));
+            return 0;
+        }
+        if (!(found.shape() instanceof ContentOreVein shape)) {
+            send(source, ChatFormatting.RED, tr("rdpl.command.veinnotvein", found.def().key().toString()));
+            return 0;
+        }
+        ServerLevel level = source.getLevel();
+        BlockPos here = BlockPos.containing(source.getPosition());
+        int chunkX = here.getX() >> 4;
+        int chunkZ = here.getZ() >> 4;
+        List<ContentOreVein.Vein> veins = new ArrayList<>();
+        for (int cx = chunkX - radius; cx <= chunkX + radius; cx++) {
+            for (int cz = chunkZ - radius; cz <= chunkZ + radius; cz++) {
+                for (ContentOreVein.Vein vein : shape.veinsOf(level.getSeed(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight(), cx, cz)) {
+                    if (ContentWorldgen.dimensionAllows(found, level) && ContentWorldgen.allows(found, level, vein.pos())) { veins.add(vein); }
+                }
+            }
+        }
+        if (veins.isEmpty()) {
+            send(source, ChatFormatting.GRAY, tr("rdpl.command.veinnone", found.def().key().toString(), radius));
+            return 0;
+        }
+        veins.sort(Comparator.comparingDouble(vein -> here.distSqr(vein.pos())));
+        send(source, ChatFormatting.GREEN, tr("rdpl.command.veinfound", veins.size(), found.def().key().toString(), radius));
+        for (ContentOreVein.Vein vein : veins.subList(0, Math.min(5, veins.size()))) {
+            send(source, ChatFormatting.WHITE, tr("rdpl.command.veinat", vein.x(), vein.y(), vein.z(), (int) Math.sqrt(here.distSqr(vein.pos()))));
+        }
+        return veins.size();
     }
 
     static void ran(CommandSourceStack source, String name, String rest) { ContentLog.LOGGER.debug("{} ran /{} {}", source.getTextName(), name, rest); }

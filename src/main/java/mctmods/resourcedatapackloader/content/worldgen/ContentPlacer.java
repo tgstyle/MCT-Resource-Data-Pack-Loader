@@ -37,6 +37,16 @@ public final class ContentPlacer {
 
     public WorldGenLevel level() { return level; }
 
+    public ContentPlacer rebound(ContentPalette other) { return new ContentPlacer(level, other, new ChunkPos(centerX, centerZ), reach); }
+
+    public int lowX() { return (centerX - reach) << 4; }
+
+    public int highX() { return ((centerX + reach) << 4) + 15; }
+
+    public int lowZ() { return (centerZ - reach) << 4; }
+
+    public int highZ() { return ((centerZ + reach) << 4) + 15; }
+
     public ContentPalette palette() { return palette; }
 
     public int floorY() { return level.getMinBuildHeight() + 1; }
