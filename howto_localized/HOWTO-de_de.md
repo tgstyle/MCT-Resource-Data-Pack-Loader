@@ -3925,10 +3925,26 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villagePathBridgeFrameHeight": 4,
     "villagePathBridgeFrameRun": 24,
     "villagePathBridgeFrameLeast": 24,
+    "villagePathVergeBlock": "",
+    "villagePathVergeWaterBlock": "minecraft:planks",
     "villagePathTunnelBlock": "minecraft:stonebrick",
     "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
     "villagePathTunnelLightRun": 8,
+    "villageSewerBlock": "minecraft:stonebrick",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:stonebrick:3",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:iron_trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 30,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
     "villagePathCenterBlock": "minecraft:quartz_block",
     "villagePathCenterDash": 2,
     "villagePathLineBlock": "minecraft:stone_slab",
@@ -3970,10 +3986,26 @@ Alles Folgende greift nur, solange `terrainAdaptation` an ist. Jede dieser Einst
 | `villagePathBridgeFrameHeight` | Zahl | `4` | Wie viele Blöcke lichte Höhe der Rahmen über dem Deck lässt; der Balken liegt einen Block darüber |
 | `villagePathBridgeFrameRun` | Zahl | `24` | Wie viele Reihen die Rahmen auseinanderstehen, wenn eine Brücke für mehrere lang genug ist |
 | `villagePathBridgeFrameLeast` | Zahl | `24` | Der kürzeste überbrückte Lauf, der überhaupt einen Rahmen bekommt. Eine kürzere Brücke bleibt schlicht |
+| `villagePathVergeBlock` | Block | leer | Der Block, mit dem der Boden neben einer Straße und unter einem Grundstück aufgefüllt wird, wo das Dorf Land schaffen muss. Leer folgt dem Gelände und legt den Füllblock des Bioms mit Gras obenauf, wo es Erde wäre |
+| `villagePathVergeWaterBlock` | Block | `minecraft:planks` | Was aus dieser Füllung wird, wo sie über Wasser steht, damit ein auf einen See hinausgeführter Randstreifen keine Erdsäule ist. Er kleidet auch eine über Wasser stehengebliebene Steinstufe |
 | `villagePathTunnelBlock` | Block | leer | Kleidet eine Straße dort aus, wo sie einen Hügel durchbohrt, statt ihn aufzuschneiden: die Wände zu beiden Seiten der Röhre und die Decke darüber. Leer bohrt keine Tunnel, und eine Straße schneidet wie bisher durch den Hügel |
 | `villagePathTunnelDepth` | Zahl | `10` | Wie viel Boden über der Fahrbahn stehen muss, bevor ein Abschnitt gebohrt statt aufgeschnitten wird. Eine Erhebung, die über zwölf Reihen oder mehr so tief über der Straße liegt, wird eben gehalten und durchbohrt, ihre flacheren Zufahrten werden aufgeschnitten; eine kürzere Kuppe wird wie bisher aufgeschnitten. Zählt erst, wenn `villagePathTunnelBlock` einen Block nennt |
 | `villagePathTunnelLightBlock` | Block | leer | Ein Licht, das entlang der Mittellinie in die Tunneldecke gesetzt wird. Leer setzt keins |
 | `villagePathTunnelLightRun` | Zahl | `8` | Wie viele Blöcke diese Lichter auseinander sitzen. An Weltkoordinaten verankert, damit die Lichter eines Straßenstücks im nächsten weiterlaufen; ein Tunnel, der zu kurz ist, um eine dieser Stellen zu erreichen, wird einmal beleuchtet, in seiner Mitte |
+| `villageSewerBlock` | Blockname | keiner | Der Block, mit dem ein Kanal unter den Straßen eines Dorfes ausgekleidet wird: Boden, beide Wände und Decke. Leer gräbt keine Kanäle |
+| `villageSewerDepth` | Zahl | `8` | Wie weit unter der Straßenoberfläche der Kanalboden liegt. Der Kanal folgt seiner Straße, eine steigende Straße trägt also einen steigenden Kanal |
+| `villageSewerHeight` | Zahl | `3` | Wie viele Blöcke Kopfhöhe über dem Gehweg stehen |
+| `villageSewerWidth` | Zahl | `5` | Wie breit der Kanal läuft, quer gezählt einschließlich seiner beiden Wände. Eine gerade Zahl wird aufgerundet, damit die Rinne die Mitte behält |
+| `villageSewerWaterBlock` | Blockname | `minecraft:water` | Was die Rinne in der Mitte füllt. Leer lässt sie trocken |
+| `villageSewerWalkBlock` | Blockname | keiner | Womit die Gehwege beiderseits der Rinne belegt sind. Leer läuft man auf dem Auskleidungsblock |
+| `villageSewerLightBlock` | Blockname | keiner | Der Block, der über der Rinne als Licht in die Decke gesetzt wird. Leer beleuchtet nichts |
+| `villageSewerLightRun` | Zahl | `8` | Wie viele Blöcke diese Lichter auseinander sitzen. An Weltkoordinaten verankert, damit die Lichter eines Straßenstücks im nächsten weiterlaufen |
+| `villageSewerLadderBlock` | Blockname | keiner | Der Block, an dem ein Einstiegsschacht erklommen wird, von der Straße bis zum Gehweg im Kanal gesetzt. Leer lässt den Schacht offen |
+| `villageSewerCoverBlock` | Blockname | keiner | Der Block, der einen Einstieg abdeckt, bündig in die Straße gesetzt, wo zwei Straßen sich kreuzen. Eine hölzerne Falltür ist die übliche Wahl: eine eiserne braucht ein Redstone-Signal und lässt sich von Hand nicht öffnen, was den Kanal verschließt. Leer lässt die Schachtmündung offen |
+| `villageSewerMossBlock` | Blockname | keiner | Ein zweiter Block, der hier und da in die Auskleidung gemischt wird, bemooster Stein unter glattem etwa. Leer kleidet den Kanal durchgehend mit einem Block aus |
+| `villageSewerMossChance` | 0 bis 100 | `30` | Wie viel Prozent der Auskleidungsblöcke als dieser zweite Block herauskommen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal sieht also immer gleich aus |
+| `villageSewerVineBlock` | Blockname | keiner | Ein Block, der hier und da innen an den Kanalwänden hängt, Ranken etwa. Er hängt sich an die Wand, an der er steht. Leer hängt nichts |
+| `villageSewerVineChance` | 0 bis 100 | `20` | Wie viel Prozent der Zellen neben einer Wand ihn tragen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal hängt also immer gleich |
 | `villagePathCenterBlock` | Block | leer | Eine Mittellinie den Weg entlang. Leer zeichnet keine |
 | `villagePathCenterDash` | Zahl | `0` | Strichelt diese Linie: N Blöcke Linie, dann einer Weg. An Weltkoordinaten verankert, sodass die Striche eines Wegstücks im nächsten weiterlaufen. `0` lässt sie durchgezogen |
 | `villagePathLineBlock` | Block | leer | Randlinien zwischen Weg und Gehweg. Leer zeichnet keine |
@@ -4001,6 +4033,8 @@ Ein Weg wird von der Mitte nach außen ausgebaut: Mittellinie, dann Weg, dann Ra
 `villagePathBlock` und seine Geschwister gewinnen über `villageBlocks`. Ein benannter Wegblock wird genommen, wie er ist, während die Zuordnung nur das anfasst, was der Weg sonst selbst gewählt hätte. Lässt man sie leer, entscheidet die Zuordnung, und genau so behält ein Pack die biomgerechte Oberfläche und färbt sie trotzdem um.
 
 **Tunnel.** Ohne Tunnelblock steigt eine Straße, die auf einen Hügel trifft, höchstens einen Block je Reihe hinauf und schneidet höchstens zwei Blöcke tief in eine kurze Erhebung. Nennt `villagePathTunnelBlock` einen Block, wird eine Erhebung, die über mindestens zwölf Reihen `villagePathTunnelDepth` oder mehr über der Straße steht, stattdessen durchbohrt: Die Straße hält durch die ganze Erhebung die Höhe der höheren Seite, jede Reihe mit so viel Boden darüber bekommt eine vier Blöcke hohe Röhre mit dem Auskleidungsblock als Wände und Decke, und die flacheren Reihen vor den Portalen werden als Zufahrt aufgeschnitten. Eine Straße, die statt auf einen überschaubaren Hügel auf eine Bergflanke trifft, steigt ebenfalls nicht hinauf: Sie hält die Höhe, mit der sie ankommt, und sucht die andere Seite, bis zu 98 Reihen über das Ende hinaus, das das Straßenstück sonst gehabt hätte. Wird sie in dieser Reichweite gefunden und ist der Boden dazwischen frei von anderen Teilen, wird das Straßenstück bis zum Portal auf der anderen Seite verlängert, ein Tunnel führt also immer hindurch. Wird sie nicht gefunden, endet die Straße am Fuß des Berges und dringt nie in ihn ein. Die ganze Straße läuft hindurch, Fahrbahn, Linien und Gehwege gleichermaßen, aus der Decke beleuchtet von `villagePathTunnelLightBlock` alle `villagePathTunnelLightRun` Blöcke, während Laternen und Randbewuchs an den Portalen enden. Eine Kreuzung wird nie gebohrt, eine querende Straße trifft die Straße also immer im Freien. Entlang eines Abschnitts, den die Straße durchbohren wird, wird kein Grundstück gesetzt und keine Straße zweigt dort ab, kein Haus steht also vor einem Tunnel und keine Kreuzung wird in einen geschnitten; ein Viertel, das anderswo keinen Platz für seine Grundstücke findet, legt dort weniger Straßen an.
+
+**Kanäle.** Wird `villageSewerBlock` genannt, entsteht unter jeder Straße voller Breite ein Kanal, `villageSewerDepth` Blöcke unter deren eigener Oberfläche. Er ist kein eigenes Netz: er folgt den Straßen, geht also überall dorthin, wohin sie gehen, biegt ab, wo sie abbiegen, steigt, wo sie steigen, und zwei Kanäle treffen sich unter einer Kreuzung, weil sich die Straßen darüber treffen. Gassen tragen keinen, eine Wendehammerkuppe und eine auf einer Brücke getragene Reihe ebenso wenig. Der Querschnitt ist ein ausgekleideter Boden, eine Rinne in der Mitte, gefüllt mit `villageSewerWaterBlock`, beiderseits ein Gehweg aus `villageSewerWalkBlock`, `villageSewerHeight` Blöcke Kopfhöhe und eine ausgekleidete Decke, quer `villageSewerWidth` breit einschließlich der beiden Wände. `villageSewerLightBlock` setzt alle `villageSewerLightRun` Blöcke ein Licht über der Rinne in die Decke. Ein Kanal steigt nie so weit, dass er die Straße darüber stört, und ein Abschnitt ohne Platz zwischen Straße und Weltboden wird ausgelassen statt gequetscht.
 
 **Laternenblöcke tragen Daten.** Die drei Laternenblöcke nehmen einen einfachen Namen, einen Namen mit Metadaten oder einen Namen mit Blockobjektdaten in geschweiften Klammern, `minecraft:skull:1{SkullType:3}`. Die Klammern werden als NBT gelesen und nach dem Setzen auf das Blockobjekt angewandt, womit eine Laterne aus einem anderen Mod die Einstellungen behält, die sie braucht. Fehlerhaftes NBT wird gemeldet und übergangen, statt den Bau der Laterne zu verhindern.
 
@@ -4099,7 +4133,43 @@ Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kre
     "villageRailTunnelBlock": "minecraft:stonebrick",
     "villageRailTunnelDepth": 6,
     "villageRailClimb": 8,
-    "villageRailTail": 48
+    "villageRailTail": 48,
+    "villageSubwayLines": 0,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "any",
+    "villageSubwayWidth": 5,
+    "villageSubwayBlock": "",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:planks:1",
+    "villageSubwayTieRun": 2,
+    "villageSubwayTracks": 2,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayShoulderBlock": "",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwayStationLength": 16,
+    "villageSubwayStationRun": 0,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:stonebrick:1",
+    "villageSubwayStairBlock": "minecraft:stonebrick",
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayEntrance": "mypack:subway_entrance",
+    "villageSubwayStationFoot": 4,
+    "villageSubwayStationRepeat": 12,
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:log",
+    "villageSubwayBenchLength": 5,
+    "villageSubwaySurfaces": 25
   }
 }
 ```
@@ -4130,6 +4200,42 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageRailTunnelDepth` | Zahl | `6` | Wie viel Boden über dem Bett stehen muss, ehe ein Abschnitt gebohrt statt aufgeschnitten wird. Braucht `villageRailTunnelBlock` |
 | `villageRailClimb` | Zahl | `8` | Wie viele Reihen die Linie eben läuft für jeden Block, den sie steigt oder fällt. `1` legt sie so steil wie eine Straße an |
 | `villageRailTail` | Zahl | `48` | Wie weit die Linie an beiden Enden über das letzte Teil des Dorfes hinausläuft |
+| `villageSubwayLines` | Zahl | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
+| `villageSubwayDepth` | Zahl | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
+| `villageSubwaySpacing` | Zahl | `64` | How far apart a village's subway lines are kept from one another |
+| `villageSubwayDirection` | Zeichenkette | `any` | Which way the lines run: `x`, `z`, or `any` to roll per village |
+| `villageSubwayWidth` | Zahl | `3` | How wide the bed is, before shoulders |
+| `villageSubwayBlock` | Block | leer | The track block. Empty lays vanilla rail |
+| `villageSubwayTrackSeat` | Zeichenkette | `auto` | Whether the track sits on the bed, in it, or `auto` to let the block decide |
+| `villageSubwayBedBlock` | Block | leer | The block the bed is made of. Empty uses gravel |
+| `villageSubwayTieBlock` | Block | leer | The block laid across the bed as sleepers. Empty uses planks |
+| `villageSubwayTieRun` | Zahl | `2` | How many blocks apart the sleepers sit |
+| `villageSubwayTracks` | Zahl | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
+| `villageSubwayTrackGap` | Zahl | `2` | How far apart parallel tracks sit |
+| `villageSubwayShoulderBlock` | Block | leer | The block either side of the bed. Empty leaves no shoulder |
+| `villageSubwayShoulderWidth` | Zahl | `1` | How wide that shoulder is |
+| `villageSubwayPowerBlock` | Block | leer | The powered track block. Empty uses vanilla powered rail |
+| `villageSubwayPowerBase` | Block | leer | The block set under a powered track to drive it. Empty uses a redstone block |
+| `villageSubwayPowerRun` | Zahl | `0` | How many blocks apart the powered tracks sit. 0 lays none |
+| `villageSubwayTunnelBlock` | Block | leer | The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, a subway being a bore |
+| `villageSubwayTunnelLightBlock` | Block | leer | The block set into the tunnel roof as a light. Empty lights none |
+| `villageSubwayTunnelLightRun` | Zahl | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
+| `villageSubwayClimb` | Zahl | `8` | How many blocks a line runs before it may step one block up or down |
+| `villageSubwayTail` | Zahl | `48` | How far past the village's own pieces a line runs before it stops |
+| `villageSubwayStationLength` | Zahl | `0` | How many blocks long a station chamber is, centred on the row where the line passes nearest the well. 0 builds no stations at all |
+| `villageSubwayStationRun` | Zahl | `0` | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one |
+| `villageSubwayPlatformWidth` | Zahl | `3` | How far the chamber is opened out either side of the bed to make a platform |
+| `villageSubwayPlatformBlock` | Block | leer | The block the platform is floored with. Empty floors it with the tunnel lining |
+| `villageSubwayStairBlock` | Block | leer | The block the steps up to the road side are made of. Empty uses the tunnel lining |
+| `villageSubwayStation` | Text | leer | A structure file used as the station itself, in place of the carved stairwell, named `mypack:subway_station` and read from that pack's `structures` folder. Its solid cells are laid in `villageSubwayStairBlock` and its air cells are carved, so what stands underground is the build rather than a description of it. Empty carves the stairwell instead |
+| `villageSubwayEntrance` | Text | leer | A structure file set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare, and it is left off entirely where `villageSubwayStation` names a build, which carries its own way in |
+| `villageSubwayStationFoot` | Zahl | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
+| `villageSubwayStationRepeat` | Zahl | `12` | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build |
+| `villageSubwayRailingBlock` | Block | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
+| `villageSubwayBenchBlock` | Block | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
+| `villageSubwayBenchEndBlock` | Block | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
+| `villageSubwayBenchLength` | Zahl | `5` | How long a station bench is, arms included. `0` leaves the benches out |
+| `villageSubwaySurfaces` | Zahl | `25` | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
 | `villageRailTracks` | Zahl | `0` | Wie viele Gleise das eine Bett trägt, nebeneinander und `villageRailTrackGap` auseinander. **Das Bett wird breiter, um sie alle zu tragen**, drei Gleise teilen sich also ein Gleisbett, statt zu drei Linien zu werden. `0` legt ein Gleis auf ein Bett unter fünf Blöcken Breite und zwei auf ein breiteres |
 | `villageRailTrackGap` | Zahl | `2` | Wie viele Blöcke die Gleise auf einem Bett auseinanderliegen, Mitte zu Mitte. `2`, das Mindeste, lässt einen Block Bett zwischen ihnen, und genau das hält sie davon ab, ineinander zu schwenken, wie berührende Schienen es tun |
 | `villageRailShoulderBlock` | Block | leer | Kleidet die äußersten Spalten des Bettes, ein Wartungspfad neben dem Gleis und die Antwort der Eisenbahn auf einen Gehweg. Leer legt keinen |
@@ -4146,6 +4252,12 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 **Kreuzungen.** Eine Straße durchquert eine Linie gerade und läuft an beiden Bettkanten sieben Blöcke oder mehr darüber hinaus. Eine Straße, die auf der Linie oder innerhalb dieser sieben Blöcke enden würde, wird darüber hinweggeführt, wenn ihr Gefälle es zulässt, und sonst sieben Blöcke vor dem Bett angehalten; eine Straße, die auf der Linie beginnen oder an ihr entlanglaufen würde, wird abgelehnt. An einer Kreuzung wird die Straße auf die Linie eingeebnet, nie umgekehrt, und steigt beiderseits mit ihrer eigenen begehbaren Steigung auf diese Höhe. Das Pflaster behält die Oberfläche, und das Gleis läuft einen Block höher darüber, sodass eine Lore die Straße quert und ein Dorfbewohner das Gleis. Eine durch einen Hügel gebohrte Linie wird gar nicht gekreuzt: Die Straße führt über den Tunnel hinweg.
 
 **Gleis.** Mit leerem `villageRailBlock` ist das Gleis eine entlang der Linie gedrehte Vanilla-Schiene, und `villageRailPowerRun` setzt alle so viele Reihen eine Antriebsschiene über einem Redstone-Block, damit eine Lore die ganze Linie fährt. Ein Paket, das Eisenblöcke, Gitter oder etwas anderes will, nennt sie stattdessen, und die Linie wird mit diesem Block so ausgestattet, wie er ist.
+
+**Stationen.** Eine U-Bahn-Linie bekommt dort eine Station, wo sie dem Brunnen am nächsten kommt, sobald `villageSubwayStationLength` gesetzt ist, und weitere alle `villageSubwayStationRun` Blöcke entlang der Linie. Jede davon verschiebt sich ein paar Blöcke in die eine oder andere Richtung, bis sie Boden findet, der sie trägt, hält Abstand zu den schon vergebenen Stationen und entfällt schlicht, wo nichts Passendes in der Nähe liegt — so trägt eine Linie nie eine Halle ohne Zugang. Die Halle ist das um `villageSubwayPlatformWidth` zu beiden Seiten geweitete Bett, mit `villageSubwayPlatformBlock` gepflastert, in der Tunnelverkleidung gemauert und überdeckt und aus den eigenen Tunnelschlüsseln `villageSubwayTunnelLightBlock` und `villageSubwayTunnelLightRun` beleuchtet. Vom Bahnsteig führt ein Gang zu einem Treppenschacht, der neben der Straße ans Tageslicht steigt, nie unter ihr, und nie durch den Brunnenplatz oder ein Haus; wo der Aufstieg für den geraden Weg zu lang ist, führt der Gang zuerst an der Halle zurück. Ein Geländer aus `villageSubwayRailingBlock` umschließt den Treppenkopf auf Straßenhöhe und lässt die nahe Seite als Zugang offen, und eine Bank aus `villageSubwayBenchBlock` mit Armlehnen aus `villageSubwayBenchEndBlock`, `villageSubwayBenchLength` lang, steht auf dem Bahnsteig und noch einmal neben dem Treppenkopf.
+
+**Die Station von Hand bauen.** `villageSubwayStation` nennt eine Strukturdatei, die statt des ausgehauenen Treppenschachts als Station dient — so liefert ein Paket eine Form aus, die jemand gebaut hat, statt einer, die in Einstellungen beschrieben ist. Baue sie in einer Welt, markiere sie in einem beliebigen Block, exportiere sie und lass sie vom Paket setzen: Ihre festen Zellen werden zu `villageSubwayStairBlock`, ihre Luftzellen werden ausgehauen. Ein Bau dient jeder Tiefe, weil sich seine Mitte wiederholt — `villageSubwayStationFoot` Lagen werden unten einmal gelegt und tragen den Boden und die Tür zum Bahnsteig, dann stapeln sich ganze Kopien der nächsten `villageSubwayStationRepeat` Lagen, bis der Bau die Straße erreicht. Dieses Band muss eine ganze Wendung der Treppe sein, sonst treffen sich die Läufe an der Fuge zweier Kopien nicht. `villageSubwayEntrance` setzt eine zweite Struktur an den Treppenkopf, damit der Weg nach unten auf der Straße kenntlich ist, und gilt nur für den ausgehauenen Treppenschacht: ein Bauwerk bringt seinen Zugang schon mit, also entfällt der Eingang, statt als geschlossener Kasten daneben zu stehen.
+
+**Auftauchen.** `villageSubwaySurfaces` ist die Chance in Hundert, dass eine Linie nicht auf ganzer Länge vergraben bleibt, sondern an einem Ende ans Tageslicht steigt und von dort als gewöhnliche Eisenbahn weiterläuft — Tunnel hinter sich, offenes Gleis vor sich. Der Aufstieg folgt `villageSubwayClimb`, ein Block auf so viele Reihen, eine `villageSubwayDepth` tiefe Linie verbringt also Tiefe mal Steigung Reihen allein auf der Rampe und braucht danach ein gutes Stück, damit der Name sich lohnt; eine Linie ohne Platz für beides bleibt schlicht unter der Erde. Auf einer kurzen Linie mit Station schafft ein höheres `villageSubwayClimb` den Platz für beides.
 
 **Türschwellen.** Bei eingeschaltetem `terrainAdaptation` legt kein Dorfgebäude einen Treppenblock außerhalb seines eigenen Kastens: Die Schwellentreppe, die Vanilla vor eine Tür setzt, entfällt, weil die Straßenfront und die Grundstücksschürze den Boden selbst bis zur Tür tragen.
 

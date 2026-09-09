@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 
@@ -154,6 +155,10 @@ public final class BeardPlots {
         for (StructureComponent other : around(start, at.getX(), at.getZ())) {
             if (other == piece || other instanceof StructureVillagePieces.Path) { continue; }
             StructureBoundingBox box = other.getBoundingBox();
+            if (other instanceof RailPiece && ((RailPiece) other).subway()) {
+                box = ((RailPiece) other).station();
+                if (box == null) { continue; }
+            }
             if (box.isVecInside(at)) { return true; }
             if (other instanceof StructureVillagePieces.Well && at.getY() == box.maxY + 1 && at.getX() >= box.minX && at.getX() <= box.maxX && at.getZ() >= box.minZ && at.getZ() <= box.maxZ) { return true; }
         }
@@ -168,10 +173,16 @@ public final class BeardPlots {
             boolean road = other instanceof StructureVillagePieces.Path;
             if (kind == ROADS && !road) { continue; }
             if (kind == BUILDINGS && road) { continue; }
-            StructureBoundingBox box = other.getBoundingBox();
+            StructureBoundingBox box = footprint(other);
+            if (box == null) { continue; }
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return true; }
         }
         return false;
+    }
+
+    @Nullable private static StructureBoundingBox footprint(StructureComponent piece) {
+        if (!(piece instanceof RailPiece) || !((RailPiece) piece).subway()) { return piece.getBoundingBox(); }
+        return ((RailPiece) piece).station();
     }
 
     public static boolean besideRoad(StructureStart start, StructureComponent piece, int x, int z) { return nearRoad(start, piece, x, z, 1); }

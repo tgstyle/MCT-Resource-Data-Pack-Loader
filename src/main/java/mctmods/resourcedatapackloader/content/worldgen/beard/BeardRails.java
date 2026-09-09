@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.block.Block;
@@ -26,6 +27,8 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
+import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -37,7 +40,9 @@ public final class BeardRails {
     private static final int MARGIN = 7;
     private static final int OVER = 6;
     private static final int FILL = 3;
-    private static final int CLEAR = 4;
+    private static final int LEAST_OPEN = 8;
+    static final int CLEAR = 4;
+    private static final int WET_REACH = 3;
     private static final int CANOPY = 14;
     private static final int BESIDE = 2;
     private static final int TOGETHER = 16;
@@ -49,31 +54,33 @@ public final class BeardRails {
 
     private BeardRails() {}
 
-    public static int lines() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailLines", Config.worldgen.villageRailLines)); }
+    public static int lines(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayLines" : "villageRailLines", sub ? Config.worldgen.villageSubwayLines : Config.worldgen.villageRailLines)); }
 
-    public static int spacing() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailSpacing", Config.worldgen.villageRailSpacing)); }
+    public static int spacing(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwaySpacing" : "villageRailSpacing", sub ? Config.worldgen.villageSubwaySpacing : Config.worldgen.villageRailSpacing)); }
 
-    public static int width() { return bed() + 2 * shoulderWidth(); }
+    public static int width(boolean sub) { return bed(sub) + 2 * shoulderWidth(sub); }
 
-    private static int askedWidth() { return Math.max(3, ContentControl.number(ContentControl.VILLAGES, "villageRailWidth", Config.worldgen.villageRailWidth)); }
+    private static int askedWidth(boolean sub) { return Math.max(3, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayWidth" : "villageRailWidth", sub ? Config.worldgen.villageSubwayWidth : Config.worldgen.villageRailWidth)); }
 
-    private static int bed() { return Math.max(askedWidth(), (tracks() - 1) * trackGap() + 3); }
+    static int bedHalf(boolean sub) { return (bed(sub) - 1) / 2; }
 
-    private static int shoulderWidth() {
-        if (BeardRoads.pathBlock("villageRailShoulderBlock", Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState()).getBlock() == Blocks.AIR) { return 0; }
-        return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailShoulderWidth", Config.worldgen.villageRailShoulderWidth));
+    private static int bed(boolean sub) { return Math.max(askedWidth(sub), (tracks(sub) - 1) * trackGap(sub) + 3); }
+
+    private static int shoulderWidth(boolean sub) {
+        if (BeardRoads.pathBlock(sub ? "villageSubwayShoulderBlock" : "villageRailShoulderBlock", sub ? Config.worldgen.villageSubwayShoulderBlock : Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState()).getBlock() == Blocks.AIR) { return 0; }
+        return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayShoulderWidth" : "villageRailShoulderWidth", sub ? Config.worldgen.villageSubwayShoulderWidth : Config.worldgen.villageRailShoulderWidth));
     }
 
-    private static int tracks() {
-        int asked = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailTracks", Config.worldgen.villageRailTracks));
+    private static int tracks(boolean sub) {
+        int asked = Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTracks" : "villageRailTracks", sub ? Config.worldgen.villageSubwayTracks : Config.worldgen.villageRailTracks));
         if (asked > 0) { return asked; }
-        return askedWidth() >= 5 ? 2 : 1;
+        return askedWidth(sub) >= 5 ? 2 : 1;
     }
 
-    private static int trackGap() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailTrackGap", Config.worldgen.villageRailTrackGap)); }
+    private static int trackGap(boolean sub) { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTrackGap" : "villageRailTrackGap", sub ? Config.worldgen.villageSubwayTrackGap : Config.worldgen.villageRailTrackGap)); }
 
-    private static boolean trackInBed(IBlockState track) {
-        String named = ContentControl.text(ContentControl.VILLAGES, "villageRailTrackSeat", Config.worldgen.villageRailTrackSeat).trim().toLowerCase(Locale.ROOT);
+    private static boolean trackInBed(IBlockState track, boolean sub) {
+        String named = ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", sub ? Config.worldgen.villageSubwayTrackSeat : Config.worldgen.villageRailTrackSeat).trim().toLowerCase(Locale.ROOT);
         if (named.isEmpty() || "auto".equals(named)) { return !(track.getBlock() instanceof BlockRailBase); }
         if (named.startsWith("i")) { return true; }
         if (named.startsWith("o")) { return false; }
@@ -81,13 +88,13 @@ public final class BeardRails {
         return !(track.getBlock() instanceof BlockRailBase);
     }
 
-    public static int climb() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailClimb", Config.worldgen.villageRailClimb)); }
+    public static int climb(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayClimb" : "villageRailClimb", sub ? Config.worldgen.villageSubwayClimb : Config.worldgen.villageRailClimb)); }
 
-    public static int tail() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailTail", Config.worldgen.villageRailTail)); }
+    public static int tail(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTail" : "villageRailTail", sub ? Config.worldgen.villageSubwayTail : Config.worldgen.villageRailTail)); }
 
-    private static int tieRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTieRun", Config.worldgen.villageRailTieRun)); }
+    private static int tieRun(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTieRun" : "villageRailTieRun", sub ? Config.worldgen.villageSubwayTieRun : Config.worldgen.villageRailTieRun)); }
 
-    private static int powerRun() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailPowerRun", Config.worldgen.villageRailPowerRun)); }
+    private static int powerRun(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayPowerRun" : "villageRailPowerRun", sub ? Config.worldgen.villageSubwayPowerRun : Config.worldgen.villageRailPowerRun)); }
 
     private static IBlockState frameBlock() { return BeardRoads.pathBlock("villageRailBridgeFrameBlock", Config.worldgen.villageRailBridgeFrameBlock, Blocks.AIR.getDefaultState()); }
 
@@ -97,17 +104,124 @@ public final class BeardRails {
 
     private static int frameLeast() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameLeast", Config.worldgen.villageRailBridgeFrameLeast)); }
 
-    private static IBlockState tunnelBlock() { return BeardRoads.pathBlock("villageRailTunnelBlock", Config.worldgen.villageRailTunnelBlock, Blocks.AIR.getDefaultState()); }
+    private static IBlockState tunnelBlock(boolean sub) { return BeardRoads.pathBlock(sub ? "villageSubwayTunnelBlock" : "villageRailTunnelBlock", sub ? Config.worldgen.villageSubwayTunnelBlock : Config.worldgen.villageRailTunnelBlock, Blocks.AIR.getDefaultState()); }
 
-    private static int tunnelLightRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelLightRun", Config.worldgen.villageRailTunnelLightRun)); }
+    private static int tunnelLightRun(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTunnelLightRun" : "villageRailTunnelLightRun", sub ? Config.worldgen.villageSubwayTunnelLightRun : Config.worldgen.villageRailTunnelLightRun)); }
 
-    public static int tunnelDepth() {
-        if (tunnelBlock().getBlock() == Blocks.AIR) { return 0; }
+    private static int surfacesChance() { return MathHelper.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSubwaySurfaces", Config.worldgen.villageSubwaySurfaces), 0, 100); }
+
+    private static int holdStation(RailPiece rail, int[] profile, int rowLeast, int rows) {
+        if (!rail.subway() || rail.stations().isEmpty()) { return 0; }
+        List<StructureComponent> mine = ContentBeard.components();
+        int wellRow = mine == null || mine.isEmpty() ? rail.rowLeast()
+                : rail.alongX() ? (mine.get(0).getBoundingBox().minX + mine.get(0).getBoundingBox().maxX) / 2
+                                : (mine.get(0).getBoundingBox().minZ + mine.get(0).getBoundingBox().maxZ) / 2;
+        int half = Math.max(0, BeardStations.length() / 2);
+        int held = 0;
+        for (StructureBoundingBox box : rail.stations()) {
+            int heart = BeardStations.heartOf(rail, box) - rowLeast;
+            if (heart < 0 || heart >= rows) { continue; }
+            int flat = profile[heart];
+            if (flat == Integer.MIN_VALUE) { continue; }
+            for (int at = Math.max(0, heart - half); at <= Math.min(rows - 1, heart + half); at++) {
+                if (profile[at] == Integer.MIN_VALUE || profile[at] == flat) { continue; }
+                profile[at] = flat;
+                held++;
+            }
+        }
+        return held;
+    }
+
+    private static boolean alongTheLine(StructureBoundingBox road, boolean alongX) {
+        int along = (alongX ? road.maxX - road.minX : road.maxZ - road.minZ) + 1;
+        int across = (alongX ? road.maxZ - road.minZ : road.maxX - road.minX) + 1;
+        return along > across;
+    }
+
+    @Nullable private static int[] streetOver(RailPiece rail) {
+        List<StructureComponent> pieces = ContentBeard.components();
+        if (pieces == null) { return null; }
+        boolean alongX = rail.alongX();
+        int center = (rail.acrossLeast() + rail.acrossMost()) / 2;
+        int least = Integer.MAX_VALUE;
+        int most = Integer.MIN_VALUE;
+        for (StructureComponent piece : pieces) {
+            if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            if (!alongTheLine(box, alongX)) { continue; }
+            if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
+            least = Math.min(least, alongX ? box.minX : box.minZ);
+            most = Math.max(most, alongX ? box.maxX : box.maxZ);
+        }
+        return least > most ? null : new int[] { least, most };
+    }
+
+    @Nullable public static int[] surfacing(World world, RailPiece rail) {
+        if (!rail.subway()) { return null; }
+        int chance = surfacesChance();
+        if (chance <= 0) { return null; }
+        StructureBoundingBox box = rail.getBoundingBox();
+        Random roll = SeededRandom.at(world, box.minX + rail.line(), box.minY, box.minZ);
+        if (roll.nextInt(100) >= chance) { return null; }
+        int least = rail.rowLeast();
+        int most = rail.rowMost();
+        int ramp = subwayDepth() * climb(true);
+        int shortest = ramp + LEAST_OPEN;
+        if (most - least < shortest) { return null; }
+        int run = ramp + Math.max(LEAST_OPEN, tail(true));
+        int stationLeast = Integer.MAX_VALUE;
+        int stationMost = Integer.MIN_VALUE;
+        for (StructureBoundingBox held : rail.stations()) {
+            stationLeast = Math.min(stationLeast, rail.alongX() ? held.minX : held.minZ);
+            stationMost = Math.max(stationMost, rail.alongX() ? held.maxX : held.maxZ);
+        }
+        boolean anyStation = !rail.stations().isEmpty();
+        int[] street = streetOver(rail);
+        int lowRow = street == null ? least + run : Math.min(least + run, street[0] - 1);
+        int highRow = street == null ? most - run : Math.max(most - run, street[1] + 1);
+        boolean canLow = lowRow - least >= shortest && (!anyStation || stationLeast > lowRow + ramp);
+        boolean canHigh = most - highRow >= shortest && (!anyStation || stationMost < highRow - ramp);
+        if (!canHigh && !canLow) { return null; }
+        boolean high = canHigh && (!canLow || roll.nextBoolean());
+        return high ? new int[] { highRow, 1 } : new int[] { lowRow, -1 };
+    }
+
+    private static int cutWall(World world, BlockPos.MutableBlockPos at, boolean alongX, int row, int across, int level, int outward, BeardRoads.Palette linings) {
+        int top = Integer.MIN_VALUE;
+        for (int out = 0; out <= WET_REACH; out++) {
+            int side = across + outward * out;
+            for (int y = level; y <= level + CLEAR + 1; y++) {
+                at.setPos(alongX ? row : side, y, alongX ? side : row);
+                if (world.getBlockState(at).getMaterial().isLiquid()) { top = Math.max(top, y); }
+            }
+        }
+        if (top == Integer.MIN_VALUE) { return 0; }
+        int x = alongX ? row : across;
+        int z = alongX ? across : row;
+        int laid = 0;
+        for (int y = level; y <= top; y++) {
+            if (BeardKeep.holds(x, y, z)) { continue; }
+            at.setPos(x, y, z);
+            world.setBlockState(at, linings.pick(world, x, y, z), 2);
+            laid++;
+        }
+        return laid;
+    }
+
+    public static boolean surfaced(@Nullable int[] rising, int row) {
+        if (rising == null) { return false; }
+        return rising[1] > 0 ? row >= rising[0] : row <= rising[0];
+    }
+
+    public static int subwayDepth() { return Math.max(6, ContentControl.number(ContentControl.VILLAGES, "villageSubwayDepth", Config.worldgen.villageSubwayDepth)); }
+
+    public static int tunnelDepth(boolean sub) {
+        if (tunnelBlock(sub).getBlock() == Blocks.AIR) { return 0; }
         return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelDepth", Config.worldgen.villageRailTunnelDepth));
     }
 
-    private static boolean direction(Random rand) {
-        String named = ContentControl.text(ContentControl.VILLAGES, "villageRailDirection", Config.worldgen.villageRailDirection).trim().toLowerCase(Locale.ROOT);
+    private static boolean direction(Random rand, boolean sub) {
+        String named = ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayDirection" : "villageRailDirection", sub ? Config.worldgen.villageSubwayDirection : Config.worldgen.villageRailDirection).trim().toLowerCase(Locale.ROOT);
         if (named.isEmpty() || "any".equals(named)) { return rand.nextBoolean(); }
         if (named.startsWith("e") || named.startsWith("w")) { return true; }
         if (named.startsWith("n") || named.startsWith("s")) { return false; }
@@ -117,22 +231,27 @@ public final class BeardRails {
 
     public static void found(World world, StructureStart start, StructureVillagePieces.Start well, Random rand) {
         if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
-        int lines = lines();
+        found(start, well, rand, false);
+        found(start, well, rand, true);
+    }
+
+    private static void found(StructureStart start, StructureVillagePieces.Start well, Random rand, boolean sub) {
+        int lines = lines(sub);
         if (lines <= 0) { return; }
         List<StructureComponent> components = start.getComponents();
-        boolean alongX = direction(rand);
+        boolean alongX = direction(rand, sub);
         StructureBoundingBox wellBox = well.getBoundingBox();
         int wellX = (wellBox.minX + wellBox.maxX) / 2;
         int wellZ = (wellBox.minZ + wellBox.maxZ) / 2;
         int nominal = BeardSite.wellNominal(wellBox);
-        int apart = width() + spacing();
-        int half = (width() - 1) / 2;
-        int clear = ContentBeard.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + BeardRoads.pathFullWidth() + half + 2;
-        int reach = CityGrowth.march() + tail() + STRETCH;
+        int apart = width(sub) + spacing(sub);
+        int half = (width(sub) - 1) / 2 + (sub ? BeardStations.reach() : 0);
+        int clear = sub ? 0 : ContentBeard.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + BeardRoads.pathFullWidth() + half + 2;
+        int reach = CityGrowth.march() + tail(sub) + STRETCH;
         List<Integer> placed = new ArrayList<>();
         for (int line = 0; line < lines; line++) {
             int side = line % 2 == 0 ? 1 : -1;
-            int candidate = side * (clear + (line / 2) * apart + rand.nextInt(Math.max(1, spacing() / 2)));
+            int candidate = side * (clear + (line / 2) * apart + rand.nextInt(Math.max(1, spacing(sub) / 2)));
             boolean moved = true;
             while (moved) {
                 moved = false;
@@ -147,21 +266,55 @@ public final class BeardRails {
             StructureBoundingBox box = alongX
                     ? new StructureBoundingBox(wellX - reach, nominal - BELOW, center - half, wellX + reach, nominal + ABOVE, center + half)
                     : new StructureBoundingBox(center - half, nominal - BELOW, wellZ - reach, center + half, nominal + ABOVE, wellZ + reach);
-            components.add(new RailPiece(well, box, alongX, line));
-            ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} is laid {} at {} {}, {} wide, at least {} block(s) of ground from any other line of this village, before any street of the village", line, wellX, wellZ, alongX ? "east to west" : "north to south", alongX ? "z" : "x", center, width(), spacing());
+            components.add(new RailPiece(well, box, alongX, line, sub));
+            ContentLog.LOGGER.debug("{} line {} of the village at {}, {} is laid {} at {} {}, {} wide, at least {} block(s) of ground from any other line of this village, before any street of the village", sub ? "Subway" : "Railway", line, wellX, wellZ, alongX ? "east to west" : "north to south", alongX ? "z" : "x", center, width(sub), spacing(sub));
         }
+    }
+
+    private static void seekRoad(List<StructureComponent> components, RailPiece rail, boolean alongX, int reach) {
+        StructureBoundingBox box = rail.getBoundingBox();
+        int mine = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+        int full = BeardRoads.pathFullWidth();
+        int best = Integer.MAX_VALUE;
+        int wanted = mine;
+        for (StructureComponent other : components) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox road = other.getBoundingBox();
+            boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+            if (roadAlongX != alongX) { continue; }
+            if (((roadAlongX ? road.maxZ - road.minZ : road.maxX - road.minX) + 1) < full) { continue; }
+            int center = roadAlongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
+            int off = Math.abs(center - mine);
+            if (off > reach || off >= best) { continue; }
+            best = off;
+            wanted = center;
+        }
+        if (wanted == mine) { return; }
+        int shift = wanted - mine;
+        if (alongX) {
+            box.minZ += shift;
+            box.maxZ += shift;
+        }
+        else {
+            box.minX += shift;
+            box.maxX += shift;
+        }
+        rail.regrade();
+        ContentLog.LOGGER.debug("Subway line {} is slid {} block(s) onto the street at {} {}, so it runs under a road and its stations can surface at the road side", rail.line(), shift, alongX ? "z" : "x", wanted);
     }
 
     public static void fit(World world, StructureStart start) {
         List<StructureComponent> components = start.getComponents();
         if (components.isEmpty()) { return; }
-        int tail = tail();
         StructureBoundingBox wellBox = components.get(0).getBoundingBox();
         List<StructureComponent> everyone = ContentBeard.everyone(world, components);
         for (StructureComponent piece : components.toArray(new StructureComponent[0])) {
             if (!(piece instanceof RailPiece)) { continue; }
             RailPiece rail = (RailPiece) piece;
+            boolean sub = rail.subway();
+            int tail = tail(sub);
             boolean alongX = rail.alongX();
+            if (sub) { seekRoad(components, rail, alongX, spacing(true)); }
             int least = Integer.MAX_VALUE;
             int most = Integer.MIN_VALUE;
             for (StructureComponent other : components) {
@@ -201,6 +354,11 @@ public final class BeardRails {
             }
             rail.regrade();
             ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} is fitted to rows {} to {} now the village is grown, {} beyond its last piece either way", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, from, to, tail);
+            if (sub) {
+                int wellAlong = alongX ? (wellBox.minX + wellBox.maxX) / 2 : (wellBox.minZ + wellBox.maxZ) / 2;
+                int acrossMid = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
+                BeardStations.claim(start, rail, alongX, acrossMid, wellAlong);
+            }
         }
     }
 
@@ -218,7 +376,7 @@ public final class BeardRails {
     public static boolean blocked(@Nullable List<StructureComponent> pieces, StructureBoundingBox box) {
         if (pieces == null) { return false; }
         for (StructureComponent piece : pieces) {
-            if (!(piece instanceof RailPiece)) { continue; }
+            if (!(piece instanceof RailPiece) || buried(piece)) { continue; }
             StructureBoundingBox rail = piece.getBoundingBox();
             if (!rail.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { continue; }
             if (crosses(rail, box)) { continue; }
@@ -229,6 +387,41 @@ public final class BeardRails {
     }
 
     public static boolean isRail(StructureComponent piece) { return piece instanceof RailPiece; }
+
+    public static boolean buried(StructureComponent piece) { return piece instanceof RailPiece && ((RailPiece) piece).subway(); }
+
+    public static List<RailPiece> subways(World world, StructureBoundingBox near) {
+        List<RailPiece> found = new ArrayList<>();
+        if (!ContentBeard.wanted()) { return found; }
+        for (StructureComponent piece : ContentBeard.everyone(world, ContentBeard.components())) {
+            if (!buried(piece)) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            if (box.maxX < near.minX || box.minX > near.maxX || box.maxZ < near.minZ || box.minZ > near.maxZ) { continue; }
+            found.add((RailPiece) piece);
+        }
+        return found;
+    }
+
+    public static boolean insideBore(World world, List<RailPiece> subways, int x, int y, int z) {
+        int reach = (width(true) - 1) / 2 + 1;
+        for (RailPiece rail : subways) {
+            StructureBoundingBox box = rail.getBoundingBox();
+            if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { continue; }
+            boolean alongX = rail.alongX();
+            int center = (rail.acrossLeast() + rail.acrossMost()) / 2;
+            if (Math.abs((alongX ? z : x) - center) > reach) { continue; }
+            BeardRoads.Grade grade = rail.grade(world);
+            if (grade == null) { continue; }
+            int level = grade.at(alongX ? x : z);
+            if (level == Integer.MIN_VALUE) { continue; }
+            if (y >= level - 1 && y <= level + CLEAR + 1) { return true; }
+        }
+        return false;
+    }
+
+    public static boolean insideBore(World world, int x, int y, int z) {
+        return insideBore(world, subways(world, new StructureBoundingBox(x, 0, z, x, 0, z)), x, y, z);
+    }
 
     public static boolean meets(StructureBoundingBox rail, StructureBoundingBox box) {
         boolean railAlongX = rail.maxX - rail.minX >= rail.maxZ - rail.minZ;
@@ -246,7 +439,7 @@ public final class BeardRails {
         int shortest = rows;
         boolean met = false;
         for (StructureComponent piece : pieces) {
-            if (!(piece instanceof RailPiece)) { continue; }
+            if (!(piece instanceof RailPiece) || buried(piece)) { continue; }
             RailPiece rail = (RailPiece) piece;
             StructureBoundingBox strip = rail.getBoundingBox();
             if (rail.alongX() == alongX) {
@@ -305,11 +498,12 @@ public final class BeardRails {
         if (pieces == null) { return 0; }
         int rowMost = start + profile.length - 1;
         int center = (acrossLeast + acrossMost) / 2;
-        int depth = tunnelDepth();
+        int depth = tunnelDepth(false);
         int pinned = 0;
         for (StructureComponent other : pieces) {
             if (other == piece || !(other instanceof RailPiece)) { continue; }
             RailPiece rail = (RailPiece) other;
+            if (rail.subway()) { continue; }
             if (rail.alongX() == alongX) { continue; }
             if (rail.rowLeast() > acrossMost || rail.rowMost() < acrossLeast) { continue; }
             int stripLeast = rail.acrossLeast();
@@ -336,6 +530,7 @@ public final class BeardRails {
     }
 
     @Nullable public static BeardRoads.Grade profile(World world, RailPiece rail) {
+        boolean sub = rail.subway();
         boolean alongX = rail.alongX();
         int rowLeast = rail.rowLeast();
         int acrossLeast = rail.acrossLeast();
@@ -389,7 +584,16 @@ public final class BeardRails {
             }
             i = end + 1;
         }
-        int climb = climb();
+        int[] rising = sub ? rail.rising(world) : null;
+        if (sub) {
+            double down = subwayDepth();
+            double floorLeast = GenHeights.floor(world, 6);
+            for (int at = 0; at < rows; at++) {
+                if (surfaced(rising, rail.rowLeast() + at)) { continue; }
+                base[at] = Math.max(floorLeast, base[at] - down);
+            }
+        }
+        int climb = climb(sub);
         int window = Math.max(4, 2 * climb);
         double[] mean = new double[rows];
         for (int at = 0; at < rows; at++) {
@@ -429,6 +633,15 @@ public final class BeardRails {
         }
         boolean[] fixed = new boolean[rows];
         int crossings = level(rail, rowLeast, profile, fixed);
+        boolean[] settled = fixed;
+        if (sub && rising != null) {
+            settled = fixed.clone();
+            int ramp = subwayDepth() * climb;
+            for (int at = 0; at < rows; at++) {
+                int row = rowLeast + at;
+                if (rising[1] > 0 ? row >= rising[0] - ramp : row <= rising[0] + ramp) { settled[at] = true; }
+            }
+        }
         if (crossings > 0) {
             rein(profile, fixed);
             int since = -climb;
@@ -439,7 +652,7 @@ public final class BeardRails {
                     continue;
                 }
                 int back = at;
-                while (back < rows && !fixed[back] && profile[back] != profile[at - 1]) {
+                while (back < rows && !settled[back] && profile[back] != profile[at - 1]) {
                     profile[back] = profile[at - 1];
                     back++;
                 }
@@ -447,10 +660,12 @@ public final class BeardRails {
             }
             rein(profile, fixed);
         }
+        int held = holdStation(rail, profile, rowLeast, rows);
+        if (held > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} holds {} station row(s) at one level, so its stored grade says what is laid there", rail.line(), held); }
         boolean[] bridged = new boolean[rows];
-        for (int at = 0; at < rows; at++) { bridged[at] = ground[at] == Integer.MIN_VALUE || profile[at] > ground[at] + FILL; }
-        int levelled = BeardGrade.levelDecks(profile, bridged, fixed, climb);
-        if (levelled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Levelled {} row(s) of railway line {} so each of its trestles lies at one height end to end", levelled, rail.line()); }
+        for (int at = 0; at < rows; at++) { bridged[at] = !sub && (ground[at] == Integer.MIN_VALUE || profile[at] > ground[at] + FILL); }
+        int leveled = BeardGrade.levelDecks(profile, bridged, fixed, climb);
+        if (leveled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Leveled {} row(s) of railway line {} so each of its trestles lies at one height end to end", leveled, rail.line()); }
         if (ContentLog.LOGGER.debugEnabled()) {
             int trestle = 0;
             int cut = 0;
@@ -499,6 +714,7 @@ public final class BeardRails {
     }
 
     public static void lay(RailPiece rail, World world, StructureBoundingBox clip) {
+        boolean sub = rail.subway();
         if (!ContentBeard.wanted()) { return; }
         StructureBoundingBox box = rail.getBoundingBox();
         boolean alongX = rail.alongX();
@@ -507,28 +723,30 @@ public final class BeardRails {
         if (most < least) { return; }
         BeardRoads.Grade grade = rail.grade(world);
         if (grade == null) { return; }
-        int acrossLeast = rail.acrossLeast();
-        int acrossMost = rail.acrossMost();
-        int center = (acrossLeast + acrossMost) / 2;
-        int tracks = tracks();
-        int gap = trackGap();
-        int shoulder = shoulderWidth();
-        IBlockState bed = BeardRoads.pathBlock("villageRailBedBlock", Config.worldgen.villageRailBedBlock, Blocks.GRAVEL.getDefaultState());
-        IBlockState tie = BeardRoads.pathBlock("villageRailTieBlock", Config.worldgen.villageRailTieBlock, Blocks.PLANKS.getDefaultState());
-        IBlockState track = oriented(BeardRoads.pathBlock("villageRailBlock", Config.worldgen.villageRailBlock, Blocks.RAIL.getDefaultState()), alongX);
-        IBlockState powered = powered(oriented(BeardRoads.pathBlock("villageRailPowerBlock", Config.worldgen.villageRailPowerBlock, Blocks.GOLDEN_RAIL.getDefaultState()), alongX));
-        IBlockState powerBase = BeardRoads.pathBlock("villageRailPowerBase", Config.worldgen.villageRailPowerBase, Blocks.REDSTONE_BLOCK.getDefaultState());
-        IBlockState shoulderBlock = BeardRoads.pathBlock("villageRailShoulderBlock", Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState());
-        IBlockState light = BeardRoads.pathBlock("villageRailTunnelLightBlock", Config.worldgen.villageRailTunnelLightBlock, Blocks.AIR.getDefaultState());
+        int center = (rail.acrossLeast() + rail.acrossMost()) / 2;
+        int boreHalf = (width(sub) - 1) / 2;
+        int bedHalf = bedHalf(sub);
+        int acrossLeast = center - boreHalf;
+        int acrossMost = center + boreHalf;
+        int tracks = tracks(sub);
+        int gap = trackGap(sub);
+        int shoulder = shoulderWidth(sub);
+        IBlockState bed = BeardRoads.pathBlock(sub ? "villageSubwayBedBlock" : "villageRailBedBlock", sub ? Config.worldgen.villageSubwayBedBlock : Config.worldgen.villageRailBedBlock, Blocks.GRAVEL.getDefaultState());
+        IBlockState tie = BeardRoads.pathBlock(sub ? "villageSubwayTieBlock" : "villageRailTieBlock", sub ? Config.worldgen.villageSubwayTieBlock : Config.worldgen.villageRailTieBlock, Blocks.PLANKS.getDefaultState());
+        IBlockState track = oriented(BeardRoads.pathBlock(sub ? "villageSubwayBlock" : "villageRailBlock", sub ? Config.worldgen.villageSubwayBlock : Config.worldgen.villageRailBlock, Blocks.RAIL.getDefaultState()), alongX);
+        IBlockState powered = powered(oriented(BeardRoads.pathBlock(sub ? "villageSubwayPowerBlock" : "villageRailPowerBlock", sub ? Config.worldgen.villageSubwayPowerBlock : Config.worldgen.villageRailPowerBlock, Blocks.GOLDEN_RAIL.getDefaultState()), alongX));
+        IBlockState powerBase = BeardRoads.pathBlock(sub ? "villageSubwayPowerBase" : "villageRailPowerBase", sub ? Config.worldgen.villageSubwayPowerBase : Config.worldgen.villageRailPowerBase, Blocks.REDSTONE_BLOCK.getDefaultState());
+        IBlockState shoulderBlock = BeardRoads.pathBlock(sub ? "villageSubwayShoulderBlock" : "villageRailShoulderBlock", sub ? Config.worldgen.villageSubwayShoulderBlock : Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState());
+        IBlockState light = BeardRoads.pathBlock(sub ? "villageSubwayTunnelLightBlock" : "villageRailTunnelLightBlock", sub ? Config.worldgen.villageSubwayTunnelLightBlock : Config.worldgen.villageRailTunnelLightBlock, Blocks.AIR.getDefaultState());
         IBlockState support = BeardRoads.pathBlock("villageRailSupportBlock", Config.worldgen.villageRailSupportBlock, Blocks.LOG.getDefaultState());
         IBlockState deck = BeardRoads.pathBlock("villageRailDeckBlock", Config.worldgen.villageRailDeckBlock, Blocks.PLANKS.getDefaultState());
         IBlockState barrier = BeardRoads.pathBlock("villageRailBarrierBlock", Config.worldgen.villageRailBarrierBlock, Blocks.AIR.getDefaultState());
-        IBlockState lining = tunnelBlock();
-        int tieRun = tieRun();
-        boolean inBed = trackInBed(track);
-        int powerRun = powered.getBlock() == Blocks.AIR || inBed ? 0 : powerRun();
-        int lightRun = tunnelLightRun();
-        int depth = tunnelDepth();
+        BeardRoads.Palette linings = BeardRoads.pathPalette(sub ? "villageSubwayTunnelBlock" : "villageRailTunnelBlock", sub ? Config.worldgen.villageSubwayTunnelBlock : Config.worldgen.villageRailTunnelBlock, Blocks.AIR.getDefaultState());
+        int tieRun = tieRun(sub);
+        boolean inBed = trackInBed(track, sub);
+        int powerRun = powered.getBlock() == Blocks.AIR || inBed ? 0 : powerRun(sub);
+        int lightRun = tunnelLightRun(sub);
+        int depth = tunnelDepth(sub);
         List<StructureComponent> roads = new ArrayList<>();
         for (StructureComponent other : ContentBeard.everyone(world, ContentBeard.components())) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
@@ -540,16 +758,29 @@ public final class BeardRails {
         Predicate<BlockPos> within = holder != null ? BeardPlots.outside(world, holder, rail, box, false, 0) : spot -> world.isChunkGeneratedAt(spot.getX() >> 4, spot.getZ() >> 4);
         List<BlockPos> seeds = new ArrayList<>();
         boolean[] frames = bridgeFrames(grade);
+        int halls = 0;
+        int stepped = 0;
+        int heads = 0;
+        List<StructureComponent> mine = ContentBeard.components();
+        int wellRow = mine == null || mine.isEmpty() ? rail.rowLeast()
+                : alongX ? (mine.get(0).getBoundingBox().minX + mine.get(0).getBoundingBox().maxX) / 2
+                         : (mine.get(0).getBoundingBox().minZ + mine.get(0).getBoundingBox().maxZ) / 2;
+        List<StructureBoundingBox> stairs = sub ? rail.stations() : java.util.Collections.emptyList();
         int laid = 0;
         int trestled = 0;
         int lined = 0;
         int crossed = 0;
         int framed = 0;
+        int[] rising = rail.rising(world);
+        if (rising != null && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} climbs out over the {} row(s) {} of row {}, {} of ramp to rise {} block(s) and the rest of it open track", rail.line(), rising[1] > 0 ? rail.rowMost() - rising[0] : rising[0] - rail.rowLeast(), rising[1] > 0 ? "beyond" : "short", rising[0], subwayDepth() * climb(true), subwayDepth()); }
         for (int row = least; row <= most; row++) {
             int level = grade.at(row);
             if (level == Integer.MIN_VALUE) { continue; }
+            int flat = sub ? BeardStations.heldLevel(rail, grade, row) : Integer.MIN_VALUE;
+            if (flat != Integer.MIN_VALUE) { level = flat; }
             boolean trestle = grade.bridgedAt(row);
-            boolean tunnel = !trestle && grade.tunneledAt(row, depth) && uncrossedAt(roads, alongX, row, center, level);
+            boolean broken = surfaced(rising, row) && grade.groundAt(row) != Integer.MIN_VALUE && level >= grade.groundAt(row) - 1;
+            boolean tunnel = (sub && !broken) || (!trestle && grade.tunneledAt(row, depth) && uncrossedAt(roads, alongX, row, center, level));
             boolean tieRow = Math.floorMod(row, tieRun) == 0;
             boolean powerRow = powerRun > 0 && Math.floorMod(row, powerRun) == 0;
             boolean litRow = light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
@@ -567,11 +798,16 @@ public final class BeardRails {
                 boolean onShoulder = shoulder > 0 && (across < acrossLeast + shoulder || across > acrossMost - shoulder);
                 if (verge) {
                     if (trestle) { continue; }
-                    if (tunnel) { lined += BeardRoads.tunnelWall(world, rail, at, x, z, level, lining); }
-                    else { BeardRoads.vergeFill(world, rail, x, z, level, at); }
+                    if (tunnel) {
+                        lined += BeardRoads.tunnelWall(world, rail, at, x, z, level, linings);
+                    }
+                    else {
+                        lined += cutWall(world, at, alongX, row, across, level, across < acrossLeast ? -1 : 1, linings);
+                        BeardRoads.vergeFill(world, rail, x, z, level, at);
+                    }
                     continue;
                 }
-                StructureComponent road = tunnel ? null : roadAt(roads, x, z);
+                StructureComponent road = tunnel ? null : roadAt(roads, alongX, x, z);
                 if (road != null) {
                     if (onRail) {
                         int atRoad = grade.at(alongX ? (road.getBoundingBox().minX + road.getBoundingBox().maxX) / 2 : (road.getBoundingBox().minZ + road.getBoundingBox().maxZ) / 2);
@@ -592,17 +828,37 @@ public final class BeardRails {
                     continue;
                 }
                 BlockPos top = GroundLevel.inWindow(world, new BlockPos(x, 64, z)).down();
-                clearAbove(world, at, x, z, level + 1, tunnel ? level + CLEAR : Math.max(level + CLEAR, top.getY() + 2), within, seeds);
+                clearAbove(world, at, x, z, level + 1, tunnel ? level + CLEAR : Math.max(level + CLEAR, top.getY() + 2), within, seeds, tunnel || broken);
                 BeardBlocks.fillUnder(world, at, x, z, level - 1, level - FILL_UNDER);
                 IBlockState base = onRail && inBed ? track : powerRow && onRail ? powerBase : onShoulder ? shoulderBlock : tieRow ? tie : bed;
                 laid += set(world, at, x, level, z, base);
                 if (onRail && !inBed) { set(world, at, x, level + 1, z, powerRow ? powered : track); }
-                if (tunnel) { lined += BeardRoads.roofCell(world, at, x, z, level + CLEAR + 1, litRow && across == center ? light : lining); }
+                if (tunnel) {
+                    lined += BeardRoads.roofCell(world, at, x, z, level + CLEAR + 1, litRow && across == center ? light : linings.pick(world, x, level + CLEAR + 1, z));
+                }
             }
             if (frameRow) { framed += bridgeFrame(world, at, clip, alongX, row, acrossLeast, acrossMost, level); }
+            if (sub && tunnel && BeardStations.stationAt(rail, row, wellRow)) {
+                halls += BeardStations.open(world, clip, alongX, row, center, level, bedHalf, linings, light, lightRun, at);
+            }
+            else if (sub && tunnel && (BeardStations.stationAt(rail, row - 1, wellRow) || BeardStations.stationAt(rail, row + 1, wellRow))) {
+                int beside = BeardStations.heldLevel(rail, grade, BeardStations.stationAt(rail, row - 1, wellRow) ? row - 1 : row + 1);
+                if (beside != Integer.MIN_VALUE) { halls += BeardStations.cap(world, clip, alongX, row, center, beside, level, bedHalf, linings, at); }
+            }
+        }
+        for (int which = 0; which < stairs.size(); which++) {
+            StructureBoundingBox stair = stairs.get(which);
+            int stairRow = (alongX ? stair.minX : stair.minZ) + 1;
+            int stairLevel = BeardStations.heldLevel(rail, grade, BeardStations.heartOf(rail, stair));
+            if (stairLevel == Integer.MIN_VALUE) { stairLevel = grade.at(stairRow); }
+            if (stairLevel == Integer.MIN_VALUE) { continue; }
+            halls += BeardStations.platformBench(world, clip, alongX, alongX ? stair.minX : stair.minZ, center, stairLevel, bedHalf, (alongX ? stair.minZ : stair.minX) + 1 > center ? 1 : -1, at);
+            int near = (alongX ? stair.minZ : stair.minX) + 1;
+            stepped += BeardStations.stairs(world, clip, rail, which, alongX, stairRow, near, near > center ? 1 : -1, center, bedHalf, stairLevel, linings, at);
+            heads += BeardStations.entrance(world, clip, rail, which, alongX, stairRow, near, stairLevel);
         }
         int felled = seeds.isEmpty() ? 0 : ContentBeard.fellTrees(world, seeds, within, at);
-        if (laid + crossed + felled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Laid railway line {} at {}, {} within its chunk: {} bed column(s), {} support block(s) under trestles, {} tunnel block(s), {} rail(s) across roads, {} overhead frame block(s), {} tree block(s) felled whole where a tree stood over the bed", rail.line(), box.minX, box.minZ, laid, trestled, lined, crossed, framed, felled); }
+        if (laid + crossed + felled + halls > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Laid railway line {} at {}, {} within its chunk: {} bed column(s), {} support block(s) under trestles, {} tunnel block(s), {} rail(s) across roads, {} overhead frame block(s), {} tree block(s) felled whole where a tree stood over the bed, {} station column(s), {} step(s) to the road side, {} entrance(s)", rail.line(), box.minX, box.minZ, laid, trestled, lined, crossed, framed, felled, halls, stepped, heads); }
     }
 
     public static int open(RailPiece rail, World world, StructureStart start, StructureBoundingBox clip) {
@@ -647,9 +903,10 @@ public final class BeardRails {
         return false;
     }
 
-    @Nullable private static StructureComponent roadAt(List<StructureComponent> roads, int x, int z) {
+    @Nullable private static StructureComponent roadAt(List<StructureComponent> roads, boolean alongX, int x, int z) {
         for (StructureComponent road : roads) {
             StructureBoundingBox box = road.getBoundingBox();
+            if (alongTheLine(box, alongX)) { continue; }
             if (x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { return road; }
         }
         return null;
@@ -658,6 +915,7 @@ public final class BeardRails {
     private static boolean uncrossedAt(List<StructureComponent> roads, boolean alongX, int row, int center, int level) {
         for (StructureComponent road : roads) {
             StructureBoundingBox box = road.getBoundingBox();
+            if (alongTheLine(box, alongX)) { continue; }
             if (row < (alongX ? box.minX : box.minZ) - 1 || row > (alongX ? box.maxX : box.maxZ) + 1) { continue; }
             if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
             BeardRoads.Grade grade = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
@@ -707,13 +965,21 @@ public final class BeardRails {
     }
 
     private static void clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int to, Predicate<BlockPos> within, List<BlockPos> seeds) {
+        clearAbove(world, at, x, z, from, to, within, seeds, false);
+    }
+
+    private static void clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int to, Predicate<BlockPos> within, List<BlockPos> seeds, boolean bored) {
         int y = from;
         for (; y <= to; y++) {
             at.setPos(x, y, z);
             IBlockState above = world.getBlockState(at);
             Block up = above.getBlock();
             if (up == Blocks.AIR || BeardKeep.holds(x, y, z) || railBlock(above)) { continue; }
-            if (above.getMaterial().isLiquid()) { break; }
+            if (above.getMaterial().isLiquid()) {
+                if (!bored) { break; }
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                continue;
+            }
             if (tree(world, at, x, y, z, above, within, seeds)) { continue; }
             if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || !above.getMaterial().isSolid()) {
                 BeardBlocks.note(world, at, "Laying a railway");

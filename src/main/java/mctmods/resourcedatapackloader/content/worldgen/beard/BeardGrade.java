@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 public final class BeardGrade {
     public static final int CAP = 2;
     public static final int TUNNEL_LEAST = 12;
+    private static final int DECK_LEAST = 4;
     public static final int TUNNEL_REACH = 98;
 
     private BeardGrade() {}
@@ -203,7 +204,7 @@ public final class BeardGrade {
 
     public static int levelDecks(int[] profile, boolean[] bridged, boolean[] keep, int run) {
         int rows = profile.length;
-        int levelled = 0;
+        int leveled = 0;
         int i = 0;
         while (i < rows) {
             if (!bridged[i] || keep[i] || profile[i] == Integer.MIN_VALUE) {
@@ -224,7 +225,7 @@ public final class BeardGrade {
                 for (int deck = most; deck >= least; deck--) {
                     int laid = layDeck(profile, keep, i, end, deck, run);
                     if (!stepped(profile, before, spacing, run)) {
-                        levelled += laid;
+                        leveled += laid;
                         laidOut = true;
                         break;
                     }
@@ -233,7 +234,7 @@ public final class BeardGrade {
             }
             i = end + 1;
         }
-        return levelled;
+        return leveled;
     }
 
     private static int layDeck(int[] profile, boolean[] keep, int first, int last, int deck, int run) {
@@ -280,12 +281,41 @@ public final class BeardGrade {
 
     public static int deckDrops(int[] profile, int[] ground, boolean[] bridged, boolean[] keep, int drop) {
         if (drop <= 0) { return 0; }
-        int decked = 0;
-        for (int i = 0; i < profile.length; i++) {
+        int rows = profile.length;
+        boolean[] own = new boolean[rows];
+        for (int i = 0; i < rows; i++) {
             if (keep[i] || bridged[i] || profile[i] == Integer.MIN_VALUE || ground[i] == Integer.MIN_VALUE) { continue; }
             if (profile[i] <= ground[i] + drop) { continue; }
             bridged[i] = true;
-            decked++;
+            own[i] = true;
+        }
+        int decked = 0;
+        int i = 0;
+        while (i < rows) {
+            if (!bridged[i]) {
+                i++;
+                continue;
+            }
+            int end = i;
+            while (end + 1 < rows && bridged[end + 1]) { end++; }
+            boolean mine = false;
+            for (int at = i; at <= end; at++) {
+                if (own[at]) {
+                    mine = true;
+                    break;
+                }
+            }
+            if (mine && end - i + 1 < DECK_LEAST) {
+                for (int at = i; at <= end; at++) {
+                    if (own[at]) { bridged[at] = false; }
+                }
+            }
+            else {
+                for (int at = i; at <= end; at++) {
+                    if (own[at]) { decked++; }
+                }
+            }
+            i = end + 1;
         }
         return decked;
     }

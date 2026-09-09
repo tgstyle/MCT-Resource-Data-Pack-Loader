@@ -77,7 +77,7 @@ public final class BeardGround {
                     if (!clip.isVecInside(at)) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     if (world.getBlockState(at).getMaterial() == Material.SAND) {
-                        world.setBlockState(at, Blocks.DIRT.getDefaultState(), 2);
+                        world.setBlockState(at, BeardBlocks.footing(), 2);
                         soiled++;
                     }
                 }
@@ -190,7 +190,7 @@ public final class BeardGround {
                         IBlockState step = world.getBlockState(at);
                         if (step.getMaterial() == Material.ROCK && world.getBlockState(at.down()).getMaterial().isLiquid()) {
                             BeardBlocks.note(world, at, "Dressing a doorstep over water in wood");
-                            world.setBlockState(at, Blocks.PLANKS.getDefaultState(), 2);
+                            world.setBlockState(at, BeardBlocks.overWater(), 2);
                             opened++;
                             continue;
                         }
@@ -372,10 +372,7 @@ public final class BeardGround {
                     if (doorBeside(world, at, x, y, z)) { break; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getMaterial().isSolid()) { break; }
-                    IBlockState laid = BeardBlocks.fillGround(world, x, z);
-                    if (laid.getBlock() == Blocks.DIRT && y == upTo) { laid = Blocks.GRASS.getDefaultState(); }
-                    if (world.getBlockState(at.down()).getMaterial().isLiquid()) { laid = Blocks.PLANKS.getDefaultState(); }
-                    world.setBlockState(at, laid, 2);
+                    world.setBlockState(at, BeardBlocks.fillAt(world, x, y, upTo, z, world.getBlockState(at.down()).getMaterial().isLiquid()), 2);
                     filled++;
                 }
             }

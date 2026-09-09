@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public final class ContentWorldTemplates {
+public final class
+ContentWorldTemplates {
     private static final Map<String, BiomeDictionary.Type> ROLES = roles();
     private static final List<String> ROLE_ORDER = Collections.unmodifiableList(Arrays.asList(
             "ocean", "river", "beach", "mushroom", "swamp", "hills", "mountain", "jungle",
@@ -106,8 +107,14 @@ public final class ContentWorldTemplates {
         }
         if ("auto".equalsIgnoreCase(wanted)) {
             WorldTemplateDef chosen = null;
+            List<ResourceLocation> fromPacks = new ArrayList<>();
             for (WorldTemplateDef def : usable) {
-                if (!"rdpl".equals(def.registryName.getNamespace())) { chosen = def; }
+                if ("rdpl".equals(def.registryName.getNamespace())) { continue; }
+                fromPacks.add(def.registryName);
+                chosen = def;
+            }
+            if (fromPacks.size() > 1) {
+                ContentLog.LOGGER.error("{} world templates are loaded and only one can be active: {}. '{}' is the one in force and the rest do nothing, settings and all. Put every setting in ONE template, and use its 'dimensions' list to say which dimensions it fills", fromPacks.size(), fromPacks, chosen.getKey());
             }
             return chosen;
         }

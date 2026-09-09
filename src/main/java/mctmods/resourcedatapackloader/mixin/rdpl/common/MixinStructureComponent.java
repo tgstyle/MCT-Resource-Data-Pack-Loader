@@ -30,6 +30,7 @@ import java.util.List;
                 StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
                 if (held == null || !rdpl$flatHit(held, boundingboxIn, 0)) { continue; }
                 if (piece instanceof StructureVillagePieces.Path && rdpl$roadShaped(boundingboxIn) && rdpl$crosses(held, boundingboxIn)) { continue; }
+                if (BeardRails.buried(piece)) { continue; }
                 if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }
                 cir.setReturnValue(piece);
                 return;
@@ -41,6 +42,7 @@ import java.util.List;
         for (StructureComponent piece : listIn) {
             StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
             if (held == null) { continue; }
+            if (BeardRails.buried(piece)) { continue; }
             if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }
             boolean flush = piece instanceof StructureVillagePieces.Path || piece instanceof StructureVillagePieces.Well || piece instanceof RailPiece;
             if (rdpl$flatHit(held, boundingboxIn, flush ? 0 : 1)) {
@@ -76,6 +78,7 @@ import java.util.List;
         StructureComponent self = StructureComponent.class.cast(this);
         if (!(self instanceof StructureVillagePieces.Village) || self instanceof StructureVillagePieces.Road) { return world.setBlockState(pos, newState, flags); }
         if (newState.getBlock() instanceof BlockStairs && ContentBeard.wanted() && !self.getBoundingBox().isVecInside(pos)) { return true; }
+        if (BeardRails.insideBore(world, pos.getX(), pos.getY(), pos.getZ())) { return true; }
         IBlockState wanted = ContentVillages.ruled(world, pos, newState);
         return world.setBlockState(pos, wanted == null ? newState : wanted, flags);
     }

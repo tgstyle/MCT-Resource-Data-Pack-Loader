@@ -137,6 +137,8 @@ public final class BeardRoads {
 
         public boolean bridgedAt(int row) { return row >= start && row < start + bridged.length && bridged[row - start]; }
 
+        public int groundAt(int row) { return ground[MathHelper.clamp(row - start, 0, ground.length - 1)]; }
+
         public boolean tunneledAt(int row, int depth) {
             if (depth <= 0 || row < start || row >= start + profile.length) { return false; }
             int i = row - start;
@@ -319,8 +321,8 @@ public final class BeardRoads {
             if (filled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Lifted {} row(s) of the road at {}, {} out of a dip, so it carries across at the level it meets on either side", filled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             int decked = BeardGrade.deckDrops(profile, ground, bridged, authority, Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeDrop", Config.worldgen.villagePathBridgeDrop)));
             if (decked > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Decked {} row(s) of the road at {}, {} where its grade stands clear of the ground, so the drop is bridged rather than filled", decked, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
-            int levelled = BeardGrade.levelDecks(profile, bridged, authority, 1);
-            if (levelled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Levelled {} row(s) of the road at {}, {} so each of its decks lies at one height end to end", levelled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            int leveled = BeardGrade.levelDecks(profile, bridged, authority, 1);
+            if (leveled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Leveled {} row(s) of the road at {}, {} so each of its decks lies at one height end to end", leveled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             if (!BeardGrade.walkable(profile, bridged) || steppedOntoDeck(profile, bridged)) {
                 boolean[] standing = new boolean[profile.length];
                 for (int i = 0; i < standing.length; i++) { standing[i] = hold[i] || bridged[i]; }
@@ -713,7 +715,7 @@ public final class BeardRoads {
                 at.setPos(x, profile[i], z);
                 if (!clip.isVecInside(at)) { continue; }
                 if (tunnel) {
-                    lined += tunnelWall(world, piece, at, x, z, profile[i], lining);
+                    lined += tunnelWall(world, piece, at, x, z, profile[i], pathPalette("villagePathTunnelBlock", Config.worldgen.villagePathTunnelBlock, lining));
                     continue;
                 }
                 filled += vergeFill(world, piece, x, z, profile[i], at);
@@ -722,6 +724,7 @@ public final class BeardRoads {
         if (stored && (alongX ? clip.minZ : clip.minX) <= acrossLeast - 1 && (alongX ? clip.maxZ : clip.maxX) >= acrossMost + 1) {
             for (int row = least; row <= most; row++) { graded.covered[row - start] = true; }
         }
+        BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, crossed);
         if ((cut + filled + paved + lined > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips, lined {} of tunnel", box.minX, box.minZ, paved, cut, filled, lined); }
     }
 
@@ -1062,12 +1065,14 @@ public final class BeardRoads {
         return filled;
     }
 
-    static int tunnelWall(World world, StructureComponent piece, BlockPos.MutableBlockPos at, int x, int z, int level, IBlockState lining) {
-        if (insidePlaza(x, z)) { return 0; }
-        StructureStart holder = ContentBeard.current();
-        if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }
+    static int tunnelWall(World world, StructureComponent piece, BlockPos.MutableBlockPos at, int x, int z, int level, Palette linings) {
+        if (!BeardRails.buried(piece)) {
+            if (insidePlaza(x, z)) { return 0; }
+            StructureStart holder = ContentBeard.current();
+            if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }
+        }
         int laid = 0;
-        for (int y = level; y <= level + BORE + 1; y++) { laid += roofCell(world, at, x, z, y, lining); }
+        for (int y = level; y <= level + BORE + 1; y++) { laid += roofCell(world, at, x, z, y, linings.pick(world, x, y, z)); }
         return laid;
     }
 
@@ -1352,9 +1357,7 @@ public final class BeardRoads {
             IBlockState held = world.getBlockState(at);
             if (held.getMaterial().isSolid() && !held.getMaterial().isLiquid()) { break; }
             if (BeardKeep.holds(x, y, z)) { break; }
-            IBlockState laying = BeardBlocks.fillGround(world, x, z);
-            if (laying.getBlock() == Blocks.DIRT && y == level) { laying = Blocks.GRASS.getDefaultState(); }
-            world.setBlockState(at, laying, 2);
+            world.setBlockState(at, BeardBlocks.fillAt(world, x, y, level, z, false), 2);
             laid++;
         }
         at.setPos(x, level, z);
@@ -2287,10 +2290,62 @@ public final class BeardRoads {
     private static final java.util.Map<String, IBlockState> PATH_BLOCKS = new java.util.concurrent.ConcurrentHashMap<>();
     private static final PackGeneration PATH_GENERATION = new PackGeneration();
 
+    public static final class Palette {
+        private final IBlockState[] drawn;
+
+        private Palette(IBlockState[] drawn) { this.drawn = drawn; }
+
+        public IBlockState first() { return drawn[0]; }
+
+        public boolean mixed() { return drawn.length > 1; }
+
+        public IBlockState pick(@Nullable World world, int x, int y, int z) {
+            if (drawn.length == 1 || world == null) { return drawn[0]; }
+            return drawn[SeededRandom.at(world, x, y, z).nextInt(drawn.length)];
+        }
+    }
+
+    private static final int MIX_MOST = 256;
+    private static final Map<String, Palette> PATH_MIXES = new HashMap<>();
+
+    public static Palette pathPalette(String key, String fromConfig, IBlockState vanilla) {
+        String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig).trim();
+        if (named.isEmpty()) { return new Palette(new IBlockState[] { vanilla }); }
+        if (PATH_GENERATION.stale()) { PATH_BLOCKS.clear(); PATH_MIXES.clear(); }
+        Palette held = PATH_MIXES.get(named);
+        if (held != null) { return held; }
+        List<IBlockState> drawn = new ArrayList<>();
+        for (String part : named.split(",")) {
+            String entry = part.trim();
+            if (entry.isEmpty()) { continue; }
+            int weight = 1;
+            int gap = entry.lastIndexOf(' ');
+            if (gap > 0) {
+                try {
+                    weight = Integer.parseInt(entry.substring(gap + 1).trim());
+                    entry = entry.substring(0, gap).trim();
+                }
+                catch (NumberFormatException ignored) { weight = 1; }
+            }
+            IBlockState state = ContentStates.parse(entry, key);
+            if (state == null) {
+                ContentLog.LOGGER.error("{} names '{}', which is not a registered block, so it is left out of the mix", key, entry);
+                continue;
+            }
+            for (int i = 0; i < Math.max(1, weight) && drawn.size() < MIX_MOST; i++) { drawn.add(state); }
+        }
+        if (drawn.isEmpty()) { drawn.add(vanilla); }
+        Palette made = new Palette(drawn.toArray(new IBlockState[0]));
+        PATH_MIXES.put(named, made);
+        if (made.mixed() && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} is a mix of {} draw(s) over {} block(s)", key, drawn.size(), named.split(",").length); }
+        return made;
+    }
+
     public static IBlockState pathBlock(String key, String fromConfig, IBlockState vanilla) {
         String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig);
         if (named.isEmpty()) { return vanilla; }
-        if (PATH_GENERATION.stale()) { PATH_BLOCKS.clear(); }
+        if (named.indexOf(',') >= 0) { return pathPalette(key, fromConfig, vanilla).first(); }
+        if (PATH_GENERATION.stale()) { PATH_BLOCKS.clear(); PATH_MIXES.clear(); }
         IBlockState held = PATH_BLOCKS.get(named);
         if (held != null) { return held; }
         IBlockState state = ContentStates.parse(named, key);

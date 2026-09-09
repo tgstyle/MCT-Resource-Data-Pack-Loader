@@ -105,8 +105,7 @@ import net.minecraft.util.math.AxisAlignedBB;
         else { entity.onUpdate(); }
     }
 
-    @Redirect(method = "getBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getChunk(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;"))
-    private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
+    @Unique private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
         if (isRemote) { return self.getChunk(pos); }
         ChunkPos populating = IChunk.rdpl$getPopulating();
         if (populating == null) { return self.getChunk(pos); }
@@ -200,7 +199,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Unique protected int rdpl$fakedMaxHeight = 0;
     @Unique private int rdpl$maxGenerationHeight = 256;
 
-    @Shadow public abstract boolean isValid(BlockPos pos);
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted") @Shadow public abstract boolean isValid(BlockPos pos);
 
     @Shadow public abstract BlockPos getPrecipitationHeight(BlockPos pos);
 
@@ -211,6 +210,8 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Shadow public abstract Biome getBiome(BlockPos pos);
 
     @Shadow public abstract Chunk getChunk(BlockPos pos);
+
+    @Shadow public abstract IBlockState getBlockState(BlockPos pos);
 
     @Unique protected void rdpl$initRubicWorld(IntRange heightRange, IntRange generationRange) {
         ((IRubicWorldSettings) worldInfo).rdpl$setRubic(true);
@@ -284,21 +285,14 @@ import net.minecraft.util.math.AxisAlignedBB;
         }
     }
 
-    /**
-     * @author tgstyle
-     * @reason Route block state lookups through the cube provider on rubic worlds.
-     */
-    @Overwrite public IBlockState getBlockState(BlockPos pos) {
-        if (this.isOutsideBuildHeight(pos)) { return Objects.requireNonNull(Blocks.AIR).getDefaultState(); }
-        if (this.rdpl$isRubicWorld) {
+    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true) private void rdpl$blockState(BlockPos pos, CallbackInfoReturnable<IBlockState> cir) {
+        if (rdpl$outsideBuildHeight(pos)) { cir.setReturnValue(Objects.requireNonNull(Blocks.AIR).getDefaultState()); }
+        else if (this.rdpl$isRubicWorld) {
             ICube cube = ((ICubeProviderInternal) this.chunkProvider)
                     .getCube(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getY()), Coords.blockToCube(pos.getZ()));
-            return cube.getBlockState(pos);
+            cir.setReturnValue(cube.getBlockState(pos));
         }
-        else {
-            Chunk chunk = this.getChunk(pos);
-            return chunk.getBlockState(pos);
-        }
+        else { cir.setReturnValue(rdpl$leaveLandAlone(World.class.cast(this), pos).getBlockState(pos)); }
     }
 
     @Inject(method = "getTopSolidOrLiquidBlock", at = @At("HEAD"), cancellable = true) private void getTopSolidOrLiquidBlockRubic(BlockPos pos, CallbackInfoReturnable<BlockPos> cir) {
@@ -351,11 +345,9 @@ import net.minecraft.util.math.AxisAlignedBB;
         updateEntity_entityPosZ = MathHelper.floor(entityIn.posZ);
     }
 
-    /**
-     * @author tgstyle
-     * @reason Test against the rubic min and max heights instead of the fixed vanilla range.
-     */
-    @Overwrite public boolean isOutsideBuildHeight(BlockPos pos) { return pos.getY() >= rdpl$getMaxHeight() || pos.getY() < rdpl$getMinHeight(); }
+    @Inject(method = "isOutsideBuildHeight", at = @At("HEAD"), cancellable = true) private void rdpl$buildHeight(BlockPos pos, CallbackInfoReturnable<Boolean> cir) { cir.setReturnValue(rdpl$outsideBuildHeight(pos)); }
+
+    @Unique private boolean rdpl$outsideBuildHeight(BlockPos pos) { return pos.getY() >= rdpl$getMaxHeight() || pos.getY() < rdpl$getMinHeight(); }
 
     /**
      * @author tgstyle
@@ -367,9 +359,12 @@ import net.minecraft.util.math.AxisAlignedBB;
         return this.getChunk(pos).getLightSubtracted(pos, 0);
     }
 
-    @Group(name = "getLightForHeightOverride", min = 2, max = 2) @ModifyConstant(method = "getLightFor",
-            constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.LESS_THAN_ZERO))
-    private int getLightForGetMinYReplace(int origY) { return this.rdpl$getMinHeight(); }
+    @Inject(method = "getLightFor", at = @At("HEAD"), cancellable = true) private void rdpl$lightFor(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
+        if (!this.rdpl$isRubicWorld) { return; }
+        BlockPos at = pos.getY() < rdpl$getMinHeight() ? new BlockPos(pos.getX(), rdpl$getMinHeight(), pos.getZ()) : pos;
+        if (!isValid(at) || !isBlockLoaded(at)) { cir.setReturnValue(type.defaultLightValue); }
+        else { cir.setReturnValue(getChunk(at).getLightFor(type, at)); }
+    }
 
     @Group(name = "isLoaded", max = 1) @Inject(method = "isAreaLoaded(IIIIIIZ)Z", at = @At(value = "HEAD"), cancellable = true, require = 1)
     private void isAreaLoadedInject(int xStart, int yStart, int zStart, int xEnd, int yEnd, int zEnd, boolean allowEmpty,

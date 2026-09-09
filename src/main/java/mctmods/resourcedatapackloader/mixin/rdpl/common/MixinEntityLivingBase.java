@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
@@ -20,7 +23,6 @@ import net.minecraft.world.World;
 
 @Mixin(EntityLivingBase.class) public abstract class MixinEntityLivingBase extends Entity {
     @Shadow protected abstract SoundEvent getHurtSound(DamageSource damageSourceIn);
-    @Shadow protected abstract int getExperiencePoints(EntityPlayer player);
     @Shadow protected abstract float getWaterSlowDown();
     @Shadow protected abstract SoundEvent getDeathSound();
 
@@ -57,8 +59,8 @@ import net.minecraft.world.World;
     @Redirect(method = "onEntityUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLivingBase;canBreatheUnderwater()Z"))
     private boolean rdpl$breathe(EntityLivingBase self) { return ContentEntities.breathesUnderwater(self) || self.canBreatheUnderwater(); }
 
-    @Redirect(method = "onDeathUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLivingBase;getExperiencePoints(Lnet/minecraft/entity/player/EntityPlayer;)I"))
-    private int rdpl$experience(EntityLivingBase self, EntityPlayer player) { return ContentEntities.experience(self, getExperiencePoints(player)); }
+    @WrapOperation(method = "onDeathUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/EntityLivingBase;getExperiencePoints(Lnet/minecraft/entity/player/EntityPlayer;)I"))
+    private int rdpl$experience(EntityLivingBase self, EntityPlayer player, Operation<Integer> original) { return ContentEntities.experience(self, original.call(self, player)); }
 
     @Inject(method = "getSoundVolume", at = @At("RETURN"), cancellable = true) private void rdpl$volume(CallbackInfoReturnable<Float> cir) { cir.setReturnValue(ContentEntities.sound((EntityLivingBase) (Object) this, cir.getReturnValueF(), false)); }
 

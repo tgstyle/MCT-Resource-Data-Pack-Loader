@@ -30,6 +30,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static Boolean cubicChunks;
     private static boolean rubicLoaded;
     private Boolean lightingReplaced;
+    private static Boolean sponge;
     private Boolean pathfindingReplaced;
     private Boolean optimizationsOff;
     private Boolean universalTweaks;
@@ -141,14 +142,21 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             }
             if (optimizationsOff) { return false; }
         }
+        if (mixinClassName.endsWith(".MixinWorldServerWeather")) { return !spongePresent(); }
         if (!mixinClassName.endsWith(".MixinWorldLight") && !mixinClassName.endsWith(".MixinChunkLight")) { return true; }
         if (lightingReplaced == null) {
             lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null
                     || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null
-                    || Launch.classLoader.getResource("com/sumirelabs/pulsar/light/WorldLightManager.class") != null;
+                    || Launch.classLoader.getResource("com/sumirelabs/pulsar/light/WorldLightManager.class") != null
+                    || spongePresent();
             if (lightingReplaced) { LogManager.getLogger("RDPL").info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
         }
         return !lightingReplaced;
+    }
+
+    private static boolean spongePresent() {
+        if (sponge == null) { sponge = Launch.classLoader.getResource("org/spongepowered/mod/SpongeMod.class") != null; }
+        return sponge;
     }
 
     private static boolean standDown(String simple, boolean taken) {

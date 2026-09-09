@@ -76,7 +76,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import java.util.Set;
-import net.minecraft.world.GameRules;
 
 @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(WorldServer.class) public abstract class MixinWorldServer extends MixinWorld implements IRubicWorldInternal.IServer, IRubicWorldServer {
     @Inject(method = "createSpawnPosition", at = @At("RETURN")) private void rdpl$spawnWhereAsked(WorldSettings settings, CallbackInfo ci) {
@@ -401,7 +400,4 @@ import net.minecraft.world.GameRules;
         }
         return strikeTarget;
     }
-
-    @Redirect(method = "updateBlocks", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/GameRules;getInt(Ljava/lang/String;)I"), require = 1)
-    public int redirectGetRandomTickSpeed(GameRules gameRules, String name) { return this.rdpl$isRubicWorld() ? 0 : gameRules.getInt(name); }
 }

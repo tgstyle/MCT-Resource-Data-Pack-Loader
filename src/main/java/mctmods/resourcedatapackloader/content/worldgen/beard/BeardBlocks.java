@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
@@ -38,6 +39,26 @@ public final class BeardBlocks {
         Biome biome = world.getBiome(AT.setPos(x, 64, z));
         return biome.topBlock.getBlock() == Blocks.SAND;
     }
+    public static IBlockState vergeBlock() { return BeardRoads.pathBlock("villagePathVergeBlock", Config.worldgen.villagePathVergeBlock, Blocks.AIR.getDefaultState()); }
+
+    public static IBlockState overWater() {
+        IBlockState wet = BeardRoads.pathBlock("villagePathVergeWaterBlock", Config.worldgen.villagePathVergeWaterBlock, Blocks.PLANKS.getDefaultState());
+        return wet.getBlock() == Blocks.AIR ? Blocks.PLANKS.getDefaultState() : wet;
+    }
+
+    public static IBlockState footing() {
+        IBlockState asked = vergeBlock();
+        return asked.getBlock() == Blocks.AIR ? Blocks.DIRT.getDefaultState() : asked;
+    }
+
+    public static IBlockState fillAt(World world, int x, int y, int top, int z, boolean overWater) {
+        if (overWater) { return overWater(); }
+        IBlockState asked = vergeBlock();
+        if (asked.getBlock() != Blocks.AIR) { return asked; }
+        IBlockState laid = fillGround(world, x, z);
+        return laid.getBlock() == Blocks.DIRT && y == top ? Blocks.GRASS.getDefaultState() : laid;
+    }
+
     public static IBlockState fillGround(World world, int x, int z) {
         Biome biome = world.getBiome(AT.setPos(x, 64, z));
         Block top = biome.topBlock.getBlock();
@@ -105,6 +126,7 @@ public final class BeardBlocks {
         for (int y = from; y >= floor; y--) {
             at.setPos(x, y, z);
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
+            if (BeardKeep.holds(x, y, z)) { continue; }
             world.setBlockState(at, fillGround(world, x, z), 2);
             filled++;
         }
@@ -135,6 +157,7 @@ public final class BeardBlocks {
         if (footing == Integer.MIN_VALUE) { return 0; }
         int filled = 0;
         for (int y = from; y > footing; y--) {
+            if (BeardKeep.holds(x, y, z)) { continue; }
             at.setPos(x, y, z);
             IBlockState laid = fillGround(world, x, z);
             if (field && laid.getBlock() == Blocks.SAND && !sandBiome(world, x, z)) { laid = Blocks.DIRT.getDefaultState(); }

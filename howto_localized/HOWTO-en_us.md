@@ -3925,10 +3925,26 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villagePathBridgeFrameHeight": 4,
     "villagePathBridgeFrameRun": 24,
     "villagePathBridgeFrameLeast": 24,
+    "villagePathVergeBlock": "",
+    "villagePathVergeWaterBlock": "minecraft:planks",
     "villagePathTunnelBlock": "minecraft:stonebrick",
     "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
     "villagePathTunnelLightRun": 8,
+    "villageSewerBlock": "minecraft:stonebrick",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:stonebrick:3",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:iron_trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 30,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
     "villagePathCenterBlock": "minecraft:quartz_block",
     "villagePathCenterDash": 2,
     "villagePathLineBlock": "minecraft:stone_slab",
@@ -3970,10 +3986,26 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 | `villagePathBridgeFrameHeight` | number | `4` | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that |
 | `villagePathBridgeFrameRun` | number | `24` | How many rows apart the frames stand when a bridge is long enough for several |
 | `villagePathBridgeFrameLeast` | number | `24` | The shortest bridged run that gets a frame at all. A shorter bridge is left plain |
+| `villagePathVergeBlock` | block | empty | The block the ground beside a road and under a plot is filled with where the village has to make land. Empty follows the terrain, laying the biome's own filler with grass on top where it would be dirt |
+| `villagePathVergeWaterBlock` | block | `minecraft:planks` | What that fill becomes where it stands over water, so a verge carried out onto a lake is not a column of dirt. It dresses a stone doorstep left over water too |
 | `villagePathTunnelBlock` | block | empty | Lines a road where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels, and a road cuts through a hill as before |
 | `villagePathTunnelDepth` | number | `10` | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
 | `villagePathTunnelLightBlock` | block | empty | A light set into the tunnel roof down its center line. Empty lights none |
 | `villagePathTunnelLightRun` | number | `8` | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next; a tunnel too short to reach one of those spots is lit once, in its middle |
+| `villageSewerBlock` | block name | none | The block a sewer is lined with under a village's streets: its floor, its two walls and its roof. Empty digs no sewers |
+| `villageSewerDepth` | number | `8` | How far under a street's own surface the sewer floor sits. The sewer follows the street it runs under, so a climbing street carries a climbing sewer |
+| `villageSewerHeight` | number | `3` | How many blocks of headroom stand over the walkway |
+| `villageSewerWidth` | number | `5` | How wide the sewer runs, counted across including its two walls. An even number is rounded up so the channel keeps the middle |
+| `villageSewerWaterBlock` | block name | `minecraft:water` | What fills the channel down the middle. Empty leaves the channel dry |
+| `villageSewerWalkBlock` | block name | none | What the walkways either side of the channel are surfaced with. Empty walks on the lining block |
+| `villageSewerLightBlock` | block name | none | The block set into the roof over the channel as a light. Empty lights none |
+| `villageSewerLightRun` | number | `8` | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next |
+| `villageSewerLadderBlock` | block name | none | The block a manhole shaft is climbed by, set down the shaft from the street to the sewer walkway. Empty leaves the shaft open |
+| `villageSewerCoverBlock` | block name | none | The block covering a manhole, set flush in the street where two streets cross. A wooden trapdoor is the usual choice: an iron one takes a redstone signal and no player can open it by hand, which shuts the sewer to them. Empty leaves the shaft mouth open |
+| `villageSewerMossBlock` | block name | none | A second block mixed into the lining here and there, mossy stone among plain for instance. Empty lines the sewer with one block throughout |
+| `villageSewerMossChance` | 0 to 100 | `30` | What percentage of lining blocks come out as that second block. Rolled per block position from the world seed, so the same sewer always comes out the same |
+| `villageSewerVineBlock` | block name | none | A block hung on the inside of the sewer walls here and there, vines for instance. It is clung to whichever wall it stands against. Empty hangs nothing |
+| `villageSewerVineChance` | 0 to 100 | `20` | What percentage of the cells beside a wall carry it. Rolled per block position from the world seed, so the same sewer always hangs the same |
 | `villagePathCenterBlock` | block | empty | A center line down the middle of the road. Empty draws none |
 | `villagePathCenterDash` | number | `0` | Dashes that line: N blocks of line, then one of road. Anchored to world coordinates, so the dashes of one road piece continue into the next. `0` keeps it solid |
 | `villagePathLineBlock` | block | empty | Edge lines between road and sidewalk. Empty draws none |
@@ -4001,6 +4033,8 @@ A road is dressed from the middle out: center line, then road, then edge lines, 
 `villagePathBlock` and its siblings win over `villageBlocks`. A named road block is used as it stands, while the map only touches what the road would otherwise have chosen for itself. Leave them empty and the map decides, which is how a pack keeps the biome accurate surfacing and still recolors it.
 
 **Tunnels.** Without a tunnel block a road that meets a hill climbs it, one block a row at most, and cuts no deeper than two blocks into a short rise. Once `villagePathTunnelBlock` names a block, a rise that stands `villagePathTunnelDepth` or more over the road for at least twelve rows is bored instead: the road holds the level of the higher side through the whole rise, every row with that much ground over it gets a bore four blocks high with the lining block for walls and roof, and the shallower rows before the portals are cut open as the approach. A road that meets a mountain face rather than a hill it can see over is not climbed either: it holds the level it arrives at and looks for the far side, up to 98 rows beyond where the piece would have ended. Found within that reach, with the ground between free of other pieces, the piece is lengthened to come out at the far portal, so a tunnel always runs through. Not found, the road stops at the foot of the mountain and never enters it. The whole street runs through, lanes, lines and sidewalks alike, lit from the roof by `villagePathTunnelLightBlock` every `villagePathTunnelLightRun` blocks, while lamp posts and verge decoration stop at the portals. A junction is never bored, so a crossing street always meets the road in the open. No plot is seated along a stretch the road will bore and no street branches off it, so a house never fronts a tunnel and no junction is cut into one; a district that finds no room for its plots elsewhere lays fewer streets there.
+
+**Sewers.** Naming `villageSewerBlock` digs a sewer under every full-width street, `villageSewerDepth` blocks beneath that street's own surface. It is not a network of its own: it follows the roads, so wherever the streets go the sewer goes, it turns where they turn, it climbs where they climb, and two sewers meet under a crossroads because the streets above them meet. Alleys carry none, and neither does a cul-de-sac bulb or a row carried on a bridge. The section is a lined floor, a channel down the middle filled with `villageSewerWaterBlock`, a walkway either side surfaced with `villageSewerWalkBlock`, `villageSewerHeight` blocks of headroom and a lined roof, `villageSewerWidth` wide across including its two walls. `villageSewerLightBlock` sets a light into the roof over the channel every `villageSewerLightRun` blocks. A sewer never rises far enough to disturb the street over it, and a stretch with no room between the road and the world floor is skipped rather than squeezed.
 
 **Lamp blocks carry data.** The three lamp blocks take a plain name, a name with metadata, or a name with block entity data in braces, `minecraft:skull:1{SkullType:3}`. The braces are read as NBT and applied to the block entity after the block is placed, which is how a lamp from another mod keeps the settings it needs. Bad NBT is reported and ignored rather than stopping the lamp being built.
 
@@ -4099,7 +4133,43 @@ Which design a junction gets is worked out from the world seed and the junction'
     "villageRailTunnelBlock": "minecraft:stonebrick",
     "villageRailTunnelDepth": 6,
     "villageRailClimb": 8,
-    "villageRailTail": 48
+    "villageRailTail": 48,
+    "villageSubwayLines": 0,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "any",
+    "villageSubwayWidth": 5,
+    "villageSubwayBlock": "",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:planks:1",
+    "villageSubwayTieRun": 2,
+    "villageSubwayTracks": 2,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayShoulderBlock": "",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwayStationLength": 16,
+    "villageSubwayStationRun": 0,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:stonebrick:1",
+    "villageSubwayStairBlock": "minecraft:stonebrick",
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayEntrance": "mypack:subway_entrance",
+    "villageSubwayStationFoot": 4,
+    "villageSubwayStationRepeat": 12,
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:log",
+    "villageSubwayBenchLength": 5,
+    "villageSubwaySurfaces": 25
   }
 }
 ```
@@ -4130,6 +4200,42 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageRailTunnelDepth` | number | `6` | How much ground must stand over the bed before a stretch is bored rather than cut. Needs `villageRailTunnelBlock` |
 | `villageRailClimb` | number | `8` | How many rows the line runs level for every block it climbs or falls. `1` grades it as steep as a road |
 | `villageRailTail` | number | `48` | How far the line runs on past the last piece of the village at either end |
+| `villageSubwayLines` | number | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
+| `villageSubwayDepth` | number | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
+| `villageSubwaySpacing` | number | `64` | How far apart a village's subway lines are kept from one another |
+| `villageSubwayDirection` | string | `any` | Which way the lines run: `x`, `z`, or `any` to roll per village |
+| `villageSubwayWidth` | number | `3` | How wide the bed is, before shoulders |
+| `villageSubwayBlock` | block | empty | The track block. Empty lays vanilla rail |
+| `villageSubwayTrackSeat` | string | `auto` | Whether the track sits on the bed, in it, or `auto` to let the block decide |
+| `villageSubwayBedBlock` | block | empty | The block the bed is made of. Empty uses gravel |
+| `villageSubwayTieBlock` | block | empty | The block laid across the bed as sleepers. Empty uses planks |
+| `villageSubwayTieRun` | number | `2` | How many blocks apart the sleepers sit |
+| `villageSubwayTracks` | number | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
+| `villageSubwayTrackGap` | number | `2` | How far apart parallel tracks sit |
+| `villageSubwayShoulderBlock` | block | empty | The block either side of the bed. Empty leaves no shoulder |
+| `villageSubwayShoulderWidth` | number | `1` | How wide that shoulder is |
+| `villageSubwayPowerBlock` | block | empty | The powered track block. Empty uses vanilla powered rail |
+| `villageSubwayPowerBase` | block | empty | The block set under a powered track to drive it. Empty uses a redstone block |
+| `villageSubwayPowerRun` | number | `0` | How many blocks apart the powered tracks sit. 0 lays none |
+| `villageSubwayTunnelBlock` | block | empty | The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, a subway being a bore |
+| `villageSubwayTunnelLightBlock` | block | empty | The block set into the tunnel roof as a light. Empty lights none |
+| `villageSubwayTunnelLightRun` | number | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
+| `villageSubwayClimb` | number | `8` | How many blocks a line runs before it may step one block up or down |
+| `villageSubwayTail` | number | `48` | How far past the village's own pieces a line runs before it stops |
+| `villageSubwayStationLength` | number | `0` | How many blocks long a station chamber is, centered on the row where the line passes nearest the well. 0 builds no stations at all |
+| `villageSubwayStationRun` | number | `0` | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one |
+| `villageSubwayPlatformWidth` | number | `3` | How far the chamber is opened out either side of the bed to make a platform |
+| `villageSubwayPlatformBlock` | block | empty | The block the platform is floored with. Empty floors it with the tunnel lining |
+| `villageSubwayStairBlock` | block | empty | The block the steps up to the road side are made of. Empty uses the tunnel lining |
+| `villageSubwayStation` | text | empty | A structure file used as the station itself, in place of the carved stairwell, named `mypack:subway_station` and read from that pack's `structures` folder. Its solid cells are laid in `villageSubwayStairBlock` and its air cells are carved, so what stands underground is the build rather than a description of it. Empty carves the stairwell instead |
+| `villageSubwayEntrance` | text | empty | A structure file set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare, and it is left off entirely where `villageSubwayStation` names a build, which carries its own way in |
+| `villageSubwayStationFoot` | number | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
+| `villageSubwayStationRepeat` | number | `12` | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build |
+| `villageSubwayRailingBlock` | block | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
+| `villageSubwayBenchBlock` | block | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
+| `villageSubwayBenchEndBlock` | block | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
+| `villageSubwayBenchLength` | number | `5` | How long a station bench is, arms included. `0` leaves the benches out |
+| `villageSubwaySurfaces` | number | `25` | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
 | `villageRailTracks` | number | `0` | How many tracks the one bed carries, side by side and `villageRailTrackGap` apart. **The bed widens to hold them all**, so three tracks share one railbed rather than becoming three lines. `0` lays one track on a bed under five wide and two on a wider one |
 | `villageRailTrackGap` | number | `2` | How many blocks apart the tracks on a bed sit, center to center. `2`, the least allowed, leaves one block of bed between them, which is what keeps them from curving into one another the way touching rails do |
 | `villageRailShoulderBlock` | block | empty | Dresses the outermost columns of the bed, a maintenance path beside the track and the railway's answer to a road sidewalk. Empty lays none |
@@ -4148,6 +4254,12 @@ A railway line is a straight run of track that crosses the whole village on one 
 **Doorsteps.** With `terrainAdaptation` on, no village building lays a stair block outside its own box: the doorstep stairs vanilla sets before a door are left out, since the road frontage and the plot apron carry the ground to the door themselves.
 
 **Track.** With `villageRailBlock` empty the track is vanilla rail turned along the line, and `villageRailPowerRun` sets a powered rail over a redstone block every so many rows so a cart rides the whole line. A pack that wants iron blocks, bars or anything else names them instead, and the line is dressed with that block as it is.
+
+**Stations.** A subway line gets a station where it passes nearest the well once `villageSubwayStationLength` is set, and further ones every `villageSubwayStationRun` blocks along it. Each of those slides a few blocks either way to find a spot the ground will take, keeps clear of the stations already claimed, and is simply left out where nothing viable is near, so a line never carries a chamber with no way into it. The chamber is the bed opened out `villageSubwayPlatformWidth` either side, floored with `villageSubwayPlatformBlock`, walled and roofed in the tunnel lining, and lit from the tunnel's own `villageSubwayTunnelLightBlock` and `villageSubwayTunnelLightRun`. From the platform a corridor runs to a stairwell that climbs to the street beside the road, never under it, and never through the well plaza or a house; where the climb is too long to go straight the corridor turns back along the chamber first. A railing of `villageSubwayRailingBlock` rings the stair head at street level with the near end left open as the way in, and a bench of `villageSubwayBenchBlock` with `villageSubwayBenchEndBlock` arms, `villageSubwayBenchLength` long, stands on the platform and again beside the stair head.
+
+**Building the station by hand.** `villageSubwayStation` names a structure file used as the station in place of the carved stairwell, which is how a pack ships a shape somebody built rather than one described in settings. Build it in a world, mark the structure in any block, export it, and place it with the pack: its solid cells become `villageSubwayStairBlock` and its air cells are carved out. One build serves any depth because the middle of it repeats — `villageSubwayStationFoot` layers are laid once at the bottom, carrying the floor and the doorway to the platform, then whole copies of the next `villageSubwayStationRepeat` layers stack up until the build reaches the street. That band must be a whole turn of the stairs or the flights will not meet where two copies join. `villageSubwayEntrance` sets a second structure at the head of the stairs so the way down is marked on the street, and it applies to the carved stairwell only: a build already carries its own opening, so the entrance is left off rather than stood beside it as a shut box.
+
+**Climbing out.** `villageSubwaySurfaces` is the chance in a hundred that a line, instead of staying buried end to end, climbs to the surface at one end and carries on from there as an ordinary railway — tunnel behind it, open track ahead. The climb obeys `villageSubwayClimb`, one block per that many rows, so a line `villageSubwayDepth` deep spends depth times climb rows on the ramp alone and needs a good stretch beyond it to be worth the name; a line with no room for both simply stays underground. On a short line carrying a station, raising `villageSubwayClimb` is what makes room for both.
 
 #### Village decoration
 

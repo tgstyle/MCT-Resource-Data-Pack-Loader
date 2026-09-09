@@ -3929,10 +3929,26 @@ tconstruct:ore:0=minecraft:netherrack
     "villagePathBridgeFrameHeight": 4,
     "villagePathBridgeFrameRun": 24,
     "villagePathBridgeFrameLeast": 24,
+    "villagePathVergeBlock": "",
+    "villagePathVergeWaterBlock": "minecraft:planks",
     "villagePathTunnelBlock": "minecraft:stonebrick",
     "villagePathTunnelDepth": 10,
     "villagePathTunnelLightBlock": "minecraft:sea_lantern",
     "villagePathTunnelLightRun": 8,
+    "villageSewerBlock": "minecraft:stonebrick",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:stonebrick:3",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:iron_trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 30,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
     "villagePathCenterBlock": "minecraft:quartz_block",
     "villagePathCenterDash": 2,
     "villagePathLineBlock": "minecraft:stone_slab",
@@ -3974,10 +3990,26 @@ tconstruct:ore:0=minecraft:netherrack
 | `villagePathBridgeFrameHeight` | число | `4` | Сколько блоков свободной высоты рама оставляет над настилом; балка лежит на блок выше |
 | `villagePathBridgeFrameRun` | число | `24` | Через сколько рядов стоят рамы, когда мост достаточно длинный для нескольких |
 | `villagePathBridgeFrameLeast` | число | `24` | Самый короткий мостовой участок, который вообще получает раму. Более короткий мост остаётся простым |
+| `villagePathVergeBlock` | блок | пусто | Блок, которым засыпается земля рядом с дорогой и под участком там, где деревне приходится создавать сушу. Пусто — следовать рельефу, укладывая наполнитель самого биома с травой сверху там, где была бы земля |
+| `villagePathVergeWaterBlock` | блок | `minecraft:planks` | Чем становится эта засыпка там, где стоит над водой, чтобы вынесенная на озеро обочина не была земляным столбом. Им же отделывается каменная ступень, оставшаяся над водой |
 | `villagePathTunnelBlock` | блок | пусто | Облицовывает дорогу там, где она пробивает холм насквозь вместо того, чтобы прорезать его: стены по обе стороны прохода и свод над ним. Пусто не пробивает тоннелей, и дорога, как и прежде, прорезает холм |
 | `villagePathTunnelDepth` | число | `10` | Сколько грунта должно стоять над полотном дороги, чтобы участок пробивался, а не прорезался. Возвышенность, лежащая настолько глубоко над дорогой на протяжении двенадцати рядов и больше, держится ровно и пробивается насквозь, а её более пологие подходы прорезаются; более короткий бугор прорезается, как и прежде. Учитывается только когда `villagePathTunnelBlock` называет блок |
 | `villagePathTunnelLightBlock` | блок | пусто | Светильник, встроенный в свод тоннеля по его осевой линии. Пусто не ставит ни одного |
 | `villagePathTunnelLightRun` | число | `8` | Через сколько блоков стоят эти светильники. Привязано к мировым координатам, поэтому светильники одного участка дороги продолжаются на следующем; тоннель, слишком короткий, чтобы дотянуться до одной из этих точек, освещается один раз, посередине |
+| `villageSewerBlock` | имя блока | нет | Блок, которым выложен коллектор под улицами деревни: пол, обе стены и потолок. Пусто — коллекторы не роются |
+| `villageSewerDepth` | число | `8` | Насколько ниже поверхности улицы лежит пол коллектора. Коллектор следует за своей улицей, поэтому поднимающаяся улица несёт поднимающийся коллектор |
+| `villageSewerHeight` | число | `3` | Сколько блоков высоты стоит над дорожкой |
+| `villageSewerWidth` | число | `5` | Какой ширины идёт коллектор, считая поперёк вместе с обеими стенами. Чётное число округляется вверх, чтобы жёлоб остался посередине |
+| `villageSewerWaterBlock` | имя блока | `minecraft:water` | Чем заполнен жёлоб посередине. Пусто оставляет его сухим |
+| `villageSewerWalkBlock` | имя блока | нет | Чем покрыты дорожки по обе стороны жёлоба. Пусто — идти по блоку обкладки |
+| `villageSewerLightBlock` | имя блока | нет | Блок, вставляемый в потолок над жёлобом как светильник. Пусто — без освещения |
+| `villageSewerLightRun` | число | `8` | Через сколько блоков стоят эти светильники. Привязаны к мировым координатам, поэтому светильники одного участка дороги продолжаются в следующем |
+| `villageSewerLadderBlock` | имя блока | нет | Блок, по которому поднимаются в шахте люка, ставится по шахте от улицы до дорожки коллектора. Пусто оставляет шахту открытой |
+| `villageSewerCoverBlock` | имя блока | нет | Блок, закрывающий люк, ставится вровень с улицей там, где пересекаются две улицы. Обычный выбор — деревянный люк: железный требует сигнала редстоуна, и открыть его рукой нельзя, что закрывает коллектор. Пусто оставляет устье шахты открытым |
+| `villageSewerMossBlock` | имя блока | нет | Второй блок, который местами подмешивается в обкладку, например замшелый камень среди обычного. Пусто — коллектор выложен одним блоком целиком |
+| `villageSewerMossChance` | от 0 до 100 | `30` | Какой процент блоков обкладки выходит этим вторым блоком. Разыгрывается для каждой позиции блока от сида мира, поэтому один и тот же коллектор всегда выглядит одинаково |
+| `villageSewerVineBlock` | имя блока | нет | Блок, который местами висит изнутри на стенах коллектора, например лозы. Цепляется за ту стену, у которой стоит. Пусто — ничего не висит |
+| `villageSewerVineChance` | от 0 до 100 | `20` | Какой процент клеток у стены его несёт. Разыгрывается для каждой позиции блока от сида мира, поэтому один и тот же коллектор всегда увит одинаково |
 | `villagePathCenterBlock` | блок | пусто | Осевая линия посередине дороги. Пусто не рисует её |
 | `villagePathCenterDash` | число | `0` | Делает линию прерывистой: N блоков линии, затем один дороги. Привязано к мировым координатам, поэтому штрихи одного участка продолжаются в следующем. `0` оставляет линию сплошной |
 | `villagePathLineBlock` | блок | пусто | Краевые линии между дорогой и тротуаром. Пусто не рисует их |
@@ -4005,6 +4037,8 @@ tconstruct:ore:0=minecraft:netherrack
 `villagePathBlock` и его соседи побеждают `villageBlocks`. Названный дорожный блок берётся как есть, а карта трогает лишь то, что дорога выбрала бы сама. Оставьте их пустыми — решает карта, и именно так пак сохраняет поверхность по биому и всё равно её перекрашивает.
 
 **Тоннели.** Без блока тоннеля дорога, встретив холм, взбирается на него не больше чем на блок за ряд и прорезает короткую возвышенность не глубже двух блоков. Когда `villagePathTunnelBlock` называет блок, возвышенность, стоящая над дорогой на `villagePathTunnelDepth` или больше на протяжении не меньше двенадцати рядов, пробивается насквозь: дорога держит уровень более высокой стороны через всю возвышенность, каждый ряд с таким слоем грунта над ним получает проход высотой в четыре блока с блоком облицовки в стенах и своде, а более пологие ряды перед порталами прорезаются как подходы. Дорога, встретившая не холм, за которым видно другую сторону, а горный склон, тоже на него не взбирается: она держит уровень, с которым подошла, и ищет другую сторону, до 98 рядов дальше того места, где участок дороги закончился бы. Если та найдена в этих пределах и земля между ними свободна от других частей, участок удлиняется до портала на другой стороне, так что тоннель всегда проходит насквозь. Если нет, дорога останавливается у подножия горы и никогда в неё не заходит. Улица проходит целиком, полосы, линии и тротуары вместе, освещённая из свода блоком `villagePathTunnelLightBlock` через каждые `villagePathTunnelLightRun` блоков, а фонари и обочинные украшения обрываются у порталов. Перекрёсток никогда не пробивается, поэтому пересекающая улица всегда встречает дорогу под открытым небом. Вдоль участка, который дорога пробьёт, участки не размещаются и улицы от него не ответвляются, поэтому дом никогда не выходит на тоннель и перекрёсток никогда не врезается в него; район, не нашедший места для своих участков в другом месте, прокладывает там меньше улиц.
+
+**Коллекторы.** Если задан `villageSewerBlock`, под каждой улицей полной ширины прокладывается коллектор, на `villageSewerDepth` блоков ниже её собственной поверхности. Это не отдельная сеть: он следует за улицами, поэтому идёт всюду, куда идут они, поворачивает там, где поворачивают они, поднимается там, где поднимаются они, и два коллектора встречаются под перекрёстком, потому что встречаются улицы над ними. Переулки его не несут, как и площадка тупика и ряд, вынесенный на мост. Сечение — выложенный пол, жёлоб посередине, заполненный `villageSewerWaterBlock`, по обе стороны дорожка из `villageSewerWalkBlock`, `villageSewerHeight` блоков высоты и выложенный потолок, шириной `villageSewerWidth` поперёк вместе с обеими стенами. `villageSewerLightBlock` вставляет светильник в потолок над жёлобом через каждые `villageSewerLightRun` блоков. Коллектор никогда не поднимается настолько, чтобы потревожить улицу над ним, а участок, где между дорогой и дном мира нет места, пропускается, а не сжимается.
 
 **Блоки фонаря несут данные.** Три блока фонаря принимают простое имя, имя с метаданными или имя с данными блочной сущности в фигурных скобках, `minecraft:skull:1{SkullType:3}`. Скобки читаются как NBT и применяются к блочной сущности после установки блока — так фонарь из другого мода сохраняет нужные ему настройки. Негодный NBT записывается в журнал и пропускается, а не срывает постройку фонаря.
 
@@ -4103,7 +4137,43 @@ tconstruct:ore:0=minecraft:netherrack
     "villageRailTunnelBlock": "minecraft:stonebrick",
     "villageRailTunnelDepth": 6,
     "villageRailClimb": 8,
-    "villageRailTail": 48
+    "villageRailTail": 48,
+    "villageSubwayLines": 0,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "any",
+    "villageSubwayWidth": 5,
+    "villageSubwayBlock": "",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:planks:1",
+    "villageSubwayTieRun": 2,
+    "villageSubwayTracks": 2,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayShoulderBlock": "",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwayStationLength": 16,
+    "villageSubwayStationRun": 0,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:stonebrick:1",
+    "villageSubwayStairBlock": "minecraft:stonebrick",
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayEntrance": "mypack:subway_entrance",
+    "villageSubwayStationFoot": 4,
+    "villageSubwayStationRepeat": 12,
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:log",
+    "villageSubwayBenchLength": 5,
+    "villageSubwaySurfaces": 25
   }
 }
 ```
@@ -4134,6 +4204,42 @@ tconstruct:ore:0=minecraft:netherrack
 | `villageRailTunnelDepth` | число | `6` | Сколько грунта должно стоять над полотном, чтобы участок пробивался, а не прорезался. Нужен `villageRailTunnelBlock` |
 | `villageRailClimb` | число | `8` | Сколько рядов линия идёт ровно на каждый блок подъёма или спуска. `1` делает её такой же крутой, как дорога |
 | `villageRailTail` | число | `48` | Насколько линия уходит за крайний элемент деревни с каждого конца |
+| `villageSubwayLines` | число | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
+| `villageSubwayDepth` | число | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
+| `villageSubwaySpacing` | число | `64` | How far apart a village's subway lines are kept from one another |
+| `villageSubwayDirection` | строка | `any` | Which way the lines run: `x`, `z`, or `any` to roll per village |
+| `villageSubwayWidth` | число | `3` | How wide the bed is, before shoulders |
+| `villageSubwayBlock` | блок | пусто | The track block. Empty lays vanilla rail |
+| `villageSubwayTrackSeat` | строка | `auto` | Whether the track sits on the bed, in it, or `auto` to let the block decide |
+| `villageSubwayBedBlock` | блок | пусто | The block the bed is made of. Empty uses gravel |
+| `villageSubwayTieBlock` | блок | пусто | The block laid across the bed as sleepers. Empty uses planks |
+| `villageSubwayTieRun` | число | `2` | How many blocks apart the sleepers sit |
+| `villageSubwayTracks` | число | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
+| `villageSubwayTrackGap` | число | `2` | How far apart parallel tracks sit |
+| `villageSubwayShoulderBlock` | блок | пусто | The block either side of the bed. Empty leaves no shoulder |
+| `villageSubwayShoulderWidth` | число | `1` | How wide that shoulder is |
+| `villageSubwayPowerBlock` | блок | пусто | The powered track block. Empty uses vanilla powered rail |
+| `villageSubwayPowerBase` | блок | пусто | The block set under a powered track to drive it. Empty uses a redstone block |
+| `villageSubwayPowerRun` | число | `0` | How many blocks apart the powered tracks sit. 0 lays none |
+| `villageSubwayTunnelBlock` | блок | пусто | The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, a subway being a bore |
+| `villageSubwayTunnelLightBlock` | блок | пусто | The block set into the tunnel roof as a light. Empty lights none |
+| `villageSubwayTunnelLightRun` | число | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
+| `villageSubwayClimb` | число | `8` | How many blocks a line runs before it may step one block up or down |
+| `villageSubwayTail` | число | `48` | How far past the village's own pieces a line runs before it stops |
+| `villageSubwayStationLength` | число | `0` | How many blocks long a station chamber is, centred on the row where the line passes nearest the well. 0 builds no stations at all |
+| `villageSubwayStationRun` | число | `0` | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one |
+| `villageSubwayPlatformWidth` | число | `3` | How far the chamber is opened out either side of the bed to make a platform |
+| `villageSubwayPlatformBlock` | блок | пусто | The block the platform is floored with. Empty floors it with the tunnel lining |
+| `villageSubwayStairBlock` | блок | пусто | The block the steps up to the road side are made of. Empty uses the tunnel lining |
+| `villageSubwayStation` | текст | пусто | A structure file used as the station itself, in place of the carved stairwell, named `mypack:subway_station` and read from that pack's `structures` folder. Its solid cells are laid in `villageSubwayStairBlock` and its air cells are carved, so what stands underground is the build rather than a description of it. Empty carves the stairwell instead |
+| `villageSubwayEntrance` | текст | пусто | A structure file set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare, and it is left off entirely where `villageSubwayStation` names a build, which carries its own way in |
+| `villageSubwayStationFoot` | число | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
+| `villageSubwayStationRepeat` | число | `12` | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build |
+| `villageSubwayRailingBlock` | блок | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
+| `villageSubwayBenchBlock` | блок | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
+| `villageSubwayBenchEndBlock` | блок | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
+| `villageSubwayBenchLength` | число | `5` | How long a station bench is, arms included. `0` leaves the benches out |
+| `villageSubwaySurfaces` | число | `25` | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
 | `villageRailTracks` | число | `0` | Сколько путей несёт одно полотно — рядом друг с другом, с шагом `villageRailTrackGap`. **Полотно расширяется, чтобы вместить их все**, так что три пути делят одно полотно, а не превращаются в три линии. `0` кладёт один путь на полотно уже пяти блоков и два на более широкое |
 | `villageRailTrackGap` | число | `2` | На сколько блоков расходятся пути на полотне, от оси до оси. `2` — минимум — оставляет между ними один блок полотна, и именно это не даёт им заворачивать друг в друга, как это делают соприкасающиеся рельсы |
 | `villageRailShoulderBlock` | блок | пусто | Отделывает крайние столбцы полотна — обходная дорожка вдоль пути, железнодорожный ответ тротуару. Пусто — не кладёт ничего |
@@ -4150,6 +4256,12 @@ tconstruct:ore:0=minecraft:netherrack
 **Переезды.** Улица пересекает линию прямо насквозь и выходит за оба края полотна на семь блоков и больше. Улица, которая закончилась бы на линии или в пределах этих семи блоков, проводится через неё дальше, если позволяет уклон, а иначе останавливается за семь блоков до полотна; улица, которая началась бы на линии или пошла бы вдоль неё, отклоняется. На переезде улица подгоняется под уровень линии, а не наоборот, и поднимается к нему с обеих сторон своим проходимым уклоном. Покрытие сохраняет поверхность, а путь идёт поверх него на блок выше, так что вагонетка пересекает дорогу, а житель — путь. Линия, пробитая сквозь холм, не пересекается вовсе: улица проходит над тоннелем.
 
 **Путь.** При пустом `villageRailBlock` путь — это ванильный рельс, повёрнутый вдоль линии, а `villageRailPowerRun` ставит через столько-то рядов энергорельс над блоком редстоуна, чтобы вагонетка проехала всю линию. Пак, которому нужны железные блоки, решётки или что-то ещё, называет их вместо этого, и линия отделывается этим блоком как он есть.
+
+**Станции.** Линия метро получает станцию там, где она проходит ближе всего к колодцу, как только задан `villageSubwayStationLength`, а дальше по линии — через каждые `villageSubwayStationRun` блоков. Каждая из них смещается на несколько блоков в ту или другую сторону, чтобы найти место, которое примет её, держится в стороне от уже занятых станций и просто не строится там, где подходящего места рядом нет, — так что на линии никогда не окажется зала без входа. Зал — это полотно, раскрытое на `villageSubwayPlatformWidth` в обе стороны, вымощенное блоком `villageSubwayPlatformBlock`, со стенами и сводом из обделки тоннеля и освещённое собственными тоннельными ключами `villageSubwayTunnelLightBlock` и `villageSubwayTunnelLightRun`. С платформы коридор ведёт к лестничному стволу, который выходит на поверхность рядом с дорогой, никогда под ней, и никогда через площадь колодца или дом; там, где подъём слишком велик для прямого хода, коридор сначала возвращается вдоль зала. Ограждение из `villageSubwayRailingBlock` окружает верх лестницы на уровне улицы, оставляя ближнюю сторону открытой как вход, а скамья из `villageSubwayBenchBlock` с подлокотниками из `villageSubwayBenchEndBlock`, длиной `villageSubwayBenchLength`, стоит на платформе и ещё раз рядом с верхом лестницы.
+
+**Как построить станцию вручную.** `villageSubwayStation` называет файл структуры, служащий станцией вместо вырубленного лестничного ствола: так пак поставляет форму, которую кто-то построил, а не описанную настройками. Постройте её в мире, отметьте любым блоком, выгрузите и дайте паку её ставить: её сплошные ячейки станут блоком `villageSubwayStairBlock`, а воздушные будут вырублены. Одна постройка годится на любую глубину, потому что её середина повторяется: `villageSubwayStationFoot` слоёв кладётся внизу один раз и несёт пол и дверь на платформу, затем целыми копиями складываются следующие `villageSubwayStationRepeat` слоёв, пока постройка не достанет до улицы. Эта полоса должна быть целым оборотом лестницы, иначе марши не сойдутся на стыке двух копий. `villageSubwayEntrance` ставит вторую структуру у верха лестницы, чтобы спуск был обозначен на улице, и относится только к вырубленному лестничному стволу: у постройки свой вход уже есть, поэтому вход не ставится вовсе, а не встаёт рядом глухой коробкой.
+
+**Выход на поверхность.** `villageSubwaySurfaces` — это шанс из ста, что линия не останется закопанной на всю длину, а поднимется на поверхность с одного конца и пойдёт дальше как обычная железная дорога: тоннель позади, открытый путь впереди. Подъём подчиняется `villageSubwayClimb` — блок на столько-то рядов, так что линия глубиной `villageSubwayDepth` тратит на один только пандус глубину, умноженную на подъём, рядов, и ей нужен ещё добрый отрезок после него, чтобы название себя оправдало; линия, где не хватает места на то и другое, просто остаётся под землёй. На короткой линии со станцией место для обоих даёт увеличенный `villageSubwayClimb`.
 
 **Пороги.** При включённой `terrainAdaptation` ни одно здание деревни не кладёт блок ступеней за пределами своей рамки: ступень-порог, которую ванилла ставит перед дверью, опускается, потому что фронт улицы и отмостка участка сами подводят грунт к двери.
 

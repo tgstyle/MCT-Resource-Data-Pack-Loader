@@ -103,15 +103,20 @@ public final class BeardPlaza {
         IBlockState line = BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
         IBlockState sidewalk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
         int paved = 0;
+        int offClip = 0;
+        int builtOn = 0;
+        int spared = 0;
+        int wet = 0;
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
                 int band = MathUtil.max(box.minX - x, x - box.maxX, box.minZ - z, z - box.maxZ);
                 if (band < 1) { continue; }
                 at.setPos(x, ground, z);
-                if (!clip.isVecInside(at) || BeardPlots.underBuilding(start, piece, x, z)) { continue; }
-                if (BeardKeep.holds(x, ground, z)) { continue; }
+                if (!clip.isVecInside(at)) { offClip++; continue; }
+                if (BeardPlots.underBuilding(start, piece, x, z)) { builtOn++; continue; }
+                if (BeardKeep.holds(x, ground, z)) { spared++; continue; }
                 BlockPos top = GroundLevel.inWindow(world, at).down();
-                if (world.getBlockState(top).getMaterial().isLiquid()) { continue; }
+                if (world.getBlockState(top).getMaterial().isLiquid()) { wet++; continue; }
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, Math.max(ground + 4, top.getY() + 2));
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);
                 at.setPos(x, ground, z);
@@ -124,7 +129,7 @@ public final class BeardPlaza {
                 paved++;
             }
         }
-        if (paved > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paved a plaza of {} column(s) around the well at {}, {}, reaching {} out from it", paved, box.minX, box.minZ, reach); }
+        if (paved + builtOn + spared + wet > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paved a plaza of {} column(s) around the well at {}, {}, reaching {} out from it; left {} to buildings, {} to blocks another piece is holding, {} to water, {} outside this chunk's turn", paved, box.minX, box.minZ, reach, builtOn, spared, wet, offClip); }
         int tapered = 0;
         int widest = 0;
         for (int x = box.minX - reach - 3; x <= box.maxX + reach + 3; x++) {
