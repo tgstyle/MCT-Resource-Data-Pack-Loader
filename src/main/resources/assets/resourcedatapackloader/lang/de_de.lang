@@ -122,3 +122,5 @@ rdpl.dir.w=westlich
 rdpl.dir.nw=nordwestlich
 rdpl.world.packOptions=Pack-Optionen haben diese Welt verändert, von der vorherigen wurde eine Sicherung angelegt. Geändert: %s
 rdpl.world.type=Das ist eine %s-Welt
+key.categories.resourcedatapackloader=Resource Data Pack Loader
+key.resourcedatapackloader.pouch=Getragenen Behälter öffnen

@@ -122,3 +122,5 @@ rdpl.dir.w=west
 rdpl.dir.nw=north-west
 rdpl.world.packOptions=Pack options have changed this world, a backup of the previous world was created. Changed: %s
 rdpl.world.type=This is a %s world
+key.categories.resourcedatapackloader=Resource Data Pack Loader
+key.resourcedatapackloader.pouch=Open worn container

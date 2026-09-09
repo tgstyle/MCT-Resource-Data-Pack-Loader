@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.Json;
@@ -71,7 +72,7 @@ public final class ContentParser {
         int expMax = JsonUtils.getInt(exp, "max", 0);
         String type = JsonUtils.getString(json, "type", ContentBlockTypes.DEFAULT);
         int maxVariants = ContentBlockTypes.get(type, key).maxVariants();
-        boolean opaque = JsonUtils.getBoolean(json, "opaque", true);
+        boolean opaque = JsonUtils.getBoolean(json, "opaque", !chested(json));
         JsonObject variants = JsonUtils.getJsonObject(json, "variants", new JsonObject());
         BlockVariant[] byMeta = new BlockVariant[maxVariants];
         List<BlockVariant> visible = new ArrayList<>();
@@ -132,7 +133,59 @@ public final class ContentParser {
                 JsonUtils.getString(json, "leafSapling", ""),
                 MathHelper.clamp(JsonUtils.getInt(json, "leafSaplingChance", 5), 0, 100),
                 opensWith(json),
-                JsonUtils.getString(json, "openSound", "").trim());
+                JsonUtils.getString(json, "openSound", "").trim(),
+                container(key, json));
+    }
+
+    private static String remainder(JsonObject json) {
+        String named = JsonUtils.getString(json, "containerItem", "").trim();
+        if (!named.isEmpty()) { return named; }
+        return json.has("container") && json.get("container").isJsonPrimitive() ? JsonUtils.getString(json, "container", "") : "";
+    }
+
+    @Nullable private static ContainerDef holds(ResourceLocation key, JsonObject json) {
+        return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null;
+    }
+
+    @Nullable private static ContainerDef container(ResourceLocation key, JsonObject json) {
+        if (!json.has("container")) { return null; }
+        JsonObject held = JsonUtils.getJsonObject(json, "container");
+        int askedRows = JsonUtils.getInt(held, "rows", 3);
+        int askedColumns = JsonUtils.getInt(held, "columns", 9);
+        int rows = MathHelper.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
+        int columns = MathHelper.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
+        if (askedRows != rows || askedColumns != columns) {
+            ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows);
+        }
+        String named = JsonUtils.getString(held, "guiTexture", "").trim();
+        ResourceLocation texture = named.isEmpty() ? null : new ResourceLocation(named);
+        int wide = JsonUtils.getInt(held, "guiWidth", 0);
+        int tall = JsonUtils.getInt(held, "guiHeight", 0);
+        if (texture != null && (wide <= 0 || tall <= 0)) {
+            ContentLog.LOGGER.error("The container on {} names a guiTexture without a guiWidth and guiHeight, so the drawn background is used instead", key);
+            texture = null;
+        }
+        JsonElement asked = held.get("chestModel");
+        boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
+        ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key.toString()) : null;
+        return new ContainerDef(rows, columns, JsonUtils.getString(held, "lootTable", "").trim(),
+                chest, sheet, texture, wide, tall,
+                JsonUtils.getString(held, "bauble", "").trim().toLowerCase(Locale.ROOT));
+    }
+
+    private static boolean chested(JsonObject json) {
+        if (!json.has("container") || !json.get("container").isJsonObject()) { return false; }
+        JsonElement asked = json.getAsJsonObject("container").get("chestModel");
+        return asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
+    }
+
+    @Nullable private static ResourceLocation sheetOf(String named, String key) {
+        if (named.isEmpty()) {
+            ContentLog.LOGGER.error("The container on {} names an empty chestModel texture, so the vanilla chest is drawn instead", key);
+            return null;
+        }
+        ResourceLocation asked = new ResourceLocation(named);
+        return new ResourceLocation(asked.getNamespace(), "textures/" + asked.getPath() + ".png");
     }
 
     @Nullable private static ResourceLocation opensWith(JsonObject json) {
@@ -713,7 +766,7 @@ public final class ContentParser {
                 Collections.unmodifiableMap(byMeta), Collections.unmodifiableList(visible), strings(json, "requires"),
                 Math.max(1, JsonUtils.getInt(json, "useDuration", 32)),
                 JsonUtils.getBoolean(json, "eat", false),
-                JsonUtils.getString(json, "container", ""),
+                remainder(json),
                 JsonUtils.getString(json, "material", ""),
                 JsonUtils.getString(json, "toolClass", ""),
                 JsonUtils.getString(json, "slot", ""),
@@ -721,7 +774,8 @@ public final class ContentParser {
                 JsonUtils.getString(json, "soil", "minecraft:farmland"),
                 strings(json, "potionTypes"),
                 JsonUtils.getFloat(json, "attackSpeed", Float.NaN),
-                Math.max(0, JsonUtils.getInt(json, "cooldown", 0)));
+                Math.max(0, JsonUtils.getInt(json, "cooldown", 0)),
+                holds(key, json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

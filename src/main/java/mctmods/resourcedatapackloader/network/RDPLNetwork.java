@@ -26,6 +26,7 @@ public final class RDPLNetwork {
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(IntroPlayHandler.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
         else { channel.registerMessage(MessageIntroPlay.Idle.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
         channel.registerMessage(MessageIntroDone.Handler.class, MessageIntroDone.class, packetId++, Side.SERVER);
+        channel.registerMessage(MessagePouchKey.Handler.class, MessagePouchKey.class, packetId++, Side.SERVER);
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(CardOverlay.Handler.class, MessageCard.class, packetId++, Side.CLIENT); }
         else { channel.registerMessage(MessageCard.Idle.class, MessageCard.class, packetId++, Side.CLIENT); }
         channel.registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class, packetId++, Side.CLIENT);
@@ -76,4 +77,6 @@ public final class RDPLNetwork {
         if (channel == null) { return; }
         channel.sendToServer(new MessageIntroDone());
     }
+
+    public static void openWornPouch() { channel.sendToServer(new MessagePouchKey()); }
 }

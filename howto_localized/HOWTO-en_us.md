@@ -46,6 +46,7 @@ Three working examples. Drop any of them straight into `rdploader` and look at h
 - [Village plots](#village-plots)
 - [Biomes](#biomes)
 - [Dimensions](#dimensions)
+- [Containers](#containers)
 - [Portals and gates](#portals-and-gates)
 - [World templates](#world-templates)
 - [Rubic worlds](#rubic-worlds)
@@ -766,6 +767,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `cane` | Grows upward in a column, like reeds or cactus |
 | `vine` | Climbs and hangs on the sides of blocks |
 | `portal` | Sends whatever walks in to another dimension |
+| `container` | Holds an inventory a player can open, of any size, and can fill itself from a loot table the first time it is opened. Draws as an ordinary block or as a chest, whichever the pack asks for |
 
 ### File keys
 
@@ -810,6 +812,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `growth` | plants only | object | none | See [Growth](#growth) |
 | `sapling` | sapling only | object | none | See [Saplings](#saplings) |
 | `portal` | portal only | object | none | See [Portals and gates](#portals-and-gates) |
+| `container` | container only | object | none | See [Containers](#containers) |
 
 ### Variant keys
 
@@ -1282,7 +1285,7 @@ A PNG always wins. If both `panel.png` and `panel.png.json` exist, the PNG is se
 
 **`forge_marker: 1` does not support multipart.** A vine blockstate has to be plain vanilla multipart, with the textures baked into the model rather than passed in.
 
-**Names come from the language file.** A block or item shows a raw key until `lang/en_us.lang` gives it one, in the usual `tile.mypack:ruby_ore.name=Ruby Ore` form.
+**Names come from the language file, and a block wants TWO of them.** A block or item shows a raw key until `lang/en_us.lang` gives it one. The item you hold and place is keyed by the block's registry name with the variant after it, `tile.mypack:ruby_ore.ruby_ore.name=Ruby Ore`, and that is the one most packs remember. The BLOCK itself is keyed by the registry name alone, `tile.mypack:ruby_ore.name=Ruby Ore`, and that is what anything asking the placed block for its name reads — the title bar of a container's screen among them. Write both, or the item reads correctly in your hand while the screen it opens has a blank title.
 
 **Single-variant types name themselves twice.** A block that can hold several variants is keyed by its registry name alone, as above. A block whose whole metadata goes on its shape adds the variant name after it, so a door defined in `blocks/my_door.json` with one variant called `my_door` is `tile.mypack:my_door.my_door.name=My Door`. That covers `door`, `trapdoor`, `fence_gate`, `banner`, `stairs`, `ladder`, `torch`, `crop`, `cane`, `sapling` and `vine`. Where such a type has an item of its own, as a door and a banner do, it wants the same key again under `item.` rather than `tile.`.
 
@@ -2411,6 +2414,60 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `renderWeather` | no | boolean | `true` | Off, no rain or snow is drawn |
 
 Colors and the three render switches are all that is offered. Drawing something of your own up there, a painted dome, your own sun and moon, still needs Java.
+
+## Containers
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "container",
+  "material": "wood",
+  "creativeTab": "decorations",
+  "container": {
+    "rows": 6,
+    "columns": 9,
+    "lootTable": "minecraft:chests/simple_dungeon",
+    "chestModel": true
+  },
+  "variants": [ { "name": "crate", "hardness": 2.5 } ]
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `rows` | int | `3` | How many rows of slots, 1 to 9 |
+| `columns` | int | `9` | How many slots in a row, 1 to 12 |
+| `lootTable` | text | empty | A loot table rolled into the block the first time a player opens it, exactly as a dungeon chest fills. Empty leaves it starting empty |
+| `chestModel` | boolean or text | `false` | Draws as a chest with a lid that opens, instead of as an ordinary block from your own model. `true` uses the vanilla chest artwork; a texture name such as `mypack:blocks/strongbox_chest` uses your own chest sheet instead, for the placed block and for the item alike. Give the blockstate the model `resourcedatapackloader:pack_chest`, with the same name under `texture`, so the item in your hand is chest-shaped too A chest-model block also defaults `opaque` to `false`, the way a vanilla chest is, so light is not cut off at the block and the chest is not drawn dark. |
+| `guiTexture` | text | empty | Your own background image for the screen. Empty draws one from the vanilla chest screen at whatever size the rows and columns need |
+| `guiWidth` | int | none | How wide that image is, required with `guiTexture` |
+| `guiHeight` | int | none | How tall that image is, required with `guiTexture` |
+| `bauble` | text | empty | An item only: the Baubles slot it can be worn in — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` or `charm`. A backpack usually takes `body` or `charm`. Ignored, with everything else about the item still working, when Baubles is not installed. Each name is one square in the Baubles tab, so an item asking for `body` fits that square and no other; `ring` is the two ring squares and `trinket` fits every square. |
+
+**Nine rows by twelve is the ceiling**, which is the largest Iron Chest offers and the most a screen can carry. A pack asking for more is cut to it with an error line saying so. One warning about the tallest: a nine-row screen is 276 pixels, and a 1080 display at GUI scale `auto` gives 270, so the top and bottom clip by three pixels each — scale 3 shows it whole. Iron Chest fits nine rows because it ships its own tighter artwork; a pack that wants the same can set `guiTexture` and draw its own.
+
+**The screen is drawn, not shipped.** A container of nine columns or fewer and six rows or fewer uses the vanilla chest screen as it stands, so it looks exactly like a chest of that size. Anything larger is assembled from the same image at draw time -- the top edge, a row of slots repeated to fit, and the bottom with the player's own inventory -- so a pack can ask for sizes no vanilla screen covers without shipping an image of its own. `guiTexture` overrides all of that where a pack wants its own look, and then `guiWidth` and `guiHeight` must say how big it is or the drawn one is used and an error line says so.
+
+**What the block does.** It keeps its contents through a save and a reload, drops them when broken, answers a comparator by how full it is, and can be renamed in an anvil like a chest. `chestModel` also gives it the chest's opening sound and the lid animation; left off, the block draws from whatever model your own `modelBlock` names, so a crate, a barrel or a cabinet all work.
+
+**Coloring a chest.** The chest sheet is an ordinary texture, so a pixel map can recolor the vanilla one without drawing a pixel: `extends` it and give it a `tint`, then name that map in `chestModel` and as the model's `texture`.
+
+```json
+{
+  "extends": "minecraft:textures/entity/chest/normal",
+  "tint": {
+    "from": "#241A12",
+    "to": "#D8BC80"
+  }
+}
+```
+
+The placed block and the item in your hand read that one name, so they match. Naming it in only one of the two leaves the other vanilla brown.
+
+**A container item can be worn.** Give it `bauble` and, where Baubles is installed, it goes in that slot and a key opens it without taking it off — `V` by default, rebindable under Resource Data Pack Loader in the controls. `B` is what Baubles binds for its own tab, so the two do not share a key. Pressing it again, with a worn container already open, moves to the next one you are wearing and wraps around, so several worn at once are all reachable. The key only appears when Baubles is there, and everything else about the item, the right-click and its inventory, works whether it is or not. Baubles has no backpack slot of its own; `body` and `charm` are the two a backpack usually takes.
+
+**The loot table fills on first open**, not when the block is placed, which is what makes it useful in a structure: whoever opens it first gets the roll. The same table can be used by `lootTable` on an imprint shape or a village plot, so a pack can place these through worldgen and stock them the same way.
 
 ## Portals and gates
 

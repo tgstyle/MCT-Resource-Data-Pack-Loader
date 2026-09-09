@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBanner;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBannerWall;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
+import mctmods.resourcedatapackloader.content.block.ContentBlockContainer;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
 import mctmods.resourcedatapackloader.content.block.ContentBlockDoor;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFalling;
@@ -59,6 +60,10 @@ public final class ContentBlockTypes {
                 return Arrays.asList(single, twin);
             }
             @Override public int maxVariants() { return ContentBlockSlab.MAX_VARIANTS; }
+        });
+        register("container", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockContainer.create(def)); }
+            @Override public int maxVariants() { return ContentBlockContainer.MAX_VARIANTS; }
         });
         register("fence", def -> Collections.singletonList(ContentBlockFence.create(def)));
         register("pane", def -> Collections.singletonList(ContentBlockPane.create(def)));

@@ -77,6 +77,10 @@ import net.minecraft.world.storage.loot.functions.LootFunctionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fluids.FluidRegistry;
+import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
+import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -95,6 +99,7 @@ import java.util.List;
 @Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
+    @Mod.Instance(MOD_ID) public static ResourceDataPackLoader INSTANCE;
 
     static {
         try {
@@ -120,6 +125,8 @@ public class ResourceDataPackLoader {
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
         RecurrentVillages.register();
         MapGenStructureIO.registerStructureComponent(RailPiece.class, RailPiece.ID);
+        GameRegistry.registerTileEntity(TileEntityPackContainer.class, new ResourceLocation(MOD_ID, "container"));
+        NetworkRegistry.INSTANCE.registerGuiHandler(this, new PackGuiHandler());
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
         ContentRegistry.resolveItemPotions();
@@ -201,6 +208,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.HoldView.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.ProspectTooltip.class);
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
+            if (mctmods.resourcedatapackloader.content.item.ContentItemContainer.baubled()) { mctmods.resourcedatapackloader.client.PouchKey.register(); }
         }
     }
 

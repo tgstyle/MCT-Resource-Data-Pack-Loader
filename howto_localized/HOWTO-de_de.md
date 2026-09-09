@@ -46,6 +46,7 @@ Drei fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Dorfgrundstücke](#dorfgrundstücke)
 - [Biome](#biome)
 - [Dimensionen](#dimensionen)
+- [Behälter](#behälter)
 - [Portale und Tore](#portale-und-tore)
 - [Weltvorlagen](#weltvorlagen)
 - [Rubic-Welten](#rubic-welten)
@@ -766,6 +767,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `cane` | Wächst als Säule nach oben, wie Zuckerrohr oder Kaktus |
 | `vine` | Klettert und hängt an den Seiten von Blöcken |
 | `portal` | Schickt alles, was hineinläuft, in eine andere Dimension |
+| `container` | Enthält ein Inventar, das ein Spieler öffnen kann, in beliebiger Größe, und kann sich beim ersten Öffnen selbst aus einer Beutetabelle füllen. Wird als gewöhnlicher Block oder als Truhe gezeichnet, je nachdem, was das Paket verlangt |
 
 ### Dateischlüssel
 
@@ -810,6 +812,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `growth` | nur Pflanzen | Objekt | keines | Siehe [Wachstum](#wachstum) |
 | `sapling` | nur `sapling` | Objekt | keines | Siehe [Setzlinge](#setzlinge) |
 | `portal` | nur `portal` | Objekt | keines | Siehe [Portale und Tore](#portale-und-tore) |
+| `container` | nur `container` | Objekt | keines | Siehe [Behälter](#behälter) |
 
 ### Variantenschlüssel
 
@@ -1185,7 +1188,7 @@ Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die P
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
 | `size` | ja, oder geerbt | `breitexhöhe` | | Wie viele Pixel quer und hinunter |
-| `rows` | ja, oder geerbt | Liste von Text | | Eine Zeichenkette je Pixelzeile, ein Zeichen je Pixel, von oben nach unten |
+| `rows` | ja, oder geerbt | Liste von Text | | Wie viele Reihen von Plätzen, 1 bis 9 |
 | `palette` | ja, oder geerbt | Objekt | | Ein Zeichen zu einer Farbe, `#RRGGBB` oder `#AARRGGBB` |
 | `extends` | nein | eine andere Pixelkarte | | Die Karte, von der diese ausgeht |
 | `tint` | nein | Objekt mit `from` und `to` | | Färbt alles Geerbte entlang einer Rampe zwischen zwei Farben um |
@@ -1282,7 +1285,7 @@ Eine PNG gewinnt immer. Gibt es sowohl `panel.png` als auch `panel.png.json`, wi
 
 **`forge_marker: 1` unterstützt kein Multipart.** Ein Blockstate für Ranken muss reines Vanilla-Multipart sein, mit den Texturen im Modell selbst statt von außen übergeben.
 
-**Namen kommen aus der Sprachdatei.** Ein Block oder Item zeigt seinen rohen Schlüssel, bis `lang/en_us.lang` ihm einen gibt, in der üblichen Form `tile.mypack:ruby_ore.name=Ruby Ore`.
+**Namen kommen aus der Sprachdatei, und ein Block will ZWEI davon.** Ein Block oder Item zeigt seinen rohen Schlüssel, bis `lang/en_us.lang` ihm einen gibt. Das Item, das du in der Hand hältst und setzt, wird mit dem Registrierungsnamen des Blocks und der Variante dahinter benannt, `tile.mypack:ruby_ore.ruby_ore.name=Ruby Ore`, und daran denken die meisten Pakete. Der BLOCK selbst wird mit dem Registrierungsnamen allein benannt, `tile.mypack:ruby_ore.name=Ruby Ore`, und das liest alles, was den gesetzten Block nach seinem Namen fragt — unter anderem die Titelzeile des Bildschirms eines Behälters. Schreibe beide, sonst liest sich das Item in deiner Hand richtig, während der Bildschirm, den es öffnet, keinen Titel trägt.
 
 **Typen mit nur einer Variante nennen sich doppelt.** Ein Block, der mehrere Varianten fassen kann, wird allein über seinen Registrierungsnamen angesprochen, wie oben. Ein Block, dessen gesamte Metadaten für seine Form draufgehen, hängt den Variantennamen dahinter: Eine Tür aus `blocks/my_door.json` mit einer Variante namens `my_door` heißt also `tile.mypack:my_door.my_door.name=My Door`. Das betrifft `door`, `trapdoor`, `fence_gate`, `banner`, `stairs`, `ladder`, `torch`, `crop`, `cane`, `sapling` und `vine`. Hat so ein Typ ein eigenes Item, wie Tür und Banner, will er denselben Schlüssel noch einmal unter `item.` statt unter `tile.`.
 
@@ -1840,7 +1843,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `name` | nein | string | keiner | Der Name, den sie in der Welt, in Todesmeldungen und auf ihrem Ei trägt |
 | `showName` | nein | boolean | `false` | Zeigt den Namen, ohne dass man sie ansieht |
 | `texture` | nein | `namespace:textures/entity/<file>.png` | keine | Ein eigener Skin, genauso aufgeteilt wie der der kopierten Entity |
-| `lootTable` | nein | `namespace:entities/<name>` | die der Basis | Was sie droppt. Ohne das droppt sie, was die kopierte Entity droppt |
+| `lootTable` | nein | `namespace:entities/<name>` | die der Basis | Eine Beutetabelle, die beim ersten Öffnen durch einen Spieler in den Block gewürfelt wird, genau wie sich eine Verliestruhe füllt. Leer lässt ihn leer beginnen |
 | `profession` | nein | `namespace:name` | zufällig | Bei einem Dorfbewohner der Beruf, den er ausübt |
 | `career` | nein | int | zufällig | Welche Laufbahn innerhalb dieses Berufs, ab 1 aufwärts |
 | `baby` | nein | boolean oder 0,0 bis 1,0 | `false` | Wie oft eines jung erscheint, und es bleibt dabei. `true` heißt immer, eine Zahl heißt dieser Anteil |
@@ -2161,7 +2164,7 @@ Ein `template`, dessen `structure` eine deiner [Strukturkarten](#strukturkarten)
 | `rowWidth` | farm | int | `2` | Wie breit jede Erdreihe ist |
 | `structure` | template | `namespace:name` | keine | Die Vorlage, die gesetzt wird, oder eine deiner Strukturkarten, die dann die Größe des Grundstücks bestimmt |
 | `integrity` | template | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die erscheinen |
-| `lootTable` | template | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird. Ein Grundstück, das einen Strukturplan nennt, bleibt unberührt |
+| `lootTable` | template | `namespace:pfad` | keine | Eine Beutetabelle, die beim ersten Öffnen durch einen Spieler in den Block gewürfelt wird, genau wie sich eine Verliestruhe füllt. Leer lässt ihn leer beginnen |
 | `villagers` | allen | int | `0` | Wie viele Leute das Grundstück spawnt |
 | `villagerEntity` | allen | `namespace:name` | ein Dorfbewohner | Wer dort wohnt, etwa eine eigene Entity-Variante |
 | `villagerX` | allen | int | `1` | Wo sie erscheinen, quer über das Grundstück |
@@ -2412,6 +2415,60 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 Farben und die drei Render-Schalter sind alles, was geboten wird. Etwas Eigenes dort oben zu zeichnen – eine bemalte Kuppel, eine eigene Sonne und einen eigenen Mond – braucht weiterhin Java.
 
+## Behälter
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "container",
+  "material": "wood",
+  "creativeTab": "decorations",
+  "container": {
+    "rows": 6,
+    "columns": 9,
+    "lootTable": "minecraft:chests/simple_dungeon",
+    "chestModel": true
+  },
+  "variants": [ { "name": "crate", "hardness": 2.5 } ]
+}
+```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `rows` | Zahl | `3` | Wie viele Reihen von Plätzen, 1 bis 9 |
+| `columns` | Zahl | `9` | Wie viele Plätze in einer Reihe, 1 bis 12 |
+| `lootTable` | Text | leer | Eine Beutetabelle, die beim ersten Öffnen durch einen Spieler in den Block gewürfelt wird, genau wie sich eine Verliestruhe füllt. Leer lässt ihn leer beginnen |
+| `chestModel` | Wahrheitswert oder Text | `false` | Wird als Truhe mit sich öffnendem Deckel gezeichnet statt als gewöhnlicher Block aus deinem eigenen Modell. `true` nimmt das Vanilla-Truhenbild; ein Texturname wie `mypack:blocks/strongbox_chest` nimmt stattdessen dein eigenes Truhenblatt, für den gesetzten Block und für den Gegenstand gleichermaßen. Gib dem Blockstate das Modell `resourcedatapackloader:pack_chest` und denselben Namen unter `texture`, damit auch der Gegenstand in der Hand truhenförmig ist Ein Block mit Truhenmodell setzt außerdem `opaque` standardmäßig auf `false`, so wie es eine Vanilla-Truhe ist, damit das Licht am Block nicht abgeschnitten wird und die Truhe nicht dunkel gezeichnet wird. |
+| `guiTexture` | Text | leer | Dein eigenes Hintergrundbild für den Bildschirm. Leer zeichnet eines aus dem Vanilla-Truhenbildschirm in der Größe, die Reihen und Spalten brauchen |
+| `guiWidth` | Zahl | keiner | Wie breit dieses Bild ist, nötig zusammen mit `guiTexture` |
+| `guiHeight` | Zahl | keiner | Wie hoch dieses Bild ist, nötig zusammen mit `guiTexture` |
+| `bauble` | Text | leer | Nur bei einem Gegenstand: der Baubles-Platz, an dem er getragen werden kann — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` oder `charm`. Ein Rucksack nimmt meist `body` oder `charm`. Wird übergangen, wobei alles andere am Gegenstand weiter funktioniert, wenn Baubles nicht installiert ist. Jeder Name ist ein Feld im Baubles-Reiter, ein Gegenstand mit `body` passt also in dieses Feld und in kein anderes; `ring` sind die beiden Ringfelder, und `trinket` passt in jedes Feld. |
+
+**Neun Reihen mal zwölf ist die Obergrenze**, das Größte, was Iron Chest bietet, und das Meiste, was ein Bildschirm tragen kann. Ein Paket, das mehr verlangt, wird darauf gekürzt, mit einer Fehlerzeile, die es sagt. Eine Warnung zur höchsten: ein Bildschirm mit neun Reihen ist 276 Pixel hoch, ein 1080er Bildschirm bei GUI-Skalierung `auto` gibt 270, also werden oben und unten je drei Pixel abgeschnitten — Skalierung 3 zeigt ihn ganz. Iron Chest bringt neun Reihen unter, weil es eigene, engere Grafik mitliefert; ein Paket, das dasselbe will, setzt `guiTexture` und zeichnet seine eigene.
+
+**Der Bildschirm wird gezeichnet, nicht mitgeliefert.** Ein Behälter mit höchstens neun Spalten und sechs Reihen nutzt den Truhenbildschirm des Grundspiels unverändert und sieht damit genau wie eine Truhe dieser Größe aus. Alles Größere wird beim Zeichnen aus demselben Bild zusammengesetzt — die obere Kante, eine Reihe von Feldern so oft wiederholt, wie es passt, und der untere Teil mit dem Inventar des Spielers — so kann ein Paket Größen verlangen, die kein Bildschirm des Grundspiels abdeckt, ohne ein eigenes Bild mitzuliefern. `guiTexture` setzt das alles außer Kraft, wenn ein Paket sein eigenes Aussehen will; dann müssen `guiWidth` und `guiHeight` die Größe nennen, sonst wird der gezeichnete genommen und eine Fehlerzeile sagt es.
+
+**Was der Block tut.** Er behält seinen Inhalt über Speichern und Neuladen, lässt ihn beim Abbauen fallen, antwortet einem Komparator nach Füllstand und lässt sich wie eine Truhe im Amboss umbenennen. `chestModel` gibt ihm zusätzlich den Öffnungston und die Deckelbewegung der Truhe; ohne das zeichnet der Block aus dem Modell, das dein eigenes `modelBlock` nennt, sodass Kiste, Fass oder Schrank alle möglich sind.
+
+**Eine Truhe einfaerben.** Das Truhenbild ist eine gewoehnliche Textur, also kann eine Pixelkarte die Vanilla-Truhe umfaerben, ohne dass ein Pixel gezeichnet wird: `extends` darauf, ein `tint` dazu, und diese Karte dann in `chestModel` und als `texture` des Modells nennen.
+
+```json
+{
+  "extends": "minecraft:textures/entity/chest/normal",
+  "tint": {
+    "from": "#241A12",
+    "to": "#D8BC80"
+  }
+}
+```
+
+Der gesetzte Block und der Gegenstand in der Hand lesen denselben Namen, also passen sie zusammen. Wird er nur an einer der beiden Stellen genannt, bleibt die andere vanilla-braun.
+
+**Ein Behälter-Item kann getragen werden.** Gib ihm `bauble`, und wo Baubles installiert ist, sitzt es in diesem Slot und eine Taste öffnet es, ohne es abzulegen — standardmäßig `V`, in den Steuerungen unter Resource Data Pack Loader neu belegbar. `B` belegt Baubles für seinen eigenen Reiter, die beiden teilen sich also keine Taste. Erneutes Drücken, während ein getragener Behälter offen ist, geht zum nächsten getragenen weiter und läuft dabei um, sodass mehrere zugleich getragene alle erreichbar sind. Die Taste erscheint nur, wenn Baubles da ist, und alles andere am Item, der Rechtsklick und sein Inventar, funktioniert so oder so. Baubles hat keinen eigenen Rucksack-Slot; `body` und `charm` sind die beiden, die ein Rucksack üblicherweise nimmt.
+
+**Die Beutetabelle füllt beim ersten Öffnen**, nicht beim Setzen, und genau das macht sie in einem Bauwerk nützlich: wer zuerst öffnet, bekommt den Wurf. Dieselbe Tabelle kann `lootTable` an einer Prägeform oder an einem Dorfgrundstück verwenden, sodass ein Paket diese Blöcke über die Weltgenerierung setzen und gleich bestücken kann.
+
 ## Portale und Tore
 
 `<namespace>/blocks/*.json`
@@ -2479,7 +2536,7 @@ Ein Rahmen ist ein Bild dessen, was ein Spieler bauen muss, und sonst nichts: Er
 | `name` | nein | Zeichenkette | der Dateiname | Der Name, der im Log erscheint |
 | `axis` | nein | `vertical`, `horizontal` oder `both` | `vertical` | Ob er steht wie ein Netherportal, flach liegt wie ein Endportal oder beides darf |
 | `legend` | ja | Objekt aus je einem Zeichen zu einem Block | keine | Die Blöcke, die die Zeilen verwenden dürfen. Ein Blockname mit Zuständen wird gelesen wie überall sonst |
-| `rows` | ja | Liste von Zeichenketten | keine | Das Bild, oberste Zeile zuerst |
+| `rows` | ja | Liste von Zeichenketten | keine | Wie viele Reihen von Plätzen, 1 bis 9 |
 | `maxWidth` | nein | Ganzzahl | `21` | Breitestes Loch, bis zu dem ein `*` sich streckt |
 | `maxHeight` | nein | Ganzzahl | `21` | Höchstes Loch, bis zu dem ein `*` sich streckt |
 
@@ -3337,7 +3394,7 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log. Nennst
 | `vines` | tree | boolean | `false` | Ranken von den Blättern hängen lassen |
 | `structure` | imprint, tree | `namespace:name` | keine | Die Vorlage, die gesetzt wird |
 | `integrity` | imprint, tree | 1 bis 100 | `100` | Prozentsatz der Blöcke der Vorlage, die tatsächlich erscheinen |
-| `lootTable` | imprint, tree | `namespace:pfad` | keine | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird, und jeder andere Behälter, der eine annimmt, eine Shulkerkiste oder die Kiste eines Mods darunter. Gilt für `structure` und jeden Eintrag von `structures`; jede Truhe würfelt ihren eigenen Seed |
+| `lootTable` | imprint, tree | `namespace:pfad` | keine | Eine Beutetabelle, die beim ersten Öffnen durch einen Spieler in den Block gewürfelt wird, genau wie sich eine Verliestruhe füllt. Leer lässt ihn leer beginnen |
 | `structures` | imprint, tree | Liste | keine | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
 | `turns` | imprint, tree | Liste | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich |
 | `mirrors` | imprint, tree | Liste | keine | Sie zusätzlich spiegeln: `none`, `leftright`, `frontback`, mit optionalem `weight`. Ein Eintrag mit eigenem Gewicht wird `{ "mirror": "leftright", "weight": 2 }` geschrieben, ein `turns`-Eintrag genauso mit `turn` |
@@ -4200,42 +4257,42 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageRailTunnelDepth` | Zahl | `6` | Wie viel Boden über dem Bett stehen muss, ehe ein Abschnitt gebohrt statt aufgeschnitten wird. Braucht `villageRailTunnelBlock` |
 | `villageRailClimb` | Zahl | `8` | Wie viele Reihen die Linie eben läuft für jeden Block, den sie steigt oder fällt. `1` legt sie so steil wie eine Straße an |
 | `villageRailTail` | Zahl | `48` | Wie weit die Linie an beiden Enden über das letzte Teil des Dorfes hinausläuft |
-| `villageSubwayLines` | Zahl | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
-| `villageSubwayDepth` | Zahl | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
-| `villageSubwaySpacing` | Zahl | `64` | How far apart a village's subway lines are kept from one another |
-| `villageSubwayDirection` | Zeichenkette | `any` | Which way the lines run: `x`, `z`, or `any` to roll per village |
-| `villageSubwayWidth` | Zahl | `3` | How wide the bed is, before shoulders |
-| `villageSubwayBlock` | Block | leer | The track block. Empty lays vanilla rail |
-| `villageSubwayTrackSeat` | Zeichenkette | `auto` | Whether the track sits on the bed, in it, or `auto` to let the block decide |
-| `villageSubwayBedBlock` | Block | leer | The block the bed is made of. Empty uses gravel |
-| `villageSubwayTieBlock` | Block | leer | The block laid across the bed as sleepers. Empty uses planks |
-| `villageSubwayTieRun` | Zahl | `2` | How many blocks apart the sleepers sit |
-| `villageSubwayTracks` | Zahl | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
-| `villageSubwayTrackGap` | Zahl | `2` | How far apart parallel tracks sit |
-| `villageSubwayShoulderBlock` | Block | leer | The block either side of the bed. Empty leaves no shoulder |
-| `villageSubwayShoulderWidth` | Zahl | `1` | How wide that shoulder is |
-| `villageSubwayPowerBlock` | Block | leer | The powered track block. Empty uses vanilla powered rail |
-| `villageSubwayPowerBase` | Block | leer | The block set under a powered track to drive it. Empty uses a redstone block |
-| `villageSubwayPowerRun` | Zahl | `0` | How many blocks apart the powered tracks sit. 0 lays none |
-| `villageSubwayTunnelBlock` | Block | leer | The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, a subway being a bore |
-| `villageSubwayTunnelLightBlock` | Block | leer | The block set into the tunnel roof as a light. Empty lights none |
-| `villageSubwayTunnelLightRun` | Zahl | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
-| `villageSubwayClimb` | Zahl | `8` | How many blocks a line runs before it may step one block up or down |
-| `villageSubwayTail` | Zahl | `48` | How far past the village's own pieces a line runs before it stops |
-| `villageSubwayStationLength` | Zahl | `0` | How many blocks long a station chamber is, centred on the row where the line passes nearest the well. 0 builds no stations at all |
-| `villageSubwayStationRun` | Zahl | `0` | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one |
-| `villageSubwayPlatformWidth` | Zahl | `3` | How far the chamber is opened out either side of the bed to make a platform |
-| `villageSubwayPlatformBlock` | Block | leer | The block the platform is floored with. Empty floors it with the tunnel lining |
-| `villageSubwayStairBlock` | Block | leer | The block the steps up to the road side are made of. Empty uses the tunnel lining |
-| `villageSubwayStation` | Text | leer | A structure file used as the station itself, in place of the carved stairwell, named `mypack:subway_station` and read from that pack's `structures` folder. Its solid cells are laid in `villageSubwayStairBlock` and its air cells are carved, so what stands underground is the build rather than a description of it. Empty carves the stairwell instead |
-| `villageSubwayEntrance` | Text | leer | A structure file set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare, and it is left off entirely where `villageSubwayStation` names a build, which carries its own way in |
-| `villageSubwayStationFoot` | Zahl | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
-| `villageSubwayStationRepeat` | Zahl | `12` | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build |
-| `villageSubwayRailingBlock` | Block | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
-| `villageSubwayBenchBlock` | Block | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
-| `villageSubwayBenchEndBlock` | Block | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
-| `villageSubwayBenchLength` | Zahl | `5` | How long a station bench is, arms included. `0` leaves the benches out |
-| `villageSubwaySurfaces` | Zahl | `25` | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
+| `villageSubwayLines` | Zahl | `0` | Wie viele unterirdische Bahnlinien ein Dorf gräbt. 0 gräbt keine und würfelt nichts, das Dorf wird also genau so angelegt, wie es ohne sie wäre |
+| `villageSubwayDepth` | Zahl | `24` | Wie tief unter der Oberfläche das Bett liegt. Die Linie wird nach dem Boden über ihr abgestuft, folgt dem Gelände also in dieser Tiefe, statt eben zu verlaufen |
+| `villageSubwaySpacing` | Zahl | `64` | Wie weit die U-Bahn-Linien eines Dorfes voneinander entfernt gehalten werden |
+| `villageSubwayDirection` | Zeichenkette | `any` | In welche Richtung die Linien verlaufen: `x`, `z` oder `any`, um je Dorf zu würfeln |
+| `villageSubwayWidth` | Zahl | `3` | Wie breit das Bett ist, ohne Schultern |
+| `villageSubwayBlock` | Block | leer | Der Gleisblock. Leer legt Vanilla-Schienen |
+| `villageSubwayTrackSeat` | Zeichenkette | `auto` | Ob das Gleis auf dem Bett liegt, darin, oder `auto`, damit der Block entscheidet |
+| `villageSubwayBedBlock` | Block | leer | Der Block, aus dem das Bett besteht. Leer nimmt Kies |
+| `villageSubwayTieBlock` | Block | leer | Der Block, der als Schwellen quer über das Bett gelegt wird. Leer nimmt Bretter |
+| `villageSubwayTieRun` | Zahl | `2` | Wie viele Blöcke Abstand die Schwellen haben |
+| `villageSubwayTracks` | Zahl | `0` | Wie viele parallele Gleise das Bett trägt. 0 nimmt so viele, wie die Breite zulässt |
+| `villageSubwayTrackGap` | Zahl | `2` | Wie weit parallele Gleise auseinanderliegen |
+| `villageSubwayShoulderBlock` | Block | leer | Der Block zu beiden Seiten des Bettes. Leer lässt keine Schulter |
+| `villageSubwayShoulderWidth` | Zahl | `1` | Wie breit diese Schulter ist |
+| `villageSubwayPowerBlock` | Block | leer | Der Block für das angetriebene Gleis. Leer nimmt Vanilla-Antriebsschienen |
+| `villageSubwayPowerBase` | Block | leer | Der Block, der unter ein angetriebenes Gleis gesetzt wird, um es zu treiben. Leer nimmt einen Redstone-Block |
+| `villageSubwayPowerRun` | Zahl | `0` | Wie viele Blöcke Abstand die Antriebsschienen haben. 0 legt keine |
+| `villageSubwayTunnelBlock` | Block | leer | Der Block, mit dem die Röhre ausgekleidet wird: die Wände zu beiden Seiten und die Decke darüber. Leer gräbt überhaupt keine U-Bahn, denn eine U-Bahn ist eine Röhre |
+| `villageSubwayTunnelLightBlock` | Block | leer | Der Block, der als Licht in die Tunneldecke gesetzt wird. Leer beleuchtet nichts |
+| `villageSubwayTunnelLightRun` | Zahl | `8` | Wie viele Blöcke Abstand diese Lichter haben, an Weltkoordinaten verankert, damit die Teilstücke übereinstimmen |
+| `villageSubwayClimb` | Zahl | `8` | Wie viele Blöcke eine Linie läuft, bevor sie einen Block steigen oder fallen darf |
+| `villageSubwayTail` | Zahl | `48` | Wie weit über die eigenen Teile des Dorfes hinaus eine Linie läuft, bevor sie endet |
+| `villageSubwayStationLength` | Zahl | `0` | Wie viele Blöcke lang eine Stationskammer ist, mittig auf der Reihe, auf der die Linie am nächsten am Brunnen vorbeiführt. 0 baut überhaupt keine Stationen |
+| `villageSubwayStationRun` | Zahl | `0` | Wie viele Blöcke Abstand weitere Stationen entlang der Linie haben, hinter der am Brunnen. Jede rückt ein Stück weiter, um Boden zu finden, der sie trägt, und entfällt dort, wo es keinen gibt. 0 baut nur jene eine |
+| `villageSubwayPlatformWidth` | Zahl | `3` | Wie weit die Kammer zu beiden Seiten des Bettes aufgeweitet wird, um einen Bahnsteig zu bilden |
+| `villageSubwayPlatformBlock` | Block | leer | Der Block, mit dem der Bahnsteig ausgelegt wird. Leer legt ihn mit der Tunnelauskleidung aus |
+| `villageSubwayStairBlock` | Block | leer | Der Block, aus dem die Stufen hinauf zur Straßenseite bestehen. Leer nimmt die Tunnelauskleidung |
+| `villageSubwayStation` | Text | leer | Eine Bauwerksdatei, die als Station selbst dient, anstelle des gehauenen Treppenschachts, benannt `mypack:subway_station` und aus dem `structures`-Ordner jenes Pakets gelesen. Ihre festen Zellen werden in `villageSubwayStairBlock` gelegt und ihre Luftzellen ausgehauen, sodass unter der Erde das Bauwerk steht und nicht eine Beschreibung davon. Leer haut stattdessen den Treppenschacht |
+| `villageSubwayEntrance` | Text | leer | Eine Bauwerksdatei, die an den Kopf der Stationstreppe gesetzt wird, damit der Weg hinein auf der Straße kenntlich ist. Leer lässt die heraufkommende Treppe kahl, und sie entfällt ganz, wo `villageSubwayStation` ein Bauwerk nennt, das seinen eigenen Weg hinein mitbringt |
+| `villageSubwayStationFoot` | Zahl | `4` | Wie viele Lagen am Fuß eines Stationsbauwerks einmalig gelegt werden, vor dem Teil, der sich wiederholt. Der Boden und der Durchgang hinaus zum Bahnsteig liegen hier |
+| `villageSubwayStationRepeat` | Zahl | `12` | Wie viele Lagen eines Stationsbauwerks sich wiederholen, damit ein Bauwerk jeder Tiefe dient: der Schacht wächst um ganze Kopien dieses Bandes, und der Gang nimmt auf, was übrig bleibt. Es muss eine ganze Windung der Treppe sein, sonst schließen die Läufe nicht an. `0` lässt das Bauwerk nie wachsen |
+| `villageSubwayRailingBlock` | Block | `minecraft:iron_bars` | Der Block, der um den Kopf der Stationstreppe geländert wird, wo sie auf die Straße mündet, damit niemand in den Schacht läuft. Leer lässt den Kopf ohne Geländer |
+| `villageSubwayBenchBlock` | Block | `minecraft:oak_stairs` | Der Sitz der Bänke, die auf dem Bahnsteig einer Station und neben ihrem Treppenkopf stehen. Ein Treppenblock wird von der Linie weggedreht und liest sich als Bank; jeder Block geht. Leer lässt die Bänke weg |
+| `villageSubwayBenchEndBlock` | Block | `minecraft:log` | Die Lehnen an beiden Enden einer Stationsbank. Leer lässt den Sitz an beiden Enden kahl |
+| `villageSubwayBenchLength` | Zahl | `5` | Wie lang eine Stationsbank ist, Lehnen eingerechnet. `0` lässt die Bänke weg |
+| `villageSubwaySurfaces` | Zahl | `25` | Die Chance in Hundert, dass eine U-Bahn-Linie an einem Ende an die Oberfläche steigt und von dort als gewöhnliche Bahn weiterläuft, Tunnel hinter sich und offenes Gleis vor sich. `0` hält jede U-Bahn auf ganzer Länge unter der Erde |
 | `villageRailTracks` | Zahl | `0` | Wie viele Gleise das eine Bett trägt, nebeneinander und `villageRailTrackGap` auseinander. **Das Bett wird breiter, um sie alle zu tragen**, drei Gleise teilen sich also ein Gleisbett, statt zu drei Linien zu werden. `0` legt ein Gleis auf ein Bett unter fünf Blöcken Breite und zwei auf ein breiteres |
 | `villageRailTrackGap` | Zahl | `2` | Wie viele Blöcke die Gleise auf einem Bett auseinanderliegen, Mitte zu Mitte. `2`, das Mindeste, lässt einen Block Bett zwischen ihnen, und genau das hält sie davon ab, ineinander zu schwenken, wie berührende Schienen es tun |
 | `villageRailShoulderBlock` | Block | leer | Kleidet die äußersten Spalten des Bettes, ein Wartungspfad neben dem Gleis und die Antwort der Eisenbahn auf einen Gehweg. Leer legt keinen |

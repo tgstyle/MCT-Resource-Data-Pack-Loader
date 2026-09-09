@@ -122,3 +122,5 @@ rdpl.dir.w=к западу
 rdpl.dir.nw=к северо-западу
 rdpl.world.packOptions=Настройки паков изменили этот мир, создана резервная копия предыдущего. Изменено: %s
 rdpl.world.type=Это мир типа %s
+key.categories.resourcedatapackloader=Resource Data Pack Loader
+key.resourcedatapackloader.pouch=Открыть носимое хранилище

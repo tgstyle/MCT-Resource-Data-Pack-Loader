@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ public final class ItemDef {
     public final int useDuration;
     public final boolean eat;
     public final String container;
+    @Nullable public final ContainerDef holds;
     public final String material;
     public final String toolClass;
     public final String slot;
@@ -26,7 +28,7 @@ public final class ItemDef {
     public final int cooldown;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -37,6 +39,7 @@ public final class ItemDef {
         this.useDuration = useDuration;
         this.eat = eat;
         this.container = container;
+        this.holds = holds;
         this.material = material;
         this.toolClass = toolClass;
         this.slot = slot;

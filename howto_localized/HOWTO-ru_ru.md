@@ -64,6 +64,7 @@
 - [Участки деревень](#участки-деревень)
 - [Биомы](#биомы)
 - [Измерения](#измерения)
+- [Хранилища](#хранилища)
 - [Порталы и ворота](#порталы-и-ворота)
 - [Шаблоны мира](#шаблоны-мира)
 - [Миры Rubic](#миры-rubic)
@@ -768,6 +769,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 | `cane` | Растёт вверх столбом, как тростник или кактус |
 | `vine` | Ползёт и висит по бокам блоков |
 | `portal` | Отправляет всё, что в него входит, в другое измерение |
+| `container` | Содержит инвентарь, который игрок может открыть, любого размера, и при первом открытии может наполнить себя из таблицы добычи. Рисуется как обычный блок или как сундук — как попросит пакет |
 
 ### Ключи файла
 
@@ -812,6 +814,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
 | `growth` | только растения | объект | нет | См. [Рост](#рост) |
 | `sapling` | только sapling | объект | нет | См. [Саженцы](#саженцы) |
 | `portal` | только portal | объект | нет | См. [Порталы и ворота](#порталы-и-ворота) |
+| `container` | только container | объект | нет | См. [Хранилища](#хранилища) |
 
 ### Ключи варианта
 
@@ -1187,7 +1190,7 @@ assets/mypack/models/item/ruby/polished_ruby.json
 | Ключ | Обяз. | Значение | По умолчанию | Что делает |
 | --- | --- | --- | --- | --- |
 | `size` | да, или унаследован | `ширинаxвысота` | | Сколько пикселей поперёк и вниз |
-| `rows` | да, или унаследованы | список строк | | По строке на ряд пикселей, по символу на пиксель, сверху вниз |
+| `rows` | да, или унаследованы | список строк | | Сколько рядов ячеек, от 1 до 9 |
 | `palette` | да, или унаследована | объект | | «символ → цвет», `#RRGGBB` или `#AARRGGBB` |
 | `extends` | нет | другая карта пикселей | | Карта, от которой эта отталкивается |
 | `tint` | нет | объект с `from` и `to` | | Перекрашивает всё унаследованное по градиенту между двумя цветами |
@@ -1284,7 +1287,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 **`forge_marker: 1` не поддерживает multipart.** Blockstate для лозы должен быть обычным ванильным multipart, с текстурами, запечёнными в модель, а не переданными в неё.
 
-**Имена берутся из языкового файла.** Блок или предмет показывает сырой ключ, пока `lang/en_us.lang` не даст ему имя, в обычной форме `tile.mypack:ruby_ore.name=Ruby Ore`.
+**Имена берутся из языкового файла, и блоку нужно ДВА.** Блок или предмет показывает сырой ключ, пока `lang/en_us.lang` не даст ему имя. Предмет, который вы держите и ставите, именуется регистрационным именем блока с вариантом после него, `tile.mypack:ruby_ore.ruby_ore.name=Ruby Ore`, — о нём помнит большинство пакетов. Сам БЛОК именуется одним регистрационным именем, `tile.mypack:ruby_ore.name=Ruby Ore`, и его читает всё, что спрашивает у поставленного блока имя, — в том числе заголовок экрана хранилища. Пишите оба, иначе предмет в руке читается верно, а у экрана, который он открывает, заголовка нет.
 
 **Типы с одним вариантом называют себя дважды.** Блок, способный держать несколько вариантов, адресуется одним своим регистрационным именем, как выше. Блок, у которого все метаданные ушли на форму, дописывает после него имя варианта: дверь из `blocks/my_door.json` с единственным вариантом `my_door` — это `tile.mypack:my_door.my_door.name=My Door`. Так устроены `door`, `trapdoor`, `fence_gate`, `banner`, `stairs`, `ladder`, `torch`, `crop`, `cane`, `sapling` и `vine`. Если у такого типа есть собственный предмет, как у двери и знамени, ему нужен тот же ключ ещё раз, но под `item.`, а не под `tile.`.
 
@@ -1842,7 +1845,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `name` | нет | строка | нет | Имя, которое она носит в мире, в сообщениях о смерти и на своём яйце |
 | `showName` | нет | boolean | `false` | Показывать имя, не глядя на неё |
 | `texture` | нет | `namespace:textures/entity/<file>.png` | нет | Собственная шкура, разложенная так же, как у копируемой сущности |
-| `lootTable` | нет | `namespace:entities/<name>` | как у базовой | Что она роняет. Без этого роняет то же, что копируемая сущность |
+| `lootTable` | нет | `namespace:entities/<name>` | как у базовой | Таблица добычи, разыгрываемая в блок при первом открытии игроком, ровно так же, как наполняется сундук в подземелье. Пусто — блок начинает пустым |
 | `profession` | нет | `namespace:name` | случайно | Для жителя — профессия, которой он занят |
 | `career` | нет | int | случайно | Какая карьера внутри этой профессии, начиная с 1 |
 | `baby` | нет | boolean или от 0,0 до 1,0 | `false` | Как часто существо появляется детёнышем и таким остаётся. `true` — всегда, число — такая доля |
@@ -2163,7 +2166,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `rowWidth` | farm | int | `2` | Насколько широк каждый ряд почвы |
 | `structure` | template | `namespace:name` | нет | Шаблон, который ставится, или одна из ваших карт структур, которая тогда задаёт размер участка |
 | `integrity` | template | от 1 до 100 | `100` | Доля блоков шаблона, которые появятся, в процентах |
-| `lootTable` | template | `namespace:путь` | нет | Таблица добычи, из которой при первом открытии наполняется каждый сундук в размещённом шаблоне. Участок, называющий карту построек, не трогается |
+| `lootTable` | template | `namespace:путь` | нет | Таблица добычи, разыгрываемая в блок при первом открытии игроком, ровно так же, как наполняется сундук в подземелье. Пусто — блок начинает пустым |
 | `villagers` | все | int | `0` | Сколько людей порождает участок |
 | `villagerEntity` | все | `namespace:name` | житель | Кто там живёт, например ваш собственный вариант сущности |
 | `villagerX` | все | int | `1` | Где они появляются, поперёк участка |
@@ -2414,6 +2417,60 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 
 Цвета и три переключателя отрисовки — это всё, что предлагается. Чтобы нарисовать там что-то своё — расписанный купол, собственные солнце и луну, — по-прежнему нужна Java.
 
+## Хранилища
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "container",
+  "material": "wood",
+  "creativeTab": "decorations",
+  "container": {
+    "rows": 6,
+    "columns": 9,
+    "lootTable": "minecraft:chests/simple_dungeon",
+    "chestModel": true
+  },
+  "variants": [ { "name": "crate", "hardness": 2.5 } ]
+}
+```
+
+| Настройка | Тип | По умолчанию | Что делает |
+| --- | --- | --- | --- |
+| `rows` | число | `3` | Сколько рядов ячеек, от 1 до 9 |
+| `columns` | число | `9` | Сколько ячеек в ряду, от 1 до 12 |
+| `lootTable` | текст | пусто | Таблица добычи, разыгрываемая в блок при первом открытии игроком, ровно так же, как наполняется сундук в подземелье. Пусто — блок начинает пустым |
+| `chestModel` | логическое или текст | `false` | Рисуется как сундук с открывающейся крышкой, а не как обычный блок из твоей собственной модели. `true` берёт ванильное изображение сундука; имя текстуры вроде `mypack:blocks/strongbox_chest` берёт вместо него твой собственный лист сундука — и для поставленного блока, и для предмета. Укажи в blockstate модель `resourcedatapackloader:pack_chest` и то же имя под `texture`, чтобы предмет в руке тоже был в форме сундука Блок с моделью сундука вдобавок по умолчанию ставит `opaque` в `false`, как и у ванильного сундука, чтобы свет не обрезался на блоке и сундук не рисовался тёмным. |
+| `guiTexture` | текст | пусто | Твоё собственное фоновое изображение для экрана. Пусто — оно рисуется из ванильного экрана сундука в том размере, какой нужен рядам и столбцам |
+| `guiWidth` | число | нет | Какой ширины это изображение, требуется вместе с `guiTexture` |
+| `guiHeight` | число | нет | Какой высоты это изображение, требуется вместе с `guiTexture` |
+| `bauble` | текст | пусто | Только для предмета: слот Baubles, в котором его можно носить — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` или `charm`. Рюкзак обычно занимает `body` или `charm`. Пропускается, причём всё остальное в предмете продолжает работать, если Baubles не установлен. Каждое имя — это одна ячейка во вкладке Baubles, поэтому предмет с `body` подходит только к ней и ни к какой другой; `ring` — это две ячейки колец, а `trinket` подходит к любой ячейке. |
+
+**Девять рядов на двенадцать — потолок**, самое большое, что даёт Iron Chest, и самое большое, что может нести экран. Пакет, запросивший больше, обрезается до этого, о чём говорит строка ошибки. Одно предупреждение о самом высоком: экран в девять рядов — 276 пикселей, а дисплей 1080 при масштабе интерфейса `auto` даёт 270, так что сверху и снизу срезается по три пикселя — масштаб 3 показывает его целиком. Iron Chest вмещает девять рядов потому, что поставляет собственную, более плотную графику; пакет, желающий того же, задаёт `guiTexture` и рисует свою.
+
+**Экран рисуется, а не поставляется.** Хранилище шириной до девяти столбцов и высотой до шести рядов использует ванильный экран сундука как есть и выглядит в точности как сундук такого размера. Всё, что больше, собирается при отрисовке из того же изображения — верхний край, ряд ячеек, повторённый столько раз, сколько нужно, и низ с инвентарём игрока, — так что пакет может запросить размеры, которых нет ни у одного ванильного экрана, не поставляя своей картинки. `guiTexture` отменяет всё это, если пакету нужен свой вид; тогда `guiWidth` и `guiHeight` обязаны указать размер, иначе берётся нарисованный, а строка ошибки об этом скажет.
+
+**Что делает блок.** Он хранит содержимое при сохранении и перезаходе, роняет его при разрушении, отвечает компаратору по заполненности и переименовывается в наковальне, как сундук. `chestModel` вдобавок даёт ему звук открытия и движение крышки сундука; без него блок рисуется по модели, которую называет ваш собственный `modelBlock`, так что ящик, бочка или шкаф — всё подходит.
+
+**Покраска сундука.** Лист сундука — обычная текстура, поэтому пиксельная карта может перекрасить ванильный, не рисуя ни одного пикселя: `extends` на него и `tint` к нему, а затем указать эту карту в `chestModel` и как `texture` модели.
+
+```json
+{
+  "extends": "minecraft:textures/entity/chest/normal",
+  "tint": {
+    "from": "#241A12",
+    "to": "#D8BC80"
+  }
+}
+```
+
+Поставленный блок и предмет в руке читают одно и то же имя, поэтому они совпадают. Если указать его только в одном месте, второе останется ванильно-коричневым.
+
+**Предмет-хранилище можно носить.** Задайте ему `bauble`, и там, где установлен Baubles, он займёт этот слот, а клавиша откроет его, не снимая, — по умолчанию `V`, переназначается в управлении под Resource Data Pack Loader. `B` занимает сам Baubles под свою вкладку, так что общей клавиши у них нет. Повторное нажатие, когда носимое хранилище уже открыто, переходит к следующему носимому и идёт по кругу, поэтому доступны все надетые сразу. Клавиша появляется только при наличии Baubles, а всё остальное в предмете — правый клик и его инвентарь — работает в любом случае. Собственного слота под рюкзак у Baubles нет; `body` и `charm` — те два, что обычно берёт рюкзак.
+
+**Таблица добычи наполняет при первом открытии**, а не при установке, и именно это делает её полезной в постройке: бросок достаётся тому, кто откроет первым. Ту же таблицу может использовать `lootTable` у оттиска или у участка деревни, так что пакет может расставлять такие блоки генерацией мира и сразу их наполнять.
+
 ## Порталы и ворота
 
 `<namespace>/blocks/*.json`
@@ -2481,7 +2538,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `name` | нет | строка | имя файла | Имя, под которым она пишется в лог |
 | `axis` | нет | `vertical`, `horizontal` или `both` | `vertical` | Стоит ли она, как портал Нижнего мира, лежит ли плашмя, как портал Края, или можно и так и так |
 | `legend` | да | объект «один символ — блок» | нет | Блоки, которые могут использовать строки. Имя блока с состояниями читается так же, как везде |
-| `rows` | да | список строк | нет | Сам рисунок, начиная с верхней строки |
+| `rows` | да | список строк | нет | Сколько рядов ячеек, от 1 до 9 |
 | `maxWidth` | нет | целое | `21` | Самый широкий проём, до которого тянется `*` |
 | `maxHeight` | нет | целое | `21` | Самый высокий проём, до которого тянется `*` |
 
@@ -3341,7 +3398,7 @@ Minecraft и так выбирает вариант по позиции блок
 | `vines` | tree | boolean | `false` | Свесить лозы с листвы |
 | `structure` | imprint, tree | `namespace:name` | нет | Шаблон, который ставится |
 | `integrity` | imprint, tree | от 1 до 100 | `100` | Доля блоков шаблона, которые действительно появятся, в процентах |
-| `lootTable` | imprint, tree | `namespace:путь` | нет | Таблица добычи, из которой при первом открытии наполняется каждый сундук в размещённом шаблоне, а также любой другой контейнер, принимающий её, шалкеровый ящик или ящик из мода. Действует для `structure` и для каждой записи `structures`; каждый сундук получает свой сид |
+| `lootTable` | imprint, tree | `namespace:путь` | нет | Таблица добычи, разыгрываемая в блок при первом открытии игроком, ровно так же, как наполняется сундук в подземелье. Пусто — блок начинает пустым |
 | `structures` | imprint, tree | список | нет | Несколько шаблонов на выбор, каждый раз ставится один. Каждая запись — `{ "structure": "namespace:name", "weight": 3 }` либо голое имя для равных шансов. Перекрывает `structure` |
 | `turns` | imprint, tree | список | любой | Как может быть повёрнут: `none`, `quarter`, `half`, `threequarter`. Записи могут нести `weight`. Если не задано, все четыре равновероятны |
 | `mirrors` | imprint, tree | список | нет | Ещё и отразить: `none`, `leftright`, `frontback`, с необязательным `weight`. Запись со своим весом пишется как `{ "mirror": "leftright", "weight": 2 }`, а запись `turns` — так же, но с `turn` |
@@ -4204,42 +4261,42 @@ tconstruct:ore:0=minecraft:netherrack
 | `villageRailTunnelDepth` | число | `6` | Сколько грунта должно стоять над полотном, чтобы участок пробивался, а не прорезался. Нужен `villageRailTunnelBlock` |
 | `villageRailClimb` | число | `8` | Сколько рядов линия идёт ровно на каждый блок подъёма или спуска. `1` делает её такой же крутой, как дорога |
 | `villageRailTail` | число | `48` | Насколько линия уходит за крайний элемент деревни с каждого конца |
-| `villageSubwayLines` | число | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
-| `villageSubwayDepth` | число | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
-| `villageSubwaySpacing` | число | `64` | How far apart a village's subway lines are kept from one another |
-| `villageSubwayDirection` | строка | `any` | Which way the lines run: `x`, `z`, or `any` to roll per village |
-| `villageSubwayWidth` | число | `3` | How wide the bed is, before shoulders |
-| `villageSubwayBlock` | блок | пусто | The track block. Empty lays vanilla rail |
-| `villageSubwayTrackSeat` | строка | `auto` | Whether the track sits on the bed, in it, or `auto` to let the block decide |
-| `villageSubwayBedBlock` | блок | пусто | The block the bed is made of. Empty uses gravel |
-| `villageSubwayTieBlock` | блок | пусто | The block laid across the bed as sleepers. Empty uses planks |
-| `villageSubwayTieRun` | число | `2` | How many blocks apart the sleepers sit |
-| `villageSubwayTracks` | число | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
-| `villageSubwayTrackGap` | число | `2` | How far apart parallel tracks sit |
-| `villageSubwayShoulderBlock` | блок | пусто | The block either side of the bed. Empty leaves no shoulder |
-| `villageSubwayShoulderWidth` | число | `1` | How wide that shoulder is |
-| `villageSubwayPowerBlock` | блок | пусто | The powered track block. Empty uses vanilla powered rail |
-| `villageSubwayPowerBase` | блок | пусто | The block set under a powered track to drive it. Empty uses a redstone block |
-| `villageSubwayPowerRun` | число | `0` | How many blocks apart the powered tracks sit. 0 lays none |
-| `villageSubwayTunnelBlock` | блок | пусто | The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, a subway being a bore |
-| `villageSubwayTunnelLightBlock` | блок | пусто | The block set into the tunnel roof as a light. Empty lights none |
-| `villageSubwayTunnelLightRun` | число | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
-| `villageSubwayClimb` | число | `8` | How many blocks a line runs before it may step one block up or down |
-| `villageSubwayTail` | число | `48` | How far past the village's own pieces a line runs before it stops |
-| `villageSubwayStationLength` | число | `0` | How many blocks long a station chamber is, centred on the row where the line passes nearest the well. 0 builds no stations at all |
-| `villageSubwayStationRun` | число | `0` | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one |
-| `villageSubwayPlatformWidth` | число | `3` | How far the chamber is opened out either side of the bed to make a platform |
-| `villageSubwayPlatformBlock` | блок | пусто | The block the platform is floored with. Empty floors it with the tunnel lining |
-| `villageSubwayStairBlock` | блок | пусто | The block the steps up to the road side are made of. Empty uses the tunnel lining |
-| `villageSubwayStation` | текст | пусто | A structure file used as the station itself, in place of the carved stairwell, named `mypack:subway_station` and read from that pack's `structures` folder. Its solid cells are laid in `villageSubwayStairBlock` and its air cells are carved, so what stands underground is the build rather than a description of it. Empty carves the stairwell instead |
-| `villageSubwayEntrance` | текст | пусто | A structure file set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare, and it is left off entirely where `villageSubwayStation` names a build, which carries its own way in |
-| `villageSubwayStationFoot` | число | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
-| `villageSubwayStationRepeat` | число | `12` | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build |
-| `villageSubwayRailingBlock` | блок | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
-| `villageSubwayBenchBlock` | блок | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
-| `villageSubwayBenchEndBlock` | блок | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
-| `villageSubwayBenchLength` | число | `5` | How long a station bench is, arms included. `0` leaves the benches out |
-| `villageSubwaySurfaces` | число | `25` | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
+| `villageSubwayLines` | число | `0` | Сколько подземных железнодорожных линий копает деревня. 0 не копает ни одной и ничего не разыгрывает, поэтому деревня строится ровно так, как строилась бы без них |
+| `villageSubwayDepth` | число | `24` | Насколько глубоко под поверхностью лежит полотно. Линия выравнивается по земле над ней, поэтому следует рельефу на этой глубине, а не идёт горизонтально |
+| `villageSubwaySpacing` | число | `64` | Насколько далеко друг от друга держатся линии метро одной деревни |
+| `villageSubwayDirection` | строка | `any` | В какую сторону идут линии: `x`, `z` или `any`, чтобы разыгрывать для каждой деревни |
+| `villageSubwayWidth` | число | `3` | Какой ширины полотно, без обочин |
+| `villageSubwayBlock` | блок | пусто | Блок рельсов. Пусто — кладутся ванильные рельсы |
+| `villageSubwayTrackSeat` | строка | `auto` | Лежат ли рельсы на полотне, в нём, или `auto`, чтобы решал сам блок |
+| `villageSubwayBedBlock` | блок | пусто | Блок, из которого сделано полотно. Пусто — гравий |
+| `villageSubwayTieBlock` | блок | пусто | Блок, укладываемый поперёк полотна как шпалы. Пусто — доски |
+| `villageSubwayTieRun` | число | `2` | Через сколько блоков стоят шпалы |
+| `villageSubwayTracks` | число | `0` | Сколько параллельных путей несёт полотно. 0 берёт столько, сколько позволяет ширина |
+| `villageSubwayTrackGap` | число | `2` | Насколько далеко друг от друга лежат параллельные пути |
+| `villageSubwayShoulderBlock` | блок | пусто | Блок по обе стороны полотна. Пусто — обочины нет |
+| `villageSubwayShoulderWidth` | число | `1` | Какой ширины эта обочина |
+| `villageSubwayPowerBlock` | блок | пусто | Блок ускоряющих рельсов. Пусто — ванильные ускоряющие рельсы |
+| `villageSubwayPowerBase` | блок | пусто | Блок, ставимый под ускоряющие рельсы, чтобы их питать. Пусто — блок редстоуна |
+| `villageSubwayPowerRun` | число | `0` | Через сколько блоков стоят ускоряющие рельсы. 0 не кладёт ни одного |
+| `villageSubwayTunnelBlock` | блок | пусто | Блок, которым выложена выработка: стены по обе стороны и свод над ней. Пусто — метро не копается вовсе, ведь метро и есть выработка |
+| `villageSubwayTunnelLightBlock` | блок | пусто | Блок, вставляемый в свод туннеля как светильник. Пусто — не освещается |
+| `villageSubwayTunnelLightRun` | число | `8` | Через сколько блоков стоят эти светильники, привязано к мировым координатам, чтобы куски сходились |
+| `villageSubwayClimb` | число | `8` | Сколько блоков линия идёт, прежде чем ей позволено подняться или опуститься на один блок |
+| `villageSubwayTail` | число | `48` | Насколько далеко за собственные куски деревни уходит линия, прежде чем закончиться |
+| `villageSubwayStationLength` | число | `0` | Какой длины в блоках зал станции, по центру того ряда, где линия проходит ближе всего к колодцу. 0 не строит станций вовсе |
+| `villageSubwayStationRun` | число | `0` | Через сколько блоков стоят следующие станции вдоль линии, после той, что у колодца. Каждая немного сдвигается вдоль, чтобы найти землю, которая её выдержит, и пропускается там, где такой нет. 0 строит только ту одну |
+| `villageSubwayPlatformWidth` | число | `3` | Насколько зал расширяется по обе стороны полотна, чтобы получилась платформа |
+| `villageSubwayPlatformBlock` | блок | пусто | Блок, которым вымощена платформа. Пусто — она мостится обделкой туннеля |
+| `villageSubwayStairBlock` | блок | пусто | Блок, из которого сделаны ступени наверх к стороне дороги. Пусто — обделка туннеля |
+| `villageSubwayStation` | текст | пусто | Файл постройки, служащий самой станцией вместо вырубленной лестничной шахты, названный `mypack:subway_station` и читаемый из папки `structures` того пакета. Его сплошные ячейки кладутся блоком `villageSubwayStairBlock`, а воздушные вырубаются, так что под землёй стоит сама постройка, а не её описание. Пусто — вместо этого вырубается лестничная шахта |
+| `villageSubwayEntrance` | текст | пусто | Файл постройки, ставимый в голове лестницы станции, чтобы вход был обозначен на улице. Пусто — выходящая наверх лестница остаётся голой; он вовсе не ставится там, где `villageSubwayStation` называет постройку, у которой свой вход |
+| `villageSubwayStationFoot` | число | `4` | Сколько слоёв в основании постройки станции кладётся один раз, до той части, что повторяется. Здесь лежат пол и проход на платформу |
+| `villageSubwayStationRepeat` | число | `12` | Сколько слоёв постройки станции повторяются, чтобы одна постройка подошла любой глубине: шахта растёт целыми копиями этой полосы, а коридор вбирает остаток. Это должен быть полный оборот лестницы, иначе марши не сойдутся. `0` никогда не наращивает постройку |
+| `villageSubwayRailingBlock` | блок | `minecraft:iron_bars` | Блок, которым огорожена голова лестницы станции там, где она выходит на улицу, чтобы никто не свалился в шахту. Пусто — голова остаётся без ограждения |
+| `villageSubwayBenchBlock` | блок | `minecraft:oak_stairs` | Сиденье скамей, ставимых на платформе станции и рядом с головой её лестницы. Блок ступеней разворачивается спиной к линии и читается как скамья; годится любой блок. Пусто — скамей нет |
+| `villageSubwayBenchEndBlock` | блок | `minecraft:log` | Подлокотники по краям станционной скамьи. Пусто — сиденье остаётся голым с обоих концов |
+| `villageSubwayBenchLength` | число | `5` | Какой длины станционная скамья, вместе с подлокотниками. `0` убирает скамьи |
+| `villageSubwaySurfaces` | число | `25` | Шанс из ста, что линия метро на одном конце поднимется на поверхность и пойдёт дальше как обычная железная дорога — туннель позади, открытый путь впереди. `0` держит каждое метро под землёй по всей длине |
 | `villageRailTracks` | число | `0` | Сколько путей несёт одно полотно — рядом друг с другом, с шагом `villageRailTrackGap`. **Полотно расширяется, чтобы вместить их все**, так что три пути делят одно полотно, а не превращаются в три линии. `0` кладёт один путь на полотно уже пяти блоков и два на более широкое |
 | `villageRailTrackGap` | число | `2` | На сколько блоков расходятся пути на полотне, от оси до оси. `2` — минимум — оставляет между ними один блок полотна, и именно это не даёт им заворачивать друг в друга, как это делают соприкасающиеся рельсы |
 | `villageRailShoulderBlock` | блок | пусто | Отделывает крайние столбцы полотна — обходная дорожка вдоль пути, железнодорожный ответ тротуару. Пусто — не кладёт ничего |
