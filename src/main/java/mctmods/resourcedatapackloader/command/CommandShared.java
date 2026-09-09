@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
@@ -9,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.brigadier.Command;
@@ -28,11 +30,13 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
 import java.nio.file.Path;
 import java.util.List;
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -68,6 +72,28 @@ public final class CommandShared {
                     locate(context.getSource(), target);
                     return 1;
                 })))
+                .then(Commands.literal("goto")
+                        .requires(source -> source.hasPermission(ContentStructureSearch.lowestLevel()))
+                        .then(Commands.argument("place", StringArgumentType.string()).suggests((context, suggestions) -> {
+                            for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
+                            for (String known : ContentStructureSearch.aliases()) { suggestions.suggest(known); }
+                            return suggestions.buildFuture();
+                        })
+                                .executes(context -> {
+                                    String place = StringArgumentType.getString(context, "place");
+                                    ran(context.getSource(), name, "goto " + place);
+                                    return goTo(context.getSource(), place, "gotoLevel", Config.commands.gotoLevel(), false);
+                                })
+                                .then(Commands.literal("next").executes(context -> {
+                                    String place = StringArgumentType.getString(context, "place");
+                                    ran(context.getSource(), name, "goto " + place + " next");
+                                    return goTo(context.getSource(), place, "gotoNextLevel", Config.commands.gotoNextLevel(), true);
+                                }))
+                                .then(Commands.literal("back").executes(context -> {
+                                    String place = StringArgumentType.getString(context, "place");
+                                    ran(context.getSource(), name, "goto " + place + " back");
+                                    return goBack(context.getSource(), place);
+                                }))))
                 .then(Commands.literal("vein").then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
                     for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
                     return suggestions.buildFuture();
@@ -132,6 +158,65 @@ public final class CommandShared {
             send(source, ChatFormatting.WHITE, tr("rdpl.command.veinat", vein.x(), vein.y(), vein.z(), (int) Math.sqrt(here.distSqr(vein.pos()))));
         }
         return veins.size();
+    }
+
+    private static boolean denied(CommandSourceStack source, String place, String key, int fallback) {
+        if (source.hasPermission(ContentStructureSearch.levelFor(place, key, fallback))) { return false; }
+        source.sendFailure(tr("rdpl.command.gotodenied", place));
+        return true;
+    }
+
+    static int goTo(CommandSourceStack source, String asked, String key, int fallback, boolean next) {
+        if (denied(source, asked, key, fallback)) { return 0; }
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(tr("rdpl.command.gotonoplayer"));
+            return 0;
+        }
+        ServerLevel level = source.getLevel();
+        String place = ContentStructureSearch.named(asked);
+        BlockPos from = BlockPos.containing(source.getPosition());
+        BlockPos found = ContentLocate.names(level).contains(place) ? recorded(level, place, from, next ? ContentStructureSearch.been(player, place) : List.of())
+                                                                   : ContentStructureSearch.find(level, place, from);
+        if (found == null) {
+            source.sendFailure(tr("rdpl.command.gotonothing", asked));
+            return 0;
+        }
+        return carry(source, player, level, asked, place, found);
+    }
+
+    @Nullable private static BlockPos recorded(ServerLevel level, String place, BlockPos from, List<BlockPos> skip) {
+        BlockPos found = ContentLocate.nearest(level, place, from);
+        if (found == null || skip.isEmpty() || !ContentStructureSearch.beenNear(skip, found)) { return found; }
+        return ContentLocate.nearestBeyond(level, place, from, skip);
+    }
+
+    static int goBack(CommandSourceStack source, String asked) {
+        if (denied(source, asked, "gotoBackLevel", Config.commands.gotoBackLevel())) { return 0; }
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(tr("rdpl.command.gotonoplayer"));
+            return 0;
+        }
+        String place = ContentStructureSearch.named(asked);
+        BlockPos previous = ContentStructureSearch.stepBack(player, place);
+        if (previous == null) {
+            source.sendFailure(tr("rdpl.command.gotonoback", asked));
+            return 0;
+        }
+        return carry(source, player, source.getLevel(), asked, place, previous);
+    }
+
+    private static int carry(CommandSourceStack source, ServerPlayer player, ServerLevel level, String asked, String place, BlockPos found) {
+        BlockPos landing = ContentStructureSearch.landing(level, found);
+        if (landing == null) {
+            source.sendFailure(tr("rdpl.command.gotonoground", asked, found.getX(), found.getZ()));
+            return 0;
+        }
+        ContentStructureSearch.remember(player, place, found);
+        player.teleportTo(level, landing.getX() + 0.5D, ContentStructureSearch.stand(level, landing), landing.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        send(source, ChatFormatting.GREEN, tr("rdpl.command.gotodone", asked, landing.getX(), landing.getY(), landing.getZ()));
+        return 1;
     }
 
     static void ran(CommandSourceStack source, String name, String rest) { ContentLog.LOGGER.debug("{} ran /{} {}", source.getTextName(), name, rest); }

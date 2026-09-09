@@ -26,6 +26,10 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldScreen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCity;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
+import mctmods.resourcedatapackloader.content.worldgen.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
@@ -47,6 +51,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.loot.LootFunctions;
 import mctmods.resourcedatapackloader.loot.LootInjections;
@@ -104,6 +109,9 @@ import java.util.Set;
         ContentBiomes.load();
         ContentCaveRegions.load();
         ContentStructureMaps.load();
+        ContentVillages.load();
+        ContentPathIntersects.load();
+        ContentCityMaps.load();
         ContentDimensions.load();
         ContentGameRules.load();
         ContentGates.load();
@@ -269,10 +277,12 @@ import java.util.Set;
         RegistryRemaps.applyAliases();
         ContentOverrides.reload();
         ContentWorldTemplates.load();
+        ContentCity.begin();
         ContentSpawning.applyCaps();
     }
 
     private void onServerStopped(ServerStoppedEvent event) {
+        ContentStructureSearch.forget();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
         PackManager.get().close();
     }

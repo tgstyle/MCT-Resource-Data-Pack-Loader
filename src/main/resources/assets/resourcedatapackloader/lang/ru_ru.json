@@ -73,5 +73,11 @@
   "rdpl.prospect.tooltip": "Ищет: %s",
   "rdpl.prospect.tooltipall": "Ищет любую жилу",
   "rdpl.prospect.tooltipnot": "Ищет любую жилу, кроме: %s",
-  "rdpl.world.type": "Это мир типа %s"
+  "rdpl.world.type": "Это мир типа %s",
+  "rdpl.command.gotodone": "Вы перенесены к ближайшей структуре %s на %s, %s, %s",
+  "rdpl.command.gotonoback": "Нет более раннего %s, к которому можно вернуться",
+  "rdpl.command.gotonoground": "Структура %s найдена на %s, %s, но там не на чем стоять",
+  "rdpl.command.gotonothing": "Структуры %s поблизости нет и не ожидается",
+  "rdpl.command.gotodenied": "Вам не разрешено перемещаться к %s",
+  "rdpl.command.gotonoplayer": "Только игрока можно куда-то перенести"
 }
