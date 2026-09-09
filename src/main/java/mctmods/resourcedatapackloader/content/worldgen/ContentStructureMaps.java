@@ -33,10 +33,10 @@ public final class ContentStructureMaps {
     public static final String MAP_STRUCTURE = "map";
     public static final String MAP_PIECE = "map_piece";
     private static final Map<String, String> DIMENSION_TAGS = Map.of("minecraft:overworld", "#minecraft:is_overworld", "minecraft:the_nether", "#minecraft:is_nether", "minecraft:the_end", "#minecraft:is_end");
-    private static final int PIN_SPACING = 32;
     private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new LinkedHashSet<>();
+    private static final Set<String> OVERSIZE = new LinkedHashSet<>();
     private static boolean loaded;
 
     private ContentStructureMaps() {}
@@ -91,18 +91,9 @@ public final class ContentStructureMaps {
         JsonObject placement = new JsonObject();
         placement.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + ContentWorldgen.SPREAD_PLACEMENT);
         placement.addProperty("salt", Math.abs(def.key().toString().hashCode()));
-        int spacing = def.spacing() > 0 ? def.spacing() : PIN_SPACING;
-        placement.addProperty("spacing", spacing);
-        placement.addProperty("separation", Mth.clamp((def.widest() + 15) / 16, 0, spacing - 1));
-        if (def.spacing() > 0) { placement.addProperty("frequency", def.chance() / 100.0F); }
-        if (def.at() != null) {
-            JsonArray pin = new JsonArray();
-            pin.add(def.at()[0]);
-            pin.add(def.at()[1]);
-            JsonArray pins = new JsonArray();
-            pins.add(pin);
-            placement.add("pins", pins);
-        }
+        int lattice = StructureMapDef.window() / 16;
+        placement.addProperty("spacing", lattice);
+        placement.addProperty("separation", lattice - 1);
         return placement;
     }
 
@@ -110,6 +101,10 @@ public final class ContentStructureMaps {
 
     public static void missing(StructureMapDef def, String named) {
         if (MISSING.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which could not be loaded, so its cells stay empty", def.key(), named); }
+    }
+
+    public static void oversize(StructureMapDef def, String named, int span) {
+        if (OVERSIZE.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which is {} block(s) across, where the game carries a map's pieces at most {} block(s) from the cell they start in, so the far side of it may be left out", def.key(), named, span, StructureMapDef.CELL_MOST); }
     }
 
     private static JsonElement biomes(StructureMapDef def) {

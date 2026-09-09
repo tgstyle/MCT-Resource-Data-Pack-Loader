@@ -79,5 +79,6 @@
   "rdpl.command.gotonoground": "Структура %s найдена на %s, %s, но там не на чем стоять",
   "rdpl.command.gotonothing": "Структуры %s поблизости нет и не ожидается",
   "rdpl.command.gotodenied": "Вам не разрешено перемещаться к %s",
-  "rdpl.command.gotonoplayer": "Только игрока можно куда-то перенести"
+  "rdpl.command.gotonoplayer": "Только игрока можно куда-то перенести",
+  "rdpl.command.serveronly": "Это работает только в мире, выполните на сервере"
 }

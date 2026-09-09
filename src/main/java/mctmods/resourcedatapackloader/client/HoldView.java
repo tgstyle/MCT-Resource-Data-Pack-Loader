@@ -26,6 +26,10 @@ public final class HoldView {
     private static String warnedAbout = "";
     private static final int TEXT_ABOVE_MIDDLE = 36;
     private static final float TEXT_SCALE = 1.5F;
+    private static final int PULSE_CYCLE = 1500;
+    private static final int PULSE_HELD = 750;
+    private static final int PULSE_FADE = 500;
+    private static final float PULSE_LEAST = 0.05F;
     private static String warning = "";
     private static boolean held;
     private static int showing;
@@ -80,17 +84,27 @@ public final class HoldView {
         RenderSystem.disableBlend();
     }
 
+    private static float pulse() {
+        long at = System.currentTimeMillis() % PULSE_CYCLE;
+        if (at < PULSE_HELD) { return 1.0F; }
+        if (at < PULSE_HELD + PULSE_FADE) { return 1.0F - (at - PULSE_HELD) / (float) PULSE_FADE; }
+        return 0.0F;
+    }
+
     private static void warn(GuiGraphics graphics) {
         if (warning.isEmpty()) { return; }
+        float pulse = pulse();
+        if (pulse < PULSE_LEAST) { return; }
         Minecraft mc = Minecraft.getInstance();
+        float scale = Crisp.scale(TEXT_SCALE);
         int width = mc.font.width(warning);
-        float x = (graphics.guiWidth() - width * TEXT_SCALE) / 2.0F;
-        float y = graphics.guiHeight() / 2.0F - TEXT_ABOVE_MIDDLE;
+        float x = Crisp.snap((graphics.guiWidth() - width * scale) / 2.0F);
+        float y = Crisp.snap(graphics.guiHeight() / 2.0F - TEXT_ABOVE_MIDDLE);
         int pad = 4;
-        graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * TEXT_SCALE) + pad, Math.round(y + mc.font.lineHeight * TEXT_SCALE) + pad, 0x99000000);
+        graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(pulse * 0x99) << 24);
         graphics.pose().pushPose();
-        graphics.pose().scale(TEXT_SCALE, TEXT_SCALE, 1.0F);
-        graphics.drawString(mc.font, warning, x / TEXT_SCALE, y / TEXT_SCALE, 0xFF5555, true);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(mc.font, warning, x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | 0xFF5555, true);
         graphics.pose().popPose();
     }
 

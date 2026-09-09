@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraftforge.common.world.PieceBeardifierModifier;
@@ -91,6 +92,8 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         CityCross cross = CityCross.of(width, alley);
         int dash = ContentCity.centerDash();
         BoundingBox held = getBoundingBox();
+        int felled = ContentCityTrees.fellAround(level, held, box, this.level - 1, this.level + CLEAR, 2);
+        if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) before the street at {}, {} was laid", felled, held.minX(), held.minZ()); }
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
             for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {

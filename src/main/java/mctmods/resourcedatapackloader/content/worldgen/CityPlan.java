@@ -12,6 +12,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.util.RandomSource;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -183,10 +184,15 @@ public final class CityPlan {
     public List<Plot> plots() { return plots; }
 
     private static List<Plot> plots(RandomSource roll, List<Line> alongX, List<Line> alongZ) {
-        List<VillageDef> choices = ContentVillages.allowed();
-        if (choices.isEmpty()) { return List.of(); }
-        int most = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsMost", Config.worldgen.villagePlotsMost()));
         List<Plot> found = new ArrayList<>();
+        plots(roll, alongX, alongZ, found);
+        return List.copyOf(found);
+    }
+
+    private static void plots(RandomSource roll, List<Line> alongX, List<Line> alongZ, List<Plot> found) {
+        List<VillageDef> choices = ContentVillages.allowed();
+        if (choices.isEmpty()) { return; }
+        int most = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsMost", Config.worldgen.villagePlotsMost()));
         for (int row = 0; row + 1 < alongX.size(); row++) {
             for (int column = 0; column + 1 < alongZ.size(); column++) {
                 int fromX = alongZ.get(column).last() + 1;
@@ -200,7 +206,6 @@ public final class CityPlan {
                 frontage(roll, choices, found, alongZ.get(column + 1), false, fromX, toX, fromZ, toZ, most);
             }
         }
-        return List.copyOf(found);
     }
 
     private static void frontage(RandomSource roll, List<VillageDef> choices, List<Plot> found, Line street, boolean lower, int fromX, int toX, int fromZ, int toZ, int most) {
@@ -298,8 +303,19 @@ public final class CityPlan {
         for (int z = 0; z < deep; z++) { runs(grid, map, originX, originZ, z, wide, deep, full, true, alongX); }
         for (int x = 0; x < wide; x++) { runs(grid, map, originX, originZ, x, deep, wide, full, false, alongZ); }
         if (alongX.isEmpty() && alongZ.isEmpty()) { return null; }
-        List<Plot> plots = mapPlots(seed, map, marks, grid, originX, originZ, alongX, alongZ);
-        return new CityPlan(originX, originZ, map.cell(), List.copyOf(alongX), List.copyOf(alongZ), plots, List.of(), windowX, windowZ, true);
+        List<Plot> found = new ArrayList<>(mapPlots(seed, map, marks, grid, originX, originZ, alongX, alongZ));
+        List<Rail> rails = List.of();
+        if (grows(grid)) {
+            RandomSource roll = RandomSource.create(seed ^ SALT ^ (windowX * 341873128712L + windowZ * 132897987541L));
+            int block = blockSize(roll, full);
+            for (Line line : lines(roll, windowZ, windowX, block, full, true)) { if (clear(alongX, line)) { alongX.add(line); } }
+            for (Line line : lines(roll, windowX, windowZ, block, full, false)) { if (clear(alongZ, line)) { alongZ.add(line); } }
+            alongX.sort(Comparator.comparingInt(Line::at));
+            alongZ.sort(Comparator.comparingInt(Line::at));
+            plots(roll, alongX, alongZ, found);
+            rails = rails(roll, windowX, windowZ);
+        }
+        return new CityPlan(originX, originZ, map.cell(), List.copyOf(alongX), List.copyOf(alongZ), List.copyOf(found), rails, windowX, windowZ, true);
     }
 
     private static void runs(CityMapDef.Kind[][] grid, CityMapDef map, int originX, int originZ, int fixed, int span, int other, int full, boolean alongX, List<Line> found) {
@@ -333,6 +349,22 @@ public final class CityPlan {
         CityMapDef.Kind before = fixed > 0 ? (alongX ? grid[fixed - 1][at] : grid[at][fixed - 1]) : CityMapDef.Kind.OPEN;
         CityMapDef.Kind after = fixed + 1 < other ? (alongX ? grid[fixed + 1][at] : grid[at][fixed + 1]) : CityMapDef.Kind.OPEN;
         return bare(before) && bare(after);
+    }
+
+    private static boolean grows(CityMapDef.Kind[][] grid) {
+        for (CityMapDef.Kind[] row : grid) {
+            for (CityMapDef.Kind kind : row) {
+                if (kind == CityMapDef.Kind.GROW) { return true; }
+            }
+        }
+        return false;
+    }
+
+    private static boolean clear(List<Line> held, Line line) {
+        for (Line other : held) {
+            if (line.at() <= other.last() && line.last() >= other.at()) { return false; }
+        }
+        return true;
     }
 
     private static boolean bare(CityMapDef.Kind kind) { return kind != CityMapDef.Kind.STREET && kind != CityMapDef.Kind.PLAZA; }

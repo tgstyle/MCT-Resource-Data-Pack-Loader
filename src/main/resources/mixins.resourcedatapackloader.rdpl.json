@@ -14,6 +14,8 @@
         "common.ILootTable",
         "common.IPotion",
         "common.IPotionBrewing",
+        "common.MixinBlock",
+        "common.MixinBlockState",
         "common.MixinBlockStateBase",
         "common.IMob",
         "common.IExperienceOrb",

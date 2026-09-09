@@ -22,7 +22,7 @@ public final class ServerCommands {
     private ServerCommands() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(CommandShared.tree(NAME, ServerCommands::reload, "rdpl.command.serverunusednote", "rdpl.command.config.servernote").requires(source -> source.hasPermission(OPERATOR))
+        dispatcher.register(CommandShared.tree(NAME, ServerCommands::reload, "rdpl.command.serverunusednote", "rdpl.command.config.servernote", true).requires(source -> source.hasPermission(OPERATOR))
                 .then(Commands.literal("pregen")
                         .then(Commands.literal("status").executes(context -> {
                             CommandShared.ran(context.getSource(), NAME, "pregen status");

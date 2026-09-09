@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.client.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
+import mctmods.resourcedatapackloader.client.FaceCacheReset;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentClient;
@@ -17,6 +18,7 @@ import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentWelcome;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
+import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -70,6 +72,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.util.Unit;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -212,6 +215,7 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(this::beforeServerStart);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStopped);
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            modBus.addListener((RegisterClientReloadListenersEvent held) -> held.registerReloadListener(FaceCacheReset.INSTANCE));
             MinecraftForge.EVENT_BUS.addListener(ClientCommands::register);
             MinecraftForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
@@ -284,6 +288,7 @@ import java.util.Set;
         ContentOverrides.reload();
         ContentWorldTemplates.load();
         ContentCity.begin();
+        ContentBlastPlaster.install();
         ContentSpawning.applyCaps();
     }
 

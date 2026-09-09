@@ -21,6 +21,7 @@ public final class CardOverlay {
     private static final int MOST = 5;
     private static final int SLIDE = 8;
     private static final int FADE = 20;
+    private static final float ABOVE_ITEMS = 300.0F;
     private static final int MARGIN = 6;
     private static final int GAP = 4;
     private static final int PAD = 5;
@@ -98,6 +99,7 @@ public final class CardOverlay {
         Font font = Minecraft.getInstance().font;
         int bottom = screenHeight - MARGIN;
         graphics.pose().pushPose();
+        graphics.pose().translate(0.0F, 0.0F, ABOVE_ITEMS);
         RenderSystem.enableBlend();
         for (int i = CARDS.size() - 1; i >= 0; i--) {
             Card card = CARDS.get(i);

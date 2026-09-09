@@ -9,6 +9,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -95,7 +96,7 @@ public final class WorldIntroScreen extends Screen {
     @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         drawPageBackground(graphics, partialTick);
         IntroPageDef def = pages.get(page);
-        float scale = def.textScale();
+        float scale = Crisp.scale(def.textScale());
         float step = LINE_HEIGHT * scale;
         float y = offset(partialTick);
         graphics.enableScissor(0, 0, width, height - FOOTER);
@@ -104,13 +105,13 @@ public final class WorldIntroScreen extends Screen {
         for (FormattedCharSequence line : lines) {
             if (y > -step && y < height) {
                 float x = def.still() ? (width - font.width(line) * scale) / 2.0F : (width - wrapWidth * scale) / 2.0F;
-                graphics.drawString(font, line, x / scale, y / scale, 0xFFFFFF, true);
+                graphics.drawString(font, line, Crisp.snap(x) / scale, Crisp.snap(y) / scale, 0xFFFFFF, true);
             }
             y += step;
         }
         graphics.pose().popPose();
         graphics.disableScissor();
-        super.render(graphics, mouseX, mouseY, partialTick);
+        for (Renderable widget : renderables) { widget.render(graphics, mouseX, mouseY, partialTick); }
     }
 
     @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {

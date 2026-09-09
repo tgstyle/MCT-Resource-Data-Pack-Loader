@@ -79,5 +79,6 @@
   "rdpl.command.gotonoground": "Found %s at %s, %s but nothing there to stand on",
   "rdpl.command.gotonothing": "No %s is known or expected anywhere near here",
   "rdpl.command.gotodenied": "You are not allowed to go to a %s",
-  "rdpl.command.gotonoplayer": "Only a player can be carried anywhere"
+  "rdpl.command.gotonoplayer": "Only a player can be carried anywhere",
+  "rdpl.command.serveronly": "That only works in a world, run it on the server"
 }

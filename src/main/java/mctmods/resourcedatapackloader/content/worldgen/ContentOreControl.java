@@ -140,6 +140,7 @@ public record ContentOreControl() implements BiomeModifier {
         reported = true;
         int total = 0;
         for (int count : BLOCKED.values()) { total += count; }
+        if (!ContentControl.flag(ContentControl.ORES, "logBlockedOres", Config.worldgen.logBlockedOres())) { return; }
         Summary.info("oregen.blocked", "Blocked " + total + " ore feature placement(s) across the biomes: " + BLOCKED);
     }
 }

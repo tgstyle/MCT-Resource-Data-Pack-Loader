@@ -33,46 +33,60 @@ public final class ContentControl {
     public static final String COMMANDS = "commands";
     public static final String REPLACEMENTS = "replacements";
     public static final String ENTITIES = "entities";
+    public static final String BLAST_PLASTER = "blastPlaster";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
     private static final Set<String> WARNED = new LinkedHashSet<>();
     private static final Set<String> KNOWN = Set.of(
             "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeWhitelist",
-            "biomeTemperatureCenterY", "biomeTemperatureHeightFactor", "biomeTemperatureScaleMaxY",
             "blockBiomeDimensions", "blockBiomeDimensionsAreBlacklist", "blockBiomes", "blockFurnaceRecipes",
-            "blockGeneratorDimensions", "blockGeneratorDimensionsAreBlacklist", "blockOres", "blockRecipes",
-            "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist", "blockReplacementKey",
-            "blockReplacementMaxHeight", "blockReplacementMinHeight", "blockReplacements", "blockWorldGenerators",
-            "blockedFurnaceMods", "blockedGenerators", "blockedRecipeMods", "creatureCap", "dragonFight", "flatBedrock",
-            "flatBedrockBiomeTypes", "flatBedrockBiomes", "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions",
-            "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof", "flatBedrockRetrogen", "retrogen", "adoptExistingChunks",
-            "furnaceWhitelist", "generatorOptions", "generatorTypeMap", "generatorTypes", "generatorTypesAreBlacklist",
-            "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
-            "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist", "prospectItems", "prospectItemsAreBlacklist", "prospectDrops", "prospectSlow", "prospectWear",
-            "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
-            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
-            "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
-            "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
-            "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
-            "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels",
-            "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice", "threatSays", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
-            "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
-            "verticalCubeLoadDistance", "cubesSentPerTick", "cubeGenMillisPerRound", "cubeGCInterval",
-            "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
-            "undergroundNightMonsterRate", "villageBlocks", "villageDecor", "villagePieces", "villagePiecesAreBlacklist",
-            "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
-            "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
-            "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
-            "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
-            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
-            "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailPowerRun", "villageRailClimb", "villageRailTail",
-            "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock",
-            "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth",
-            "villageRailTunnelLightBlock", "villageRailTunnelLightRun",
-            "villagePlotsMost", "villageBlockSizes", "villageCitySpacing", "villageLayout", "voidPlatformBlock",
-            "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
-            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions");
+            "blockOres", "blockRecipes", "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist",
+            "blockReplacementKey", "blockReplacementMaxHeight", "blockReplacementMinHeight", "blockReplacements",
+            "blockedFurnaceMods", "blockedRecipeMods", "creatureCap", "flatBedrock", "flatBedrockBiomes",
+            "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions", "flatBedrockDimensionsAreBlacklist",
+            "flatBedrockRoof", "retrogen", "adoptExistingChunks", "furnaceWhitelist", "generatorOptions",
+            "logBlockReplacements", "logBlockedBiomes", "logBlockedOres", "logBlockedRecipes", "monsterCap",
+            "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "blockOreDimensions",
+            "blockOreDimensionsAreBlacklist", "oreWhitelist", "prospectItems", "prospectItemsAreBlacklist",
+            "prospectDrops", "prospectSlow", "prospectWear", "pregenAllDimensions", "pregenDimensions",
+            "pregenDimensionsWhenEntered", "pregenOnNewWorld", "pregenFinishedSays", "pregenResume",
+            "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "welcomeSays",
+            "saysCard", "saysIcon", "saysColor", "saysImage", "recipeMatch", "recipeWhitelist", "slowDistance",
+            "slowDistantEntities", "slowRate", "slowRecheck", "slowedKinds", "spawnChunkRadius", "structureBiomes",
+            "structureBiomesAreBlacklist", "structureMinDistanceFromSpawn", "structureSeparation",
+            "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation", "gotoLevel",
+            "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "structureSpawns", "surfaceDayMonsterRate",
+            "monsterSpawnLight", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice",
+            "threatSays", "deepStone", "noiseCaves", "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
+            "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate", "villageBlocks",
+            "villageDecor", "villagePieces", "villagePiecesAreBlacklist", "villagePathBlock",
+            "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth", "villagePathCenterBlock",
+            "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock", "villagePathSidewalkWidth",
+            "villagePathAlleyBlock", "villagePathAlleyChance", "villagePathMinimumWidth", "villagePathIntersects",
+            "villagePathFlatRun", "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock",
+            "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathTunnelBlock",
+            "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villagePathPiers",
+            "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight",
+            "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds",
+            "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock",
+            "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot",
+            "villagePlotsLeast", "villageRailLines", "villageRailSpacing", "villageRailDirection",
+            "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock",
+            "villageRailTieBlock", "villageRailTieRun", "villageRailTracks", "villageRailTrackGap",
+            "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase",
+            "villageRailPowerRun", "villageRailClimb", "villageRailTail", "villageRailSupportBlock",
+            "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock",
+            "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun",
+            "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth",
+            "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villagePlotsMost", "villageBlockSizes",
+            "villageCitySpacing", "villageLayout", "voidPlatformBlock", "voidPlatformHeight", "voidPlatformSize",
+            "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "cloudHeight",
+            "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "worldBorder", "worldBelow",
+            "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
+            "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
+            "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
+            "worldTypeExceptions");
     private static final Map<String, String[]> MODES = new HashMap<>();
     private static final Map<String, JsonElement> SETTINGS = new HashMap<>();
     @Nullable private static WorldTemplateDef settingsFrom;
@@ -195,6 +209,7 @@ public final class ContentControl {
         if (COMMANDS.equals(group)) { return Config.control.commands(); }
         if (REPLACEMENTS.equals(group)) { return Config.control.replacements(); }
         if (ENTITIES.equals(group)) { return Config.control.entities(); }
+        if (BLAST_PLASTER.equals(group)) { return Config.control.blastPlaster(); }
         return DEFAULT;
     }
 }
