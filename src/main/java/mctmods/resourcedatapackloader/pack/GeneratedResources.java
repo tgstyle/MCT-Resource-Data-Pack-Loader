@@ -24,6 +24,10 @@ public final class GeneratedResources {
         HELD.get(type).computeIfAbsent(namespace, k -> new ConcurrentHashMap<>()).put(path, contents.getBytes(StandardCharsets.UTF_8));
     }
 
+    public static void put(PackType type, String namespace, String path, byte[] contents) {
+        HELD.get(type).computeIfAbsent(namespace, k -> new ConcurrentHashMap<>()).put(path, contents.clone());
+    }
+
     @Nullable public static byte[] get(PackType type, String namespace, String path) {
         Map<String, byte[]> paths = HELD.get(type).get(namespace);
         return paths == null ? null : paths.get(path);

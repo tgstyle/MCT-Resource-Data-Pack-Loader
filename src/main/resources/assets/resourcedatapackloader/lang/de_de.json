@@ -79,5 +79,6 @@
   "rdpl.command.gotonoground": "%s bei %s, %s gefunden, aber dort ist nichts zum Stehen",
   "rdpl.command.gotonothing": "In der Nähe ist keine Struktur %s bekannt oder zu erwarten",
   "rdpl.command.gotodenied": "Du darfst nicht zu einer Struktur %s reisen",
-  "rdpl.command.gotonoplayer": "Nur ein Spieler kann irgendwohin gebracht werden"
+  "rdpl.command.gotonoplayer": "Nur ein Spieler kann irgendwohin gebracht werden",
+  "rdpl.command.serveronly": "Das geht nur in einer Welt, führe es auf dem Server aus"
 }

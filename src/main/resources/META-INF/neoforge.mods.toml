@@ -11,6 +11,13 @@ authors="${mod_authors}"
 description='''${mod_description}'''
 
 [[dependencies.resourcedatapackloader]]
+modId="blastplaster"
+type="required"
+versionRange="${version_bp}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.resourcedatapackloader]]
 modId="neoforge"
 type="required"
 versionRange="[${version_neoforge_min},)"

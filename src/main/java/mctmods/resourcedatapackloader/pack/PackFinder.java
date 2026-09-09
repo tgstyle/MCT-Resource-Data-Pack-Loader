@@ -14,12 +14,12 @@ import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.neoforged.fml.loading.FMLPaths;
-import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class PackFinder implements RepositorySource {
@@ -40,7 +40,7 @@ public final class PackFinder implements RepositorySource {
         manager.report();
     }
 
-    @Override public void loadPacks(@NotNull Consumer<Pack> out) {
+    @Override public void loadPacks(@Nonnull Consumer<Pack> out) {
         ensureScanned();
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }

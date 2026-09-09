@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Hashes;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -10,7 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -19,6 +19,8 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilde
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public final class ContentMapStructure extends Structure {
@@ -36,30 +38,62 @@ public final class ContentMapStructure extends Structure {
     @Override @Nonnull protected Optional<GenerationStub> findGenerationPoint(@Nonnull GenerationContext context) {
         StructureMapDef def = ContentStructureMaps.def(map);
         if (def == null) { return Optional.empty(); }
-        ChunkPos chunk = context.chunkPos();
-        RandomSource random = context.random();
-        Rotation turn = TURNS[random.nextInt(TURNS.length)];
+        int windowX = context.chunkPos().getMinBlockX();
+        int windowZ = context.chunkPos().getMinBlockZ();
+        List<Spot> spots = spots(context, def, windowX, windowZ);
+        if (spots.isEmpty()) { return Optional.empty(); }
+        BlockPos origin = new BlockPos(windowX, context.chunkGenerator().getSeaLevel(), windowZ);
+        return Optional.of(new GenerationStub(origin, builder -> {
+            for (Spot spot : spots) { pieces(context, def, spot, windowX, windowZ, builder); }
+        }));
+    }
+
+    private static List<Spot> spots(GenerationContext context, StructureMapDef def, int windowX, int windowZ) {
+        int window = StructureMapDef.window();
+        int widest = def.widest();
+        long salted = context.seed() ^ def.key().hashCode();
+        List<Spot> spots = new ArrayList<>();
+        if (def.at() != null && reaches(def.at()[0], def.at()[1], windowX, windowZ, window, widest)) {
+            spots.add(spot(context, def, Hashes.mix(salted, def.at()[0], 0, def.at()[1]), def.at()[0], def.at()[1]));
+        }
+        if (def.spacing() <= 0) { return spots; }
+        int pitch = def.spacing() * 16;
+        int give = Math.max(1, pitch - widest);
+        for (int gridX = Math.floorDiv(windowX - widest, pitch); gridX <= Math.floorDiv(windowX + window - 1, pitch); gridX++) {
+            for (int gridZ = Math.floorDiv(windowZ - widest, pitch); gridZ <= Math.floorDiv(windowZ + window - 1, pitch); gridZ++) {
+                long seed = Hashes.mix(salted, gridX, 1, gridZ);
+                if (Math.floorMod(seed >>> 16, 100) >= def.chance()) { continue; }
+                int originX = gridX * pitch + Math.floorMod(seed, give);
+                int originZ = gridZ * pitch + Math.floorMod(seed >>> 40, give);
+                if (reaches(originX, originZ, windowX, windowZ, window, widest)) { spots.add(spot(context, def, seed, originX, originZ)); }
+            }
+        }
+        return spots;
+    }
+
+    private static boolean reaches(int originX, int originZ, int windowX, int windowZ, int window, int widest) {
+        return originX + widest > windowX && originX < windowX + window && originZ + widest > windowZ && originZ < windowZ + window;
+    }
+
+    private static Spot spot(GenerationContext context, StructureMapDef def, long seed, int originX, int originZ) {
+        Rotation turn = TURNS[Math.floorMod(seed >>> 8, TURNS.length)];
         boolean swapped = turn == Rotation.CLOCKWISE_90 || turn == Rotation.COUNTERCLOCKWISE_90;
         int wide = def.cellsWide() * def.cell();
         int deep = def.cellsDeep() * def.cell();
         int spanX = swapped ? deep : wide;
         int spanZ = swapped ? wide : deep;
-        int originX = chunk.getMinBlockX();
-        int originZ = chunk.getMinBlockZ();
         int anchor = context.chunkGenerator().getFirstOccupiedHeight(originX + spanX / 2, originZ + spanZ / 2, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
-        int floor = anchor + 1;
-        int base = floor - def.ground() * def.cell();
-        BlockPos origin = new BlockPos(originX, floor, originZ);
-        return Optional.of(new GenerationStub(origin, builder -> pieces(context, def, random.nextLong(), turn, origin, base, wide, deep, builder)));
+        return new Spot(seed, originX, originZ, turn, anchor + 1 - def.ground() * def.cell());
     }
 
-    private void pieces(GenerationContext context, StructureMapDef def, long seed, Rotation turn, BlockPos origin, int base, int wide, int deep, StructurePiecesBuilder builder) {
+    private void pieces(GenerationContext context, StructureMapDef def, Spot spot, int windowX, int windowZ, StructurePiecesBuilder builder) {
+        int window = StructureMapDef.window();
+        int wide = def.cellsWide() * def.cell();
+        int deep = def.cellsDeep() * def.cell();
         int placed = 0;
-        int originX = origin.getX();
-        int originZ = origin.getZ();
         for (int layer = 0; layer < def.layers().size(); layer++) {
             StructureMapDef.Layer held = def.layers().get(layer);
-            int layerY = base + layer * def.cell();
+            int layerY = spot.base() + layer * def.cell();
             for (int row = 0; row < held.rows().size(); row++) {
                 String cells = held.rows().get(row);
                 for (int column = 0; column < cells.length(); column++) {
@@ -69,15 +103,15 @@ public final class ContentMapStructure extends Structure {
                     int flatZ = row * def.cell();
                     int cellX;
                     int cellZ;
-                    if (turn == Rotation.NONE) {
+                    if (spot.turn() == Rotation.NONE) {
                         cellX = flatX;
                         cellZ = flatZ;
                     }
-                    else if (turn == Rotation.CLOCKWISE_90) {
+                    else if (spot.turn() == Rotation.CLOCKWISE_90) {
                         cellX = deep - def.cell() - flatZ;
                         cellZ = flatX;
                     }
-                    else if (turn == Rotation.CLOCKWISE_180) {
+                    else if (spot.turn() == Rotation.CLOCKWISE_180) {
                         cellX = wide - def.cell() - flatX;
                         cellZ = deep - def.cell() - flatZ;
                     }
@@ -85,8 +119,11 @@ public final class ContentMapStructure extends Structure {
                         cellX = flatZ;
                         cellZ = wide - def.cell() - flatX;
                     }
-                    RandomSource cellRandom = RandomSource.create(seed ^ (column * 31L + layer * 977L + row * 31337L));
-                    String named = PickDef.pick(held.palette().get(mark), cellRandom);
+                    int cornerX = spot.x() + cellX;
+                    int cornerZ = spot.z() + cellZ;
+                    if (cornerX < windowX || cornerX >= windowX + window || cornerZ < windowZ || cornerZ >= windowZ + window) { continue; }
+                    long cellSeed = Hashes.mix(spot.seed(), column, layer, row);
+                    String named = PickDef.pick(held.palette().get(mark), RandomSource.create(cellSeed));
                     ResourceLocation template = named == null ? null : ResourceLocation.tryParse(named);
                     if (template == null) { continue; }
                     Optional<StructureTemplate> piece = context.structureTemplateManager().get(template);
@@ -94,14 +131,20 @@ public final class ContentMapStructure extends Structure {
                         ContentStructureMaps.missing(def, named);
                         continue;
                     }
-                    Vec3i span = piece.get().getSize(turn);
-                    builder.addPiece(new ContentMapPiece(context.structureTemplateManager(), template, turn, new BlockPos(originX + cellX + ContentImprint.backX(turn, span), layerY, originZ + cellZ + ContentImprint.backZ(turn, span))));
+                    Vec3i span = piece.get().getSize(spot.turn());
+                    if (Math.max(span.getX(), span.getZ()) > StructureMapDef.CELL_MOST) { ContentStructureMaps.oversize(def, named, Math.max(span.getX(), span.getZ())); }
+                    builder.addPiece(new ContentMapPiece(context.structureTemplateManager(), template, spot.turn(), new BlockPos(cornerX + ContentImprint.backX(spot.turn(), span), layerY, cornerZ + ContentImprint.backZ(spot.turn(), span))));
                     placed++;
                 }
             }
         }
-        if (placed > 0) { ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key(), originX, origin.getY(), originZ, turn, origin.getY()); }
+        if (placed > 0 && spot.x() >= windowX && spot.x() < windowX + window && spot.z() >= windowZ && spot.z() < windowZ + window) {
+            int floor = spot.base() + def.ground() * def.cell();
+            ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key(), spot.x(), floor, spot.z(), spot.turn(), floor);
+        }
     }
 
     @Override @Nonnull public StructureType<?> type() { return TYPE; }
+
+    private record Spot(long seed, int x, int z, Rotation turn, int base) {}
 }

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.TradeDef;
 import mctmods.resourcedatapackloader.content.def.TradeStackDef;
 import mctmods.resourcedatapackloader.content.def.VillagerDef;
+import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -22,6 +23,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.VillagerProfession;
@@ -33,15 +35,16 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentVillagers {
+    private static final byte[] PLAIN_SKIN = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAJ0lEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAIB3A0BAAAGveg7oAAAAAElFTkSuQmCC");
     private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ResourceLocation, VillagerDef> VILLAGERS = new LinkedHashMap<>();
     private static final List<TradeDef> TRADES = new ArrayList<>();
@@ -67,8 +70,6 @@ public final class ContentVillagers {
 
     public static boolean wanted() { return !VILLAGERS.isEmpty() || !TRADES.isEmpty(); }
 
-    public static Set<ResourceLocation> jobSites() { return Collections.unmodifiableSet(JOB_SITES); }
-
     private static void readVillager(ResourceLocation key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
@@ -77,6 +78,11 @@ public final class ContentVillagers {
         }
         if (json.has("careers")) { ContentLog.LOGGER.warn("Villager profession {} lists careers, which this line does not read. There are no careers now, so give each one its own villager file and name it in the trade's 'profession'", key); }
         if (json.has("texture") || json.has("zombieTexture")) { ContentLog.LOGGER.warn("Villager profession {} sets a texture, which this line does not read. Ship it as assets/{}/textures/entity/villager/profession/{}.png instead", key, key.getNamespace(), key.getPath()); }
+        String skin = "textures/entity/villager/profession/" + key.getPath() + ".png";
+        if (PackManager.get().holders(PackType.CLIENT_RESOURCES, key.getNamespace(), skin).isEmpty()) {
+            GeneratedResources.put(PackType.CLIENT_RESOURCES, key.getNamespace(), skin, PLAIN_SKIN);
+            ContentLog.LOGGER.info("Villager profession {} ships no texture, so villagers taking the job wear none. Ship assets/{}/{} to dress them", key, key.getNamespace(), skin);
+        }
         String jobSite = GsonHelper.getAsString(json, "jobSite", "").trim();
         if (jobSite.isEmpty()) {
             ContentLog.LOGGER.error("Villager profession {} names no jobSite block, ignoring it. A profession with no job site can never be taken by a villager", key);
@@ -171,7 +177,6 @@ public final class ContentVillagers {
         load();
         if (TRADES.isEmpty()) { return; }
         ResourceLocation profession = BuiltInRegistries.VILLAGER_PROFESSION.getKey(event.getType());
-        if (profession == null) { return; }
         int count = 0;
         for (TradeDef def : TRADES) {
             if (!profession.toString().equals(def.profession()) || !ContentRegistry.available(def.requires(), def.key())) { continue; }

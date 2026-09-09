@@ -25,9 +25,9 @@ public final class Config {
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+        packs = new Packs(builder);
         content = new Content(builder);
         entities = new Entities(builder);
-        packs = new Packs(builder);
         recipes = new Recipes(builder);
         data = new Data(builder);
         worldgen = new Worldgen(builder);
@@ -281,6 +281,8 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> retrogenKey;
         private final ModConfigSpec.IntValue retrogenChunksPerTick;
         private final ModConfigSpec.BooleanValue blockOres;
+        private final ModConfigSpec.BooleanValue logBlockedOres;
+        private final ModConfigSpec.BooleanValue logBlockedBiomes;
         private final ModConfigSpec.ConfigValue<List<? extends String>> oreWhitelist;
         private final ModConfigSpec.ConfigValue<List<? extends String>> prospectItems;
         private final ModConfigSpec.BooleanValue prospectItemsAreBlacklist;
@@ -455,6 +457,8 @@ public final class Config {
             retrogenKey = builder.comment("Change this to make every chunk eligible for retrogen again, for every worldgen entry. New veins are added on top of what is already there [Default=0000]").define("retrogenKey", "0000");
             retrogenChunksPerTick = builder.comment("How many already generated chunks to catch up per tick. Higher is faster but stutters more [Default=2]").defineInRange("retrogenChunksPerTick", 2, 1, 64);
             blockOres = builder.comment("Stop every mod, and Minecraft itself, from generating ores. Only the mods in oreWhitelist still generate. An ore is a placed feature with ore in its id, which is Minecraft's and most mods' [Default=false]").define("blockOres", false);
+            logBlockedOres = builder.comment("Log the first time each mod and ore type is blocked, so you can see what to whitelist [Default=true]").define("logBlockedOres", true);
+            logBlockedBiomes = builder.comment("Log a per mod count of which biomes were blocked, so you can see what to whitelist [Default=true]").define("logBlockedBiomes", true);
             oreWhitelist = builder.comment("Mod ids allowed to generate ores while blockOres is on. Ores a pack defines belong to that pack's namespace [Default=[minecraft]]").defineListAllowEmpty("oreWhitelist", List.of("minecraft"), () -> "", each -> each instanceof String);
             prospectItems = builder.comment("Items that prospect for vein shaped worldgen entries when a sneaking player breaks a block with one, as item=entry|entry[,radius in chunks] or item=*[,radius], e.g. minecraft:compass=iron_vein|coal_seam or mypack:rod=*,12. The reading names the ore and a compass direction [Default=[]]").defineListAllowEmpty("prospectItems", List.of(), () -> "", each -> each instanceof String);
             prospectItemsAreBlacklist = builder.comment("On, the entries named after an item in prospectItems are the ones it does NOT read, and every other vein shaped entry is [Default=false]").define("prospectItemsAreBlacklist", false);
@@ -664,6 +668,8 @@ public final class Config {
         public int retrogenChunksPerTick() { return loaded() ? retrogenChunksPerTick.get() : 2; }
 
         public boolean blockOres() { return loaded() ? blockOres.get() : ConfigCore.flag("worldgen.blockOres", false); }
+        public boolean logBlockedOres() { return !loaded() || logBlockedOres.get(); }
+        public boolean logBlockedBiomes() { return !loaded() || logBlockedBiomes.get(); }
 
         public List<String> oreWhitelist() { return loaded() ? List.copyOf(oreWhitelist.get()) : List.of("minecraft"); }
         public List<String> prospectItems() { return loaded() ? List.copyOf(prospectItems.get()) : List.of(); }
@@ -987,6 +993,7 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> structures;
         private final ModConfigSpec.ConfigValue<String> villages;
         private final ModConfigSpec.ConfigValue<String> commands;
+        private final ModConfigSpec.ConfigValue<String> blastPlaster;
 
         private Control(ModConfigSpec.Builder builder) {
             builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
@@ -1002,6 +1009,7 @@ public final class Config {
             structures = builder.comment("Vanilla structures switched off, their spacing, separation, spawn distance, biomes, spawns, pins and terrain adaptation [default|global|off]").define("structures", "default");
             villages = builder.comment("The city and village streets a pack lays: their shape, dress, bridges, tunnels, rails, plots and plaza [default|global|off]").define("villages", "default");
             commands = builder.comment("Who may run the mod's own commands: the goto permission levels [default|global|off]").define("commands", "default");
+            blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", "default");
             builder.pop();
         }
 
@@ -1020,9 +1028,12 @@ public final class Config {
         public String spawning() { return loaded() ? spawning.get() : ConfigCore.text("control.spawning", "default"); }
 
         public String structures() { return loaded() ? structures.get() : ConfigCore.text("control.structures", "default"); }
+
         public String villages() { return loaded() ? villages.get() : ConfigCore.text("control.villages", "default"); }
 
         public String commands() { return loaded() ? commands.get() : ConfigCore.text("control.commands", "default"); }
+
+        public String blastPlaster() { return loaded() ? blastPlaster.get() : ConfigCore.text("control.blastPlaster", "default"); }
 
         public String replacements() { return loaded() ? replacements.get() : ConfigCore.text("control.replacements", "default"); }
 

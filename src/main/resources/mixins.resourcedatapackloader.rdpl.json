@@ -14,6 +14,8 @@
         "common.IFireBlock",
         "common.IItem",
         "common.IPotion",
+        "common.MixinBlock",
+        "common.MixinBlockState",
         "common.MixinBlockStateBase",
         "common.IMob",
         "common.IExperienceOrb",

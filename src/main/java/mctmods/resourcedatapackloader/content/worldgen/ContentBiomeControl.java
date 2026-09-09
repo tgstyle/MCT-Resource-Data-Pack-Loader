@@ -63,6 +63,10 @@ public final class ContentBiomeControl {
         int points = 0;
         for (int count : BLOCKED.values()) { points += count; }
         WorldTemplateDef template = ContentWorldTemplates.active();
+        if (!ContentControl.flag(ContentControl.BIOMES, "logBlockedBiomes", Config.worldgen.logBlockedBiomes())) {
+            BLOCKED.clear();
+            return;
+        }
         Summary.info("biomes.blocked." + dimension, "Blocked " + BLOCKED.size() + " biome(s) out of " + dimension + ", " + points + " climate point(s), replaced " + (template == null || (template.fallback().isEmpty() && template.roles().isEmpty()) ? "with " + VOID : "by world template " + template.key() + "'s roles and fallback") + ": " + BLOCKED.keySet());
         BLOCKED.clear();
     }

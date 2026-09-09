@@ -43,8 +43,8 @@ import java.util.concurrent.CompletableFuture;
 public final class CommandShared {
     private CommandShared() {}
 
-    static LiteralArgumentBuilder<CommandSourceStack> tree(String name, Command<CommandSourceStack> reload, String unusedNote, String configNote) {
-        return Commands.literal(name)
+    static LiteralArgumentBuilder<CommandSourceStack> tree(String name, Command<CommandSourceStack> reload, String unusedNote, String configNote, boolean server) {
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(name)
                 .then(Commands.literal("reload").executes(reload))
                 .then(Commands.literal("list").executes(context -> {
                     ran(context.getSource(), name, "list");
@@ -63,50 +63,6 @@ public final class CommandShared {
                     pixelmap(context.getSource(), target);
                     return 1;
                 })))
-                .then(Commands.literal("locate").then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
-                    for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
-                    return suggestions.buildFuture();
-                }).executes(context -> {
-                    String target = StringArgumentType.getString(context, "name");
-                    ran(context.getSource(), name, "locate " + target);
-                    locate(context.getSource(), target);
-                    return 1;
-                })))
-                .then(Commands.literal("goto")
-                        .requires(source -> source.hasPermission(ContentStructureSearch.lowestLevel()))
-                        .then(Commands.argument("place", StringArgumentType.string()).suggests((context, suggestions) -> {
-                            for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
-                            for (String known : ContentStructureSearch.aliases()) { suggestions.suggest(known); }
-                            return suggestions.buildFuture();
-                        })
-                                .executes(context -> {
-                                    String place = StringArgumentType.getString(context, "place");
-                                    ran(context.getSource(), name, "goto " + place);
-                                    return goTo(context.getSource(), place, "gotoLevel", Config.commands.gotoLevel(), false);
-                                })
-                                .then(Commands.literal("next").executes(context -> {
-                                    String place = StringArgumentType.getString(context, "place");
-                                    ran(context.getSource(), name, "goto " + place + " next");
-                                    return goTo(context.getSource(), place, "gotoNextLevel", Config.commands.gotoNextLevel(), true);
-                                }))
-                                .then(Commands.literal("back").executes(context -> {
-                                    String place = StringArgumentType.getString(context, "place");
-                                    ran(context.getSource(), name, "goto " + place + " back");
-                                    return goBack(context.getSource(), place);
-                                }))))
-                .then(Commands.literal("vein").then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
-                    for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
-                    return suggestions.buildFuture();
-                }).executes(context -> {
-                    ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
-                    ran(context.getSource(), name, "vein " + asked);
-                    return vein(context.getSource(), asked, 8);
-                }).then(Commands.argument("radius", IntegerArgumentType.integer(1, 64)).executes(context -> {
-                    ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
-                    int radius = IntegerArgumentType.getInteger(context, "radius");
-                    ran(context.getSource(), name, "vein " + asked + " " + radius);
-                    return vein(context.getSource(), asked, radius);
-                }))))
                 .then(Commands.literal("unused").executes(context -> {
                     ran(context.getSource(), name, "unused");
                     unused(context.getSource(), unusedNote);
@@ -123,6 +79,54 @@ public final class CommandShared {
                             config(context.getSource(), true, configNote);
                             return 1;
                         })));
+        if (server) {
+            root
+                    .then(Commands.literal("locate").then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
+                        for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
+                        return suggestions.buildFuture();
+                    }).executes(context -> {
+                        String target = StringArgumentType.getString(context, "name");
+                        ran(context.getSource(), name, "locate " + target);
+                        locate(context.getSource(), target);
+                        return 1;
+                    })))
+                    .then(Commands.literal("goto")
+                            .requires(source -> source.hasPermission(ContentStructureSearch.lowestLevel()))
+                            .then(Commands.argument("place", StringArgumentType.string()).suggests((context, suggestions) -> {
+                                for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
+                                for (String known : ContentStructureSearch.aliases()) { suggestions.suggest(known); }
+                                return suggestions.buildFuture();
+                            })
+                                    .executes(context -> {
+                                        String place = StringArgumentType.getString(context, "place");
+                                        ran(context.getSource(), name, "goto " + place);
+                                        return goTo(context.getSource(), place, "gotoLevel", Config.commands.gotoLevel(), false);
+                                    })
+                                    .then(Commands.literal("next").executes(context -> {
+                                        String place = StringArgumentType.getString(context, "place");
+                                        ran(context.getSource(), name, "goto " + place + " next");
+                                        return goTo(context.getSource(), place, "gotoNextLevel", Config.commands.gotoNextLevel(), true);
+                                    }))
+                                    .then(Commands.literal("back").executes(context -> {
+                                        String place = StringArgumentType.getString(context, "place");
+                                        ran(context.getSource(), name, "goto " + place + " back");
+                                        return goBack(context.getSource(), place);
+                                    }))))
+                    .then(Commands.literal("vein").then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
+                        for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
+                        return suggestions.buildFuture();
+                    }).executes(context -> {
+                        ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
+                        ran(context.getSource(), name, "vein " + asked);
+                        return vein(context.getSource(), asked, 8);
+                    }).then(Commands.argument("radius", IntegerArgumentType.integer(1, 64)).executes(context -> {
+                        ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
+                        int radius = IntegerArgumentType.getInteger(context, "radius");
+                        ran(context.getSource(), name, "vein " + asked + " " + radius);
+                        return vein(context.getSource(), asked, radius);
+                    }))));
+        }
+        return root;
     }
 
     private static int vein(CommandSourceStack source, ResourceLocation asked, int radius) {
