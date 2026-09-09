@@ -73,5 +73,11 @@
   "rdpl.prospect.tooltip": "Prospects for %s",
   "rdpl.prospect.tooltipall": "Prospects for every vein",
   "rdpl.prospect.tooltipnot": "Prospects for every vein but %s",
-  "rdpl.world.type": "This is a %s world"
+  "rdpl.world.type": "This is a %s world",
+  "rdpl.command.gotodone": "Brought you to the nearest %s at %s, %s, %s",
+  "rdpl.command.gotonoback": "There is no earlier %s to go back to",
+  "rdpl.command.gotonoground": "Found %s at %s, %s but nothing there to stand on",
+  "rdpl.command.gotonothing": "No %s is known or expected anywhere near here",
+  "rdpl.command.gotodenied": "You are not allowed to go to a %s",
+  "rdpl.command.gotonoplayer": "Only a player can be carried anywhere"
 }

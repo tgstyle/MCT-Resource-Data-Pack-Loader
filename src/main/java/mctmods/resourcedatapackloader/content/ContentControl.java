@@ -29,6 +29,8 @@ public final class ContentControl {
     public static final String BIOMES = "biomes";
     public static final String SPAWNING = "spawning";
     public static final String STRUCTURES = "structures";
+    public static final String VILLAGES = "villages";
+    public static final String COMMANDS = "commands";
     public static final String REPLACEMENTS = "replacements";
     public static final String ENTITIES = "entities";
     private static final String DEFAULT = "default";
@@ -63,8 +65,12 @@ public final class ContentControl {
             "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
             "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
             "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
-            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeBarrierHeight", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villagePathPiers", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
-            "villagePlotsMost", "villageBlockSizes", "villageLayout", "voidPlatformBlock",
+            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villagePlotsLeast",
+            "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailPowerRun", "villageRailClimb", "villageRailTail",
+            "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock",
+            "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth",
+            "villageRailTunnelLightBlock", "villageRailTunnelLightRun",
+            "villagePlotsMost", "villageBlockSizes", "villageCitySpacing", "villageLayout", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions");
     private static final Map<String, String[]> MODES = new HashMap<>();
@@ -185,6 +191,8 @@ public final class ContentControl {
         if (BIOMES.equals(group)) { return Config.control.biomes(); }
         if (SPAWNING.equals(group)) { return Config.control.spawning(); }
         if (STRUCTURES.equals(group)) { return Config.control.structures(); }
+        if (VILLAGES.equals(group)) { return Config.control.villages(); }
+        if (COMMANDS.equals(group)) { return Config.control.commands(); }
         if (REPLACEMENTS.equals(group)) { return Config.control.replacements(); }
         if (ENTITIES.equals(group)) { return Config.control.entities(); }
         return DEFAULT;

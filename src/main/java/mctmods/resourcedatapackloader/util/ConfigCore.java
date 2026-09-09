@@ -3,9 +3,11 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
-import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.toml.TomlFormat;
 import net.minecraftforge.fml.loading.FMLPaths;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -41,9 +43,8 @@ public final class ConfigCore {
             long size = Files.size(file);
             if (cached == null || !stamp.equals(cachedStamp) || size != cachedSize) {
                 Map<String, Object> flat = new HashMap<>();
-                try (CommentedFileConfig config = CommentedFileConfig.of(file)) {
-                    config.load();
-                    flatten(config, "", flat);
+                try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                    flatten(TomlFormat.instance().createParser().parse(reader), "", flat);
                 }
                 cached = flat;
                 cachedStamp = stamp;
