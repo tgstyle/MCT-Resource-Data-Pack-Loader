@@ -452,6 +452,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
     }
 
     public static class Client {
+        @net.minecraftforge.common.config.Config.Comment("The Forge loading screen in dark colors instead of white, written into config/splash.properties before Forge reads it. Off puts Forge's own colors back. Neither touches colors set there by hand. Requires a restart [Default=true]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean darkSplash = true;
         @net.minecraftforge.common.config.Config.Comment("Add the spawn area percentage to the world loading screen, so a slow first load shows progress instead of a motionless 'Building terrain' [Default=true]") public boolean loadingScreenPercent = true;
         @net.minecraftforge.common.config.Config.Comment("Vertical view distance in cubes on rubic worlds, set by the slider in video settings. The vertical analog of render distance [Default=8]") public int verticalCubeLoadDistance = 8;
     }

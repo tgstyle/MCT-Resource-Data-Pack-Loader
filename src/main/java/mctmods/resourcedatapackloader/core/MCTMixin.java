@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.core;
 
+import mctmods.resourcedatapackloader.core.util.EarlyConfig;
+import mctmods.resourcedatapackloader.core.util.SplashDark;
 import mctmods.resourcedatapackloader.content.ContentModels;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -17,6 +19,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.ModJars;
 
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.common.config.Config.Type;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.MinecraftForge;
@@ -115,6 +118,7 @@ import java.util.Map;
         }
         File mcDir = (File) location;
         ConfigCore.at(mcDir);
+        if (FMLLaunchHandler.side().isClient()) { SplashDark.apply(mcDir, EarlyConfig.flag(mcDir, "mct_resourcedatapackloader_mixin.cfg", "B:darkSplash=", true), LOGGER); }
         Path root = mcDir.toPath().resolve(rootDirectory());
         LOGGER.info("Pack root: {}", root);
         PackManager.get().scan(root);

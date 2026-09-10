@@ -9,8 +9,6 @@ import java.io.File;
 import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -175,18 +173,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     private static boolean optimizationsDisabled() { return cfgFlag("mct_resourcedatapackloader_mixin.cfg", "B:disableOptimizations=", false); }
 
-    private static boolean cfgFlag(String file, String prefix, boolean fallback) {
-        try {
-            File held = new File(Launch.minecraftHome, "config/" + file);
-            if (!held.isFile()) { return fallback; }
-            for (String line : Files.readAllLines(held.toPath(), StandardCharsets.UTF_8)) {
-                String trimmed = line.trim();
-                if (trimmed.startsWith(prefix)) { return trimmed.endsWith("true"); }
-            }
-        }
-        catch (Exception ignored) {}
-        return fallback;
-    }
+    private static boolean cfgFlag(String file, String prefix, boolean fallback) { return mctmods.resourcedatapackloader.core.util.EarlyConfig.flag(Launch.minecraftHome, file, prefix, fallback); }
 
     @Override public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
 
