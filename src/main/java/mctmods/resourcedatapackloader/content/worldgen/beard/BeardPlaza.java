@@ -141,6 +141,7 @@ public final class BeardPlaza {
             }
         }
         if (paved + builtOn + spared + wet > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Paved a plaza of {} column(s) around the well at {}, {}, reaching {} out from it; left {} to buildings, {} to blocks another piece is holding, {} to water, {} outside this chunk's turn", paved, box.minX, box.minZ, reach, builtOn, spared, wet, offClip); }
+        BeardSewers.wellEntrance(start, piece, world, clip, ground);
         int tapered = 0;
         int widest = 0;
         for (int x = box.minX - reach - 3; x <= box.maxX + reach + 3; x++) {

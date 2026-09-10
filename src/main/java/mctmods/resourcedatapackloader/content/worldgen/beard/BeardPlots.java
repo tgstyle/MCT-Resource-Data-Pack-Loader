@@ -118,6 +118,7 @@ public final class BeardPlots {
         for (int cx = box.minX >> 4; cx <= box.maxX >> 4; cx++) {
             for (int cz = box.minZ >> 4; cz <= box.maxZ >> 4; cz++) {
                 for (StructureComponent other : held.at(cx << 4, cz << 4)) {
+                    if (BeardRails.buriedUnder(other, box)) { continue; }
                     if (other.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { return true; }
                 }
             }

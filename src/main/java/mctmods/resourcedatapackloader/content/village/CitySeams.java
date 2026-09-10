@@ -385,7 +385,7 @@ public final class CitySeams {
         List<StructureComponent> plots = new ArrayList<>();
         for (StructureComponent held : everyone) {
             if (held == piece || !held.getBoundingBox().intersectsWith(strip.minX, strip.minZ, strip.maxX, strip.maxZ)) { continue; }
-            if (held instanceof StructureVillagePieces.Well) { return null; }
+            if (held instanceof StructureVillagePieces.Well || held instanceof MergePiece) { return null; }
             if (held instanceof RailPiece) {
                 if (own.contains(held) && BeardRails.crosses(held.getBoundingBox(), strip)) { continue; }
                 return null;

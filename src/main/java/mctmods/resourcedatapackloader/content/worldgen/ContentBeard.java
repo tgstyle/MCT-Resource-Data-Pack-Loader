@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.ContentVillagePiece;
+import mctmods.resourcedatapackloader.content.village.MergePiece;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
@@ -781,8 +782,11 @@ public final class ContentBeard {
             int cTo = outward ? metNear - 1 : end - 1;
             int metSideLo = alongX ? bestMet.minZ : bestMet.minX;
             int metSideHi = alongX ? bestMet.maxZ : bestMet.maxX;
-            if ((metSideLo + metSideHi) / 2 != (acrossLo + acrossHi) / 2) {
-                crossStreet(start, piece, box, alongX, outward, everyone, rand, bestOther, end, acrossLo, acrossHi, metSideLo, metSideHi, cFrom, cTo);
+            int offset = (metSideLo + metSideHi) / 2 - (acrossLo + acrossHi) / 2;
+            if (offset != 0) {
+                if (!mergeInto(start, piece, box, alongX, outward, everyone, bestOther, acrossLo, acrossHi, metSideLo, metSideHi, cFrom, cTo, offset)) {
+                    crossStreet(start, piece, box, alongX, outward, everyone, rand, bestOther, end, acrossLo, acrossHi, metSideLo, metSideHi, cFrom, cTo);
+                }
                 return;
             }
             List<StructureComponent> joining = standing(everyone, pieces, piece, bestOther, alongX ? cFrom : acrossLo, alongX ? acrossLo : cFrom, alongX ? cTo : acrossHi, alongX ? acrossHi : cTo);
@@ -871,6 +875,52 @@ public final class ContentBeard {
         ContentLog.LOGGER.debug("The dead end at {}, {} reaches the road at {}, {} and closes into a {}, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, overlaps ? "junction" : "corner", making.size());
     }
 
+    private static final int MERGE_ROWS = 3;
+
+    private static boolean mergeInto(StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean alongX, boolean outward, List<StructureComponent> everyone, StructureComponent other, int acrossLo, int acrossHi, int metSideLo, int metSideHi, int cFrom, int cTo, int offset) {
+        List<StructureComponent> pieces = start.getComponents();
+        if (pieces.isEmpty() || !(pieces.get(0) instanceof StructureVillagePieces.Start)) { return false; }
+        int rows = cTo - cFrom + 1;
+        int shift = Math.abs(offset);
+        int endX = alongX ? (outward ? box.maxX : box.minX) : (acrossLo + acrossHi) / 2;
+        int endZ = alongX ? (acrossLo + acrossHi) / 2 : (outward ? box.maxZ : box.minZ);
+        StructureBoundingBox met = other.getBoundingBox();
+        if (shift > (BeardRoads.pathFullWidth() - 1) / 2 || rows < MERGE_ROWS * shift) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} faces the street at {}, {} {} block(s) off its line with {} row(s) between them, too far off or too close to merge", endX, endZ, met.minX, met.minZ, shift, rows);
+            return false;
+        }
+        int unionLo = Math.min(acrossLo, metSideLo);
+        int unionHi = Math.max(acrossHi, metSideHi);
+        StructureBoundingBox merge = alongX
+                ? new StructureBoundingBox(cFrom, box.minY, unionLo, cTo, box.maxY, unionHi)
+                : new StructureBoundingBox(unionLo, box.minY, cFrom, unionHi, box.maxY, cTo);
+        if (BeardRoads.crossesHill(pieces, merge)) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would meet a tunnel through a hill", endX, endZ, met.minX, met.minZ);
+            return false;
+        }
+        List<StructureComponent> making = standing(everyone, pieces, piece, other, merge.minX, merge.minZ, merge.maxX, merge.maxZ);
+        if (making == null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the ground between them is held", endX, endZ, met.minX, met.minZ);
+            return false;
+        }
+        StructureBoundingBox beside = beside(pieces, merge, alongX, piece);
+        if (beside != null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would run beside the road at {}, {}", endX, endZ, met.minX, met.minZ, beside.minX, beside.minZ);
+            return false;
+        }
+        for (StructureComponent plot : making) {
+            ContentLog.LOGGER.debug("{} at {}, {} makes way for the street merging into its neighbor", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
+            pieces.remove(plot);
+        }
+        int ownCenter = (acrossLo + acrossHi) / 2;
+        int metCenter = (metSideLo + metSideHi) / 2;
+        MergePiece lane = new MergePiece((StructureVillagePieces.Start) pieces.get(0), merge, alongX, outward ? ownCenter : metCenter, outward ? metCenter : ownCenter);
+        pieces.add(lane);
+        everyone.add(lane);
+        ContentLog.LOGGER.debug("The dead end at {}, {} meets the street at {}, {} {} block(s) off its line and merges into it over {} row(s) at {}, {}, {} plot(s) making way", endX, endZ, met.minX, met.minZ, shift, rows, merge.minX, merge.minZ, making.size());
+        return true;
+    }
+
     private static void crossStreet(StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean alongX, boolean outward, List<StructureComponent> everyone, Random rand, StructureComponent other, int end, int acrossLo, int acrossHi, int metSideLo, int metSideHi, int cFrom, int cTo) {
         List<StructureComponent> pieces = start.getComponents();
         if (pieces.isEmpty() || !(pieces.get(0) instanceof StructureVillagePieces.Start)) { return; }
@@ -936,7 +986,7 @@ public final class ContentBeard {
 
     public static boolean metBeyond(List<StructureComponent> pieces, StructureComponent piece, boolean alongX, int beyond, int acrossLo, int acrossHi) {
         for (StructureComponent other : pieces) {
-            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+            if (other == piece || !(other instanceof StructureVillagePieces.Path || other instanceof MergePiece)) { continue; }
             StructureBoundingBox met = other.getBoundingBox();
             if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(other))) { continue; }
             int lo = alongX ? met.minX : met.minZ;
@@ -957,7 +1007,7 @@ public final class ContentBeard {
             if (held == piece || held == other) { continue; }
             StructureBoundingBox met = held.getBoundingBox();
             if (!met.intersectsWith(minX, minZ, maxX, maxZ)) { continue; }
-            if (held instanceof StructureVillagePieces.Well) { return null; }
+            if (held instanceof StructureVillagePieces.Well || held instanceof MergePiece) { return null; }
             if (BeardRails.isRail(held)) {
                 StructureBoundingBox road = piece.getBoundingBox();
                 StructureBoundingBox whole = new StructureBoundingBox(Math.min(road.minX, minX), 0, Math.min(road.minZ, minZ), Math.max(road.maxX, maxX), 0, Math.max(road.maxZ, maxZ));
@@ -1046,7 +1096,7 @@ public final class ContentBeard {
             if (held == piece || held == other) { continue; }
             StructureBoundingBox spot = held.getBoundingBox();
             if (!spot.intersectsWith(minX, minZ, maxX, maxZ)) { continue; }
-            if (held instanceof StructureVillagePieces.Well) { return false; }
+            if (held instanceof StructureVillagePieces.Well || held instanceof MergePiece) { return false; }
             if (held instanceof StructureVillagePieces.Path && !BeardRoads.roadNarrow(spot, BeardPlots.roadAlongX(held))) { return false; }
         }
         return true;
@@ -1152,8 +1202,9 @@ public final class ContentBeard {
     }
 
     private static boolean free(List<StructureComponent> pieces, @Nullable StructureComponent piece, StructureBoundingBox box, boolean alongX, int least, int most) {
+        StructureBoundingBox strip = alongX ? new StructureBoundingBox(least, box.minY, box.minZ, most, box.maxY, box.maxZ) : new StructureBoundingBox(box.minX, box.minY, least, box.maxX, box.maxY, most);
         for (StructureComponent other : pieces) {
-            if (other == piece) { continue; }
+            if (other == piece || BeardRails.buriedUnder(other, strip)) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
             boolean acrossed = alongX ? held.maxZ >= box.minZ && held.minZ <= box.maxZ : held.maxX >= box.minX && held.minX <= box.maxX;
             boolean along = alongX ? held.maxX >= least && held.minX <= most : held.maxZ >= least && held.minZ <= most;

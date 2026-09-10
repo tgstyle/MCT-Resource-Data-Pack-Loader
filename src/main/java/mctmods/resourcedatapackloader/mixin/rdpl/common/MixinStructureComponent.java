@@ -25,12 +25,23 @@ import java.util.List;
 @Mixin(StructureComponent.class) public abstract class MixinStructureComponent {
     @Inject(method = "findIntersecting", at = @At("HEAD"), cancellable = true) private static void rdpl$betweenBuildings(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn, CallbackInfoReturnable<StructureComponent> cir) {
         if (!ContentBeard.spacedLayout()) {
-            if (!CityGrowth.laying()) { return; }
+            if (!CityGrowth.laying()) {
+                for (StructureComponent piece : listIn) {
+                    if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
+                    StructureBoundingBox held = piece.getBoundingBox();
+                    if (held.intersectsWith(boundingboxIn)) {
+                        cir.setReturnValue(piece);
+                        return;
+                    }
+                }
+                cir.setReturnValue(null);
+                return;
+            }
             for (StructureComponent piece : listIn) {
                 StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
                 if (held == null || !rdpl$flatHit(held, boundingboxIn, 0)) { continue; }
                 if (piece instanceof StructureVillagePieces.Path && rdpl$roadShaped(boundingboxIn) && rdpl$crosses(held, boundingboxIn)) { continue; }
-                if (BeardRails.buried(piece)) { continue; }
+                if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
                 if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }
                 cir.setReturnValue(piece);
                 return;
@@ -42,7 +53,7 @@ import java.util.List;
         for (StructureComponent piece : listIn) {
             StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
             if (held == null) { continue; }
-            if (BeardRails.buried(piece)) { continue; }
+            if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
             if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }
             boolean flush = piece instanceof StructureVillagePieces.Path || piece instanceof StructureVillagePieces.Well || piece instanceof RailPiece;
             if (rdpl$flatHit(held, boundingboxIn, flush ? 0 : 1)) {

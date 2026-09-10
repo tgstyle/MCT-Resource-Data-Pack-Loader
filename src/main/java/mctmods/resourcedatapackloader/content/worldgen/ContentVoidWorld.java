@@ -117,7 +117,7 @@ public final class ContentVoidWorld {
     }
 
     private static boolean standing(EntityPlayer player, BlockPos center) {
-        if (player.posY < center.getY() + 1) { return false; }
+        if (player.posY < center.getY() + 1 || player.posY >= center.getY() + 2) { return false; }
         return Math.abs(player.posX - (center.getX() + 0.5)) <= 0.5 && Math.abs(player.posZ - (center.getZ() + 0.5)) <= 0.5;
     }
 

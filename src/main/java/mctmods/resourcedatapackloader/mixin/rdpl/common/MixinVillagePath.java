@@ -137,7 +137,7 @@ import javax.annotation.Nullable;
     @Unique @Nullable private static StructureBoundingBox rdpl$place(StructureVillagePieces.Start start, List<StructureComponent> pieces, Random rand, StructureBoundingBox found, EnumFacing facing, boolean alongX) {
         if (BeardLayout.acrossPlaza(pieces, found) || ContentBeard.taken(pieces, found)) { return null; }
         int half = (BeardRoads.pathFullWidth() - 3) / 2;
-        if (!BeardLayout.lineUp(pieces, found, alongX, half)) { return null; }
+        if (!BeardLayout.lineUp(pieces, found, alongX, half, facing)) { return null; }
         if (half > 0) {
             StructureBoundingBox wide = new StructureBoundingBox(found);
             if (facing == EnumFacing.NORTH || facing == EnumFacing.SOUTH) {

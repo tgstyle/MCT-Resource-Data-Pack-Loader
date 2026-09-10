@@ -8,7 +8,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) verwandelt die Oberwelt in eine leere Void-Welt, in der die Generierung frei in der Luft hängt, eine Form pro Höhenband, sodass jede einzeln gut zu sehen ist.
 - [RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip) macht die Oberwelt zu einer Rubic-Welt mit 256 Blöcken generierter Welt unter der von Vanilla und 128 darüber: der Übergang zum Tiefenstein, moderne Rausch-Höhlen, Schluchten, gebänderte Erzadern, drei Höhlenregionen, durch die man absteigt, und schwebende Inseln darüber, die dasselbe Rauschen schneidet.
 - [RDPLExampleContainers.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleContainers.zip) fügt Blöcke und getragene Gegenstände hinzu, die ein Inventar halten, in jeder Größe von drei Plätzen bis zur größten erlaubten, mit einer Beutetabelle, dem aus dem Vanilla-Blatt eingefärbten Truhenmodell, jeder Textur als Pixelkarte gezeichnet und zwei Beuteln, die sich in Baubles tragen lassen.
-- [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) erzeugt eine Superflat-Welt mit einem absichtlich riesigen Dorf, auf tausend Grundstücke gewachsen und am Ursprung festgesetzt, mit Straßen aus Beton, Gehwegen, gestrichelter Mitte und Laternen, und mit Gebäuden aus Strukturkarten in vier Größen und drei Fassaden statt aus Vanilla-Häusern.
+- [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) erzeugt eine Superflat-Welt mit einem absichtlich riesigen Dorf, auf tausend Grundstücke gewachsen und am Ursprung festgesetzt, mit Straßen aus Beton, Gehwegen, gestrichelter Mitte und Laternen, Kanälen unter den Straßen, zwei U-Bahn-Linien mit Stationen darunter und einer Eisenbahn durch die Stadt, und mit Gebäuden aus Strukturkarten in vier Größen und drei Fassaden statt aus Vanilla-Häusern.
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) ist dieselbe Stadt auf einer Rubic-Welt mit Decke bei 512 und Wolken auf 384, sodass Türme 256 Blöcke über der Straße stehen, und jeder Bezirk würfelt eine Blocktiefe von 16, 32 oder 64, sodass sich ein grobes Raster mit einem feinen mischt.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) zeichnet dieselbe Stadt aus einer Stadtkarte, statt sie zu würfeln: ein Zeichenraster mit 48 Blöcken je Zelle und einer Palette für Straßen, Plätze, Gassen und gewichtete Gebäudeauswahlen, sodass der Blockplan von Hand gelegt ist.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) lässt vier Fraktionen in einer Bedrock-Arena unter ewiger Nacht aufeinander los: jede Seite ist ein echtes Vanilla-Scoreboard-Team, dem ihre Mobs beim Spawnen beitreten, eine Seite punktet für jeden Mob einer anderen Seite, den sie tötet, eine Runde endet nach zwei Minuten mit einer Karte, und drei Runden ergeben ein Match.
@@ -4050,6 +4050,7 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
     "villagePiecesAreBlacklist": true,
     "villagePlotsLeast": 12,
     "villagePlotsMost": 30,
+    "villagePlotsBackRow": true,
     "villageTieStreets": true,
     "villageBlockSizes": ["32=3", "64=1"],
     "villageLayout": "mypack:downtown"
@@ -4063,6 +4064,7 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 | `villagePieces` | Liste von Teilnamen | keine | Vanilla-Dorfteile, einer pro Zeile: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1`, `field2`. Ein Pack-Grundstück wird nach seiner eigenen Vorlage benannt, ebenso Teile, die andere Mods hinzufügen |
 | `villagePiecesAreBlacklist` | boolean | `true` | An werden die genannten Teile blockiert. Aus generieren nur diese Teile, und eine Whitelist entfernt immer nur Vanillas eigene Teile |
 | `villagePlotsLeast` | Zahl | `0` | Die wenigsten gebauten Grundstücke, mit denen sich ein Dorf zufriedengibt — Häuser, Felder und Pack-Grundstücke, nie Wege, Fackeln oder der Brunnen. Ein kleiner ausgelegtes Dorf wird ein paar Mal neu gezogen, und die größte Auslegung gewinnt. `0` behält Vanilla |
+| `villagePlotsBackRow` | Wahrheitswert | `true` | Ist das Dorf gewachsen, setzt ein zweiter Durchgang hinter jedes Grundstück an einer Straße ein weiteres, ihm zugewandt, mit demselben Wurf und derselben Platzprüfung, damit das Innere eines Blocks zwischen zwei Straßen bebaut wird statt leer zu bleiben |
 | `villagePlotsMost` | Zahl | `0` | Die meisten, die es haben darf; beim Höchstwert hört es rundweg auf zu wachsen, keine Gebäude und keine Wege mehr. `0` behält Vanilla |
 | `villageTieStreets` | boolean | `false` | An bekommt ein Viertel, das seine Straßen nicht bis zum stehenden Dorf wachsen lassen kann, eine gerade Verbindungsstraße zur nächsten Straße, mit der es fluchtet. Aus wird ein solches Viertel wieder abgeräumt |
 | `villageBlockSizes` | Liste von `größe=gewicht` | keine | Wie tief die Blocks zwischen den parallelen Straßen einer Stadt sind, je Viertel einmal aus seiner Platzlage gewürfelt. Leer bemisst jeden Block nach dem größten Grundstück, das das Pack mitbringt |
@@ -4133,6 +4135,7 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
     "villageSewerMossChance": 30,
     "villageSewerVineBlock": "minecraft:vine",
     "villageSewerVineChance": 20,
+    "villageSewerWellEntrance": true,
     "villagePathCenterBlock": "minecraft:quartz_block",
     "villagePathCenterDash": 2,
     "villagePathLineBlock": "minecraft:stone_slab",
@@ -4193,6 +4196,7 @@ Alles Folgende greift nur, solange `terrainAdaptation` an ist. Jede dieser Einst
 | `villageSewerMossBlock` | Blockname | keiner | Ein zweiter Block, der hier und da in die Auskleidung gemischt wird, bemooster Stein unter glattem etwa. Leer kleidet den Kanal durchgehend mit einem Block aus |
 | `villageSewerMossChance` | 0 bis 100 | `30` | Wie viel Prozent der Auskleidungsblöcke als dieser zweite Block herauskommen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal sieht also immer gleich aus |
 | `villageSewerVineBlock` | Blockname | keiner | Ein Block, der hier und da innen an den Kanalwänden hängt, Ranken etwa. Er hängt sich an die Wand, an der er steht. Leer hängt nichts |
+| `villageSewerWellEntrance` | Wahrheitswert | `true` | Ein Kanalring unter dem Platzring um den Brunnen, durch den der Kanal jeder Straße läuft, und ein Gullydeckel auf dem Platz hinab auf den Ring, sodass die Kanalisation ein zusammenhängendes System mit Einstieg in der Stadtmitte ist. Aus endet der Kanal jeder Straße am Brunnen, und der Platz hat keinen Weg hinab |
 | `villageSewerVineChance` | 0 bis 100 | `20` | Wie viel Prozent der Zellen neben einer Wand ihn tragen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal hängt also immer gleich |
 | `villagePathCenterBlock` | Block | leer | Eine Mittellinie den Weg entlang. Leer zeichnet keine |
 | `villagePathCenterDash` | Zahl | `0` | Strichelt diese Linie: N Blöcke Linie, dann einer Weg. An Weltkoordinaten verankert, sodass die Striche eines Wegstücks im nächsten weiterlaufen. `0` lässt sie durchgezogen |

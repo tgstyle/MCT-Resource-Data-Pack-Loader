@@ -150,12 +150,41 @@ public final class BeardStations {
 
     public static void claim(StructureStart start, RailPiece rail, boolean alongX, int center, int wellRow) {
         if (!on() || !rail.stations().isEmpty()) { return; }
-        claimAt(start, rail, alongX, center, wellRow);
+        int least = rail.rowLeast();
+        int most = rail.rowMost();
+        int[] street = BeardRails.streetOver(rail);
+        if (street == null) {
+            ContentLog.LOGGER.debug("Subway line {} has no street over it, so it gets no stations", rail.line());
+            return;
+        }
+        least = Math.max(least, street[0]);
+        most = Math.min(most, street[1]);
+        int[] rising = rail.risingKnown();
+        if (rising != null) {
+            int ramp = BeardRails.subwayDepth() * BeardRails.climb(true);
+            if (rising[1] > 0) { most = Math.min(most, rising[0] - ramp - 1); }
+            else { least = Math.max(least, rising[0] + ramp + 1); }
+            ContentLog.LOGGER.debug("Subway line {} climbs out past row {}, so its stations keep to rows {} to {}", rail.line(), rising[0], least, most);
+        }
+        claimAt(start, rail, alongX, center, wellRow, least, most);
         int run = run();
         if (run <= 0) { return; }
-        for (int heart = wellRow - run; heart >= rail.rowLeast(); heart -= run) { claimAt(start, rail, alongX, center, heart); }
-        for (int heart = wellRow + run; heart <= rail.rowMost(); heart += run) { claimAt(start, rail, alongX, center, heart); }
+        for (int heart = wellRow - run; heart >= least; heart -= run) { claimAt(start, rail, alongX, center, heart, least, most); }
+        for (int heart = wellRow + run; heart <= most; heart += run) { claimAt(start, rail, alongX, center, heart, least, most); }
         if (rail.stations().size() > 1 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} carries {} station(s), one at the well and the rest every {} block(s) along it where the ground allowed one", rail.line(), rail.stations().size(), run); }
+    }
+
+    private static boolean streetAlong(List<StructureComponent> components, boolean alongX, int center, int from, int to) {
+        int full = BeardRoads.pathFullWidth();
+        for (StructureComponent piece : components) {
+            if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            if (BeardPlots.roadAlongX(box) != alongX) { continue; }
+            if ((alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1 < full) { continue; }
+            if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
+            if ((alongX ? box.minX : box.minZ) <= from && (alongX ? box.maxX : box.maxZ) >= to) { return true; }
+        }
+        return false;
     }
 
     private static boolean apart(RailPiece rail, int row) {
@@ -166,15 +195,16 @@ public final class BeardStations {
         return true;
     }
 
-    private static void claimAt(StructureStart start, RailPiece rail, boolean alongX, int center, int wellRow) {
+    private static void claimAt(StructureStart start, RailPiece rail, boolean alongX, int center, int wellRow, int least, int most) {
         List<StructureComponent> components = start.getComponents();
         int out = outFromLine();
         for (int slide = 0; slide <= SLIDE; slide++) {
             for (int way = 0; way < (slide == 0 ? 1 : 2); way++) {
                 int row = wellRow + (way == 0 ? slide : -slide);
                 int half = length() / 2;
-                if (row - 1 < rail.rowLeast() + half || row + RUN + 1 > rail.rowMost() - half) { continue; }
+                if (row - 1 < least + half || row + RUN + 1 > most - half) { continue; }
                 if (!apart(rail, row)) { continue; }
+                if (!streetAlong(components, alongX, center, row - 1, row + RUN + 1)) { continue; }
                 for (int s = 0; s < 2; s++) {
                     int near = s == 0 ? center + out : center - out - WIDE + 1;
                     StructureBoundingBox box = alongX
@@ -490,8 +520,11 @@ public final class BeardStations {
         for (int door = DOOR; door <= DOOR + 1; door++) { mouths.add(Template.transformedBlockPos(how, new BlockPos(door, 1, 0)).add(origin)); }
         int bored = bore(world, clip, alongX, way, mouths, center, bedHalf, level + 1, linings, at);
         int railed = railing(world, clip, alongX, leastX, leastZ, alongX ? size.getX() : size.getZ(), alongX ? size.getZ() : size.getX(), surface, at);
-        int seated = bench(world, clip, alongX, (alongX ? leastX : leastZ) + DOOR - 3,
-                           (alongX ? leastZ : leastX) + 1, surface + 1, awayFrom(alongX, way), at);
+        BlockPos seatFrom = Template.transformedBlockPos(how, new BlockPos(DOOR - 3, 0, 1)).add(origin);
+        BlockPos seatTo = Template.transformedBlockPos(how, new BlockPos(DOOR + 1, 0, 1)).add(origin);
+        boolean seatAlongX = seatFrom.getZ() == seatTo.getZ();
+        int seated = bench(world, clip, seatAlongX, Math.min(seatAlongX ? seatFrom.getX() : seatFrom.getZ(), seatAlongX ? seatTo.getX() : seatTo.getZ()),
+                           seatAlongX ? seatFrom.getZ() : seatFrom.getX(), surface + 1, awayFrom(alongX, way), at);
         if ((railed + seated) > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The station head is railed with {} block(s) and {} bench block(s) stand beside it", railed, seated); }
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A subway station is laid from the build '{}' at {}, {}, {} turn, floor y {} to street y {}, {} block(s) of packing under it, {} of corridor to the platform and {} lamp(s) up the shaft", named, origin.getX(), origin.getZ(), how.getRotation(), base, surface, Math.max(0, base - level), bored, lit); }
         if (copies > 1 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The build '{}' is {} tall and the climb is {}, so its {} block band is laid {} times: the shaft stands {} block(s) tall", named, tall, surface - level, repeat, copies, grown); }

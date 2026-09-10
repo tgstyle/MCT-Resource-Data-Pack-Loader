@@ -134,7 +134,7 @@ public final class BeardRails {
         return along > across;
     }
 
-    @Nullable private static int[] streetOver(RailPiece rail) {
+    @Nullable public static int[] streetOver(RailPiece rail) {
         List<StructureComponent> pieces = ContentBeard.components();
         if (pieces == null) { return null; }
         boolean alongX = rail.alongX();
@@ -158,7 +158,7 @@ public final class BeardRails {
         if (chance <= 0) { return null; }
         StructureBoundingBox box = rail.getBoundingBox();
         Random roll = SeededRandom.at(world, box.minX + rail.line(), box.minY, box.minZ);
-        if (roll.nextInt(100) >= chance) { return null; }
+        if (roll.nextInt(100) >= chance) { ContentLog.LOGGER.debug("Subway line {} rolled to stay buried at {} in a hundred", rail.line(), chance); return null; }
         int least = rail.rowLeast();
         int most = rail.rowMost();
         int ramp = subwayDepth() * climb(true);
@@ -177,6 +177,7 @@ public final class BeardRails {
         int highRow = street == null ? most - run : Math.max(most - run, street[1] + 1);
         boolean canLow = lowRow - least >= shortest && (!anyStation || stationLeast > lowRow + ramp);
         boolean canHigh = most - highRow >= shortest && (!anyStation || stationMost < highRow - ramp);
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} weighs a climb-out: rows {} to {}, ramp {} and run {} (shortest {}), streets over it {}, stations {} to {}, low end at row {} {}, high end at row {} {}", rail.line(), least, most, ramp, run, shortest, street == null ? "none" : street[0] + " to " + street[1], anyStation ? stationLeast : "none", anyStation ? stationMost : "none", lowRow, canLow ? "can" : "cannot", highRow, canHigh ? "can" : "cannot"); }
         if (!canHigh && !canLow) { return null; }
         boolean high = canHigh && (!canLow || roll.nextBoolean());
         return high ? new int[] { highRow, 1 } : new int[] { lowRow, -1 };
@@ -349,11 +350,27 @@ public final class BeardRails {
                 box.maxZ = to;
             }
             rail.regrade();
+            if (sub) {
+                List<StructureComponent> held = ContentBeard.laid();
+                ContentBeard.laying(components);
+                try { rail.rising(world); }
+                finally { ContentBeard.laying(held); }
+                for (StructureComponent plot : components.toArray(new StructureComponent[0])) {
+                    if (!(plot instanceof mctmods.resourcedatapackloader.content.village.ContentVillagePiece)) { continue; }
+                    StructureBoundingBox met = plot.getBoundingBox();
+                    if (!met.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ) || buriedUnder(rail, met)) { continue; }
+                    components.remove(plot);
+                    ContentLog.LOGGER.debug("A plot at {}, {} makes way for subway line {} climbing out of the ground", met.minX, met.minZ, rail.line());
+                }
+            }
             ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} is fitted to rows {} to {} now the village is grown, {} beyond its last piece either way", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, from, to, tail);
             if (sub) {
                 int wellAlong = alongX ? (wellBox.minX + wellBox.maxX) / 2 : (wellBox.minZ + wellBox.maxZ) / 2;
                 int acrossMid = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
-                BeardStations.claim(start, rail, alongX, acrossMid, wellAlong);
+                List<StructureComponent> held = ContentBeard.laid();
+                ContentBeard.laying(components);
+                try { BeardStations.claim(start, rail, alongX, acrossMid, wellAlong); }
+                finally { ContentBeard.laying(held); }
             }
         }
     }
@@ -385,6 +402,17 @@ public final class BeardRails {
     public static boolean isRail(StructureComponent piece) { return piece instanceof RailPiece; }
 
     public static boolean buried(StructureComponent piece) { return piece instanceof RailPiece && ((RailPiece) piece).subway(); }
+
+    public static boolean buriedUnder(StructureComponent piece, StructureBoundingBox box) {
+        if (!buried(piece)) { return false; }
+        RailPiece rail = (RailPiece) piece;
+        int[] rising = rail.risingKnown();
+        if (rising == null) { return true; }
+        boolean alongX = rail.alongX();
+        int lo = alongX ? box.minX : box.minZ;
+        int hi = alongX ? box.maxX : box.maxZ;
+        return rising[1] > 0 ? hi < rising[0] : lo > rising[0];
+    }
 
     public static List<RailPiece> subways(World world, StructureBoundingBox near) {
         List<RailPiece> found = new ArrayList<>();
@@ -435,7 +463,7 @@ public final class BeardRails {
         int shortest = rows;
         boolean met = false;
         for (StructureComponent piece : pieces) {
-            if (!(piece instanceof RailPiece) || buried(piece)) { continue; }
+            if (!(piece instanceof RailPiece) || buriedUnder(piece, box)) { continue; }
             RailPiece rail = (RailPiece) piece;
             StructureBoundingBox strip = rail.getBoundingBox();
             if (rail.alongX() == alongX) {

@@ -8,7 +8,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
 - [RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip) makes the overworld a rubic world with 256 blocks of generated world below the vanilla one and 128 above it: the deep stone blend, modern noise caves, ravines, banded ore veins, three cave regions to descend through, and floating islands overhead cut by the same noise.
 - [RDPLExampleContainers.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleContainers.zip) adds blocks and carried items that hold an inventory, in every size from three slots to the largest allowed, with a loot table, the chest model tinted out of the vanilla sheet, every texture drawn as a pixel map, and two pouches that can be worn in Baubles.
-- [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) makes a superflat world holding one deliberately enormous village, grown to a thousand plots and pinned to the origin, with the streets dressed as concrete roads, sidewalks, dashed centers and lamp posts, and the buildings composed from structure maps in four sizes and three facades rather than from vanilla houses.
+- [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) makes a superflat world holding one deliberately enormous village, grown to a thousand plots and pinned to the origin, with the streets dressed as concrete roads, sidewalks, dashed centers and lamp posts, sewers under the streets, two subway lines with stations under those and a railway through the town, and the buildings composed from structure maps in four sizes and three facades rather than from vanilla houses.
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) is that same city on a rubic world with its ceiling at 512 and the clouds lifted to 384, so towers stand 256 blocks over the street, and every district rolls a block depth of 16, 32 or 64 so a coarse grid mixes with a fine one.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
@@ -4050,6 +4050,7 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
     "villagePiecesAreBlacklist": true,
     "villagePlotsLeast": 12,
     "villagePlotsMost": 30,
+    "villagePlotsBackRow": true,
     "villageTieStreets": true,
     "villageBlockSizes": ["32=3", "64=1"],
     "villageLayout": "mypack:downtown"
@@ -4063,6 +4064,7 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 | `villagePieces` | list of piece names | none | Vanilla village pieces named one per line: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1`, `field2`. A pack plot is named by its own template, and so are pieces other mods add |
 | `villagePiecesAreBlacklist` | boolean | `true` | On, the pieces listed are blocked. Off, only those pieces generate, and a whitelist only ever removes vanilla's own pieces |
 | `villagePlotsLeast` | int | `0` | The fewest built plots a village settles for, counting houses, farms and pack plots but never roads, torches or the well. A village that lays out smaller is regrown a few times and the largest layout wins. `0` keeps vanilla |
+| `villagePlotsBackRow` | boolean | `true` | Once the village has grown, a second pass seats a plot directly behind every plot that fronts a street, turned to face it, with the same roll and the same room test, so the inside of a block between two streets is built rather than left bare |
 | `villagePlotsMost` | int | `0` | The most it may have; at the maximum it stops growing outright, no more buildings and no more roads. `0` keeps vanilla |
 | `villageTieStreets` | boolean | `false` | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down |
 | `villageBlockSizes` | list of `size=weight` | none | How deep the blocks between a city's parallel streets are, rolled once per district from its plaza position. Empty sizes every block to the largest plot the pack ships |
@@ -4133,6 +4135,7 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
     "villageSewerMossChance": 30,
     "villageSewerVineBlock": "minecraft:vine",
     "villageSewerVineChance": 20,
+    "villageSewerWellEntrance": true,
     "villagePathCenterBlock": "minecraft:quartz_block",
     "villagePathCenterDash": 2,
     "villagePathLineBlock": "minecraft:stone_slab",
@@ -4193,6 +4196,7 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 | `villageSewerMossBlock` | block name | none | A second block mixed into the lining here and there, mossy stone among plain for instance. Empty lines the sewer with one block throughout |
 | `villageSewerMossChance` | 0 to 100 | `30` | What percentage of lining blocks come out as that second block. Rolled per block position from the world seed, so the same sewer always comes out the same |
 | `villageSewerVineBlock` | block name | none | A block hung on the inside of the sewer walls here and there, vines for instance. It is clung to whichever wall it stands against. Empty hangs nothing |
+| `villageSewerWellEntrance` | boolean | `true` | A loop of sewer under the plaza ring around the well, every street's sewer running through it, and a manhole on the plaza down onto the loop, so the sewers are one connected system with a way in at the town center. Off, each street's sewer ends at the well and the plaza has no way down |
 | `villageSewerVineChance` | 0 to 100 | `20` | What percentage of the cells beside a wall carry it. Rolled per block position from the world seed, so the same sewer always hangs the same |
 | `villagePathCenterBlock` | block | empty | A center line down the middle of the road. Empty draws none |
 | `villagePathCenterDash` | number | `0` | Dashes that line: N blocks of line, then one of road. Anchored to world coordinates, so the dashes of one road piece continue into the next. `0` keeps it solid |

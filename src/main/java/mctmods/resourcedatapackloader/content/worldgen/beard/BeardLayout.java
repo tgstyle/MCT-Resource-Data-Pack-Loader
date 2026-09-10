@@ -46,7 +46,8 @@ public final class BeardLayout {
         return false;
     }
 
-    public static boolean lineUp(List<StructureComponent> own, StructureBoundingBox found, boolean alongX, int half) {
+    public static boolean lineUp(List<StructureComponent> own, StructureBoundingBox found, boolean alongX, int half, EnumFacing facing) {
+        if (fromWell(own, found, facing)) { return true; }
         List<StructureComponent> pieces = ContentBeard.everyone(own);
         int center = alongX ? (found.minZ + found.maxZ) / 2 : (found.minX + found.maxX) / 2;
         StructureBoundingBox held = null;
@@ -76,7 +77,7 @@ public final class BeardLayout {
             slid.maxX += delta;
         }
         for (StructureComponent taken : pieces) {
-            if (taken instanceof StructureVillagePieces.Path && BeardRoads.roadNarrow(taken.getBoundingBox(), BeardPlots.roadAlongX(taken))) { continue; }
+            if (BeardRails.buriedUnder(taken, slid) || taken instanceof StructureVillagePieces.Path && BeardRoads.roadNarrow(taken.getBoundingBox(), BeardPlots.roadAlongX(taken))) { continue; }
             if (taken.getBoundingBox().intersectsWith(slid.minX, slid.minZ, slid.maxX, slid.maxZ)) {
                 ContentLog.LOGGER.debug("A road attempt {} cannot slide {} to line up with the road at {}, {} along its corridor, so it is refused", found, delta, held.minX, held.minZ);
                 return false;
@@ -110,6 +111,7 @@ public final class BeardLayout {
         List<StructureBoundingBox> plazas = BeardPlots.plazaSquares(pieces);
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         for (StructureComponent other : pieces) {
+            if (BeardRails.buriedUnder(other, wide)) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
             if (!held.intersectsWith(wide.minX, wide.minZ, wide.maxX, wide.maxZ)) { continue; }
             if (other instanceof StructureVillagePieces.Path && BeardRoads.roadNarrow(held, BeardPlots.roadAlongX(held))) { continue; }

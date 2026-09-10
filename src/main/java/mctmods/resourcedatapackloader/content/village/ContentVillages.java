@@ -314,6 +314,23 @@ public final class ContentVillages {
         return WeightedPicks.pick(defs().values(), def -> (filtering && blocked(def)) || exceeds(def, block) ? 0 : Math.max(1, def.weight) * span(def), random);
     }
 
+    @Nullable public static ContentVillagePiece behind(StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, ContentVillagePiece front) {
+        EnumFacing facing = front.getCoordBaseMode();
+        if (facing == null) { return null; }
+        int block = blockOf(start);
+        VillageDef def = pick(random, block);
+        if (def != null) {
+            ContentVillagePiece seated = Handler.seatBehind(start, placed, front, facing, def);
+            if (seated != null) { return seated; }
+        }
+        for (VillageDef held : Handler.bySize()) {
+            if (held == def || (filtering() && blocked(held)) || exceeds(held, block)) { continue; }
+            ContentVillagePiece seated = Handler.seatBehind(start, placed, front, facing, held);
+            if (seated != null) { return seated; }
+        }
+        return null;
+    }
+
     public static final class Handler implements VillagerRegistry.IVillageCreationHandler {
         @Override public StructureVillagePieces.PieceWeight getVillagePieceWeight(Random random, int size) {
             int weight = 0;
@@ -376,6 +393,31 @@ public final class ContentVillages {
                 if (seated != null) { return seated; }
             }
             return null;
+        }
+
+        private static StructureBoundingBox behindBox(StructureBoundingBox f, EnumFacing facing, BlockPos size) {
+            boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+            int dx = alongX ? size.getZ() : size.getX();
+            int dz = alongX ? size.getX() : size.getZ();
+            int minX;
+            int minZ;
+            if (alongX) {
+                minX = facing == EnumFacing.EAST ? f.maxX + 1 : f.minX - dx;
+                minZ = f.minZ + (f.maxZ - f.minZ + 1 - dz) / 2;
+            }
+            else {
+                minZ = facing == EnumFacing.SOUTH ? f.maxZ + 1 : f.minZ - dz;
+                minX = f.minX + (f.maxX - f.minX + 1 - dx) / 2;
+            }
+            return new StructureBoundingBox(minX, f.minY, minZ, minX + dx - 1, f.minY + size.getY() - 1, minZ + dz - 1);
+        }
+
+        @Nullable private static ContentVillagePiece seatBehind(StructureVillagePieces.Start start, List<StructureComponent> placed, ContentVillagePiece front, EnumFacing facing, VillageDef def) {
+            StructureBoundingBox f = front.getBoundingBox();
+            StructureBoundingBox box = behindBox(f, facing, plotSize(def));
+            if (BeardPlots.collides(placed, box)) { return null; }
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Village plot {} is laid behind the plot at {}, {} from template {}", def.registryName, f.minX, f.minZ, def.isTemplate() ? def.structure : "none, it is a farm"); }
+            return new ContentVillagePiece(start, front.type(), box, facing.getOpposite(), def);
         }
 
         @Nullable private static StructureVillagePieces.Village seat(StructureVillagePieces.Start start, List<StructureComponent> placed, int x, int y, int z, EnumFacing facing, int type, VillageDef def) {

@@ -41,7 +41,8 @@ import java.util.List;
     @Inject(method = "getStructureStart", at = @At("RETURN")) private void rdpl$grownVillage(int chunkX, int chunkZ, CallbackInfoReturnable<StructureStart> cir) {
         World world = ((IMapGenBase) this).rdpl$getWorld();
         if (world == null) { return; }
-        if (!CityLayout.lay(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand())) { CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size); }
+        if (CityLayout.lay(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand())) { CityGrowth.backRows(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand()); }
+        else { CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size); }
         BeardRoads.pierOut(world, cir.getReturnValue());
         ContentBeard.attachAll(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
         CitySeams.tie(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());

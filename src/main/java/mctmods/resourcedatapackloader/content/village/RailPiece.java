@@ -80,6 +80,8 @@ public class RailPiece extends StructureVillagePieces.Road {
         return rising;
     }
 
+    @Nullable public int[] risingKnown() { return risingKnown ? rising : null; }
+
     public void regrade() { grade = null; risingKnown = false; rising = null; }
 
     @Override protected void writeStructureToNBT(@Nonnull NBTTagCompound tag) {

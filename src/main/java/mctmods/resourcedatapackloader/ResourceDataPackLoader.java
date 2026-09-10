@@ -30,6 +30,7 @@ import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
+import mctmods.resourcedatapackloader.content.village.MergePiece;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
@@ -125,6 +126,7 @@ public class ResourceDataPackLoader {
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
         RecurrentVillages.register();
         MapGenStructureIO.registerStructureComponent(RailPiece.class, RailPiece.ID);
+        MapGenStructureIO.registerStructureComponent(MergePiece.class, MergePiece.ID);
         GameRegistry.registerTileEntity(TileEntityPackContainer.class, new ResourceLocation(MOD_ID, "container"));
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new PackGuiHandler());
         ContentPotions.registerContainers();

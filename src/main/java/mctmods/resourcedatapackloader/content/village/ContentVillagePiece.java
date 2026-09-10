@@ -49,6 +49,8 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         this.plot = def.registryName.toString();
     }
 
+    public int type() { return structureType; }
+
     @Override protected void writeStructureToNBT(@Nonnull NBTTagCompound tag) {
         super.writeStructureToNBT(tag);
         tag.setString("rdpl_plot", plot);
