@@ -2,11 +2,16 @@
 
 **One folder that overrides anything Minecraft or a mod provides, defines new content from JSON, and controls what generates, in every world, on clients and servers, with nothing for players to switch on.**
 
-Three working examples. Drop any of them straight into `rdploader` and look at how each file is written.
+Eight working examples. Drop any of them straight into `rdploader` and look at how each file is written.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) covers most features, blocks, items, biomes, a dimension, a world template and every worldgen shape.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
 - [RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip) makes the overworld a rubic world with 256 blocks of generated world below the vanilla one and 128 above it: the deep stone blend, modern noise caves, ravines, banded ore veins, three cave regions to descend through, and floating islands overhead cut by the same noise.
+- [RDPLExampleContainers.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleContainers.zip) adds blocks and carried items that hold an inventory, in every size from three slots to the largest allowed, with a loot table, the chest model tinted out of the vanilla sheet, every texture drawn as a pixel map, and two pouches that can be worn in Baubles.
+- [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) makes a superflat world holding one deliberately enormous village, grown to a thousand plots and pinned to the origin, with the streets dressed as concrete roads, sidewalks, dashed centers and lamp posts, and the buildings composed from structure maps in four sizes and three facades rather than from vanilla houses.
+- [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) is that same city on a rubic world with its ceiling at 512 and the clouds lifted to 384, so towers stand 256 blocks over the street, and every district rolls a block depth of 16, 32 or 64 so a coarse grid mixes with a fine one.
+- [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
+- [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, and after ten minutes the standings come up as a card.
 
 ---
 
@@ -117,6 +122,8 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/worldintro/*.json` | Pages shown when a player enters the world. [World intro](#world-intro) |
 | `<namespace>/gates/*.json` | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates) |
 | `<namespace>/gamerules/*.json` | Game rules for new worlds. [Game rules](#game-rules) |
+| `<namespace>/teams/*.json` | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams) |
+| `<namespace>/scoring/*.json` | Objectives, points and how a match ends. [Scoring](#scoring) |
 | `<namespace>/entities/*.json` | Entity variants built on entities that already exist. [Entity variants](#entity-variants) |
 | `<namespace>/hardness/*.json` | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups) |
 | `<namespace>/exposures/*.json` | Hazards that expose players near or carrying named blocks and items. [Exposures](#exposures) |
@@ -2443,7 +2450,7 @@ Colors and the three render switches are all that is offered. Drawing something 
 | `guiTexture` | text | empty | Your own background image for the screen. Empty draws one from the vanilla chest screen at whatever size the rows and columns need |
 | `guiWidth` | int | none | How wide that image is, required with `guiTexture` |
 | `guiHeight` | int | none | How tall that image is, required with `guiTexture` |
-| `bauble` | text | empty | An item only: the Baubles slot it can be worn in — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` or `charm`. A backpack usually takes `body` or `charm`. Ignored, with everything else about the item still working, when Baubles is not installed. Each name is one square in the Baubles tab, so an item asking for `body` fits that square and no other; `ring` is the two ring squares and `trinket` fits every square. |
+| `bauble` | text | empty | An item only: the Baubles slot it can be worn in — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` or `charm`. A backpack usually takes `body` or `charm`. Ignored, with everything else about the item still working, when Baubles is not installed. Each name is one square in the Baubles tab, so an item asking for `body` fits that square and no other; `ring` is the two ring squares and `trinket` fits every square. Baubles is a soft dependency: this mod loads after it when it is there and runs without it when it is not, so a pack naming a slot is safe on a server that has never heard of Baubles. |
 
 **Nine rows by twelve is the ceiling**, which is the largest Iron Chest offers and the most a screen can carry. A pack asking for more is cut to it with an error line saying so. One warning about the tallest: a nine-row screen is 276 pixels, and a 1080 display at GUI scale `auto` gives 270, so the top and bottom clip by three pixels each — scale 3 shows it whole. Iron Chest fits nine rows because it ships its own tighter artwork; a pack that wants the same can set `guiTexture` and draw its own.
 
@@ -2982,6 +2989,114 @@ The file name is yours to choose, only the folder is read, and several files sta
 ```
 
 Each key is the id of the world the rules belong to, `0` for the overworld, `-1` for the nether, `1` for the end, and whatever a mod uses for its own. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world.
+
+## Teams
+
+`<namespace>/teams/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Each file is one side.
+
+A side is a real team on the game's own scoreboard, so `/scoreboard teams list` sees it, it keeps its members through a save and a reload, and a client without this mod shows the colors and the nameplates the same as any vanilla team. Membership is by name, so anything with a name or a UUID can be on a side: a player, a zombie, a villager, an armor stand.
+
+```json
+{
+  "name": "red",
+  "displayName": "Red Team",
+  "color": "red",
+  "friendlyFire": false,
+  "joinable": false,
+  "entities": ["mypack:zombie_a", "mypack:sapper_a"]
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `name` | text | the file name | The team's name on the scoreboard, 1 to 16 characters. This is what `/scoreboard` and the other files use |
+| `displayName` | text | the name | What players are shown instead of the name |
+| `color` | text | `white` | One of the sixteen text colors. It tints the nameplate and is what the per-team sidebar slots key off |
+| `prefix` | text | empty | Put in front of a member's name, after the color |
+| `suffix` | text | empty | Put after a member's name |
+| `friendlyFire` | boolean | `false` | Whether members can hurt each other. Also the default of `mobFriendlyFire` |
+| `mobFriendlyFire` | boolean | `friendlyFire` | Whether a side's mobs can hurt their own side with explosions and thrown TNT, which the game alone never stops. Off spares the side; on leaves it as the game has it |
+| `seeFriendlyInvisibles` | boolean | `true` | Whether members see each other while invisible |
+| `nameTags` | text | `always` | `always`, `never`, `hideForOtherTeams` or `hideForOwnTeam` |
+| `deathMessages` | text | `always` | The same four words, for who is told when a member dies |
+| `collision` | text | `always` | `always`, `never`, `pushOtherTeams` or `pushOwnTeam` |
+| `entities` | list | empty | Entity ids whose every spawn joins this side, such as `minecraft:zombie` or one of your own |
+| `players` | list | empty | Player names that join this side as they log in |
+| `spawnBox` | list | none | Six whole numbers, x y z to x y z. Anything spawning inside joins, and the corners may be given either way round |
+| `joinable` | boolean | `true` | Whether a player may join with `/rdpl team join`. Set it false for a side that is only for mobs |
+| `lead` | text | `none` | How the side's lead is chosen: `none`, `topScore` for whoever is highest on the objective `leadOn` names, `appointed` for the player `leadIs` names, `vote` for whoever the members vote for, or `claim` for whoever claims it first. A lead is a label and a color and nothing more: it grants no power, so a lead who logs out breaks nothing |
+| `leadOn` | text | empty | With `topScore`, the objective the members are ranked by. It is worked out afresh every time it is read, so it follows the score |
+| `leadIs` | text | empty | With `appointed`, the player who leads |
+
+Three ways to join, and a side may use all of them. `entities` names entity ids, and anything of that type joins as it spawns, which is how a pack gives mobs sides without touching the mobs. `spawnBox` claims a corner of the world, and anything spawning inside joins, which suits an arena where both sides use the same mob. `players` names players outright. Beyond those, a player can join with `/rdpl team join <name>` unless the side sets `joinable` to false, and leave with `/rdpl team leave`.
+
+A side is only fielded where a pack asks for one: with no `teams` folder anywhere the mod adds no team, listens for nothing, and does not offer the command. A server operator who edits a file can run `/rdpl reload` to field the change into the running world without restarting.
+
+## Scoring
+
+`<namespace>/scoring/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Each file is one objective.
+
+An objective is a real objective on the game's own scoreboard, so `/scoreboard players list` reads it and it keeps its scores through a save. `criterion` is what the game counts by itself: `dummy` for a score only this pack moves, or `deathCount`, `playerKillCount`, `totalKillCount`, `health`, or any `stat.` or `achievement.` name the game knows.
+
+```json
+{
+  "name": "kaboom",
+  "displayName": "Kills",
+  "criterion": "dummy",
+  "display": "sidebar",
+  "teamTotals": true,
+  "points": {
+    "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
+    "death": -1
+  },
+  "ends": {
+    "afterMinutes": 10
+  },
+  "results": {
+    "card": true,
+    "title": "Final standings",
+    "icon": "minecraft:tnt",
+    "seconds": 15
+  }
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `name` | text | the file name | The objective's name on the scoreboard, 1 to 16 characters |
+| `displayName` | text | the name | What players are shown instead of the name |
+| `criterion` | text | `dummy` | What the game counts by itself. An unknown one is refused with a line saying so |
+| `display` | text | empty | `sidebar`, `list`, `belowName` or `sidebar.team.<color>`. Empty shows it nowhere; there is no scoreboard screen to open |
+| `render` | text | the criterion's own | `integer` or `hearts` |
+| `teamTotals` | boolean | `true` | Points land on a row named after the member's team |
+| `individuals` | boolean | `false` | Points also land on a row for the member itself |
+| `carries` | boolean | `false` | The objective survives a map reset instead of being wiped with it. A match tally of round wins is one |
+| `awardsTo` | text | empty | Another objective this one hands a point to when it ends, to the side that led. Level standings hand out nothing |
+| `points.kill` | object | empty | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill |
+| `points.death` | int | `0` | Points whenever a member dies, however it died. May be negative |
+| `points.ownKill` | int | `0` | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty |
+| `ends.atScore` | int | `0` | The match ends the moment a side reaches this. 0 never ends on score |
+| `ends.afterMinutes` | int | `0` | The match ends after this many minutes. 0 never ends on time |
+| `ends.afterRounds` | int | `0` | For an objective another one `awardsTo`: the match ends once this many rounds have been awarded in all, whoever took them. 0 never ends on rounds |
+| `ends.resets` | boolean | `false` | Ending the round resets the map, as `resetSays` and the other reset settings describe, then a new round opens |
+| `ends.intermissionSeconds` | int | `10` | How long the standings stand between the end and the reset |
+| `ends.intermissionSays` | text | `Round cooldown {seconds}` | Shown on the action bar every second of the intermission after a round ends, with `{seconds}` counting down to the reset. Empty shows nothing |
+| `ends.startsSays` | text | `Round starting in {seconds}` | Shown on the action bar through the five-second count that opens the next round after the reset, with `{seconds}` counting down. Empty shows nothing |
+| `ends.locksTeams` | boolean | `true` | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway |
+| `results.card` | boolean | `false` | Show the standings as a card rather than as chat |
+| `results.title` | text | the name and `results` | The card's heading |
+| `results.icon` | text | empty | An item drawn on the card, e.g. `minecraft:tnt` |
+| `results.image` | text | empty | An image drawn on the card instead of an item |
+| `results.background` | text | a dark slate | The card's background color |
+| `results.seconds` | int | `8` | How long the card stands, at least one second |
+
+`points` is what this mod adds on top of what the game counts, fed into the same objective so `/scoreboard` still reads it. `kill` is worth so many points per entity id killed, credited to the killer's side; `death` is worth so many whenever a member of a side dies, and may be negative. With `teamTotals` the points land on a row named after the team, which is what lets the sidebar show four sides rather than a row for every mob. `individuals` adds a row per member as well, and is off by default because a row per mob UUID reads as noise.
+
+`ends` finishes the match, either the moment a side reaches `atScore` or once `afterMinutes` have passed. The standings are then shown, ranked by the game itself: as chat, or as a card if `results` asks for one. A player without this mod is told the same standings as chat lines, so nobody is left without a result. With `resets`, that end is a round's: the standings stand for `intermissionSeconds` while a cooldown counts down on the action bar, the map resets to the welcome, and the next round opens after a five-second count. `awardsTo` hands the round to the side that led, on an objective that `carries` across the reset. A carried objective can end on its own -- `atScore` for a best-of, `afterRounds` for a fixed count -- and its standing is cleared at the reset after, so a fresh match opens.
 
 ## Hardness groups
 
@@ -3658,6 +3773,13 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
     "pregenStoppedSays": "World building stopped",
     "pregenSpectatingSays": "Spectating until the world is ready",
     "pregenLogo": "center",
+    "pregenBackup": true,
+    "pregenBackupSays": "Pack requested world backup",
+    "resetSays": "Pack requested map reset",
+    "resetSendsTo": "spawn",
+    "resetRuns": "",
+    "resetClearsEntities": true,
+    "resetClearsScores": true,
     "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"],
     "saysCard": true,
     "saysIcon": "minecraft:compass",
@@ -3682,6 +3804,13 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
 | `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | The chat messages for each stage. The first two may hold `%d` for the percent and, after it, `%s` for the dimension's name, or `%1$d` and `%2$s` to put them in any order, and always end with ` - ETA 00:00:00` for that pass, which is not a setting. Finished and stopped are said once, when everything asked for is done, ending with ` - Total time 00:00:00` for the whole of it, which is not a setting either | Reword them in your pack's voice, name the dimension when several are made, or silence them |
 | `pregenSpectatingSays` | The mid-screen hold line while land is being made. Left at its default it speaks each player's language; empty shows nothing | Keep it under about thirty-five characters or small windows clip it |
 | `pregenLogo` | Where the logo stands when pregeneration finishes: `left`, `center` or `right`, above the mid-screen text, shown for a few seconds and then fading out with the fog | It is always shown; an unknown word is read as `center` |
+| `pregenBackup` | Copy the world to a pristine backup once pregeneration finishes, while the players are still held. Generation is then paid once: a later reset, or a new world on the same pack and seed, restores the copy instead of generating again, which is far faster than pregenerating twice. The copy is kept outside the save, at `rdpl-pristine/<world>` beside it, so another mod's backups do not sweep it up and it does not appear in a folder they manage | `false` |
+| `pregenBackupSays` | The mid-screen line players are shown while that copy is made, with the percentage after it. Empty shows nothing and the copy is made quietly | `Pack requested world backup` |
+| `resetSays` | The mid-screen line players are shown while `/rdpl reset` puts the map back. Empty resets quietly | `Pack requested map reset` |
+| `resetSendsTo` | Where players are put by a reset: `spawn`, a position as `x,y,z`, or `dimension:x,y,z` to send them into another world, which is how a reset drops everyone in a lobby rather than back in the arena | `spawn` |
+| `resetRuns` | A function run after a reset has cleared the map, named `namespace:path`. This is what builds the arena again, since a pack that made its map from a function can simply run it a second time. Empty runs nothing | empty |
+| `resetClearsEntities` | Remove every entity that is not a player. Mobs, dropped items and experience all go, which is what leaves the map as it started | `true` |
+| `resetClearsScores` | Set every objective the pack keeps back to nothing, so a new match starts from zero. Teams themselves are kept | `true` |
 | `welcomeSays` | The green greeting, shown on every login and after pregeneration. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
 | `saysCard` | Shows the lines this mod says, the welcome, the pregeneration progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too | Turn it on when chat is busy or the lines should read as part of the world rather than as chatter |
 | `saysIcon` | An item drawn on the card, e.g. `minecraft:compass`. Empty draws none | Give the card your pack's emblem |
@@ -4301,6 +4430,28 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageRailPowerBase` | block | empty | What sits under a powered track to feed it. Empty uses a redstone block |
 | `villageRailTunnelLightBlock` | block | empty | A light set into a railway tunnel's roof down its center line. Empty lights none |
 | `villageRailTunnelLightRun` | number | `8` | How many blocks apart those tunnel lights sit, anchored to world coordinates so pieces agree |
+
+**One biome can build differently.** A `biomes` object inside `settings` holds village settings of its own for a named biome, so a desert village lays sandstone streets where a plains one lays concrete without either being a separate pack. Name a biome by its id, `minecraft:desert`, or by a Forge biome type, `SANDY`, `SNOWY`, `MESA`, `JUNGLE` and the rest; an exact id is looked at before the types, so a general rule can be overridden for one biome. Everything not named inside a section falls back to the plain setting above it.
+
+```json
+{
+  "settings": {
+    "villagePathBlock": "minecraft:concrete:15",
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "biomes": {
+      "SANDY": {
+        "villagePathBlock": "minecraft:sandstone:2",
+        "villageSubwayTunnelBlock": "minecraft:sandstone"
+      },
+      "minecraft:icy_plains": {
+        "villageSubwayTunnelBlock": "minecraft:packed_ice"
+      }
+    }
+  }
+}
+```
+
+Every block setting a road, a bridge, a railway, a subway, a station or a sewer takes answers to this, and the weighted-mix syntax works inside a section as it does outside. The biome is read as a piece is built, and the blocks are taken again wherever the ground changes biome, so a road or a railway crossing out of a desert changes material at the border itself. A log line on world load says how many sections a pack shipped and names them, and with debug on each biome says which section it took, or that it took none and what it would have answered to.
 
 **Where a line goes.** The lines run parallel, on the axis `villageRailDirection` names, and are spaced out from the well plaza in turn, first one side then the other, each keeping at least `villageRailSpacing` blocks of ground between its bed and the next line's. A line never passes through the plaza or a plot: it is laid before the first street, so every street and house of the village is placed around it, and it is trimmed to the grown village plus `villageRailTail` at either end once the village is laid out.
 
@@ -5092,6 +5243,11 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl biome list` | none | Every biome that can generate, and its id |
 | `/rdpl biome here` | none | The biome you are standing in |
 | `/rdpl biome find <name>` | the server's | Linked. Passed to `/rdplserver biome find`, the only side that knows the seed |
+| `/rdpl team` | none | The sides a pack has fielded, each in its own color, which one you are on, and who leads each |
+| `/rdpl team join <name>` | none | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into |
+| `/rdpl team leave` | none | Leave the side you are on |
+| `/rdpl team vote <player>` | none | Vote for who leads your side, where the pack chooses its lead by a vote. A tie leaves nobody leading |
+| `/rdpl team claim` | none | Take the lead of your side, where the pack lets it be claimed and nobody on the side holds it |
 | `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
 
 **Which server subcommands are linked, and why the rest are not.** A server subcommand gets a passthrough exactly when the client has no meaning of its own for that name: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` and `goto` can only ever mean the server's, so `/rdpl` hands them over. The six the client also has, `reload`, `list`, `which`, `unused`, `config` and `biome`, keep their own meaning of your packs and your client, and forwarding them would take that away. `biome find` is the one part of a shared name that belongs to the server anyway, since only the server knows the world seed, so that one form is passed on while `biome list` and `biome here` stay with you. That also settles the permission: the server's own operator check decides it, and a client can neither cheat it nor be told a fabricated answer.

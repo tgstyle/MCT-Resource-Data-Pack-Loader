@@ -47,8 +47,6 @@ public final class BaublesPouch {
         }
     }
 
-    public static int wornSlot(EntityPlayer player) { return nextWorn(player, -1); }
-
     public static int nextWorn(EntityPlayer player, int after) {
         IBaublesItemHandler worn = BaublesApi.getBaublesHandler(player);
         int slots = worn.getSlots();

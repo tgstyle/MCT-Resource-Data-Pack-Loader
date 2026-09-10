@@ -22,6 +22,12 @@ public final class BeardOpen {
     private BeardOpen() {}
 
     public static void around(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
+        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
+        try { opened(start, piece, world, clip); }
+        finally { BeardBiome.leave(); }
+    }
+
+    private static void opened(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         if (BeardPlots.waystone(piece)) { BeardGround.waystoneRing(start, piece, world, clip, box, at); }

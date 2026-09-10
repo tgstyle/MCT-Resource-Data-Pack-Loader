@@ -5,27 +5,32 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
 import mctmods.resourcedatapackloader.util.Coords;
 
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class StagingHeightMap implements IHeightMap {
     private static final Comparator<ICube> TOP_DOWN = Comparator.comparingInt(cube -> -cube.getCoords().getY());
-    private final List<ICube> stagedCubes = new ArrayList<>();
-    private final int[] heightmap = new int[ICube.SIZE * ICube.SIZE];
-    private final BitSet dirtyFlag = new BitSet(heightmap.length);
+    private final List<ICube> stagedCubes = new CopyOnWriteArrayList<>();
+    private static final int COLUMNS = ICube.SIZE * ICube.SIZE;
+    private static final int CLEAN = 0;
+    private static final int DIRTY = 1;
+    private final AtomicIntegerArray heightmap = new AtomicIntegerArray(COLUMNS);
+    private final AtomicIntegerArray dirtyFlag = new AtomicIntegerArray(COLUMNS);
 
-    public StagingHeightMap() { Arrays.fill(heightmap, Coords.NO_HEIGHT); }
+    public StagingHeightMap() {
+        for (int i = 0; i < COLUMNS; i++) { heightmap.set(i, Coords.NO_HEIGHT); }
+    }
 
     public void addStagedCube(ICube cube) {
         stagedCubes.add(cube);
         stagedCubes.sort(TOP_DOWN);
         if (cube.isEmpty()) { return; }
         int cubeTop = Coords.cubeToMaxBlock(cube.getY());
-        for (int i = 0; i < heightmap.length; i++) {
-            if (dirtyFlag.get(i) || heightmap[i] == Coords.NO_HEIGHT || cubeTop > heightmap[i]) { dirtyFlag.set(i); }
+        for (int i = 0; i < COLUMNS; i++) {
+            int held = heightmap.get(i);
+            if (dirtyFlag.get(i) == DIRTY || held == Coords.NO_HEIGHT || cubeTop > held) { dirtyFlag.set(i, DIRTY); }
         }
     }
 
@@ -33,25 +38,28 @@ public class StagingHeightMap implements IHeightMap {
         if (!stagedCubes.remove(cube) || cube.isEmpty()) { return; }
         int cubeBottom = Coords.cubeToMinBlock(cube.getY());
         int cubeTop = Coords.cubeToMaxBlock(cube.getY());
-        for (int i = 0; i < heightmap.length; i++) {
-            if (dirtyFlag.get(i) || (heightmap[i] >= cubeBottom && heightmap[i] <= cubeTop)) { dirtyFlag.set(i); }
+        for (int i = 0; i < COLUMNS; i++) {
+            int held = heightmap.get(i);
+            if (dirtyFlag.get(i) == DIRTY || (held >= cubeBottom && held <= cubeTop)) { dirtyFlag.set(i, DIRTY); }
         }
     }
 
     @Override public void onOpacityChange(int localX, int blockY, int localZ, int opacity) {
         if (opacity > 0) {
-            if (blockY > getTopBlockY(localX, localZ)) { heightmap[index(localX, localZ)] = blockY; }
+            if (blockY > getTopBlockY(localX, localZ)) { heightmap.set(index(localX, localZ), blockY); }
         }
-        else if(blockY == getTopBlockY(localX, localZ)) { dirtyFlag.set(index(localX, localZ)); }
+        else if (blockY == getTopBlockY(localX, localZ)) { dirtyFlag.set(index(localX, localZ), DIRTY); }
     }
 
     private int index(int localX, int localZ) { return (localZ << 4) | localX; }
 
     @Override public int getTopBlockY(int localX, int localZ) {
         int idx = index(localX, localZ);
-        if (!dirtyFlag.get(idx)) { return heightmap[idx]; }
-        dirtyFlag.clear(idx);
-        return heightmap[idx] = stagedCubes.isEmpty() ? Coords.NO_HEIGHT : computeHeightMap(localX, localZ);
+        if (dirtyFlag.get(idx) == CLEAN) { return heightmap.get(idx); }
+        dirtyFlag.set(idx, CLEAN);
+        int found = stagedCubes.isEmpty() ? Coords.NO_HEIGHT : computeHeightMap(localX, localZ);
+        heightmap.set(idx, found);
+        return found;
     }
 
     @SuppressWarnings("deprecation") private int computeHeightMap(int localX, int localZ) {

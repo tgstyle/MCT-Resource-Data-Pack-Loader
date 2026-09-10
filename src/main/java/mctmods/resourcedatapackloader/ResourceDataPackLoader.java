@@ -96,7 +96,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);")
+@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);after:baubles;")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
     @Mod.Instance(MOD_ID) public static ResourceDataPackLoader INSTANCE;
@@ -158,6 +158,8 @@ public class ResourceDataPackLoader {
         if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }
         ContentDimensions.load();
         ContentGameRules.load();
+        mctmods.resourcedatapackloader.content.ContentTeams.load();
+        mctmods.resourcedatapackloader.content.ContentScoring.load();
         if (ContentEntities.load()) { MinecraftForge.EVENT_BUS.register(ContentEntities.class); }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
@@ -218,6 +220,7 @@ public class ResourceDataPackLoader {
     }
 
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {
+        mctmods.resourcedatapackloader.content.worldgen.ContentPristine.beforeWorldsLoad(event.getServer());
         Path root = PackManager.get().getRoot();
         if (root == null) { return; }
         PackManager.get().scan(root);

@@ -32,6 +32,8 @@ public final class RDPLNetwork {
         channel.registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class, packetId++, Side.CLIENT);
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(HoldView.Handler.class, MessageHold.class, packetId++, Side.CLIENT); }
         else { channel.registerMessage(MessageHold.Idle.class, MessageHold.class, packetId++, Side.CLIENT); }
+        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(HoldView.NoteHandler.class, MessageNote.class, packetId++, Side.CLIENT); }
+        else { channel.registerMessage(MessageNote.Idle.class, MessageNote.class, packetId++, Side.CLIENT); }
         registerMessage(MessageCubes.Handler.class, MessageCubes.class);
         registerMessage(MessageColumn.Handler.class, MessageColumn.class);
         registerMessage(MessageUnloadColumn.Handler.class, MessageUnloadColumn.class);
@@ -47,9 +49,11 @@ public final class RDPLNetwork {
         channel.registerMessage(handlerClass, messageClass, packetId++, side);
     }
 
-    public static boolean vanilla(EntityPlayerMP player) {
-        if (player.connection == null) { return true; }
-        Boolean marked = player.connection.netManager.channel().attr(NetworkRegistry.FML_MARKER).get();
+    public static boolean vanilla(EntityPlayerMP player) { return vanilla(player.connection); }
+
+    public static boolean vanilla(@javax.annotation.Nullable net.minecraft.network.NetHandlerPlayServer connection) {
+        if (connection == null) { return true; }
+        Boolean marked = connection.netManager.channel().attr(NetworkRegistry.FML_MARKER).get();
         return marked == null || !marked;
     }
 
@@ -63,9 +67,15 @@ public final class RDPLNetwork {
         channel.sendTo(new MessageIntroPlay(ContentPregen.busy()), player);
     }
 
-    public static void sendHold(EntityPlayerMP player, boolean held) {
+    public static boolean sendNote(EntityPlayerMP player, String said) {
+        if (channel == null || vanilla(player)) { return false; }
+        channel.sendTo(new MessageNote(said), player);
+        return true;
+    }
+
+    public static void sendHold(EntityPlayerMP player, boolean held, String warning, boolean fog) {
         if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageHold(held), player);
+        channel.sendTo(new MessageHold(held, warning, fog), player);
     }
 
     public static void sendHardnessSalt(EntityPlayerMP player, long salt) {

@@ -319,13 +319,13 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         }
     }
 
-    private static void holdEveryone() {
+    public static void holdEveryone(boolean fog) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { hold(player); }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { hold(player, fog); }
     }
 
-    private static void hold(EntityPlayerMP player) {
+    private static void hold(EntityPlayerMP player, boolean fog) {
         if (HELD.containsKey(player.getUniqueID())) { return; }
         NBTTagCompound data = player.getEntityData();
         GameType before = data.hasKey(HELD_MODE) ? GameType.getByID(data.getInteger(HELD_MODE)) : player.interactionManager.getGameType();
@@ -333,8 +333,8 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         Held held = new Held(player, before);
         HELD.put(player.getUniqueID(), held);
         player.setGameType(GameType.SPECTATOR);
-        RDPLNetwork.sendHold(player, true);
-        flash(held);
+        RDPLNetwork.sendHold(player, true, held.warning, fog);
+        if (RDPLNetwork.vanilla(player)) { flash(held); }
         startFlashing();
     }
 
@@ -369,14 +369,14 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         boolean changed = !said.isEmpty() && !said.equals(lastSaid);
         if (changed) { lastSaid = said; }
         for (Held held : HELD.values()) {
-            if (titles) { flash(held); }
+            if (titles && RDPLNetwork.vanilla(held.connection)) { flash(held); }
             if (changed || (keepAlive && !said.isEmpty())) { held.connection.sendPacket(bar(said)); }
         }
     }
 
     private static SPacketChat bar(String said) { return new SPacketChat(new TextComponentString(said).setStyle(new Style().setColor(TextFormatting.YELLOW)), ChatType.GAME_INFO); }
 
-    private static void tellBar(MinecraftServer server, String said) {
+    public static void tellBar(MinecraftServer server, String said) {
         if (server == null || said.isEmpty()) { return; }
         SPacketChat packet = bar(said);
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { player.connection.sendPacket(packet); }
@@ -389,7 +389,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
-    private static void releaseEveryone(boolean welcomed) {
+    public static void releaseEveryone(boolean welcomed) {
         if (HELD.isEmpty()) { return; }
         stopFlashing();
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
@@ -414,8 +414,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     public static void releaseAfterIntro(EntityPlayerMP player) {
         if (busy()) { return; }
         Held held = HELD.remove(player.getUniqueID());
-        if (held == null) { return; }
-        release(player, held);
+        if (held != null) { release(player, held); }
         welcome(player);
     }
 
@@ -426,6 +425,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             Says.tell(player, greeting, TextFormatting.GREEN);
             return;
         }
+        if (RDPLNetwork.sendNote(player, greeting)) { return; }
         player.connection.sendPacket(new SPacketTitle(10, 70, 20));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
@@ -434,7 +434,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static void release(EntityPlayerMP player, Held held) {
         modeBack(player, held.before);
         player.timeUntilPortal = 100;
-        RDPLNetwork.sendHold(player, false);
+        RDPLNetwork.sendHold(player, false, "", false);
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.CLEAR, null, -1, -1, -1));
     }
 
@@ -509,10 +509,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         startWhenEntered(event.player.dimension);
         ContentPregen worker = running;
         if (worker == null) {
-            if (event.player instanceof EntityPlayerMP) { welcome((EntityPlayerMP) event.player); }
+            if (event.player instanceof EntityPlayerMP && !ContentIntroPlay.willPlay((EntityPlayerMP) event.player)) { welcome((EntityPlayerMP) event.player); }
             return;
         }
-        if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player); }
+        if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player, true); }
         String said = worker.sofar();
         if (said.isEmpty()) { return; }
         if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, said, TextFormatting.YELLOW); }
@@ -710,7 +710,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         watchedDone = -1L;
         if (chainBegun == 0L) { chainBegun = System.currentTimeMillis(); }
         if (dimension != 0) { DimensionManager.keepDimensionLoaded(dimension, true); }
-        holdEveryone();
+        holdEveryone(true);
         WorldWorkerManager.addWorker(worker);
         return worker.order.total();
     }
@@ -942,7 +942,28 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (memory != null) { memory.rdpl$setLandMadeAt(dimension, (int) done); }
     }
 
-    private static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
+    public static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
+
+    @SuppressWarnings({"ConstantConditions", "ConstantValue"}) private static void keepPristine() {
+        if (!ContentControl.flag(ContentControl.CHUNKS, "pregenBackup", Config.chunks.pregenBackup)) { return; }
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server == null) { return; }
+        WorldServer world = server.getWorld(0);
+        if (world == null || ContentPristine.already(server, world)) { return; }
+        String said = says("pregenBackupSays", Config.chunks.pregenBackupSays).trim();
+        try { server.saveAllWorlds(true); }
+        catch (RuntimeException notSaved) { ContentLog.LOGGER.warn("The worlds could not be flushed before the pristine copy, copying what is on disk", notSaved); }
+        long begun = System.currentTimeMillis();
+        int[] last = { -1 };
+        int files = ContentPristine.take(server, world, along -> {
+            if (said.isEmpty() || along == last[0]) { return; }
+            last[0] = along;
+            tellBar(server, said + " " + along + "%");
+        });
+        if (files > 0) { ContentPristine.mark(server, world); }
+        if (files > 0 && !said.isEmpty()) { tellBar(server, said + " " + Lang.tr("rdpl.pregen.done")); }
+        ContentLog.LOGGER.info("The pristine copy took {} ms", System.currentTimeMillis() - begun);
+    }
 
     private static String defaulted(String key, String fallback, String shipped, String langKey, EntityPlayerMP player) {
         String said = says(key, fallback);
@@ -1067,6 +1088,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             }
             chainBegun = 0L;
             tell(ending, TextFormatting.GREEN);
+            if (!stopping) { keepPristine(); }
             releaseEveryone(!stopping);
         }
         if (asked != null && !(asked instanceof EntityPlayer)) { asked.sendMessage(new TextComponentString(Lang.tr("rdpl.pregen.finished", report())).setStyle(new Style().setColor(TextFormatting.GREEN))); }

@@ -91,6 +91,12 @@ public final class BeardPlaza {
     }
 
     public static void wellPlaza(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
+        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
+        try { plazaLaid(start, piece, world, clip); }
+        finally { BeardBiome.leave(); }
+    }
+
+    private static void plazaLaid(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         StructureBoundingBox box = piece.getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int reach = ContentBeard.plazaReach();
@@ -109,6 +115,11 @@ public final class BeardPlaza {
         int wet = 0;
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
+                if (BeardBiome.moved(world, x, z)) {
+                    surface = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+                    line = BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
+                    sidewalk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
+                }
                 int band = MathUtil.max(box.minX - x, x - box.maxX, box.minZ - z, z - box.maxZ);
                 if (band < 1) { continue; }
                 at.setPos(x, ground, z);

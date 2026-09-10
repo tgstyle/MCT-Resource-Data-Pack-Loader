@@ -202,6 +202,12 @@ import javax.annotation.Nullable;
     }
 
     @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
+        mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
+        try { rdpl$paved(world, clip); }
+        finally { mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.leave(); }
+    }
+
+    @Unique private void rdpl$paved(World world, StructureBoundingBox clip) {
         IBlockState deck = getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.PLANKS).getDefaultState());
         if (deck.getMaterial() != Material.WOOD) { deck = Objects.requireNonNull(Blocks.PLANKS).getDefaultState(); }
         BeardRoads.pave(this, world, clip,

@@ -19,31 +19,22 @@ import org.spongepowered.asm.mixin.Overwrite;
 
     /**
      * @author tgstyle
-     * @reason Clamp the air and solid scans to the world height bounds and loaded blocks so pathing terminates on cube worlds.
+     * @reason Clamp the air and solid scans to the world height bounds and loaded blocks so pathing terminates on cube worlds, keeping vanilla's check-first climbs so a floor lying exactly at the lowest height still counts as ground.
      */
     @Nullable @Overwrite public Path getPathToPos(@Nonnull BlockPos posIn) {
-        BlockPos posOriginal = posIn;
+        int floor = ((IMinMaxHeight) world).rdpl$getMinHeight();
+        int ceiling = ((IMinMaxHeight) world).rdpl$getMaxHeight();
         if (world.getBlockState(posIn).getMaterial() == Material.AIR) {
             BlockPos pos = posIn.down();
-            while (pos.getY() > ((IMinMaxHeight) world).rdpl$getMinHeight()
-                    && world.isBlockLoaded(pos)
-                    && world.getBlockState(pos).getMaterial() == Material.AIR) { pos = pos.down(); }
-            if (pos.getY() > ((IMinMaxHeight) world).rdpl$getMinHeight() && world.isBlockLoaded(pos)) { return super.getPathToPos(pos.up()); }
-            do {
-                pos = pos.up();
-            } while (pos.getY() < ((IMinMaxHeight) world).rdpl$getMaxHeight()
-                    && world.isBlockLoaded(pos)
-                    && world.getBlockState(pos).getMaterial() == Material.AIR);
+            while (pos.getY() > floor && world.isBlockLoaded(pos) && world.getBlockState(pos).getMaterial() == Material.AIR) { pos = pos.down(); }
+            if (pos.getY() > floor && world.isBlockLoaded(pos)) { return super.getPathToPos(pos.up()); }
+            while (pos.getY() < ceiling && world.isBlockLoaded(pos) && world.getBlockState(pos).getMaterial() == Material.AIR) { pos = pos.up(); }
             posIn = pos;
         }
         if (!world.getBlockState(posIn).getMaterial().isSolid()) { return super.getPathToPos(posIn); }
-        else {
-            BlockPos pos = posIn.up();
-            while (pos.getY() < ((IMinMaxHeight) world).rdpl$getMaxHeight()
-                    && world.isBlockLoaded(pos)
-                    && this.world.getBlockState(pos).getMaterial().isSolid()) { pos = pos.up(); }
-            if(pos.getY() >= ((IMinMaxHeight) world).rdpl$getMaxHeight() || !world.isBlockLoaded(pos)) { return super.getPathToPos(posOriginal); }
-            return super.getPathToPos(pos);
-        }
+        BlockPos pos = posIn.up();
+        while (pos.getY() < ceiling && world.isBlockLoaded(pos) && world.getBlockState(pos).getMaterial().isSolid()) { pos = pos.up(); }
+        if (pos.getY() >= ceiling || !world.isBlockLoaded(pos)) { return super.getPathToPos(posIn); }
+        return super.getPathToPos(pos);
     }
 }

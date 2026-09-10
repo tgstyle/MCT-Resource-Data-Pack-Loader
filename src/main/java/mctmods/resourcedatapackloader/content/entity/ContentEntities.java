@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.entity.ai.EntityAIGust;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIPatrol;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAISwoop;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIKamikaze;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIStrike;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIThrower;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntity;
@@ -30,6 +31,10 @@ import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.entity.Entity;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraft.world.WorldServer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
@@ -39,6 +44,7 @@ import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIAttackMelee;
@@ -209,6 +215,39 @@ public final class ContentEntities {
     public static boolean steerable(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         return def != null && def.steerable;
+    }
+
+    private static final int ENGAGE_EVERY = 100;
+    private static int engageWatch;
+
+    @SubscribeEvent public static void onEngagement(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || BY_CLASS.isEmpty() || !ContentLog.LOGGER.debugEnabled()) { return; }
+        if (++engageWatch % ENGAGE_EVERY != 0) { return; }
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server == null) { return; }
+        int mobs = 0;
+        int aimed = 0;
+        int pathless = 0;
+        int reaching = 0;
+        long away = 0L;
+        for (WorldServer world : server.worlds) {
+            if (world == null) { continue; }
+            for (Entity entity : world.loadedEntityList) {
+                if (!(entity instanceof EntityLiving) || !BY_CLASS.containsKey(entity.getClass())) { continue; }
+                EntityLiving mob = (EntityLiving) entity;
+                mobs++;
+                EntityLivingBase aim = mob.getAttackTarget();
+                if (aim == null) { continue; }
+                aimed++;
+                double gap = Math.sqrt(mob.getDistanceSq(aim));
+                away += (long) gap;
+                if (mob.getNavigator().noPath()) { pathless++; }
+                if (gap <= mob.width * 2.0F + aim.width) { reaching++; }
+            }
+        }
+        if (mobs == 0) { return; }
+        ContentLog.LOGGER.debug("Of {} pack mob(s), {} hold a target, {} of those have no path to walk to it, {} stand close enough to strike, and a target is {} block(s) off on average",
+                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed);
     }
 
     @SubscribeEvent public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
@@ -428,14 +467,24 @@ public final class ContentEntities {
         for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(living.tasks.taskEntries)) {
             if (entry.action instanceof EntityAIAvoidEntity || entry.action instanceof EntityAIPanic || tame(entry.action)) { living.tasks.removeTask(entry.action); }
         }
-        boolean already = false;
-        for (EntityAITasks.EntityAITaskEntry task : living.tasks.taskEntries) {
-            if (task.action instanceof EntityAIAttackMelee) {
-                already = true;
-                break;
+        if (ownStrike(living, def)) {
+            for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(living.tasks.taskEntries)) {
+                if (entry.action instanceof EntityAIAttackMelee) { living.tasks.removeTask(entry.action); }
             }
+            living.tasks.addTask(2, new EntityAIStrike(creature, 1.2D, false));
+            ContentLog.LOGGER.debug("Entity variant {} asks for an attack damage of {}, which {} never reads when it strikes, so the blow is dealt by the pack's own reckoning instead",
+                    def.registryName, living.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue(), def.base);
         }
-        if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
+        else {
+            boolean already = false;
+            for (EntityAITasks.EntityAITaskEntry task : living.tasks.taskEntries) {
+                if (task.action instanceof EntityAIAttackMelee) {
+                    already = true;
+                    break;
+                }
+            }
+            if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
+        }
         if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
         if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, carrying(def), def.explosionFuse, def.throwReload > 0 ? def.throwReload : def.explosionFuse, def.throwRetreat > 0 ? def.throwRetreat : def.explosionFuse, def.throwAmmo, def.throwPower, def.throwArc, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue())); }
         if (def.charges) { living.tasks.addTask(1, new EntityAICharge(creature, 2.0D)); }
@@ -453,6 +502,14 @@ public final class ContentEntities {
             if (type == null) { continue; }
             living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, true));
         }
+    }
+
+    private static boolean ownStrike(EntityLiving living, EntityVariantDef def) {
+        if (living instanceof EntityMob) { return false; }
+        for (String key : def.attributes.keySet()) {
+            if (ContentAttributes.find(key, def.registryName) == SharedMonsterAttributes.ATTACK_DAMAGE) { return true; }
+        }
+        return false;
     }
 
     private static boolean tame(EntityAIBase task) {

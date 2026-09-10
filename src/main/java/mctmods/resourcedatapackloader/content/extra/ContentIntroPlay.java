@@ -23,13 +23,15 @@ public final class ContentIntroPlay {
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.player instanceof EntityPlayerMP)) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.player;
-        if (!enabled()) { return; }
-        if (ContentWorldIntro.once() && persisted(player).getBoolean(SEEN)) { return; }
-        PLAYING.add(player.getUniqueID());
-        RDPLNetwork.playIntro(player);
+        if (willPlay(player)) {
+            PLAYING.add(player.getUniqueID());
+            RDPLNetwork.playIntro(player);
+        }
     }
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { PLAYING.remove(event.player.getUniqueID()); }
+
+    public static boolean willPlay(EntityPlayerMP player) { return enabled() && !(ContentWorldIntro.once() && persisted(player).getBoolean(SEEN)); }
 
     public static boolean reading(UUID player) { return PLAYING.contains(player); }
 

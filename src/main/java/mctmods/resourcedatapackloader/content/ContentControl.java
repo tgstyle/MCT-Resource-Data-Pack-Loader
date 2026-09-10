@@ -47,7 +47,7 @@ public final class ContentControl {
             "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
             "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "prospectItems", "prospectItemsAreBlacklist", "prospectWear", "prospectSlow", "prospectDrops", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
             "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
-            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
+            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
@@ -62,7 +62,7 @@ public final class ContentControl {
             "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
             "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathVergeBlock", "villagePathVergeWaterBlock", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailPowerRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth", "villageRailClimb", "villageRailTail", "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStairBlock", "villageSubwayEntrance", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villagePlotsLeast",
-            "villagePlotsMost", "villageTieStreets", "villageBlockSizes", "villageLayout", "voidPlatformBlock",
+            "villagePlotsMost", "villageTieStreets", "villageBlockSizes", "villageLayout", "biomes", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
@@ -99,6 +99,65 @@ public final class ContentControl {
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
         return value.getAsFloat();
+    }
+
+    private static final String BIOME_SETTINGS = "biomes";
+    private static final Map<String, JsonElement> BIOME_KEYS = new ConcurrentHashMap<>();
+    private static final Set<String> BIOME_WARNED = new LinkedHashSet<>();
+    @Nullable private static JsonObject biomeSettings;
+    @Nullable private static WorldTemplateDef biomesFrom;
+
+    @Nullable private static synchronized JsonObject biomeSections() {
+        WorldTemplateDef template = ContentWorldTemplates.active();
+        if (template != biomesFrom) {
+            biomesFrom = template;
+            BIOME_KEYS.clear();
+            JsonObject settings = template == null ? null : template.settings;
+            JsonElement held = settings == null || !settings.has(BIOME_SETTINGS) ? null : settings.get(BIOME_SETTINGS);
+            if (held != null && !held.isJsonObject()) {
+                if (BIOME_WARNED.add(BIOME_SETTINGS)) {
+                    ContentLog.LOGGER.error("The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOME_SETTINGS);
+                }
+                held = null;
+            }
+            biomeSettings = held == null ? null : held.getAsJsonObject();
+            if (biomeSettings != null) {
+                List<String> named = new ArrayList<>();
+                for (Map.Entry<String, JsonElement> entry : biomeSettings.entrySet()) { named.add(entry.getKey()); }
+                ContentLog.LOGGER.info("Village settings of their own for {} biome(s): {}", named.size(), named);
+            }
+        }
+        return biomeSettings;
+    }
+
+    public static boolean hasBiomeSettings() { return biomeSections() != null; }
+
+    public static Object biomeSettingsMark() { return biomeSections(); }
+
+    public static boolean hasBiomeSection(String named) {
+        JsonObject sections = biomeSections();
+        return sections != null && sections.has(named) && sections.get(named).isJsonObject();
+    }
+
+    @Nullable private static JsonElement biomeSetting(String group, String key, @Nullable String section) {
+        if (section == null || !packDecides(group)) { return null; }
+        String at = section + "/" + key;
+        JsonElement held = BIOME_KEYS.get(at);
+        if (held == null) {
+            JsonObject sections = biomeSections();
+            JsonObject inside = sections != null && sections.has(section) && sections.get(section).isJsonObject() ? sections.getAsJsonObject(section) : null;
+            held = inside != null && inside.has(key) ? inside.get(key) : JsonNull.INSTANCE;
+            if (inside != null && !inside.has(key) && KNOWN.contains(key)) { held = JsonNull.INSTANCE; }
+            BIOME_KEYS.put(at, held);
+        }
+        return held.isJsonNull() ? null : held;
+    }
+
+    public static String text(String group, String key, String fallback, @Nullable String section) {
+        JsonElement value = biomeSetting(group, key, section);
+        if (value == null) { return text(group, key, fallback); }
+        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
+        return value.getAsString();
     }
 
     public static String text(String group, String key, String fallback) {

@@ -1,5 +1,11 @@
 package mctmods.resourcedatapackloader.content;
 
+import net.minecraft.scoreboard.IScoreCriteria;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.Team;
+import net.minecraft.util.text.TextFormatting;
+import mctmods.resourcedatapackloader.content.def.ScoreDef;
+import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.entity.ContentTasks;
 import mctmods.resourcedatapackloader.content.portal.PortalShapes;
@@ -519,6 +525,154 @@ public final class ContentParser {
                 direction,
                 JsonUtils.getFloat(json, "textScale", 1.0F),
                 JsonUtils.getBoolean(json, "settle", false));
+    }
+
+    @Nullable public static ScoreDef scoreFile(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+        String name = JsonUtils.getString(json, "name", key.getPath()).trim();
+        if (name.isEmpty() || name.length() > 16) {
+            ContentLog.LOGGER.error("Score file {} names the objective '{}', and an objective name is 1 to 16 characters, so it is left out", key, name);
+            return null;
+        }
+        String wanted = JsonUtils.getString(json, "criterion", "dummy").trim();
+        IScoreCriteria criterion = IScoreCriteria.INSTANCES.get(wanted);
+        if (criterion == null) {
+            ContentLog.LOGGER.error("Objective {} scores on '{}', which is not a criterion the game knows, so it is left out. dummy, deathCount, playerKillCount, totalKillCount, health and any stat. or achievement. name are the ones there are", name, wanted);
+            return null;
+        }
+        String slot = JsonUtils.getString(json, "display", "").trim();
+        if (!slot.isEmpty() && Scoreboard.getObjectiveDisplaySlotNumber(slot) < 0) {
+            ContentLog.LOGGER.error("Objective {} asks to be shown in '{}', which is not list, sidebar, belowName or sidebar.team.<color>, so it is not shown", name, slot);
+            slot = "";
+        }
+        IScoreCriteria.EnumRenderType render = null;
+        if (json.has("render")) {
+            render = IScoreCriteria.EnumRenderType.getByName(JsonUtils.getString(json, "render", "integer").trim());
+        }
+        JsonObject results = JsonUtils.getJsonObject(json, "results", new JsonObject());
+        JsonObject points = JsonUtils.getJsonObject(json, "points", new JsonObject());
+        Map<String, Integer> kills = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(points, "kill", new JsonObject()).entrySet()) {
+            kills.put(entry.getKey().trim(), entry.getValue().getAsInt());
+        }
+        return new ScoreDef(name, JsonUtils.getString(json, "displayName", name), criterion, slot, render,
+                JsonUtils.getBoolean(json, "teamTotals", true),
+                JsonUtils.getBoolean(json, "individuals", false),
+                kills,
+                JsonUtils.getInt(points, "death", 0),
+                JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "atScore", 0),
+                JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "afterMinutes", 0),
+                JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "afterRounds", 0),
+                JsonUtils.getBoolean(results, "card", false),
+                JsonUtils.getString(results, "title", name + " results"),
+                JsonUtils.getString(results, "icon", "").trim(),
+                JsonUtils.getString(results, "image", "").trim(),
+                cardColor(results, name),
+                Math.max(20, JsonUtils.getInt(results, "seconds", 8) * 20),
+                JsonUtils.getBoolean(json, "carries", false),
+                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "resets", false),
+                Math.max(0, JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "intermissionSeconds", 10)),
+                JsonUtils.getString(json, "awardsTo", "").trim(),
+                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "locksTeams", true),
+                JsonUtils.getInt(points, "ownKill", 0),
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "intermissionSays", "Round cooldown {seconds}"),
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "startsSays", "Round starting in {seconds}"));
+    }
+
+    private static int cardColor(JsonObject results, String name) {
+        String asked = JsonUtils.getString(results, "background", "").trim();
+        return asked.isEmpty() ? 0x1E2630 : ContentTypes.color(asked, name + " results background") & 0xFFFFFF;
+    }
+
+    @Nullable public static TeamDef teamFile(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+        String name = JsonUtils.getString(json, "name", key.getPath()).trim();
+        if (name.isEmpty() || name.length() > 16) {
+            ContentLog.LOGGER.error("Team file {} names the team '{}', and a team name is 1 to 16 characters, so the team is left out", key, name);
+            return null;
+        }
+        TextFormatting color = TextFormatting.getValueByName(JsonUtils.getString(json, "color", "white").trim().toLowerCase(Locale.ROOT));
+        if (color == null || !color.isColor()) {
+            ContentLog.LOGGER.error("Team {} asks for the color '{}', which is not one of the sixteen text colors, so it is white", name, JsonUtils.getString(json, "color", ""));
+            color = TextFormatting.WHITE;
+        }
+        return new TeamDef(name,
+                JsonUtils.getString(json, "displayName", name),
+                color,
+                JsonUtils.getString(json, "prefix", ""),
+                JsonUtils.getString(json, "suffix", ""),
+                JsonUtils.getBoolean(json, "friendlyFire", false),
+                JsonUtils.getBoolean(json, "mobFriendlyFire", JsonUtils.getBoolean(json, "friendlyFire", false)),
+                JsonUtils.getBoolean(json, "seeFriendlyInvisibles", true),
+                visible(json, "nameTags", key),
+                visible(json, "deathMessages", key),
+                collision(json, key),
+                names(json, "entities"),
+                names(json, "players"),
+                box(json, key),
+                JsonUtils.getBoolean(json, "joinable", true),
+                leadWay(json, name),
+                JsonUtils.getString(json, "leadOn", "").trim(),
+                JsonUtils.getString(json, "leadIs", "").trim(),
+                JsonUtils.getBoolean(json, "balance", false),
+                JsonUtils.getBoolean(json, "scoreboard", true));
+    }
+
+    private static String leadWay(JsonObject json, String team) {
+        String asked = JsonUtils.getString(json, "lead", "none").trim();
+        if ("none".equals(asked) || "topScore".equals(asked) || "appointed".equals(asked)
+                || "vote".equals(asked) || "claim".equals(asked)) { return asked; }
+        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, topScore, appointed, vote or claim, so it has no lead", team, asked);
+        return "none";
+    }
+
+    private static Team.EnumVisible visible(JsonObject json, String field, ResourceLocation key) {
+        String asked = JsonUtils.getString(json, field, "always").trim().toLowerCase(Locale.ROOT);
+        for (Team.EnumVisible held : Team.EnumVisible.values()) {
+            if (held.internalName.equals(asked)) { return held; }
+        }
+        ContentLog.LOGGER.error("Team file {} sets {} to '{}', which is not always, never, hideForOtherTeams or hideForOwnTeam, so it is always", key, field, asked);
+        return Team.EnumVisible.ALWAYS;
+    }
+
+    private static Team.CollisionRule collision(JsonObject json, ResourceLocation key) {
+        String asked = JsonUtils.getString(json, "collision", "always").trim().toLowerCase(Locale.ROOT);
+        for (Team.CollisionRule held : Team.CollisionRule.values()) {
+            if (held.name.equals(asked)) { return held; }
+        }
+        ContentLog.LOGGER.error("Team file {} sets collision to '{}', which is not always, never, pushOtherTeams or pushOwnTeam, so it is always", key, asked);
+        return Team.CollisionRule.ALWAYS;
+    }
+
+    private static List<String> names(JsonObject json, String field) {
+        List<String> found = new ArrayList<>();
+        if (!json.has(field) || !json.get(field).isJsonArray()) { return found; }
+        for (JsonElement entry : json.getAsJsonArray(field)) {
+            String named = entry.getAsString().trim();
+            if (!named.isEmpty()) { found.add(named); }
+        }
+        return found;
+    }
+
+    @Nullable private static int[] box(JsonObject json, ResourceLocation key) {
+        if (!json.has("spawnBox")) { return null; }
+        if (!json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) {
+            ContentLog.LOGGER.error("Team file {} has a spawnBox that is not six whole numbers, x y z to x y z, so nothing joins by where it spawns", key);
+            return null;
+        }
+        int[] box = new int[6];
+        int at = 0;
+        for (JsonElement entry : json.getAsJsonArray("spawnBox")) { box[at++] = entry.getAsInt(); }
+        for (int side = 0; side < 3; side++) {
+            if (box[side] > box[side + 3]) {
+                int swap = box[side];
+                box[side] = box[side + 3];
+                box[side + 3] = swap;
+            }
+        }
+        return box;
     }
 
     public static Map<Integer, Map<String, String>> gameRuleFile(ResourceLocation key, String contents) {

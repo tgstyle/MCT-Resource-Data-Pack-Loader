@@ -171,6 +171,14 @@ public final class BeardSewers {
         int walledOff = 0;
         List<RailPiece> subways = BeardRails.subways(world, piece.getBoundingBox());
         for (int row = least; row <= most; row++) {
+            if (BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
+                lining = lining();
+                walk = walk();
+                water = water();
+                light = light();
+                moss = moss();
+                vine = vine();
+            }
             int index = row - graded.start;
             if (index < 0 || index >= graded.profile.length) { continue; }
             int level = graded.profile[index];

@@ -112,10 +112,6 @@ public final class BeardRails {
 
     private static int holdStation(RailPiece rail, int[] profile, int rowLeast, int rows) {
         if (!rail.subway() || rail.stations().isEmpty()) { return 0; }
-        List<StructureComponent> mine = ContentBeard.components();
-        int wellRow = mine == null || mine.isEmpty() ? rail.rowLeast()
-                : rail.alongX() ? (mine.get(0).getBoundingBox().minX + mine.get(0).getBoundingBox().maxX) / 2
-                                : (mine.get(0).getBoundingBox().minZ + mine.get(0).getBoundingBox().maxZ) / 2;
         int half = Math.max(0, BeardStations.length() / 2);
         int held = 0;
         for (StructureBoundingBox box : rail.stations()) {
@@ -714,6 +710,12 @@ public final class BeardRails {
     }
 
     public static void lay(RailPiece rail, World world, StructureBoundingBox clip) {
+        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
+        try { laid(rail, world, clip); }
+        finally { BeardBiome.leave(); }
+    }
+
+    private static void laid(RailPiece rail, World world, StructureBoundingBox clip) {
         boolean sub = rail.subway();
         if (!ContentBeard.wanted()) { return; }
         StructureBoundingBox box = rail.getBoundingBox();
@@ -774,6 +776,19 @@ public final class BeardRails {
         int[] rising = rail.rising(world);
         if (rising != null && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} climbs out over the {} row(s) {} of row {}, {} of ramp to rise {} block(s) and the rest of it open track", rail.line(), rising[1] > 0 ? rail.rowMost() - rising[0] : rising[0] - rail.rowLeast(), rising[1] > 0 ? "beyond" : "short", rising[0], subwayDepth() * climb(true), subwayDepth()); }
         for (int row = least; row <= most; row++) {
+            if (BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
+                bed = BeardRoads.pathBlock(sub ? "villageSubwayBedBlock" : "villageRailBedBlock", sub ? Config.worldgen.villageSubwayBedBlock : Config.worldgen.villageRailBedBlock, Blocks.GRAVEL.getDefaultState());
+                tie = BeardRoads.pathBlock(sub ? "villageSubwayTieBlock" : "villageRailTieBlock", sub ? Config.worldgen.villageSubwayTieBlock : Config.worldgen.villageRailTieBlock, Blocks.PLANKS.getDefaultState());
+                track = oriented(BeardRoads.pathBlock(sub ? "villageSubwayBlock" : "villageRailBlock", sub ? Config.worldgen.villageSubwayBlock : Config.worldgen.villageRailBlock, Blocks.RAIL.getDefaultState()), alongX);
+                powered = powered(oriented(BeardRoads.pathBlock(sub ? "villageSubwayPowerBlock" : "villageRailPowerBlock", sub ? Config.worldgen.villageSubwayPowerBlock : Config.worldgen.villageRailPowerBlock, Blocks.GOLDEN_RAIL.getDefaultState()), alongX));
+                powerBase = BeardRoads.pathBlock(sub ? "villageSubwayPowerBase" : "villageRailPowerBase", sub ? Config.worldgen.villageSubwayPowerBase : Config.worldgen.villageRailPowerBase, Blocks.REDSTONE_BLOCK.getDefaultState());
+                shoulderBlock = BeardRoads.pathBlock(sub ? "villageSubwayShoulderBlock" : "villageRailShoulderBlock", sub ? Config.worldgen.villageSubwayShoulderBlock : Config.worldgen.villageRailShoulderBlock, Blocks.AIR.getDefaultState());
+                light = BeardRoads.pathBlock(sub ? "villageSubwayTunnelLightBlock" : "villageRailTunnelLightBlock", sub ? Config.worldgen.villageSubwayTunnelLightBlock : Config.worldgen.villageRailTunnelLightBlock, Blocks.AIR.getDefaultState());
+                support = BeardRoads.pathBlock("villageRailSupportBlock", Config.worldgen.villageRailSupportBlock, Blocks.LOG.getDefaultState());
+                deck = BeardRoads.pathBlock("villageRailDeckBlock", Config.worldgen.villageRailDeckBlock, Blocks.PLANKS.getDefaultState());
+                barrier = BeardRoads.pathBlock("villageRailBarrierBlock", Config.worldgen.villageRailBarrierBlock, Blocks.AIR.getDefaultState());
+                linings = BeardRoads.pathPalette(sub ? "villageSubwayTunnelBlock" : "villageRailTunnelBlock", sub ? Config.worldgen.villageSubwayTunnelBlock : Config.worldgen.villageRailTunnelBlock, Blocks.AIR.getDefaultState());
+            }
             int level = grade.at(row);
             if (level == Integer.MIN_VALUE) { continue; }
             int flat = sub ? BeardStations.heldLevel(rail, grade, row) : Integer.MIN_VALUE;

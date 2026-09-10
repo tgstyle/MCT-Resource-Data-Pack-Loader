@@ -583,7 +583,14 @@ public final class BeardRoads {
             if (trace.length() > 0) { ContentLog.LOGGER.debug("The road at {}, {} roofs row(s){}, lit where starred, with {} for the light", box.minX, box.minZ, trace, light.getBlock().getRegistryName()); }
         }
         if (!crossed.isEmpty() && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} sees {} crossing road box(es): {}", box.minX, box.minZ, crossed.size(), crossed); }
+        int middle = (acrossLeast + acrossMost) / 2;
         for (int i = Math.max(0, least - start); i < profile.length && start + i <= most; i++) {
+            if (piece instanceof mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece && BeardBiome.moved(world, alongX ? start + i : middle, alongX ? middle : start + i)) {
+                path = pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+                gravel = pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, ((mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()));
+                lining = tunnelBlock();
+                light = pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState());
+            }
             boolean tunnel = tunnels[i];
             for (int across = acrossLeast; across <= acrossMost; across++) {
                 int x = alongX ? start + i : across;
@@ -2308,8 +2315,10 @@ public final class BeardRoads {
     private static final int MIX_MOST = 256;
     private static final Map<String, Palette> PATH_MIXES = new HashMap<>();
 
-    public static Palette pathPalette(String key, String fromConfig, IBlockState vanilla) {
-        String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig).trim();
+    public static Palette pathPalette(String key, String fromConfig, IBlockState vanilla) { return pathPalette(key, fromConfig, vanilla, BeardBiome.building()); }
+
+    public static Palette pathPalette(String key, String fromConfig, IBlockState vanilla, @Nullable String section) {
+        String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig, section).trim();
         if (named.isEmpty()) { return new Palette(new IBlockState[] { vanilla }); }
         if (PATH_GENERATION.stale()) { PATH_BLOCKS.clear(); PATH_MIXES.clear(); }
         Palette held = PATH_MIXES.get(named);
@@ -2341,10 +2350,12 @@ public final class BeardRoads {
         return made;
     }
 
-    public static IBlockState pathBlock(String key, String fromConfig, IBlockState vanilla) {
-        String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig);
+    public static IBlockState pathBlock(String key, String fromConfig, IBlockState vanilla) { return pathBlock(key, fromConfig, vanilla, BeardBiome.building()); }
+
+    public static IBlockState pathBlock(String key, String fromConfig, IBlockState vanilla, @Nullable String section) {
+        String named = ContentControl.text(ContentControl.VILLAGES, key, fromConfig, section);
         if (named.isEmpty()) { return vanilla; }
-        if (named.indexOf(',') >= 0) { return pathPalette(key, fromConfig, vanilla).first(); }
+        if (named.indexOf(',') >= 0) { return pathPalette(key, fromConfig, vanilla, section).first(); }
         if (PATH_GENERATION.stale()) { PATH_BLOCKS.clear(); PATH_MIXES.clear(); }
         IBlockState held = PATH_BLOCKS.get(named);
         if (held != null) { return held; }
