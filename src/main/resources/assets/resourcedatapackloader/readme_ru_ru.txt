@@ -258,13 +258,16 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     villages         entities         gates            dimensions
     gamerules        worldtemplates   worldintro       pathintersects
     hardness         blastplaster     player_loot      overrides
+    teams            scoring          caveregions      exposures
+    structuremaps    citymaps         portalframes     block_drops
+    texts
 
 Блоки бывают таких видов, вид задаёт поле "type":
 
     basic   ore     falling   slab    stairs   fence    door
     pane    wall    ladder    torch   crop     flower   cane
     log     leaves  sapling   vine    portal   trapdoor fence_gate
-    banner
+    banner  container
 
 а предметы таких:
 
@@ -302,6 +305,12 @@ creativeTab, как любой предмет, перечисляет в potionT
 карточка, слайд-шоу, при желании с музыкой позади. Сами слова это обычные файлы
 .txt в assets/<yourpack>/texts. Проигрывать можно один раз на игрока или при
 каждом входе.
+
+Файл teams/<name>.json выставляет на табло игры сторону, в которую при
+появлении вступают мобы, игроки или всё, что появляется в углу мира, а файл
+scoring/<name>.json это цель, которая засчитывает этим сторонам убийства и
+смерти, заканчивает раунд по счёту или по времени, показывает итоги чатом или
+карточкой и может сбросить карту к следующему раунду.
 
 ЦЕЛЫЕ МИРЫ
 ----------

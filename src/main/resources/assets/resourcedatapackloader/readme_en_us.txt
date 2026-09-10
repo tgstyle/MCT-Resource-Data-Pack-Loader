@@ -250,13 +250,16 @@ Each of these is a folder under assets/<yourpack>:
     villages         entities         gates            dimensions
     gamerules        worldtemplates   worldintro       pathintersects
     hardness         blastplaster     player_loot      overrides
+    teams            scoring          caveregions      exposures
+    structuremaps    citymaps         portalframes     block_drops
+    texts
 
 Blocks come in these shapes, set by the "type" field:
 
     basic   ore     falling   slab    stairs   fence    door
     pane    wall    ladder    torch   crop     flower   cane
     log     leaves  sapling   vine    portal   trapdoor fence_gate
-    banner
+    banner  container
 
 and items in these:
 
@@ -292,6 +295,12 @@ A worldintro/<name>.json file plays a run of pages when somebody enters the
 world, before they take control: scrolling text over a picture, a title card, a
 slideshow, with music behind it if you want. The words are plain .txt files
 under assets/<yourpack>/texts. It can play once per player or on every join.
+
+A teams/<name>.json file fields a side on the game's scoreboard that mobs,
+players or anything spawning in a corner of the world join as they arrive, and
+a scoring/<name>.json file is an objective that scores kills and deaths to
+those sides, ends a round on a score or a clock, shows the standings as chat
+or as a card, and can reset the map for the next round.
 
 WHOLE WORLDS
 ------------

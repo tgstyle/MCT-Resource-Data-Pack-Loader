@@ -11,7 +11,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) makes a superflat world holding one deliberately enormous village, grown to a thousand plots and pinned to the origin, with the streets dressed as concrete roads, sidewalks, dashed centers and lamp posts, and the buildings composed from structure maps in four sizes and three facades rather than from vanilla houses.
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) is that same city on a rubic world with its ceiling at 512 and the clouds lifted to 384, so towers stand 256 blocks over the street, and every district rolls a block depth of 16, 32 or 64 so a coarse grid mixes with a fine one.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
-- [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, and after ten minutes the standings come up as a card.
+- [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
 
 ---
 
@@ -2961,7 +2961,7 @@ Text files go in `<namespace>/texts/*.txt`. Plain text, one paragraph to a line,
 
 A scrolling page moves to the next one when its time is up. The last page never advances on its own, it waits. Along the bottom are **Next Page** and **Skip All**, or a single **Continue to World** on the last page. Escape does the same as Skip All. Static pages center every line. Scrolling pages keep to a fixed column, the way the credits do.
 
-In singleplayer the world pauses behind the intro, so nothing creeps up on the player while they read. The one exception is land still being made when the intro opens: then the making carries on behind the pages, and the player stays held as a spectator until they continue to the world, even if the run finishes first. On a server the world keeps running, and a vanilla client never sees the intro at all and joins as normal.
+In singleplayer the world pauses behind the intro, so nothing creeps up on the player while they read. The one exception is land still being made when the intro opens: then the making carries on behind the pages, and the player stays held as a spectator until they continue to the world, even if the run finishes first. On a server the world keeps running, and a vanilla client never sees the intro at all and joins as normal. The welcome greeting waits until the pages are closed, so it is not lost behind them.
 
 `once` is remembered in the player's saved data and survives death. `/rdplserver intro` clears it for whoever runs it, so the intro plays again the next time they join. It does not replay on the spot, which keeps it from being a way back into the entry sequence in the middle of a game.
 
@@ -3029,6 +3029,8 @@ A side is a real team on the game's own scoreboard, so `/scoreboard teams list` 
 | `lead` | text | `none` | How the side's lead is chosen: `none`, `topScore` for whoever is highest on the objective `leadOn` names, `appointed` for the player `leadIs` names, `vote` for whoever the members vote for, or `claim` for whoever claims it first. A lead is a label and a color and nothing more: it grants no power, so a lead who logs out breaks nothing |
 | `leadOn` | text | empty | With `topScore`, the objective the members are ranked by. It is worked out afresh every time it is read, so it follows the score |
 | `leadIs` | text | empty | With `appointed`, the player who leads |
+| `balance` | boolean | `false` | Whether `/rdpl team join` with no name may put a player here. Among the sides that allow it, the one with the fewest players is chosen |
+| `scoreboard` | boolean | `true` | Whether the side stands as a team on the game's scoreboard. Off fields no team at all: its mobs wear the side's color in their name instead, nothing keeps them from fighting each other, and no points land on it, since scoring goes by the team |
 
 Three ways to join, and a side may use all of them. `entities` names entity ids, and anything of that type joins as it spawns, which is how a pack gives mobs sides without touching the mobs. `spawnBox` claims a corner of the world, and anything spawning inside joins, which suits an arena where both sides use the same mob. `players` names players outright. Beyond those, a player can join with `/rdpl team join <name>` unless the side sets `joinable` to false, and leave with `/rdpl team leave`.
 
@@ -3806,7 +3808,7 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
 | `pregenLogo` | Where the logo stands when pregeneration finishes: `left`, `center` or `right`, above the mid-screen text, shown for a few seconds and then fading out with the fog | It is always shown; an unknown word is read as `center` |
 | `pregenBackup` | Copy the world to a pristine backup once pregeneration finishes, while the players are still held. Generation is then paid once: a later reset, or a new world on the same pack and seed, restores the copy instead of generating again, which is far faster than pregenerating twice. The copy is kept outside the save, at `rdpl-pristine/<world>` beside it, so another mod's backups do not sweep it up and it does not appear in a folder they manage | `false` |
 | `pregenBackupSays` | The mid-screen line players are shown while that copy is made, with the percentage after it. Empty shows nothing and the copy is made quietly | `Pack requested world backup` |
-| `resetSays` | The mid-screen line players are shown while `/rdpl reset` puts the map back. Empty resets quietly | `Pack requested map reset` |
+| `resetSays` | The mid-screen line players are shown while `/rdplserver reset` or a round's end puts the map back. Empty resets quietly | `Pack requested map reset` |
 | `resetSendsTo` | Where players are put by a reset: `spawn`, a position as `x,y,z`, or `dimension:x,y,z` to send them into another world, which is how a reset drops everyone in a lobby rather than back in the arena | `spawn` |
 | `resetRuns` | A function run after a reset has cleared the map, named `namespace:path`. This is what builds the arena again, since a pack that made its map from a function can simply run it a second time. Empty runs nothing | empty |
 | `resetClearsEntities` | Remove every entity that is not a player. Mobs, dropped items and experience all go, which is what leaves the map as it started | `true` |
@@ -5244,15 +5246,15 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl biome here` | none | The biome you are standing in |
 | `/rdpl biome find <name>` | the server's | Linked. Passed to `/rdplserver biome find`, the only side that knows the seed |
 | `/rdpl team` | none | The sides a pack has fielded, each in its own color, which one you are on, and who leads each |
-| `/rdpl team join <name>` | none | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into |
+| `/rdpl team join [name]` | none | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into. Leave the name off to be put on the side with the fewest players among those that take players by `balance` |
 | `/rdpl team leave` | none | Leave the side you are on |
 | `/rdpl team vote <player>` | none | Vote for who leads your side, where the pack chooses its lead by a vote. A tie leaves nobody leading |
 | `/rdpl team claim` | none | Take the lead of your side, where the pack lets it be claimed and nobody on the side holds it |
-| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
+| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
 
-**Which server subcommands are linked, and why the rest are not.** A server subcommand gets a passthrough exactly when the client has no meaning of its own for that name: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` and `goto` can only ever mean the server's, so `/rdpl` hands them over. The six the client also has, `reload`, `list`, `which`, `unused`, `config` and `biome`, keep their own meaning of your packs and your client, and forwarding them would take that away. `biome find` is the one part of a shared name that belongs to the server anyway, since only the server knows the world seed, so that one form is passed on while `biome list` and `biome here` stay with you. That also settles the permission: the server's own operator check decides it, and a client can neither cheat it nor be told a fabricated answer.
+**Which server subcommands are linked, and why the rest are not.** A server subcommand gets a passthrough exactly when the client has no meaning of its own for that name: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` and `team` can only ever mean the server's, so `/rdpl` hands them over. The six the client also has, `reload`, `list`, `which`, `unused`, `config` and `biome`, keep their own meaning of your packs and your client, and forwarding them would take that away. `biome find` is the one part of a shared name that belongs to the server anyway, since only the server knows the world seed, so that one form is passed on while `biome list` and `biome here` stay with you. That also settles the permission: the server's own operator check decides it, and a client can neither cheat it nor be told a fabricated answer.
 
-On a dedicated server, `/rdplserver` does the same for the server's own copy of the folder. The Level column is the permission level a sender needs: `3` is an operator, `2` also admits command blocks, `0` is any player, and `4` is above operator and reaches nobody. Only `intro` and the three `goto` forms are open below operator, and `goto` is the one a pack can move.
+On a dedicated server, `/rdplserver` does the same for the server's own copy of the folder. The Level column is the permission level a sender needs: `3` is an operator, `2` also admits command blocks, `0` is any player, and `4` is above operator and reaches nobody. Only `intro`, `team` and the three `goto` forms are open below operator, and `goto` is the one a pack can move.
 
 | Command | Level | What it does |
 | --- | --- | --- |
@@ -5280,11 +5282,13 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver vein <entry> [radius]` | 3 | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it |
 | `/rdplserver pregen stop` | 3 | End it |
 | `/rdplserver intro` | 0 | Let the world intro play again on your next join. Any player may run it, and it only ever clears their own |
+| `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0 | The same as the `/rdpl team` forms above, which are passed to these |
+| `/rdplserver reset` | 3 | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | Take you to the nearest one nobody has been to yet, looking without generating the land on the way |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Take you to the one before it, stepping back through where this session has sent you |
 
-**Opening `goto` up.** Every part of `/rdplserver` needs an operator, level 3, apart from `intro`, which is a player's own command and always level 0. The three `goto` forms are the one thing a pack decides: each carries a permission level of its own that a pack or the config may lower, separately from the other two and from the rest of the command.
+**Opening `goto` up.** Every part of `/rdplserver` needs an operator, level 3, apart from `intro` and `team`, which are a player's own commands and always level 0. The three `goto` forms are the one thing a pack decides: each carries a permission level of its own that a pack or the config may lower, separately from the other two and from the rest of the command.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -5308,7 +5312,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 The value is the permission level a sender needs. `3` (operator) is the default. `2` also admits command blocks, so a pack can put a jump on a button or pressure plate without exposing the rest of `/rdplserver`. `0` opens it to any player. The three settings are independent: for example, `next` open to command blocks for a village tour while `back` stays operator-only.
 
-Because `intro` is open to everyone, any player reaches `/rdplserver` itself, so every other subcommand checks for operator on its own and refuses with a message. Tab completion matches: a non-operator is offered `intro`, and `goto` as well once a level lets them use it.
+Because `intro` is open to everyone, any player reaches `/rdplserver` itself, so every other subcommand checks for operator on its own and refuses with a message. Tab completion matches: a non-operator is offered `intro`, `team` where a pack fields a side, and `goto` as well once a level lets them use it.
 
 `gotoPlaceLevels` overrides the three settings for single places, as `name=level` entries, as in the example above. The name is whatever you would type after `goto`: a vanilla one such as `Village` or `Mansion`, or a name registered with `locateAs` on an imprint entry. Matching ignores case. A level of `4` is above operator and closes that place to everyone — the way to hide one place while the rest of `goto` is open.
 
@@ -5318,7 +5322,7 @@ Tab completion follows the same rules, so after `goto` a sender is offered only 
 
 These sit in the `commands` group, so `control.commands` in the config decides whether a pack may set them at all, and `off` there keeps everything at operator whatever a pack asks for.
 
-**`/rdpl` reaches the server command too.** Anything `/rdpl` does not handle itself, `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro` and `goto`, is passed straight through to `/rdplserver` and offered in tab completion, so there is one command to type in single player. It is passed on word for word and the server decides as it always would, permissions and all, so nothing is opened up by typing the shorter name. The subcommands both have, `reload`, `list`, `which`, `unused`, `biome` and `config`, stay with `/rdpl` and mean the client's own packs. `biome find` is the one exception inside a shared name: only the server knows the world seed, so that form is passed on while `biome list` and `biome here` answer from your own client.
+**`/rdpl` reaches the server command too.** Anything `/rdpl` does not handle itself, `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` and `team`, is passed straight through to `/rdplserver` and offered in tab completion, so there is one command to type in single player. It is passed on word for word and the server decides as it always would, permissions and all, so nothing is opened up by typing the shorter name. The subcommands both have, `reload`, `list`, `which`, `unused`, `biome` and `config`, stay with `/rdpl` and mean the client's own packs. `biome find` is the one exception inside a shared name: only the server knows the world seed, so that form is passed on while `biome list` and `biome here` answer from your own client.
 
 **Day-to-day editing:** `/rdpl reload textures` is much faster than F3+T in a large modpack. F3+T still works and reloads everything. Use plain `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 
@@ -5333,6 +5337,7 @@ These sit in the `commands` group, so `control.commands` in the config decides w
 - The folder can be moved or renamed with the `rootDirectory` option in `config/mct_resourcedatapackloader_mixin.cfg`. An absolute path works too, and it needs a restart.
 - Blockstates naming a bare vanilla model inherit vanilla's textures too. Parent models such as `cube_all` and `cross` take their textures from the blockstate and are fine.
 - `forge_marker: 1` does not support multipart, so vine blockstates have to be plain vanilla multipart with the textures baked into the model.
+- The Forge loading screen is drawn in dark colors, with this mod's logo in place of Forge's. `darkSplash` in the `client` config category puts Forge's own colors back; colors set by hand in `config/splash.properties` are left alone either way, and it needs a restart.
 
 ## When something doesn't work
 

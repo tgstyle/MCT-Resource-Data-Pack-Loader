@@ -167,6 +167,15 @@ scrolling or still text over pictures, backgrounds that cycle, music behind the
 run. The player gets Next Page and Skip All, and the world stays paused behind it
 in singleplayer. It can play once per player per world or on every join.
 
+# Teams and scoring
+
+A pack can field sides on the vanilla scoreboard that mobs, players or anything
+spawning in a corner of the world join as they arrive, and objectives that score
+kills and deaths to those sides. A round ends on a score or a clock, the
+standings come up as chat or as a card, the map can reset itself for the next
+round, and rounds are counted into a match. The Kamikaze demo in `example/` is
+that, ready to drop in.
+
 # Pregeneration
 
 A pack can hand a player a world whose land is already there. `pregenOnNewWorld`

@@ -267,13 +267,16 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     villages         entities         gates            dimensions
     gamerules        worldtemplates   worldintro       pathintersects
     hardness         blastplaster     player_loot      overrides
+    teams            scoring          caveregions      exposures
+    structuremaps    citymaps         portalframes     block_drops
+    texts
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 
     basic   ore     falling   slab    stairs   fence    door
     pane    wall    ladder    torch   crop     flower   cane
     log     leaves  sapling   vine    portal   trapdoor fence_gate
-    banner
+    banner  container
 
 und Items in diesen:
 
@@ -314,6 +317,13 @@ die Welt betritt, bevor er die Kontrolle bekommt: laufender Text über einem
 Bild, eine Titelkarte, eine Diashow, auf Wunsch mit Musik dahinter. Die Worte
 sind einfache .txt-Dateien unter assets/<yourpack>/texts. Es kann einmal je
 Spieler oder bei jedem Beitritt laufen.
+
+Eine Datei teams/<name>.json stellt eine Seite auf dem Scoreboard des Spiels
+auf, der Mobs, Spieler oder alles, was in einer Ecke der Welt spawnt, beim
+Erscheinen beitreten, und eine Datei scoring/<name>.json ist ein Ziel, das
+Kills und Tode diesen Seiten anrechnet, eine Runde bei einem Stand oder nach
+einer Zeit beendet, den Stand als Chat oder als Karte zeigt und die Karte für
+die nächste Runde zurücksetzen kann.
 
 GANZE WELTEN
 ------------
