@@ -79,7 +79,7 @@ public final class ContentBiomes {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff() || !Config.content.biomes()) { return; }
         Json.eachFile(PackManager.BIOMES, "biome file", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             BiomeDef def = ContentBiomeParser.parse(key, contents);

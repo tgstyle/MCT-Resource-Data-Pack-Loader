@@ -44,6 +44,8 @@ public final class Config {
 
     public static boolean contentOff() { return !content.load() || content.vanillaClients(); }
 
+    public static boolean definitionsOff() { return !content.load(); }
+
     public static final class Content {
         private final ModConfigSpec.BooleanValue load;
         private final ModConfigSpec.BooleanValue vanillaClients;
@@ -53,6 +55,9 @@ public final class Config {
         private final ModConfigSpec.BooleanValue brewing;
         private final ModConfigSpec.BooleanValue villagers;
         private final ModConfigSpec.BooleanValue entities;
+        private final ModConfigSpec.BooleanValue biomes;
+        private final ModConfigSpec.BooleanValue dimensions;
+        private final ModConfigSpec.BooleanValue villages;
         private final ModConfigSpec.BooleanValue overrides;
         private final ModConfigSpec.BooleanValue hardness;
         private final ModConfigSpec.BooleanValue shovelPaths;
@@ -73,6 +78,9 @@ public final class Config {
             brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
             villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
             entities = builder.comment("Register the entity variants described by entities/*.json in packs. Requires a restart [Default=true]").worldRestart().define("entities", true);
+            biomes = builder.comment("Register the biomes described by biomes/*.json in packs and place them into world generation. Requires a restart [Default=true]").worldRestart().define("biomes", true);
+            dimensions = builder.comment("Register the dimensions described by dimensions/*.json in packs. Turning this off leaves worlds that contain them unable to load those dimensions. Requires a restart [Default=true]").worldRestart().define("dimensions", true);
+            villages = builder.comment("Register the village plots described by villages/*.json in packs so cities and villages can build them. Requires a restart [Default=true]").worldRestart().define("villages", true);
             overrides = builder.comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]").define("overrides", true);
             hardness = builder.comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]").define("hardness", true);
             shovelPaths = builder.comment("Let a shovel turn blocks marked behavesAs path into a path, and revert a path while sneaking [Default=true]").define("shovelPaths", true);
@@ -100,6 +108,12 @@ public final class Config {
         public boolean villagers() { return loaded() ? villagers.get() : ConfigCore.flag("content.villagers", true); }
 
         public boolean entities() { return loaded() ? entities.get() : ConfigCore.flag("content.entities", true); }
+
+        public boolean biomes() { return loaded() ? biomes.get() : ConfigCore.flag("content.biomes", true); }
+
+        public boolean dimensions() { return loaded() ? dimensions.get() : ConfigCore.flag("content.dimensions", true); }
+
+        public boolean villages() { return loaded() ? villages.get() : ConfigCore.flag("content.villages", true); }
 
         public boolean overrides() { return loaded() ? overrides.get() : ConfigCore.flag("content.overrides", true); }
 
@@ -185,17 +199,17 @@ public final class Config {
 
         public boolean blockRecipes() { return blockRecipes.get(); }
 
-        public List<? extends String> recipeWhitelist() { return recipeWhitelist.get(); }
+        public List<String> recipeWhitelist() { return loaded() ? List.copyOf(recipeWhitelist.get()) : List.of("minecraft"); }
 
-        public List<? extends String> blockedRecipeMods() { return blockedRecipeMods.get(); }
+        public List<String> blockedRecipeMods() { return loaded() ? List.copyOf(blockedRecipeMods.get()) : List.of(); }
 
         public String recipeMatch() { return recipeMatch.get(); }
 
         public boolean blockFurnaceRecipes() { return blockFurnaceRecipes.get(); }
 
-        public List<? extends String> furnaceWhitelist() { return furnaceWhitelist.get(); }
+        public List<String> furnaceWhitelist() { return loaded() ? List.copyOf(furnaceWhitelist.get()) : List.of("minecraft"); }
 
-        public List<? extends String> blockedFurnaceMods() { return blockedFurnaceMods.get(); }
+        public List<String> blockedFurnaceMods() { return loaded() ? List.copyOf(blockedFurnaceMods.get()) : List.of(); }
 
         public boolean logBlockedRecipes() { return logBlockedRecipes.get(); }
     }
@@ -225,6 +239,8 @@ public final class Config {
         private final ModConfigSpec.BooleanValue lenientPaths;
         private final ModConfigSpec.BooleanValue unbreakableSpawners;
         private final ModConfigSpec.BooleanValue experimentalWarning;
+        private final ModConfigSpec.BooleanValue privacy;
+        private final ModConfigSpec.BooleanValue darkSplash;
 
         private Tweaks(ModConfigSpec.Builder builder) {
             builder.comment("Small changes to how vanilla behaves").push("tweaks");
@@ -232,6 +248,8 @@ public final class Config {
             lenientPaths = builder.comment("Paths and tilled ground can be made under a block and stay there when one is placed above [Default=true]").define("lenientPaths", true);
             unbreakableSpawners = builder.comment("Mob spawners cannot be mined or blown up. Creative mode still removes them. Requires a restart [Default=false]").define("unbreakableSpawners", false);
             experimentalWarning = builder.comment("Show the game's experimental settings warning when a world is made or opened. Off answers it as if you had clicked proceed [Default=false]").define("experimentalWarning", false);
+            privacy = builder.comment("Turn off the game's telemetry and chat reporting: no telemetry event is sent or logged, the client signs no chat message, the server keeps no chat session and does not require one, so no message anybody sends can be reported. A pack cannot set this. Takes effect on the next world or server joined [Default=true]").define("privacy", true);
+            darkSplash = builder.comment("Draw the loading screen dark with the pack loader's logo in place of the game's: the logo is swapped as the screen is made, and the game's own Monochrome Logo option is turned on when it is still off, which takes effect at the next start. Off leaves the option as it is [Default=true]").define("darkSplash", true);
             builder.pop();
         }
 
@@ -242,9 +260,14 @@ public final class Config {
         public boolean unbreakableSpawners() { return loaded() ? unbreakableSpawners.get() : ConfigCore.flag("tweaks.unbreakableSpawners", false); }
 
         public boolean experimentalWarning() { return loaded() ? experimentalWarning.get() : ConfigCore.flag("tweaks.experimentalWarning", false); }
+
+        public boolean privacy() { return loaded() ? privacy.get() : ConfigCore.flag("tweaks.privacy", true); }
+
+        public boolean darkSplash() { return loaded() ? darkSplash.get() : ConfigCore.flag("tweaks.darkSplash", true); }
     }
 
     public static final class Worldgen {
+        private final ModConfigSpec.BooleanValue load;
         private final ModConfigSpec.BooleanValue worldgenDebug;
         private final ModConfigSpec.ConfigValue<String> worldTemplate;
         private final ModConfigSpec.ConfigValue<String> worldSeed;
@@ -309,13 +332,15 @@ public final class Config {
         private final ModConfigSpec.IntValue waterCreatureCap;
         private final ModConfigSpec.IntValue monsterSpawnLight;
         private final ModConfigSpec.IntValue caveRegionPlainWeight;
+        private final ModConfigSpec.IntValue caveRegionCells;
+        private final ModConfigSpec.IntValue caveRegionCellsY;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureSpacing;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureSeparation;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureMost;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureSpawners;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureMinDistanceFromSpawn;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureBiomes;
-        private final ModConfigSpec.BooleanValue structureBiomesAreBlacklist;
+        private final ModConfigSpec.ConfigValue<List<? extends String>> structureBiomesAreBlacklist;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureSpawns;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureAt;
         private final ModConfigSpec.ConfigValue<List<? extends String>> structureAdaptation;
@@ -333,6 +358,7 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<List<? extends String>> villageBlocks;
         private final ModConfigSpec.IntValue villagePlotsLeast;
         private final ModConfigSpec.IntValue villagePlotsMost;
+        private final ModConfigSpec.BooleanValue villagePlotsBackRow;
         private final ModConfigSpec.ConfigValue<String> villageLayout;
         private final ModConfigSpec.ConfigValue<String> villagePathCenterBlock;
         private final ModConfigSpec.IntValue villagePathCenterDash;
@@ -396,6 +422,57 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> villagePathPierLoot;
         private final ModConfigSpec.ConfigValue<List<? extends String>> villagePathIntersects;
         private final ModConfigSpec.ConfigValue<List<? extends String>> villageDecor;
+        private final ModConfigSpec.IntValue villageSubwayLines;
+        private final ModConfigSpec.IntValue villageSubwayDepth;
+        private final ModConfigSpec.IntValue villageSubwaySpacing;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayDirection;
+        private final ModConfigSpec.IntValue villageSubwayWidth;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayTrackSeat;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayBedBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayTieBlock;
+        private final ModConfigSpec.IntValue villageSubwayTieRun;
+        private final ModConfigSpec.IntValue villageSubwayTracks;
+        private final ModConfigSpec.IntValue villageSubwayTrackGap;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayShoulderBlock;
+        private final ModConfigSpec.IntValue villageSubwayShoulderWidth;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayPowerBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayPowerBase;
+        private final ModConfigSpec.IntValue villageSubwayPowerRun;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayTunnelBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayTunnelLightBlock;
+        private final ModConfigSpec.IntValue villageSubwayTunnelLightRun;
+        private final ModConfigSpec.IntValue villageSubwayClimb;
+        private final ModConfigSpec.IntValue villageSubwayTail;
+        private final ModConfigSpec.IntValue villageSubwayStationLength;
+        private final ModConfigSpec.IntValue villageSubwayStationRun;
+        private final ModConfigSpec.IntValue villageSubwayPlatformWidth;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayPlatformBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayStairBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayRailingBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayBenchBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayBenchEndBlock;
+        private final ModConfigSpec.IntValue villageSubwayBenchLength;
+        private final ModConfigSpec.IntValue villageSubwaySurfaces;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayStation;
+        private final ModConfigSpec.ConfigValue<String> villageSubwayEntrance;
+        private final ModConfigSpec.IntValue villageSubwayStationFoot;
+        private final ModConfigSpec.IntValue villageSubwayStationRepeat;
+        private final ModConfigSpec.ConfigValue<String> villageSewerBlock;
+        private final ModConfigSpec.IntValue villageSewerDepth;
+        private final ModConfigSpec.IntValue villageSewerHeight;
+        private final ModConfigSpec.IntValue villageSewerWidth;
+        private final ModConfigSpec.ConfigValue<String> villageSewerWaterBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSewerWalkBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSewerLightBlock;
+        private final ModConfigSpec.IntValue villageSewerLightRun;
+        private final ModConfigSpec.ConfigValue<String> villageSewerLadderBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSewerCoverBlock;
+        private final ModConfigSpec.ConfigValue<String> villageSewerMossBlock;
+        private final ModConfigSpec.IntValue villageSewerMossChance;
+        private final ModConfigSpec.ConfigValue<String> villageSewerVineBlock;
+        private final ModConfigSpec.IntValue villageSewerVineChance;
+        private final ModConfigSpec.BooleanValue villageSewerWellEntrance;
         private final ModConfigSpec.ConfigValue<List<? extends String>> worldGravity;
         private final ModConfigSpec.ConfigValue<List<? extends String>> worldFallDamage;
         private final ModConfigSpec.ConfigValue<List<? extends String>> worldJumpStrength;
@@ -421,15 +498,16 @@ public final class Config {
 
         private Worldgen(ModConfigSpec.Builder builder) {
             builder.comment("What generates in the world, and what is stopped from generating").push("worldgen");
+            load = builder.comment("Generate what the worldgen/*.json entries describe in new chunks. Chunks that already exist are not changed [Default=true]").define("load", true);
             worldgenDebug = builder.comment("Write the debug lines other messages refer to into logs/rdpl.log, such as which pack served a file and what each command did. Very verbose [Default=false]").define("worldgenDebug", false);
             worldTemplate = builder.comment("Which world template's settings apply. A pack adds one in worldtemplates/*.json and you name it here as namespace:name. 'auto' picks the template from the highest priority pack. Empty uses none [Default=auto]").define("worldTemplate", "auto");
             worldSeed = builder.comment("The seed every new world is made with, whatever was typed when it was made, written the same way it would be typed. Empty leaves the choice alone [Default=empty]").define("worldSeed", "");
             worldGameMode = builder.comment("Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose [Default=empty]").define("worldGameMode", "");
             worldName = builder.comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=empty]").define("worldName", "");
-            worldType = builder.comment("The world type the shaped world is built on, one of default, largebiomes or amplified. The shape below (heights, deep stone, sea level, bedrock, void) is generated as a world preset of its own, listed under World Type on the world screen and chosen there whatever was picked. Empty builds on default [Default=empty]").define("worldType", "");
+            worldType = builder.comment("The world type the shaped world is built on, one of default, largebiomes, amplified or flat; flat is a superflat overworld built from the generatorOptions layers, with the pack's cities on it. The shape below (heights, deep stone, sea level, bedrock, void) is generated as a world preset of its own, listed under World Type on the world screen and chosen there whatever was picked. Empty builds on default [Default=empty]").define("worldType", "");
             worldTypeExceptions = builder.comment("World types a player picks that the generated preset leaves alone, such as flat or debug_all_block_states. Empty means every choice is replaced [Default=[flat, debug_all_block_states]]").defineListAllowEmpty("worldTypeExceptions", List.of("flat", "debug_all_block_states"), () -> "", each -> each instanceof String);
             tellWorldType = builder.comment("Tell a player in chat, as they join a world made with the generated preset, which template shaped it. A pack cannot set this [Default=true]").define("tellWorldType", true);
-            generatorOptions = builder.comment("The overworld's terrain settings as a JSON object, the keys the 1.12.2 customized world type wrote. Read here: seaLevel and useLavaOceans. Only applied to a world as it is created. Empty leaves the terrain as the world type makes it [Default=empty]").define("generatorOptions", "");
+            generatorOptions = builder.comment("The overworld's terrain settings as a JSON object, the keys the 1.12.2 customized world type wrote. Read here: seaLevel and useLavaOceans. With worldType flat it is the layers instead, bottom up, as the 1.12.2 superflat text 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village or a list of layers, and a village, mineshaft or stronghold named after the biome turns that vanilla structure on. Only applied to a world as it is created. Empty leaves the terrain as the world type makes it [Default=empty]").define("generatorOptions", "");
             worldMinHeight = builder.comment("The lowest block of the overworld, a multiple of 16 down to -2032. The game's own bottom is -64; lower makes a deep world under the vanilla terrain, solid stone until the worldgen layer carves it or noiseCaves carries the game's caves down. Only applied through the generated preset [Default=-64]").defineInRange("worldMinHeight", -64, -2032, 2016);
             worldMaxHeight = builder.comment("The block above the overworld's top, a multiple of 16 up to 2032, at most 4064 above worldMinHeight. The game's own top is 320; higher leaves open sky above the vanilla terrain [Default=320]").defineInRange("worldMaxHeight", 320, -2016, 2032);
             deepStone = builder.comment("The block the world below the vanilla terrain is made of when worldMinHeight goes under -64, such as a pack's own deepslate. It blends into deepslate across the eight layers under -64 the way deepslate blends into stone. Empty keeps stone [Default=empty]").define("deepStone", "");
@@ -485,21 +563,23 @@ public final class Config {
             waterCreatureCap = builder.comment("The same cap for water mobs such as squid. Vanilla is 5. -1 leaves it alone [Default=-1]").defineInRange("waterCreatureCap", -1, -1, 1000);
             monsterSpawnLight = builder.comment("The brightest block light a hostile mob may still spawn in, on top of the vanilla checks. -1 keeps the vanilla rule alone. Spawners are not affected [Default=-1]").defineInRange("monsterSpawnLight", -1, -1, 15);
             caveRegionPlainWeight = builder.comment("The weight of plain, region-less underground against the cave regions' own weights. Higher leaves more of the underground without any region [Default=4]").defineInRange("caveRegionPlainWeight", 4, 0, 1000);
+            caveRegionCells = builder.comment("How wide a cave region cell is in blocks. Cave regions from packs are painted over the underground in cells about this size [Default=128]").defineInRange("caveRegionCells", 128, 16, 4096);
+            caveRegionCellsY = builder.comment("How tall a cave region cell is in blocks [Default=64]").defineInRange("caveRegionCellsY", 64, 16, 4096);
             structureSpacing = builder.comment("How far apart vanilla structures are seeded, in chunks, as structure=chunks entries: the 1.12.2 names temples, monuments, mansions, mineshafts, strongholds, netherbridges, endcities and villages, or any structure set id such as pillager_outposts. For mineshafts the number is one chunk in that many; for strongholds it is the ring distance [Default=[]]").defineListAllowEmpty("structureSpacing", List.of(), () -> "", each -> each instanceof String);
             structureSeparation = builder.comment("The closest two of a structure may be, in chunks, as structure=chunks entries; for strongholds it is the ring spread [Default=[]]").defineListAllowEmpty("structureSeparation", List.of(), () -> "", each -> each instanceof String);
             structureMost = builder.comment("The most of a structure a dimension may hold, as structure=count entries such as villages=100: once that many have been founded no chunk founds another, chunks pinned with structureAt aside. 0 or an absent entry sets no ceiling [Default=[]]").defineListAllowEmpty("structureMost", List.of(), () -> "", each -> each instanceof String);
             structureSpawners = builder.comment("What the mob spawner inside a vanilla structure spawns, as structure=namespace:entity entries, comma separated for a random pick. Only dungeons, mineshafts, netherbridges and strongholds build one; spawners other mods place are left alone [Default=[]]").defineListAllowEmpty("structureSpawners", List.of(), () -> "", each -> each instanceof String);
             structureMinDistanceFromSpawn = builder.comment("How far from the world spawn a structure starts, in blocks, as structure=blocks entries. Measured from the pack's worldSpawn when one is set, else from the world origin, since placement is decided before any spawn exists [Default=[]]").defineListAllowEmpty("structureMinDistanceFromSpawn", List.of(), () -> "", each -> each instanceof String);
             structureBiomes = builder.comment("Where a structure may generate, as structure=biome,biome entries naming biome ids or biome types such as SANDY [Default=[]]").defineListAllowEmpty("structureBiomes", List.of(), () -> "", each -> each instanceof String);
-            structureBiomesAreBlacklist = builder.comment("On, structureBiomes names the biomes to keep a structure out of. Off, only those biomes get it [Default=false]").define("structureBiomesAreBlacklist", false);
+            structureBiomesAreBlacklist = builder.comment("Direction of the biome lists, written as structure=true or structure=false, one per line. True takes the listed biomes away, false makes them the only ones [Default=false]").defineListAllowEmpty("structureBiomesAreBlacklist", List.of(), () -> "", each -> each instanceof String);
             structureSpawns = builder.comment("The mobs a structure spawns whatever the biome says, as structure=namespace:entity:weight:least:most entries, comma separated; an empty list after the = spawns nothing [Default=[]]").defineListAllowEmpty("structureSpawns", List.of(), () -> "", each -> each instanceof String);
-            structureAt = builder.comment("Structures pinned to exact spots, as structure=x,z entries in block coordinates, one per wanted instance. A pinned structure generates in that chunk and nowhere else [Default=[]]").defineListAllowEmpty("structureAt", List.of(), () -> "", each -> each instanceof String);
+            structureAt = builder.comment("Structures pinned to exact spots, as structure=x,z entries in block coordinates, one per wanted instance. A pinned structure generates in that chunk and nowhere else. city=x,z seats the center district of the city whose region holds that spot [Default=[]]").defineListAllowEmpty("structureAt", List.of(), () -> "", each -> each instanceof String);
             structureAdaptation = builder.comment("How the terrain adapts to a structure, as structure=mode entries with the modes none, bury, beard_thin, beard_box and encapsulate [Default=[]]").defineListAllowEmpty("structureAdaptation", List.of(), () -> "", each -> each instanceof String);
             terrainAdaptation = builder.comment("Lay RDPL's own city streets, seated into the terrain instead of standing on stilts over every dip, and read the villagePath and villageRail options with them. Changes the terrain, so a world made with it on differs from one made without. This line lays no streets yet, so turning it on only says so [Default=false]").define("terrainAdaptation", false);
             villagePathBlock = builder.comment("The block city roads are paved with when terrainAdaptation lays them. Empty paves them with dirt path [Default=empty]").define("villagePathBlock", "");
             villagePathExtraWidth = builder.comment("Extra blocks of road width on each side beyond the usual 3, when terrainAdaptation lays the roads. Widens the streets themselves, so the blocks between them stand back from wide roads [Default=0]").defineInRange("villagePathExtraWidth", 0, 0, 16);
             villageBlockSizes = builder.comment("How deep the blocks between a city's parallel streets are, one weighted entry per line written size=weight like 32=3, rolled once per district. Empty uses 32 [Default=[]]").defineListAllowEmpty("villageBlockSizes", List.of(), () -> "", each -> each instanceof String);
-            villageCitySpacing = builder.comment("How far apart city districts are seeded, in districts of 96 blocks: one district in every square of this many carries a city, placed at a spot fixed by the world seed. 0 seeds none [Default=16]").defineInRange("villageCitySpacing", 16, 0, 256);
+            villageCitySpacing = builder.comment("How far apart city districts are seeded, in districts sized from the plots (twice the largest plot, plus a plaza and a street each side, rounded up to 16 blocks, at least 96): one district in every square of this many carries a city center, seated in the middle half of the square at a spot fixed by the world seed (or where structureAt city=x,z pins it), from which the city grows ring by ring to villagePlotsLeast plots but never past a quarter of this spacing in any direction, so neighboring cities stay apart. At 1 every district is one, a plaza with the well at its center and streets out of it that join the next district's. 0 seeds none [Default=16]").defineInRange("villageCitySpacing", 16, 0, 256);
             villagePathAlleyBlock = builder.comment("The block alleys are laid with. An alley is a street too narrow for lines and sidewalks. Empty lays alleys with the street block [Default=empty]").define("villagePathAlleyBlock", "");
             villagePathAlleyChance = builder.comment("The percent chance a street is laid as an alley rather than at its full width. 0 lays no alleys [Default=0]").defineInRange("villagePathAlleyChance", 0, 0, 100);
             villagePathMinimumWidth = builder.comment("The narrowest street allowed. A street that would be laid narrower than this is not laid at all, and the district lays out around the gap. 0 never refuses [Default=0]").defineInRange("villagePathMinimumWidth", 0, 0, 32);
@@ -507,11 +587,12 @@ public final class Config {
             villagePieces = builder.comment("Village plot definitions named here, one per line, as the full id of a villages file such as mypack:smithy. On 1.12.2 these were the vanilla piece names, which this line does not have [Default=[]]").defineListAllowEmpty("villagePieces", List.of(), () -> "", each -> each instanceof String);
             villagePiecesAreBlacklist = builder.comment("On, the plots in villagePieces are blocked. Off, only those plots are built [Default=true]").define("villagePiecesAreBlacklist", true);
             villageBlocks = builder.comment("Blocks village plots are built from, as original=replacement pairs, minecraft:cobblestone=mypack:ruby_brick. A pair may carry a chance out of 100, minecraft:cobblestone=minecraft:mossy_cobblestone,20, weighed where the block is laid. Streets are never ruled. Empty leaves every block as the plot's own structure has it [Default=[]]").defineListAllowEmpty("villageBlocks", List.of(), () -> "", each -> each instanceof String);
-            villagePlotsLeast = builder.comment("The fewest built plots a district settles for. A district that lays out with fewer than this is not laid at all. 0 sets no floor [Default=0]").defineInRange("villagePlotsLeast", 0, 0, 512);
-            villagePlotsMost = builder.comment("The most built plots a district may have. Once a district reaches this many, no further plots are laid. 0 sets no ceiling [Default=0]").defineInRange("villagePlotsMost", 0, 0, 512);
+            villagePlotsLeast = builder.comment("How many plots a city grows to: districts are added ring by ring around its center until they hold at least this many. 0 lays the center district alone [Default=0]").defineInRange("villagePlotsLeast", 0, 0, 512);
+            villagePlotsMost = builder.comment("The most plots a city may hold: growth stops before the district that would pass it, and no district seats more than this. 0 sets no ceiling [Default=0]").defineInRange("villagePlotsMost", 0, 0, 512);
+            villagePlotsBackRow = builder.comment("On, a second pass seats a plot directly behind every plot that fronts a street, turned to face it, with the same roll and the same room test, so the inside of a block between two streets is built rather than left bare. Off leaves plots on the street fronts only [Default=true]").define("villagePlotsBackRow", true);
             villageLayout = builder.comment("A city map laid out instead of planning the district, named like mypack:downtown and read from that pack's citymaps folder. Empty plans the district as usual [Default=empty]").define("villageLayout", "");
-            villagePathCenterBlock = builder.comment("The block of the centre line down the middle of a city street. Empty draws no centre line [Default=empty]").define("villagePathCenterBlock", "");
-            villagePathCenterDash = builder.comment("Dashes the centre line: N blocks of line, then one of street, anchored to world coordinates so segments continue each other. 0 keeps the line solid [Default=0]").defineInRange("villagePathCenterDash", 0, 0, 64);
+            villagePathCenterBlock = builder.comment("The block of the center line down the middle of a city street. Empty draws no center line [Default=empty]").define("villagePathCenterBlock", "");
+            villagePathCenterDash = builder.comment("Dashes the center line: N blocks of line, then one of street, anchored to world coordinates so segments continue each other. 0 keeps the line solid [Default=0]").defineInRange("villagePathCenterDash", 0, 0, 64);
             villagePathLineBlock = builder.comment("The block of the edge lines between street and sidewalk. Empty draws no edge lines [Default=empty]").define("villagePathLineBlock", "");
             villagePathSidewalkBlock = builder.comment("The block sidewalks are laid with, level with the street, outside the edge lines. Empty lays no sidewalks [Default=empty]").define("villagePathSidewalkBlock", "");
             villagePathSidewalkWidth = builder.comment("How many blocks wide each sidewalk is, when villagePathSidewalkBlock is set. A street too narrow to carry its lines and sidewalks is laid bare instead [Default=2]").defineInRange("villagePathSidewalkWidth", 2, 0, 16);
@@ -533,9 +614,9 @@ public final class Config {
             villagePathBridgeFrameLeast = builder.comment("The shortest bridged run that gets a frame at all, in rows. A shorter bridge is left plain [Default=24]").defineInRange("villagePathBridgeFrameLeast", 24, 1, 256);
             villagePathTunnelBlock = builder.comment("The block a street is lined with where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels and lets a street climb the hill [Default=empty]").define("villagePathTunnelBlock", "");
             villagePathTunnelDepth = builder.comment("How much ground must stand over the street surface before a stretch is bored as a tunnel rather than climbed. A rise that deep anywhere along it is held level and bored through. Needs villagePathTunnelBlock [Default=10]").defineInRange("villagePathTunnelDepth", 10, 1, 128);
-            villagePathTunnelLightBlock = builder.comment("The block set into a tunnel roof down its centre line as a light. Empty lights none [Default=empty]").define("villagePathTunnelLightBlock", "");
+            villagePathTunnelLightBlock = builder.comment("The block set into a tunnel roof down its center line as a light. Empty lights none [Default=empty]").define("villagePathTunnelLightBlock", "");
             villagePathTunnelLightRun = builder.comment("How many blocks apart the tunnel lights sit, anchored to world coordinates so pieces agree [Default=8]").defineInRange("villagePathTunnelLightRun", 8, 1, 64);
-            villageRailLines = builder.comment("How many railway lines run through a district, laid before any street so the town grows around them. 0 lays none [Default=0]").defineInRange("villageRailLines", 0, 0, 16);
+            villageRailLines = builder.comment("How many railway lines run through a city, laid before any street so the town grows around them: the first through the city's center district, the rest to either side at least villageRailSpacing apart, rounded up to whole districts so each keeps to the same edge of its blocks, each crossing every district of the city it reaches. At villageCitySpacing 1 every district is a city and carries its own. 0 lays none [Default=0]").defineInRange("villageRailLines", 0, 0, 16);
             villageRailSpacing = builder.comment("The fewest blocks of clear ground between one railway line's bed and the next of the same district. 1 lays them a block apart, which is how a pack builds a yard of parallel lines [Default=48]").defineInRange("villageRailSpacing", 48, 1, 256);
             villageRailDirection = builder.comment("Which way a district's railway lines run: ew for east to west, ns for north to south, any to roll it per district [Default=any]").define("villageRailDirection", "any");
             villageRailWidth = builder.comment("The least the railbed is, in blocks. 3 carries one track down the middle and 5 carries two; a bed asked for more tracks than this fits widens to hold them, and villageRailShoulderWidth is added outside it [Default=3]").defineInRange("villageRailWidth", 3, 3, 32);
@@ -545,7 +626,7 @@ public final class Config {
             villageRailTieBlock = builder.comment("The sleeper laid across the bed every villageRailTieRun rows. Empty lays oak planks [Default=empty]").define("villageRailTieBlock", "");
             villageRailTieRun = builder.comment("How many rows apart the sleepers lie [Default=2]").defineInRange("villageRailTieRun", 2, 1, 32);
             villageRailTracks = builder.comment("How many tracks the one bed carries, side by side, villageRailTrackGap apart. The bed widens to hold them all. 0 lays one track on a bed under five wide and two on a wider one [Default=0]").defineInRange("villageRailTracks", 0, 0, 8);
-            villageRailTrackGap = builder.comment("How many blocks apart the tracks on a bed sit, centre to centre. 2, the least allowed, leaves one block of bed between them, which is what keeps them from curving into one another the way touching rails do [Default=2]").defineInRange("villageRailTrackGap", 2, 2, 16);
+            villageRailTrackGap = builder.comment("How many blocks apart the tracks on a bed sit, center to center. 2, the least allowed, leaves one block of bed between them, which is what keeps them from curving into one another the way touching rails do [Default=2]").defineInRange("villageRailTrackGap", 2, 2, 16);
             villageRailShoulderBlock = builder.comment("The block dressing the outermost columns of the bed, a maintenance path beside the track, the railway counterpart of a street sidewalk. Empty lays none and leaves the bed its full width [Default=empty]").define("villageRailShoulderBlock", "");
             villageRailShoulderWidth = builder.comment("How many columns wide that shoulder is on each side, added outside villageRailWidth. Needs villageRailShoulderBlock [Default=1]").defineInRange("villageRailShoulderWidth", 1, 0, 8);
             villageRailPowerBlock = builder.comment("The powered track set into the line every villageRailPowerRun rows. Empty uses a vanilla powered rail; a block that is not a rail is simply laid there [Default=empty]").define("villageRailPowerBlock", "");
@@ -563,15 +644,66 @@ public final class Config {
             villageRailBridgeFrameLeast = builder.comment("The shortest trestle that gets a frame at all, in rows. A shorter trestle is left plain [Default=24]").defineInRange("villageRailBridgeFrameLeast", 24, 1, 256);
             villageRailTunnelBlock = builder.comment("The block a railway line is lined with where it bores through a hill instead of climbing it. Empty bores no tunnels [Default=empty]").define("villageRailTunnelBlock", "");
             villageRailTunnelDepth = builder.comment("How much ground must stand over the bed before a stretch is bored as a tunnel rather than climbed. Needs villageRailTunnelBlock [Default=6]").defineInRange("villageRailTunnelDepth", 6, 1, 128);
-            villageRailTunnelLightBlock = builder.comment("The block set into a railway tunnel roof down its centre line as a light. Empty lights none [Default=empty]").define("villageRailTunnelLightBlock", "");
+            villageRailTunnelLightBlock = builder.comment("The block set into a railway tunnel roof down its center line as a light. Empty lights none [Default=empty]").define("villageRailTunnelLightBlock", "");
             villageRailTunnelLightRun = builder.comment("How many blocks apart those tunnel lights sit, anchored to world coordinates so pieces agree [Default=8]").defineInRange("villageRailTunnelLightRun", 8, 1, 64);
-            villageWellStructure = builder.comment("Structure files placed as the plaza centrepiece at the district's middle crossing, one weighted entry per line written name=weight like mypack:plaza_spire=3, rolled once per district. Its lowest layer sits on the plaza floor. Empty places none [Default=[]]").defineListAllowEmpty("villageWellStructure", List.of(), () -> "", each -> each instanceof String);
+            villageWellStructure = builder.comment("Structure files placed as the plaza centerpiece at the district's middle crossing, one weighted entry per line written name=weight like mypack:plaza_spire=3, rolled once per district. Its lowest layer sits on the plaza floor. Empty places none [Default=[]]").defineListAllowEmpty("villageWellStructure", List.of(), () -> "", each -> each instanceof String);
             villagePathDeadEnds = builder.comment("How a street that dead ends is closed off, as structure names read from a pack, one per line, rolled per end. Empty closes each dead end with a cul-de-sac instead [Default=[]]").defineListAllowEmpty("villagePathDeadEnds", List.of(), () -> "", each -> each instanceof String);
             villagePathPiers = builder.comment("Pier styles for a street that dead ends over water: the bridged tail becomes a pier instead of a bridge to nowhere. The styles are railed, pilings and boardwalk; several entries roll one per pier. Empty leaves such a tail a plain bridge [Default=[]]").defineListAllowEmpty("villagePathPiers", List.of(), () -> "", each -> each instanceof String);
             villagePathPierCargo = builder.comment("Cargo stood along the inside of a pier's rails, as block=weight entries, block=weight,height to stack it, or empty=weight for the share left clear. Every other row rolls the list on each side. Empty leaves piers bare [Default=[]]").defineListAllowEmpty("villagePathPierCargo", List.of(), () -> "", each -> each instanceof String);
             villagePathPierLoot = builder.comment("The loot table cargo blocks with an inventory are filled from, rolled the first time one is opened. A pack may replace the built-in table by shipping its own loot table at that name. Empty leaves them empty [Default=resourcedatapackloader:chests/pier_cargo]").define("villagePathPierLoot", "resourcedatapackloader:chests/pier_cargo");
             villagePathIntersects = builder.comment("Path intersect designs painted where streets cross, by registry key from a pack's pathintersects folder. One entry paints every crossing alike; several roll one per crossing, weighted by each design. Empty paints nothing [Default=[]]").defineListAllowEmpty("villagePathIntersects", List.of(), () -> "", each -> each instanceof String);
             villageDecor = builder.comment("Decoration scattered along city streets, as name=weight pairs naming worldgen from a pack, mypack:street_flowers=2. The name empty is the share of spots left bare. Every third block of verge on each side of a street rolls the list. Empty scatters nothing [Default=[]]").defineListAllowEmpty("villageDecor", List.of(), () -> "", each -> each instanceof String);
+            villageSubwayLines = builder.comment("How many underground railway lines a city digs: the first under the center district's street, the rest to either side at least villageSubwaySpacing apart, rounded up to whole districts so each runs under a street. 0 digs none and rolls nothing, so the city is laid exactly as it would be without them [Default=0]").defineInRange("villageSubwayLines", 0, 0, 32);
+            villageSubwayDepth = builder.comment("How far under the surface a subway's bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level [Default=24]").defineInRange("villageSubwayDepth", 24, 6, 192);
+            villageSubwaySpacing = builder.comment("How far apart a city's subway lines are kept from one another [Default=64]").defineInRange("villageSubwaySpacing", 64, 1, 512);
+            villageSubwayDirection = builder.comment("Which way subway lines run: x, z, or any to roll per city [Default=any]").define("villageSubwayDirection", "any");
+            villageSubwayWidth = builder.comment("How wide the bed is, before shoulders [Default=3]").defineInRange("villageSubwayWidth", 3, 3, 33);
+            villageSubwayBlock = builder.comment("The track block. Empty lays vanilla rail [Default=empty]").define("villageSubwayBlock", "");
+            villageSubwayTrackSeat = builder.comment("Whether the track sits on the bed, in it, or auto to let the block decide [Default=auto]").define("villageSubwayTrackSeat", "auto");
+            villageSubwayBedBlock = builder.comment("The block the bed is made of. Empty uses gravel [Default=empty]").define("villageSubwayBedBlock", "");
+            villageSubwayTieBlock = builder.comment("The block laid across the bed as sleepers. Empty uses planks [Default=empty]").define("villageSubwayTieBlock", "");
+            villageSubwayTieRun = builder.comment("How many blocks apart the sleepers sit [Default=2]").defineInRange("villageSubwayTieRun", 2, 1, 64);
+            villageSubwayTracks = builder.comment("How many parallel tracks the bed carries. 0 takes as many as the width allows [Default=0]").defineInRange("villageSubwayTracks", 0, 0, 16);
+            villageSubwayTrackGap = builder.comment("How far apart parallel tracks sit [Default=2]").defineInRange("villageSubwayTrackGap", 2, 2, 16);
+            villageSubwayShoulderBlock = builder.comment("The block either side of the bed. Empty leaves no shoulder [Default=empty]").define("villageSubwayShoulderBlock", "");
+            villageSubwayShoulderWidth = builder.comment("How wide that shoulder is [Default=1]").defineInRange("villageSubwayShoulderWidth", 1, 0, 16);
+            villageSubwayPowerBlock = builder.comment("The powered track block. Empty uses vanilla powered rail [Default=empty]").define("villageSubwayPowerBlock", "");
+            villageSubwayPowerBase = builder.comment("The block set under a powered track to drive it. Empty uses a redstone block [Default=empty]").define("villageSubwayPowerBase", "");
+            villageSubwayPowerRun = builder.comment("How many blocks apart the powered tracks sit. 0 lays none [Default=0]").defineInRange("villageSubwayPowerRun", 0, 0, 256);
+            villageSubwayTunnelBlock = builder.comment("The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, since a subway is a bore [Default=empty]").define("villageSubwayTunnelBlock", "");
+            villageSubwayTunnelLightBlock = builder.comment("The block set into the tunnel roof as a light. Empty lights none [Default=empty]").define("villageSubwayTunnelLightBlock", "");
+            villageSubwayTunnelLightRun = builder.comment("How many blocks apart those lights sit, anchored to world coordinates so pieces agree [Default=8]").defineInRange("villageSubwayTunnelLightRun", 8, 1, 128);
+            villageSubwayClimb = builder.comment("How many blocks a line runs before it may step one block up or down [Default=8]").defineInRange("villageSubwayClimb", 8, 1, 128);
+            villageSubwayTail = builder.comment("How far past the city's own pieces a line runs before it stops [Default=48]").defineInRange("villageSubwayTail", 48, 0, 256);
+            villageSubwayStationLength = builder.comment("How many blocks long a subway station chamber is. 0 builds no stations at all [Default=0]").defineInRange("villageSubwayStationLength", 0, 0, 128);
+            villageSubwayStationRun = builder.comment("How many blocks apart further stations sit along a line, past the one nearest the plaza. 0 builds only the one at the plaza [Default=0]").defineInRange("villageSubwayStationRun", 0, 0, 1024);
+            villageSubwayPlatformWidth = builder.comment("How far the chamber is opened out either side of the bed to make a platform [Default=3]").defineInRange("villageSubwayPlatformWidth", 3, 0, 16);
+            villageSubwayPlatformBlock = builder.comment("The block the platform is floored with. Empty floors it with the tunnel lining [Default=empty]").define("villageSubwayPlatformBlock", "");
+            villageSubwayStairBlock = builder.comment("The block the steps up to the road side are made of. Empty uses the tunnel lining [Default=empty]").define("villageSubwayStairBlock", "");
+            villageSubwayRailingBlock = builder.comment("The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed [Default=minecraft:iron_bars]").define("villageSubwayRailingBlock", "minecraft:iron_bars");
+            villageSubwayBenchBlock = builder.comment("The seat of the benches set on a station's platform and beside its stair head. A stairs block reads as a bench; any block works. Empty leaves the benches out [Default=minecraft:oak_stairs]").define("villageSubwayBenchBlock", "minecraft:oak_stairs");
+            villageSubwayBenchEndBlock = builder.comment("The arms at each end of a station bench. Empty leaves the seat bare at both ends [Default=minecraft:oak_log]").define("villageSubwayBenchEndBlock", "minecraft:oak_log");
+            villageSubwayBenchLength = builder.comment("How long a station bench is, arms included. 0 leaves the benches out [Default=5]").defineInRange("villageSubwayBenchLength", 5, 0, 32);
+            villageSubwaySurfaces = builder.comment("The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. The climb takes villageSubwayClimb rows per block, so a deep line spends a long run coming up. 0 keeps every subway buried for its whole length [Default=25]").defineInRange("villageSubwaySurfaces", 25, 0, 100);
+            villageSubwayStation = builder.comment("A structure from a pack's structures folder used as the station itself, in place of the carved stairwell. Lift one out of a world built by hand with #scripts/rdpl-grab-template.py: its solid cells are laid and its air cells are carved, so the shape is the build and not a description of it. Empty carves the stairwell instead [Default=empty]").define("villageSubwayStation", "");
+            villageSubwayEntrance = builder.comment("A structure from a pack's structures folder set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare [Default=empty]").define("villageSubwayEntrance", "");
+            villageSubwayStationFoot = builder.comment("How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here [Default=4]").defineInRange("villageSubwayStationFoot", 4, 0, 64);
+            villageSubwayStationRepeat = builder.comment("How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. 0 never grows the build [Default=12]").defineInRange("villageSubwayStationRepeat", 12, 0, 64);
+            villageSewerBlock = builder.comment("The block a sewer is lined with under a city's streets and alleys: its floor, walls and roof. Empty digs no sewers [Default=empty]").define("villageSewerBlock", "");
+            villageSewerDepth = builder.comment("How far under a street's own surface the sewer floor sits. The sewer follows the street, so a climbing street carries a climbing sewer. Needs villageSewerBlock [Default=8]").defineInRange("villageSewerDepth", 8, 4, 128);
+            villageSewerHeight = builder.comment("How many blocks of headroom stand over the sewer walkway [Default=3]").defineInRange("villageSewerHeight", 3, 2, 32);
+            villageSewerWidth = builder.comment("How wide a sewer runs, counted across including its two walls. Even numbers are rounded up so the channel keeps the middle [Default=5]").defineInRange("villageSewerWidth", 5, 3, 33);
+            villageSewerWaterBlock = builder.comment("The block filling the channel down the middle of a sewer. Empty leaves the channel dry [Default=minecraft:water]").define("villageSewerWaterBlock", "minecraft:water");
+            villageSewerWalkBlock = builder.comment("The block the walkways either side of the channel are surfaced with. Empty walks on the lining block [Default=empty]").define("villageSewerWalkBlock", "");
+            villageSewerLightBlock = builder.comment("The block set into a sewer roof over the channel as a light. Empty lights none [Default=empty]").define("villageSewerLightBlock", "");
+            villageSewerLightRun = builder.comment("How many blocks apart the sewer lights sit, anchored to world coordinates so pieces agree [Default=8]").defineInRange("villageSewerLightRun", 8, 1, 128);
+            villageSewerLadderBlock = builder.comment("The block a manhole shaft is climbed by, set down the shaft from the street to the sewer roof. Empty leaves the shaft open [Default=empty]").define("villageSewerLadderBlock", "");
+            villageSewerCoverBlock = builder.comment("The block covering a manhole, set flush in an east-west street wherever a street or alley meets it, and on the plaza where that street crosses the sewer loop. Empty leaves the shaft mouth open [Default=empty]").define("villageSewerCoverBlock", "");
+            villageSewerMossBlock = builder.comment("A second block mixed into the sewer lining here and there, mossy stone among plain for instance. Empty lines the sewer with one block throughout [Default=empty]").define("villageSewerMossBlock", "");
+            villageSewerMossChance = builder.comment("The percentage of lining blocks that come out as villageSewerMossBlock. Rolled per block position from the world seed, so a repave lays the same pattern [Default=25]").defineInRange("villageSewerMossChance", 25, 0, 100);
+            villageSewerVineBlock = builder.comment("A block hung on the inside of the sewer walls here and there, vines for instance. Empty hangs nothing [Default=empty]").define("villageSewerVineBlock", "");
+            villageSewerVineChance = builder.comment("The percentage of wall-side cells that carry villageSewerVineBlock. Rolled per block position from the world seed, so a repave hangs the same pattern [Default=20]").defineInRange("villageSewerVineChance", 20, 0, 100);
+            villageSewerWellEntrance = builder.comment("On, a city with sewers gets a loop of sewer under the plaza around the well, the sewers of the streets meeting there running through it, and a manhole on the plaza down onto the loop on each side where an east-west street crosses it, so the sewers are one connected system with an entrance at the town center. Off, the street sewers cross under the well and the plaza has no way down of its own [Default=true]").define("villageSewerWellEntrance", true);
             worldGravity = builder.comment("Scale gravity, as a multiplier of vanilla where 1.0 is unchanged and 0.17 is moon-like, for every entity. A bare value covers every dimension, and an entry written as dimension=value covers that dimension alone and wins over the bare one. Empty leaves gravity alone [Default=[]]").defineListAllowEmpty("worldGravity", List.of(), () -> "", each -> each instanceof String);
             worldFallDamage = builder.comment("Scale fall damage the same way, 0.5 halving it and 2.0 doubling it [Default=[]]").defineListAllowEmpty("worldFallDamage", List.of(), () -> "", each -> each instanceof String);
             worldJumpStrength = builder.comment("Scale jump strength the same way, 1.5 jumping half again as high [Default=[]]").defineListAllowEmpty("worldJumpStrength", List.of(), () -> "", each -> each instanceof String);
@@ -596,6 +728,8 @@ public final class Config {
             logBlockReplacements = builder.comment("Log the first time each replacement is made, and a total when a world catches up [Default=true]").define("logBlockReplacements", true);
             builder.pop();
         }
+
+        public boolean load() { return loaded() ? load.get() : ConfigCore.flag("worldgen.load", true); }
 
         public boolean worldgenDebug() { return loaded() ? worldgenDebug.get() : ConfigCore.flag("worldgen.worldgenDebug", false); }
 
@@ -722,6 +856,10 @@ public final class Config {
 
         public int caveRegionPlainWeight() { return loaded() ? caveRegionPlainWeight.get() : 4; }
 
+        public int caveRegionCells() { return loaded() ? caveRegionCells.get() : 128; }
+
+        public int caveRegionCellsY() { return loaded() ? caveRegionCellsY.get() : 64; }
+
         public List<String> structureSpacing() { return loaded() ? List.copyOf(structureSpacing.get()) : List.of(); }
 
         public List<String> structureSeparation() { return loaded() ? List.copyOf(structureSeparation.get()) : List.of(); }
@@ -732,7 +870,7 @@ public final class Config {
 
         public List<String> structureBiomes() { return loaded() ? List.copyOf(structureBiomes.get()) : List.of(); }
 
-        public boolean structureBiomesAreBlacklist() { return loaded() && structureBiomesAreBlacklist.get(); }
+        public List<String> structureBiomesAreBlacklist() { return loaded() ? List.copyOf(structureBiomesAreBlacklist.get()) : List.of(); }
 
         public List<String> structureSpawns() { return loaded() ? List.copyOf(structureSpawns.get()) : List.of(); }
 
@@ -753,6 +891,7 @@ public final class Config {
         public List<String> villageBlocks() { return loaded() ? List.copyOf(villageBlocks.get()) : List.of(); }
         public int villagePlotsLeast() { return loaded() ? villagePlotsLeast.get() : 0; }
         public int villagePlotsMost() { return loaded() ? villagePlotsMost.get() : 0; }
+        public boolean villagePlotsBackRow() { return !loaded() || villagePlotsBackRow.get(); }
         public String villageLayout() { return loaded() ? villageLayout.get() : ""; }
         public String villagePathCenterBlock() { return loaded() ? villagePathCenterBlock.get() : ""; }
         public int villagePathCenterDash() { return loaded() ? villagePathCenterDash.get() : 0; }
@@ -816,6 +955,107 @@ public final class Config {
         public String villagePathPierLoot() { return loaded() ? villagePathPierLoot.get() : "resourcedatapackloader:chests/pier_cargo"; }
         public List<String> villagePathIntersects() { return loaded() ? List.copyOf(villagePathIntersects.get()) : List.of(); }
         public List<String> villageDecor() { return loaded() ? List.copyOf(villageDecor.get()) : List.of(); }
+
+        public String villageSewerBlock() { return loaded() ? villageSewerBlock.get() : ""; }
+
+        public int villageSubwayLines() { return loaded() ? villageSubwayLines.get() : 0; }
+
+        public int villageSubwayDepth() { return loaded() ? villageSubwayDepth.get() : 24; }
+
+        public int villageSubwaySpacing() { return loaded() ? villageSubwaySpacing.get() : 64; }
+
+        public String villageSubwayDirection() { return loaded() ? villageSubwayDirection.get() : "any"; }
+
+        public int villageSubwayWidth() { return loaded() ? villageSubwayWidth.get() : 3; }
+
+        public String villageSubwayBlock() { return loaded() ? villageSubwayBlock.get() : ""; }
+
+        public String villageSubwayTrackSeat() { return loaded() ? villageSubwayTrackSeat.get() : "auto"; }
+
+        public String villageSubwayBedBlock() { return loaded() ? villageSubwayBedBlock.get() : ""; }
+
+        public String villageSubwayTieBlock() { return loaded() ? villageSubwayTieBlock.get() : ""; }
+
+        public int villageSubwayTieRun() { return loaded() ? villageSubwayTieRun.get() : 2; }
+
+        public int villageSubwayTracks() { return loaded() ? villageSubwayTracks.get() : 0; }
+
+        public int villageSubwayTrackGap() { return loaded() ? villageSubwayTrackGap.get() : 2; }
+
+        public String villageSubwayShoulderBlock() { return loaded() ? villageSubwayShoulderBlock.get() : ""; }
+
+        public int villageSubwayShoulderWidth() { return loaded() ? villageSubwayShoulderWidth.get() : 1; }
+
+        public String villageSubwayPowerBlock() { return loaded() ? villageSubwayPowerBlock.get() : ""; }
+
+        public String villageSubwayPowerBase() { return loaded() ? villageSubwayPowerBase.get() : ""; }
+
+        public int villageSubwayPowerRun() { return loaded() ? villageSubwayPowerRun.get() : 0; }
+
+        public String villageSubwayTunnelBlock() { return loaded() ? villageSubwayTunnelBlock.get() : ""; }
+
+        public String villageSubwayTunnelLightBlock() { return loaded() ? villageSubwayTunnelLightBlock.get() : ""; }
+
+        public int villageSubwayTunnelLightRun() { return loaded() ? villageSubwayTunnelLightRun.get() : 8; }
+
+        public int villageSubwayClimb() { return loaded() ? villageSubwayClimb.get() : 8; }
+
+        public int villageSubwayTail() { return loaded() ? villageSubwayTail.get() : 48; }
+
+        public int villageSubwayStationLength() { return loaded() ? villageSubwayStationLength.get() : 0; }
+
+        public int villageSubwayStationRun() { return loaded() ? villageSubwayStationRun.get() : 0; }
+
+        public int villageSubwayPlatformWidth() { return loaded() ? villageSubwayPlatformWidth.get() : 3; }
+
+        public String villageSubwayPlatformBlock() { return loaded() ? villageSubwayPlatformBlock.get() : ""; }
+
+        public String villageSubwayStairBlock() { return loaded() ? villageSubwayStairBlock.get() : ""; }
+
+        public String villageSubwayRailingBlock() { return loaded() ? villageSubwayRailingBlock.get() : "minecraft:iron_bars"; }
+
+        public String villageSubwayBenchBlock() { return loaded() ? villageSubwayBenchBlock.get() : "minecraft:oak_stairs"; }
+
+        public String villageSubwayBenchEndBlock() { return loaded() ? villageSubwayBenchEndBlock.get() : "minecraft:oak_log"; }
+
+        public int villageSubwayBenchLength() { return loaded() ? villageSubwayBenchLength.get() : 5; }
+
+        public int villageSubwaySurfaces() { return loaded() ? villageSubwaySurfaces.get() : 25; }
+
+        public String villageSubwayStation() { return loaded() ? villageSubwayStation.get() : ""; }
+
+        public String villageSubwayEntrance() { return loaded() ? villageSubwayEntrance.get() : ""; }
+
+        public int villageSubwayStationFoot() { return loaded() ? villageSubwayStationFoot.get() : 4; }
+
+        public int villageSubwayStationRepeat() { return loaded() ? villageSubwayStationRepeat.get() : 12; }
+
+        public int villageSewerDepth() { return loaded() ? villageSewerDepth.get() : 8; }
+
+        public int villageSewerHeight() { return loaded() ? villageSewerHeight.get() : 3; }
+
+        public int villageSewerWidth() { return loaded() ? villageSewerWidth.get() : 5; }
+
+        public String villageSewerWaterBlock() { return loaded() ? villageSewerWaterBlock.get() : "minecraft:water"; }
+
+        public String villageSewerWalkBlock() { return loaded() ? villageSewerWalkBlock.get() : ""; }
+
+        public String villageSewerLightBlock() { return loaded() ? villageSewerLightBlock.get() : ""; }
+
+        public int villageSewerLightRun() { return loaded() ? villageSewerLightRun.get() : 8; }
+
+        public String villageSewerLadderBlock() { return loaded() ? villageSewerLadderBlock.get() : ""; }
+
+        public String villageSewerCoverBlock() { return loaded() ? villageSewerCoverBlock.get() : ""; }
+
+        public String villageSewerMossBlock() { return loaded() ? villageSewerMossBlock.get() : ""; }
+
+        public int villageSewerMossChance() { return loaded() ? villageSewerMossChance.get() : 25; }
+
+        public String villageSewerVineBlock() { return loaded() ? villageSewerVineBlock.get() : ""; }
+
+        public int villageSewerVineChance() { return loaded() ? villageSewerVineChance.get() : 20; }
+        public boolean villageSewerWellEntrance() { return !loaded() || villageSewerWellEntrance.get(); }
         public List<String> worldGravity() { return loaded() ? List.copyOf(worldGravity.get()) : List.of(); }
         public List<String> worldFallDamage() { return loaded() ? List.copyOf(worldFallDamage.get()) : List.of(); }
         public List<String> worldJumpStrength() { return loaded() ? List.copyOf(worldJumpStrength.get()) : List.of(); }
@@ -859,6 +1099,13 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> pregenStoppedSays;
         private final ModConfigSpec.ConfigValue<String> pregenSpectatingSays;
         private final ModConfigSpec.ConfigValue<String> pregenLogo;
+        private final ModConfigSpec.BooleanValue pregenBackup;
+        private final ModConfigSpec.ConfigValue<String> pregenBackupSays;
+        private final ModConfigSpec.ConfigValue<String> resetSays;
+        private final ModConfigSpec.ConfigValue<String> resetSendsTo;
+        private final ModConfigSpec.ConfigValue<String> resetRuns;
+        private final ModConfigSpec.BooleanValue resetClearsEntities;
+        private final ModConfigSpec.BooleanValue resetClearsScores;
         private final ModConfigSpec.IntValue spawnChunkRadius;
 
         private Chunks(ModConfigSpec.Builder builder) {
@@ -881,7 +1128,14 @@ public final class Config {
             pregenStoppedSays = builder.comment("The message players see when generation is stopped early. Empty tells them nothing. Left at this default it speaks each player's language [Default=" + PREGEN_STOPPED + "]").define("pregenStoppedSays", PREGEN_STOPPED);
             pregenSpectatingSays = builder.comment("The mid-screen message players see while held in spectator during world generation. Empty shows nothing. Left at this default it speaks each player's language [Default=" + PREGEN_SPECTATING + "]").define("pregenSpectatingSays", PREGEN_SPECTATING);
             pregenLogo = builder.comment("Where the logo stands when pregeneration finishes: left, center or right, above the mid-screen text. It is always shown; an unknown word is read as center [Default=center]").define("pregenLogo", "center");
-            spawnChunkRadius = builder.comment("How far from the spawn point, in chunks, chunks are held loaded whether or not a player is there, applied as the spawnChunkRadius game rule when a world starts. -1 leaves the game's own value [Default=-1]").defineInRange("spawnChunkRadius", -1, -1, 32);
+            pregenBackup = builder.comment("Copy the world to a pristine backup once pregeneration finishes, while the players are still held. The copy is what a reset would restore [Default=false]").define("pregenBackup", false);
+            pregenBackupSays = builder.comment("The mid-screen message players see while that backup is copied. Empty shows nothing [Default=Pack requested world backup]").define("pregenBackupSays", "Pack requested world backup");
+            resetSays = builder.comment("The mid-screen line players are shown while /rdpl reset puts the map back. Empty resets quietly [Default=Pack requested map reset]").define("resetSays", "Pack requested map reset");
+            resetSendsTo = builder.comment("Where players are put by a reset: spawn, a position as x,y,z, or dimension:x,y,z to send them into another world [Default=spawn]").define("resetSendsTo", "spawn");
+            resetRuns = builder.comment("A function run after a reset has cleared the map, named namespace:path. Empty runs nothing [Default=empty]").define("resetRuns", "");
+            resetClearsEntities = builder.comment("Remove every entity that is not a player when the map resets [Default=true]").define("resetClearsEntities", true);
+            resetClearsScores = builder.comment("Set every objective the pack keeps back to nothing when the map resets, so a new match starts from zero. Teams themselves are kept [Default=true]").define("resetClearsScores", true);
+            spawnChunkRadius = builder.comment("How far from the spawn point, in chunks, chunks are held loaded whether or not a player is there, applied as the spawnChunkRadius game rule when a world starts. The default 2 is the game's own value here, 25 chunks, and is what 1.20.1 is set to as well so both lines hold the same area; -1 leaves the game's own [Default=2]").defineInRange("spawnChunkRadius", 2, -1, 32);
             builder.pop();
         }
 
@@ -910,6 +1164,20 @@ public final class Config {
         public String pregenSpectatingSays() { return loaded() ? pregenSpectatingSays.get() : PREGEN_SPECTATING; }
 
         public String pregenLogo() { return loaded() ? pregenLogo.get() : "center"; }
+
+        public boolean pregenBackup() { return loaded() && pregenBackup.get(); }
+
+        public String pregenBackupSays() { return loaded() ? pregenBackupSays.get() : "Pack requested world backup"; }
+
+        public String resetSays() { return loaded() ? resetSays.get() : "Pack requested map reset"; }
+
+        public String resetSendsTo() { return loaded() ? resetSendsTo.get() : "spawn"; }
+
+        public String resetRuns() { return loaded() ? resetRuns.get() : ""; }
+
+        public boolean resetClearsEntities() { return !loaded() || resetClearsEntities.get(); }
+
+        public boolean resetClearsScores() { return !loaded() || resetClearsScores.get(); }
 
         public int spawnChunkRadius() { return loaded() ? spawnChunkRadius.get() : -1; }
 
@@ -993,6 +1261,7 @@ public final class Config {
         private final ModConfigSpec.ConfigValue<String> structures;
         private final ModConfigSpec.ConfigValue<String> villages;
         private final ModConfigSpec.ConfigValue<String> commands;
+        private final ModConfigSpec.ConfigValue<String> recipes;
         private final ModConfigSpec.ConfigValue<String> blastPlaster;
 
         private Control(ModConfigSpec.Builder builder) {
@@ -1009,6 +1278,7 @@ public final class Config {
             structures = builder.comment("Vanilla structures switched off, their spacing, separation, spawn distance, biomes, spawns, pins and terrain adaptation [default|global|off]").define("structures", "default");
             villages = builder.comment("The city and village streets a pack lays: their shape, dress, bridges, tunnels, rails, plots and plaza [default|global|off]").define("villages", "default");
             commands = builder.comment("Who may run the mod's own commands: the goto permission levels [default|global|off]").define("commands", "default");
+            recipes = builder.comment("Recipe and furnace blocking and their whitelists [default|global|off]").define("recipes", "default");
             blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", "default");
             builder.pop();
         }
@@ -1032,6 +1302,8 @@ public final class Config {
         public String villages() { return loaded() ? villages.get() : ConfigCore.text("control.villages", "default"); }
 
         public String commands() { return loaded() ? commands.get() : ConfigCore.text("control.commands", "default"); }
+
+        public String recipes() { return loaded() ? recipes.get() : ConfigCore.text("control.recipes", "default"); }
 
         public String blastPlaster() { return loaded() ? blastPlaster.get() : ConfigCore.text("control.blastPlaster", "default"); }
 

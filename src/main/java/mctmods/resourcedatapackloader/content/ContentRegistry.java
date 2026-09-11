@@ -54,6 +54,11 @@ public final class ContentRegistry {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
+        Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
+            ExposureDef def = ContentParser.exposure(key, contents);
+            if (def != null) { EXPOSURE_DEFS.put(key, def); }
+        });
+        if (!EXPOSURE_DEFS.isEmpty()) { Summary.info("exposures", "Loaded " + EXPOSURE_DEFS.size() + " exposure definition(s)"); }
         if (Config.contentOff()) { return; }
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
@@ -84,14 +89,9 @@ public final class ContentRegistry {
             TabDef def = ContentParser.tab(key, contents);
             if (def != null) { TAB_DEFS.put(key, def); }
         });
-        Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
-            ExposureDef def = ContentParser.exposure(key, contents);
-            if (def != null) { EXPOSURE_DEFS.put(key, def); }
-        });
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !MATERIAL_DEFS.isEmpty() || !TAB_DEFS.isEmpty()) {
             Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid, " + MATERIAL_DEFS.size() + " material and " + TAB_DEFS.size() + " creative tab definition(s)");
         }
-        if (!EXPOSURE_DEFS.isEmpty()) { Summary.info("exposures", "Loaded " + EXPOSURE_DEFS.size() + " exposure definition(s)"); }
     }
 
     public static boolean reserved(ResourceLocation key) {

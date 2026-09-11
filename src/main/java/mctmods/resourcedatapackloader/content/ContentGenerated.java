@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
+import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
@@ -40,6 +42,7 @@ public final class ContentGenerated {
     private static final String[] SHAPES = {"straight", "inner_left", "inner_right", "outer_left", "outer_right"};
     private static final int[] BOTTOM_TURN = {0, 270, 0, 270, 0};
     private static final int[] TOP_TURN = {0, 0, 90, 0, 90};
+    private static final Set<String> CURIOS_PRESETS = Set.of("back", "belt", "body", "bracelet", "charm", "curio", "hands", "head", "necklace", "ring");
 
     private ContentGenerated() {}
 
@@ -62,6 +65,7 @@ public final class ContentGenerated {
         }
         blockTags(blockTags);
         tags(itemTags, Map.of(), ContentFormats.ITEM_TAGS);
+        worn();
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
 
@@ -72,12 +76,12 @@ public final class ContentGenerated {
         String type = def.type();
         boolean hasItem = ContentRegistry.items().stream().anyMatch(item -> item.block() == entry);
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) { models(entry, namespace, name, type); }
-        if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { itemModel(namespace, name, type); }
+        if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { itemModel(def, namespace, name, type); }
         if (!provided(PackType.SERVER_DATA, namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json")) { data(namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json", loot(entry, type)); }
         if (entry.isMain()) {
             tagBlock(entry, blockTags, itemTags, hasItem);
             SaplingDef sapling = def.sapling();
-            if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && !sapling.usesStructure() && !provided(PackType.SERVER_DATA, namespace, "worldgen/configured_feature/" + name + "_tree.json")) {
+            if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && sapling.growsVanilla() && !provided(PackType.SERVER_DATA, namespace, "worldgen/configured_feature/" + name + "_tree.json")) {
                 data(namespace, "worldgen/configured_feature/" + name + "_tree.json", tree(sapling));
             }
         }
@@ -95,6 +99,21 @@ public final class ContentGenerated {
         }
     }
 
+    private static void worn() {
+        Set<String> slots = new LinkedHashSet<>();
+        for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+            ItemDef def = entry.def();
+            if (entry.block() == null && def != null && def.holds() != null && def.holds().worn()) { slots.add(def.holds().curioSlot()); }
+        }
+        if (slots.isEmpty()) { return; }
+        JsonArray named = arr();
+        for (String slot : slots) {
+            named.add(slot);
+            if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + ".json", obj("validators", arr("curios:tag"))); }
+        }
+        data(ResourceDataPackLoader.MOD_ID, "curios/entities/worn.json", obj("entities", arr("minecraft:player"), "slots", named));
+    }
+
     private static void item(ContentRegistry.ItemEntry entry, Map<String, Set<String>> itemTags) {
         String namespace = entry.id().getNamespace();
         String name = entry.id().getPath();
@@ -108,6 +127,7 @@ public final class ContentGenerated {
         }
         if (def != null) {
             for (String tag : ContentFormats.equipmentTags(def)) { tag(itemTags, tag, entry.id()); }
+            if (def.holds() != null && def.holds().worn()) { tag(itemTags, "curios:" + def.holds().curioSlot(), entry.id()); }
         }
     }
 
@@ -116,6 +136,19 @@ public final class ContentGenerated {
         String main = namespace + ":block/" + name;
         String texture = texture(namespace, name);
         switch (type) {
+            case ContentBlockTypes.CONTAINER -> {
+                if (def.container() != null && def.container().chestModel()) {
+                    blockstate(namespace, name, obj("variants", obj("", obj("model", "resourcedatapackloader:block/pack_chest"))));
+                }
+                else {
+                    model(def, namespace, name, cube(def, texture, "cube_all"));
+                    blockstate(namespace, name, obj("variants", obj(
+                            "facing=north", obj("model", main),
+                            "facing=east", obj("model", main, "y", 90),
+                            "facing=south", obj("model", main, "y", 180),
+                            "facing=west", obj("model", main, "y", 270))));
+                }
+            }
             case ContentBlockTypes.LOG -> {
                 String top = textureOr(namespace, name + "_top", texture);
                 model(def, namespace, name, column(def, texture, top, "cube_column"));
@@ -354,12 +387,23 @@ public final class ContentGenerated {
         return model.getNamespace() + ":block/" + model.getPath();
     }
 
-    private static void itemModel(String namespace, String name, String type) {
+    private static JsonObject chestItem(BlockDef def, String main) {
+        ContainerDef held = def.container();
+        if (held == null || !held.chestModel()) { return obj("parent", main); }
+        if (held.chestTexture() == null) { return obj("parent", "resourcedatapackloader:block/pack_chest"); }
+        String path = held.chestTexture().getPath();
+        if (path.startsWith("textures/")) { path = path.substring("textures/".length()); }
+        if (path.endsWith(".png")) { path = path.substring(0, path.length() - ".png".length()); }
+        return obj("parent", "resourcedatapackloader:block/pack_chest", "textures", obj("texture", held.chestTexture().getNamespace() + ":" + path));
+    }
+
+    private static void itemModel(BlockDef def, String namespace, String name, String type) {
         String main = namespace + ":block/" + name;
         JsonObject model = switch (type) {
             case ContentBlockTypes.FENCE, ContentBlockTypes.WALL -> obj("parent", main + "_inventory");
             case ContentBlockTypes.TRAPDOOR -> obj("parent", main + "_bottom");
             case ContentBlockTypes.BANNER -> obj("parent", "minecraft:item/template_banner");
+            case ContentBlockTypes.CONTAINER -> chestItem(def, main);
             case ContentBlockTypes.PORTAL -> obj("parent", main + "_x");
             case ContentBlockTypes.DOOR, ContentBlockTypes.LADDER, ContentBlockTypes.TORCH, ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE, ContentBlockTypes.PANE -> {
                 String flat = provided(PackType.CLIENT_RESOURCES, namespace, "textures/item/" + name + ".png") ? namespace + ":item/" + name : texture(namespace, name);

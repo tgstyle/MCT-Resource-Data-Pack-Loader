@@ -1,5 +1,11 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.client.SplashDark;
+import mctmods.resourcedatapackloader.client.PouchKey;
+import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
+import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
+import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
@@ -8,6 +14,7 @@ import mctmods.resourcedatapackloader.content.item.ContentBannerItem;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -22,6 +29,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
@@ -48,6 +56,8 @@ public final class ContentClient {
 
     public static void register(IEventBus modBus) {
         modBus.addListener(ContentClient::setup);
+        modBus.addListener(PouchKey::register);
+        modBus.addListener(ContentClient::screens);
         modBus.addListener(ContentClient::extensions);
         modBus.addListener(ContentClient::blockColors);
         modBus.addListener(ContentClient::itemColors);
@@ -58,6 +68,8 @@ public final class ContentClient {
     private static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.registered();
         if (type != null) { event.registerBlockEntityRenderer(type, ContentBannerRenderer::new); }
+        BlockEntityType<ContentContainerBlockEntity> chests = ContentContainers.registeredType();
+        if (chests != null) { event.registerBlockEntityRenderer(chests, ContentContainerRenderer::new); }
         Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$providers();
         for (EntityType<Mob> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
@@ -69,8 +81,14 @@ public final class ContentClient {
 
     @SuppressWarnings("unchecked") private static EntityRendererProvider<Mob> provider(EntityRendererProvider<?> provider) { return (EntityRendererProvider<Mob>) provider; }
 
+    private static void screens(RegisterMenuScreensEvent event) {
+        MenuType<ContentContainerMenu> menu = ContentContainers.registeredMenu();
+        if (menu != null) { event.register(menu, ContentContainerScreen::new); }
+    }
+
     private static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            SplashDark.apply();
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());

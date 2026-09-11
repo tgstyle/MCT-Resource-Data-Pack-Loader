@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,7 +45,7 @@ public final class ContentGates {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             GateDef def = parse(key, contents);
@@ -122,8 +123,10 @@ public final class ContentGates {
         if (def.blockedMessage().isEmpty()) { return; }
         String needed = def.consume().isEmpty() ? def.craft() : def.consume();
         if (needed.isEmpty()) { needed = def.hold(); }
-        String message = def.blockedMessage().replace("%dim%", def.name()).replace("%item%", describe(needed));
-        player.displayClientMessage(Component.literal(message).withStyle(ChatFormatting.RED), true);
+        String[] parts = def.blockedMessage().replace("%dim%", def.name()).split("%item%", -1);
+        MutableComponent message = Component.literal(parts[0]);
+        for (int at = 1; at < parts.length; at++) { message.append(describe(needed)).append(parts[at]); }
+        player.displayClientMessage(message.withStyle(ChatFormatting.RED), true);
     }
 
     public static boolean carrying(ServerPlayer player, String item) {
@@ -132,7 +135,7 @@ public final class ContentGates {
         for (ItemStack held : player.getInventory().items) {
             if (ContentStacks.matches(held, wanted)) { return true; }
         }
-        return ContentStacks.matches(player.getInventory().offhand.get(0), wanted);
+        return ContentStacks.matches(player.getInventory().offhand.getFirst(), wanted);
     }
 
     private static boolean earned(ServerPlayer player, String name) {
@@ -143,10 +146,10 @@ public final class ContentGates {
         return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
     }
 
-    private static String describe(String item) {
-        if (item.isEmpty()) { return "something"; }
+    private static Component describe(String item) {
+        if (item.isEmpty()) { return Component.literal("something"); }
         ItemStack stack = stack(item);
-        return stack.isEmpty() ? item : stack.getHoverName().getString();
+        return stack.isEmpty() ? Component.literal(item) : stack.getHoverName();
     }
 
     public static ItemStack stack(String item) { return STACKS.computeIfAbsent(item, held -> ContentStacks.parse(GATE, held, 1)); }

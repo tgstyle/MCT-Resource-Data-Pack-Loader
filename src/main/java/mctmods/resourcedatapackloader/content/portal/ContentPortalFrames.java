@@ -41,7 +41,7 @@ public final class ContentPortalFrames {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.PORTALFRAMES, "portal frame", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             PortalFrameDef def = parse(key, contents);
@@ -116,7 +116,7 @@ public final class ContentPortalFrames {
         int[] budget = { BUDGET };
         for (List<String> shape : PortalShapes.spread(frame)) {
             int rows = shape.size();
-            int columns = shape.get(0).length();
+            int columns = shape.getFirst().length();
             for (int stance = 0; stance < 2; stance++) {
                 boolean flat = stance == 1;
                 if (flat && !frame.liesFlat()) { continue; }

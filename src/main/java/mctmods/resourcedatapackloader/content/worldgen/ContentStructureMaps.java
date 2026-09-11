@@ -44,7 +44,7 @@ public final class ContentStructureMaps {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.STRUCTUREMAPS, "structure map", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             StructureMapDef def = parse(key, contents);

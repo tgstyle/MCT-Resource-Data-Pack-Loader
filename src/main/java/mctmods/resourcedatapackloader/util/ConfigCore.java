@@ -17,13 +17,19 @@ import javax.annotation.Nullable;
 
 public final class ConfigCore {
     public static final String FILE = ResourceDataPackLoader.MOD_ID + "-common.toml";
+    private static final long RESTAT_MILLIS = 1000L;
     @Nullable private static Map<String, Object> cached;
     @Nullable private static FileTime cachedStamp;
     private static long cachedSize = -1L;
+    private static long checkedAt = Long.MIN_VALUE;
+    @Nullable private static Path located;
 
     private ConfigCore() {}
 
-    public static Path file() { return FMLPaths.CONFIGDIR.get().resolve(FILE); }
+    public static synchronized Path file() {
+        if (located == null) { located = FMLPaths.CONFIGDIR.get().resolve(FILE); }
+        return located;
+    }
 
     public static String text(String path, String fallback) {
         Object held = read(path);
@@ -36,9 +42,12 @@ public final class ConfigCore {
     }
 
     @Nullable private static synchronized Object read(String path) {
+        long now = System.currentTimeMillis();
+        if (cached != null && now - checkedAt < RESTAT_MILLIS) { return cached.get(path); }
         Path file = file();
         if (!Files.isRegularFile(file)) { return null; }
         try {
+            checkedAt = now;
             FileTime stamp = Files.getLastModifiedTime(file);
             long size = Files.size(file);
             if (cached == null || !stamp.equals(cachedStamp) || size != cachedSize) {

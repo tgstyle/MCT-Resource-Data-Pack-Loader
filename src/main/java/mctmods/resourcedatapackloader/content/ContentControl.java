@@ -5,19 +5,19 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentControl {
@@ -31,6 +31,7 @@ public final class ContentControl {
     public static final String STRUCTURES = "structures";
     public static final String VILLAGES = "villages";
     public static final String COMMANDS = "commands";
+    public static final String RECIPES = "recipes";
     public static final String REPLACEMENTS = "replacements";
     public static final String ENTITIES = "entities";
     public static final String BLAST_PLASTER = "blastPlaster";
@@ -60,6 +61,8 @@ public final class ContentControl {
             "monsterSpawnLight", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice",
             "threatSays", "deepStone", "noiseCaves", "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate", "villageBlocks",
+            "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStairBlock", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villageSubwayStation", "villageSubwayEntrance", "villageSubwayStationFoot", "villageSubwayStationRepeat",
+            "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance",
             "villageDecor", "villagePieces", "villagePiecesAreBlacklist", "villagePathBlock",
             "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth", "villagePathCenterBlock",
             "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock", "villagePathSidewalkWidth",
@@ -79,10 +82,10 @@ public final class ContentControl {
             "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock",
             "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun",
             "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth",
-            "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villagePlotsMost", "villageBlockSizes",
+            "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villagePlotsMost", "villagePlotsBackRow", "villageBlockSizes",
             "villageCitySpacing", "villageLayout", "voidPlatformBlock", "voidPlatformHeight", "voidPlatformSize",
             "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "cloudHeight",
-            "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "worldBorder", "worldBelow",
+            "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "biomes", "worldBorder", "worldBelow",
             "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
             "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
@@ -92,6 +95,81 @@ public final class ContentControl {
     @Nullable private static WorldTemplateDef settingsFrom;
 
     private ContentControl() {}
+
+    private static final String BIOME_SETTINGS = "biomes";
+    private static final Map<String, JsonElement> BIOME_KEYS = new ConcurrentHashMap<>();
+    private static final ThreadLocal<String> BUILDING = new ThreadLocal<>();
+    @Nullable private static JsonObject biomeSettings;
+    @Nullable private static WorldTemplateDef biomesFrom;
+
+    @Nullable private static synchronized JsonObject biomeSections() {
+        WorldTemplateDef template = ContentWorldTemplates.active();
+        if (template != biomesFrom) {
+            biomesFrom = template;
+            BIOME_KEYS.clear();
+            JsonObject settings = template == null ? null : template.settings();
+            JsonElement held = settings == null || !settings.has(BIOME_SETTINGS) ? null : settings.get(BIOME_SETTINGS);
+            if (held != null && !held.isJsonObject()) {
+                if (WARNED.add(BIOME_SETTINGS)) { ContentLog.LOGGER.error("The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOME_SETTINGS); }
+                held = null;
+            }
+            biomeSettings = held == null ? null : held.getAsJsonObject();
+            if (biomeSettings != null) {
+                List<String> named = new ArrayList<>();
+                for (Map.Entry<String, JsonElement> section : biomeSettings.entrySet()) {
+                    named.add(section.getKey());
+                    if (!section.getValue().isJsonObject()) { continue; }
+                    for (String key : section.getValue().getAsJsonObject().keySet()) {
+                        if (!KNOWN.contains(key) && WARNED.add(BIOME_SETTINGS + "." + section.getKey() + "." + key)) { ContentLog.LOGGER.error("World template {} sets '{}' under biomes.{}, which is not a setting anything reads, so it does nothing", template.key(), key, section.getKey()); }
+                    }
+                }
+                ContentLog.LOGGER.info("Village settings of their own for {} biome(s): {}", named.size(), named);
+            }
+        }
+        return biomeSettings;
+    }
+
+    public static boolean hasBiomeSettings() { return biomeSections() != null; }
+
+    @Nullable public static Object biomeSettingsMark() { return biomeSections(); }
+
+    public static boolean hasBiomeSection(String named) {
+        JsonObject sections = biomeSections();
+        return sections != null && sections.has(named) && sections.get(named).isJsonObject();
+    }
+
+    public static List<String> biomeSectionNames() {
+        JsonObject sections = biomeSections();
+        if (sections == null) { return List.of(); }
+        List<String> named = new ArrayList<>();
+        for (Map.Entry<String, JsonElement> section : sections.entrySet()) {
+            if (section.getValue().isJsonObject()) { named.add(section.getKey()); }
+        }
+        return named;
+    }
+
+    public static void enterSection(@Nullable String section) {
+        if (section == null) { BUILDING.remove(); }
+        else { BUILDING.set(section); }
+    }
+
+    public static void leaveSection() { BUILDING.remove(); }
+
+    @Nullable public static String buildingSection() { return BUILDING.get(); }
+
+    @Nullable private static JsonElement biomeSetting(String group, String key) {
+        String section = BUILDING.get();
+        if (section == null || !packDecides(group)) { return null; }
+        String at = section + "/" + key;
+        JsonElement held = BIOME_KEYS.get(at);
+        if (held == null) {
+            JsonObject sections = biomeSections();
+            JsonObject inside = sections != null && sections.has(section) && sections.get(section).isJsonObject() ? sections.getAsJsonObject(section) : null;
+            held = inside != null && inside.has(key) ? inside.get(key) : JsonNull.INSTANCE;
+            BIOME_KEYS.put(at, held);
+        }
+        return held.isJsonNull() ? null : held;
+    }
 
     public static void check(@Nullable WorldTemplateDef template) {
         if (template == null || template.settings() == null) { return; }
@@ -127,7 +205,8 @@ public final class ContentControl {
     }
 
     public static String text(String group, String key, String fallback) {
-        JsonElement value = setting(group, key);
+        JsonElement value = biomeSetting(group, key);
+        if (value == null) { value = setting(group, key); }
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
         return value.getAsString();
@@ -207,6 +286,7 @@ public final class ContentControl {
         if (STRUCTURES.equals(group)) { return Config.control.structures(); }
         if (VILLAGES.equals(group)) { return Config.control.villages(); }
         if (COMMANDS.equals(group)) { return Config.control.commands(); }
+        if (RECIPES.equals(group)) { return Config.control.recipes(); }
         if (REPLACEMENTS.equals(group)) { return Config.control.replacements(); }
         if (ENTITIES.equals(group)) { return Config.control.entities(); }
         if (BLAST_PLASTER.equals(group)) { return Config.control.blastPlaster(); }

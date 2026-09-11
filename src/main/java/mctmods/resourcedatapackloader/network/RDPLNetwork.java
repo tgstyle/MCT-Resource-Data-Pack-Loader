@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.network;
 
+import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
@@ -23,7 +24,10 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         });
         registrar.playToClient(MessageHold.TYPE, MessageHold.CODEC, (message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog()); }
+        });
+        registrar.playToClient(MessageNote.TYPE, MessageNote.CODEC, (message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said()); }
         });
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
@@ -31,10 +35,23 @@ public final class RDPLNetwork {
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (message, context) -> {
             if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); }
         });
+        registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (message, context) -> {
+            if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player, message.after()); }
+        });
     }
 
-    public static void sendHold(ServerPlayer player, boolean held, String warning) {
-        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held, warning)); }
+    public static void openWorn(int after) {
+        PacketDistributor.sendToServer(new MessageOpenWorn(after));
+    }
+
+    public static void sendHold(ServerPlayer player, boolean held, String warning, boolean fog) {
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held, warning, fog)); }
+    }
+
+    public static boolean sendNote(ServerPlayer player, String said) {
+        if (!reaches(player)) { return false; }
+        PacketDistributor.sendToPlayer(player, new MessageNote(said));
+        return true;
     }
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {

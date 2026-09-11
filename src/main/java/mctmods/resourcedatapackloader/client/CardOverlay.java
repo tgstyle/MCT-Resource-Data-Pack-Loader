@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,7 +11,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -84,10 +84,10 @@ public final class CardOverlay {
         }
     }
 
-    public static void onHud(RenderGuiEvent.Post event) {
+    public static void onLayer(GuiGraphics graphics, DeltaTracker ignoredDelta) {
         Minecraft mc = Minecraft.getInstance();
         if (CARDS.isEmpty() || mc.screen != null) { return; }
-        draw(event.getGuiGraphics(), mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+        draw(graphics, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
     }
 
     public static void onScreen(ScreenEvent.Render.Post event) {

@@ -15,7 +15,7 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
     public static final String HELD = "held";
     public static final List<String> PARTS = List.of(BODY, ARMOR, HELD);
 
-    public record Sounds(String ambient, String hurt, String death, float volume, float pitch) {}
+    public record Sounds(String ambient, String hurt, String death, String target, String explode, float targetVaries, float volume, float pitch) {}
 
     public record Physics(float jumpMultiplier, float fallDamage, int maxFallHeight, float waterSlowdown, boolean breathesUnderwater, boolean swims, boolean amphibious) {}
 

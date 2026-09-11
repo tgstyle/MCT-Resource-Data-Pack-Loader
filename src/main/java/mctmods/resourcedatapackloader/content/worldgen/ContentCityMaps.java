@@ -35,7 +35,7 @@ public final class ContentCityMaps {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.CITYMAPS, "city map", (key, contents) -> {
             CityMapDef def = parse(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }

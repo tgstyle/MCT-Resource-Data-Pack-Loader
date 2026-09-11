@@ -25,6 +25,14 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCaveStructureFeatu
 import mctmods.resourcedatapackloader.content.worldgen.ContentCity;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityBulbPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityDecorPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityPlazaPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCitySewerHatchPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCitySewerLoopPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCitySewerPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityStationPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityStairsPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityEntrancePiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityStampPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityFarmPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityIntersectPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityLampPiece;
@@ -75,22 +83,7 @@ public final class ContentEvents {
     private ContentEvents() {}
 
     public static void onRegister(RegisterEvent event) {
-        if (Config.contentOff()) { return; }
-        ContentFluids.prepare();
-        if (event.getRegistryKey().equals(Registries.ARMOR_MATERIAL)) { event.register(Registries.ARMOR_MATERIAL, helper -> ContentMaterials.registerArmor(helper::register)); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.FLUID_TYPES)) { event.register(NeoForgeRegistries.Keys.FLUID_TYPES, helper -> ContentFluids.registerTypes(helper::register)); }
-        else if (event.getRegistryKey().equals(Registries.FLUID)) { event.register(Registries.FLUID, helper -> ContentFluids.registerFluids(helper::register)); }
-        else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
-        else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
-        else if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) { event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs); }
-        else if (event.getRegistryKey().equals(Registries.ENTITY_TYPE)) { event.register(Registries.ENTITY_TYPE, ContentEntities::registerTypes); }
-        else if (event.getRegistryKey().equals(Registries.BLOCK_ENTITY_TYPE)) { event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register); }
-        else if (event.getRegistryKey().equals(Registries.SOUND_EVENT)) { event.register(Registries.SOUND_EVENT, ContentSounds::register); }
-        else if (event.getRegistryKey().equals(Registries.MOB_EFFECT)) { event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions); }
-        else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
-        else if (event.getRegistryKey().equals(Registries.POINT_OF_INTEREST_TYPE)) { event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites); }
-        else if (event.getRegistryKey().equals(Registries.VILLAGER_PROFESSION)) { event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions); }
-        else if (event.getRegistryKey().equals(Registries.FEATURE)) {
+        if (event.getRegistryKey().equals(Registries.FEATURE)) {
             event.register(Registries.FEATURE, helper -> {
                 helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
                 helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
@@ -113,10 +106,40 @@ public final class ContentEvents {
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_pier"), ContentCityPierPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_intersect"), ContentCityIntersectPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_decor"), ContentCityDecorPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer"), ContentCitySewerPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_loop"), ContentCitySewerLoopPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_hatch"), ContentCitySewerHatchPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plaza"), ContentCityPlazaPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_station"), ContentCityStationPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stairs"), ContentCityStairsPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stamp"), ContentCityStampPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_entrance"), ContentCityEntrancePiece.TYPE);
         }); }
         else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) { event.register(Registries.STRUCTURE_PLACEMENT, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE)); }
         else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
         else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
+        if (Config.contentOff()) {
+            if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, helper -> generateData()); }
+            return;
+        }
+        ContentFluids.prepare();
+        if (event.getRegistryKey().equals(Registries.ARMOR_MATERIAL)) { event.register(Registries.ARMOR_MATERIAL, helper -> ContentMaterials.registerArmor(helper::register)); }
+        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.FLUID_TYPES)) { event.register(NeoForgeRegistries.Keys.FLUID_TYPES, helper -> ContentFluids.registerTypes(helper::register)); }
+        else if (event.getRegistryKey().equals(Registries.FLUID)) { event.register(Registries.FLUID, helper -> ContentFluids.registerFluids(helper::register)); }
+        else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
+        else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
+        else if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) { event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs); }
+        else if (event.getRegistryKey().equals(Registries.ENTITY_TYPE)) { event.register(Registries.ENTITY_TYPE, ContentEntities::registerTypes); }
+        else if (event.getRegistryKey().equals(Registries.BLOCK_ENTITY_TYPE)) {
+            event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register);
+            event.register(Registries.BLOCK_ENTITY_TYPE, ContentContainers::register);
+        }
+        else if (event.getRegistryKey().equals(Registries.MENU)) { event.register(Registries.MENU, ContentContainers::registerMenu); }
+        else if (event.getRegistryKey().equals(Registries.SOUND_EVENT)) { event.register(Registries.SOUND_EVENT, ContentSounds::register); }
+        else if (event.getRegistryKey().equals(Registries.MOB_EFFECT)) { event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions); }
+        else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
+        else if (event.getRegistryKey().equals(Registries.POINT_OF_INTEREST_TYPE)) { event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites); }
+        else if (event.getRegistryKey().equals(Registries.VILLAGER_PROFESSION)) { event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions); }
     }
 
     private static void registerBlocks(RegisterEvent.RegisterHelper<Block> helper) {
@@ -136,6 +159,10 @@ public final class ContentEvents {
         for (BlockDef def : ContentRegistry.blockDefs()) {
             if (ContentBlockTypes.STAIRS.equals(def.type()) != stairs || !ContentRegistry.available(def.requires(), def.key())) { continue; }
             for (BlockVariant variant : def.variants()) {
+                if (BuiltInRegistries.BLOCK.containsKey(variant.id())) {
+                    ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack definition", variant.id());
+                    continue;
+                }
                 for (ContentBlockTypes.Created made : ContentBlockTypes.create(def, variant)) {
                     if (BuiltInRegistries.BLOCK.containsKey(made.id())) {
                         ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack definition", made.id());
@@ -186,6 +213,10 @@ public final class ContentEvents {
         });
         resolveSoils();
         if (count > 0) { Summary.info("content.items", "Registered " + count + " item(s) from packs"); }
+        generateData();
+    }
+
+    private static void generateData() {
         ContentGenerated.generate();
         ContentEntities.generate();
         ContentExposures.generate();

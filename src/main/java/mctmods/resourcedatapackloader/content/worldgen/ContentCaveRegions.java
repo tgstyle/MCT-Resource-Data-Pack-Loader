@@ -59,7 +59,7 @@ public final class ContentCaveRegions {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.CAVEREGIONS, "cave region", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             CaveRegionDef def = parse(key, contents);

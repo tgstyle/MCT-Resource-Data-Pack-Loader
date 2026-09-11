@@ -22,6 +22,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -80,6 +81,8 @@ public final class PackManager {
     public static final String EXPOSURES = "exposures";
     public static final String MATERIALS = "materials";
     public static final String TABS = "tabs";
+    public static final String TEAMS = "teams";
+    public static final String SCORING = "scoring";
     public static final String OVERRIDES = "overrides";
     public static final String HARDNESS = "hardness";
     private static final String README = "readme.txt";
@@ -185,6 +188,8 @@ public final class PackManager {
                         Entry prev = paths.get(lowered);
                         if (prev == null) {
                             paths.put(lowered, new Entry(pack, path, null));
+                            String singular = type == PackType.SERVER_DATA ? singular(lowered) : null;
+                            if (singular != null && !paths.containsKey(singular)) { paths.put(singular, new Entry(pack, path, null)); }
                             continue;
                         }
                         Map<String, RDPLPack> variants = prev.variants();
@@ -198,6 +203,15 @@ public final class PackManager {
                 }
             }
         }
+    }
+
+    private static final String[][] SINGULAR = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
+
+    @Nullable private static String singular(String path) {
+        for (String[] pair : SINGULAR) {
+            if (path.startsWith(pair[0])) { return pair[1] + path.substring(pair[0].length()); }
+        }
+        return null;
     }
 
     private void prepare(Path packRoot) {
@@ -238,6 +252,16 @@ public final class PackManager {
                 ContentLog.LOGGER.warn("Skipping '{}': no '{}' or '{}' directory inside the zip", fileName, RDPLPack.ASSETS, RDPLPack.DATA);
                 zip.close();
                 return null;
+            }
+            if (pack.ported() != null) {
+                Path written = entry.resolveSibling(fileName + ".converting");
+                Path kept = entry.resolveSibling(stripExtension(fileName) + "_converted.zip" + DISABLED);
+                pack.ported().writeZip(written, pack.root());
+                zip.close();
+                Files.move(entry, kept, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(written, entry, StandardCopyOption.REPLACE_EXISTING);
+                ContentLog.LOGGER.info("Pack '{}' was written out as a pack of this version under its own name, and the 1.12.2 pack it came from is kept beside it as '{}'. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, kept.getFileName());
+                return load(entry);
             }
             return pack;
         }
@@ -294,6 +318,16 @@ public final class PackManager {
         }
         ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first{}", packs.size(), root,
                 fromMods == 0 ? "" : ", " + fromMods + " of them shipped inside a mod jar and listed in " + CONFIG + "/" + ModPacks.CONTROL_FILE);
+        if (Config.content.vanillaClients()) {
+            ContentLog.LOGGER.info("vanillaClients is on: nothing a client would have to know is registered from any pack, so clients without the mod can join. Pack blocks, items, fluids, materials, creative tabs, sounds, potion effects and types, villager professions and entity variants are skipped and named below; everything that lives on the server alone still applies");
+            for (RDPLPack pack : packs) {
+                for (String folder : List.of(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, SOUNDS, POTIONS, POTION_TYPES, VILLAGERS, ENTITIES)) {
+                    List<String> skipped = pack.files(CONTENT, folder, JSON);
+                    if (skipped.isEmpty()) { continue; }
+                    ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on: {}", pack.getName(), skipped.size(), folder, String.join(", ", skipped));
+                }
+            }
+        }
         if (!Config.packs.logContents()) { return; }
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";

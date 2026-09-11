@@ -78,7 +78,7 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
         tag.putInt(HEAD, head);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         CityCross cross = CityCross.of(width, false);
         BlockState deck = stateOr(ContentCity.bridgeBlock(), stateOr(ContentCity.paving(), Blocks.OAK_PLANKS.defaultBlockState()));
         BlockState rail = block(ContentCity.bridgeBarrierBlock());
@@ -86,6 +86,7 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
         BlockState air = Blocks.AIR.defaultBlockState();
         int half = BOARDWALK.equals(style) ? cross.core() : cross.curb();
         BoundingBox held = getBoundingBox();
+        ContentCityTrees.fellAround(level, held, box, this.level - 1, this.level + CLEAR, 2);
         int first = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
         int last = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -176,4 +177,10 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
     @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return TerrainAdjustment.NONE; }
 
     @Override public int getGroundLevelDelta() { return 0; }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box); }
+        finally { CityBiome.leave(); }
+    }
 }

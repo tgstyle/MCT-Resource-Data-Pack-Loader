@@ -14,7 +14,8 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 import java.util.Locale;
 
 public final class HoldView {
-    private static final float FOG_REACH = 24.0F;
+    private static final float FOG_REACH = 2.0F;
+    private static final float VANILLA_START = 0.25F;
     private static final int SHOW = 60;
     private static final int FADE = 60;
     private static final ResourceLocation LOGO = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "textures/gui/hold.png");
@@ -31,16 +32,31 @@ public final class HoldView {
     private static final int PULSE_FADE = 500;
     private static final float PULSE_LEAST = 0.05F;
     private static String warning = "";
+    private static String note = "";
+    private static boolean fogging;
+    private static final int NOTE_COLOR = 0x55FF55;
+    private static final float NOTE_SCALE = 2.0F;
+    private static final int BACKDROP_ALPHA = 0x99;
     private static boolean held;
     private static int showing;
 
     private HoldView() {}
 
-    public static void set(boolean holding, String said) {
+    public static void set(boolean holding, String said, boolean fog) {
         warning = said;
+        if (holding) {
+            note = "";
+            fogging = fog;
+        }
         if (holding == held) { return; }
         held = holding;
         showing = holding ? 0 : SHOW + FADE;
+    }
+
+    public static void note(String said) {
+        note = said == null ? "" : said;
+        if (note.isEmpty()) { return; }
+        if (!held) { showing = SHOW + FADE; }
     }
 
     public static boolean showing() { return held || showing > 0; }
@@ -52,11 +68,13 @@ public final class HoldView {
     }
 
     public static void onFog(ViewportEvent.RenderFog event) {
+        if (!held && !fogging) { return; }
         float strength = strength((float) event.getPartialTick());
         if (strength <= 0.0F) { return; }
         float eased = strength * strength * (3.0F - 2.0F * strength);
-        float near = event.getNearPlaneDistance() * (1.0F - eased);
-        float far = Math.min(event.getFarPlaneDistance(), FOG_REACH * eased + event.getFarPlaneDistance() * (1.0F - eased));
+        float reach = event.getFarPlaneDistance();
+        float near = reach * VANILLA_START * (1.0F - eased);
+        float far = Math.min(reach, FOG_REACH * eased + reach * (1.0F - eased));
         event.setNearPlaneDistance(near);
         event.setFarPlaneDistance(far);
         event.setCanceled(true);
@@ -72,16 +90,23 @@ public final class HoldView {
         float strength = strength(event.getPartialTick().getGameTimeDeltaPartialTick(false));
         if (strength <= 0.0F) { return; }
         GuiGraphics graphics = event.getGuiGraphics();
-        int screenWidth = graphics.guiWidth();
-        int width = Math.min(LOGO_WIDTH, screenWidth / 4);
-        int height = LOGO_HEIGHT * width / LOGO_WIDTH;
-        int left = leftFor(screenWidth, width);
-        int top = Math.max(MARGIN, graphics.guiHeight() / 2 + SUBTITLE_TOP - MARGIN - height);
+        double gui = Crisp.factor();
+        int screenWidth = (int) Math.round(graphics.guiWidth() * gui);
+        int times = Math.max(1, screenWidth / 4 / LOGO_WIDTH);
+        int width = LOGO_WIDTH * times;
+        int height = LOGO_HEIGHT * times;
+        int margin = (int) Math.round(MARGIN * gui);
+        int left = leftFor(screenWidth, width, margin);
+        int top = Math.max(margin, (int) Math.round((graphics.guiHeight() / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
         RenderSystem.enableBlend();
         graphics.setColor(1.0F, 1.0F, 1.0F, strength);
+        graphics.pose().pushPose();
+        graphics.pose().scale((float) (1.0D / gui), (float) (1.0D / gui), 1.0F);
         graphics.blit(LOGO, left, top, 0.0F, 0.0F, width, height, width, height);
+        graphics.pose().popPose();
         graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableBlend();
+        greet(graphics, strength);
     }
 
     private static float pulse() {
@@ -89,6 +114,21 @@ public final class HoldView {
         if (at < PULSE_HELD) { return 1.0F; }
         if (at < PULSE_HELD + PULSE_FADE) { return 1.0F - (at - PULSE_HELD) / (float) PULSE_FADE; }
         return 0.0F;
+    }
+
+    private static void greet(GuiGraphics graphics, float strength) {
+        if (note.isEmpty() || strength < PULSE_LEAST) { return; }
+        Minecraft mc = Minecraft.getInstance();
+        float scale = Crisp.scale(NOTE_SCALE);
+        int width = mc.font.width(note);
+        float x = Crisp.snap((graphics.guiWidth() - width * scale) / 2.0F);
+        float y = Crisp.snap(graphics.guiHeight() / 2.0F + SUBTITLE_TOP);
+        int pad = 4;
+        graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(strength * BACKDROP_ALPHA) << 24);
+        graphics.pose().pushPose();
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawString(mc.font, note, x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR, true);
+        graphics.pose().popPose();
     }
 
     private static void warn(GuiGraphics graphics) {
@@ -108,10 +148,10 @@ public final class HoldView {
         graphics.pose().popPose();
     }
 
-    private static int leftFor(int screenWidth, int width) {
+    private static int leftFor(int screenWidth, int width, int margin) {
         String asked = ContentControl.text(ContentControl.CHUNKS, KEY, Config.chunks.pregenLogo()).trim().toLowerCase(Locale.ROOT);
-        if ("left".equals(asked)) { return MARGIN; }
-        if ("right".equals(asked)) { return screenWidth - MARGIN - width; }
+        if ("left".equals(asked)) { return margin; }
+        if ("right".equals(asked)) { return screenWidth - margin - width; }
         if (!"center".equals(asked) && !asked.isEmpty() && !asked.equals(warnedAbout)) {
             warnedAbout = asked;
             ContentLog.LOGGER.error("{} '{}' is not left, center or right, so the logo stands in the center", KEY, asked);
@@ -122,10 +162,17 @@ public final class HoldView {
     public static void tick() {
         if (held || showing <= 0) { return; }
         showing--;
+        if (showing <= 0) {
+            note = "";
+            fogging = false;
+        }
     }
 
     public static void reset() {
         held = false;
         showing = 0;
+        fogging = false;
+        warning = "";
+        note = "";
     }
 }

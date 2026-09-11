@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.TeamDef;
+import mctmods.resourcedatapackloader.content.def.ScoreDef;
+import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
@@ -18,7 +21,9 @@ import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgenParser;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 
 import com.google.gson.Gson;
@@ -26,16 +31,23 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.criteria.ObjectiveCriteria;
+import net.minecraft.world.scores.Team;
+import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentParser {
+    private static final Map<String, String> BAUBLE_SLOTS = Map.of("amulet", "necklace", "trinket", "charm");
+    private static final Set<String> TOLD_BAUBLE = new HashSet<>();
     public static final String DEFAULT_TYPE = "basic";
     public static final String DEFAULT_STILL = "minecraft:block/water_still";
     public static final String DEFAULT_FLOW = "minecraft:block/water_flow";
@@ -56,7 +68,7 @@ public final class ContentParser {
         }
         JsonObject exp = GsonHelper.getAsJsonObject(json, "expDrop", new JsonObject());
         String type = GsonHelper.getAsString(json, "type", DEFAULT_TYPE).trim().toLowerCase(Locale.ROOT);
-        boolean opaque = GsonHelper.getAsBoolean(json, "opaque", true);
+        boolean opaque = GsonHelper.getAsBoolean(json, "opaque", !chested(json));
         List<BlockVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
             ResourceLocation id = variantId(key, entry.getKey(), "Block");
@@ -105,7 +117,8 @@ public final class ContentParser {
                 Math.clamp(GsonHelper.getAsInt(json, "leafSaplingChance", 5), 0, 100),
                 location(GsonHelper.getAsString(json, "opensWith", "")),
                 GsonHelper.getAsString(json, "openSound", "").trim(),
-                portal(key, json, null, true, false));
+                portal(key, json, null, true, false),
+                container(key, json));
     }
 
     @Nullable public static PortalDef portal(ResourceLocation key, JsonObject json, @Nullable ResourceLocation ownDimension, boolean ownedDefault, boolean walkInDefault) {
@@ -274,7 +287,7 @@ public final class ContentParser {
                 Collections.unmodifiableList(variants), Json.strings(json, "requires"),
                 Math.max(1, GsonHelper.getAsInt(json, "useDuration", 32)),
                 GsonHelper.getAsBoolean(json, "eat", false),
-                GsonHelper.getAsString(json, "container", "").trim(),
+                remainder(json),
                 GsonHelper.getAsString(json, "material", "").trim(),
                 GsonHelper.getAsString(json, "toolClass", "").trim().toLowerCase(Locale.ROOT),
                 GsonHelper.getAsString(json, "slot", "").trim().toLowerCase(Locale.ROOT),
@@ -282,7 +295,8 @@ public final class ContentParser {
                 GsonHelper.getAsString(json, "soil", "minecraft:farmland").trim(),
                 Json.strings(json, "potionTypes"),
                 GsonHelper.getAsFloat(json, "attackSpeed", Float.NaN),
-                Math.max(0, GsonHelper.getAsInt(json, "cooldown", 0)));
+                Math.max(0, GsonHelper.getAsInt(json, "cooldown", 0)),
+                holds(key, json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
@@ -447,6 +461,7 @@ public final class ContentParser {
                 Math.max(1, GsonHelper.getAsInt(entry, "chance", 7)),
                 Math.max(0, GsonHelper.getAsInt(entry, "light", 9)),
                 GsonHelper.getAsString(entry, "structure", "").trim(),
+                ContentWorldgenParser.picks(entry, "structures", "structure"),
                 GsonHelper.getAsString(entry, "log", "minecraft:oak_log").trim(),
                 GsonHelper.getAsString(entry, "leaves", "minecraft:oak_leaves").trim(),
                 Math.max(1, GsonHelper.getAsInt(entry, "height", 4)),
@@ -502,4 +517,202 @@ public final class ContentParser {
         for (String value : values) { out.add(value.trim().toLowerCase(Locale.ROOT)); }
         return Collections.unmodifiableList(out);
     }
+
+    private static String remainder(JsonObject json) {
+        String named = GsonHelper.getAsString(json, "containerItem", "").trim();
+        if (!named.isEmpty()) { return named; }
+        return json.has("container") && json.get("container").isJsonPrimitive() ? GsonHelper.getAsString(json, "container", "").trim() : "";
+    }
+
+    @Nullable private static ContainerDef holds(ResourceLocation key, JsonObject json) {
+        return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null;
+    }
+
+    private static boolean chested(JsonObject json) {
+        if (!json.has("container") || !json.get("container").isJsonObject()) { return false; }
+        JsonElement asked = json.getAsJsonObject("container").get("chestModel");
+        return asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
+    }
+
+    @Nullable private static ContainerDef container(ResourceLocation key, JsonObject json) {
+        if (!json.has("container") || !json.get("container").isJsonObject()) { return null; }
+        JsonObject held = GsonHelper.getAsJsonObject(json, "container");
+        int askedRows = GsonHelper.getAsInt(held, "rows", 3);
+        int askedColumns = GsonHelper.getAsInt(held, "columns", 9);
+        int rows = Math.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
+        int columns = Math.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
+        if (askedRows != rows || askedColumns != columns) {
+            ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows);
+        }
+        String named = GsonHelper.getAsString(held, "guiTexture", "").trim();
+        ResourceLocation texture = named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        int wide = GsonHelper.getAsInt(held, "guiWidth", 0);
+        int tall = GsonHelper.getAsInt(held, "guiHeight", 0);
+        if (texture != null && (wide <= 0 || tall <= 0)) {
+            ContentLog.LOGGER.error("The container on {} names a guiTexture without a guiWidth and guiHeight, so the drawn background is used instead", key);
+            texture = null;
+        }
+        JsonElement asked = held.get("chestModel");
+        boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
+        ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key) : null;
+        return new ContainerDef(rows, columns, GsonHelper.getAsString(held, "lootTable", "").trim(),
+                chest, sheet, texture, wide, tall, curioSlot(key, held));
+    }
+
+    private static String curioSlot(ResourceLocation key, JsonObject held) {
+        String asked = GsonHelper.getAsString(held, "curioSlot", "").trim().toLowerCase(Locale.ROOT);
+        if (!asked.isEmpty()) { return asked; }
+        String old = GsonHelper.getAsString(held, "bauble", "").trim().toLowerCase(Locale.ROOT);
+        if (old.isEmpty()) { return ""; }
+        String mapped = BAUBLE_SLOTS.getOrDefault(old, old);
+        if (TOLD_BAUBLE.add(key.toString())) {
+            ContentLog.LOGGER.info("The container on {} names the 1.12.2 setting 'bauble' as '{}'. It is read as curioSlot '{}'; write curioSlot on this line", key, old, mapped);
+        }
+        return mapped;
+    }
+
+    @Nullable private static ResourceLocation sheetOf(String named, ResourceLocation key) {
+        if (named.isEmpty()) {
+            ContentLog.LOGGER.error("The container on {} names an empty chestModel texture, so the vanilla chest is drawn instead", key);
+            return null;
+        }
+        ResourceLocation asked = ResourceLocation.tryParse(named);
+        if (asked == null) {
+            ContentLog.LOGGER.error("The container on {} names the chestModel texture '{}', which is not a valid id, so the vanilla chest is drawn instead", key, named);
+            return null;
+        }
+        return ResourceLocation.fromNamespaceAndPath(asked.getNamespace(), "textures/" + asked.getPath() + ".png");
+    }
+
+
+    @Nullable public static ScoreDef scoreFile(ResourceLocation key, String contents) {
+        JsonObject json = GSON.fromJson(contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Score file {} is empty, ignoring it", key);
+            return null;
+        }
+        String name = GsonHelper.getAsString(json, "name", key.getPath()).trim();
+        if (name.isEmpty() || name.length() > 16) {
+            ContentLog.LOGGER.error("Score file {} names the objective '{}', and an objective name is 1 to 16 characters, so it is left out", key, name);
+            return null;
+        }
+        String wanted = GsonHelper.getAsString(json, "criterion", "dummy").trim();
+        ObjectiveCriteria criterion = ObjectiveCriteria.byName(wanted).orElse(null);
+        if (criterion == null) {
+            ContentLog.LOGGER.error("Objective {} scores on '{}', which is not a criterion the game knows, so it is left out. dummy, deathCount, playerKillCount, totalKillCount, health and any stat name are the ones there are", name, wanted);
+            return null;
+        }
+        String slot = GsonHelper.getAsString(json, "display", "").trim();
+        slot = "belowName".equals(slot) ? "below_name" : slot;
+        if (!slot.isEmpty() && !displaySlotKnown(slot)) {
+            ContentLog.LOGGER.error("Objective {} asks to be shown in '{}', which is not list, sidebar, belowName, below_name or sidebar.team.<color>, so it is not shown", name, slot);
+            slot = "";
+        }
+        ObjectiveCriteria.RenderType render = json.has("render") ? ObjectiveCriteria.RenderType.byId(GsonHelper.getAsString(json, "render", "integer").trim()) : null;
+        JsonObject results = GsonHelper.getAsJsonObject(json, "results", new JsonObject());
+        JsonObject points = GsonHelper.getAsJsonObject(json, "points", new JsonObject());
+        JsonObject ends = GsonHelper.getAsJsonObject(json, "ends", new JsonObject());
+        Map<String, Integer> kills = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(points, "kill", new JsonObject()).entrySet()) { kills.put(entry.getKey().trim(), entry.getValue().getAsInt()); }
+        return new ScoreDef(name, GsonHelper.getAsString(json, "displayName", name), criterion, slot, render,
+                GsonHelper.getAsBoolean(json, "teamTotals", true),
+                GsonHelper.getAsBoolean(json, "individuals", false),
+                Map.copyOf(kills),
+                GsonHelper.getAsInt(points, "death", 0),
+                GsonHelper.getAsInt(ends, "atScore", 0),
+                GsonHelper.getAsInt(ends, "afterMinutes", 0),
+                GsonHelper.getAsInt(ends, "afterRounds", 0),
+                GsonHelper.getAsBoolean(results, "card", false),
+                GsonHelper.getAsString(results, "title", name + " results"),
+                GsonHelper.getAsString(results, "icon", "").trim(),
+                GsonHelper.getAsString(results, "image", "").trim(),
+                cardColor(results, name),
+                Math.max(20, GsonHelper.getAsInt(results, "seconds", 8) * 20),
+                GsonHelper.getAsBoolean(json, "carries", false),
+                GsonHelper.getAsBoolean(ends, "resets", false),
+                Math.max(0, GsonHelper.getAsInt(ends, "intermissionSeconds", 10)),
+                GsonHelper.getAsString(json, "awardsTo", "").trim(),
+                GsonHelper.getAsBoolean(ends, "locksTeams", true),
+                GsonHelper.getAsInt(points, "ownKill", 0),
+                GsonHelper.getAsString(ends, "intermissionSays", "Round cooldown {seconds}"),
+                GsonHelper.getAsString(ends, "startsSays", "Round starting in {seconds}"));
+    }
+
+    private static int cardColor(JsonObject results, String name) {
+        String asked = GsonHelper.getAsString(results, "background", "").trim();
+        return asked.isEmpty() ? 0x1E2630 : color(asked, name + " results background") & 0xFFFFFF;
+    }
+
+    @Nullable public static TeamDef teamFile(ResourceLocation key, String contents) {
+        JsonObject json = GSON.fromJson(contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Team file {} is empty, ignoring it", key);
+            return null;
+        }
+        String name = GsonHelper.getAsString(json, "name", key.getPath()).trim();
+        if (name.isEmpty() || name.length() > 16) {
+            ContentLog.LOGGER.error("Team file {} names the team '{}', and a team name is 1 to 16 characters, so the team is left out", key, name);
+            return null;
+        }
+        ChatFormatting color = ChatFormatting.getByName(GsonHelper.getAsString(json, "color", "white").trim().toLowerCase(Locale.ROOT));
+        if (color == null || !color.isColor()) {
+            ContentLog.LOGGER.error("Team {} asks for the color '{}', which is not one of the sixteen text colors, so it is white", name, GsonHelper.getAsString(json, "color", ""));
+            color = ChatFormatting.WHITE;
+        }
+        boolean friendlyFire = GsonHelper.getAsBoolean(json, "friendlyFire", false);
+        return new TeamDef(name, GsonHelper.getAsString(json, "displayName", name), color,
+                GsonHelper.getAsString(json, "prefix", ""), GsonHelper.getAsString(json, "suffix", ""),
+                friendlyFire, GsonHelper.getAsBoolean(json, "mobFriendlyFire", friendlyFire),
+                GsonHelper.getAsBoolean(json, "seeFriendlyInvisibles", true),
+                visible(json, "nameTags", key), visible(json, "deathMessages", key), collision(json, key),
+                Json.strings(json, "entities"), Json.strings(json, "players"), box(json, key),
+                GsonHelper.getAsBoolean(json, "joinable", true),
+                leadWay(json, name), GsonHelper.getAsString(json, "leadOn", "").trim(), GsonHelper.getAsString(json, "leadIs", "").trim(),
+                GsonHelper.getAsBoolean(json, "balance", false), GsonHelper.getAsBoolean(json, "scoreboard", true));
+    }
+
+    private static String leadWay(JsonObject json, String team) {
+        String asked = GsonHelper.getAsString(json, "lead", TeamDef.NONE).trim();
+        if (TeamDef.NONE.equals(asked) || TeamDef.TOP_SCORE.equals(asked) || TeamDef.APPOINTED.equals(asked) || TeamDef.VOTE.equals(asked) || TeamDef.CLAIM.equals(asked)) { return asked; }
+        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, topScore, appointed, vote or claim, so it has no lead", team, asked);
+        return TeamDef.NONE;
+    }
+
+    private static Team.Visibility visible(JsonObject json, String field, ResourceLocation key) {
+        String asked = GsonHelper.getAsString(json, field, "always").trim();
+        Team.Visibility held = Team.Visibility.byName(asked);
+        if (held != null) { return held; }
+        ContentLog.LOGGER.error("Team file {} sets {} to '{}', which is not always, never, hideForOtherTeams or hideForOwnTeam, so it is always", key, field, asked);
+        return Team.Visibility.ALWAYS;
+    }
+
+    private static Team.CollisionRule collision(JsonObject json, ResourceLocation key) {
+        String asked = GsonHelper.getAsString(json, "collision", "always").trim();
+        Team.CollisionRule held = Team.CollisionRule.byName(asked);
+        if (held != null) { return held; }
+        ContentLog.LOGGER.error("Team file {} sets collision to '{}', which is not always, never, pushOtherTeams or pushOwnTeam, so it is always", key, asked);
+        return Team.CollisionRule.ALWAYS;
+    }
+
+    @Nullable private static int[] box(JsonObject json, ResourceLocation key) {
+        if (!json.has("spawnBox")) { return null; }
+        if (!json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) {
+            ContentLog.LOGGER.error("Team file {} has a spawnBox that is not six whole numbers, x y z to x y z, so nothing joins by where it spawns", key);
+            return null;
+        }
+        int[] box = new int[6];
+        int at = 0;
+        for (JsonElement entry : json.getAsJsonArray("spawnBox")) { box[at++] = entry.getAsInt(); }
+        for (int side = 0; side < 3; side++) {
+            if (box[side] > box[side + 3]) {
+                int swap = box[side];
+                box[side] = box[side + 3];
+                box[side + 3] = swap;
+            }
+        }
+        return box;
+    }
+
+    private static boolean displaySlotKnown(String slot) { return DisplaySlot.CODEC.byName(slot) != null; }
+
 }

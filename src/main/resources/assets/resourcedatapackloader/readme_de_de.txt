@@ -33,8 +33,8 @@ deine Fassung also hier:
 
 Eine Beutetabelle liegt stattdessen unter data und geht denselben Weg:
 
-    data/minecraft/loot_tables/blocks/iron_ore.json
-    rdploader/data/minecraft/loot_tables/blocks/iron_ore.json
+    data/minecraft/loot_table/blocks/iron_ore.json
+    rdploader/data/minecraft/loot_table/blocks/iron_ore.json
 
 Das ist die ganze Regel. Der Pfad nach 'assets' oder 'data' ist immer derselbe
 wie der Pfad im Jar, es muss also nie etwas umbenannt oder verschoben werden.

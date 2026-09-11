@@ -1,12 +1,15 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
+import mctmods.resourcedatapackloader.pack.port.Port;
+import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.server.packs.PackType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -32,6 +35,7 @@ public final class RDPLPack {
     @Nullable private final FileSystem owned;
     @Nullable private final Set<String> ownedNamespaces;
     private final Map<PackType, Map<String, Set<String>>> index = new EnumMap<>(PackType.class);
+    @Nullable private final Ported ported;
     private int fileCount;
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
@@ -45,12 +49,18 @@ public final class RDPLPack {
         this.root = root;
         this.owned = owned;
         this.ownedNamespaces = ownedNamespaces;
+        this.ported = Port.legacy(root) ? new Ported(name, root) : null;
         buildIndex();
+        if (ported != null) { ported.report(); }
     }
 
     public static boolean lacksContent(Path root) { return !Files.isDirectory(root.resolve(ASSETS)) && !Files.isDirectory(root.resolve(DATA)); }
 
     public boolean isFromMod() { return ownedNamespaces != null; }
+
+    @Nullable public Ported ported() { return ported; }
+
+    public Path root() { return root; }
 
     public String getName() { return name; }
 
@@ -81,6 +91,15 @@ public final class RDPLPack {
                 ContentLog.LOGGER.error("Pack '{}': could not list namespaces under {}", name, type.getDirectory(), ex);
             }
         }
+        if (ported == null) { return; }
+        for (Map.Entry<PackType, Map<String, Set<String>>> type : ported.exposed().entrySet()) {
+            for (Map.Entry<String, Set<String>> namespace : type.getValue().entrySet()) {
+                Set<String> paths = index.computeIfAbsent(type.getKey(), k -> new HashMap<>()).computeIfAbsent(namespace.getKey(), k -> new LinkedHashSet<>());
+                for (String path : namespace.getValue()) {
+                    if (paths.add(path)) { fileCount++; }
+                }
+            }
+        }
     }
 
     private boolean ownsNamespace(Path dir) {
@@ -107,6 +126,10 @@ public final class RDPLPack {
         }
         if (nested > 0) { ContentLog.LOGGER.warn("Pack '{}': {} file(s) under '{}/{}/{}/' are ignored. Nothing reads a '{}' folder inside a namespace; content folders sit directly under the namespace", name, nested, type.getDirectory(), namespace, PackManager.ROOT_DIRECTORY, PackManager.ROOT_DIRECTORY); }
         if (paths.isEmpty()) { return; }
+        if (ported != null && type == PackType.CLIENT_RESOURCES) {
+            ported.index(namespace, new ArrayList<>(paths));
+            return;
+        }
         index.computeIfAbsent(type, k -> new HashMap<>()).put(namespace, paths);
         fileCount += paths.size();
     }
@@ -132,9 +155,30 @@ public final class RDPLPack {
 
     private Path locate(PackType type, String namespace, String path) { return root.resolve(type.getDirectory()).resolve(namespace).resolve(path); }
 
-    public InputStream open(PackType type, String namespace, String path) throws IOException { return Files.newInputStream(locate(type, namespace, path)); }
+    public InputStream open(PackType type, String namespace, String path) throws IOException {
+        if (ported != null) {
+            InputStream held = ported.open(type, namespace, path);
+            if (held != null) { return held; }
+        }
+        return Files.newInputStream(locate(type, namespace, path));
+    }
 
-    private String read(PackType type, String namespace, String path) throws IOException { return Files.readString(locate(type, namespace, path)); }
+    private String read(PackType type, String namespace, String path) throws IOException {
+        try (InputStream stream = open(type, namespace, path)) { return new String(stream.readAllBytes(), StandardCharsets.UTF_8); }
+    }
+
+    public List<String> files(PackType type, String folder, String ext) {
+        String prefix = folder + "/";
+        String suffix = "." + ext;
+        List<String> found = new ArrayList<>();
+        for (Map.Entry<String, Set<String>> entry : index.getOrDefault(type, Collections.emptyMap()).entrySet()) {
+            for (String path : entry.getValue()) {
+                if (path.startsWith(prefix) && path.endsWith(suffix)) { found.add(entry.getKey() + ":" + path.substring(prefix.length(), path.length() - suffix.length())); }
+            }
+        }
+        Collections.sort(found);
+        return found;
+    }
 
     public void forEach(PackType type, String folder, String ext, IPackConsumer consumer) {
         String prefix = folder + "/";
@@ -175,6 +219,7 @@ public final class RDPLPack {
     }
 
     public void close() throws IOException {
+        if (ported != null) { ported.closing(); }
         if (owned != null) { owned.close(); }
     }
 }

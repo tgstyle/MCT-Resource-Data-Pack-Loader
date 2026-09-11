@@ -32,8 +32,8 @@ so your version goes here:
 
 A loot table lives under data instead, and goes the same way:
 
-    data/minecraft/loot_tables/blocks/iron_ore.json
-    rdploader/data/minecraft/loot_tables/blocks/iron_ore.json
+    data/minecraft/loot_table/blocks/iron_ore.json
+    rdploader/data/minecraft/loot_table/blocks/iron_ore.json
 
 That is the whole rule. The path after 'assets' or 'data' is always the same as
 the path inside the jar, so nothing ever needs renaming or moving.

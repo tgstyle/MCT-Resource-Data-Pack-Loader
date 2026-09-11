@@ -139,6 +139,10 @@ public final class ContentStructureControl {
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAt", Config.worldgen.structureAt())) {
             String[] parts = split(entry, "structureAt");
             if (parts == null) { continue; }
+            if (ContentCity.STRUCTURE.equals(parts[0])) {
+                touched.add("the city center district pinned at " + parts[1].trim());
+                continue;
+            }
             String[] xz = parts[1].split(",");
             if (xz.length != 2) {
                 ContentLog.LOGGER.error("structureAt entry '{}' is not written as structure=x,z", entry);
@@ -182,7 +186,7 @@ public final class ContentStructureControl {
         }
         if (values.isEmpty()) { return; }
         JsonElement set = holderSet(values);
-        if (ContentControl.flag(ContentControl.STRUCTURES, "structureBiomesAreBlacklist", Config.worldgen.structureBiomesAreBlacklist())) {
+        if (blacklisted(parts[0])) {
             JsonObject not = new JsonObject();
             not.addProperty("type", ContentFormats.CONVENTION_HOLDER_SETS + ":not");
             not.add("value", set);
@@ -254,13 +258,11 @@ public final class ContentStructureControl {
             ContentLog.LOGGER.error("structureAdaptation entry '{}' asks for '{}', which is not one of {}", entry, asked, ADAPTATIONS);
             return;
         }
-        String mode = ContentFormats.adaptation(asked);
-        if (!mode.equals(asked) && WARNED.add(entry)) { ContentLog.LOGGER.warn("structureAdaptation entry '{}' asks for '{}', which this line does not carry, so '{}' stands in", entry, asked, mode); }
         for (ResourceLocation structure : structures(parts[0])) {
             JsonObject json = structure(structure);
             if (json == null) { continue; }
-            json.addProperty("terrain_adaptation", mode);
-            touched.add(structure.getPath() + " " + mode);
+            json.addProperty("terrain_adaptation", asked);
+            touched.add(structure.getPath() + " " + asked);
         }
     }
 
@@ -314,6 +316,16 @@ public final class ContentStructureControl {
         String home = SET_DIMENSIONS.getOrDefault(set.getPath(), "minecraft:overworld");
         for (String named : dimensions) {
             if (ContentFormats.dimensionId(named).equals(home)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean blacklisted(String structure) {
+        String wanted = structure.trim().toLowerCase(Locale.ROOT);
+        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureBiomesAreBlacklist", Config.worldgen.structureBiomesAreBlacklist())) {
+            String[] parts = split(entry, "structureBiomesAreBlacklist");
+            if (parts == null) { continue; }
+            if (parts[0].trim().toLowerCase(Locale.ROOT).equals(wanted)) { return Boolean.parseBoolean(parts[1].trim()); }
         }
         return false;
     }

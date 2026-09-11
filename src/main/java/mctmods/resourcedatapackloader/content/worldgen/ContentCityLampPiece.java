@@ -40,7 +40,7 @@ public final class ContentCityLampPiece extends StructurePiece {
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) { tag.putInt(FOOT, foot); }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         BlockState post = state(ContentCity.lampBlock());
         if (post == null) { return; }
         BoundingBox held = getBoundingBox();
@@ -69,5 +69,11 @@ public final class ContentCityLampPiece extends StructurePiece {
         if (named.isEmpty()) { return null; }
         Block found = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(named));
         return found == null || found == Blocks.AIR ? null : found.defaultBlockState();
+    }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box); }
+        finally { CityBiome.leave(); }
     }
 }

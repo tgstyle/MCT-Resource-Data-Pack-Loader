@@ -32,7 +32,7 @@ public final class ContentWorldIntro {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.WORLDINTRO, "world intro", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             WorldIntroDef def = parse(key, contents);

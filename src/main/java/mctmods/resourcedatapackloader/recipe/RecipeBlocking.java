@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.recipe;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
@@ -25,18 +26,20 @@ public final class RecipeBlocking {
     private static Set<String> blocked = Collections.emptySet();
     private static String match = MATCH_RECIPE;
     private static boolean blockAll;
+    private static boolean off;
 
     private RecipeBlocking() {}
 
     public static void reload() {
         BLOCKED.clear();
-        whitelist = Settings.lower(Config.recipes.recipeWhitelist());
-        blocked = Settings.lower(Config.recipes.blockedRecipeMods());
-        match = Config.recipes.recipeMatch().toLowerCase(Locale.ROOT);
-        blockAll = Config.recipes.blockRecipes();
+        off = ContentControl.off(ContentControl.RECIPES);
+        whitelist = Settings.lower(ContentControl.list(ContentControl.RECIPES, "recipeWhitelist", Config.recipes.recipeWhitelist()));
+        blocked = Settings.lower(ContentControl.list(ContentControl.RECIPES, "blockedRecipeMods", Config.recipes.blockedRecipeMods()));
+        match = ContentControl.text(ContentControl.RECIPES, "recipeMatch", Config.recipes.recipeMatch()).toLowerCase(Locale.ROOT);
+        blockAll = ContentControl.flag(ContentControl.RECIPES, "blockRecipes", Config.recipes.blockRecipes());
     }
 
-    public static boolean disabled() { return !blockAll && blocked.isEmpty(); }
+    public static boolean disabled() { return off || (!blockAll && blocked.isEmpty()); }
 
     public static boolean blocks(ResourceLocation id, ItemStack result) {
         if (disabled()) { return false; }
@@ -50,7 +53,7 @@ public final class RecipeBlocking {
         int total = BLOCKED.total();
         if (total == 0) { return; }
         Summary.info("recipes.blocked", "Blocked " + total + " crafting recipe(s)");
-        if (Config.recipes.logBlockedRecipes()) { BLOCKED.report("crafting recipe(s)"); }
+        if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes())) { BLOCKED.report("crafting recipe(s)"); }
     }
 
     @Nullable private static String reason(Set<String> owners) {

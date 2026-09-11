@@ -63,6 +63,7 @@ public final class ContentEntityParser {
                 baby(json),
                 picks(key, json),
                 new EntityVariantDef.Sounds(GsonHelper.getAsString(sounds, "ambient", "").trim(), GsonHelper.getAsString(sounds, "hurt", "").trim(), GsonHelper.getAsString(sounds, "death", "").trim(),
+                        GsonHelper.getAsString(sounds, "target", "").trim(), GsonHelper.getAsString(sounds, "explode", "").trim(), Math.max(0.0F, GsonHelper.getAsFloat(sounds, "targetVaries", 0.0F)),
                         Math.max(0.0F, GsonHelper.getAsFloat(json, "soundVolume", 1.0F)), Math.max(0.1F, GsonHelper.getAsFloat(json, "soundPitch", 1.0F))),
                 lowered(Json.strings(json, "immuneTo")),
                 new EntityVariantDef.Physics(Math.max(0.1F, GsonHelper.getAsFloat(json, "jumpMultiplier", 1.0F)), Math.max(0.0F, GsonHelper.getAsFloat(json, "fallDamage", 1.0F)),

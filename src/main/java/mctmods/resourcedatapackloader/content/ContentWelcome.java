@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.Config;
@@ -40,7 +41,7 @@ public final class ContentWelcome {
         List<String> entries = entries();
         boolean atDefault = entries.size() == 1 && entries.getFirst().trim().equals(Config.WELCOME);
         String greeting = atDefault ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player, player.level().dimension(), true);
-        if (greeting != null && !greeting.isEmpty()) { send(player, greeting); }
+        if (greeting != null && !greeting.isEmpty() && !RDPLNetwork.sendNote(player, greeting)) { send(player, greeting); }
     }
 
     @Nullable private static String greetingFor(ServerPlayer player, ResourceKey<Level> dimension, boolean fallBack) {

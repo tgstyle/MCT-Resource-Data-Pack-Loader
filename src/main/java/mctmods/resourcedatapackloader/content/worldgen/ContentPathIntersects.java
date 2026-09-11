@@ -33,7 +33,7 @@ public final class ContentPathIntersects {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.PATHINTERSECTS, "path intersect design", (key, contents) -> {
             PathIntersectDef def = parse(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }

@@ -6,6 +6,7 @@ license="${mod_license}"
 modId="resourcedatapackloader"
 version="${version}"
 displayName="${mod_name}"
+logoFile="logo.png"
 displayURL="${mod_url}"
 authors="${mod_authors}"
 description='''${mod_description}'''
@@ -29,6 +30,13 @@ modId="minecraft"
 type="required"
 versionRange="[${version_mc}]"
 ordering="NONE"
+side="BOTH"
+
+[[dependencies.resourcedatapackloader]]
+modId="curios"
+type="optional"
+versionRange="[9,)"
+ordering="AFTER"
 side="BOTH"
 
 [[mixins]]

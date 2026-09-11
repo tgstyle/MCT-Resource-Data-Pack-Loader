@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import net.minecraft.world.Difficulty;
 
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -42,6 +44,37 @@ public final class ContentTerrain {
     @Nullable public static JsonObject generatorOptions() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
         return ContentControl.object(ContentControl.TERRAIN, "generatorOptions", Config.worldgen.generatorOptions());
+    }
+
+    public record Flat(List<String> layers, List<String> structures, boolean decorated) {}
+
+    private static final Map<String, String> FLAT_STRUCTURES = Map.of("village", "minecraft:villages", "mineshaft", "minecraft:mineshafts", "stronghold", "minecraft:strongholds", "oceanmonument", "minecraft:ocean_monuments", "mansion", "minecraft:woodland_mansions");
+
+    public static Flat flat() {
+        List<String> layers = new ArrayList<>();
+        List<String> structures = new ArrayList<>();
+        boolean decorated = false;
+        List<String> written = ContentControl.off(ContentControl.TERRAIN) ? List.of(Config.worldgen.generatorOptions()) : ContentControl.list(ContentControl.TERRAIN, "generatorOptions", List.of(Config.worldgen.generatorOptions()));
+        if (written.size() == 1 && written.getFirst().indexOf(';') >= 0) {
+            String[] parts = written.getFirst().split(";");
+            written = List.of(parts.length > 1 ? parts[1].split(",") : parts[0].split(","));
+            if (parts.length > 3) {
+                for (String named : parts[3].split(",")) {
+                    String key = named.trim().toLowerCase(Locale.ROOT);
+                    int at = key.indexOf('(');
+                    if (at >= 0) { key = key.substring(0, at); }
+                    String set = FLAT_STRUCTURES.get(key);
+                    if ("decoration".equals(key)) { decorated = true; }
+                    else if (set != null) { structures.add(set); }
+                    else if (!key.isEmpty() && WARNED.add("flat." + key)) { ContentLog.LOGGER.info("generatorOptions names the flat structure '{}', which has no structure set on this version, so it is left out", key); }
+                }
+            }
+        }
+        for (String layer : written) {
+            String trimmed = layer.trim();
+            if (!trimmed.isEmpty()) { layers.add(trimmed); }
+        }
+        return new Flat(layers, structures, decorated);
     }
 
     public static int worldMinHeight() { return number("worldMinHeight", Config.worldgen.worldMinHeight(), ContentWorldShape.VANILLA_MIN); }

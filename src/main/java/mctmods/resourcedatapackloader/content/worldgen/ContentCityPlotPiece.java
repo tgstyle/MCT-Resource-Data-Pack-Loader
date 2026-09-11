@@ -55,7 +55,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         tag.putString(PLOT, plot);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
         super.postProcess(level, manager, generator, random, box, chunk, pos);
         VillageDef def = ContentVillages.byKey(plot);
         if (def == null) { return; }
@@ -69,4 +69,10 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return TerrainAdjustment.BEARD_THIN; }
 
     @Override public int getGroundLevelDelta() { return 0; }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, manager, generator, random, box, chunk, pos); }
+        finally { CityBiome.leave(); }
+    }
 }

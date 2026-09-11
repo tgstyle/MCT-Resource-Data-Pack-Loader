@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -19,14 +18,19 @@ public final class Json {
     private Json() {}
 
     public static List<String> strings(JsonObject json, String member) {
-        if (!json.has(member)) { return Collections.emptyList(); }
-        JsonArray array = GsonHelper.getAsJsonArray(json, member);
-        List<String> values = new ArrayList<>(array.size());
-        for (JsonElement element : array) {
-            String value = element.getAsString();
-            if (!value.isEmpty()) { values.add(value); }
+        List<String> out = new ArrayList<>();
+        if (!json.has(member)) { return out; }
+        JsonElement held = json.get(member);
+        if (held.isJsonPrimitive()) {
+            out.add(held.getAsString());
+            return out;
         }
-        return Collections.unmodifiableList(values);
+        if (!held.isJsonArray()) { return out; }
+        for (JsonElement element : held.getAsJsonArray()) {
+            if (element.isJsonPrimitive()) { out.add(element.getAsString()); }
+            else if (element.isJsonObject() && element.getAsJsonObject().has("block") && element.getAsJsonObject().get("block").isJsonPrimitive()) { out.add(element.getAsJsonObject().get("block").getAsString()); }
+        }
+        return out;
     }
 
     public static Map<String, String> map(JsonObject json, String member) {

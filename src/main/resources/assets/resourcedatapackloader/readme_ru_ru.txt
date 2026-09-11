@@ -32,8 +32,8 @@ Resource Data Pack Loader
 
 Таблица лута лежит в data, и путь у неё устроен так же:
 
-    data/minecraft/loot_tables/blocks/iron_ore.json
-    rdploader/data/minecraft/loot_tables/blocks/iron_ore.json
+    data/minecraft/loot_table/blocks/iron_ore.json
+    rdploader/data/minecraft/loot_table/blocks/iron_ore.json
 
 Это всё правило целиком. Путь после 'assets' или 'data' всегда такой же, как
 путь внутри jar, поэтому ничего никогда не нужно переименовывать или

@@ -10,6 +10,8 @@ public final class Crisp {
         return mc.getWindow().getGuiScale();
     }
 
+    public static double factor() { return gui(); }
+
     public static float scale(float wanted) {
         double gui = gui();
         if (gui <= 0.0D) { return wanted; }

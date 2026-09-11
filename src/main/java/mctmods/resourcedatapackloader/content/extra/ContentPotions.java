@@ -53,13 +53,15 @@ public final class ContentPotions {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (Config.contentOff() || !Config.content.potions()) { return false; }
-        Json.eachFile(PackManager.POTIONS, "potion file", (key, contents) -> {
-            if (!ContentRegistry.reserved(key)) { readPotion(key, contents); }
-        });
-        Json.eachFile(PackManager.POTION_TYPES, "potion type file", (key, contents) -> {
-            if (!ContentRegistry.reserved(key)) { readType(key, contents); }
-        });
+        if (!Config.content.potions()) { return false; }
+        if (!Config.contentOff()) {
+            Json.eachFile(PackManager.POTIONS, "potion file", (key, contents) -> {
+                if (!ContentRegistry.reserved(key)) { readPotion(key, contents); }
+            });
+            Json.eachFile(PackManager.POTION_TYPES, "potion type file", (key, contents) -> {
+                if (!ContentRegistry.reserved(key)) { readType(key, contents); }
+            });
+        }
         if (Config.content.brewing()) {
             Json.eachFile(PackManager.BREWING, "brewing file", (key, contents) -> {
                 if (!ContentRegistry.reserved(key)) { readBrewing(key, contents); }

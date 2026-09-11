@@ -32,7 +32,7 @@ public final class ContentVillages {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff() || !Config.content.villages()) { return; }
         Json.eachFile(PackManager.VILLAGES, "village plot", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             VillageDef def = parse(key, contents);
@@ -57,16 +57,24 @@ public final class ContentVillages {
         return found;
     }
 
+    private static int chance(VillageDef def) { return Math.max(1, def.weight()) * Math.max(1, def.mostCount() - def.leastCount() + 1); }
+
+    public static int largestPlot() {
+        int largest = 0;
+        for (VillageDef def : allowed()) { largest = Math.max(largest, Math.max(def.width(), def.depth())); }
+        return largest;
+    }
+
     @Nullable public static VillageDef pick(List<VillageDef> choices, RandomSource random, int widest, int deepest) {
         int total = 0;
         for (VillageDef def : choices) {
-            if (def.width() <= widest && def.depth() <= deepest) { total += def.weight(); }
+            if (def.width() <= widest && def.depth() <= deepest) { total += chance(def); }
         }
         if (total <= 0) { return null; }
         int roll = random.nextInt(total);
         for (VillageDef def : choices) {
             if (def.width() > widest || def.depth() > deepest) { continue; }
-            roll -= def.weight();
+            roll -= chance(def);
             if (roll < 0) { return def; }
         }
         return null;

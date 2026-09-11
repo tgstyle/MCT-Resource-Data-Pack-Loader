@@ -36,8 +36,8 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
     private final String paving;
     private final String walk;
 
-    public ContentCityBulbPiece(int centreX, int centreZ, int level, int reach, String paving, String walk) {
-        super(TYPE, 0, new BoundingBox(centreX - reach, level, centreZ - reach, centreX + reach, level + CLEAR, centreZ + reach));
+    public ContentCityBulbPiece(int centerX, int centerZ, int level, int reach, String paving, String walk) {
+        super(TYPE, 0, new BoundingBox(centerX - reach, level, centerZ - reach, centerX + reach, level + CLEAR, centerZ + reach));
         this.level = level;
         this.reach = reach;
         this.paving = paving;
@@ -59,21 +59,22 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
         tag.putString(WALK, walk);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         BlockState road = stateOr(paving, Blocks.DIRT_PATH.defaultBlockState());
-        BlockState kerb = stateOr(walk, road);
+        BlockState curb = stateOr(walk, road);
         BlockState air = Blocks.AIR.defaultBlockState();
         BoundingBox held = getBoundingBox();
-        int centreX = (held.minX() + held.maxX()) / 2;
-        int centreZ = (held.minZ() + held.maxZ()) / 2;
+        ContentCityTrees.fellAround(level, held, box, this.level - 1, this.level + CLEAR, 2);
+        int centerX = (held.minX() + held.maxX()) / 2;
+        int centerZ = (held.minZ() + held.maxZ()) / 2;
         int inner = Math.max(1, reach - 1);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
             for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
-                int away = (x - centreX) * (x - centreX) + (z - centreZ) * (z - centreZ);
+                int away = (x - centerX) * (x - centerX) + (z - centerZ) * (z - centerZ);
                 if (away > reach * reach + reach) { continue; }
                 at.set(x, this.level, z);
-                level.setBlock(at, away > inner * inner + inner ? kerb : road, 2);
+                level.setBlock(at, away > inner * inner + inner ? curb : road, 2);
                 for (int up = 1; up <= CLEAR; up++) {
                     at.set(x, this.level + up, z);
                     if (!level.getBlockState(at).isAir()) { level.setBlock(at, air, 2); }
@@ -101,4 +102,10 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
     @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return TerrainAdjustment.BEARD_THIN; }
 
     @Override public int getGroundLevelDelta() { return 0; }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box); }
+        finally { CityBiome.leave(); }
+    }
 }

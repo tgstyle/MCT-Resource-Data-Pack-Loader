@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.types;
 
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.block.ContentContainerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBushBlock;
@@ -65,13 +66,14 @@ public final class ContentBlockTypes {
     public static final String LOG = "log";
     public static final String LEAVES = "leaves";
     public static final String SAPLING = "sapling";
+    public static final String CONTAINER = "container";
     public static final String CROP = "crop";
     public static final String FLOWER = "flower";
     public static final String CANE = "cane";
     public static final String VINE = "vine";
     public static final String BANNER = "banner";
     public static final String PORTAL = "portal";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL);
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER);
     private static final Set<String> LATER = Set.of();
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
 
@@ -125,6 +127,13 @@ public final class ContentBlockTypes {
                 ContentTorchBlock torch = new ContentTorchBlock(def, properties.noCollission().instabreak().lightLevel(state -> Math.max(variant.light(), 14)));
                 ContentWallTorchBlock wall = new ContentWallTorchBlock(def, ContentTypes.properties(def, variant, false).noCollission().instabreak().lightLevel(state -> Math.max(variant.light(), 14)));
                 yield List.of(new Created(id, torch, ContentRegistry.MAIN), new Created(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_wall"), wall, ContentRegistry.WALL));
+            }
+            case CONTAINER -> {
+                if (def.container() == null) {
+                    ContentLog.LOGGER.error("Block {} is a container but has no 'container' section, so there is no inventory for it to hold", variant.id());
+                    yield List.of();
+                }
+                yield List.of(new Created(id, new ContentContainerBlock(def, def.container(), properties), ContentRegistry.MAIN));
             }
             case LOG -> List.of(new Created(id, new ContentLogBlock(def, properties), ContentRegistry.MAIN));
             case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, properties.noOcclusion().randomTicks().isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)), ContentRegistry.MAIN));

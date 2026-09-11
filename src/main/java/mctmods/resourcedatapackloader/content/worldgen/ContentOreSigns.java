@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.def.FollowDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -24,7 +25,7 @@ public final class ContentOreSigns {
         if (def.indicators().isEmpty()) { return 0; }
         WorldGenLevel level = placer.level();
         int count = def.indicatorCount().pick(random);
-        int reach = Math.max(1, def.shape().radius().most()) + def.indicatorSpread();
+        int reach = footprint(def) + def.indicatorSpread();
         int laid = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int i = 0; i < count; i++) {
@@ -48,4 +49,6 @@ public final class ContentOreSigns {
         if (laid > 0) { ContentLog.LOGGER.debug("Left {} indicator block(s) on the surface over the {} at {}, {}, {}", laid, def.key(), origin.getX(), origin.getY(), origin.getZ()); }
         return Mth.clamp(laid, 0, count);
     }
+
+    private static int footprint(WorldgenDef def) { return ShapeDef.VEIN.equals(def.shape().type()) ? ContentOreVein.REACH : Math.max(1, def.shape().radius().most()); }
 }

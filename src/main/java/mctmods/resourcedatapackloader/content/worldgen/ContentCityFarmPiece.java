@@ -81,13 +81,14 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         tag.putString(PLOT, plot);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         BlockState fence = stateOr(edge, Blocks.OAK_LOG.defaultBlockState());
         BlockState tilled = stateOr(soil, Blocks.FARMLAND.defaultBlockState());
         BlockState under = stateOr(ground, Blocks.DIRT.defaultBlockState());
         BlockState pond = Blocks.WATER.defaultBlockState();
         BlockState air = Blocks.AIR.defaultBlockState();
         BoundingBox held = getBoundingBox();
+        ContentCityTrees.fellAround(level, held, box, this.level - 1, held.maxY(), 2);
         int step = water ? row + 1 : row;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
@@ -159,4 +160,10 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return TerrainAdjustment.BEARD_THIN; }
 
     @Override public int getGroundLevelDelta() { return 0; }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box); }
+        finally { CityBiome.leave(); }
+    }
 }

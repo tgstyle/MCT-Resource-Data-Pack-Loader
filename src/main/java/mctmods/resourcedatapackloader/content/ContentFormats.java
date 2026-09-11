@@ -114,5 +114,4 @@ public final class ContentFormats {
         };
     }
 
-    public static String adaptation(String mode) { return mode; }
 }
