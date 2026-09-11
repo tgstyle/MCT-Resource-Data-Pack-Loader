@@ -65,7 +65,7 @@ public class ServerCommands extends CommandBase {
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
     private static final List<String> TEAM_ACTIONS = Arrays.asList("list", "join", "leave", "vote", "claim");
-    private static final List<String> ROUND_ACTIONS = Collections.singletonList("start");
+    private static final List<String> ROUND_ACTIONS = Arrays.asList("start", "reset", "vote");
     private static final List<String> STRUCTURE_NAMES = Arrays.asList("Village", "Temple", "Mansion", "Monument", "Mineshaft", "Stronghold", "Fortress", "EndCity");
     private static final Map<String, String> STRUCTURE_ALIASES = new HashMap<>();
     static {
@@ -148,6 +148,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_ACTIONS); }
         if (args.length == 2 && "team".equals(args[0])) { return getListOfStringsMatchingLastWord(args, TEAM_ACTIONS); }
         if (args.length == 2 && "round".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ROUND_ACTIONS); }
+        if (args.length == 3 && "round".equals(args[0]) && "vote".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Arrays.asList("yes", "no")); }
         if (args.length == 3 && "team".equals(args[0]) && "join".equals(args[1])) { return getListOfStringsMatchingLastWord(args, ContentTeams.joinableNames()); }
         if (args.length == 3 && "team".equals(args[0]) && "vote".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Arrays.asList(server.getOnlinePlayerNames())); }
         if (args.length == 3 && "biome".equals(args[0]) && "list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("all")); }
@@ -191,6 +192,8 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "reset".equals(args[0])) { reset(server, sender); }
         else if ("team".equals(args[0])) { team(sender, args); }
         else if (args.length == 2 && "round".equals(args[0]) && "start".equals(args[1])) { round(server, sender); }
+        else if (args.length == 2 && "round".equals(args[0]) && "reset".equals(args[1])) { roundReset(server, sender); }
+        else if (args.length == 3 && "round".equals(args[0]) && "vote".equals(args[1]) && ("yes".equals(args[2]) || "no".equals(args[2]))) { roundVote(server, sender, "yes".equals(args[2])); }
         else if ("pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.servernote"); }
@@ -251,6 +254,21 @@ public class ServerCommands extends CommandBase {
         }
         String said = mctmods.resourcedatapackloader.content.ContentScoring.start(server, (EntityPlayer) sender, sender.canUseCommand(OPERATOR, getName()));
         send(sender, "The round starts".equals(said) ? TextFormatting.GREEN : TextFormatting.RED, said);
+    }
+
+    private void roundReset(MinecraftServer server, ICommandSender sender) {
+        EntityPlayer who = sender instanceof EntityPlayer ? (EntityPlayer) sender : null;
+        String said = mctmods.resourcedatapackloader.content.ContentRoundReset.call(server, sender.getName(), who, sender.canUseCommand(OPERATOR, getName()));
+        send(sender, "The round is reset".equals(said) || "Your vote to reset the round is called".equals(said) ? TextFormatting.GREEN : TextFormatting.RED, said);
+    }
+
+    private void roundVote(MinecraftServer server, ICommandSender sender, boolean yes) {
+        if (!(sender instanceof EntityPlayer)) {
+            send(sender, TextFormatting.RED, "Only a player votes");
+            return;
+        }
+        String said = mctmods.resourcedatapackloader.content.ContentRoundReset.vote(server, (EntityPlayer) sender, yes);
+        send(sender, said.startsWith("You voted") ? TextFormatting.GREEN : TextFormatting.RED, said);
     }
 
     private void team(ICommandSender sender, String[] args) throws CommandException {

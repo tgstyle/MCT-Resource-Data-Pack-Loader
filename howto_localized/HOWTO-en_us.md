@@ -444,11 +444,13 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 
 | Server alone is enough | Needs the pack on the client too |
 | --- | --- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
-| `gates`, `trades`, `registry_remap` | `villagers` |
-| the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions` | `blocks`, `items`, `fluids`, `materials` |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps` | `potions`, `potion_types`, `sounds`, `tabs` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `biomes`, `dimensions`, `portalframes` |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers`, `trades` (both skipped together) |
+| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides` | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client) |
+| `teams`, `scoring` | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
+| the whole control layer, settings, and pregeneration | |
 
 The right-hand column is a hard stop: a vanilla client sent to an unknown dimension disconnects, and unknown blocks cannot be described to it. The left-hand column works because everything there either runs entirely server-side or reaches the client through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
 
@@ -458,10 +460,15 @@ Setup:
 
 1. Enable `vanillaClients` in the config (`content` category, needs a restart). It enforces the right-hand column: those folders are skipped at load and each skipped file is named in the log, so a slipped block file becomes a log line instead of a refused connection.
 2. Keep definitions out of the right-hand folders anyway; skipped files are dead weight. Where the pack references items (a gate's `hold`, `killedDrops`, recipe outputs, trades), name only items vanilla or the server's other both-sided mods provide.
-3. Entity variants may stay: attributes, drops and spawns are server-applied, but looks are client-rendered, so vanilla clients see the stock creature with the new behavior. If the look is the point, the pack is not server-side.
-4. Install on the server as usual. Nothing goes on players' machines; `/rdpl` will not exist for them.
+3. Leave entity variants out. Each one is registered as an entity of its own, which a vanilla client has no way to spawn, so `vanillaClients` skips them the way it skips blocks and names them in the log; a side's `standIn` or a spawn that names one then has nothing to make.
+4. Install on the server as usual. Nothing goes on players' machines; `/rdpl` will not exist for them, so they run the `/rdplserver` forms instead: `/rdplserver team join`, `/rdplserver round start`, `round reset`, `round vote yes`. `opens.leaderSays` and `reset.voteSays` name `/rdpl` by default, so word them with `/rdplserver` in a pack served to vanilla clients.
 5. Test with one clean vanilla client join of the same version. Failures are loud — the connection is refused at the door, not quietly broken later.
-6. Two accepted cosmetic gaps: server-added recipes craft but do not appear in the recipe book, and behavior-only entity variants wear stock looks.
+6. Accepted gaps:
+   - Server-added recipes craft but do not appear in the recipe book.
+   - The world intro is not shown. A vanilla client is not waited on either: it is welcomed at once, released from a pregeneration hold with everyone else, and never holds back `/rdpl round start`.
+   - Anything this mod shows as a card, such as results, the lead notice or `saysCard` lines, arrives as chat lines, and mid-screen notes such as the lobby's arrive as titles.
+   - A hardness group sets how long the server takes to break a block, but the client's crack animation runs at the block's usual pace. An override of a number the client reads too, such as stack size, durability, hardness or light, still shows the old value there.
+   - A hardness group's `adventure` mining does not work: a vanilla client in adventure mode never starts digging unless the held item names the block in its own `CanDestroy` tag.
 
 ## Registry renames
 
@@ -4519,6 +4526,44 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `opens.leaderSays` | text | `Type /rdpl round start` | Flashed in the same way and at the same moments to a player who leads a side, in place of `opens.says`. Empty shows nothing |
 | `opens.lobby` | text | none | `x,y,z` in the overworld, or `dimension:x,y,z` in another world, such as `-1:0,64,0`, where everyone waits while the lobby holds: every player, and every living mob on a side, is stood on a ring around that spot, each facing its middle, so they stand staring at one another. Each is given an arc as wide as it is plus two blocks, so none overlaps another, and the ring grows as more arrive; it is laid out again whenever someone joins or leaves it. The height is the floor they stand on, found within three blocks either way. Players and mobs cross into that world and back directly, with no portal built. As the round opens players go to their side's `spawn`, and a mob that is still standing is put back where it was, in its own world |
 
+### Resetting a round
+
+*scoring*
+
+```json
+{
+  "name": "wall",
+  "opens": { "by": "leader" },
+  "ends": { "lastStanding": true, "resets": true },
+  "reset": {
+    "lead": "now",
+    "players": "vote",
+    "teams": ["miners", "raiders"],
+    "passPercent": 51,
+    "voteSeconds": 30,
+    "cooldownSeconds": 60
+  }
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `reset.lead` | text | `none` | What `/rdpl round reset` does for a side's lead while a round runs. `now` ends the round at once and resets the map; `vote` calls a vote instead; `none` gives the lead no say of its own, so the lead calls a vote like any other player where `players` allows it. An operator always resets at once |
+| `reset.players` | text | `none` | `vote` lets a player on any side call a vote with `/rdpl round reset`. `none` leaves resetting to the lead |
+| `reset.teams` | list | empty | The sides whose players may call a vote. Empty is every side |
+| `reset.passPercent` | int | `51` | The share of voters, 1 to 100, who must vote yes for the round to be reset. `51` is more than half, `100` is everyone |
+| `reset.voteSeconds` | int | `30` | How long a vote runs, five seconds at the least. It closes early the moment its outcome is certain |
+| `reset.cooldownSeconds` | int | `60` | How long after a failed vote before another can be called. A lead with `now` is not held back by it |
+| `reset.leadSays` | text | `{player} reset the round` | Told to everyone when the round is reset at once, `{player}` being who reset it. Empty says nothing |
+| `reset.voteSays` | text | `{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds` | Told to everyone as a vote is called, `{player}` being who called it. Empty says nothing |
+| `reset.tallySays` | text | `Reset the round? {yes} yes, {no} no, {seconds}` | Shown on the action bar every second of a vote, with `{seconds}` counting down. Empty shows nothing |
+| `reset.passSays` | text | `The vote passed, so the round is reset` | Told to everyone when a vote passes. Empty says nothing |
+| `reset.failSays` | text | `The vote failed, so the round goes on` | Told to everyone when a vote fails. Empty says nothing |
+
+A reset cuts the round short where it stands. The standings are shown under `The round was reset`, nobody is awarded the round, the intermission counts down, and the map resets as though the round had ended with `ends.resets`, back to the lobby where `opens.by` is `leader`. It works whether or not the round would ever end on its own, but not in the lobby, through the count that opens a round, or once a round is over and its reset is on the way; a vote still running then is dropped.
+
+Every online player on a side votes, whatever side they are on, with `/rdpl round vote yes` or `no`, and may change their vote while it runs. Whoever calls the vote has voted yes, and a player who has not voted when time runs out counts as no. In a pack with sides, a player on none neither calls nor votes; in a pack without sides, every online player does. The first score file whose `reset` lets anyone reset is the one used.
+
 ### Results
 
 *scoring*
@@ -6078,6 +6123,8 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl team vote <player>` | none | Vote for who leads your side, where the pack chooses its lead by a vote. A tie leaves nobody leading |
 | `/rdpl team claim` | none | Take the lead of your side, where the pack lets it be claimed and nobody on the side holds it |
 | `/rdpl round start` | none | Start the round, where the pack holds it in a lobby (`opens.by`). For the lead of a side, or an operator |
+| `/rdpl round reset` | none | Reset the running round, or call a vote to, as the pack's `reset` allows. For the lead of a side, a player on a side the pack lets call a vote, or an operator |
+| `/rdpl round vote yes`, `no` | none | Vote in a running vote to reset the round. For a player on a side |
 | `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
 
 **Which server subcommands are linked, and why the rest are not.** A server subcommand gets a passthrough exactly when the client has no meaning of its own for that name: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` and `team` can only ever mean the server's, so `/rdpl` hands them over. The six the client also has, `reload`, `list`, `which`, `unused`, `config` and `biome`, keep their own meaning of your packs and your client, and forwarding them would take that away. `biome find` is the one part of a shared name that belongs to the server anyway, since only the server knows the world seed, so that one form is passed on while `biome list` and `biome here` stay with you. That also settles the permission: the server's own operator check decides it, and a client can neither cheat it nor be told a fabricated answer.
@@ -6152,6 +6199,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver intro` | 0 | Let the world intro play again on your next join. Any player may run it, and it only ever clears their own |
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0 | The same as the `/rdpl team` forms above, which are passed to these |
 | `/rdplserver round start` | 0 | The same as `/rdpl round start`, which is passed to it |
+| `/rdplserver round reset`, `round vote yes`, `round vote no` | 0 | The same as the `/rdpl round` forms above, which are passed to these |
 | `/rdplserver reset` | 3 | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |
 
 #### Going to places

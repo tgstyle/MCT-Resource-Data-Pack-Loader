@@ -444,11 +444,13 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 
 | Server allein genügt | Pack muss auch auf den Client |
 | --- | --- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
-| `gates`, `trades`, `registry_remap` | `villagers` |
-| die ganze Steuerungsebene, Einstellungen und Vorgenerierung | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions` | `blocks`, `items`, `fluids`, `materials` |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps` | `potions`, `potion_types`, `sounds`, `tabs` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `biomes`, `dimensions`, `portalframes` |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers`, `trades` (werden zusammen übersprungen) |
+| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides` | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
+| `teams`, `scoring` | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
+| die ganze Steuerungsebene, Einstellungen und Vorgenerierung | |
 
 Die rechte Spalte ist eine harte Grenze: Ein Vanilla-Client, der in eine unbekannte Dimension geschickt wird, fliegt sofort raus, und unbekannte Blöcke lassen sich ihm nicht beschreiben. Die linke Spalte funktioniert, weil alles darin entweder vollständig serverseitig läuft oder den Client über Pakete erreicht, die Vanilla ohnehin spricht (vom Server gefülltes Ergebnisfeld der Werkbank, gewöhnliche Fortschrittspakete, Statusmeldungen bei abgelehnten Toren, ein Vorgenerierungs-Halt aus Vanilla-Paketen für Spielmodus, Titel und Teleport).
 
@@ -458,10 +460,15 @@ Einrichtung:
 
 1. Schalte `vanillaClients` in der Config ein (Kategorie `content`, braucht einen Neustart). Das erzwingt die rechte Spalte: Diese Ordner werden beim Laden übersprungen, jede übersprungene Datei steht namentlich im Log – aus einer durchgerutschten Blockdatei wird eine Logzeile statt einer abgelehnten Verbindung.
 2. Halte Definitionen trotzdem aus den rechten Ordnern heraus; übersprungene Dateien sind totes Gewicht. Wo das Pack Items nennt (das `hold` eines Tors, `killedDrops`, Rezeptergebnisse, Handel), nenne nur Items, die Vanilla oder die anderen beidseitigen Mods des Servers mitbringen.
-3. Entity-Varianten dürfen bleiben: Attribute, Drops und Spawns setzt der Server, das Aussehen rendert aber der Client – Vanilla-Clients sehen die Standardkreatur mit dem neuen Verhalten. Geht es um das Aussehen, ist das Pack nicht serverseitig.
-4. Auf dem Server installieren wie üblich. Auf Spielerrechnern landet nichts; `/rdpl` existiert dort nicht.
+3. Lass Entity-Varianten weg. Jede wird als eigene Entity registriert, die ein Vanilla-Client nicht spawnen kann, also überspringt `vanillaClients` sie wie Blöcke und nennt sie im Log; ein `standIn` einer Seite oder ein Spawn, der eine nennt, hat dann nichts zu erzeugen.
+4. Auf dem Server installieren wie üblich. Auf Spielerrechnern landet nichts; `/rdpl` existiert dort nicht, also nutzen die Spieler die `/rdplserver`-Formen: `/rdplserver team join`, `/rdplserver round start`, `round reset`, `round vote yes`. `opens.leaderSays` und `reset.voteSays` nennen standardmäßig `/rdpl`, formuliere sie in einem Pack für Vanilla-Clients also mit `/rdplserver`.
 5. Mit einem einzigen sauberen Vanilla-Client derselben Version testen. Fehler sind laut – die Verbindung wird an der Tür abgelehnt, nicht später still kaputt.
-6. Zwei akzeptierte kosmetische Lücken: Server-Rezepte lassen sich craften, erscheinen aber nicht im Rezeptbuch, und rein verhaltensändernde Entity-Varianten tragen das Standardaussehen.
+6. Akzeptierte Lücken:
+   - Server-Rezepte lassen sich craften, erscheinen aber nicht im Rezeptbuch.
+   - Das Welt-Intro wird nicht gezeigt. Auf einen Vanilla-Client wird auch nicht gewartet: Er wird sofort begrüßt, mit allen anderen aus einem Vorgenerierungs-Halt entlassen und hält `/rdpl round start` nie auf.
+   - Was diese Mod als Karte zeigt, etwa Ergebnisse, den Hinweis an die Führung oder `saysCard`-Zeilen, kommt als Chatzeilen an, und Einblendungen mitten im Bild, etwa die der Lobby, als Titel.
+   - Eine Härtegruppe legt fest, wie lange der Server zum Abbauen eines Blocks braucht, die Riss-Animation des Clients läuft aber im gewohnten Tempo des Blocks. Ein Override einer Zahl, die auch der Client liest, etwa Stapelgröße, Haltbarkeit, Härte oder Licht, zeigt dort weiter den alten Wert.
+   - Das `adventure`-Abbauen einer Härtegruppe funktioniert nicht: Ein Vanilla-Client im Abenteuermodus beginnt nie zu graben, solange der gehaltene Gegenstand den Block nicht in seinem eigenen `CanDestroy`-Tag nennt.
 
 ## Registry-Umbenennungen
 
@@ -4519,6 +4526,44 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 | `opens.leaderSays` | Text | `Type /rdpl round start` | Auf dieselbe Weise und zu denselben Momenten einem Spieler eingeblendet, der eine Seite führt, anstelle von `opens.says`. Leer zeigt nichts |
 | `opens.lobby` | Text | keiner | `x,y,z` in der Oberwelt oder `dimension:x,y,z` in einer anderen Welt, etwa `-1:0,64,0`, wo alle warten, solange die Lobby hält: Jeder Spieler und jeder lebende Mob auf einer Seite wird auf einen Ring um diese Stelle gestellt, jeder zur Mitte gewandt, sodass sie einander anstarren. Jeder bekommt einen Bogen, so breit wie er selbst plus zwei Blöcke, sodass sich keiner mit einem anderen überschneidet, und der Ring wächst, wenn mehr ankommen; er wird neu aufgestellt, sobald jemand hinzukommt oder geht. Die Höhe ist der Boden, auf dem sie stehen, gefunden innerhalb von drei Blöcken in beide Richtungen. Spieler und Mobs wechseln direkt in diese Welt und zurück, ohne dass ein Portal gebaut wird. Wenn die Runde beginnt, gehen Spieler an das `spawn` ihrer Seite, und ein Mob, der noch steht, wird zurückgestellt, wo er war, in seiner eigenen Welt |
 
+### Eine Runde zurücksetzen
+
+*wertung*
+
+```json
+{
+  "name": "wall",
+  "opens": { "by": "leader" },
+  "ends": { "lastStanding": true, "resets": true },
+  "reset": {
+    "lead": "now",
+    "players": "vote",
+    "teams": ["miners", "raiders"],
+    "passPercent": 51,
+    "voteSeconds": 30,
+    "cooldownSeconds": 60
+  }
+}
+```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `reset.lead` | Text | `none` | Was `/rdpl round reset` für die Führung einer Seite tut, während eine Runde läuft. `now` beendet die Runde sofort und setzt die Karte zurück; `vote` ruft stattdessen eine Abstimmung aus; `none` gibt der Führung kein eigenes Recht, sodass sie wie jeder andere Spieler eine Abstimmung ausruft, wo `players` das erlaubt. Ein Operator setzt immer sofort zurück |
+| `reset.players` | Text | `none` | `vote` lässt einen Spieler jeder Seite mit `/rdpl round reset` eine Abstimmung ausrufen. `none` überlässt das Zurücksetzen der Führung |
+| `reset.teams` | Liste | leer | Die Seiten, deren Spieler eine Abstimmung ausrufen dürfen. Leer sind alle Seiten |
+| `reset.passPercent` | Zahl | `51` | Der Anteil der Abstimmenden, 1 bis 100, der mit Ja stimmen muss, damit die Runde zurückgesetzt wird. `51` ist mehr als die Hälfte, `100` sind alle |
+| `reset.voteSeconds` | Zahl | `30` | Wie lange eine Abstimmung läuft, mindestens fünf Sekunden. Sie schließt früher, sobald ihr Ausgang feststeht |
+| `reset.cooldownSeconds` | Zahl | `60` | Wie lange nach einer gescheiterten Abstimmung keine neue ausgerufen werden kann. Eine Führung mit `now` hält das nicht auf |
+| `reset.leadSays` | Text | `{player} reset the round` | Allen gesagt, wenn die Runde sofort zurückgesetzt wird, `{player}` ist, wer sie zurückgesetzt hat. Leer sagt nichts |
+| `reset.voteSays` | Text | `{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds` | Allen gesagt, wenn eine Abstimmung ausgerufen wird, `{player}` ist, wer sie ausgerufen hat. Leer sagt nichts |
+| `reset.tallySays` | Text | `Reset the round? {yes} yes, {no} no, {seconds}` | Jede Sekunde einer Abstimmung in der Aktionsleiste gezeigt, `{seconds}` zählt herunter. Leer zeigt nichts |
+| `reset.passSays` | Text | `The vote passed, so the round is reset` | Allen gesagt, wenn eine Abstimmung durchgeht. Leer sagt nichts |
+| `reset.failSays` | Text | `The vote failed, so the round goes on` | Allen gesagt, wenn eine Abstimmung scheitert. Leer sagt nichts |
+
+Ein Zurücksetzen bricht die Runde ab, wo sie gerade steht. Die Wertung wird unter `The round was reset` gezeigt, niemand bekommt die Runde zugesprochen, die Pause zählt herunter, und die Karte wird zurückgesetzt, als hätte die Runde mit `ends.resets` geendet, zurück in die Lobby, wo `opens.by` auf `leader` steht. Das geht, ob die Runde je von selbst enden würde oder nicht, aber nicht in der Lobby, nicht während des Countdowns, der eine Runde eröffnet, und nicht, wenn eine Runde vorbei ist und ihr Reset schon kommt; eine dann noch laufende Abstimmung wird fallen gelassen.
+
+Jeder Spieler auf einer Seite, der online ist, stimmt ab, gleich auf welcher Seite, mit `/rdpl round vote yes` oder `no`, und kann seine Stimme ändern, solange sie läuft. Wer die Abstimmung ausruft, hat mit Ja gestimmt, und wer bei Ablauf der Zeit nicht abgestimmt hat, zählt als Nein. In einem Paket mit Seiten ruft ein Spieler ohne Seite weder aus noch stimmt er ab; in einem Paket ohne Seiten tut es jeder Spieler, der online ist. Verwendet wird die erste Wertungsdatei, deren `reset` überhaupt jemanden zurücksetzen lässt.
+
 ### Ergebnisse
 
 *wertung*
@@ -6078,6 +6123,8 @@ Jeder Ordner, mit vollem Pfad und einem Link zum Abschnitt, der ihn beschreibt, 
 | `/rdpl team vote <player>` | keine | Wähle, wer deine Seite führt, sofern das Paket die Führung per Wahl bestimmt. Ein Gleichstand lässt niemanden führen |
 | `/rdpl team claim` | keine | Die Führung deiner Seite übernehmen, sofern das Paket sie beanspruchen lässt und niemand auf der Seite sie hält |
 | `/rdpl round start` | keine | Die Runde starten, wo das Paket sie in einer Lobby hält (`opens.by`). Für die Führung einer Seite oder einen Operator |
+| `/rdpl round reset` | keine | Die laufende Runde zurücksetzen oder dazu eine Abstimmung ausrufen, wie `reset` des Pakets es erlaubt. Für die Führung einer Seite, einen Spieler einer Seite, die das Paket abstimmen lässt, oder einen Operator |
+| `/rdpl round vote yes`, `no` | keine | In einer laufenden Abstimmung über das Zurücksetzen der Runde abstimmen. Für einen Spieler auf einer Seite |
 | `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten |
 
 **Welche Server-Unterbefehle verknüpft sind und warum die übrigen nicht.** Ein Server-Unterbefehl bekommt genau dann eine Weiterreichung, wenn der Client für diesen Namen keine eigene Bedeutung hat: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` und `team` können immer nur die des Servers meinen, `/rdpl` gibt sie also weiter. Die sechs, die der Client ebenfalls hat, `reload`, `list`, `which`, `unused`, `config` und `biome`, behalten ihre eigene Bedeutung von deinen Packs und deinem Client, und ein Weiterreichen würde sie ihnen nehmen. `biome find` ist der eine Teil eines geteilten Namens, der ohnehin dem Server gehört, denn nur der Server kennt den Weltseed; diese eine Form wird also weitergereicht, während `biome list` und `biome here` bei dir bleiben. Damit ist auch die Berechtigung geklärt: Die Operator-Prüfung des Servers entscheidet, und ein Client kann sie weder umgehen noch eine erfundene Antwort bekommen.
@@ -6152,6 +6199,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver intro` | 0 | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen. Jeder Spieler darf ihn ausführen, und er löscht immer nur sein eigenes |
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <Spieler>`, `team claim` | 0 | Dasselbe wie die `/rdpl team`-Formen oben, die an diese weitergereicht werden |
 | `/rdplserver round start` | 0 | Dasselbe wie `/rdpl round start`, das daran weitergereicht wird |
+| `/rdplserver round reset`, `round vote yes`, `round vote no` | 0 | Dasselbe wie die `/rdpl round`-Formen oben, die an diese weitergereicht werden |
 | `/rdplserver reset` | 3 | Setzt die Karte zurück, wie es ein Rundenende tut: Alle werden festgehalten, die Entities weggefegt, die Punkte gelöscht, `resetRuns` ausgeführt, die Spieler nach `resetSendsTo` gesetzt und freigegeben, und eine Runde öffnet mit dem Startzähler, wie die Reset-Einstellungen unter [Vorgenerierung](#vorgenerierung) beschreiben. Wird nicht von `/rdpl` weitergereicht |
 
 #### Orte anspringen

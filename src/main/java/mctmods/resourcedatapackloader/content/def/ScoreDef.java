@@ -36,6 +36,7 @@ public final class ScoreDef {
     public final String opensLeaderSays;
     @Nullable public final int[] opensLobby;
     public final boolean endsLastStanding;
+    public final RoundResetDef reset;
 
     public ScoreDef(String name, String displayName, IScoreCriteria criterion, String slot,
                     @Nullable IScoreCriteria.EnumRenderType render, boolean teamTotals, boolean individuals,
@@ -43,7 +44,7 @@ public final class ScoreDef {
                     boolean resultsCard, String resultsTitle, String resultsIcon, String resultsImage,
                     int resultsBackground, int resultsTicks,
                     boolean carries, boolean endsResets, int endsIntermission, String awardsTo, boolean endsLocksTeams,
-                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays, String opensLeaderSays, @Nullable int[] opensLobby, boolean endsLastStanding) {
+                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays, String opensLeaderSays, @Nullable int[] opensLobby, boolean endsLastStanding, RoundResetDef reset) {
         this.name = name;
         this.displayName = displayName;
         this.criterion = criterion;
@@ -75,6 +76,7 @@ public final class ScoreDef {
         this.opensLeaderSays = opensLeaderSays;
         this.opensLobby = opensLobby;
         this.endsLastStanding = endsLastStanding;
+        this.reset = reset;
     }
 
     public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0 || endsLastStanding; }

@@ -582,7 +582,30 @@ public final class ContentParser {
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "leaderSays", "Type /rdpl round start"),
                 lobbyAt(key, JsonUtils.getJsonObject(json, "opens", new JsonObject())),
-                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false));
+                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false),
+                roundReset(key, JsonUtils.getJsonObject(json, "reset", new JsonObject())));
+    }
+
+    private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {
+        String lead = JsonUtils.getString(reset, "lead", "none").trim();
+        if (!"none".equals(lead) && !"now".equals(lead) && !"vote".equals(lead)) {
+            ContentLog.LOGGER.error("Score file {} lets the lead reset the round by '{}', which is not none, now or vote, so the lead cannot", key, lead);
+            lead = "none";
+        }
+        String players = JsonUtils.getString(reset, "players", "none").trim();
+        if (!"none".equals(players) && !"vote".equals(players)) {
+            ContentLog.LOGGER.error("Score file {} lets players reset the round by '{}', which is not none or vote, so they cannot", key, players);
+            players = "none";
+        }
+        return new RoundResetDef(lead, "vote".equals(players), names(reset, "teams"),
+                Math.max(1, Math.min(100, JsonUtils.getInt(reset, "passPercent", 51))),
+                Math.max(5, JsonUtils.getInt(reset, "voteSeconds", 30)),
+                Math.max(0, JsonUtils.getInt(reset, "cooldownSeconds", 60)),
+                JsonUtils.getString(reset, "leadSays", "{player} reset the round"),
+                JsonUtils.getString(reset, "voteSays", "{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds"),
+                JsonUtils.getString(reset, "tallySays", "Reset the round? {yes} yes, {no} no, {seconds}"),
+                JsonUtils.getString(reset, "passSays", "The vote passed, so the round is reset"),
+                JsonUtils.getString(reset, "failSays", "The vote failed, so the round goes on"));
     }
 
     private static String opensBy(JsonObject json, ResourceLocation key) {

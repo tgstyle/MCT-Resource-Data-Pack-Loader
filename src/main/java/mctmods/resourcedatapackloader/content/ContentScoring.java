@@ -74,11 +74,13 @@ public final class ContentScoring {
     private static final double NARROWEST = 3.0D;
     private static final int REACH = 3;
     private static boolean lobbied;
+    private static final String RESET = "reset";
 
     private ContentScoring() {}
 
     public static boolean load() {
         BY_NAME.clear();
+        ContentRoundReset.clear();
         PackManager.get().forEach(PackManager.SCORING, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
             ScoreDef def = ContentParser.scoreFile(key, contents);
@@ -176,6 +178,7 @@ public final class ContentScoring {
         if (event.phase != TickEvent.Phase.END || BY_NAME.isEmpty() || opened == 0L) { return; }
         keepStill(FMLCommonHandler.instance().getMinecraftServerInstance());
         if (++beat % 20 != 0) { return; }
+        ContentRoundReset.second(FMLCommonHandler.instance().getMinecraftServerInstance());
         if (closed && lobbied) {
             gather(FMLCommonHandler.instance().getMinecraftServerInstance());
             lobbyNotes(FMLCommonHandler.instance().getMinecraftServerInstance());
@@ -222,9 +225,11 @@ public final class ContentScoring {
             lines.add(0, (side == null ? winner : side.displayName) + " stood last");
         }
         else if ("last standing".equals(why)) { lines.add(0, "No side was left standing"); }
+        else if (RESET.equals(why)) { lines.add(0, "The round was reset"); }
         ContentLog.LOGGER.info("The {} round is over on {}: {}", def.displayName, why, lines);
         ContentLog.LOGGER.info("Kills this round by the killer's kind: {}; deaths by kind: {}; kills of their own side: {}", KILLS, DEATHS, OWN);
-        award(server, def, winner);
+        if (RESET.equals(why)) { ContentLog.LOGGER.info("A reset round is awarded to nobody"); }
+        else { award(server, def, winner); }
         if (def.endsResets) {
             resetting = def;
             waiting = Math.max(1, def.endsIntermission);
@@ -291,6 +296,24 @@ public final class ContentScoring {
         }
         starting = OPENS_IN;
         count(server);
+    }
+
+    @Nullable public static ScoreDef resetOffer() {
+        for (ScoreDef def : BY_NAME.values()) {
+            if (def.reset.offered()) { return def; }
+        }
+        return null;
+    }
+
+    public static boolean noRoundToReset() { return closed || starting > 0 || resetting != null; }
+
+    public static void resetRound(ScoreDef offered) {
+        for (ScoreDef def : new ArrayList<>(BY_NAME.values())) {
+            if (!def.carries && (def.ends() || def == offered)) { finish(def, RESET, null); }
+        }
+        resetting = offered;
+        waiting = Math.max(1, offered.endsIntermission);
+        ContentLog.LOGGER.info("The round was reset, so the map is reset in {} second(s)", waiting);
     }
 
     @Nullable private static ScoreDef lobbyDef() {
