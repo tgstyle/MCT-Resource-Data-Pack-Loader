@@ -131,7 +131,7 @@ public final class ContentTerrain {
         if (wanted.isEmpty() || world.provider.getDimension() != 0) { return; }
         WorldType made = world.getWorldInfo().getTerrainType();
         if (!wanted.equalsIgnoreCase(made.getName())) { return; }
-        event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.type", Lang.vanilla(made.getTranslationKey()))));
+        event.player.sendMessage(new TextComponentString(Lang.tr(event.player, "rdpl.world.type", Lang.vanilla("generator." + made.getName()))));
     }
 
     public static boolean keeps(String worldType) {

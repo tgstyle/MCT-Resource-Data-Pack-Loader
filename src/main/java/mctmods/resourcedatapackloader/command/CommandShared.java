@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.command;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -101,7 +102,7 @@ public final class CommandShared {
         Biome found = Biomes.byName(name);
         if (found != null) { return found; }
         for (Biome biome : ForgeRegistries.BIOMES) {
-            if (biome.getBiomeName().equalsIgnoreCase(name)) { return biome; }
+            if (ContentBiomeControl.shownName(biome).equalsIgnoreCase(name)) { return biome; }
         }
         return null;
     }
@@ -119,7 +120,7 @@ public final class CommandShared {
 
     static void biomeAt(ICommandSender sender, World world, BlockPos pos) {
         Biome biome = world.getBiome(pos);
-        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.here", biome.getBiomeName(), biome.getRegistryName(), Biome.getIdForBiome(biome)));
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.here", ContentBiomeControl.shownName(biome), biome.getRegistryName(), Biome.getIdForBiome(biome)));
     }
 
     static void biomeList(ICommandSender sender, boolean all) {
@@ -132,7 +133,7 @@ public final class CommandShared {
                 vanilla++;
                 continue;
             }
-            send(sender, TextFormatting.GRAY, "  " + Biome.getIdForBiome(biome) + "  " + name + "  '" + biome.getBiomeName() + "'");
+            send(sender, TextFormatting.GRAY, "  " + Biome.getIdForBiome(biome) + "  " + name + "  '" + ContentBiomeControl.shownName(biome) + "'");
             shown++;
         }
         send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Lang.tr(sender, "rdpl.command.biomesmore", vanilla)));
@@ -145,11 +146,11 @@ public final class CommandShared {
         BlockPos from = sender.getPosition();
         BlockPos found = world.getBiomeProvider().findBiomePosition(from.getX(), from.getZ(), FIND_RANGE, Collections.singletonList(target), new Random());
         if (found == null) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", target.getBiomeName(), FIND_RANGE));
+            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.biomemissing", ContentBiomeControl.shownName(target), FIND_RANGE));
             return;
         }
         int distance = (int) Math.sqrt(from.distanceSq(found.getX(), from.getY(), found.getZ()));
-        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", target.getBiomeName(), found.getX(), found.getZ(), distance));
+        send(sender, TextFormatting.WHITE, Lang.tr(sender, "rdpl.command.biomefound", ContentBiomeControl.shownName(target), found.getX(), found.getZ(), distance));
     }
 
     static void config(ICommandSender sender, String action, String usage, String note) throws CommandException {

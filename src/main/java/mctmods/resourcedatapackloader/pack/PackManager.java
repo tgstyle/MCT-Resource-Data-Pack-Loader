@@ -291,7 +291,7 @@ public final class PackManager {
         clientSide(off, Config.content.biomes, "content.biomes", BIOMES);
         clientSide(off, Config.content.dimensions, "content.dimensions", DIMENSIONS);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
-        collect(off, Config.content.entities, "content.entities", JSON, ENTITIES);
+        clientSide(off, Config.content.entities, "content.entities", ENTITIES);
         collect(off, Config.content.hardness, "content.hardness", JSON, HARDNESS);
         collect(off, Config.recipes.furnace, "recipes.furnace", JSON, FURNACE);
         collect(off, Config.recipes.removals, "recipes.removals", JSON, RECIPE_REMOVALS);

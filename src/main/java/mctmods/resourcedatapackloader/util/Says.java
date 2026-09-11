@@ -26,7 +26,7 @@ public final class Says {
 
     public static void tell(EntityPlayerMP player, String said, TextFormatting color) {
         if (said.isEmpty()) { return; }
-        if (!card()) {
+        if (!card() || RDPLNetwork.vanilla(player)) {
             player.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(color)));
             return;
         }

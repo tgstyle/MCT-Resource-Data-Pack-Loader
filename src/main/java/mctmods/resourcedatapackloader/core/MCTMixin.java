@@ -45,7 +45,7 @@ import java.util.Map;
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
         Lang.load();
         if (Config.content.vanillaClients) {
-            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, villagers and their trades, biomes and dimensions in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates and recipes, still applies");
+            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, villagers and their trades, biomes, dimensions and entity variants in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates and recipes, still applies");
         }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug);
         LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",

@@ -31,7 +31,7 @@ public final class ContentIntroPlay {
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { PLAYING.remove(event.player.getUniqueID()); }
 
-    public static boolean willPlay(EntityPlayerMP player) { return enabled() && !(ContentWorldIntro.once() && persisted(player).getBoolean(SEEN)); }
+    public static boolean willPlay(EntityPlayerMP player) { return enabled() && !RDPLNetwork.vanilla(player) && !(ContentWorldIntro.once() && persisted(player).getBoolean(SEEN)); }
 
     public static boolean reading(UUID player) { return PLAYING.contains(player); }
 
