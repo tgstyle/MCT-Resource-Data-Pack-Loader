@@ -269,7 +269,7 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     hardness         blastplaster     player_loot      overrides
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
-    texts
+    texts            anvils
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 

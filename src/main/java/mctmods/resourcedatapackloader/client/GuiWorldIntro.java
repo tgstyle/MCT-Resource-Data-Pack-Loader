@@ -86,7 +86,8 @@ import javax.annotation.Nullable;
     @Override public void updateScreen() {
         ticks += 1.0F;
         IntroPageDef def = pages.get(page);
-        if (def.still() || page >= pages.size() - 1) { return; }
+        boolean timed = def.time > IntroPageDef.DERIVE;
+        if (!timed && (def.still() || page >= pages.size() - 1)) { return; }
         if (ticks >= duration()) { advance(); }
     }
 

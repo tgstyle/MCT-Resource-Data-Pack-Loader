@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentExposures;
+import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
@@ -188,13 +189,15 @@ public class ResourceDataPackLoader {
         if (Config.worldgen.blockOres && veins.isEmpty()) {
             ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above");
         }
+        if (ContentAnvils.load()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
         if (ContentHardness.load()) {
             ContentHardness.resolve();
             MinecraftForge.EVENT_BUS.register(ContentHardness.class);
+            if (ContentHardness.anySwaps()) { GameRegistry.registerWorldGenerator(new ContentHardness.Swaps(), 100); }
         }
         ContentOverrides.reload();
         ContentReplacements.reload();
-        if (ContentRetrogen.wanted()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
+        if (ContentRetrogen.wanted() || ContentHardness.anySwaps()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
         MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
         MinecraftForge.EVENT_BUS.register(ContentPregen.class);
         if (Config.worldgen.worldgenDebug) {

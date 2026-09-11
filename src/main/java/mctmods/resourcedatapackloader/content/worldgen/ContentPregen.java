@@ -418,7 +418,18 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         welcome(player);
     }
 
+    private static final Set<UUID> ARRIVED = new HashSet<>();
+
+    public static boolean arrived(EntityPlayerMP player) { return ARRIVED.contains(player.getUniqueID()); }
+
     private static void welcome(EntityPlayerMP player) {
+        greet(player);
+        if (!ARRIVED.add(player.getUniqueID())) { return; }
+        mctmods.resourcedatapackloader.content.ContentScoring.greet(player);
+        mctmods.resourcedatapackloader.content.ContentTeams.greet(player);
+    }
+
+    private static void greet(EntityPlayerMP player) {
         String greeting = welcomeAtDefault() ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player.dimension, true);
         if (greeting == null || greeting.isEmpty()) { return; }
         if (Says.card()) {
@@ -446,6 +457,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
     }
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        ARRIVED.remove(event.player.getUniqueID());
         Held held = HELD.remove(event.player.getUniqueID());
         if (HELD.isEmpty()) { stopFlashing(); }
         if (held == null || !(event.player instanceof EntityPlayerMP)) { return; }

@@ -59,12 +59,13 @@ import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
     private static final int OPERATOR = 3;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
     private static final List<String> TEAM_ACTIONS = Arrays.asList("list", "join", "leave", "vote", "claim");
+    private static final List<String> ROUND_ACTIONS = Collections.singletonList("start");
     private static final List<String> STRUCTURE_NAMES = Arrays.asList("Village", "Temple", "Mansion", "Monument", "Mineshaft", "Stronghold", "Fortress", "EndCity");
     private static final Map<String, String> STRUCTURE_ALIASES = new HashMap<>();
     static {
@@ -128,6 +129,7 @@ public class ServerCommands extends CommandBase {
         List<String> open = new ArrayList<>();
         open.add("intro");
         if (ContentTeams.any()) { open.add("team"); }
+        if (mctmods.resourcedatapackloader.content.ContentScoring.any()) { open.add("round"); }
         if (sender.canUseCommand(lowestGotoLevel(), getName())) { open.add("goto"); }
         return open;
     }
@@ -145,6 +147,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_ACTIONS); }
         if (args.length == 2 && "biome".equals(args[0])) { return getListOfStringsMatchingLastWord(args, BIOME_ACTIONS); }
         if (args.length == 2 && "team".equals(args[0])) { return getListOfStringsMatchingLastWord(args, TEAM_ACTIONS); }
+        if (args.length == 2 && "round".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ROUND_ACTIONS); }
         if (args.length == 3 && "team".equals(args[0]) && "join".equals(args[1])) { return getListOfStringsMatchingLastWord(args, ContentTeams.joinableNames()); }
         if (args.length == 3 && "team".equals(args[0]) && "vote".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Arrays.asList(server.getOnlinePlayerNames())); }
         if (args.length == 3 && "biome".equals(args[0]) && "list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("all")); }
@@ -171,7 +174,7 @@ public class ServerCommands extends CommandBase {
             else if (args.length == 3 && "back".equals(args[2])) { allow(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
             else { throw new WrongUsageException(getUsage(sender)); }
         }
-        else if (!"team".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
+        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
@@ -187,6 +190,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { biomeFind(sender, args[2]); }
         else if (args.length == 1 && "reset".equals(args[0])) { reset(server, sender); }
         else if ("team".equals(args[0])) { team(sender, args); }
+        else if (args.length == 2 && "round".equals(args[0]) && "start".equals(args[1])) { round(server, sender); }
         else if ("pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.servernote"); }
@@ -240,6 +244,15 @@ public class ServerCommands extends CommandBase {
         send(sender, TextFormatting.GREEN, "The map was reset, " + swept + " entity(s) swept");
     }
 
+    private void round(MinecraftServer server, ICommandSender sender) {
+        if (!(sender instanceof EntityPlayer)) {
+            send(sender, TextFormatting.RED, "Only a player starts a round");
+            return;
+        }
+        String said = mctmods.resourcedatapackloader.content.ContentScoring.start(server, (EntityPlayer) sender, sender.canUseCommand(OPERATOR, getName()));
+        send(sender, "The round starts".equals(said) ? TextFormatting.GREEN : TextFormatting.RED, said);
+    }
+
     private void team(ICommandSender sender, String[] args) throws CommandException {
         if (!ContentTeams.any()) {
             send(sender, TextFormatting.RED, "No pack has fielded any team");
@@ -283,7 +296,7 @@ public class ServerCommands extends CommandBase {
             if (!"claim".equals(mine.lead)) { send(sender, TextFormatting.RED, mine.displayName + " does not let its lead be claimed"); return; }
             boolean took = ContentTeams.claim(player.world, player.getName(), mine);
             send(sender, took ? mine.color : TextFormatting.RED,
-                    took ? "You lead " + mine.displayName : ContentTeams.holding(mine) + " already leads " + mine.displayName);
+                    took ? mine.leadSays.replace("{side}", mine.displayName) : ContentTeams.holding(mine) + " already leads " + mine.displayName);
             return;
         }
         boolean locked = mctmods.resourcedatapackloader.content.ContentScoring.roundRunning();

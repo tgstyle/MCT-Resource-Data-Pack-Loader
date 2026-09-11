@@ -12,6 +12,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) ist dieselbe Stadt auf einer Rubic-Welt mit Decke bei 512 und Wolken auf 384, sodass Türme 256 Blöcke über der Straße stehen, und jeder Bezirk würfelt eine Blocktiefe von 16, 32 oder 64, sodass sich ein grobes Raster mit einem feinen mischt.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) zeichnet dieselbe Stadt aus einer Stadtkarte, statt sie zu würfeln: ein Zeichenraster mit 48 Blöcken je Zelle und einer Palette für Straßen, Plätze, Gassen und gewichtete Gebäudeauswahlen, sodass der Blockplan von Hand gelegt ist.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) lässt vier Fraktionen in einer Bedrock-Arena unter ewiger Nacht aufeinander los: jede Seite ist ein echtes Vanilla-Scoreboard-Team, dem ihre Mobs beim Spawnen beitreten, eine Seite punktet für jeden Mob einer anderen Seite, den sie tötet, eine Runde endet nach zwei Minuten mit einer Karte, und drei Runden ergeben ein Match.
+- [RDPLExampleAdventureMine.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleAdventureMine.zip) startet eine flache Steinwelt im Abenteuermodus, zieht jeden Spieler auf ein Team Miners, das eine Eisenspitzhacke und Brot bekommt, und lässt diese Spitzhacke die Kohle abbauen und sonst nichts: Die Kohle geht nie aus, jeder zehnte Abbau lässt auch einen Eisenbarren fallen, und zehn Eisen in der Hand machen jeden Kohleblock der Welt zu Golderz
 
 ---
 
@@ -33,6 +34,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Registry-Umbenennungen](#registry-umbenennungen)
 - [Spielerbeute](#spielerbeute)
 - [Blockdrops](#blockdrops)
+- [Ambosswerk](#ambosswerk)
 
 **Neuen Inhalt beschreiben**
 - [Wie Definitionen funktionieren](#wie-definitionen-funktionieren)
@@ -147,6 +149,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/loot_tables/*.json` | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/loot_injections/*.json` | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/block_drops/*.json` | Zusätzliche oder ersetzende Drops für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops) |
+| `<namespace>/anvils/*.json` | Verzauberungen, die ein Amboss auf einen genannten Gegenstand legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk) |
 | `<namespace>/player_loot/*.json` | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute) |
 | `<namespace>/advancements/*.json` | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/functions/*.mcfunction` | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
@@ -282,7 +285,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `block_drops`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
 
@@ -616,9 +619,11 @@ Vanilla-Blöcke in 1.12 haben keine Beutetabellen, ein Pack konnte also den Drop
   "block": "minecraft:stone",
   "meta": 0,
   "replace": false,
+  "advancement": "mypack:deep_miner",
   "drops": [
     { "item": "minecraft:diamond", "count": "1-2", "chance": 0.05, "fortune": 1, "silkTouch": "never" },
-    { "item": "minecraft:emerald", "silkTouch": "only" }
+    { "item": "minecraft:emerald", "silkTouch": "only" },
+    { "experience": "2-4", "chance": 0.5 }
   ]
 }
 ```
@@ -628,19 +633,52 @@ Vanilla-Blöcke in 1.12 haben keine Beutetabellen, ein Pack konnte also den Drop
 | `block` | ja | Block-ID | | Der Block, den die Regel beobachtet |
 | `meta` | nein | int | `-1` | Nur diese Metadaten des Blocks; `-1` ist jeder Zustand |
 | `replace` | nein | boolean | `false` | Ob die üblichen Drops verworfen werden, bevor diese gewürfelt werden |
+| `advancement` | nein | `namespace:pfad` | keins | Die Regel gilt nur für einen Spieler, der diesen Fortschritt hat, sodass derselbe Block vorher das eine und nachher das andere fallen lassen kann |
 | `drops` | ja | Liste von Drops | | Jeder wird für sich gewürfelt, wenn ein Spieler den Block abbaut |
 
 Jeder Drop:
 
 | Schlüssel | Pflicht | Wert | Standard | Was er macht |
 | --- | --- | --- | --- | --- |
-| `item` | ja | Item-ID | | Was fällt, mit Metadaten wie `minecraft:dye:4` |
+| `item` | ja, außer mit `experience` | Item-ID | | Was fällt, mit Metadaten wie `minecraft:dye:4` |
+| `experience` | nein | Zahl oder `niedrig-hoch` | | Statt eines Gegenstands so viel Erfahrung als Kugeln, gleichmäßig innerhalb der Spanne gewürfelt. `chance` und `silkTouch` gelten wie bei einem Gegenstand |
 | `count` | nein | Zahl oder `min-max` | `1` | Wie viele, gleichmäßig innerhalb des Bereichs gewürfelt |
 | `chance` | nein | float | `1.0` | Die Wahrscheinlichkeit, dass der Drop überhaupt fällt, `0.05` ist ein Abbau von zwanzig |
 | `fortune` | nein | int | `0` | Bis zu so viele extra pro Stufe Glück auf dem Werkzeug |
 | `silkTouch` | nein | `either`, `only` oder `never` | `either` | Ob der Drop ein Werkzeug mit Behutsamkeit braucht, eines ablehnt oder sich nicht darum kümmert |
 
 Regeln sehen nur den Abbau durch einen Spieler; Explosionen, Kolben und Mob-Schäden würfeln nichts. Mehrere Regeln für einen Block gelten alle, ein `replace` auf irgendeiner davon leert zuerst die üblichen Drops.
+
+## Ambosswerk
+
+`<namespace>/anvils/*.json`
+
+Der Dateiname ist deine Sache, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich. Jede Datei ist ein Stück Arbeit.
+
+Lege den genannten Gegenstand in den linken Platz eines Ambosses und seinen `with`-Gegenstand in den rechten, und der Amboss bietet den linken mit den aufgeführten Verzauberungen zurück, für die genannten Stufen; einer vom rechten wird verbraucht. Das Herausnehmen kann zugleich einen Fortschritt einbringen, und der Gegenstand kann bis zu diesem Fortschritt vom Gebrauch zurückgehalten werden: ein Schwert, das erst schwingt, wenn es bearbeitet wurde.
+
+```json
+{
+  "item": "minecraft:iron_sword",
+  "with": "minecraft:wooden_sword",
+  "levels": 3,
+  "enchantments": { "minecraft:sharpness": 2 },
+  "grants": "mypack:sword_rite",
+  "locks": true
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er tut |
+| --- | --- | --- | --- | --- |
+| `item` | ja | Gegenstandsname | | Was in den linken Platz kommt. Metadaten als `minecraft:dye:4` |
+| `with` | ja | Gegenstandsname oder `{ "item", "count" }` | | Was in den rechten Platz kommt und wie viele davon verbraucht werden, standardmäßig einer: `{ "item": "minecraft:coal", "count": 10 }` verlangt einen Stapel von mindestens zehn und nimmt zehn. Ein Amboss meldet sich nie für einen einzelnen Gegenstand, also ist jede Arbeit ein Paar |
+| `result` | nein | Gegenstandsname | der linke Gegenstand | Was statt des linken Gegenstands herauskommt, mit dessen Tags, sodass eine unzerbrechliche Eisenspitzhacke und zehn Kohle als unzerbrechliche Diamantspitzhacke zurückkommen können. Die Verzauberungen landen auf dem, was herauskommt |
+| `levels` | nein | int | `1` | Die Erfahrungsstufen, die die Arbeit kostet, mindestens 1 |
+| `enchantments` | nein | Objekt von Verzauberungsname zu Stufe | keine | Womit der Gegenstand zurückkommt. Eine Stufe, die er schon in dieser Höhe oder darüber hat, bleibt unberührt, und gibt es nichts zu erhöhen, bietet der Amboss nichts an, es sei denn, `grants` ist gesetzt |
+| `grants` | nein | `namespace:pfad` | keiner | Ein Fortschritt, der beim Herausnehmen der Arbeit erreicht wird. Liefere ihn unter `advancements/` mit einem `impossible`-Kriterium, damit nichts anderes ihn erreicht |
+| `locks` | nein | Wahrheitswert | `false` | Bis der Spieler `grants` hat, kann der Gegenstand nicht geschwungen, benutzt oder zum Graben genommen werden; ihm wird gesagt, worauf er wartet, sobald er ihn in die Hand nimmt. In den Amboss legen bleibt erlaubt, und so wird er freigeschaltet |
+
+Die eigenen Reparaturen und Kombinationen des Ambosses bleiben unberührt: Das hier antwortet nur, wenn links ein genannter Gegenstand liegt und rechts sein `with`.
 
 ## Wie Definitionen funktionieren
 
@@ -1763,7 +1801,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "explode": "mypack:boom" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "targetVaries": 3, "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "anvil", "inWall"],
@@ -1867,7 +1905,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `career` | nein | int | zufällig | Welche Laufbahn innerhalb dieses Berufs, ab 1 aufwärts |
 | `baby` | nein | boolean oder 0,0 bis 1,0 | `false` | Wie oft eines jung erscheint, und es bleibt dabei. `true` heißt immer, eine Zahl heißt dieser Anteil |
 | `becomes` | nein | Liste | keine | Andere Varianten, zu denen dieses beim Erscheinen werden kann, nach Gewicht. Siehe unten |
-| `sounds` | nein | Objekt | die der Basis | `ambient`, `hurt` und `death`, jeweils ein registriertes Sound-Event. Zwei weitere, für die die Basis keinen Laut hat: `target` wird einmal gespielt, sooft sie ein Ziel fasst, und `explode` ist der Klang ihrer Explosion anstelle des Spielklangs, ob sie sich mit `explodes` selbst sprengt oder mit `throws` TNT wirft |
+| `sounds` | nein | Objekt | die der Basis | `ambient`, `hurt` und `death`, jeweils ein registriertes Sound-Event. Zwei weitere, für die die Basis keinen Laut hat: `target` wird einmal gespielt, sooft sie ein Ziel fasst, und `explode` ist der Klang ihrer Explosion anstelle des Spielklangs, ob sie sich mit `explodes` selbst sprengt oder mit `throws` TNT wirft. `targetVaries` verschiebt jedes Abspielen von `target` zufällig um bis zu so viele Halbtöne nach oben oder unten, `3` also bis zu einer Vierteloktave in beide Richtungen; `0` spielt ihn unverändert |
 | `soundVolume` | nein | Zahl | `1.0` | Wie laut diese Sounds sind |
 | `soundPitch` | nein | Zahl | `1.0` | Wie hoch sie klingen. Unter 1 tiefer, über 1 quietschiger |
 | `immuneTo` | nein | Liste von Schadensarten | keine | Schaden, der an ihr abprallt: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` und der Rest |
@@ -1940,7 +1978,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `patrols` | nein | boolean | `false` | Zieht in langen Etappen über das Land, mit anderen ihrer Art, die einem Anführer folgen, wie eine Plünderer-Patrouille. Eine Gruppe, die zusammen erscheint, wählt einen Anführer; die anderen bleiben wenige Blöcke bei ihm, und nimmt der Anführer ein Ziel, nehmen es alle. Ein Gefolgsmann, der seinen Anführer verliert, übernimmt selbst die Führung. Braucht `hostile` |
 | `swoops` | nein | boolean | `false` | Kreist über ihrem Ziel und stürzt hindurch, schlägt im Vorbeiflug zu, wie ein Phantom. Die Variante bekommt eine Flughilfe, fliegt also, solange sie jagt, und lässt sich im Leerlauf zu Boden; sie braucht eine Basis, die eine Kreatur ist, etwa einen Papagei, und eine Fledermaus ist keine. Braucht `hostile` |
 | `gusts` | nein | boolean | `false` | Holt aus und lässt aus der Entfernung einen Windstoß auf ihr Ziel los, der alles nahe dem Ziel zurück und nach oben wirft, wie die Windkugel einer Brise. Braucht `hostile` |
-| `digs` | nein | boolean | `false` | Gräbt sich durch das, was zwischen ihr und ihrem Ziel steht, mit dem Werkzeug in der Hand: eine Schaufel durch Erde, Sand und Kies, eine Spitzhacke durch Stein, eine Axt durch Holz, und nur, was das Material des Werkzeugs schafft, eine Holzspitzhacke öffnet also nie Eisenerz, und Obsidian öffnet nichts unter Diamant. Ein Block braucht so lange wie bei einem Spieler mit dem Werkzeug, lässt fallen, was er fallen ließe, und nutzt das Werkzeug ab. Das Werkzeug kommt über `equipment`; mit bloßen Händen gräbt sie nichts, und wo `mobGriefing` aus ist, ebenfalls nichts. Sie sucht nie einen Umweg: mit einem Ziel läuft sie geradewegs darauf zu und gräbt, was im Weg steht, und wo das Werkzeug den Block nicht schafft, steht sie und drückt. Braucht `hostile` |
+| `digs` | nein | boolean | `false` | Gräbt sich durch das, was zwischen ihr und ihrem Ziel steht, mit dem Werkzeug in der Hand: eine Schaufel durch Erde, Sand und Kies, eine Spitzhacke durch Stein, eine Axt durch Holz, und nur, was das Material des Werkzeugs schafft, eine Holzspitzhacke öffnet also nie Eisenerz, und Obsidian öffnet nichts unter Diamant. Ein Block braucht so lange wie bei einem Spieler mit dem Werkzeug, lässt fallen, was er fallen ließe, und nutzt das Werkzeug ab. Das Werkzeug kommt über `equipment`; mit bloßen Händen gräbt sie nichts, und wo `mobGriefing` aus ist, ebenfalls nichts. Sie sucht nie einen Umweg: mit einem Ziel läuft sie geradewegs darauf zu und gräbt, was im Weg steht, und wo das Werkzeug den Block nicht schafft, steht sie und drückt. Braucht `hostile`. Es fasst seine Ziele, ohne sie sehen zu müssen, denn wohin es gräbt, liegt seiner Natur nach hinter etwas |
 | `gustPower` | nein | float | `1.5` | Wie hart ein Windstoß wirft. Ein Treffer eines Mobs ist 0,4, eine starke Rückstoß-Verzauberung etwa 1 |
 | `threatLeast` | nein | int | `0` | Die niedrigste Bedrohungsstufe, in der ein Spieler oder anderer Träger im Umkreis von 128 Blöcken stehen muss, bevor die Variante natürlich spawnt. `0` spawnt wie gewohnt |
 | `threatHostile` | nein | int | `0` | Die niedrigste Bedrohungsstufe, in der ein Spieler stehen muss, bevor die Variante von sich aus auf ihn losgeht. Darunter ist die Variante diesem Spieler gegenüber friedlich, wehrt sich aber weiterhin, wenn sie getroffen wird. `0` greift wie gewohnt an |
@@ -2973,7 +3011,7 @@ Jeder Eintrag in `pages`:
 | `background` | nein | Texturpfad | der gekachelte Erdhintergrund | Ein Hintergrund |
 | `backgrounds` | nein | Liste von Texturpfaden | keine | Mehrere, im Wechsel. Kommt zu `background` dazu, wenn du beides angibst |
 | `interval` | nein | Sekunden | `5.0` | Wie lange jeder Hintergrund steht, wenn es mehr als einen gibt |
-| `time` | nein | Sekunden | wird aus dem Text errechnet | Wie lange eine laufende Seite von Anfang bis Ende braucht |
+| `time` | nein | Sekunden | wird aus dem Text errechnet | Wie lange eine laufende Seite von Anfang bis Ende braucht. Auf einer stehenden Seite, oder auf der letzten Seite jeder Art, ist es die Zeit, bis die Seite von selbst weitergeht, und ohne warten sie auf den Knopf |
 | `direction` | nein | `up` oder `down` | `up` | In welche Richtung der laufende Text zieht |
 | `textScale` | nein | Zahl | `1.0` | Multipliziert die Schriftgröße |
 | `settle` | nein | boolean | `false` | Endet mit der letzten Zeile in der Mitte, statt ganz aus dem Bild zu laufen |
@@ -3028,7 +3066,11 @@ Eine Seite ist ein echtes Team auf dem Scoreboard des Spiels, also sieht `/score
   "color": "red",
   "friendlyFire": false,
   "joinable": false,
-  "entities": ["mypack:zombie_a", "mypack:sapper_a"]
+  "entities": ["mypack:zombie_a", "mypack:sapper_a"],
+  "picks": 0,
+  "picksFrom": ["players"],
+  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
+  "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" }
 }
 ```
 
@@ -3048,12 +3090,18 @@ Eine Seite ist ein echtes Team auf dem Scoreboard des Spiels, also sieht `/score
 | `entities` | Liste | leer | Entity-Ids, deren Spawns dieser Seite beitreten, etwa `minecraft:zombie` oder eine eigene |
 | `players` | Liste | leer | Spielernamen, die dieser Seite beim Einloggen beitreten |
 | `spawnBox` | Liste | keiner | Sechs ganze Zahlen, x y z bis x y z. Alles, was darin spawnt, tritt bei, und die Ecken dürfen in beliebiger Reihenfolge stehen |
+| `spawn` | Text | keiner | `x,y,z` in der Oberwelt, wohin die Spieler der Seite gesetzt werden, wenn eine Runde beginnt, sodass jede Seite auf eigenem Boden startet; ohne bleiben sie, wo Reset oder Lobby sie ließen |
 | `joinable` | Wahrheitswert | `true` | Ob ein Spieler mit `/rdpl team join` beitreten darf. Auf false für eine Seite, die nur für Mobs ist |
-| `lead` | Text | `none` | Wie die Führung der Seite bestimmt wird: `none`, `topScore` für den Höchsten auf dem Ziel, das `leadOn` nennt, `appointed` für den Spieler, den `leadIs` nennt, `vote` für den, den die Mitglieder wählen, oder `claim` für den, der sie zuerst beansprucht. Eine Führung ist ein Etikett und eine Farbe und sonst nichts: sie verleiht keine Macht, also zerbricht nichts, wenn eine Führung sich ausloggt |
+| `lead` | Text | `none` | Wie die Führung der Seite bestimmt wird: `none`, `first` für den, der von den Anwesenden der Seite am frühesten beitrat, sodass sie in der Reihenfolge des Beitritts weitergeht, solange einer fort ist, und mit ihm zurückkommt; es wird ihm gesagt, wenn er ankommt, nach dem Intro und jedem Halten, und erneut, wenn sie auf ihn übergeht, `topScore` für den Höchsten auf dem Ziel, das `leadOn` nennt, `appointed` für den Spieler, den `leadIs` nennt, `vote` für den, den die Mitglieder wählen, oder `claim` für den, der sie zuerst beansprucht. Eine Führung ist ein Etikett und eine Farbe und sonst nichts: sie verleiht keine Macht, also zerbricht nichts, wenn eine Führung sich ausloggt |
 | `leadOn` | Text | leer | Bei `topScore` das Ziel, nach dem die Mitglieder geordnet werden. Es wird bei jedem Lesen neu ermittelt und folgt damit dem Punktestand |
 | `leadIs` | Text | leer | Bei `appointed` der Spieler, der führt |
+| `leadSays` | Text | `You are the current round leader` | Einem Spieler gesagt, wenn die Führung an ihn kommt: wenn er auf einer Seite ankommt, die er führt, wenn er sie beansprucht, oder wenn eine `first`-Führung auf ihn übergeht, dann mit dem Namen dessen, der ging. `{side}` ist der Anzeigename der Seite; leer sagt nichts |
 | `balance` | Wahrheitswert | `false` | Ob `/rdpl team join` ohne Namen einen Spieler hierher setzen darf. Unter den Seiten, die das erlauben, wird die mit den wenigsten Spielern gewählt |
 | `scoreboard` | Wahrheitswert | `true` | Ob die Seite als Team auf dem Scoreboard des Spiels steht. Aus stellt gar kein Team auf: Ihre Mobs tragen stattdessen die Farbe der Seite im Namen, nichts hält sie davon ab, einander anzugreifen, und es landen keine Punkte auf ihr, denn gewertet wird nach dem Team |
+| `picks` | Zahl | `0` | Wie viele Mitglieder diese Seite zufällig zieht. Bei jedem Rundenbeginn lässt die Seite ihre letzte Ziehung dorthin zurück, wo sie stand, und zieht neu aus allem, was `picksFrom` nennt; zwischen den Ziehungen besetzt ein Login oder ein Spawn aus diesem Pool einen leeren Platz sofort. Ein Spieler aus allen, auf einer eigenen Seite, ist der Zweck |
+| `picksFrom` | Liste | leer | Woraus gezogen wird: `players` für alle, die online sind, und Entity-Ids für jeden lebenden Mob dieser Art |
+| `gives` | Liste | leer | Gegenstände, die einem Spieler beim Beitritt zur Seite ins Inventar gelegt werden, ein Gegenstandsname für einen oder `{ "item", "count", "unbreakable" }` für mehrere oder für einen, der sich nie abnutzt, in einen freien Platz und vor die Füße geworfen, wenn keiner frei ist. Nach einem Reset, der Inventare leert (`resetClearsInventory`), werden sie erneut ausgegeben |
+| `standIn` | Objekt | keins | Ein Mob, der die Seite hält, solange kein Spieler darauf ist: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` hält einen davon an dieser Stelle der Oberwelt am Leben, beschwört ihn, wenn er fehlt, und entfernt ihn, sobald ein Spieler der Seite beitritt, sodass ein Spiel gegen die KI läuft, bis ein Spieler die Rolle übernimmt. Alle fünf Sekunden geprüft; die Stelle muss in geladenem Gelände liegen |
 
 Drei Wege beizutreten, und eine Seite darf alle nutzen. `entities` nennt Entity-Ids, und alles dieser Art tritt beim Spawnen bei, so gibt ein Paket Mobs ihre Seite, ohne die Mobs anzufassen. `spawnBox` beansprucht eine Ecke der Welt, und alles, was darin spawnt, tritt bei, was zu einer Arena passt, in der beide Seiten denselben Mob nutzen. `players` nennt Spieler direkt. Darüber hinaus tritt ein Spieler mit `/rdpl team join <name>` bei, sofern die Seite `joinable` nicht auf false setzt, und verlässt sie mit `/rdpl team leave`.
 
@@ -3078,6 +3126,7 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1
   },
+  "opens": { "by": "leader" },
   "ends": {
     "afterMinutes": 10
   },
@@ -3112,6 +3161,8 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 | `ends.intermissionSays` | Text | `Round cooldown {seconds}` | Jede Sekunde der Pause nach einem Rundenende in der Aktionsleiste gezeigt, `{seconds}` zählt bis zum Reset herunter. Leer zeigt nichts |
 | `ends.startsSays` | Text | `Round starting in {seconds}` | In der Aktionsleiste gezeigt, während die fünf Sekunden nach dem Reset die nächste Runde einleiten, `{seconds}` zählt herunter. Leer zeigt nichts |
 | `ends.locksTeams` | Wahrheitswert | `true` | Wer während einer laufenden Runde einer Seite beitritt, wartet bis zum Rundenende, damit niemand mitten in eine gewertete Runde fällt |
+| `opens.by` | Text | `auto` | `auto` eröffnet die nächste Runde von selbst, fünf Sekunden nach dem Reset. `leader` hält das Spiel stattdessen in einer Lobby: Nach dem Reset, und beim ersten Laden der Welt, wird nichts gewertet und keine Uhr läuft, Seiten können frei betreten und verlassen werden, und die Runde beginnt erst, wenn die Führung einer Seite, oder ein Operator, `/rdpl round start` ausführt, und nicht, solange noch jemand das Welt-Intro liest; dann läuft der Fünf-Sekunden-Zähler, die Ziehungen werden gemacht, und jede Seite kommt an ihr `spawn` |
+| `opens.says` | Text | `Waiting for {leader} to start the round` | Allen gesagt, wenn die Lobby aufgeht, und jedem Spieler, wenn er darin ankommt, nach dem Intro und jedem Halten, `{leader}` sind die Führungen aller Seiten oder `a leader`, solange niemand führt. Leer sagt nichts |
 | `results.card` | Wahrheitswert | `false` | Den Stand als Karte statt als Chat zeigen |
 | `results.title` | Text | der Name und `results` | Die Überschrift der Karte |
 | `results.icon` | Text | leer | Ein auf der Karte gezeichneter Gegenstand, z. B. `minecraft:tnt` |
@@ -3141,6 +3192,10 @@ Gibt einer Gruppe von Blöcken einen Faktor für die Abbauzeit, der pro Blockpos
   "minHeight": 0,
   "maxHeight": 255,
   "field": { "type": "speckle", "spread": 0.15 },
+  "keeps": false,
+  "adventure": { "tools": ["minecraft:iron_pickaxe"], "teams": ["red"], "players": [], "entities": ["mypack:digger"] },
+  "advancement": "mypack:deep_miner",
+  "becomes": { "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" },
   "requires": ["mypack"]
 }
 ```
@@ -3149,12 +3204,16 @@ Gibt einer Gruppe von Blöcken einen Faktor für die Abbauzeit, der pro Blockpos
 | --- | --- | --- | --- | --- |
 | `blocks` | ja | Liste von Blocknamen oder Objekten | | Die Gruppe. Dieselben drei Formen wie `replace` bei der Weltgenerierung |
 | `except` | nein | Liste von Blocknamen oder Objekten | keine | Wieder aus der Gruppe genommen, was auch immer `blocks` sagt |
-| `miningTime` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Um wie viel länger der Block zum Abbauen braucht |
+| `miningTime` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Um wie viel länger der Block zum Abbauen braucht, für einen Spieler wie für einen `digs`-Mob |
 | `blastResistance` | nein | Zahl oder Objekt mit `min` und `max` | `1.0` | Multipliziert den Explosionswiderstand des Blocks |
 | `buckets` | nein | 1 bis 256 | `10` | In wie viele Stufen die Spanne geteilt wird |
 | `minHeight` | nein | Ganzzahl | `0` | Darunter ist der Wurf die härteste Stufe |
 | `maxHeight` | nein | Ganzzahl | `255` | Darüber ist der Wurf die härteste Stufe |
 | `field` | nein | Objekt | siehe unten | Die Form, zu der sich der Wurf zusammenballt |
+| `keeps` | nein | Wahrheitswert | `false` | Der Block bleibt stehen, wenn er abgebaut ist: Drops, Erfahrung, Werkzeugverschleiß und Bruchgeräusch geschehen alle, und der Block ist noch da, um ihn erneut abzubauen, sodass die Gruppe eine unerschöpfliche Ader ist, in dem Tempo, das `miningTime` vorgibt. Kreativ entfernt ihn wie immer |
+| `adventure` | nein | Objekt | keins | Wer die Gruppe im Abenteuermodus abbauen darf, wo sonst nichts bricht. `tools` nennt die Gegenstände, von denen einer in der Hand sein muss, leer für alles, was gehalten wird; `teams`, `players` und `entities` sagen wer, ein Team über seinen Namen, ein Spieler über seinen Namen, ein Mob über seine Entity-Id für die `digs`-Aufgabe, und alle drei leer heißt jeder mit dem Werkzeug. Überleben und Kreativ bleiben unberührt |
+| `advancement` | nein | `namespace:pfad` | keins | Die Gruppe gilt für einen Spieler erst, wenn er diesen Fortschritt hat. Zwei Gruppen dürfen denselben Block nennen, eine mit Fortschritt und eine ohne, und die freigeschaltete gewinnt; ein Spieler ohne ihn bekommt die schlichte Gruppe, oder Vanilla, wenn es keine gibt. Mobs haben keine Fortschritte, also erreicht eine gesperrte Gruppe nie eine `digs`-Aufgabe, und Explosionswiderstand und der Texturwurf, die keinem Spieler gehören, kommen aus der schlichten Gruppe |
+| `becomes` | nein | Objekt | keins | Die Blöcke der Gruppe werden weltweit zu einem anderen Block, sobald irgendein Spieler `advancement` erreicht: `{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`. Jeder geladene Chunk wird sofort durchgegangen, ein später geladener beim Laden, ein später erzeugter gleich nach dem Setzen seiner Erze, sodass der alte Block für immer weg ist. Gib dem neuen Block eine eigene Gruppe, um sein Abbauen zu ändern |
 | `requires` | nein | Liste von Mod-Ids oder Pack-Namensräumen | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 
 Eine einzelne Zahl gibt jedem Block der Gruppe denselben Faktor, und nichts wird gewürfelt. Ein `min` und ein `max` würfeln pro Position: `max`, wo das Feld leer ist, `min` in der Mitte eines Nestes, und die Stufen dazwischen entscheidet `buckets`.
@@ -3805,6 +3864,8 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
     "resetRuns": "",
     "resetClearsEntities": true,
     "resetClearsScores": true,
+    "resetClearsInventory": true,
+    "resetClearsExperience": true,
     "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"],
     "saysCard": true,
     "saysIcon": "minecraft:compass",
@@ -3836,6 +3897,8 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
 | `resetRuns` | Eine Funktion, die läuft, nachdem ein Reset die Karte geräumt hat, benannt `namespace:pfad`. Sie baut die Arena wieder auf, denn ein Paket, das seine Karte aus einer Funktion gemacht hat, kann sie einfach ein zweites Mal laufen lassen. Leer führt nichts aus | leer |
 | `resetClearsEntities` | Entfernt jede Entity, die kein Spieler ist. Mobs, liegende Gegenstände und Erfahrung verschwinden, was die Karte so zurücklässt, wie sie begann | `true` |
 | `resetClearsScores` | Setzt jedes Ziel, das das Paket führt, wieder auf nichts, sodass eine neue Partie bei null beginnt. Die Teams selbst bleiben | `true` |
+| `resetClearsInventory` | Leert das Inventar jedes Spielers, Rüstung und Zweithand eingeschlossen, sodass eine Runde mit dem beginnt, was die Karte ausgibt, und nicht mit dem, was die letzte übrig ließ. Die `gives` einer Seite werden gleich danach erneut ausgegeben | `false` |
+| `resetClearsExperience` | Setzt die Erfahrung jedes Spielers auf Stufe null zurück | `false` |
 | `welcomeSays` | Die grüne Begrüßung, gezeigt bei jedem Login und nach der Vorgenerierung. Ein bloßer Eintrag ist die Zeile für überall; ein Eintrag `dimension=nachricht` überschreibt sie für diese Dimension und begrüßt außerdem jede Ankunft dort, z. B. `"-1=Welcome to the Nether!"`. Eine leere Nachricht nach dem `=` stellt diese Dimension stumm; eine leere Liste zeigt nichts. Auf dem Standardwert spricht sie die Sprache jedes Spielers | Eine bloße Zeile nennt dein Pack; mit Dimensionszeilen gibst du jeder Welt ihr Thema. Halte die Zeilen unter etwa fünfunddreißig Zeichen |
 | `saysCard` | Zeigt die Zeilen, die dieser Mod sagt, die Begrüßung, den Fortschritt der Vorgenerierung und die Bedrohungszeilen, als Karte unten rechts statt im Chat. Die Karte gleitet herein, bleibt acht Sekunden und verblasst, und erscheint auch über einem offenen Bildschirm | Schalte es ein, wenn der Chat voll ist oder die Zeilen wie ein Teil der Welt wirken sollen statt wie Geplauder |
 | `saysIcon` | Ein Item, das auf der Karte gezeichnet wird, z. B. `minecraft:compass`. Leer zeichnet keines | Gib der Karte das Wappen deines Packs |
@@ -5277,6 +5340,7 @@ Jeder Ordner, mit vollem Pfad und einem Link zum Abschnitt, der ihn beschreibt, 
 | `/rdpl team leave` | keine | Die Seite verlassen, auf der du bist |
 | `/rdpl team vote <player>` | keine | Wähle, wer deine Seite führt, sofern das Paket die Führung per Wahl bestimmt. Ein Gleichstand lässt niemanden führen |
 | `/rdpl team claim` | keine | Die Führung deiner Seite übernehmen, sofern das Paket sie beanspruchen lässt und niemand auf der Seite sie hält |
+| `/rdpl round start` | keine | Die Runde starten, wo das Paket sie in einer Lobby hält (`opens.by`). Für die Führung einer Seite oder einen Operator |
 | `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten |
 
 **Welche Server-Unterbefehle verknüpft sind und warum die übrigen nicht.** Ein Server-Unterbefehl bekommt genau dann eine Weiterreichung, wenn der Client für diesen Namen keine eigene Bedeutung hat: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` und `team` können immer nur die des Servers meinen, `/rdpl` gibt sie also weiter. Die sechs, die der Client ebenfalls hat, `reload`, `list`, `which`, `unused`, `config` und `biome`, behalten ihre eigene Bedeutung von deinen Packs und deinem Client, und ein Weiterreichen würde sie ihnen nehmen. `biome find` ist der eine Teil eines geteilten Namens, der ohnehin dem Server gehört, denn nur der Server kennt den Weltseed; diese eine Form wird also weitergereicht, während `biome list` und `biome here` bei dir bleiben. Damit ist auch die Berechtigung geklärt: Die Operator-Prüfung des Servers entscheidet, und ein Client kann sie weder umgehen noch eine erfundene Antwort bekommen.
@@ -5310,6 +5374,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver pregen stop` | 3 | Ihn beenden |
 | `/rdplserver intro` | 0 | Das Welt-Intro beim nächsten Beitritt noch einmal abspielen lassen. Jeder Spieler darf ihn ausführen, und er löscht immer nur sein eigenes |
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <Spieler>`, `team claim` | 0 | Dasselbe wie die `/rdpl team`-Formen oben, die an diese weitergereicht werden |
+| `/rdplserver round start` | 0 | Dasselbe wie `/rdpl round start`, das daran weitergereicht wird |
 | `/rdplserver reset` | 3 | Setzt die Karte zurück, wie es ein Rundenende tut: Alle werden festgehalten, die Entities weggefegt, die Punkte gelöscht, `resetRuns` ausgeführt, die Spieler nach `resetSendsTo` gesetzt und freigegeben, und eine Runde öffnet mit dem Startzähler, wie die Reset-Einstellungen unter [Vorgenerierung](#vorgenerierung) beschreiben. Wird nicht von `/rdpl` weitergereicht |
 | `/rdplserver goto <struktur>` | `gotoLevel`, `3` | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen |
 | `/rdplserver goto <struktur> next` | `gotoNextLevel`, `3` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht |

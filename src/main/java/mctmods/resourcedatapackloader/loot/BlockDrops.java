@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.loot;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -14,6 +15,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
+import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import javax.annotation.Nullable;
 
 public final class BlockDrops {
     public static final String BLOCK = "block";
@@ -38,6 +41,8 @@ public final class BlockDrops {
     public static final String CHANCE = "chance";
     public static final String FORTUNE = "fortune";
     public static final String SILK_TOUCH = "silkTouch";
+    public static final String EXPERIENCE = "experience";
+    public static final String ADVANCEMENT = "advancement";
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
@@ -50,24 +55,28 @@ public final class BlockDrops {
     private static final class Rule {
         final int meta;
         final boolean replace;
+        final String advancement;
         final List<Drop> drops;
 
-        Rule(int meta, boolean replace, List<Drop> drops) {
+        Rule(int meta, boolean replace, String advancement, List<Drop> drops) {
             this.meta = meta;
             this.replace = replace;
+            this.advancement = advancement;
             this.drops = drops;
         }
     }
 
     private static final class Drop {
         final ItemStack item;
+        final boolean experience;
         final AmountDef count;
         final float chance;
         final int fortune;
         final String silkTouch;
 
-        Drop(ItemStack item, AmountDef count, float chance, int fortune, String silkTouch) {
+        Drop(ItemStack item, boolean experience, AmountDef count, float chance, int fortune, String silkTouch) {
             this.item = item;
+            this.experience = experience;
             this.count = count;
             this.chance = chance;
             this.fortune = fortune;
@@ -117,37 +126,43 @@ public final class BlockDrops {
             ContentLog.LOGGER.error("Block drops {} has no usable drop, ignoring it", key);
             return;
         }
-        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Rule(JsonUtils.getInt(json, META, -1), JsonUtils.getBoolean(json, REPLACE, false), drops));
+        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Rule(JsonUtils.getInt(json, META, -1), JsonUtils.getBoolean(json, REPLACE, false), JsonUtils.getString(json, ADVANCEMENT, "").trim(), drops));
         count[0]++;
     }
 
     private static Drop drop(ResourceLocation key, JsonObject json) {
-        ItemStack item = ContentStacks.parse(key, JsonUtils.getString(json, ITEM, ""), 1);
-        if (item.isEmpty()) { return null; }
-        int least = 1;
-        int most = 1;
-        if (json.has(COUNT)) {
-            String count = json.get(COUNT).getAsString().trim();
-            String[] parts = count.split("-", 2);
-            try {
-                least = Integer.parseInt(parts[0].trim());
-                most = parts.length == 2 ? Integer.parseInt(parts[1].trim()) : least;
-            }
-            catch (NumberFormatException ex) {
-                ContentLog.LOGGER.error("Drop count '{}' in {} is not a number or a low-high range, skipping the drop", count, key);
-                return null;
-            }
-            if (least < 0 || most < least) {
-                ContentLog.LOGGER.error("Drop count '{}' in {} must run from a low to a high number, skipping the drop", count, key);
-                return null;
-            }
-        }
+        boolean experience = json.has(EXPERIENCE);
+        ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, JsonUtils.getString(json, ITEM, ""), 1);
+        if (!experience && item.isEmpty()) { return null; }
+        AmountDef count = amount(key, json, experience ? EXPERIENCE : COUNT);
+        if (count == null) { return null; }
         String silkTouch = JsonUtils.getString(json, SILK_TOUCH, EITHER).trim().toLowerCase(Locale.ROOT);
         if (!EITHER.equals(silkTouch) && !ONLY.equals(silkTouch) && !NEVER.equals(silkTouch)) {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
         }
-        return new Drop(item, new AmountDef(least, most), MathHelper.clamp(JsonUtils.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, JsonUtils.getInt(json, FORTUNE, 0)), silkTouch);
+        return new Drop(item, experience, count, MathHelper.clamp(JsonUtils.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, JsonUtils.getInt(json, FORTUNE, 0)), silkTouch);
+    }
+
+    @Nullable private static AmountDef amount(ResourceLocation key, JsonObject json, String name) {
+        if (!json.has(name)) { return new AmountDef(1, 1); }
+        String count = json.get(name).getAsString().trim();
+        String[] parts = count.split("-", 2);
+        int least;
+        int most;
+        try {
+            least = Integer.parseInt(parts[0].trim());
+            most = parts.length == 2 ? Integer.parseInt(parts[1].trim()) : least;
+        }
+        catch (NumberFormatException ex) {
+            ContentLog.LOGGER.error("Drop {} '{}' in {} is not a number or a low-high range, skipping the drop", name, count, key);
+            return null;
+        }
+        if (least < 0 || most < least) {
+            ContentLog.LOGGER.error("Drop {} '{}' in {} must run from a low to a high number, skipping the drop", name, count, key);
+            return null;
+        }
+        return new AmountDef(least, most);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onHarvest(BlockEvent.HarvestDropsEvent event) {
@@ -160,6 +175,7 @@ public final class BlockDrops {
         Random random = event.getWorld().rand;
         for (Rule rule : rules) {
             if (rule.meta >= 0 && rule.meta != meta) { continue; }
+            if (!rule.advancement.isEmpty() && (event.getHarvester() == null || !Advancements.has(event.getHarvester(), rule.advancement))) { continue; }
             if (rule.replace) { event.getDrops().clear(); }
             for (Drop drop : rule.drops) {
                 if (ONLY.equals(drop.silkTouch) && !event.isSilkTouching()) { continue; }
@@ -168,6 +184,10 @@ public final class BlockDrops {
                 int count = drop.count.pick(random);
                 if (drop.fortune > 0 && event.getFortuneLevel() > 0) { count += random.nextInt(drop.fortune * event.getFortuneLevel() + 1); }
                 if (count <= 0) { continue; }
+                if (drop.experience) {
+                    if (!event.getWorld().isRemote) { event.getWorld().spawnEntity(new EntityXPOrb(event.getWorld(), event.getPos().getX() + 0.5D, event.getPos().getY() + 0.5D, event.getPos().getZ() + 0.5D, count)); }
+                    continue;
+                }
                 ItemStack stack = drop.item.copy();
                 stack.setCount(count);
                 event.getDrops().add(stack);

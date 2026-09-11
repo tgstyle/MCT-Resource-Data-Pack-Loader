@@ -31,6 +31,8 @@ public final class ScoreDef {
     public final int ownKillPoints;
     public final String intermissionSays;
     public final String startsSays;
+    public final String opensBy;
+    public final String opensSays;
 
     public ScoreDef(String name, String displayName, IScoreCriteria criterion, String slot,
                     @Nullable IScoreCriteria.EnumRenderType render, boolean teamTotals, boolean individuals,
@@ -38,7 +40,7 @@ public final class ScoreDef {
                     boolean resultsCard, String resultsTitle, String resultsIcon, String resultsImage,
                     int resultsBackground, int resultsTicks,
                     boolean carries, boolean endsResets, int endsIntermission, String awardsTo, boolean endsLocksTeams,
-                    int ownKillPoints, String intermissionSays, String startsSays) {
+                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays) {
         this.name = name;
         this.displayName = displayName;
         this.criterion = criterion;
@@ -65,6 +67,8 @@ public final class ScoreDef {
         this.ownKillPoints = ownKillPoints;
         this.intermissionSays = intermissionSays;
         this.startsSays = startsSays;
+        this.opensBy = opensBy;
+        this.opensSays = opensSays;
     }
 
     public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0; }

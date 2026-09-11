@@ -153,6 +153,7 @@
     "common.MixinPacketBufferBlockPosWrite",
     "common.MixinPathNavigate",
     "common.MixinPathNavigateGround",
+    "common.MixinPlayerInteractionManager",
     "common.MixinPlayerList",
     "common.MixinRandomPositionGenerator",
     "common.MixinRecipeUnlockedTrigger",
@@ -223,6 +224,7 @@
   ],
   "client": [
     "client.IChunkProviderClient",
+    "client.IClientAdvancementManager",
     "client.MixinCommandSuccess",
     "client.IContainerLocalRenderInformation",
     "client.IGuiOptionsRowList",
@@ -251,6 +253,7 @@
     "client.MixinLayerArmorBase",
     "client.MixinLayerHeldItem",
     "client.MixinMinecraft",
+    "client.MixinPlayerControllerMP",
     "client.MixinRender",
     "client.MixinRenderChunk",
     "client.MixinRenderChunkOptifine",

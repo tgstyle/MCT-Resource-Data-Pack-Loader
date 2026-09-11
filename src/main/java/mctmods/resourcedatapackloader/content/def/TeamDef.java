@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.text.TextFormatting;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class TeamDef {
     public final String name;
@@ -23,14 +24,21 @@ public final class TeamDef {
     public final String lead;
     public final String leadOn;
     public final String leadIs;
+    public final String leadSays;
     public final boolean balance;
     public final boolean scoreboard;
+    public final int picks;
+    public final List<String> picksFrom;
+    public final List<ItemGiveDef> gives;
+    public final String standIn;
+    @Nullable public final int[] standInAt;
+    @Nullable public final int[] spawnAt;
 
     public TeamDef(String name, String displayName, TextFormatting color, String prefix, String suffix,
                    boolean friendlyFire, boolean mobFriendlyFire, boolean seeFriendlyInvisibles, Team.EnumVisible nameTags,
                    Team.EnumVisible deathMessages, Team.CollisionRule collision,
                    List<String> entities, List<String> players, int[] spawnBox, boolean joinable,
-                   String lead, String leadOn, String leadIs, boolean balance, boolean scoreboard) {
+                   String lead, String leadOn, String leadIs, String leadSays, boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt, @Nullable int[] spawnAt) {
         this.name = name;
         this.displayName = displayName;
         this.color = color;
@@ -49,9 +57,18 @@ public final class TeamDef {
         this.lead = lead;
         this.leadOn = leadOn;
         this.leadIs = leadIs;
+        this.leadSays = leadSays;
         this.balance = balance;
         this.scoreboard = scoreboard;
+        this.picks = picks;
+        this.picksFrom = picksFrom;
+        this.gives = gives;
+        this.standIn = standIn;
+        this.standInAt = standInAt;
+        this.spawnAt = spawnAt;
     }
+
+    public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }
 
     public boolean leads() { return !"none".equals(lead); }
 

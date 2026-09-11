@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -9,6 +10,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.server.MinecraftServer;
@@ -34,6 +36,9 @@ public final class ContentReset {
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsScores", Config.chunks.resetClearsScores)) {
             wipe(server);
         }
+        boolean inventory = ContentControl.flag(ContentControl.CHUNKS, "resetClearsInventory", Config.chunks.resetClearsInventory);
+        strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, "resetClearsExperience", Config.chunks.resetClearsExperience));
+        if (inventory) { ContentTeams.giveAll(server); }
         String runs = ContentPregen.says("resetRuns", Config.chunks.resetRuns).trim();
         if (!runs.isEmpty()) { call(server, runs); }
         place(server);
@@ -65,6 +70,17 @@ public final class ContentReset {
             if (objective != null) { board.removeObjective(objective); }
         }
         ContentScoring.keep(world);
+    }
+
+    private static void strip(MinecraftServer server, boolean inventory, boolean experience) {
+        if (!inventory && !experience) { return; }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            if (inventory) {
+                player.inventory.clear();
+                player.inventory.setItemStack(ItemStack.EMPTY);
+            }
+            if (experience) { player.addExperienceLevel(-(player.experienceLevel + 1)); }
+        }
     }
 
     private static void call(MinecraftServer server, String named) {

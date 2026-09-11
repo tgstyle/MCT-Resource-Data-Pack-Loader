@@ -12,6 +12,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) is that same city on a rubic world with its ceiling at 512 and the clouds lifted to 384, so towers stand 256 blocks over the street, and every district rolls a block depth of 16, 32 or 64 so a coarse grid mixes with a fine one.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
+- [RDPLExampleAdventureMine.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleAdventureMine.zip) starts a flat stone world in adventure mode, draws every player onto a Miners team that is handed an iron pickaxe and bread, and lets that pickaxe mine the coal and nothing else: the coal never runs out, one break in ten also drops an iron ingot, and holding ten iron turns every coal block in the world to gold ore
 
 ---
 
@@ -33,6 +34,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [Registry renames](#registry-renames)
 - [Player loot](#player-loot)
 - [Block drops](#block-drops)
+- [Anvil work](#anvil-work)
 
 **Defining new content**
 - [How definitions work](#how-definitions-work)
@@ -147,6 +149,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/loot_tables/*.json` | Loot tables, replaced. [What you can override](#what-you-can-override) |
 | `<namespace>/loot_injections/*.json` | A pool added to a table that already exists. [What you can override](#what-you-can-override) |
 | `<namespace>/block_drops/*.json` | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops) |
+| `<namespace>/anvils/*.json` | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work) |
 | `<namespace>/player_loot/*.json` | A loot table rolled when a player dies. [Player loot](#player-loot) |
 | `<namespace>/advancements/*.json` | Advancements. [What you can override](#what-you-can-override) |
 | `<namespace>/functions/*.mcfunction` | Function files. [What you can override](#what-you-can-override) |
@@ -282,7 +285,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures` | `blocks`, `items`, `fluids`, `materials` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `loot_tables`, `loot_injections`, `block_drops`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `biomes`, `dimensions` |
 | `gates`, `trades`, `registry_remap` | `villagers` |
 | the whole control layer, settings, and pregeneration | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 
@@ -616,9 +619,11 @@ Vanilla 1.12 blocks have no loot tables, so a pack could add to what its own blo
   "block": "minecraft:stone",
   "meta": 0,
   "replace": false,
+  "advancement": "mypack:deep_miner",
   "drops": [
     { "item": "minecraft:diamond", "count": "1-2", "chance": 0.05, "fortune": 1, "silkTouch": "never" },
-    { "item": "minecraft:emerald", "silkTouch": "only" }
+    { "item": "minecraft:emerald", "silkTouch": "only" },
+    { "experience": "2-4", "chance": 0.5 }
   ]
 }
 ```
@@ -628,19 +633,52 @@ Vanilla 1.12 blocks have no loot tables, so a pack could add to what its own blo
 | `block` | yes | block id | | The block the rule watches |
 | `meta` | no | int | `-1` | Only this metadata of the block; `-1` is every state |
 | `replace` | no | boolean | `false` | Whether the usual drops are discarded before these are rolled |
+| `advancement` | no | `namespace:path` | none | The rule counts only for a player who has that advancement, so the same block can drop one thing before and another after |
 | `drops` | yes | list of drops | | Each rolled on its own when a player breaks the block |
 
 Each drop:
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `item` | yes | item id | | What drops, with metadata as `minecraft:dye:4` |
+| `item` | yes, unless `experience` | item id | | What drops, with metadata as `minecraft:dye:4` |
+| `experience` | no | number or `low-high` | | Instead of an item, that much experience as orbs, rolled evenly within the range. `chance` and `silkTouch` apply as for an item |
 | `count` | no | number or `low-high` | `1` | How many, rolled evenly within the range |
 | `chance` | no | float | `1.0` | The odds the drop happens at all, `0.05` being one break in twenty |
 | `fortune` | no | int | `0` | Up to this many extra per level of Fortune on the tool |
 | `silkTouch` | no | `either`, `only` or `never` | `either` | Whether the drop needs a Silk Touch tool, refuses one, or does not care |
 
 Rules only see a player's harvest; explosions, pistons and mob grief roll nothing. Several rules for one block all apply, a `replace` on any of them clearing the usual drops first.
+
+## Anvil work
+
+`<namespace>/anvils/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Each file is one piece of work.
+
+Put the named item in an anvil's left slot and its `with` item in the right, and the anvil offers the left one back with the enchantments listed, for the levels named; one of the right item is spent. Taking it out can also earn an advancement, and the item can be held back from use until that advancement is earned: a sword that only swings once it has been worked.
+
+```json
+{
+  "item": "minecraft:iron_sword",
+  "with": "minecraft:wooden_sword",
+  "levels": 3,
+  "enchantments": { "minecraft:sharpness": 2 },
+  "grants": "mypack:sword_rite",
+  "locks": true
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `item` | yes | item name | | What goes in the left slot. Metadata as `minecraft:dye:4` |
+| `with` | yes | item name, or `{ "item", "count" }` | | What goes in the right slot, and how many of it are spent, one by default: `{ "item": "minecraft:coal", "count": 10 }` asks for a stack of at least ten and takes ten. An anvil never speaks up for a lone item, so every piece of work is a pair |
+| `result` | no | item name | the left item | What comes out instead of the left item, keeping the left item's tags, so an unbreakable iron pickaxe and ten coal can come back as an unbreakable diamond one. The enchantments go on whichever comes out |
+| `levels` | no | int | `1` | The experience levels the work costs, 1 at the least |
+| `enchantments` | no | object of enchantment name to level | none | What the item comes back with. A level it already has at that height or above is left alone, and with nothing to raise the anvil offers nothing, unless `grants` is set |
+| `grants` | no | `namespace:path` | none | An advancement earned as the work is taken out. Ship it under `advancements/` with an `impossible` criterion, so nothing else earns it |
+| `locks` | no | boolean | `false` | Until the player has `grants`, the item cannot be swung at anything, used, or dug with; they are told what it waits on as it comes into their hand. Putting it in the anvil is still allowed, which is how it gets unlocked |
+
+The anvil's own repairs and combinations are untouched: this only answers when the left holds a named item and the right holds its `with`.
 
 ## How definitions work
 
@@ -1763,7 +1801,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "explode": "mypack:boom" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "targetVaries": 3, "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "anvil", "inWall"],
@@ -1867,7 +1905,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `career` | no | int | random | Which career within that profession, from 1 upwards |
 | `baby` | no | boolean or 0.0 to 1.0 | `false` | How often one spawns young, and it stays that way. `true` is always, a number is that share of them |
 | `becomes` | no | list | none | Other variants this one may turn into as it spawns, by weight. See below |
-| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event. Two more it has no base sound for: `target` is played once each time it takes a target, and `explode` is what its blast sounds like in place of the game's, whether it blows itself up with `explodes` or throws TNT with `throws` |
+| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event. Two more it has no base sound for: `target` is played once each time it takes a target, and `explode` is what its blast sounds like in place of the game's, whether it blows itself up with `explodes` or throws TNT with `throws`. `targetVaries` shifts each `target` play up or down by a random amount within that many semitones, so `3` wanders a quarter octave either way; `0` plays it as it is |
 | `soundVolume` | no | number | `1.0` | How loud those sounds are |
 | `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
 | `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
@@ -1940,7 +1978,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `patrols` | no | boolean | `false` | Walks the land in long legs with others of its kind following a leader, the way a pillager patrol does. A group that spawns together picks one leader; the rest keep within a few blocks of it, and when the leader takes a target they all do. A follower that loses its leader takes the lead itself. Needs `hostile` |
 | `swoops` | no | boolean | `false` | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile` |
 | `gusts` | no | boolean | `false` | Winds up and lets loose a blast of wind at its target from a distance, throwing everything near the target back and up, the way a breeze's wind charge does. Needs `hostile` |
-| `digs` | no | boolean | `false` | Digs through whatever stands between it and its target, with the tool in its hand: a shovel through dirt, sand and gravel, a pickaxe through stone, an axe through wood, and only what that tool's material can break, so a wooden pickaxe never opens iron ore and nothing opens obsidian short of diamond. A block takes as long as it would for a player with that tool, drops what it would, and wears the tool. Give it the tool with `equipment`; bare-handed it digs nothing, and it digs nothing where `mobGriefing` is off. It never looks for a way around: with a target it walks straight at it and digs whatever stands in the way, and where the tool cannot open the block it stands and pushes. Needs `hostile` |
+| `digs` | no | boolean | `false` | Digs through whatever stands between it and its target, with the tool in its hand: a shovel through dirt, sand and gravel, a pickaxe through stone, an axe through wood, and only what that tool's material can break, so a wooden pickaxe never opens iron ore and nothing opens obsidian short of diamond. A block takes as long as it would for a player with that tool, drops what it would, and wears the tool. Give it the tool with `equipment`; bare-handed it digs nothing, and it digs nothing where `mobGriefing` is off. It never looks for a way around: with a target it walks straight at it and digs whatever stands in the way, and where the tool cannot open the block it stands and pushes. Needs `hostile`. It takes its targets without needing to see them, since what it digs toward is by nature behind something |
 | `gustPower` | no | float | `1.5` | How hard a gust throws. A hit from a mob is 0.4, a strong knockback enchantment about 1 |
 | `threatLeast` | no | int | `0` | The lowest threat band a player or other carrier within 128 blocks must stand in before the variant spawns naturally. `0` spawns as usual |
 | `threatHostile` | no | int | `0` | The lowest threat band a player must stand in before the variant goes after them on its own. Below it the variant is docile toward that player, though it still fights back when hit. `0` attacks as usual |
@@ -2973,7 +3011,7 @@ Each entry in `pages`:
 | `background` | no | texture path | the tiled dirt background | One background |
 | `backgrounds` | no | list of texture paths | none | Several, cycled. Adds to `background` if you give both |
 | `interval` | no | seconds | `5.0` | How long each background is held, when there is more than one |
-| `time` | no | seconds | worked out from the text | How long a scrolling page takes, start to finish |
+| `time` | no | seconds | worked out from the text | How long a scrolling page takes, start to finish. On a still page, or on the last page of any kind, it is how long until the page moves on by itself, and without it they wait for the button |
 | `direction` | no | `up` or `down` | `up` | Which way scrolling text travels |
 | `textScale` | no | number | `1.0` | Multiplies the font size |
 | `settle` | no | boolean | `false` | Finish with the last line centered rather than running clear off the screen |
@@ -3028,7 +3066,11 @@ A side is a real team on the game's own scoreboard, so `/scoreboard teams list` 
   "color": "red",
   "friendlyFire": false,
   "joinable": false,
-  "entities": ["mypack:zombie_a", "mypack:sapper_a"]
+  "entities": ["mypack:zombie_a", "mypack:sapper_a"],
+  "picks": 0,
+  "picksFrom": ["players"],
+  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
+  "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" }
 }
 ```
 
@@ -3048,12 +3090,18 @@ A side is a real team on the game's own scoreboard, so `/scoreboard teams list` 
 | `entities` | list | empty | Entity ids whose every spawn joins this side, such as `minecraft:zombie` or one of your own |
 | `players` | list | empty | Player names that join this side as they log in |
 | `spawnBox` | list | none | Six whole numbers, x y z to x y z. Anything spawning inside joins, and the corners may be given either way round |
+| `spawn` | text | none | `x,y,z` in the overworld where the side's players are put as a round opens, so each side starts on its own ground; without it they stay where the reset or the lobby left them |
 | `joinable` | boolean | `true` | Whether a player may join with `/rdpl team join`. Set it false for a side that is only for mobs |
-| `lead` | text | `none` | How the side's lead is chosen: `none`, `topScore` for whoever is highest on the objective `leadOn` names, `appointed` for the player `leadIs` names, `vote` for whoever the members vote for, or `claim` for whoever claims it first. A lead is a label and a color and nothing more: it grants no power, so a lead who logs out breaks nothing |
+| `lead` | text | `none` | How the side's lead is chosen: `none`, `first` for whoever joined the side earliest among those online, so it passes down the order of joining while one is away and comes back with them; they are told as they arrive, past the intro and any hold, and again when it passes to them, `topScore` for whoever is highest on the objective `leadOn` names, `appointed` for the player `leadIs` names, `vote` for whoever the members vote for, or `claim` for whoever claims it first. A lead is a label and a color and nothing more: it grants no power, so a lead who logs out breaks nothing |
 | `leadOn` | text | empty | With `topScore`, the objective the members are ranked by. It is worked out afresh every time it is read, so it follows the score |
 | `leadIs` | text | empty | With `appointed`, the player who leads |
+| `leadSays` | text | `You are the current round leader` | Told to a player as the lead comes to them: as they arrive on a side they lead, as they claim it, or as a `first` lead passes to them, when it carries who left. `{side}` is the side's display name; empty tells nothing |
 | `balance` | boolean | `false` | Whether `/rdpl team join` with no name may put a player here. Among the sides that allow it, the one with the fewest players is chosen |
 | `scoreboard` | boolean | `true` | Whether the side stands as a team on the game's scoreboard. Off fields no team at all: its mobs wear the side's color in their name instead, nothing keeps them from fighting each other, and no points land on it, since scoring goes by the team |
+| `picks` | number | `0` | How many members this side draws at random. Each round open the side lets its last draw go back where they stood and draws afresh from everything `picksFrom` names; between draws a login or a spawn from that pool fills an empty seat at once. One player out of everyone, on a side of their own, is what it is for |
+| `picksFrom` | list | empty | What the draw is made from: `players` for everyone online, and entity ids for every living mob of that kind |
+| `gives` | list | empty | Items put in a player's inventory as they join the side, an item name for one or `{ "item", "count", "unbreakable" }` for more, or for one that never wears, into any free slot and dropped at their feet when none is. Handed out again after a reset that clears inventories (`resetClearsInventory`) |
+| `standIn` | object | none | A mob that holds the side while no player is on it: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` keeps one of that entity alive at that spot in the overworld, summoning it when it is missing, and removes it the moment a player joins the side, so a game plays against the AI until a player takes the part. Checked every five seconds; the spot must be in loaded ground |
 
 Three ways to join, and a side may use all of them. `entities` names entity ids, and anything of that type joins as it spawns, which is how a pack gives mobs sides without touching the mobs. `spawnBox` claims a corner of the world, and anything spawning inside joins, which suits an arena where both sides use the same mob. `players` names players outright. Beyond those, a player can join with `/rdpl team join <name>` unless the side sets `joinable` to false, and leave with `/rdpl team leave`.
 
@@ -3078,6 +3126,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1
   },
+  "opens": { "by": "leader" },
   "ends": {
     "afterMinutes": 10
   },
@@ -3112,6 +3161,8 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `ends.intermissionSays` | text | `Round cooldown {seconds}` | Shown on the action bar every second of the intermission after a round ends, with `{seconds}` counting down to the reset. Empty shows nothing |
 | `ends.startsSays` | text | `Round starting in {seconds}` | Shown on the action bar through the five-second count that opens the next round after the reset, with `{seconds}` counting down. Empty shows nothing |
 | `ends.locksTeams` | boolean | `true` | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway |
+| `opens.by` | text | `auto` | `auto` opens the next round on its own, five seconds after the reset. `leader` holds the game in a lobby instead: after the reset, and when the world first loads, nothing is scored and no clock runs, sides may be joined and left freely, and the round opens only when a side's lead, or an operator, runs `/rdpl round start`, and not while anyone is still reading the world intro; then the five-second count runs, the draws are made, and each side is put at its `spawn` |
+| `opens.says` | text | `Waiting for {leader} to start the round` | Told to everyone as the lobby opens and to each player as they arrive in it, past the intro and any hold, `{leader}` being the leads of every side, or `a leader` while nobody leads. Empty says nothing |
 | `results.card` | boolean | `false` | Show the standings as a card rather than as chat |
 | `results.title` | text | the name and `results` | The card's heading |
 | `results.icon` | text | empty | An item drawn on the card, e.g. `minecraft:tnt` |
@@ -3141,6 +3192,10 @@ Gives a group of blocks a mining time multiplier, rolled per block position. The
   "minHeight": 0,
   "maxHeight": 255,
   "field": { "type": "speckle", "spread": 0.15 },
+  "keeps": false,
+  "adventure": { "tools": ["minecraft:iron_pickaxe"], "teams": ["red"], "players": [], "entities": ["mypack:digger"] },
+  "advancement": "mypack:deep_miner",
+  "becomes": { "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" },
   "requires": ["mypack"]
 }
 ```
@@ -3149,12 +3204,16 @@ Gives a group of blocks a mining time multiplier, rolled per block position. The
 | --- | --- | --- | --- | --- |
 | `blocks` | yes | list of block names or objects | | The group. Same three forms as a worldgen `replace` |
 | `except` | no | list of block names or objects | none | Taken back out of the group, whatever `blocks` says |
-| `miningTime` | no | number, or object with `min` and `max` | `1.0` | How many times longer the block takes to break |
+| `miningTime` | no | number, or object with `min` and `max` | `1.0` | How many times longer the block takes to break, for a player and for a `digs` mob alike |
 | `blastResistance` | no | number, or object with `min` and `max` | `1.0` | Multiplies the block's blast resistance |
 | `buckets` | no | 1 to 256 | `10` | How many steps the range is divided into |
 | `minHeight` | no | int | `0` | Below this the roll is the hardest step |
 | `maxHeight` | no | int | `255` | Above this the roll is the hardest step |
 | `field` | no | object | see below | The shape the roll clumps into |
+| `keeps` | no | boolean | `false` | The block stays where it is when it is mined out: the drops, the experience, the tool wear and the break sound all happen and the block is still there to mine again, so the group is an endless seam at whatever pace `miningTime` sets. Creative removes it as ever |
+| `adventure` | no | object | none | Who may break the group in adventure mode, where nothing breaks otherwise. `tools` lists the items one of which must be in hand, empty for anything held; `teams`, `players` and `entities` say who, a team by its name, a player by name, a mob by its entity id for the `digs` task, and all three empty means anyone with the tool. Survival and creative are untouched |
+| `advancement` | no | `namespace:path` | none | The group counts for a player only once they have that advancement. Two groups may name the same block, one with an advancement and one without, and the unlocked one wins; a player without it gets the plain group, or vanilla if there is none. Mobs hold no advancements, so a gated group never reaches a `digs` task, and blast resistance and the texture roll, which belong to no player, come from the plain group |
+| `becomes` | no | object | none | The group's blocks turn into another block, world wide, the moment any player earns `advancement`: `{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`. Every loaded chunk is swept at once, a chunk loaded later is swept as it comes in, and a chunk made later is swept right after its ore is placed, so the old block is gone for good. Give the new block a group of its own to change how it mines |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
 
 A single number gives every block in the group the same multiplier, and nothing is rolled. A `min` and `max` roll per position: `max` where the field is empty, `min` at the middle of a clump, and the steps between decided by `buckets`.
@@ -3805,6 +3864,8 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
     "resetRuns": "",
     "resetClearsEntities": true,
     "resetClearsScores": true,
+    "resetClearsInventory": true,
+    "resetClearsExperience": true,
     "welcomeSays": ["Welcome to Ruby World!", "-1=Welcome to the Nether!"],
     "saysCard": true,
     "saysIcon": "minecraft:compass",
@@ -3836,6 +3897,8 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
 | `resetRuns` | A function run after a reset has cleared the map, named `namespace:path`. This is what builds the arena again, since a pack that made its map from a function can simply run it a second time. Empty runs nothing | empty |
 | `resetClearsEntities` | Remove every entity that is not a player. Mobs, dropped items and experience all go, which is what leaves the map as it started | `true` |
 | `resetClearsScores` | Set every objective the pack keeps back to nothing, so a new match starts from zero. Teams themselves are kept | `true` |
+| `resetClearsInventory` | Empty every player's inventory, armor and off hand included, so a round starts with what the map hands out and not what the last one left. A side's `gives` is handed out again right after | `false` |
+| `resetClearsExperience` | Set every player's experience back to level zero | `false` |
 | `welcomeSays` | The green greeting, shown on every login and after pregeneration. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
 | `saysCard` | Shows the lines this mod says, the welcome, the pregeneration progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too | Turn it on when chat is busy or the lines should read as part of the world rather than as chatter |
 | `saysIcon` | An item drawn on the card, e.g. `minecraft:compass`. Empty draws none | Give the card your pack's emblem |
@@ -5277,6 +5340,7 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl team leave` | none | Leave the side you are on |
 | `/rdpl team vote <player>` | none | Vote for who leads your side, where the pack chooses its lead by a vote. A tie leaves nobody leading |
 | `/rdpl team claim` | none | Take the lead of your side, where the pack lets it be claimed and nobody on the side holds it |
+| `/rdpl round start` | none | Start the round, where the pack holds it in a lobby (`opens.by`). For the lead of a side, or an operator |
 | `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
 
 **Which server subcommands are linked, and why the rest are not.** A server subcommand gets a passthrough exactly when the client has no meaning of its own for that name: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` and `team` can only ever mean the server's, so `/rdpl` hands them over. The six the client also has, `reload`, `list`, `which`, `unused`, `config` and `biome`, keep their own meaning of your packs and your client, and forwarding them would take that away. `biome find` is the one part of a shared name that belongs to the server anyway, since only the server knows the world seed, so that one form is passed on while `biome list` and `biome here` stay with you. That also settles the permission: the server's own operator check decides it, and a client can neither cheat it nor be told a fabricated answer.
@@ -5310,6 +5374,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver pregen stop` | 3 | End it |
 | `/rdplserver intro` | 0 | Let the world intro play again on your next join. Any player may run it, and it only ever clears their own |
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0 | The same as the `/rdpl team` forms above, which are passed to these |
+| `/rdplserver round start` | 0 | The same as `/rdpl round start`, which is passed to it |
 | `/rdplserver reset` | 3 | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | Take you to the nearest one nobody has been to yet, looking without generating the land on the way |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before |

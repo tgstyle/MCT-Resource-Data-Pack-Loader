@@ -577,7 +577,16 @@ public final class ContentParser {
                 JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "locksTeams", true),
                 JsonUtils.getInt(points, "ownKill", 0),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "intermissionSays", "Round cooldown {seconds}"),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "startsSays", "Round starting in {seconds}"));
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "startsSays", "Round starting in {seconds}"),
+                opensBy(json, key),
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"));
+    }
+
+    private static String opensBy(JsonObject json, ResourceLocation key) {
+        String asked = JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "by", "auto").trim();
+        if ("auto".equals(asked) || "leader".equals(asked)) { return asked; }
+        ContentLog.LOGGER.error("Score file {} opens its round by '{}', which is not auto or leader, so it opens on its own", key, asked);
+        return "auto";
     }
 
     private static int cardColor(JsonObject results, String name) {
@@ -616,15 +625,66 @@ public final class ContentParser {
                 leadWay(json, name),
                 JsonUtils.getString(json, "leadOn", "").trim(),
                 JsonUtils.getString(json, "leadIs", "").trim(),
+                JsonUtils.getString(json, "leadSays", "You are the current round leader"),
                 JsonUtils.getBoolean(json, "balance", false),
-                JsonUtils.getBoolean(json, "scoreboard", true));
+                JsonUtils.getBoolean(json, "scoreboard", true),
+                Math.max(0, JsonUtils.getInt(json, "picks", 0)),
+                names(json, "picksFrom"),
+                gives(key, json),
+                standIn(json), standInAt(key, json), spawnAt(key, json));
+    }
+
+    @Nullable private static int[] spawnAt(ResourceLocation key, JsonObject json) {
+        String at = JsonUtils.getString(json, "spawn", "").trim();
+        if (at.isEmpty()) { return null; }
+        String[] parts = at.split(",");
+        if (parts.length != 3) {
+            ContentLog.LOGGER.error("Team file {} gives spawn something that is not x,y,z, so the side has no spawn of its own", key);
+            return null;
+        }
+        try { return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()) }; }
+        catch (NumberFormatException notNumbers) {
+            ContentLog.LOGGER.error("Team file {} gives spawn something that is not three numbers, so the side has no spawn of its own", key);
+            return null;
+        }
+    }
+
+    private static String standIn(JsonObject json) {
+        if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return ""; }
+        return JsonUtils.getString(JsonUtils.getJsonObject(json, "standIn"), "entity", "").trim();
+    }
+
+    @Nullable private static int[] standInAt(ResourceLocation key, JsonObject json) {
+        if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return null; }
+        String at = JsonUtils.getString(JsonUtils.getJsonObject(json, "standIn"), "at", "").trim();
+        String[] parts = at.split(",");
+        if (parts.length != 3) {
+            ContentLog.LOGGER.error("Team file {} gives standIn an 'at' that is not x,y,z, so no stand-in is kept", key);
+            return null;
+        }
+        try { return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()) }; }
+        catch (NumberFormatException notNumbers) {
+            ContentLog.LOGGER.error("Team file {} gives standIn an 'at' that is not three numbers, so no stand-in is kept", key);
+            return null;
+        }
+    }
+
+    private static List<ItemGiveDef> gives(ResourceLocation key, JsonObject json) {
+        List<ItemGiveDef> values = new ArrayList<>();
+        if (!json.has("gives")) { return values; }
+        for (JsonElement held : JsonUtils.getJsonArray(json, "gives")) {
+            if (held.isJsonPrimitive()) { values.add(new ItemGiveDef(held.getAsString().trim(), 1, false)); }
+            else if (held.isJsonObject()) { values.add(new ItemGiveDef(JsonUtils.getString(held.getAsJsonObject(), "item", "").trim(), Math.max(1, JsonUtils.getInt(held.getAsJsonObject(), "count", 1)), JsonUtils.getBoolean(held.getAsJsonObject(), "unbreakable", false))); }
+            else { ContentLog.LOGGER.error("Team file {} lists something under gives that is neither an item name nor an object, skipping it", key); }
+        }
+        return values;
     }
 
     private static String leadWay(JsonObject json, String team) {
         String asked = JsonUtils.getString(json, "lead", "none").trim();
-        if ("none".equals(asked) || "topScore".equals(asked) || "appointed".equals(asked)
+        if ("none".equals(asked) || "first".equals(asked) || "topScore".equals(asked) || "appointed".equals(asked)
                 || "vote".equals(asked) || "claim".equals(asked)) { return asked; }
-        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, topScore, appointed, vote or claim, so it has no lead", team, asked);
+        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, first, topScore, appointed, vote or claim, so it has no lead", team, asked);
         return "none";
     }
 
@@ -1428,6 +1488,7 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "digs", false),
                 JsonUtils.getString(sounds, "target", ""),
                 JsonUtils.getString(sounds, "explode", ""),
+                Math.max(0.0F, JsonUtils.getFloat(sounds, "targetVaries", 0.0F)),
                 JsonUtils.getBoolean(json, "bright", false));
     }
 

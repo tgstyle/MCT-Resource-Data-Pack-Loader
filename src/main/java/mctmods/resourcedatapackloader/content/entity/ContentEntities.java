@@ -636,7 +636,7 @@ public final class ContentEntities {
         for (String name : targets) {
             Class<? extends EntityLivingBase> type = living(name, def);
             if (type == null) { continue; }
-            living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, true));
+            living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, !def.digs));
         }
     }
 

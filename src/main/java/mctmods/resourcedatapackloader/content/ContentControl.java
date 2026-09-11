@@ -47,7 +47,7 @@ public final class ContentControl {
             "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
             "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "prospectItems", "prospectItemsAreBlacklist", "prospectWear", "prospectSlow", "prospectDrops", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
             "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
-            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
+            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",

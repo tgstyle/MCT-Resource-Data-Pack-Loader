@@ -93,7 +93,7 @@ public final class EntityAIDig extends EntityAIBase {
         IBlockState state = mob.world.getBlockState(pos);
         ItemStack tool = mob.getHeldItemMainhand();
         float speed = Math.max(1.0F, tool.getItem().getDestroySpeed(tool, state));
-        total = Math.max(1, MathHelper.ceil(state.getBlockHardness(mob.world, pos) * 30.0F / speed));
+        total = Math.max(1, MathHelper.ceil(state.getBlockHardness(mob.world, pos) * 30.0F / speed * ContentHardness.miningAt(state, mob, pos.getX(), pos.getY(), pos.getZ())));
         left = total;
         mob.getNavigator().clearPath();
     }

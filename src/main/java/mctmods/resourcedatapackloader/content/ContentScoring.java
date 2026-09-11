@@ -50,6 +50,7 @@ public final class ContentScoring {
     private static int beat;
     private static int waiting;
     @Nullable private static ScoreDef resetting;
+    private static boolean closed;
 
     private ContentScoring() {}
 
@@ -76,6 +77,7 @@ public final class ContentScoring {
     public static Map<String, ScoreDef> all() { return BY_NAME; }
 
     public static boolean roundRunning() {
+        if (closed) { return false; }
         for (ScoreDef def : BY_NAME.values()) {
             if (def.ends() && def.endsLocksTeams && !FINISHED.contains(def.name)) { return true; }
         }
@@ -117,7 +119,7 @@ public final class ContentScoring {
     }
 
     private static void credit(World world, ScoreDef def, Entity who, int points) {
-        if (def.ends() && FINISHED.contains(def.name)) { return; }
+        if (closed || def.ends() && FINISHED.contains(def.name)) { return; }
         Scoreboard board = world.getScoreboard();
         ScoreObjective objective = board.getObjective(def.name);
         if (objective == null) { return; }
@@ -166,6 +168,7 @@ public final class ContentScoring {
                         resetting.intermissionSays.replace("{seconds}", Integer.toString(waiting)));
             }
         }
+        if (closed) { return; }
         long running = System.currentTimeMillis() - opened;
         for (ScoreDef def : BY_NAME.values()) {
             if (def.endsAfterMinutes <= 0 || FINISHED.contains(def.name)) { continue; }
@@ -243,8 +246,59 @@ public final class ContentScoring {
     }
 
     public static void starting(MinecraftServer server) {
+        ScoreDef lobby = lobbyDef();
+        if (lobby != null) {
+            closed = true;
+            opening = lobby;
+            waitingSaid(server);
+            return;
+        }
         starting = OPENS_IN;
         count(server);
+    }
+
+    @Nullable private static ScoreDef lobbyDef() {
+        for (ScoreDef def : BY_NAME.values()) {
+            if ("leader".equals(def.opensBy)) { return def; }
+        }
+        return null;
+    }
+
+    public static boolean closed() { return closed; }
+
+    private static String waitingLine(MinecraftServer server, ScoreDef lobby) {
+        List<String> leaders = mctmods.resourcedatapackloader.content.ContentTeams.leaders(server.getWorld(0));
+        return lobby.opensSays.replace("{leader}", leaders.isEmpty() ? "a leader" : String.join(", ", leaders));
+    }
+
+    private static void waitingSaid(MinecraftServer server) {
+        ScoreDef lobby = lobbyDef();
+        if (lobby == null || lobby.opensSays.isEmpty()) { return; }
+        Says.tellAll(waitingLine(server, lobby), TextFormatting.GOLD);
+    }
+
+    public static void greet(EntityPlayerMP player) {
+        ScoreDef lobby = lobbyDef();
+        if (!closed || lobby == null || lobby.opensSays.isEmpty()) { return; }
+        MinecraftServer server = player.getServer();
+        if (server != null) { Says.tell(player, waitingLine(server, lobby), TextFormatting.GOLD); }
+    }
+
+    public static String start(MinecraftServer server, EntityPlayer who, boolean operator) {
+        if (lobbyDef() == null) { return "This pack's rounds open on their own"; }
+        if (!closed) { return "The round is already running"; }
+        if (!operator && !mctmods.resourcedatapackloader.content.ContentTeams.leads(who)) { return "Only a side's leader starts the round"; }
+        List<String> reading = new ArrayList<>();
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            if (mctmods.resourcedatapackloader.content.extra.ContentIntroPlay.reading(player.getUniqueID())) { reading.add(player.getName()); }
+        }
+        if (!reading.isEmpty()) { return "Not yet: still reading the intro: " + String.join(", ", reading); }
+        closed = false;
+        opening = lobbyDef();
+        starting = OPENS_IN;
+        count(server);
+        ContentLog.LOGGER.info("{} started the round", who.getName());
+        return "The round starts";
     }
 
     private static void count(MinecraftServer server) {
@@ -256,6 +310,7 @@ public final class ContentScoring {
         opening = null;
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities)) { mctmods.resourcedatapackloader.content.worldgen.ContentReset.sweep(server); }
         roundOver();
+        mctmods.resourcedatapackloader.content.ContentTeams.placeAtSpawns(server);
     }
 
     public static void roundOver() {
@@ -277,6 +332,7 @@ public final class ContentScoring {
         DEATHS.clear();
         OWN.clear();
         mctmods.resourcedatapackloader.content.ContentTeams.seatWaiting();
+        mctmods.resourcedatapackloader.content.ContentTeams.draw();
     }
 
     private static List<String> standings(MinecraftServer server, ScoreDef def) {
@@ -292,7 +348,10 @@ public final class ContentScoring {
 
     public static void keep(World world) {
         if (BY_NAME.isEmpty() || world.isRemote) { return; }
-        if (opened == 0L) { opened = System.currentTimeMillis(); }
+        if (opened == 0L) {
+            opened = System.currentTimeMillis();
+            if (lobbyDef() != null) { closed = true; }
+        }
         Scoreboard board = world.getScoreboard();
         for (ScoreDef def : BY_NAME.values()) {
             ScoreObjective held = board.getObjective(def.name);

@@ -46,12 +46,16 @@ public final class ContentHardnessCheck {
     private static void look() {
         ContentLog.LOGGER.debug("Looking over {} whole block group(s) and {} exact state group(s) for hardness blockstate mismatches", ContentHardness.whole().size(), ContentHardness.exact().size());
         Set<IBlockState> seen = new LinkedHashSet<>();
-        for (Map.Entry<Block, HardnessDef> entry : ContentHardness.whole().entrySet()) {
-            for (IBlockState state : entry.getKey().getBlockState().getValidStates()) { measure(state, entry.getValue(), seen); }
+        for (Map.Entry<Block, List<HardnessDef>> entry : ContentHardness.whole().entrySet()) {
+            for (HardnessDef def : entry.getValue()) {
+                for (IBlockState state : entry.getKey().getBlockState().getValidStates()) { measure(state, def, seen); }
+            }
         }
-        for (Map.Entry<IBlockState, HardnessDef> entry : ContentHardness.exact().entrySet()) {
-            measure(entry.getKey(), entry.getValue(), seen);
-            others(entry.getKey(), entry.getValue());
+        for (Map.Entry<IBlockState, List<HardnessDef>> entry : ContentHardness.exact().entrySet()) {
+            for (HardnessDef def : entry.getValue()) {
+                measure(entry.getKey(), def, seen);
+                others(entry.getKey(), def);
+            }
         }
         if (seen.isEmpty()) { ContentLog.LOGGER.debug("No hardness group asks for more than one step, so no blockstate needs variants"); }
     }

@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentHardness;
+import mctmods.resourcedatapackloader.content.def.HardnessDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -77,6 +79,12 @@ public final class ContentRetrogen {
 
     private static Map<ChunkPos, Set<String>> done(int dimension) { return DONE.computeIfAbsent(dimension, k -> new HashMap<>()); }
 
+    public static void mark(World world, ChunkPos pos, String token) {
+        if (world.isRemote) { return; }
+        done(world.provider.getDimension()).computeIfAbsent(pos, k -> new HashSet<>()).add(token);
+        world.getChunk(pos.x, pos.z).markDirty();
+    }
+
     @SubscribeEvent public static void onChunkLoad(ChunkDataEvent.Load event) {
         if (event.getWorld().isRemote) { return; }
         int dimension = event.getWorld().provider.getDimension();
@@ -88,7 +96,8 @@ public final class ContentRetrogen {
         done(dimension).put(event.getChunk().getPos(), already);
         ContentLog.LOGGER.debug("Chunk {} loaded with retrogen tokens {}", event.getChunk().getPos(), already);
         boolean replace = ContentReplacements.wanted() && !already.contains(ContentReplacements.token()) && ContentReplacements.appliesTo(dimension);
-        if (!replace && (!retrogenWanted() || (defs.isEmpty() && !bedrockWanted()))) { return; }
+        List<HardnessDef> swaps = ContentHardness.swapsMissing(event.getWorld(), already);
+        if (!replace && swaps.isEmpty() && (!retrogenWanted() || (defs.isEmpty() && !bedrockWanted()))) { return; }
         List<WorldgenDef> pending = new ArrayList<>();
         boolean bedrock = false;
         String bedrockToken = bedrockToken();
@@ -98,14 +107,14 @@ public final class ContentRetrogen {
             }
             bedrock = bedrockWanted() && !already.contains(bedrockToken) && ContentBedrock.appliesTo(dimension);
         }
-        if (pending.isEmpty() && !bedrock && !replace) {
+        if (pending.isEmpty() && !bedrock && !replace && swaps.isEmpty()) {
             ContentLog.LOGGER.debug("Nothing to do for chunk {}: bedrockToken={} present={} appliesTo={}",
                     event.getChunk().getPos(), bedrockToken, already.contains(bedrockToken), ContentBedrock.appliesTo(dimension));
             return;
         }
-        QUEUES.computeIfAbsent(dimension, k -> new ArrayDeque<>()).add(new Pending(event.getChunk().getPos(), pending, bedrock, replace));
+        QUEUES.computeIfAbsent(dimension, k -> new ArrayDeque<>()).add(new Pending(event.getChunk().getPos(), pending, bedrock, replace, swaps));
         queued++;
-        ContentLog.LOGGER.debug("Queued chunk {} for retrogen: {} vein(s), bedrock={}, replace={}", event.getChunk().getPos(), pending.size(), bedrock, replace);
+        ContentLog.LOGGER.debug("Queued chunk {} for retrogen: {} vein(s), bedrock={}, replace={}, swaps={}", event.getChunk().getPos(), pending.size(), bedrock, replace, swaps.size());
     }
 
     @SubscribeEvent public static void onChunkSave(ChunkDataEvent.Save event) {
@@ -128,7 +137,7 @@ public final class ContentRetrogen {
 
     @SubscribeEvent public static void onWorldTick(TickEvent.WorldTickEvent event) {
         if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END) { return; }
-        if (queued == 0 || (!retrogenWanted() && !ContentReplacements.wanted())) { return; }
+        if (queued == 0 || (!retrogenWanted() && !ContentReplacements.wanted() && !ContentHardness.anySwaps())) { return; }
         Deque<Pending> queue = QUEUES.get(event.world.provider.getDimension());
         if (queue == null || queue.isEmpty()) { return; }
         int budget = Math.max(1, Config.worldgen.retrogenChunksPerTick);
@@ -151,6 +160,7 @@ public final class ContentRetrogen {
         BlockFalling.fallInstantly = true;
         try {
             if (pending.replace) { ContentReplacements.replace(world, pending.pos.x, pending.pos.z); }
+            for (HardnessDef def : pending.swaps) { ContentHardness.swap(world, pending.pos.x, pending.pos.z, def); }
             if (pending.bedrock) {
                 ContentBedrock.flatten(world, pending.pos.x, pending.pos.z, world.provider.getDimension());
                 flattened++;
@@ -167,6 +177,7 @@ public final class ContentRetrogen {
         for (WorldgenDef def : pending.defs) { already.add(def.getToken()); }
         if (pending.bedrock) { already.add(bedrockToken()); }
         if (pending.replace && settled(world, pending.pos)) { already.add(ContentReplacements.token()); }
+        for (HardnessDef def : pending.swaps) { already.add(ContentHardness.swapToken(def)); }
         world.getChunk(pending.pos.x, pending.pos.z).markDirty();
         completed++;
     }
@@ -195,7 +206,7 @@ public final class ContentRetrogen {
 
     private static boolean hasVeinTokens(Set<String> already) {
         for (String token : already) {
-            if (!token.startsWith("bedrock:") && !token.startsWith("replace:")) { return true; }
+            if (!token.startsWith("bedrock:") && !token.startsWith("replace:") && !token.startsWith("swap:")) { return true; }
         }
         return false;
     }
@@ -205,12 +216,14 @@ public final class ContentRetrogen {
         private final List<WorldgenDef> defs;
         private final boolean bedrock;
         private final boolean replace;
+        private final List<HardnessDef> swaps;
 
-        private Pending(ChunkPos pos, List<WorldgenDef> defs, boolean bedrock, boolean replace) {
+        private Pending(ChunkPos pos, List<WorldgenDef> defs, boolean bedrock, boolean replace, List<HardnessDef> swaps) {
             this.pos = pos;
             this.defs = defs;
             this.bedrock = bedrock;
             this.replace = replace;
+            this.swaps = swaps;
         }
     }
 }

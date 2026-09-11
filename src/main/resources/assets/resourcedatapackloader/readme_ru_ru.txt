@@ -260,7 +260,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     hardness         blastplaster     player_loot      overrides
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
-    texts
+    texts            anvils
 
 Блоки бывают таких видов, вид задаёт поле "type":
 

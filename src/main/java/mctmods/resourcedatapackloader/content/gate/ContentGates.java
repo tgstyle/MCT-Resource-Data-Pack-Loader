@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.advancements.Advancement;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -110,14 +109,7 @@ public final class ContentGates {
 
     public static boolean matches(ItemStack found, ItemStack wanted) { return Stacks.matches(wanted, found); }
 
-    private static boolean earned(EntityPlayer player, String name) {
-        if (!(player instanceof EntityPlayerMP)) { return false; }
-        MinecraftServer server = player.getServer();
-        if (server == null) { return false; }
-        Advancement advancement = server.getAdvancementManager().getAdvancement(new ResourceLocation(name));
-        if (advancement == null) { return false; }
-        return ((EntityPlayerMP) player).getAdvancements().getProgress(advancement).isDone();
-    }
+    private static boolean earned(EntityPlayer player, String name) { return mctmods.resourcedatapackloader.util.Advancements.has(player, name); }
 
     private static void broadcast(EntityPlayer player, String message) {
         MinecraftServer server = player.getServer();
