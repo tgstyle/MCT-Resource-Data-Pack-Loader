@@ -163,7 +163,10 @@ public class ResourceDataPackLoader {
         ContentGameRules.load();
         mctmods.resourcedatapackloader.content.ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
-        if (ContentEntities.load()) { MinecraftForge.EVENT_BUS.register(ContentEntities.class); }
+        if (ContentEntities.load()) {
+            MinecraftForge.EVENT_BUS.register(ContentEntities.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentMobExperience.class);
+        }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
         ContentGates.load();

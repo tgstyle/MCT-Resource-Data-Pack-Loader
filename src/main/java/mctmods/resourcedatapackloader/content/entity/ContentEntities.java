@@ -275,7 +275,9 @@ public final class ContentEntities {
         EntityLivingBase living = event.getEntityLiving();
         if (!(living instanceof EntityLiving)) { return; }
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0 && def.targetSound.isEmpty())) { return; }
+        if (def == null) { return; }
+        if (def.collectsExperience && !living.world.isRemote && living.isEntityAlive()) { ContentMobExperience.collect((EntityLiving) living); }
+        if (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0 && def.targetSound.isEmpty()) { return; }
         if (living.world.isRemote) {
             if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
             return;
@@ -304,6 +306,11 @@ public final class ContentEntities {
     @Nullable public static SoundEvent explodeSound(@Nullable Entity exploder) {
         if (exploder instanceof EntityTNTPrimed) { exploder = ((EntityTNTPrimed) exploder).getTntPlacedBy(); }
         return exploder == null ? null : soundEvent(exploder, 4);
+    }
+
+    public static boolean collectsExperience(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.collectsExperience;
     }
 
     public static boolean bright(Entity entity) {

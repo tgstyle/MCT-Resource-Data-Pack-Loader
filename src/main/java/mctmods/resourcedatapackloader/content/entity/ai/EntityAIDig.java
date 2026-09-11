@@ -69,7 +69,7 @@ public final class EntityAIDig extends EntityAIBase {
         left--;
         mob.world.sendBlockBreakProgress(mob.getEntityId(), pos, (int) (9.0F * (total - left) / total));
         if (left > 0) { return; }
-        ContentHardness.dig(mob.world, pos);
+        ContentHardness.dig(mob, pos);
         mob.getHeldItemMainhand().damageItem(1, mob);
         digging = null;
         begin(pick());

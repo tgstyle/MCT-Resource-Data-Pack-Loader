@@ -227,10 +227,17 @@ public final class ContentHardness {
         return mayBreak(mob, state, held);
     }
 
-    public static boolean dig(World world, BlockPos pos) {
+    public static boolean dig(EntityLivingBase digger, BlockPos pos) {
+        World world = digger.world;
         IBlockState state = world.getBlockState(pos);
-        if (!keeps(state, null)) { return world.destroyBlock(pos, true); }
+        int earned = mctmods.resourcedatapackloader.content.entity.ContentEntities.collectsExperience(digger) ? state.getBlock().getExpDrop(state, world, pos, 0) : 0;
+        if (!keeps(state, null)) {
+            boolean broke = world.destroyBlock(pos, true);
+            if (broke && earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
+            return broke;
+        }
         state.getBlock().dropBlockAsItem(world, pos, state, 0);
+        if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
         world.playEvent(2001, pos, Block.getStateId(state));
         return true;
     }

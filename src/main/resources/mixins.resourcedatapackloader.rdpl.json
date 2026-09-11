@@ -33,6 +33,7 @@
     "common.IEntityCreeper",
     "common.IEntityGhast",
     "common.IEntityLiving",
+    "common.IEntityLivingBase",
     "common.IEntityLivingNavigator",
     "common.IEntityVillager",
     "common.IEnumCreatureType",

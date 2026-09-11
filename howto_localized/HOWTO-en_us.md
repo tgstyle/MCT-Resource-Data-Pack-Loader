@@ -1871,6 +1871,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "throwArc": 0.35,
   "explodes": false,
   "digs": false,
+  "collectsExperience": false,
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
@@ -1979,6 +1980,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `swoops` | no | boolean | `false` | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile` |
 | `gusts` | no | boolean | `false` | Winds up and lets loose a blast of wind at its target from a distance, throwing everything near the target back and up, the way a breeze's wind charge does. Needs `hostile` |
 | `digs` | no | boolean | `false` | Digs through whatever stands between it and its target, with the tool in its hand: a shovel through dirt, sand and gravel, a pickaxe through stone, an axe through wood, and only what that tool's material can break, so a wooden pickaxe never opens iron ore and nothing opens obsidian short of diamond. A block takes as long as it would for a player with that tool, drops what it would, and wears the tool. Give it the tool with `equipment`; bare-handed it digs nothing, and it digs nothing where `mobGriefing` is off. It never looks for a way around: with a target it walks straight at it and digs whatever stands in the way, and where the tool cannot open the block it stands and pushes. Needs `hostile`. It takes its targets without needing to see them, since what it digs toward is by nature behind something |
+| `collectsExperience` | no | boolean | `false` | Gathers experience the way a player does: orbs within eight blocks drift to it and are taken on touch, Mending on its gear is repaired first, and the points build levels on the player's own curve, kept on the mob through a save. What it kills drops its experience as if a player had made the kill, a block its `digs` task breaks drops the block's own experience, and a `block_drops` experience roll lands for it too. On death it drops seven per level up to a hundred, unless `keepInventory` is on. Objectives with the `xp` or `level` criterion carry its total and level on a row named by its UUID, so a function reads them with `score_<objective>_min` |
 | `gustPower` | no | float | `1.5` | How hard a gust throws. A hit from a mob is 0.4, a strong knockback enchantment about 1 |
 | `threatLeast` | no | int | `0` | The lowest threat band a player or other carrier within 128 blocks must stand in before the variant spawns naturally. `0` spawns as usual |
 | `threatHostile` | no | int | `0` | The lowest threat band a player must stand in before the variant goes after them on its own. Below it the variant is docile toward that player, though it still fights back when hit. `0` attacks as usual |
