@@ -178,6 +178,11 @@ public final class ContentEntities {
         return TEXTURES.computeIfAbsent(def.texture, ResourceLocation::new);
     }
 
+    public static float baseBabyChance(Entity entity, float chance) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def == null || def.keepsBaseBaby ? chance : 0.0F;
+    }
+
     @Nullable public static ResourceLocation lootTable(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null || def.lootTable.isEmpty()) { return null; }

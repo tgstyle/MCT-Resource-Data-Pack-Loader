@@ -447,8 +447,8 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions` | `blocks`, `items`, `fluids`, `materials` |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps` | `potions`, `potion_types`, `sounds`, `tabs` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `biomes`, `dimensions`, `portalframes` |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers`, `trades` (both skipped together) |
-| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides` | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client) |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers` |
+| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client) |
 | `teams`, `scoring` | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 | the whole control layer, settings, and pregeneration | |
 
@@ -1917,7 +1917,7 @@ Each entry is either `input`, `ingredient` and `output`, which brews one item in
 
 The file name is yours to choose, only the folder is read, and several files stack. Each file is one piece of work.
 
-Put the named item in an anvil's left slot and its `with` item in the right, and the anvil offers the left one back with the enchantments listed, for the levels named; one of the right item is spent. Taking it out can also earn an advancement, and the item can be held back from use until that advancement is earned: a sword that only swings once it has been worked.
+Put the named item in an anvil's left slot and its `with` item in the right, and the anvil offers the left one back with the enchantments listed, or its `result`, for the levels named; one of each is spent unless a count asks for more, and the rest of either stack stays in the anvil. Taking it out can also earn an advancement, and the item can be held back from use until that advancement is earned: a sword that only swings once it has been worked.
 
 ```json
 {
@@ -1932,9 +1932,9 @@ Put the named item in an anvil's left slot and its `with` item in the right, and
 
 | Key | Required | Value | Default | What it does |
 | --- | --- | --- | --- | --- |
-| `item` | yes | item name | | What goes in the left slot. Metadata as `minecraft:dye:4` |
+| `item` | yes | item name, or `{ "item", "count" }` | | What goes in the left slot, and how many of it one piece of work takes, one by default; the rest of the stack stays for the next. `{ "item": "minecraft:coal", "count": 8 }` with a diamond `result` is eight coal to one diamond. Metadata as `minecraft:dye:4` |
 | `with` | yes | item name, or `{ "item", "count" }` | | What goes in the right slot, and how many of it are spent, one by default: `{ "item": "minecraft:coal", "count": 10 }` asks for a stack of at least ten and takes ten. An anvil never speaks up for a lone item, so every piece of work is a pair |
-| `result` | no | item name | the left item | What comes out instead of the left item, keeping the left item's tags, so an unbreakable iron pickaxe and ten coal can come back as an unbreakable diamond one. The enchantments go on whichever comes out |
+| `result` | no | item name, or `{ "item", "count" }` | the left item | What comes out instead of the left item, and how many, one by default, keeping the left item's tags, so an unbreakable iron pickaxe and ten coal can come back as an unbreakable diamond one. The enchantments go on whichever comes out |
 | `levels` | no | int | `1` | The experience levels the work costs, 1 at the least |
 | `enchantments` | no | object of enchantment name to level | none | What the item comes back with. A level it already has at that height or above is left alone, and with nothing to raise the anvil offers nothing, unless `grants` is set |
 | `grants` | no | `namespace:path` | none | An advancement earned as the work is taken out. Ship it under `advancements/` with an `impossible` criterion, so nothing else earns it |
@@ -2224,6 +2224,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `egg` | no | boolean or object | `true` | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out |
 | `becomes` | no | list | none | Other variants this one may turn into as it spawns, by weight. See below |
 | `baby` | no | boolean or 0.0 to 1.0 | `false` | How often one spawns young, and it stays that way. `true` is always, a number is that share of them |
+| `keepsBaseBaby` | no | boolean | `false` | Whether the base's own young roll also runs. Without it a zombie-based variant spawns young only as `baby` says, with no Forge `zombieBabyChance` child and no chicken jockey |
 | `profession` | no | `namespace:name` | random | For a villager, the trade it practices |
 | `career` | no | int | random | Which career within that profession, from 1 upwards |
 | `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
@@ -2243,7 +2244,7 @@ A variant is a class of its own, so a world that contains one depends on the pac
 
 Naming itself is how it stays as it is, and the weights are the odds. Put that on `mypack:walker` and one egg, one spawner and one spawn entry give mostly walkers with the occasional little one, the way a zombie egg gives you the odd baby. It happens as the creature enters the world, so it holds for eggs, spawners, `/summon` and natural spawning alike, and the creature that arrives is a real one of the chosen variant with everything that variant says. A variant reached this way does not turn again, so two variants may name each other without spinning.
 
-**Where `baby` fits.** The game has no baby zombie of its own: there is one zombie that rolls whether it is a child as it spawns. `baby` says how often, so `"baby": 0.05` is the vanilla habit and `"baby": true` is always. Between them these are two ways at the same thing, and which to reach for depends on the difference you want: `baby` alone gives one variant that is sometimes young, `becomes` gives several variants that differ in whatever you like, and a mix of both is fine.
+**Where `baby` fits.** The game has no baby zombie of its own: there is one zombie that rolls whether it is a child as it spawns. `baby` says how often, so `"baby": 0.05` is the vanilla habit and `"baby": true` is always. A variant does not take the zombie's own roll on top, so no child or chicken jockey turns up that `baby` did not ask for; `keepsBaseBaby` gives that roll back. Between them these are two ways at the same thing, and which to reach for depends on the difference you want: `baby` alone gives one variant that is sometimes young, `becomes` gives several variants that differ in whatever you like, and a mix of both is fine.
 
 ### Looks
 
@@ -5998,7 +5999,7 @@ The `terrain` keys below, together in a world template's `settings` block:
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `worldName` | string | empty | Prefills the create-world screen's name box, and the save folder follows from it. It only fills the box while the box still holds the game's default, and unlike the seed and game mode it is not reapplied afterward |
-| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` or `spectator` | empty | The mode every new world is started in, applied at creation only. `hardcore` is survival plus the save-wide hardcore flag, and `creative` also enables cheats |
+| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` or `spectator` | empty | The mode every new world is started in, applied at creation only in single player. A dedicated server sets every world to its `server.properties` mode at each start, so there the pack's mode is written into `server.properties` (`gamemode` and `hardcore`) before the worlds load. `hardcore` is survival plus the save-wide hardcore flag, and `creative` also enables cheats |
 | `worldSpawn` | `x,z` or `x,y,z` | empty | Where every new world spawns, applied at creation only. Without a y the surface at the world type's ground level is used |
 | `worldBorder` | int, blocks | `0` | The border diameter every new world is given, the figure `/worldborder set` takes. `0` leaves the border alone |
 | `worldTime` | int, ticks | `-1` | The time of day every new world starts at. `-1` leaves it alone |

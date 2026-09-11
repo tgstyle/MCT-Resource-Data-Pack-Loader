@@ -17,6 +17,7 @@ public final class EntityVariantDef {
     public final String profession;
     public final int career;
     public final float baby;
+    public final boolean keepsBaseBaby;
     public final List<PickDef> becomes;
     public final String ambientSound;
     public final String hurtSound;
@@ -115,7 +116,7 @@ public final class EntityVariantDef {
     public final boolean bright;
     public final boolean collectsExperience;
 
-    public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, List<PickDef> becomes,
+    public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, boolean keepsBaseBaby, List<PickDef> becomes,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, boolean hitEffects, List<String> ignoresEffects, float soundVolume, float soundPitch, float waterSlowdown,
                             int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns, int despawnTicks,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
@@ -134,6 +135,7 @@ public final class EntityVariantDef {
         this.profession = profession;
         this.career = career;
         this.baby = baby;
+        this.keepsBaseBaby = keepsBaseBaby;
         this.becomes = becomes;
         this.ambientSound = ambientSound;
         this.hurtSound = hurtSound;

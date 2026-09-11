@@ -1435,6 +1435,7 @@ public final class ContentParser {
                 JsonUtils.getString(json, "profession", ""),
                 Math.max(0, JsonUtils.getInt(json, "career", 0)),
                 baby(json),
+                JsonUtils.getBoolean(json, "keepsBaseBaby", false),
                 picks(json, "becomes", "variant"),
                 JsonUtils.getString(sounds, "ambient", ""),
                 JsonUtils.getString(sounds, "hurt", ""),

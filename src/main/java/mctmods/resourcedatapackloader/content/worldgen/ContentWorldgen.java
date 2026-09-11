@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentWorldgen implements IWorldGenerator {
@@ -116,7 +117,10 @@ public final class ContentWorldgen implements IWorldGenerator {
                     continue;
                 }
                 if (figure instanceof ContentOreVein) {
-                    ((ContentOreVein) figure).generateChunk(world, chunkX, chunkZ, source -> allows(def, world, source, filtered));
+                    ContentOreVein vein = (ContentOreVein) figure;
+                    Predicate<BlockPos> valid = source -> allows(def, world, source, filtered);
+                    vein.generateChunk(world, chunkX, chunkZ, valid);
+                    for (BlockPos led : vein.originsIn(world, chunkX, chunkZ, valid)) { after(def, world, random, led, baseX + 8, baseZ + 8, baseX + 23, baseZ + 23, new ArrayList<>()); }
                     continue;
                 }
                 int tries = def.attempts.pick(random);

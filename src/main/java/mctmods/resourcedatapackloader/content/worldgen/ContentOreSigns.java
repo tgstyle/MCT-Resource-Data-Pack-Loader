@@ -22,7 +22,7 @@ public final class ContentOreSigns {
         if (def.indicators.isEmpty()) { return 0; }
         Random random = SeededRandom.at(world, origin.getX(), origin.getZ());
         int count = def.indicatorCount.pick(random);
-        int reach = Math.max(1, def.shape.radius.most) + def.indicatorSpread;
+        int reach = footprint(def) + def.indicatorSpread;
         int laid = 0;
         for (int i = 0; i < count; i++) {
             int x = MathHelper.clamp(origin.getX() + random.nextInt(2 * reach + 1) - reach, lowX, highX);
@@ -45,6 +45,8 @@ public final class ContentOreSigns {
         if (laid > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Left {} indicator block(s) on the surface over the {} at {}, {}, {}", laid, def.registryName, origin.getX(), origin.getY(), origin.getZ()); }
         return laid;
     }
+
+    private static int footprint(WorldgenDef def) { return def.getShape() instanceof ContentOreVein ? ContentOreVein.REACH : Math.max(1, def.shape.radius.most); }
 
     private static boolean taken(World world, int x, int z) {
         for (StructureStart village : ContentStructureSearch.villageStarts(world)) {

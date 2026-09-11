@@ -42,10 +42,12 @@ public final class ContentVillagers {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (!Config.registersToClients() || !Config.content.villagers) { return false; }
-        Json.eachFile(PackManager.VILLAGERS, "villager file", (key, contents) -> {
-            if (!ContentOwners.reserved(key)) { readVillager(key, contents); }
-        });
+        if (!Config.content.villagers) { return false; }
+        if (Config.registersToClients()) {
+            Json.eachFile(PackManager.VILLAGERS, "villager file", (key, contents) -> {
+                if (!ContentOwners.reserved(key)) { readVillager(key, contents); }
+            });
+        }
         Json.eachFile(PackManager.TRADES, "trade file", (key, contents) -> {
             if (!ContentOwners.reserved(key)) { readTrades(key, contents); }
         });
@@ -132,6 +134,7 @@ public final class ContentVillagers {
     }
 
     public static void applyTrades() {
+        if (!load()) { return; }
         int count = 0;
         for (TradeDef def : TRADES) {
             if (!ContentRegistry.available(def.requires, def.key)) { continue; }

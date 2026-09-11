@@ -90,6 +90,15 @@ public final class ContentOreVein implements IContentShape {
         return found;
     }
 
+    public List<BlockPos> originsIn(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
+        List<BlockPos> origins = new ArrayList<>();
+        for (Vein vein : veinsOf(world, chunkX, chunkZ)) {
+            BlockPos pos = new BlockPos(vein.x, vein.y, vein.z);
+            if (valid.test(pos)) { origins.add(pos); }
+        }
+        return origins;
+    }
+
     public void generateChunk(World world, int chunkX, int chunkZ, Predicate<BlockPos> valid) {
         resolve();
         int baseX = chunkX * 16 + OFFSET;

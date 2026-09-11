@@ -447,8 +447,8 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions` | `blocks`, `items`, `fluids`, `materials` |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps` | `potions`, `potion_types`, `sounds`, `tabs` |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `biomes`, `dimensions`, `portalframes` |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers`, `trades` (werden zusammen übersprungen) |
-| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides` | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers` |
+| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder einer beidseitigen Mod) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
 | `teams`, `scoring` | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung | |
 
@@ -1917,7 +1917,7 @@ Jeder Eintrag ist entweder `input`, `ingredient` und `output`, was ein Item zu e
 
 Der Dateiname ist deine Sache, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich. Jede Datei ist ein Stück Arbeit.
 
-Lege den genannten Gegenstand in den linken Platz eines Ambosses und seinen `with`-Gegenstand in den rechten, und der Amboss bietet den linken mit den aufgeführten Verzauberungen zurück, für die genannten Stufen; einer vom rechten wird verbraucht. Das Herausnehmen kann zugleich einen Fortschritt einbringen, und der Gegenstand kann bis zu diesem Fortschritt vom Gebrauch zurückgehalten werden: ein Schwert, das erst schwingt, wenn es bearbeitet wurde.
+Lege den genannten Gegenstand in den linken Platz eines Ambosses und seinen `with`-Gegenstand in den rechten, und der Amboss bietet den linken mit den aufgeführten Verzauberungen zurück, oder sein `result`, für die genannten Stufen; von beiden wird je einer verbraucht, sofern keine Anzahl mehr verlangt, und der Rest jedes Stapels bleibt im Amboss. Das Herausnehmen kann zugleich einen Fortschritt einbringen, und der Gegenstand kann bis zu diesem Fortschritt vom Gebrauch zurückgehalten werden: ein Schwert, das erst schwingt, wenn es bearbeitet wurde.
 
 ```json
 {
@@ -1932,9 +1932,9 @@ Lege den genannten Gegenstand in den linken Platz eines Ambosses und seinen `wit
 
 | Schlüssel | Pflicht | Wert | Standard | Was er tut |
 | --- | --- | --- | --- | --- |
-| `item` | ja | Gegenstandsname | | Was in den linken Platz kommt. Metadaten als `minecraft:dye:4` |
+| `item` | ja | Gegenstandsname oder `{ "item", "count" }` | | Was in den linken Platz kommt und wie viele davon eine Arbeit nimmt, standardmäßig einer; der Rest des Stapels bleibt für die nächste liegen. `{ "item": "minecraft:coal", "count": 8 }` mit einem Diamanten als `result` macht aus acht Kohle einen Diamanten. Metadaten als `minecraft:dye:4` |
 | `with` | ja | Gegenstandsname oder `{ "item", "count" }` | | Was in den rechten Platz kommt und wie viele davon verbraucht werden, standardmäßig einer: `{ "item": "minecraft:coal", "count": 10 }` verlangt einen Stapel von mindestens zehn und nimmt zehn. Ein Amboss meldet sich nie für einen einzelnen Gegenstand, also ist jede Arbeit ein Paar |
-| `result` | nein | Gegenstandsname | der linke Gegenstand | Was statt des linken Gegenstands herauskommt, mit dessen Tags, sodass eine unzerbrechliche Eisenspitzhacke und zehn Kohle als unzerbrechliche Diamantspitzhacke zurückkommen können. Die Verzauberungen landen auf dem, was herauskommt |
+| `result` | nein | Gegenstandsname oder `{ "item", "count" }` | der linke Gegenstand | Was statt des linken Gegenstands herauskommt und wie viele, standardmäßig einer, mit dessen Tags, sodass eine unzerbrechliche Eisenspitzhacke und zehn Kohle als unzerbrechliche Diamantspitzhacke zurückkommen können. Die Verzauberungen landen auf dem, was herauskommt |
 | `levels` | nein | int | `1` | Die Erfahrungsstufen, die die Arbeit kostet, mindestens 1 |
 | `enchantments` | nein | Objekt von Verzauberungsname zu Stufe | keine | Womit der Gegenstand zurückkommt. Eine Stufe, die er schon in dieser Höhe oder darüber hat, bleibt unberührt, und gibt es nichts zu erhöhen, bietet der Amboss nichts an, es sei denn, `grants` ist gesetzt |
 | `grants` | nein | `namespace:pfad` | keiner | Ein Fortschritt, der beim Herausnehmen der Arbeit erreicht wird. Liefere ihn unter `advancements/` mit einem `impossible`-Kriterium, damit nichts anderes ihn erreicht |
@@ -2224,6 +2224,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `egg` | nein | boolean oder Objekt | `true` | Ein Spawn-Ei, gefärbt wie das der kopierten Entity. `{ "primary": "AABBCC", "secondary": "112233" }` wählt eigene Farben, `false` lässt das Ei weg |
 | `becomes` | nein | Liste | keine | Andere Varianten, zu denen dieses beim Erscheinen werden kann, nach Gewicht. Siehe unten |
 | `baby` | nein | boolean oder 0,0 bis 1,0 | `false` | Wie oft eines jung erscheint, und es bleibt dabei. `true` heißt immer, eine Zahl heißt dieser Anteil |
+| `keepsBaseBaby` | nein | boolean | `false` | Ob der eigene Jung-Wurf der Basis zusätzlich läuft. Ohne ihn erscheint eine Variante auf Zombie-Basis nur so oft jung, wie `baby` sagt, ohne Kind aus Forges `zombieBabyChance` und ohne Hühnerjockey |
 | `profession` | nein | `namespace:name` | zufällig | Bei einem Dorfbewohner der Beruf, den er ausübt |
 | `career` | nein | int | zufällig | Welche Laufbahn innerhalb dieses Berufs, ab 1 aufwärts |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Variante bleibt weg, wenn nicht alle da sind |
@@ -2243,7 +2244,7 @@ Eine Variante ist eine eigene Klasse, eine Welt, die eine enthält, hängt also 
 
 Sich selbst zu nennen ist der Weg, so zu bleiben, wie man ist, und die Gewichte sind die Chancen. Setz das auf `meinpack:walker`, und ein Ei, ein Spawner und ein Spawn-Eintrag liefern meist Walker mit gelegentlich einem kleinen – so wie ein Zombie-Ei ab und zu ein Baby liefert. Es geschieht, während die Kreatur in die Welt kommt, gilt also für Eier, Spawner, `/summon` und natürliches Spawnen gleichermaßen, und was ankommt, ist eine echte Kreatur der gewählten Variante mit allem, was diese Variante sagt. Eine so erreichte Variante wandelt sich nicht noch einmal, zwei Varianten dürfen sich also gegenseitig nennen, ohne sich im Kreis zu drehen.
 
-**Wo `baby` hineinpasst.** Das Spiel hat keinen eigenen Baby-Zombie: Es gibt einen Zombie, der beim Erscheinen auswürfelt, ob er ein Kind ist. `baby` sagt, wie oft, `"baby": 0.05` ist also die Vanilla-Gewohnheit und `"baby": true` heißt immer. Beide sind zwei Wege zur selben Sache, und welchen du nimmst, hängt vom Unterschied ab, den du willst: `baby` allein gibt eine Variante, die manchmal jung ist, `becomes` gibt mehrere Varianten, die sich in allem unterscheiden dürfen, und beides zusammen ist auch in Ordnung.
+**Wo `baby` hineinpasst.** Das Spiel hat keinen eigenen Baby-Zombie: Es gibt einen Zombie, der beim Erscheinen auswürfelt, ob er ein Kind ist. `baby` sagt, wie oft, `"baby": 0.05` ist also die Vanilla-Gewohnheit und `"baby": true` heißt immer. Eine Variante bekommt den eigenen Wurf des Zombies nicht obendrauf, es taucht also kein Kind und kein Hühnerjockey auf, um das `baby` nicht gebeten hat; `keepsBaseBaby` gibt diesen Wurf zurück. Beide sind zwei Wege zur selben Sache, und welchen du nimmst, hängt vom Unterschied ab, den du willst: `baby` allein gibt eine Variante, die manchmal jung ist, `becomes` gibt mehrere Varianten, die sich in allem unterscheiden dürfen, und beides zusammen ist auch in Ordnung.
 
 ### Aussehen
 
@@ -5998,7 +5999,7 @@ Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
 | `worldName` | Text | leer | Füllt das Namensfeld des Erstellungsbildschirms vor; der Speicherordner folgt daraus. Es füllt das Feld nur, solange dort noch die Vorgabe des Spiels steht, und wird anders als Seed und Spielmodus danach nicht erneut gesetzt |
-| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` oder `spectator` | leer | Der Modus, in dem jede neue Welt startet, nur bei der Erstellung angewandt. `hardcore` ist Survival plus dem weltweiten Hardcore-Flag, und `creative` schaltet zusätzlich Cheats ein |
+| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` oder `spectator` | leer | Der Modus, in dem jede neue Welt startet, im Einzelspieler nur bei der Erstellung angewandt. Ein dedizierter Server setzt bei jedem Start jede Welt auf den Modus aus seiner `server.properties`, dort wird der Modus des Packs deshalb vor dem Laden der Welten in die `server.properties` geschrieben (`gamemode` und `hardcore`). `hardcore` ist Survival plus dem weltweiten Hardcore-Flag, und `creative` schaltet zusätzlich Cheats ein |
 | `worldSpawn` | `x,z` oder `x,y,z` | leer | Wo jede neue Welt spawnt, nur bei der Erstellung angewandt. Ohne y wird die Oberfläche auf Bodenhöhe des Welttyps genommen |
 | `worldBorder` | Zahl, Blöcke | `0` | Der Durchmesser der Weltgrenze jeder neuen Welt, die Zahl, die `/worldborder set` nimmt. `0` lässt die Grenze in Ruhe |
 | `worldTime` | Zahl, Ticks | `-1` | Die Tageszeit, mit der jede neue Welt beginnt. `-1` lässt sie in Ruhe |

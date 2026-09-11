@@ -100,6 +100,8 @@
     "common.MixinCommandTP",
     "common.MixinCommandTeleport",
     "common.MixinCommandsHeightLimits",
+    "common.MixinContainerRepair",
+    "common.MixinContainerRepairOutput",
     "common.MixinCraftingHelper",
     "common.MixinDerivedWorldInfo",
     "common.MixinDragonFightManager",
@@ -127,6 +129,7 @@
     "common.MixinEntityTracker",
     "common.MixinEntityTrackerEntry",
     "common.MixinEntityXPOrb",
+    "common.MixinEntityZombie",
     "common.MixinForgeChunkManager",
     "common.MixinForgeEventFactory",
     "common.MixinFunctionManager",
@@ -276,6 +279,7 @@
   ],
   "server": [
     "server.MixinDedicatedPlayerList",
+    "server.MixinDedicatedServerGameMode",
     "server.MixinDedicatedServerHeightLimits"
   ]
 }

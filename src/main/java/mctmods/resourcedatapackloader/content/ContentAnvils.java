@@ -19,6 +19,7 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.ContainerRepair;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -35,16 +36,18 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentAnvils {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final String TAG = "rdplAnvil";
+    private static final Map<ItemStack, AnvilDef> OFFERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final int TOLD_EVERY = 40;
     private static final List<AnvilDef> DEFS = new ArrayList<>();
     private static final Map<AnvilDef, ItemStack> ITEMS = new IdentityHashMap<>();
@@ -69,7 +72,7 @@ public final class ContentAnvils {
             ItemStack with = ContentStacks.parse(key, def.with, 1);
             if (stack.isEmpty() || with.isEmpty()) { return; }
             if (!def.result.isEmpty()) {
-                ItemStack result = ContentStacks.parse(key, def.result, 1);
+                ItemStack result = ContentStacks.parse(key, def.result, def.resultCount);
                 if (result.isEmpty()) { return; }
                 RESULTS.put(def, result);
             }
@@ -97,19 +100,12 @@ public final class ContentAnvils {
             ContentLog.LOGGER.error("Anvil work {} is empty, ignoring it", key);
             return null;
         }
-        String item = JsonUtils.getString(json, "item", "").trim();
+        String item = itemOf(json, "item");
         if (item.isEmpty()) {
             ContentLog.LOGGER.error("Anvil work {} names no item, ignoring it", key);
             return null;
         }
-        String with;
-        int withCount = 1;
-        if (json.has("with") && json.get("with").isJsonObject()) {
-            JsonObject pair = JsonUtils.getJsonObject(json, "with");
-            with = JsonUtils.getString(pair, "item", "").trim();
-            withCount = Math.max(1, JsonUtils.getInt(pair, "count", 1));
-        }
-        else { with = JsonUtils.getString(json, "with", "").trim(); }
+        String with = itemOf(json, "with");
         if (with.isEmpty()) {
             ContentLog.LOGGER.error("Anvil work {} names nothing for the right slot under with, and an anvil only answers to a pair, ignoring it", key);
             return null;
@@ -124,7 +120,17 @@ public final class ContentAnvils {
                 enchantments.put(entry.getKey(), Math.max(1, entry.getValue().getAsInt()));
             }
         }
-        return new AnvilDef(key, item, with, withCount, JsonUtils.getString(json, "result", "").trim(), Math.max(1, JsonUtils.getInt(json, "levels", 1)), enchantments, JsonUtils.getString(json, "grants", "").trim(), JsonUtils.getBoolean(json, "locks", false));
+        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), itemOf(json, "result"), countOf(json, "result"), Math.max(1, JsonUtils.getInt(json, "levels", 1)), enchantments, JsonUtils.getString(json, "grants", "").trim(), JsonUtils.getBoolean(json, "locks", false));
+    }
+
+    private static String itemOf(JsonObject json, String name) {
+        if (json.has(name) && json.get(name).isJsonObject()) { return JsonUtils.getString(JsonUtils.getJsonObject(json, name), "item", "").trim(); }
+        return JsonUtils.getString(json, name, "").trim();
+    }
+
+    private static int countOf(JsonObject json, String name) {
+        if (!json.has(name) || !json.get(name).isJsonObject()) { return 1; }
+        return Math.max(1, JsonUtils.getInt(JsonUtils.getJsonObject(json, name), "count", 1));
     }
 
     @Nullable private static AnvilDef holding(ItemStack held) {
@@ -136,20 +142,14 @@ public final class ContentAnvils {
         return null;
     }
 
-    @Nullable private static AnvilDef named(String name) {
-        for (AnvilDef def : DEFS) {
-            if (def.registryName.toString().equals(name)) { return def; }
-        }
-        return null;
-    }
-
     @SubscribeEvent public static void onAnvil(AnvilUpdateEvent event) {
         if (DEFS.isEmpty() || event.getRight().isEmpty()) { return; }
         AnvilDef def = holding(event.getLeft());
         if (def == null) { return; }
         ItemStack with = WITH.get(def);
-        if (!ContentStacks.matches(event.getRight(), with.getItem(), with.getMetadata()) || event.getRight().getCount() < def.withCount) { return; }
+        if (!ContentStacks.matches(event.getRight(), with.getItem(), with.getMetadata()) || event.getRight().getCount() < def.withCount || event.getLeft().getCount() < def.itemCount) { return; }
         ItemStack output = event.getLeft().copy();
+        output.setCount(def.itemCount);
         ItemStack result = RESULTS.get(def);
         if (result != null) {
             output = result.copy();
@@ -166,24 +166,26 @@ public final class ContentAnvils {
         }
         if (!rises && result == null && (!ENCHANTMENTS.get(def).isEmpty() || def.grants.isEmpty())) { return; }
         if (rises) { EnchantmentHelper.setEnchantments(held, output); }
-        NBTTagCompound tag = output.getTagCompound();
-        if (tag == null) { tag = new NBTTagCompound(); }
-        tag.setString(TAG, def.registryName.toString());
-        output.setTagCompound(tag);
+        OFFERED.put(output, def);
         event.setOutput(output);
         event.setCost(def.levels);
         event.setMaterialCost(def.withCount);
     }
 
     @SubscribeEvent public static void onTaken(AnvilRepairEvent event) {
-        ItemStack result = event.getItemResult();
-        NBTTagCompound tag = result.getTagCompound();
-        if (tag == null || !tag.hasKey(TAG, 8)) { return; }
-        AnvilDef def = named(tag.getString(TAG));
-        tag.removeTag(TAG);
-        if (tag.isEmpty()) { result.setTagCompound(null); }
+        AnvilDef def = OFFERED.get(event.getItemResult());
         if (def == null || def.grants.isEmpty() || !(event.getEntityPlayer() instanceof EntityPlayerMP)) { return; }
         grant((EntityPlayerMP) event.getEntityPlayer(), def);
+    }
+
+    public static ItemStack leftAfterWork(EntityPlayer player, ItemStack taken) {
+        AnvilDef def = OFFERED.get(taken);
+        if (def == null || !(player.openContainer instanceof ContainerRepair)) { return ItemStack.EMPTY; }
+        ItemStack left = player.openContainer.getSlot(0).getStack();
+        if (left.getCount() <= def.itemCount) { return ItemStack.EMPTY; }
+        ItemStack kept = left.copy();
+        kept.shrink(def.itemCount);
+        return kept;
     }
 
     private static void grant(EntityPlayerMP player, AnvilDef def) {

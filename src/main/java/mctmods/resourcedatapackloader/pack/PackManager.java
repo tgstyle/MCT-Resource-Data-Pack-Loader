@@ -287,7 +287,8 @@ public final class PackManager {
         collect(off, Config.content.oreDictionary, "content.oreDictionary", JSON, OREDICT);
         clientSide(off, Config.content.potions, "content.potions", POTIONS, POTION_TYPES);
         collect(off, Config.content.brewing, "content.brewing", JSON, BREWING);
-        clientSide(off, Config.content.villagers, "content.villagers", VILLAGERS, TRADES);
+        clientSide(off, Config.content.villagers, "content.villagers", VILLAGERS);
+        collect(off, Config.content.villagers, "content.villagers", JSON, TRADES);
         clientSide(off, Config.content.biomes, "content.biomes", BIOMES);
         clientSide(off, Config.content.dimensions, "content.dimensions", DIMENSIONS);
         collect(off, Config.content.villages, "content.villages", JSON, VILLAGES);
