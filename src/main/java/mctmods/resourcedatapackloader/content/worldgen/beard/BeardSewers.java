@@ -79,25 +79,35 @@ public final class BeardSewers {
         return vine.withProperty(side, Boolean.TRUE);
     }
 
-    private static boolean uncrossedSewer(List<StructureBoundingBox> crossed, boolean alongX, int x, int z, int half) {
+    private static boolean uncrossedSewer(List<StructureBoundingBox> crossed, boolean alongX, int x, int z, int half, int acrossLeast, int acrossMost) {
         for (StructureBoundingBox other : crossed) {
-            boolean otherAlongX = BeardPlots.roadAlongX(other);
+            boolean otherAlongX = axisX(other);
             if (otherAlongX == alongX) { continue; }
-            int across = (otherAlongX ? other.maxZ - other.minZ : other.maxX - other.minX) + 1;
-            if (across < BeardRoads.pathFullWidth()) { continue; }
+            int spanLeast = otherAlongX ? other.minX : other.minZ;
+            int spanMost = otherAlongX ? other.maxX : other.maxZ;
+            if (spanMost < acrossLeast - 1 || spanLeast > acrossMost + 1) { continue; }
             int middle = otherAlongX ? (other.minZ + other.maxZ) / 2 : (other.minX + other.maxX) / 2;
             int off = Math.abs((otherAlongX ? z : x) - middle);
-            boolean along = otherAlongX ? x >= other.minX && x <= other.maxX : z >= other.minZ && z <= other.maxZ;
-            if (off <= half && along) { return false; }
+            int along = otherAlongX ? x : z;
+            if (off <= half && along >= Math.min(spanLeast, acrossLeast - half) && along <= Math.max(spanMost, acrossMost + half)) { return false; }
         }
         return true;
     }
 
-    private static boolean walled(StructureBoundingBox clip, List<StructureBoundingBox> crossed, boolean alongX, int x, int z, int half, int center) {
+    private static boolean axisX(StructureBoundingBox box) {
+        int spanX = box.maxX - box.minX + 1;
+        int spanZ = box.maxZ - box.minZ + 1;
+        int full = BeardRoads.pathFullWidth();
+        if (spanZ < full && spanX > spanZ) { return true; }
+        if (spanX < full && spanZ > spanX) { return false; }
+        return BeardPlots.roadAlongX(box);
+    }
+
+    private static boolean walled(StructureBoundingBox clip, List<StructureBoundingBox> crossed, boolean alongX, int x, int z, int half, int center, int acrossLeast, int acrossMost) {
         if (!clip.isVecInside(new BlockPos(x, clip.minY, z))) { return false; }
         int across = alongX ? z : x;
         if (across != center - half && across != center + half) { return false; }
-        return uncrossedSewer(crossed, alongX, x, z, half);
+        return uncrossedSewer(crossed, alongX, x, z, half, acrossLeast, acrossMost);
     }
 
     private static boolean onTrack(World world, BlockPos.MutableBlockPos at, int x, int y, int z) {
@@ -119,23 +129,36 @@ public final class BeardSewers {
     }
 
     private static boolean manhole(World world, StructureBoundingBox clip, int x, int z, int level, int floor, int roof, IBlockState lining, IBlockState ladder, IBlockState cover, BlockPos.MutableBlockPos at) {
-        if (!clip.isVecInside(at.setPos(x, level, z))) { return false; }
+        boolean mouth = clip.isVecInside(at.setPos(x, level, z));
         IBlockState air = Blocks.AIR.getDefaultState();
         for (int y = floor + 2; y <= level; y++) {
             if (y >= roof && y < level) {
                 for (EnumFacing side : EnumFacing.HORIZONTALS) {
                     at.setPos(x + side.getXOffset(), y, z + side.getZOffset());
                     if (clip.isVecInside(at)) { world.setBlockState(at, lining, 2); }
+                    BeardKeep.holdSpot(at.getX(), y, at.getZ());
                 }
             }
             else if (y < roof) {
                 at.setPos(x + MANHOLE_BACK.getXOffset(), y, z + MANHOLE_BACK.getZOffset());
                 if (clip.isVecInside(at)) { world.setBlockState(at, lining, 2); }
+                BeardKeep.holdSpot(at.getX(), y, at.getZ());
             }
-            world.setBlockState(at.setPos(x, y, z), y == level ? cover.getBlock() == Blocks.AIR ? air : cover : ladder, 2);
+            if (clip.isVecInside(at.setPos(x, y, z))) { world.setBlockState(at, y == level ? cover.getBlock() == Blocks.AIR ? air : cover : ladder, 2); }
             BeardKeep.holdSpot(x, y, z);
         }
-        return true;
+        return mouth;
+    }
+
+    private static boolean plazaOffLoop(int x, int z) {
+        List<StructureComponent> pieces = ContentBeard.components();
+        if (pieces == null) { return false; }
+        int reach = ContentBeard.plazaReach();
+        for (StructureBoundingBox well : BeardPlots.wells(pieces)) {
+            int ring = band(well, x, z);
+            if (ring <= reach) { return ring != LOOP; }
+        }
+        return false;
     }
 
     private static boolean wellEntranceOff() { return !ContentControl.flag(ContentControl.VILLAGES, "villageSewerWellEntrance", Config.worldgen.villageSewerWellEntrance); }
@@ -188,6 +211,7 @@ public final class BeardSewers {
         int full = BeardRoads.pathFullWidth();
         int back = (full - 1) / 2;
         int ahead = full / 2;
+        int pad = Math.max(1, (full + 3 - ((alongX ? road.maxZ - road.minZ : road.maxX - road.minX) + 1)) / 2);
         for (StructureComponent piece : nearby) {
             if (!(piece instanceof StructureVillagePieces.Well)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
@@ -196,13 +220,13 @@ public final class BeardSewers {
                 if (road.minX > box.maxX) { center = box.maxX + LOOP; }
                 else if (road.maxX < box.minX) { center = box.minX - LOOP; }
                 else { continue; }
-                found.add(new StructureBoundingBox(center - back, road.minY, road.minZ - 1, center + ahead, road.maxY, road.maxZ + 1));
+                found.add(new StructureBoundingBox(center - back, road.minY, road.minZ - pad, center + ahead, road.maxY, road.maxZ + pad));
             }
             else {
                 if (road.minZ > box.maxZ) { center = box.maxZ + LOOP; }
                 else if (road.maxZ < box.minZ) { center = box.minZ - LOOP; }
                 else { continue; }
-                found.add(new StructureBoundingBox(road.minX - 1, road.minY, center - back, road.maxX + 1, road.maxY, center + ahead));
+                found.add(new StructureBoundingBox(road.minX - pad, road.minY, center - back, road.maxX + pad, road.maxY, center + ahead));
             }
         }
         return found;
@@ -243,7 +267,14 @@ public final class BeardSewers {
                 dug++;
             }
         }
-        StructureComponent street = radials.isEmpty() ? null : radials.get(0);
+        StructureComponent street = null;
+        for (StructureComponent radial : radials) {
+            if (BeardPlots.roadAlongX(radial.getBoundingBox())) {
+                street = null;
+                break;
+            }
+            if (street == null) { street = radial; }
+        }
         boolean cut = false;
         int shaftX = 0;
         int shaftZ = 0;
@@ -275,13 +306,87 @@ public final class BeardSewers {
         return false;
     }
 
-    public static void lay(StructureComponent piece, World world, StructureBoundingBox clip, boolean alongX, BeardRoads.Grade graded, int least, int most, int acrossLeast, int acrossMost, List<StructureBoundingBox> crossed) {
-        lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, crossed, null);
+    public static void lay(StructureComponent piece, World world, StructureBoundingBox clip, boolean alongX, BeardRoads.Grade graded, int least, int most, int acrossLeast, int acrossMost, List<StructureBoundingBox> crossed, List<StructureBoundingBox> roads) {
+        lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, crossed, roads, null);
     }
 
-    public static void lay(StructureComponent piece, World world, StructureBoundingBox clip, boolean alongX, BeardRoads.Grade graded, int least, int most, int acrossLeast, int acrossMost, List<StructureBoundingBox> crossed, @Nullable IntUnaryOperator centers) {
+    public static void lay(StructureComponent piece, World world, StructureBoundingBox clip, boolean alongX, BeardRoads.Grade graded, int least, int most, int acrossLeast, int acrossMost, List<StructureBoundingBox> crossed, List<StructureBoundingBox> roads, @Nullable IntUnaryOperator centers) {
         if (!on() || graded == null) { return; }
-        if (acrossMost - acrossLeast + 1 < BeardRoads.pathFullWidth()) { return; }
+        int depth = depth();
+        int height = height();
+        int floorLeast = GenHeights.floor(world, FLOOR_LEAST);
+        int middle = (acrossLeast + acrossMost) / 2;
+        StructureBoundingBox road = piece.getBoundingBox();
+        List<RailPiece> subways = BeardRails.subways(world, road);
+        List<int[]> laying = new ArrayList<>();
+        for (int row = least; row <= most; row++) {
+            int index = row - graded.start;
+            if (index < 0 || index >= graded.profile.length) { continue; }
+            int level = graded.profile[index];
+            if (level == Integer.MIN_VALUE || graded.bridged[index]) { continue; }
+            laying.add(new int[] {row, level});
+        }
+        int[] counts = new int[3];
+        run(world, clip, alongX, laying, middle, centers, crossed, acrossLeast, acrossMost, subways, counts);
+        int joined = centers == null ? stubs(world, clip, alongX, road, graded, least, most, middle, acrossLeast, acrossMost, crossed, roads, subways, counts) : 0;
+        int holes = 0;
+        IBlockState lining = lining();
+        IBlockState ladder = ladder();
+        IBlockState cover = cover();
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        if (alongX && (ladder.getBlock() != Blocks.AIR || cover.getBlock() != Blocks.AIR)) {
+            for (StructureBoundingBox other : crossed) {
+                if (axisX(other)) { continue; }
+                if (other.maxZ < acrossLeast - 1 || other.minZ > acrossMost + 1) { continue; }
+                int row = (other.minX + other.maxX) / 2;
+                if (plazaOffLoop(row, middle + 1)) { continue; }
+                int index = row - graded.start;
+                if (row < least || row > most || index < 0 || index >= graded.profile.length) { continue; }
+                int level = graded.profile[index];
+                if (level == Integer.MIN_VALUE || graded.bridged[index]) { continue; }
+                int floor = level - depth;
+                if (floor < floorLeast || floor + height + CLEAR_UNDER >= level) { continue; }
+                if (manhole(world, clip, row, middle + 1, level, floor, floor + 2 + height, lining, ladder, cover, at)) { holes++; }
+            }
+        }
+        if (counts[0] + counts[2] > 0 && ContentLog.LOGGER.debugEnabled()) {
+            ContentLog.LOGGER.debug("Sewer under the road at {}, {} laid {} column(s) {} block(s) under the grade, {} lit, {} manhole(s), {} column(s) walled solid where a subway passes through its depth, {} row(s) of the sewers of roads ending against it run on to join it", road.minX, road.minZ, counts[0], depth, counts[1], holes, counts[2], joined);
+        }
+    }
+
+    private static int stubs(World world, StructureBoundingBox clip, boolean alongX, StructureBoundingBox road, BeardRoads.Grade graded, int least, int most, int middle, int acrossLeast, int acrossMost, List<StructureBoundingBox> crossed, List<StructureBoundingBox> roads, List<RailPiece> subways, int[] counts) {
+        int half = width() / 2;
+        List<StructureBoundingBox> meeting = new ArrayList<>(crossed);
+        meeting.add(road);
+        int laid = 0;
+        for (StructureBoundingBox other : roads) {
+            boolean otherAlongX = axisX(other);
+            if (otherAlongX == alongX) { continue; }
+            int otherMiddle = alongX ? (other.minX + other.maxX) / 2 : (other.minZ + other.maxZ) / 2;
+            if (otherMiddle + half < least || otherMiddle - half > most) { continue; }
+            int index = otherMiddle - graded.start;
+            if (index < 0 || index >= graded.profile.length) { continue; }
+            int level = graded.profile[index];
+            if (level == Integer.MIN_VALUE || graded.bridged[index]) { continue; }
+            int otherLeast = alongX ? other.minZ : other.minX;
+            int otherMost = alongX ? other.maxZ : other.maxX;
+            List<int[]> steps = new ArrayList<>();
+            if (otherLeast - 1 >= acrossLeast && otherLeast - 1 <= acrossMost) {
+                for (int row = middle + 1; row <= otherLeast - 1; row++) { steps.add(new int[] {row, level}); }
+            }
+            if (otherMost + 1 >= acrossLeast && otherMost + 1 <= acrossMost) {
+                for (int row = otherMost + 1; row <= middle - 1; row++) { steps.add(new int[] {row, level}); }
+            }
+            if (steps.isEmpty()) { continue; }
+            int otherAcrossLeast = alongX ? other.minX : other.minZ;
+            int otherAcrossMost = alongX ? other.maxX : other.maxZ;
+            run(world, clip, otherAlongX, steps, otherMiddle, null, meeting, otherAcrossLeast, otherAcrossMost, subways, counts);
+            laid += steps.size();
+        }
+        return laid;
+    }
+
+    private static void run(World world, StructureBoundingBox clip, boolean alongX, List<int[]> laying, int middle, @Nullable IntUnaryOperator centers, List<StructureBoundingBox> crossed, int acrossLeast, int acrossMost, List<RailPiece> subways, int[] counts) {
         IBlockState lining = lining();
         IBlockState walk = walk();
         IBlockState water = water();
@@ -294,15 +399,12 @@ public final class BeardSewers {
         int depth = depth();
         int height = height();
         int half = width() / 2;
-        int run = lightRun();
+        int lightRun = lightRun();
         int floorLeast = GenHeights.floor(world, FLOOR_LEAST);
-        int middle = (acrossLeast + acrossMost) / 2;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        int dug = 0;
-        int lit = 0;
-        int walledOff = 0;
-        List<RailPiece> subways = BeardRails.subways(world, piece.getBoundingBox());
-        for (int row = least; row <= most; row++) {
+        for (int[] step : laying) {
+            int row = step[0];
+            int level = step[1];
             int center = centers == null ? middle : centers.applyAsInt(row);
             if (BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
                 lining = lining();
@@ -312,14 +414,10 @@ public final class BeardSewers {
                 moss = moss();
                 vine = vine();
             }
-            int index = row - graded.start;
-            if (index < 0 || index >= graded.profile.length) { continue; }
-            int level = graded.profile[index];
-            if (level == Integer.MIN_VALUE || graded.bridged[index]) { continue; }
             int floor = level - depth;
             if (floor < floorLeast) { continue; }
             if (floor + height + CLEAR_UNDER >= level) { continue; }
-            boolean lightRow = light.getBlock() != Blocks.AIR && Math.floorMod(row, run) == 0;
+            boolean lightRow = light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
             for (int across = center - half; across <= center + half; across++) {
                 int x = alongX ? row : across;
                 int z = alongX ? across : row;
@@ -332,14 +430,14 @@ public final class BeardSewers {
                         if (onTrack(world, at, x, y, z)) { continue; }
                         put(world, at.setPos(x, y, z), lining, lining, moss, mossChance);
                     }
-                    walledOff++;
+                    counts[2]++;
                     continue;
                 }
-                boolean edge = (across == center - half || across == center + half) && uncrossedSewer(crossed, alongX, x, z, half);
+                boolean edge = (across == center - half || across == center + half) && uncrossedSewer(crossed, alongX, x, z, half, acrossLeast, acrossMost);
                 put(world, at.setPos(x, floor, z), lining, lining, moss, mossChance);
                 put(world, at.setPos(x, floor + 1, z), edge ? lining : across == center ? water : walk, lining, moss, mossChance);
                 EnumFacing wall = across == center - half + 1 ? (alongX ? EnumFacing.NORTH : EnumFacing.WEST) : across == center + half - 1 ? (alongX ? EnumFacing.SOUTH : EnumFacing.EAST) : null;
-                if (wall != null && !walled(clip, crossed, alongX, x + wall.getXOffset(), z + wall.getZOffset(), half, center)) { wall = null; }
+                if (wall != null && !walled(clip, crossed, alongX, x + wall.getXOffset(), z + wall.getZOffset(), half, center, acrossLeast, acrossMost)) { wall = null; }
                 for (int y = floor + 2; y <= floor + 1 + height; y++) {
                     boolean hung = !edge && wall != null && vineChance > 0 && vine.getBlock() != Blocks.AIR
                             && SeededRandom.at(world, x, y, z).nextInt(100) < vineChance;
@@ -348,30 +446,9 @@ public final class BeardSewers {
                 }
                 boolean lamp = lightRow && across == center;
                 put(world, at.setPos(x, floor + 2 + height, z), lamp ? light : lining, lining, moss, mossChance);
-                if (lamp) { lit++; }
-                dug++;
+                if (lamp) { counts[1]++; }
+                counts[0]++;
             }
-        }
-        int holes = 0;
-        IBlockState ladder = ladder();
-        IBlockState cover = cover();
-        if (alongX && (ladder.getBlock() != Blocks.AIR || cover.getBlock() != Blocks.AIR)) {
-            for (StructureBoundingBox other : crossed) {
-                if (BeardPlots.roadAlongX(other)) { continue; }
-                if (other.maxX - other.minX + 1 < BeardRoads.pathFullWidth()) { continue; }
-                int row = (other.minX + other.maxX) / 2;
-                int index = row - graded.start;
-                if (row < least || row > most || index < 0 || index >= graded.profile.length) { continue; }
-                int level = graded.profile[index];
-                if (level == Integer.MIN_VALUE || graded.bridged[index]) { continue; }
-                int floor = level - depth;
-                if (floor < floorLeast || floor + height + CLEAR_UNDER >= level) { continue; }
-                if (manhole(world, clip, row, middle + 1, level, floor, floor + 2 + height, lining, ladder, cover, at)) { holes++; }
-            }
-        }
-        if (dug + walledOff > 0 && ContentLog.LOGGER.debugEnabled()) {
-            StructureBoundingBox box = piece.getBoundingBox();
-            ContentLog.LOGGER.debug("Sewer under the road at {}, {} laid {} column(s) {} block(s) under the grade, {} lit, {} manhole(s), {} column(s) walled solid where a subway passes through its depth", box.minX, box.minZ, dug, depth, lit, holes, walledOff);
         }
     }
 }

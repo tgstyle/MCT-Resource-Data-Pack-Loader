@@ -233,7 +233,7 @@ public final class BeardPlots {
         return new ArrayList<>(wells(pieces));
     }
 
-    private static List<StructureBoundingBox> wells(List<StructureComponent> pieces) {
+    static List<StructureBoundingBox> wells(List<StructureComponent> pieces) {
         if (pieces != wellsFrom.get() || pieces.size() != wellsCount) {
             WELLS.clear();
             if (!pieces.isEmpty() && pieces.get(0) instanceof StructureVillagePieces.Start) {

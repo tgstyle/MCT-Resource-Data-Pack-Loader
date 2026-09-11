@@ -742,11 +742,11 @@ public final class BeardRoads {
         if (stored && (alongX ? clip.minZ : clip.minX) <= acrossLeast - 1 && (alongX ? clip.maxZ : clip.maxX) >= acrossMost + 1) {
             for (int row = least; row <= most; row++) { graded.covered[row - start] = true; }
         }
-        if (piece instanceof MergePiece) { BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, new ArrayList<>(), ((MergePiece) piece)::centerAt); }
+        if (piece instanceof MergePiece) { BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, new ArrayList<>(), new ArrayList<>(), ((MergePiece) piece)::centerAt); }
         else {
             List<StructureBoundingBox> sewerCrossed = new ArrayList<>(crossed);
             sewerCrossed.addAll(BeardSewers.loopCrossings(nearby, box));
-            BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, sewerCrossed);
+            BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, sewerCrossed, crossed);
         }
         if ((cut + filled + paved + lined > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips, lined {} of tunnel", box.minX, box.minZ, paved, cut, filled, lined); }
     }
