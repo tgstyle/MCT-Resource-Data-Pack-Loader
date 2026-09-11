@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
@@ -18,7 +20,7 @@ public final class EntityAIStrike extends EntityAIAttackMelee {
 
     @Override protected void checkAndPerformAttack(@Nonnull EntityLivingBase enemy, double distance) {
         if (distance > getAttackReachSqr(enemy) || this.attackTick > 0) { return; }
-        this.attackTick = 20;
+        this.attackTick = ContentEntities.attackInterval(this.attacker);
         this.attacker.swingArm(EnumHand.MAIN_HAND);
         IAttributeInstance held = this.attacker.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
         if (held == null) {

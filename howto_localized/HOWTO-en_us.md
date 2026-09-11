@@ -1763,12 +1763,21 @@ Every key, shown at once. A real file writes only the ones it needs.
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "anvil", "inWall"],
   "jumpMultiplier": 1.0,
   "fallDamage": 1.0,
+  "hitEffects": true,
+  "ignoresEffects": ["minecraft:wither", "minecraft:poison"],
+  "hitFire": true,
+  "attackReach": 2.0,
+  "hurtResistance": 20,
+  "stepHeight": 0.6,
+  "knockback": 0.4,
+  "climbs": false,
+  "teleports": true,
   "maxFallHeight": 3,
   "breathesUnderwater": false,
   "swims": false,
@@ -1785,6 +1794,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "fireproof": false,
   "invulnerable": false,
   "glowing": false,
+  "bright": false,
   "invisible": false,
   "dropChance": 0.085,
   "scale": 1.0,
@@ -1799,6 +1809,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     "maxHealth": 20,
     "movementSpeed": 0.32,
     "attackDamage": 4,
+    "attackSpeed": 1.0,
     "knockbackResistance": 0.0,
     "followRange": 32,
     "armor": 4
@@ -1821,6 +1832,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "throwPower": 1.0,
   "throwArc": 0.35,
   "explodes": false,
+  "digs": false,
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
@@ -1855,12 +1867,21 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `career` | no | int | random | Which career within that profession, from 1 upwards |
 | `baby` | no | boolean or 0.0 to 1.0 | `false` | How often one spawns young, and it stays that way. `true` is always, a number is that share of them |
 | `becomes` | no | list | none | Other variants this one may turn into as it spawns, by weight. See below |
-| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
+| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event. Two more it has no base sound for: `target` is played once each time it takes a target, and `explode` is what its blast sounds like in place of the game's, whether it blows itself up with `explodes` or throws TNT with `throws` |
 | `soundVolume` | no | number | `1.0` | How loud those sounds are |
 | `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
 | `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
 | `jumpMultiplier` | no | float | `1.0` | How much higher it jumps than the entity it copies |
 | `fallDamage` | no | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
+| `hitEffects` | no | boolean | `true` | Whether it puts on whatever it hits the effect the entity it copies does: a wither skeleton's wither, a cave spider's poison, a husk's hunger. Off, it hits for damage alone |
+| `ignoresEffects` | no | list of potion ids, or `all` | none | Effects that never take on it, whoever or whatever applies them: a hit, a splash, a beacon, an arrow, `/effect`. `all` refuses every effect, so a variant starts as a blank slate. Its own `effects` are still put on it |
+| `hitFire` | no | boolean | `true` | Whether it sets alight whatever it hits when the entity it copies would: a burning zombie, a blaze's fireball. Off, nothing it does starts a fire on its target |
+| `attackReach` | no | float, blocks | its size | How far a melee blow reaches. The game reaches twice the width, which is why a scaled-up creature hits from further away; this sets it outright |
+| `hurtResistance` | no | int, ticks | the base's, `20` | How long after a hit it cannot be hurt again. Blows faster than half of this are lost, so a fast attacker wants a target with less |
+| `stepHeight` | no | float, blocks | the base's | How high a ledge it walks up without jumping. Most creatures step `0.6`, a zombie `1.0` |
+| `knockback` | no | float | the base's, `0.4` | How hard its blows shove. `0` shoves not at all |
+| `climbs` | no | boolean | the base's | Climbs walls the way a spider does, and paths over them; `false` grounds a spider |
+| `teleports` | no | boolean | `true` | Whether an enderman or a shulker may teleport. Off, it stays where it stands, in daylight and in water too |
 | `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
 | `breathesUnderwater` | no | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it |
 | `swims` | no | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it |
@@ -1877,6 +1898,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `fireproof` | no | boolean | `false` | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight |
 | `invulnerable` | no | boolean | `false` | Takes no damage from anything but the void and creative |
 | `glowing` | no | boolean | `false` | Outlined through walls |
+| `bright` | no | boolean | `false` | Drawn at full light wherever it stands, as if in noon sun, so it is never dimmed by night, shade or a cave |
 | `invisible` | no | boolean | `false` | Not drawn, though its gear still is |
 | `dropChance` | no | 0 to 1 | `0` | How likely each piece of equipment is to drop |
 | `scale` | no | float | `1.0` | How big it is drawn, and how big its hitbox is |
@@ -1887,7 +1909,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `height` | no | float | the base's | Its hitbox up, before `scale` is applied |
 | `pathPriorities` | no | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
 | `egg` | no | boolean or object | `true` | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out |
-| `attributes` | no | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it |
+| `attributes` | no | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `attackSpeed`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it. `attackSpeed` is blows a second for a melee fighter, `1` as the game has it, so `2` strikes twice as often. Any name the base already carries works too, `zombie.spawnReinforcements`, `horse.jumpStrength`. `attackDamage` on a base that shoots is what its arrows hit for |
 | `hostile` | no | boolean | `false` | Attacks what it can reach, and fights back when hurt. A hostile variant counts as a monster to the game whatever its base, so the monster cap holds it and peaceful clears it, and it drops the animal tasks its base came with, breeding, being tempted, following a parent, an owner or its own kind, sitting |
 | `targets` | no | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
 | `passive` | no | boolean | `false` | Stops it attacking anything, however it normally behaves |
@@ -1906,8 +1928,8 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `throwPower` | no | float | `1.0` | How hard it throws. Doubling it roughly doubles the reach |
 | `throwArc` | no | float | `0.35` | How high it lobs. Higher hangs longer, near zero is a flat hurl, below zero throws downward |
 | `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
-| `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4 |
-| `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off |
+| `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4. On a creeper base it is the creeper's own blast as well, and on a ghast the fireball's |
+| `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off. On a creeper base it is the creeper's own fuse as well |
 | `explosionFire` | no | boolean | `false` | Leaves fires behind |
 | `charges` | no | boolean | `false` | Rushes its target from a distance and hits with a heavy knockback on contact, the way a ravager does, then rests before the next run. Needs `hostile` |
 | `pounces` | no | boolean | `false` | Crouches, then leaps onto its target in an arc and strikes on landing, the way a fox does. Needs `hostile` |
@@ -1918,6 +1940,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `patrols` | no | boolean | `false` | Walks the land in long legs with others of its kind following a leader, the way a pillager patrol does. A group that spawns together picks one leader; the rest keep within a few blocks of it, and when the leader takes a target they all do. A follower that loses its leader takes the lead itself. Needs `hostile` |
 | `swoops` | no | boolean | `false` | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile` |
 | `gusts` | no | boolean | `false` | Winds up and lets loose a blast of wind at its target from a distance, throwing everything near the target back and up, the way a breeze's wind charge does. Needs `hostile` |
+| `digs` | no | boolean | `false` | Digs through whatever stands between it and its target, with the tool in its hand: a shovel through dirt, sand and gravel, a pickaxe through stone, an axe through wood, and only what that tool's material can break, so a wooden pickaxe never opens iron ore and nothing opens obsidian short of diamond. A block takes as long as it would for a player with that tool, drops what it would, and wears the tool. Give it the tool with `equipment`; bare-handed it digs nothing, and it digs nothing where `mobGriefing` is off. It never looks for a way around: with a target it walks straight at it and digs whatever stands in the way, and where the tool cannot open the block it stands and pushes. Needs `hostile` |
 | `gustPower` | no | float | `1.5` | How hard a gust throws. A hit from a mob is 0.4, a strong knockback enchantment about 1 |
 | `threatLeast` | no | int | `0` | The lowest threat band a player or other carrier within 128 blocks must stand in before the variant spawns naturally. `0` spawns as usual |
 | `threatHostile` | no | int | `0` | The lowest threat band a player must stand in before the variant goes after them on its own. Below it the variant is docile toward that player, though it still fights back when hit. `0` attacks as usual |

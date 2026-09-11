@@ -8,6 +8,8 @@ public final class Crisp {
 
     private static double gui() { return new ScaledResolution(Minecraft.getMinecraft()).getScaleFactor(); }
 
+    public static double factor() { return gui(); }
+
     public static float scale(float wanted) {
         double gui = gui();
         if (gui <= 0.0D) { return wanted; }

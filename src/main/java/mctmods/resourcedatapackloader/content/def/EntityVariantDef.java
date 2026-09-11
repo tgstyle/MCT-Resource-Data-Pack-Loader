@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.util.ResourceLocation;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class EntityVariantDef {
     public static final String BODY = "body";
@@ -23,6 +24,8 @@ public final class EntityVariantDef {
     public final List<String> immuneTo;
     public final float jumpMultiplier;
     public final float fallDamage;
+    public final boolean hitEffects;
+    public final List<String> ignoresEffects;
     public final float soundVolume;
     public final float soundPitch;
     public final float waterSlowdown;
@@ -97,9 +100,22 @@ public final class EntityVariantDef {
     public final int threatLeast;
     public final int threatHostile;
     public final List<TaskDef> tasks;
+    public final float attackReach;
+    public final int hurtResistance;
+    public final float stepHeight;
+    public final boolean hitFire;
+    @Nullable public final Boolean climbs;
+    public final boolean teleports;
+    public final float knockback;
+    public final boolean ownBlast;
+    public final boolean digs;
+    public final String targetSound;
+    public final String explodeSound;
+    public final float targetVaries;
+    public final boolean bright;
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, List<PickDef> becomes,
-                            String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, float soundVolume, float soundPitch, float waterSlowdown,
+                            String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, boolean hitEffects, List<String> ignoresEffects, float soundVolume, float soundPitch, float waterSlowdown,
                             int experience, int maxFallHeight, float absorption, String creatureAttribute, boolean breathesUnderwater, boolean swims, boolean amphibious, boolean despawns, int despawnTicks,
                             boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, float dropChance,
                             float scale, float angryScale, boolean leashable, boolean steerable, float width, float height, Map<String, Integer> effects, Map<String, Float> pathPriorities, boolean egg, int eggPrimary, int eggSecondary,
@@ -107,7 +123,8 @@ public final class EntityVariantDef {
                             boolean hostile, boolean passive, boolean ignoresSpawnRules, List<String> targets, boolean persistent, boolean silent,
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
                             boolean explodes, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower, float throwArc, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
-                            List<String> biomes, List<String> biomeTypes, List<String> requires, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, int threatLeast, int threatHostile, List<TaskDef> tasks) {
+                            List<String> biomes, List<String> biomeTypes, List<String> requires, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, int threatLeast, int threatHostile, List<TaskDef> tasks,
+                            float attackReach, int hurtResistance, float stepHeight, boolean hitFire, @Nullable Boolean climbs, boolean teleports, float knockback, boolean ownBlast, boolean digs, String targetSound, String explodeSound, float targetVaries, boolean bright) {
         this.registryName = registryName;
         this.base = base;
         this.name = name;
@@ -123,6 +140,8 @@ public final class EntityVariantDef {
         this.immuneTo = immuneTo;
         this.jumpMultiplier = jumpMultiplier;
         this.fallDamage = fallDamage;
+        this.hitEffects = hitEffects;
+        this.ignoresEffects = ignoresEffects;
         this.soundVolume = soundVolume;
         this.soundPitch = soundPitch;
         this.waterSlowdown = waterSlowdown;
@@ -197,5 +216,18 @@ public final class EntityVariantDef {
         this.threatLeast = threatLeast;
         this.threatHostile = threatHostile;
         this.tasks = tasks;
+        this.attackReach = attackReach;
+        this.hurtResistance = hurtResistance;
+        this.stepHeight = stepHeight;
+        this.hitFire = hitFire;
+        this.climbs = climbs;
+        this.teleports = teleports;
+        this.knockback = knockback;
+        this.ownBlast = ownBlast;
+        this.digs = digs;
+        this.targetSound = targetSound;
+        this.explodeSound = explodeSound;
+        this.targetVaries = targetVaries;
+        this.bright = bright;
     }
 }

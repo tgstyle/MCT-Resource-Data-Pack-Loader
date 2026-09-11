@@ -66,6 +66,15 @@ import net.minecraft.world.World;
 
     @Inject(method = "getSoundPitch", at = @At("RETURN"), cancellable = true) private void rdpl$pitch(CallbackInfoReturnable<Float> cir) { cir.setReturnValue(ContentEntities.sound((EntityLivingBase) (Object) this, cir.getReturnValueF(), true)); }
 
+    @Inject(method = "isOnLadder", at = @At("RETURN"), cancellable = true) private void rdpl$climbs(CallbackInfoReturnable<Boolean> cir) {
+        Boolean wanted = ContentEntities.climbs(this);
+        if (wanted == null) { return; }
+        cir.setReturnValue(wanted && (cir.getReturnValueZ() || collidedHorizontally));
+    }
+
+    @ModifyVariable(method = "knockBack", at = @At("HEAD"), ordinal = 0, argsOnly = true)
+    private float rdpl$knockback(float value, Entity entityIn, float strength, double xRatio, double zRatio) { return ContentEntities.knockback(entityIn, value); }
+
     @Inject(method = "handleJumpWater", at = @At("HEAD"), cancellable = true) private void rdpl$sink(CallbackInfo ci) {
         if (!ContentEntities.sinks((EntityLivingBase) (Object) this)) { return; }
         ci.cancel();

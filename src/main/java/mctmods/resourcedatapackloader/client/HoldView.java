@@ -96,14 +96,19 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (strength <= 0.0F) { return; }
         greet(mc, event.getResolution(), strength);
         ScaledResolution resolution = event.getResolution();
-        int width = Math.min(LOGO_WIDTH, resolution.getScaledWidth() / 4);
-        int height = LOGO_HEIGHT * width / LOGO_WIDTH;
-        int left = leftFor(resolution.getScaledWidth(), width);
-        int top = Math.max(MARGIN, resolution.getScaledHeight() / 2 + SUBTITLE_TOP - MARGIN - height);
+        double gui = Crisp.factor();
+        int screenWidth = (int) Math.round(resolution.getScaledWidth() * gui);
+        int times = Math.max(1, screenWidth / 4 / LOGO_WIDTH);
+        int width = LOGO_WIDTH * times;
+        int height = LOGO_HEIGHT * times;
+        int margin = (int) Math.round(MARGIN * gui);
+        int left = leftFor(screenWidth, width, margin);
+        int top = Math.max(margin, (int) Math.round((resolution.getScaledHeight() / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.color(1.0F, 1.0F, 1.0F, strength);
+        GlStateManager.scale((float) (1.0D / gui), (float) (1.0D / gui), 1.0F);
         mc.getTextureManager().bindTexture(LOGO);
         Gui.drawModalRectWithCustomSizedTexture(left, top, 0.0F, 0.0F, width, height, width, height);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -165,10 +170,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    private static int leftFor(int screenWidth, int width) {
+    private static int leftFor(int screenWidth, int width, int margin) {
         String asked = ContentControl.text(ContentControl.CHUNKS, KEY, Config.chunks.pregenLogo).trim().toLowerCase(java.util.Locale.ROOT);
-        if ("left".equals(asked)) { return MARGIN; }
-        if ("right".equals(asked)) { return screenWidth - MARGIN - width; }
+        if ("left".equals(asked)) { return margin; }
+        if ("right".equals(asked)) { return screenWidth - margin - width; }
         if (!"center".equals(asked) && !asked.isEmpty() && !asked.equals(warnedAbout)) {
             warnedAbout = asked;
             ContentLog.LOGGER.error("{} '{}' is not left, center or right, so the logo stands in the center", KEY, asked);

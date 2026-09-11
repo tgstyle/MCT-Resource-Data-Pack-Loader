@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAICharge;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIDig;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIFleeWhenHurt;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIPounce;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAISleepByDay;
@@ -19,6 +20,8 @@ import mctmods.resourcedatapackloader.content.entity.ai.EntityAIStrike;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIThrower;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntity;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityCreeper;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityGhast;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLiving;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingNavigator;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityVillager;
@@ -39,8 +42,12 @@ import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.monster.EntityCreeper;
+import net.minecraft.entity.monster.EntityGhast;
 import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.entity.monster.EntityZombie;
+import net.minecraft.entity.item.EntityTNTPrimed;
+import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.EntityLivingBase;
@@ -74,6 +81,7 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.pathfinding.PathNavigateClimber;
 import net.minecraft.pathfinding.PathNavigateGround;
 import net.minecraft.pathfinding.PathNavigateSwimmer;
 import net.minecraft.pathfinding.PathNodeType;
@@ -85,7 +93,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.PotionEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
@@ -110,6 +121,10 @@ public final class ContentEntities {
     private static final Map<String, SoundEvent> SOUNDS = new LinkedHashMap<>();
     private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
     private static boolean loaded;
+    @Nullable private static EntityLivingBase struck;
+    private static long struckAt;
+    private static boolean struckEffects;
+    private static boolean struckFire;
 
     private ContentEntities() {}
 
@@ -172,7 +187,7 @@ public final class ContentEntities {
     @Nullable public static SoundEvent soundEvent(Entity entity, int which) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return null; }
-        String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : def.deathSound;
+        String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : which == 2 ? def.deathSound : which == 3 ? def.targetSound : def.explodeSound;
         if (name.isEmpty()) { return null; }
         if (SOUNDS.containsKey(name)) { return SOUNDS.get(name); }
         ResourceLocation key = new ResourceLocation(name);
@@ -180,6 +195,12 @@ public final class ContentEntities {
         if (event == null) { ContentLog.LOGGER.error("Entity variant {} names sound {}, which nothing registers", def.registryName, key); }
         SOUNDS.put(name, event);
         return event;
+    }
+
+    public static int attackInterval(EntityLivingBase attacker) {
+        IAttributeInstance speed = attacker.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_SPEED.getName());
+        if (speed == null || speed.getAttributeValue() <= 0.0D) { return 20; }
+        return Math.max(1, (int) Math.round(20.0D / speed.getAttributeValue()));
     }
 
     public static boolean immune(Entity entity, String damageType) {
@@ -254,7 +275,7 @@ public final class ContentEntities {
         EntityLivingBase living = event.getEntityLiving();
         if (!(living instanceof EntityLiving)) { return; }
         EntityVariantDef def = BY_CLASS.get(living.getClass());
-        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0)) { return; }
+        if (def == null || (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0 && def.targetSound.isEmpty())) { return; }
         if (living.world.isRemote) {
             if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
             return;
@@ -266,8 +287,28 @@ public final class ContentEntities {
         if (def.amphibious) { amphibious((EntityLiving) living); }
         if (def.baby > 0.0F && living.getEntityData().getBoolean(YOUNG) && living instanceof EntityAgeable && ((EntityAgeable) living).getGrowingAge() >= 0) { ((EntityAgeable) living).setGrowingAge(-24000); }
         boolean angry = stillRoused((EntityLiving) living);
+        if (angry && !living.isSprinting()) { cry(living); }
         if (angry != living.isSprinting()) { living.setSprinting(angry); }
         resize(living, angry ? def.angryScale : def.scale);
+    }
+
+    private static void cry(EntityLivingBase living) {
+        SoundEvent cry = soundEvent(living, 3);
+        if (cry == null) { return; }
+        float carries = (float) Math.max(1.0D, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue() / 16.0D);
+        float varies = BY_CLASS.get(living.getClass()).targetVaries;
+        float pitch = varies <= 0.0F ? 1.0F : (float) Math.pow(2.0D, (living.getRNG().nextFloat() * 2.0F - 1.0F) * varies / 12.0D);
+        living.world.playSound(null, living.posX, living.posY, living.posZ, cry, living.getSoundCategory(), carries, pitch);
+    }
+
+    @Nullable public static SoundEvent explodeSound(@Nullable Entity exploder) {
+        if (exploder instanceof EntityTNTPrimed) { exploder = ((EntityTNTPrimed) exploder).getTntPlacedBy(); }
+        return exploder == null ? null : soundEvent(exploder, 4);
+    }
+
+    public static boolean bright(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.bright;
     }
 
     public static float jumpMultiplier(Entity entity) {
@@ -348,6 +389,71 @@ public final class ContentEntities {
         return def.tint;
     }
 
+    @SubscribeEvent public static void onStruck(LivingAttackEvent event) {
+        Entity by = event.getSource().getTrueSource();
+        if (by == null || event.getEntityLiving().world.isRemote) { return; }
+        EntityVariantDef def = BY_CLASS.get(by.getClass());
+        if (def == null || (def.hitEffects && def.hitFire)) { return; }
+        struck = event.getEntityLiving();
+        struckAt = struck.world.getTotalWorldTime();
+        struckEffects = !def.hitEffects;
+        struckFire = !def.hitFire;
+    }
+
+    public static boolean struckFireless(Entity entity) { return struckFire && entity == struck && entity.world.getTotalWorldTime() == struckAt; }
+
+    @SubscribeEvent public static void onShot(EntityJoinWorldEvent event) {
+        if (event.getWorld().isRemote || !(event.getEntity() instanceof EntityArrow)) { return; }
+        EntityArrow arrow = (EntityArrow) event.getEntity();
+        Entity shooter = arrow.shootingEntity;
+        if (!(shooter instanceof EntityLivingBase)) { return; }
+        EntityVariantDef def = BY_CLASS.get(shooter.getClass());
+        if (def == null || !declaresAttackDamage(def)) { return; }
+        IAttributeInstance damage = ((EntityLivingBase) shooter).getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
+        if (damage == null) { return; }
+        arrow.setDamage(arrow.getDamage() - 2.0D + damage.getAttributeValue());
+    }
+
+    public static double attackReachSqr(EntityLivingBase attacker, EntityLivingBase target, double vanilla) {
+        EntityVariantDef def = BY_CLASS.get(attacker.getClass());
+        if (def == null || def.attackReach <= 0.0F) { return vanilla; }
+        return (double) def.attackReach * def.attackReach + target.width;
+    }
+
+    public static float knockback(@Nullable Entity by, float strength) {
+        EntityVariantDef def = by == null ? null : BY_CLASS.get(by.getClass());
+        return def == null || def.knockback < 0.0F ? strength : def.knockback;
+    }
+
+    @Nullable public static Boolean climbs(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def == null ? null : def.climbs;
+    }
+
+    public static boolean teleports(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def == null || def.teleports;
+    }
+
+    @SubscribeEvent public static void onEffect(PotionEvent.PotionApplicableEvent event) {
+        EntityLivingBase living = event.getEntityLiving();
+        if (struckEffects && living == struck && living.world.getTotalWorldTime() == struckAt) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        EntityVariantDef def = BY_CLASS.get(living.getClass());
+        if (def == null || def.ignoresEffects.isEmpty()) { return; }
+        ResourceLocation potion = event.getPotionEffect().getPotion().getRegistryName();
+        String id = potion == null ? "" : potion.toString();
+        if (def.effects.containsKey(id)) { return; }
+        for (String ignored : def.ignoresEffects) {
+            if (ignored.equalsIgnoreCase("all") || ignored.equalsIgnoreCase(id)) {
+                event.setResult(Event.Result.DENY);
+                return;
+            }
+        }
+    }
+
     @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
         EntityVariantDef def = BY_CLASS.get(event.getEntity().getClass());
         if (def == null) { return; }
@@ -398,12 +504,14 @@ public final class ContentEntities {
         if (!(entity instanceof EntityLivingBase)) { return; }
         EntityLivingBase alive = (EntityLivingBase) entity;
         attributes(alive, def);
+        body(alive, def);
         if (def.absorption > 0.0F) { alive.setAbsorptionAmount(def.absorption); }
         effects(alive, def);
         if (!(entity instanceof EntityLiving)) { return; }
         EntityLiving living = (EntityLiving) entity;
         if (def.swims) { swimmer(living); }
         if (def.swoops) { flyer(living); }
+        if (def.climbs != null) { climber(living, def.climbs); }
         if (def.amphibious && living.getNavigator() instanceof PathNavigateGround) { ((PathNavigateGround) living.getNavigator()).setCanSwim(true); }
         if (def.breathesUnderwater || def.swims) {
             for (EntityAITasks.EntityAITaskEntry task : new ArrayList<>(living.tasks.taskEntries)) {
@@ -425,15 +533,41 @@ public final class ContentEntities {
     }
 
     private static void attributes(EntityLivingBase living, EntityVariantDef def) {
+        AbstractAttributeMap map = living.getAttributeMap();
         for (Map.Entry<String, Double> entry : def.attributes.entrySet()) {
-            IAttribute attribute = ContentAttributes.find(entry.getKey(), def.registryName);
-            if (attribute == null) { continue; }
-            AbstractAttributeMap map = living.getAttributeMap();
-            IAttributeInstance instance = map.getAttributeInstanceByName(attribute.getName());
-            if (instance == null) { instance = map.registerAttribute(attribute); }
+            IAttribute attribute = ContentAttributes.lookup(entry.getKey());
+            IAttributeInstance instance = map.getAttributeInstanceByName(attribute == null ? entry.getKey() : attribute.getName());
+            if (instance == null && attribute != null) { instance = map.registerAttribute(attribute); }
+            if (instance == null) {
+                ContentLog.LOGGER.error("Unknown attribute '{}' in {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.registryName, def.base);
+                continue;
+            }
             instance.setBaseValue(entry.getValue());
             if (attribute == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth((float) (double) entry.getValue()); }
         }
+    }
+
+    private static void body(EntityLivingBase alive, EntityVariantDef def) {
+        if (def.hurtResistance >= 0) { alive.maxHurtResistantTime = def.hurtResistance; }
+        if (def.stepHeight >= 0.0F) { alive.stepHeight = def.stepHeight; }
+        if (!def.ownBlast) { return; }
+        if (alive instanceof EntityCreeper) {
+            ((IEntityCreeper) alive).rdpl$setFuseTime(def.explosionFuse);
+            ((IEntityCreeper) alive).rdpl$setExplosionRadius((int) def.explosionPower);
+        }
+        else if (alive instanceof EntityGhast) { ((IEntityGhast) alive).rdpl$setExplosionStrength((int) def.explosionPower); }
+    }
+
+    private static void climber(EntityLiving living, boolean climbs) {
+        if (climbs && !(living.getNavigator() instanceof PathNavigateClimber)) { ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateClimber(living, living.world)); }
+        else if (!climbs && living.getNavigator() instanceof PathNavigateClimber) { ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateGround(living, living.world)); }
+    }
+
+    private static boolean declaresAttackDamage(EntityVariantDef def) {
+        for (String key : def.attributes.keySet()) {
+            if (ContentAttributes.lookup(key) == SharedMonsterAttributes.ATTACK_DAMAGE) { return true; }
+        }
+        return false;
     }
 
     private static void behavior(EntityLiving living, EntityVariantDef def) {
@@ -455,6 +589,7 @@ public final class ContentEntities {
             if (def.patrols) { ContentLog.LOGGER.error("Entity variant {} asks to patrol, but is not hostile, so its patrol never converges on anyone", def.registryName); }
             if (def.swoops) { ContentLog.LOGGER.error("Entity variant {} asks to swoop, but is not hostile, so it never takes a target to dive on", def.registryName); }
             if (def.gusts) { ContentLog.LOGGER.error("Entity variant {} asks to gust, but is not hostile, so it never takes a target to blow away", def.registryName); }
+            if (def.digs) { ContentLog.LOGGER.error("Entity variant {} asks to dig, but is not hostile, so it never has a target to dig toward", def.registryName); }
             if (def.explodes) { ContentLog.LOGGER.error("Entity variant {} asks to explode, but is not hostile, so it never takes a target to close on", def.registryName); }
             if (def.throwsItems) { ContentLog.LOGGER.error("Entity variant {} asks to throw what it holds, but is not hostile, so it never takes a target to throw at", def.registryName); }
             return;
@@ -492,6 +627,7 @@ public final class ContentEntities {
         if (def.fleesWhenHurt > 0.0F) { living.tasks.addTask(0, new EntityAIFleeWhenHurt(creature, def.fleesWhenHurt, 1.4D)); }
         if (def.sniffs > 0) { living.tasks.addTask(3, new EntityAISniff(creature, def.sniffs)); }
         if (def.gusts) { living.tasks.addTask(1, new EntityAIGust(creature, def.gustPower)); }
+        if (def.digs) { living.tasks.addTask(1, new EntityAIDig(creature)); }
         if (def.swoops) { living.tasks.addTask(1, new EntityAISwoop(creature)); }
         if (def.patrols) { living.tasks.addTask(4, new EntityAIPatrol(creature)); }
         living.targetTasks.addTask(1, new EntityAIHurtByTarget(creature, true));
@@ -504,13 +640,7 @@ public final class ContentEntities {
         }
     }
 
-    private static boolean ownStrike(EntityLiving living, EntityVariantDef def) {
-        if (living instanceof EntityMob) { return false; }
-        for (String key : def.attributes.keySet()) {
-            if (ContentAttributes.find(key, def.registryName) == SharedMonsterAttributes.ATTACK_DAMAGE) { return true; }
-        }
-        return false;
-    }
+    private static boolean ownStrike(EntityLiving living, EntityVariantDef def) { return !(living instanceof EntityMob) && declaresAttackDamage(def); }
 
     private static boolean tame(EntityAIBase task) {
         return task instanceof EntityAIMate || task instanceof EntityAITempt || task instanceof EntityAIFollowParent || task instanceof EntityAIFollow

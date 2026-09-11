@@ -3,19 +3,25 @@ package mctmods.resourcedatapackloader.pack;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import javax.annotation.Nullable;
 
 public final class RDPLPack {
@@ -28,6 +34,8 @@ public final class RDPLPack {
     @Nullable private final Set<String> ownedNamespaces;
     private final Map<String, Set<String>> index = new HashMap<>();
     private int fileCount;
+    @Nullable private ZipFile archive;
+    private boolean archiveTried;
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
         this(name, priority, overriding, root, owned, null);
@@ -115,9 +123,35 @@ public final class RDPLPack {
 
     private Path locate(String namespace, String path) { return root.resolve(ASSETS).resolve(namespace).resolve(path); }
 
-    public InputStream open(String namespace, String path) throws IOException { return Files.newInputStream(locate(namespace, path)); }
+    public InputStream open(String namespace, String path) throws IOException {
+        Path located = locate(namespace, path);
+        ZipFile zip = archive();
+        if (zip == null) { return Files.newInputStream(located); }
+        String inside = located.toString();
+        ZipEntry entry = zip.getEntry(inside.startsWith("/") ? inside.substring(1) : inside);
+        if (entry == null) { throw new FileNotFoundException(namespace + ":" + path); }
+        return zip.getInputStream(entry);
+    }
 
-    public String read(String namespace, String path) throws IOException { return new String(Files.readAllBytes(locate(namespace, path)), StandardCharsets.UTF_8); }
+    public String read(String namespace, String path) throws IOException {
+        try (InputStream stream = open(namespace, path)) {
+            ByteArrayOutputStream held = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            for (int read = stream.read(buffer); read > 0; read = stream.read(buffer)) { held.write(buffer, 0, read); }
+            return new String(held.toByteArray(), StandardCharsets.UTF_8);
+        }
+    }
+
+    @SuppressWarnings("resource") @Nullable private synchronized ZipFile archive() {
+        if (owned == null || archiveTried) { return archive; }
+        archiveTried = true;
+        String spec = owned.getPath("/").toUri().toString();
+        int bang = spec.indexOf("!/");
+        if (!spec.startsWith("jar:") || bang < 0) { return null; }
+        try { archive = new ZipFile(Paths.get(URI.create(spec.substring(4, bang))).toFile()); }
+        catch (IOException | RuntimeException unopened) { ContentLog.LOGGER.warn("Pack '{}' could not be reopened as a plain zip, so its files are read through the interruptible channel", name, unopened); }
+        return archive;
+    }
 
     public java.util.List<String> packFiles(String folder, String ext) {
         java.util.List<String> out = new java.util.ArrayList<>();
@@ -172,7 +206,12 @@ public final class RDPLPack {
         return total;
     }
 
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
+        if (archive != null) {
+            archive.close();
+            archive = null;
+        }
+        archiveTried = false;
         if (owned != null) { owned.close(); }
     }
 }

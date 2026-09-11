@@ -15,8 +15,9 @@ import org.apache.logging.log4j.Logger;
 public final class SplashDark {
     private static final String FILE = "config/splash.properties";
     private static final String FORGE_LOGO = "fml:textures/gui/forge.png";
-    private static final String OUR_LOGO = "resourcedatapackloader:textures/gui/hold.png";
-    private static final String LOGO_PATH = "assets/resourcedatapackloader/textures/gui/hold.png";
+    private static final String OUR_LOGO = "resourcedatapackloader:textures/gui/splash.png";
+    private static final String OLD_LOGO = "resourcedatapackloader:textures/gui/hold.png";
+    private static final String LOGO_PATH = "assets/resourcedatapackloader/textures/gui/splash.png";
     private static final Map<String, Integer> DARK = new LinkedHashMap<>();
     private static final Map<String, Integer> FORGE = new LinkedHashMap<>();
 
@@ -49,12 +50,12 @@ public final class SplashDark {
             changed = true;
         }
         String logo = held.getProperty("forgeTexture", FORGE_LOGO).trim();
-        if (dark && FORGE_LOGO.equals(logo) && placed(mcDir, held, log)) {
+        if (dark && (FORGE_LOGO.equals(logo) || OLD_LOGO.equals(logo)) && placed(mcDir, held, log)) {
             held.setProperty("forgeTexture", OUR_LOGO);
             changed = true;
         }
         else if (dark && OUR_LOGO.equals(logo)) { placed(mcDir, held, log); }
-        else if (!dark && OUR_LOGO.equals(logo)) {
+        else if (!dark && (OUR_LOGO.equals(logo) || OLD_LOGO.equals(logo))) {
             held.setProperty("forgeTexture", FORGE_LOGO);
             changed = true;
         }

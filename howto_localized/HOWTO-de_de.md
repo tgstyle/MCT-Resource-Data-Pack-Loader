@@ -1763,12 +1763,21 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "anvil", "inWall"],
   "jumpMultiplier": 1.0,
   "fallDamage": 1.0,
+  "hitEffects": true,
+  "ignoresEffects": ["minecraft:wither", "minecraft:poison"],
+  "hitFire": true,
+  "attackReach": 2.0,
+  "hurtResistance": 20,
+  "stepHeight": 0.6,
+  "knockback": 0.4,
+  "climbs": false,
+  "teleports": true,
   "maxFallHeight": 3,
   "breathesUnderwater": false,
   "swims": false,
@@ -1785,6 +1794,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "fireproof": false,
   "invulnerable": false,
   "glowing": false,
+  "bright": false,
   "invisible": false,
   "dropChance": 0.085,
   "scale": 1.0,
@@ -1799,6 +1809,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "maxHealth": 20,
     "movementSpeed": 0.32,
     "attackDamage": 4,
+    "attackSpeed": 1.0,
     "knockbackResistance": 0.0,
     "followRange": 32,
     "armor": 4
@@ -1821,6 +1832,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "throwPower": 1.0,
   "throwArc": 0.35,
   "explodes": false,
+  "digs": false,
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
@@ -1855,12 +1867,21 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `career` | nein | int | zufällig | Welche Laufbahn innerhalb dieses Berufs, ab 1 aufwärts |
 | `baby` | nein | boolean oder 0,0 bis 1,0 | `false` | Wie oft eines jung erscheint, und es bleibt dabei. `true` heißt immer, eine Zahl heißt dieser Anteil |
 | `becomes` | nein | Liste | keine | Andere Varianten, zu denen dieses beim Erscheinen werden kann, nach Gewicht. Siehe unten |
-| `sounds` | nein | Objekt | die der Basis | `ambient`, `hurt` und `death`, jeweils ein registriertes Sound-Event |
+| `sounds` | nein | Objekt | die der Basis | `ambient`, `hurt` und `death`, jeweils ein registriertes Sound-Event. Zwei weitere, für die die Basis keinen Laut hat: `target` wird einmal gespielt, sooft sie ein Ziel fasst, und `explode` ist der Klang ihrer Explosion anstelle des Spielklangs, ob sie sich mit `explodes` selbst sprengt oder mit `throws` TNT wirft |
 | `soundVolume` | nein | Zahl | `1.0` | Wie laut diese Sounds sind |
 | `soundPitch` | nein | Zahl | `1.0` | Wie hoch sie klingen. Unter 1 tiefer, über 1 quietschiger |
 | `immuneTo` | nein | Liste von Schadensarten | keine | Schaden, der an ihr abprallt: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` und der Rest |
 | `jumpMultiplier` | nein | float | `1.0` | Wie viel höher sie springt als die kopierte Entity |
 | `fallDamage` | nein | float | `1.0` | Multipliziert den Sturzschaden. `0` nimmt ihn ganz weg |
+| `hitEffects` | nein | boolean | `true` | Ob sie dem, was sie trifft, den Effekt der kopierten Entity anhängt: das Verdorren eines Witherskeletts, das Gift einer Höhlenspinne, den Hunger eines Husks. Aus trifft sie nur mit Schaden |
+| `ignoresEffects` | nein | Liste von Trank-IDs oder `all` | keine | Effekte, die bei ihr nie greifen, egal wer oder was sie verhängt: ein Treffer, ein Wurftrank, ein Leuchtfeuer, ein Pfeil, `/effect`. `all` weist jeden Effekt ab, die Variante beginnt also als unbeschriebenes Blatt. Ihre eigenen `effects` bekommt sie trotzdem |
+| `hitFire` | nein | boolean | `true` | Ob sie das, was sie trifft, in Brand setzt, wo die kopierte Entity es täte: ein brennender Zombie, der Feuerball einer Lohe. Aus entzündet nichts, was sie tut, ihr Ziel |
+| `attackReach` | nein | float, Blöcke | ihre Größe | Wie weit ein Nahkampfschlag reicht. Das Spiel reicht die doppelte Breite, weshalb eine vergrößerte Kreatur von weiter weg trifft; das hier setzt es direkt |
+| `hurtResistance` | nein | int, Ticks | wie die Basis, `20` | Wie lange sie nach einem Treffer nicht erneut verletzt werden kann. Schläge schneller als die Hälfte davon gehen verloren, ein schneller Angreifer will also ein Ziel mit weniger |
+| `stepHeight` | nein | float, Blöcke | wie die Basis | Wie hoch eine Stufe sein darf, die sie ohne Sprung hinaufgeht. Die meisten Kreaturen schaffen `0.6`, ein Zombie `1.0` |
+| `knockback` | nein | float | wie die Basis, `0.4` | Wie hart ihre Schläge stoßen. `0` stößt gar nicht |
+| `climbs` | nein | boolean | wie die Basis | Klettert Wände hoch wie eine Spinne und findet ihren Weg darüber; `false` holt eine Spinne auf den Boden |
+| `teleports` | nein | boolean | `true` | Ob sich ein Enderman oder ein Shulker teleportieren darf. Aus bleibt er, wo er steht, auch bei Tageslicht und im Wasser |
 | `maxFallHeight` | nein | int | der der Basis | Wie tief sie beim Wegfinden springt |
 | `breathesUnderwater` | nein | boolean | `false` | Ertrinkt nie und sinkt zu Boden, um dort zu laufen, statt zur Oberfläche zu schwimmen. Sie findet ihren Weg weiterhin über den Boden, tiefes Wasser, aus dem sie nicht herauslaufen kann, hält sie also fest |
 | `swims` | nein | boolean | `false` | Bewegt sich durchs Wasser wie ein Tintenfisch oder ein Wächter und ertrinkt nie. Sie findet ihren Weg durch Wasser statt über Land, gehört also ins Wasser und ist außerhalb gestrandet |
@@ -1877,6 +1898,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `fireproof` | nein | boolean | `false` | Fängt überhaupt nie Feuer, nimmt also keinen Schaden durch Feuer oder Lava und brennt nicht im Tageslicht |
 | `invulnerable` | nein | boolean | `false` | Nimmt von nichts Schaden außer von der Leere und vom Kreativmodus |
 | `glowing` | nein | boolean | `false` | Durch Wände umrandet |
+| `bright` | nein | boolean | `false` | Wird überall in vollem Licht gezeichnet, wie in der Mittagssonne, also nie von Nacht, Schatten oder einer Höhle abgedunkelt |
 | `invisible` | nein | boolean | `false` | Wird nicht gezeichnet, ihre Ausrüstung aber schon |
 | `dropChance` | nein | 0 bis 1 | `0` | Wie wahrscheinlich jedes Ausrüstungsstück droppt |
 | `scale` | nein | float | `1.0` | Wie groß sie gezeichnet wird und wie groß ihre Hitbox ist |
@@ -1887,7 +1909,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `height` | nein | float | die der Basis | Höhe ihrer Hitbox, bevor `scale` angewendet wird |
 | `pathPriorities` | nein | Objekt | keines | Wodurch sie läuft, als `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` und so weiter, jeweils eine Zahl, wobei negativ „nie“ heißt |
 | `egg` | nein | boolean oder Objekt | `true` | Ein Spawn-Ei, gefärbt wie das der kopierten Entity. `{ "primary": "AABBCC", "secondary": "112233" }` wählt eigene Farben, `false` lässt das Ei weg |
-| `attributes` | nein | Objekt | keines | `maxHealth`, `movementSpeed`, `attackDamage`, `knockbackResistance`, `followRange`, `armor`. Ein Attribut, das die Entity normalerweise nicht hat, bekommt sie dazu |
+| `attributes` | nein | Objekt | keines | `maxHealth`, `movementSpeed`, `attackDamage`, `attackSpeed`, `knockbackResistance`, `followRange`, `armor`. Ein Attribut, das die Entity normalerweise nicht hat, bekommt sie dazu. `attackSpeed` sind Schläge pro Sekunde eines Nahkämpfers, `1` wie im Spiel, `2` schlägt also doppelt so oft zu. Jeder Name, den die Basis schon trägt, geht ebenfalls, `zombie.spawnReinforcements`, `horse.jumpStrength`. `attackDamage` auf einer Basis, die schießt, ist das, was ihre Pfeile anrichten |
 | `hostile` | nein | boolean | `false` | Greift an, was sie erreicht, und wehrt sich, wenn sie verletzt wird. Eine feindliche Variante zählt für das Spiel als Monster, welche Basis sie auch hat, das Monsterlimit hält sie also und Friedlich räumt sie weg, und sie legt die Tieraufgaben ihrer Basis ab, Paaren, Anlocken, einem Elternteil, einem Besitzer oder Artgenossen folgen, Sitzen |
 | `targets` | nein | Liste von Entity-Namen | der Spieler | Wonach sie sucht, solange sie feindselig ist. `minecraft:player` wird verstanden, obwohl der Spieler keine registrierte Entity ist |
 | `passive` | nein | boolean | `false` | Hält sie davon ab, irgendetwas anzugreifen, egal wie sie sich sonst verhält |
@@ -1906,8 +1928,8 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `throwPower` | nein | float | `1.0` | Wie kräftig es wirft. Verdoppeln verdoppelt ungefähr die Weite |
 | `throwArc` | nein | float | `0.35` | Wie steil der Wurfbogen ausfällt. Höher hängt länger, nahe null ist ein flacher Wurf, unter null wirft es nach unten |
 | `explodes` | nein | boolean | `false` | Sprengt sich neben ihrem Ziel in die Luft, wie ein Creeper. Braucht `hostile` |
-| `explosionPower` | nein | Zahl | `3.0` | Wie groß die Explosion ist. Ein Creeper ist 3, TNT ist 4 |
-| `explosionFuse` | nein | int, Ticks | `30` | Wie lange sie zischt, bevor es losgeht |
+| `explosionPower` | nein | Zahl | `3.0` | Wie groß die Explosion ist. Ein Creeper ist 3, TNT ist 4. Auf einer Creeper-Basis ist es zugleich dessen eigene Explosion, auf einem Ghast die des Feuerballs |
+| `explosionFuse` | nein | int, Ticks | `30` | Wie lange sie zischt, bevor es losgeht. Auf einer Creeper-Basis ist es zugleich dessen eigene Lunte |
 | `explosionFire` | nein | boolean | `false` | Lässt Feuer zurück |
 | `charges` | nein | boolean | `false` | Stürmt aus der Entfernung auf ihr Ziel los und trifft beim Aufprall mit kräftigem Rückstoß, wie ein Verwüster, und ruht dann vor dem nächsten Anlauf. Braucht `hostile` |
 | `pounces` | nein | boolean | `false` | Duckt sich, springt dann im Bogen auf ihr Ziel und schlägt beim Aufsetzen zu, wie ein Fuchs. Braucht `hostile` |
@@ -1918,6 +1940,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `patrols` | nein | boolean | `false` | Zieht in langen Etappen über das Land, mit anderen ihrer Art, die einem Anführer folgen, wie eine Plünderer-Patrouille. Eine Gruppe, die zusammen erscheint, wählt einen Anführer; die anderen bleiben wenige Blöcke bei ihm, und nimmt der Anführer ein Ziel, nehmen es alle. Ein Gefolgsmann, der seinen Anführer verliert, übernimmt selbst die Führung. Braucht `hostile` |
 | `swoops` | nein | boolean | `false` | Kreist über ihrem Ziel und stürzt hindurch, schlägt im Vorbeiflug zu, wie ein Phantom. Die Variante bekommt eine Flughilfe, fliegt also, solange sie jagt, und lässt sich im Leerlauf zu Boden; sie braucht eine Basis, die eine Kreatur ist, etwa einen Papagei, und eine Fledermaus ist keine. Braucht `hostile` |
 | `gusts` | nein | boolean | `false` | Holt aus und lässt aus der Entfernung einen Windstoß auf ihr Ziel los, der alles nahe dem Ziel zurück und nach oben wirft, wie die Windkugel einer Brise. Braucht `hostile` |
+| `digs` | nein | boolean | `false` | Gräbt sich durch das, was zwischen ihr und ihrem Ziel steht, mit dem Werkzeug in der Hand: eine Schaufel durch Erde, Sand und Kies, eine Spitzhacke durch Stein, eine Axt durch Holz, und nur, was das Material des Werkzeugs schafft, eine Holzspitzhacke öffnet also nie Eisenerz, und Obsidian öffnet nichts unter Diamant. Ein Block braucht so lange wie bei einem Spieler mit dem Werkzeug, lässt fallen, was er fallen ließe, und nutzt das Werkzeug ab. Das Werkzeug kommt über `equipment`; mit bloßen Händen gräbt sie nichts, und wo `mobGriefing` aus ist, ebenfalls nichts. Sie sucht nie einen Umweg: mit einem Ziel läuft sie geradewegs darauf zu und gräbt, was im Weg steht, und wo das Werkzeug den Block nicht schafft, steht sie und drückt. Braucht `hostile` |
 | `gustPower` | nein | float | `1.5` | Wie hart ein Windstoß wirft. Ein Treffer eines Mobs ist 0,4, eine starke Rückstoß-Verzauberung etwa 1 |
 | `threatLeast` | nein | int | `0` | Die niedrigste Bedrohungsstufe, in der ein Spieler oder anderer Träger im Umkreis von 128 Blöcken stehen muss, bevor die Variante natürlich spawnt. `0` spawnt wie gewohnt |
 | `threatHostile` | nein | int | `0` | Die niedrigste Bedrohungsstufe, in der ein Spieler stehen muss, bevor die Variante von sich aus auf ihn losgeht. Darunter ist die Variante diesem Spieler gegenüber friedlich, wehrt sich aber weiterhin, wenn sie getroffen wird. `0` greift wie gewohnt an |

@@ -17,8 +17,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(Entity.class) public abstract class MixinEntity {
     @Inject(method = "setFire", at = @At("HEAD"), cancellable = true) private void rdpl$neverCatchesFire(int seconds, CallbackInfo ci) {
-        if (!ContentEntities.fireproof((Entity) (Object) this)) { return; }
-
+        Entity self = (Entity) (Object) this;
+        if (!ContentEntities.fireproof(self) && !ContentEntities.struckFireless(self)) { return; }
         ci.cancel();
     }
 

@@ -32,8 +32,10 @@ public final class ContentAttributes {
         ATTRIBUTES.put(key("generic." + name), attribute);
     }
 
+    @Nullable public static IAttribute lookup(String name) { return ATTRIBUTES.get(key(name)); }
+
     @Nullable public static IAttribute find(String name, Object context) {
-        IAttribute attribute = ATTRIBUTES.get(key(name));
+        IAttribute attribute = lookup(name);
         if (attribute != null) { return attribute; }
         ContentLog.LOGGER.error("Unknown attribute '{}' in {}, skipping that modifier", name, context);
         return null;

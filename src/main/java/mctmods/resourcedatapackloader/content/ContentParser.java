@@ -1345,6 +1345,8 @@ public final class ContentParser {
                 strings(json, "immuneTo"),
                 Math.max(0.1F, JsonUtils.getFloat(json, "jumpMultiplier", 1.0F)),
                 Math.max(0.0F, JsonUtils.getFloat(json, "fallDamage", 1.0F)),
+                JsonUtils.getBoolean(json, "hitEffects", true),
+                strings(json, "ignoresEffects"),
                 Math.max(0.0F, JsonUtils.getFloat(json, "soundVolume", 1.0F)),
                 Math.max(0.1F, JsonUtils.getFloat(json, "soundPitch", 1.0F)),
                 Math.max(0.0F, JsonUtils.getFloat(json, "waterSlowdown", 0.8F)),
@@ -1414,7 +1416,19 @@ public final class ContentParser {
                 Math.max(0.1F, JsonUtils.getFloat(json, "gustPower", 1.5F)),
                 Math.max(0, JsonUtils.getInt(json, "threatLeast", 0)),
                 Math.max(0, JsonUtils.getInt(json, "threatHostile", 0)),
-                ContentTasks.parse(key, json));
+                ContentTasks.parse(key, json),
+                Math.max(0.0F, JsonUtils.getFloat(json, "attackReach", 0.0F)),
+                Math.max(-1, JsonUtils.getInt(json, "hurtResistance", -1)),
+                json.has("stepHeight") ? Math.max(0.0F, JsonUtils.getFloat(json, "stepHeight", 0.0F)) : -1.0F,
+                JsonUtils.getBoolean(json, "hitFire", true),
+                json.has("climbs") ? JsonUtils.getBoolean(json, "climbs", false) : null,
+                JsonUtils.getBoolean(json, "teleports", true),
+                json.has("knockback") ? Math.max(0.0F, JsonUtils.getFloat(json, "knockback", 0.4F)) : -1.0F,
+                json.has("explosionPower") || json.has("explosionFuse"),
+                JsonUtils.getBoolean(json, "digs", false),
+                JsonUtils.getString(sounds, "target", ""),
+                JsonUtils.getString(sounds, "explode", ""),
+                JsonUtils.getBoolean(json, "bright", false));
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {
