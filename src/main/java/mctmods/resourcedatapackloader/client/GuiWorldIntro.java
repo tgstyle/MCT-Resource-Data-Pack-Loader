@@ -31,16 +31,21 @@ import javax.annotation.Nullable;
     private static final int TEXT_WIDTH = 274;
     private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
+    private static final int BUTTONS = 36;
+    private static final int FITS = 4;
+    private static final float SMALLEST = 0.5F;
     private static final float DERIVED_SPEED = 0.25F;
     private static final int NEXT = 0;
     private static final int SKIP = 1;
     private final List<IntroPageDef> pages;
     private final List<String> lines = new ArrayList<>();
+    private final List<String> written = new ArrayList<>();
     @Nullable private final ISound music;
     private final boolean landBeingMade;
     private int page;
     private boolean sounding;
     private int wrapWidth = TEXT_WIDTH;
+    private float scale = 1.0F;
     private float totalScrollLength;
     private float ticks;
 
@@ -94,7 +99,6 @@ import javax.annotation.Nullable;
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawPageBackground(partialTicks);
         IntroPageDef def = pages.get(page);
-        float scale = def.textScale;
         float step = LINE_HEIGHT * scale;
         float y = offset(partialTicks);
         GlStateManager.pushMatrix();
@@ -157,7 +161,7 @@ import javax.annotation.Nullable;
 
     private float offset(float partialTicks) {
         IntroPageDef def = pages.get(page);
-        if (def.still()) { return (height - totalScrollLength) / 2.0F; }
+        if (def.still()) { return Math.max(0.0F, (height - BUTTONS - totalScrollLength) / 2.0F); }
         float start = startOffset();
         float span = duration();
         if (span <= 0.0F) { return endOffset(); }
@@ -178,9 +182,24 @@ import javax.annotation.Nullable;
 
     private void loadPage() {
         lines.clear();
-        totalScrollLength = 0.0F;
+        written.clear();
         IntroPageDef def = pages.get(page);
-        wrapWidth = (int) MathHelper.clamp((width - MARGIN) / def.textScale, 1.0F, TEXT_WIDTH);
+        scale = def.textScale;
+        read(def);
+        if (!def.still()) {
+            wrap((int) MathHelper.clamp((width - MARGIN) / scale, 1.0F, TEXT_WIDTH));
+            return;
+        }
+        float room = height - BUTTONS;
+        for (int tries = 0; tries < FITS; tries++) {
+            wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+            if (totalScrollLength <= room || scale <= SMALLEST) { return; }
+            scale = Math.max(SMALLEST, scale * room / totalScrollLength);
+        }
+        wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+    }
+
+    private void read(IntroPageDef def) {
         if (def.text == null) { return; }
         InputStream stream = null;
         try {
@@ -188,14 +207,19 @@ import javax.annotation.Nullable;
             BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
             String name = mc.getSession().getUsername();
             String line;
-            while ((line = reader.readLine()) != null) {
-                String text = line.replaceAll("PLAYERNAME", name);
-                if (text.isEmpty()) { lines.add(""); }
-                else { lines.addAll(fontRenderer.listFormattedStringToWidth(text, wrapWidth)); }
-            }
+            while ((line = reader.readLine()) != null) { written.add(line.replaceAll("PLAYERNAME", name)); }
         }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read intro text {}, showing the page without it: {}", def.text, ex.getMessage()); }
         finally { IOUtils.closeQuietly(stream); }
-        totalScrollLength = lines.size() * LINE_HEIGHT * def.textScale;
+    }
+
+    private void wrap(int widest) {
+        wrapWidth = widest;
+        lines.clear();
+        for (String text : written) {
+            if (text.isEmpty()) { lines.add(""); }
+            else { lines.addAll(fontRenderer.listFormattedStringToWidth(text, wrapWidth)); }
+        }
+        totalScrollLength = lines.size() * LINE_HEIGHT * scale;
     }
 }

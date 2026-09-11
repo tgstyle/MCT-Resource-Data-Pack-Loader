@@ -580,6 +580,8 @@ public final class ContentParser {
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "startsSays", "Round starting in {seconds}"),
                 opensBy(json, key),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"),
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "leaderSays", "Type /rdpl round start"),
+                lobbyAt(key, JsonUtils.getJsonObject(json, "opens", new JsonObject())),
                 JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false));
     }
 
@@ -636,19 +638,36 @@ public final class ContentParser {
                 standIn(json), standInAt(key, json), spawnAt(key, json));
     }
 
+    @Nullable private static int[] lobbyAt(ResourceLocation key, JsonObject opens) {
+        String asked = JsonUtils.getString(opens, "lobby", "").trim();
+        int colon = asked.indexOf(':');
+        int dimension = 0;
+        if (colon > 0) {
+            try { dimension = Integer.parseInt(asked.substring(0, colon).trim()); }
+            catch (NumberFormatException notADimension) {
+                ContentLog.LOGGER.error("Score file {} gives opens.lobby '{}', whose dimension is not a whole number, so the lobby has no area of its own", key, asked);
+                return null;
+            }
+            asked = asked.substring(colon + 1);
+        }
+        int[] at = point(key, asked, "Score file {} gives opens.lobby '{}', which is not three whole numbers x,y,z, so the lobby has no area of its own");
+        return at == null ? null : new int[] { dimension, at[0], at[1], at[2] };
+    }
+
     @Nullable private static int[] spawnAt(ResourceLocation key, JsonObject json) {
-        String at = JsonUtils.getString(json, "spawn", "").trim();
+        return point(key, JsonUtils.getString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own");
+    }
+
+    @Nullable private static int[] point(ResourceLocation key, String asked, String refused) {
+        String at = asked.trim();
         if (at.isEmpty()) { return null; }
         String[] parts = at.split(",");
-        if (parts.length != 3) {
-            ContentLog.LOGGER.error("Team file {} gives spawn something that is not x,y,z, so the side has no spawn of its own", key);
-            return null;
+        if (parts.length == 3) {
+            try { return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()) }; }
+            catch (NumberFormatException notNumbers) { ContentLog.LOGGER.debug("{} holds {}, which does not read as whole numbers", key, at); }
         }
-        try { return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()) }; }
-        catch (NumberFormatException notNumbers) {
-            ContentLog.LOGGER.error("Team file {} gives spawn something that is not three numbers, so the side has no spawn of its own", key);
-            return null;
-        }
+        ContentLog.LOGGER.error(refused, key, at);
+        return null;
     }
 
     private static String standIn(JsonObject json) {
@@ -658,17 +677,10 @@ public final class ContentParser {
 
     @Nullable private static int[] standInAt(ResourceLocation key, JsonObject json) {
         if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return null; }
-        String at = JsonUtils.getString(JsonUtils.getJsonObject(json, "standIn"), "at", "").trim();
-        String[] parts = at.split(",");
-        if (parts.length != 3) {
-            ContentLog.LOGGER.error("Team file {} gives standIn an 'at' that is not x,y,z, so no stand-in is kept", key);
-            return null;
-        }
-        try { return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()) }; }
-        catch (NumberFormatException notNumbers) {
-            ContentLog.LOGGER.error("Team file {} gives standIn an 'at' that is not three numbers, so no stand-in is kept", key);
-            return null;
-        }
+        String at = JsonUtils.getString(JsonUtils.getJsonObject(json, "standIn"), "at", "");
+        int[] found = point(key, at, "Team file {} gives standIn an 'at' of '{}', which is not three whole numbers x,y,z, so no stand-in is kept");
+        if (found == null && at.trim().isEmpty()) { ContentLog.LOGGER.error("Team file {} gives standIn no 'at', so no stand-in is kept", key); }
+        return found;
     }
 
     private static List<ItemGiveDef> gives(ResourceLocation key, JsonObject json) {

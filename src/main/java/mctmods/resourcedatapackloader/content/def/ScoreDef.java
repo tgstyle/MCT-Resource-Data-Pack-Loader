@@ -33,6 +33,8 @@ public final class ScoreDef {
     public final String startsSays;
     public final String opensBy;
     public final String opensSays;
+    public final String opensLeaderSays;
+    @Nullable public final int[] opensLobby;
     public final boolean endsLastStanding;
 
     public ScoreDef(String name, String displayName, IScoreCriteria criterion, String slot,
@@ -41,7 +43,7 @@ public final class ScoreDef {
                     boolean resultsCard, String resultsTitle, String resultsIcon, String resultsImage,
                     int resultsBackground, int resultsTicks,
                     boolean carries, boolean endsResets, int endsIntermission, String awardsTo, boolean endsLocksTeams,
-                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays, boolean endsLastStanding) {
+                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays, String opensLeaderSays, @Nullable int[] opensLobby, boolean endsLastStanding) {
         this.name = name;
         this.displayName = displayName;
         this.criterion = criterion;
@@ -70,6 +72,8 @@ public final class ScoreDef {
         this.startsSays = startsSays;
         this.opensBy = opensBy;
         this.opensSays = opensSays;
+        this.opensLeaderSays = opensLeaderSays;
+        this.opensLobby = opensLobby;
         this.endsLastStanding = endsLastStanding;
     }
 

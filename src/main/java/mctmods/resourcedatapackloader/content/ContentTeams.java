@@ -254,8 +254,7 @@ public final class ContentTeams {
             ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
             TeamDef def = held == null ? null : BY_NAME.get(held.getName());
             if (def == null || def.spawnAt == null) { continue; }
-            if (player.dimension != 0) { player.changeDimension(0); }
-            player.connection.setPlayerLocation(def.spawnAt[0] + 0.5D, def.spawnAt[1], def.spawnAt[2] + 0.5D, player.rotationYaw, player.rotationPitch);
+            mctmods.resourcedatapackloader.util.world.Travel.to(player, 0, def.spawnAt[0] + 0.5D, def.spawnAt[1], def.spawnAt[2] + 0.5D, player.rotationYaw, player.rotationPitch);
         }
     }
 
@@ -453,7 +452,7 @@ public final class ContentTeams {
             if (!standing.isEmpty()) { ContentLog.LOGGER.info("A player stands on {}, so its {} stand-in(s) of {} step aside", def.displayName, standing.size(), def.standIn); }
             return;
         }
-        if (!standing.isEmpty() || ContentScoring.eliminating() && !now) { return; }
+        if (!standing.isEmpty() || ContentScoring.standInWaits() && !now) { return; }
         int[] at = def.standInAt;
         if (at == null || !world.isBlockLoaded(new net.minecraft.util.math.BlockPos(at[0], at[1], at[2]))) { return; }
         Entity made = EntityList.createEntityByIDFromName(id, world);
@@ -511,7 +510,7 @@ public final class ContentTeams {
             if (board.getTeam(def.name) == null) { field(world); }
             board.addPlayerToTeam(member, def.name);
             if (one instanceof EntityPlayerMP) {
-                mctmods.resourcedatapackloader.util.Says.tell((EntityPlayerMP) one, "You were picked for " + def.displayName, def.color);
+                if (mctmods.resourcedatapackloader.content.worldgen.ContentPregen.arrived((EntityPlayerMP) one)) { mctmods.resourcedatapackloader.util.Says.tell((EntityPlayerMP) one, "You were picked for " + def.displayName, def.color); }
                 seated(world, member, def);
             }
             ContentLog.LOGGER.info("{} was picked for {}", one.getName(), def.displayName);

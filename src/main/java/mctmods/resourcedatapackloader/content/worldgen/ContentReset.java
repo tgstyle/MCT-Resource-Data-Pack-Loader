@@ -87,8 +87,7 @@ public final class ContentReset {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Landing landing = landingFor(server, asked, player);
             if (landing == null) { continue; }
-            if (player.dimension != landing.dimension) { player.changeDimension(landing.dimension); }
-            player.connection.setPlayerLocation(landing.x + 0.5D, landing.y, landing.z + 0.5D, player.rotationYaw, player.rotationPitch);
+            mctmods.resourcedatapackloader.util.world.Travel.to(player, landing.dimension, landing.x + 0.5D, landing.y, landing.z + 0.5D, player.rotationYaw, player.rotationPitch);
         }
     }
 

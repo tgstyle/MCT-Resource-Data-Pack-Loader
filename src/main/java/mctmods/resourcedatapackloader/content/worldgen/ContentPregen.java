@@ -436,9 +436,13 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             Says.tell(player, greeting, TextFormatting.GREEN);
             return;
         }
-        if (RDPLNetwork.sendNote(player, greeting)) { return; }
+        show(player, greeting, TextFormatting.GREEN);
+    }
+
+    public static void show(EntityPlayerMP player, String said, TextFormatting color) {
+        if (said.isEmpty() || RDPLNetwork.sendNote(player, said)) { return; }
         player.connection.sendPacket(new SPacketTitle(10, 70, 20));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(greeting).setStyle(new Style().setColor(TextFormatting.GREEN))));
+        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(said).setStyle(new Style().setColor(color))));
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
     }
 
