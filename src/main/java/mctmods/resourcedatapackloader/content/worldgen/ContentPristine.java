@@ -100,35 +100,6 @@ public final class ContentPristine {
         catch (IOException broken) { ContentLog.LOGGER.warn("The pristine copy could not be stamped, so it will not be trusted later", broken); }
     }
 
-    public static boolean bare(WorldServer world) {
-        Path region = world.getSaveHandler().getWorldDirectory().toPath().resolve("region");
-        if (!Files.isDirectory(region)) { return true; }
-        try (java.util.stream.Stream<Path> held = Files.list(region)) { return !held.findAny().isPresent(); }
-        catch (IOException unreadable) { return false; }
-    }
-
-    public static int give(MinecraftServer server, WorldServer world, IntConsumer along) {
-        Path kept = holdingFor(server, world);
-        Path save = world.getSaveHandler().getWorldDirectory().toPath();
-        try {
-            List<Path> wanted = worth(kept);
-            if (wanted.isEmpty()) { return 0; }
-            int done = 0;
-            for (Path from : wanted) {
-                Path to = save.resolve(kept.relativize(from).toString());
-                Files.createDirectories(to.getParent());
-                Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
-                along.accept(++done * 100 / wanted.size());
-            }
-            ContentLog.LOGGER.info("Restored {} from the pristine copy, {} file(s), instead of generating it", save.getFileName(), wanted.size());
-            return wanted.size();
-        }
-        catch (IOException broken) {
-            ContentLog.LOGGER.error("The pristine copy of {} could not be restored, so the world is generated as usual", save.getFileName(), broken);
-            return 0;
-        }
-    }
-
     public static int take(MinecraftServer server, WorldServer world, IntConsumer along) {
         Path save = world.getSaveHandler().getWorldDirectory().toPath();
         Path kept = holdingFor(server, world);
