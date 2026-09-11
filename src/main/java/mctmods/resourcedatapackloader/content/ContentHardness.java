@@ -197,9 +197,9 @@ public final class ContentHardness {
 
     public static void salt(long value) { salt = value; }
 
-    public static boolean keeps(@Nullable IBlockState state, @Nullable EntityLivingBase who) {
+    public static boolean breaksAway(@Nullable IBlockState state, @Nullable EntityLivingBase who) {
         HardnessDef def = groupFor(state, who);
-        return def != null && def.keeps;
+        return def == null || !def.keeps;
     }
 
     public static boolean mayBreak(@Nullable EntityLivingBase who, @Nullable IBlockState state, ItemStack held) {
@@ -221,25 +221,23 @@ public final class ContentHardness {
         return id != null && def.entities.contains(id.toString());
     }
 
-    public static boolean mayDig(EntityLivingBase mob, @Nullable IBlockState state, ItemStack held) {
+    public static boolean digBarred(EntityLivingBase mob, @Nullable IBlockState state, ItemStack held) {
         HardnessDef def = groupFor(state, mob);
-        if (def == null || !def.adventure || mob.world.getWorldInfo().getGameType() != GameType.ADVENTURE) { return true; }
-        return mayBreak(mob, state, held);
+        if (def == null || !def.adventure || mob.world.getWorldInfo().getGameType() != GameType.ADVENTURE) { return false; }
+        return !mayBreak(mob, state, held);
     }
 
-    public static boolean dig(EntityLivingBase digger, BlockPos pos) {
+    public static void dig(EntityLivingBase digger, BlockPos pos) {
         World world = digger.world;
         IBlockState state = world.getBlockState(pos);
         int earned = mctmods.resourcedatapackloader.content.entity.ContentEntities.collectsExperience(digger) ? state.getBlock().getExpDrop(state, world, pos, 0) : 0;
-        if (!keeps(state, null)) {
-            boolean broke = world.destroyBlock(pos, true);
-            if (broke && earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
-            return broke;
+        if (breaksAway(state, null)) {
+            if (world.destroyBlock(pos, true) && earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
+            return;
         }
         state.getBlock().dropBlockAsItem(world, pos, state, 0);
         if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
         world.playEvent(2001, pos, Block.getStateId(state));
-        return true;
     }
 
     public static String swapToken(HardnessDef def) { return "swap:" + def.registryName; }
@@ -256,13 +254,13 @@ public final class ContentHardness {
         return missing;
     }
 
-    private static boolean inGroup(HardnessDef def, IBlockState state) {
-        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return false; }
-        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return false; }
+    private static boolean outsideGroup(HardnessDef def, IBlockState state) {
+        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return true; }
+        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return true; }
         List<HardnessDef> whole = WHOLE.get(state.getBlock());
-        if (whole != null && whole.contains(def)) { return true; }
+        if (whole != null && whole.contains(def)) { return false; }
         List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
-        return exact != null && exact.contains(def);
+        return exact == null || !exact.contains(def);
     }
 
     public static int swap(World world, int chunkX, int chunkZ, HardnessDef def) {
@@ -280,7 +278,7 @@ public final class ContentHardness {
                 for (int x = 0; x < 16; x++) {
                     for (int z = 0; z < 16; z++) {
                         IBlockState found = section.get(x, y, z);
-                        if (found == target || !inGroup(def, found)) { continue; }
+                        if (found == target || outsideGroup(def, found)) { continue; }
                         pos.setPos(baseX + x, bottom + y, baseZ + z);
                         world.setBlockState(pos, target, SWAP_FLAGS);
                         swapped++;
@@ -339,7 +337,7 @@ public final class ContentHardness {
         IBlockState state = event.getState();
         ItemStack held = player.getHeldItemMainhand();
         if (event.isCanceled() && player.interactionManager.getGameType() == GameType.ADVENTURE && mayBreak(player, state, held)) { event.setCanceled(false); }
-        if (event.isCanceled() || player.interactionManager.isCreative() || !keeps(state, player)) { return; }
+        if (event.isCanceled() || player.interactionManager.isCreative() || breaksAway(state, player)) { return; }
         event.setCanceled(true);
         World world = event.getWorld();
         BlockPos pos = event.getPos();

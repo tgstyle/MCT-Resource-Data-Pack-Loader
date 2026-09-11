@@ -14,7 +14,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public final class ContentReset {
         strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, "resetClearsExperience", Config.chunks.resetClearsExperience));
         if (inventory) { ContentTeams.giveAll(server); }
         String runs = ContentPregen.says("resetRuns", Config.chunks.resetRuns).trim();
-        if (!runs.isEmpty()) { call(server, runs); }
+        if (!runs.isEmpty()) { mctmods.resourcedatapackloader.util.Functions.run(server, runs, "The reset"); }
         place(server);
         ContentPregen.releaseEveryone(true);
         ContentScoring.starting(server);
@@ -81,16 +80,6 @@ public final class ContentReset {
             }
             if (experience) { player.addExperienceLevel(-(player.experienceLevel + 1)); }
         }
-    }
-
-    private static void call(MinecraftServer server, String named) {
-        net.minecraft.advancements.FunctionManager manager = server.getFunctionManager();
-        net.minecraft.command.FunctionObject held = manager.getFunction(new ResourceLocation(named));
-        if (held == null) {
-            ContentLog.LOGGER.error("The reset asks to run the function {}, which no pack provides, so nothing is run", named);
-            return;
-        }
-        manager.execute(held, server);
     }
 
     private static void place(MinecraftServer server) {

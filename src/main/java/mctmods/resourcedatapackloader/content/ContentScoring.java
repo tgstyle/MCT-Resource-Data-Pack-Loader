@@ -19,7 +19,9 @@ import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.GameType;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -51,6 +53,8 @@ public final class ContentScoring {
     private static int waiting;
     @Nullable private static ScoreDef resetting;
     private static boolean closed;
+    private static final Map<String, GameType> OUT = new LinkedHashMap<>();
+    private static final Set<String> IN_PLAY = new LinkedHashSet<>();
 
     private ContentScoring() {}
 
@@ -172,23 +176,30 @@ public final class ContentScoring {
         long running = System.currentTimeMillis() - opened;
         for (ScoreDef def : BY_NAME.values()) {
             if (def.endsAfterMinutes <= 0 || FINISHED.contains(def.name)) { continue; }
-            if (running >= (long) def.endsAfterMinutes * A_MINUTE) { finish(def, "time"); }
+            if (running >= (long) def.endsAfterMinutes * A_MINUTE) { finish(def, "time", null); }
         }
+        if (starting == 0) { standing(FMLCommonHandler.instance().getMinecraftServerInstance()); }
     }
 
     private static void watch(ScoreDef def, int standing) {
         if (def.endsAtScore <= 0 || standing < def.endsAtScore || FINISHED.contains(def.name)) { return; }
-        finish(def, "score");
+        finish(def, "score", null);
     }
 
-    private static void finish(ScoreDef def, String why) {
+    private static void finish(ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name)) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
         List<String> lines = standings(server, def);
+        if (def.endsLastStanding) { backIn(server); }
+        if (winner != null) {
+            mctmods.resourcedatapackloader.content.def.TeamDef side = ContentTeams.named(winner);
+            lines.add(0, (side == null ? winner : side.displayName) + " stood last");
+        }
+        else if ("last standing".equals(why)) { lines.add(0, "No side was left standing"); }
         ContentLog.LOGGER.info("The {} round is over on {}: {}", def.displayName, why, lines);
         ContentLog.LOGGER.info("Kills this round by the killer's kind: {}; deaths by kind: {}; kills of their own side: {}", KILLS, DEATHS, OWN);
-        award(server, def);
+        award(server, def, winner);
         if (def.endsResets) {
             resetting = def;
             waiting = Math.max(1, def.endsIntermission);
@@ -212,7 +223,7 @@ public final class ContentScoring {
         }
     }
 
-    private static void award(MinecraftServer server, ScoreDef def) {
+    private static void award(MinecraftServer server, ScoreDef def, @Nullable String winner) {
         if (def.awardsTo.isEmpty()) { return; }
         Scoreboard board = server.getWorld(0).getScoreboard();
         ScoreObjective round = board.getObjective(def.name);
@@ -221,9 +232,9 @@ public final class ContentScoring {
             ContentLog.LOGGER.error("The round {} awards to {}, which is not an objective this pack keeps, so no round win is recorded", def.name, def.awardsTo);
             return;
         }
-        Score best = null;
+        Score best = winner == null ? null : board.getOrCreateScore(winner, round);
         boolean tied = false;
-        for (Score one : board.getSortedScores(round)) {
+        for (Score one : winner == null ? board.getSortedScores(round) : new ArrayList<Score>()) {
             if (best == null || one.getScorePoints() > best.getScorePoints()) {
                 best = one;
                 tied = false;
@@ -241,7 +252,7 @@ public final class ContentScoring {
         if (whole == null || FINISHED.contains(whole.name)) { return; }
         int played = 0;
         for (Score one : board.getSortedScores(match)) { played += one.getScorePoints(); }
-        if (whole.endsAfterRounds > 0 && played >= whole.endsAfterRounds) { finish(whole, "rounds"); }
+        if (whole.endsAfterRounds > 0 && played >= whole.endsAfterRounds) { finish(whole, "rounds", null); }
         else { watch(whole, held.getScorePoints()); }
     }
 
@@ -264,7 +275,81 @@ public final class ContentScoring {
         return null;
     }
 
-    public static boolean closed() { return closed; }
+    public static boolean eliminating() {
+        if (closed || starting > 0) { return false; }
+        for (ScoreDef def : BY_NAME.values()) {
+            if (def.endsLastStanding && !FINISHED.contains(def.name)) { return true; }
+        }
+        return false;
+    }
+
+    private static void standing(@Nullable MinecraftServer server) {
+        if (server == null || !eliminating()) { return; }
+        Map<String, Integer> sides = new LinkedHashMap<>();
+        WorldServer overworld = server.getWorld(0);
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            if (OUT.containsKey(player.getName()) || player.isSpectator()) { continue; }
+            String side = sideOf(overworld, player, player.getName());
+            if (side != null) { sides.merge(side, 1, Integer::sum); }
+        }
+        for (WorldServer world : server.worlds) {
+            for (Entity one : world.loadedEntityList) {
+                if (one instanceof EntityPlayer || one.isDead || !(one instanceof net.minecraft.entity.EntityLivingBase) || ((net.minecraft.entity.EntityLivingBase) one).getHealth() <= 0.0F) { continue; }
+                String side = sideOf(world, one, one.getCachedUniqueIdString());
+                if (side != null) { sides.merge(side, 1, Integer::sum); }
+            }
+        }
+        if (IN_PLAY.isEmpty()) {
+            IN_PLAY.addAll(sides.keySet());
+            if (IN_PLAY.size() < 2) { ContentLog.LOGGER.info("Only {} side(s) are in play, so the round cannot end on the last side standing", IN_PLAY.size()); }
+            else { ContentLog.LOGGER.info("The sides in play this round are {}", IN_PLAY); }
+            return;
+        }
+        if (IN_PLAY.size() < 2) { return; }
+        List<String> left = new ArrayList<>();
+        for (String side : IN_PLAY) {
+            if (sides.containsKey(side)) { left.add(side); }
+        }
+        if (left.size() > 1) { return; }
+        String winner = left.isEmpty() ? null : left.get(0);
+        for (ScoreDef def : BY_NAME.values()) {
+            if (def.endsLastStanding && !FINISHED.contains(def.name)) { finish(def, "last standing", winner); }
+        }
+    }
+
+    @SubscribeEvent public static void onPlayerDeath(LivingDeathEvent event) {
+        if (!(event.getEntityLiving() instanceof EntityPlayerMP) || event.isCanceled() || !eliminating()) { return; }
+        EntityPlayerMP player = (EntityPlayerMP) event.getEntityLiving();
+        if (sideOf(player.world, player, player.getName()) == null || OUT.containsKey(player.getName())) { return; }
+        OUT.put(player.getName(), player.interactionManager.getGameType());
+        ContentLog.LOGGER.info("{} is out of the round", player.getName());
+    }
+
+    @SubscribeEvent public static void onRespawn(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
+        if (!(event.player instanceof EntityPlayerMP) || !OUT.containsKey(event.player.getName())) { return; }
+        EntityPlayerMP player = (EntityPlayerMP) event.player;
+        if (!eliminating()) {
+            player.setGameType(OUT.remove(player.getName()));
+            return;
+        }
+        player.setGameType(GameType.SPECTATOR);
+        Says.tell(player, "You are out until the round ends", TextFormatting.GRAY);
+    }
+
+    @SubscribeEvent public static void onBack(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.player instanceof EntityPlayerMP) || eliminating() || !OUT.containsKey(event.player.getName())) { return; }
+        event.player.setGameType(OUT.remove(event.player.getName()));
+    }
+
+    private static void backIn(MinecraftServer server) {
+        for (Map.Entry<String, GameType> one : new LinkedHashMap<>(OUT).entrySet()) {
+            EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(one.getKey());
+            if (player == null) { continue; }
+            if (player.isEntityAlive()) { player.setGameType(one.getValue()); }
+            else { continue; }
+            OUT.remove(one.getKey());
+        }
+    }
 
     private static String waitingLine(MinecraftServer server, ScoreDef lobby) {
         List<String> leaders = mctmods.resourcedatapackloader.content.ContentTeams.leaders(server.getWorld(0));
@@ -287,7 +372,7 @@ public final class ContentScoring {
     public static String start(MinecraftServer server, EntityPlayer who, boolean operator) {
         if (lobbyDef() == null) { return "This pack's rounds open on their own"; }
         if (!closed) { return "The round is already running"; }
-        if (!operator && !mctmods.resourcedatapackloader.content.ContentTeams.leads(who)) { return "Only a side's leader starts the round"; }
+        if (!operator && mctmods.resourcedatapackloader.content.ContentTeams.leadsNoSide(who)) { return "Only a side's leader starts the round"; }
         List<String> reading = new ArrayList<>();
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             if (mctmods.resourcedatapackloader.content.extra.ContentIntroPlay.reading(player.getUniqueID())) { reading.add(player.getName()); }
@@ -311,6 +396,7 @@ public final class ContentScoring {
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities)) { mctmods.resourcedatapackloader.content.worldgen.ContentReset.sweep(server); }
         roundOver();
         mctmods.resourcedatapackloader.content.ContentTeams.placeAtSpawns(server);
+        mctmods.resourcedatapackloader.content.ContentTeams.standInsNow(server);
     }
 
     public static void roundOver() {
@@ -328,6 +414,7 @@ public final class ContentScoring {
             ContentLog.LOGGER.info("The {} match is over, so its standing is cleared for the next one", def.displayName);
         }
         opened = System.currentTimeMillis();
+        IN_PLAY.clear();
         KILLS.clear();
         DEATHS.clear();
         OWN.clear();

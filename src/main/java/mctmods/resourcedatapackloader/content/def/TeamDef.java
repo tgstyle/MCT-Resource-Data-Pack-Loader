@@ -25,6 +25,7 @@ public final class TeamDef {
     public final String leadOn;
     public final String leadIs;
     public final String leadSays;
+    public final String leadRuns;
     public final boolean balance;
     public final boolean scoreboard;
     public final int picks;
@@ -38,7 +39,7 @@ public final class TeamDef {
                    boolean friendlyFire, boolean mobFriendlyFire, boolean seeFriendlyInvisibles, Team.EnumVisible nameTags,
                    Team.EnumVisible deathMessages, Team.CollisionRule collision,
                    List<String> entities, List<String> players, int[] spawnBox, boolean joinable,
-                   String lead, String leadOn, String leadIs, String leadSays, boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt, @Nullable int[] spawnAt) {
+                   String lead, String leadOn, String leadIs, String leadSays, String leadRuns, boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt, @Nullable int[] spawnAt) {
         this.name = name;
         this.displayName = displayName;
         this.color = color;
@@ -58,6 +59,7 @@ public final class TeamDef {
         this.leadOn = leadOn;
         this.leadIs = leadIs;
         this.leadSays = leadSays;
+        this.leadRuns = leadRuns;
         this.balance = balance;
         this.scoreboard = scoreboard;
         this.picks = picks;
@@ -70,7 +72,7 @@ public final class TeamDef {
 
     public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }
 
-    public boolean leads() { return !"none".equals(lead); }
+    public boolean leaderless() { return "none".equals(lead); }
 
     public boolean holds(double x, double y, double z) {
         return spawnBox != null

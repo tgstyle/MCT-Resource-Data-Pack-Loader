@@ -33,8 +33,6 @@ public final class ContentMobExperience {
 
     public static int level(Entity entity) { return entity.getEntityData().getInteger(LEVEL); }
 
-    public static int total(Entity entity) { return entity.getEntityData().getInteger(TOTAL); }
-
     public static void collect(EntityLiving mob) {
         AxisAlignedBB touch = mob.getEntityBoundingBox().grow(1.0D, 0.5D, 1.0D);
         boolean ready = mob.ticksExisted % 2 == 0;

@@ -3072,7 +3072,8 @@ A side is a real team on the game's own scoreboard, so `/scoreboard teams list` 
   "picks": 0,
   "picksFrom": ["players"],
   "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
-  "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" }
+  "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" },
+  "leadRuns": "mypack:lead_chosen"
 }
 ```
 
@@ -3098,12 +3099,13 @@ A side is a real team on the game's own scoreboard, so `/scoreboard teams list` 
 | `leadOn` | text | empty | With `topScore`, the objective the members are ranked by. It is worked out afresh every time it is read, so it follows the score |
 | `leadIs` | text | empty | With `appointed`, the player who leads |
 | `leadSays` | text | `You are the current round leader` | Told to a player as the lead comes to them: as they arrive on a side they lead, as they claim it, or as a `first` lead passes to them, when it carries who left. `{side}` is the side's display name; empty tells nothing |
+| `leadRuns` | text | empty | A function, `namespace:path`, run once each time the lead passes to a player: the first lead, and every hand-on after. It runs as the lead, at their position, with the permission a function an advancement rewards has, so `@s` is the lead. Checked every second; a lead who is offline is run for when they are next on. A restart decides the lead afresh |
 | `balance` | boolean | `false` | Whether `/rdpl team join` with no name may put a player here. Among the sides that allow it, the one with the fewest players is chosen |
 | `scoreboard` | boolean | `true` | Whether the side stands as a team on the game's scoreboard. Off fields no team at all: its mobs wear the side's color in their name instead, nothing keeps them from fighting each other, and no points land on it, since scoring goes by the team |
 | `picks` | number | `0` | How many members this side draws at random. Each round open the side lets its last draw go back where they stood and draws afresh from everything `picksFrom` names; between draws a login or a spawn from that pool fills an empty seat at once. One player out of everyone, on a side of their own, is what it is for |
 | `picksFrom` | list | empty | What the draw is made from: `players` for everyone online, and entity ids for every living mob of that kind |
 | `gives` | list | empty | Items put in a player's inventory as they join the side, an item name for one or `{ "item", "count", "unbreakable" }` for more, or for one that never wears, into any free slot and dropped at their feet when none is. Handed out again after a reset that clears inventories (`resetClearsInventory`) |
-| `standIn` | object | none | A mob that holds the side while no player is on it: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` keeps one of that entity alive at that spot in the overworld, summoning it when it is missing, and removes it the moment a player joins the side, so a game plays against the AI until a player takes the part. Checked every five seconds; the spot must be in loaded ground |
+| `standIn` | object | none | A mob that holds the side while no player is on it: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` keeps one of that entity alive at that spot in the overworld, summoning it when it is missing, and removes it the moment a player joins the side, so a game plays against the AI until a player takes the part. Checked every five seconds; the spot must be in loaded ground. While a round that ends on `ends.lastStanding` runs, a fallen stand-in is not replaced until the next round opens |
 
 Three ways to join, and a side may use all of them. `entities` names entity ids, and anything of that type joins as it spawns, which is how a pack gives mobs sides without touching the mobs. `spawnBox` claims a corner of the world, and anything spawning inside joins, which suits an arena where both sides use the same mob. `players` names players outright. Beyond those, a player can join with `/rdpl team join <name>` unless the side sets `joinable` to false, and leave with `/rdpl team leave`.
 
@@ -3163,6 +3165,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `ends.intermissionSays` | text | `Round cooldown {seconds}` | Shown on the action bar every second of the intermission after a round ends, with `{seconds}` counting down to the reset. Empty shows nothing |
 | `ends.startsSays` | text | `Round starting in {seconds}` | Shown on the action bar through the five-second count that opens the next round after the reset, with `{seconds}` counting down. Empty shows nothing |
 | `ends.locksTeams` | boolean | `true` | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway |
+| `ends.lastStanding` | boolean | `false` | The round ends when only one side is left standing. The sides in play are those with a player or a living mob on them as the round opens, two at the least; a player who dies is out, back as a spectator until the round is over, and a side whose players are all out or gone and whose mobs are all dead has fallen. The side left standing takes the round, and `awardsTo` records it for that side whatever the score. With `resets` and `opens.by: leader` the game then goes back to the lobby. A side's `standIn` is not summoned again while such a round runs |
 | `opens.by` | text | `auto` | `auto` opens the next round on its own, five seconds after the reset. `leader` holds the game in a lobby instead: after the reset, and when the world first loads, nothing is scored and no clock runs, sides may be joined and left freely, and the round opens only when a side's lead, or an operator, runs `/rdpl round start`, and not while anyone is still reading the world intro; then the five-second count runs, the draws are made, and each side is put at its `spawn` |
 | `opens.says` | text | `Waiting for {leader} to start the round` | Told to everyone as the lobby opens and to each player as they arrive in it, past the intro and any hold, `{leader}` being the leads of every side, or `a leader` while nobody leads. Empty says nothing |
 | `results.card` | boolean | `false` | Show the standings as a card rather than as chat |

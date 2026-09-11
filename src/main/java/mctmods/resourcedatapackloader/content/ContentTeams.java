@@ -44,6 +44,8 @@ public final class ContentTeams {
     private static final Map<String, Map<String, String>> PICKED = new LinkedHashMap<>();
     private static final int STAND_IN_EVERY = 100;
     private static final Map<String, List<String>> ARRIVALS = new LinkedHashMap<>();
+    private static final Map<String, String> DECIDED = new LinkedHashMap<>();
+    private static final int DECIDED_EVERY = 20;
     private static final Map<String, TeamDef> BY_NAME = new LinkedHashMap<>();
 
     private ContentTeams() {}
@@ -231,11 +233,11 @@ public final class ContentTeams {
         return null;
     }
 
-    public static boolean leads(EntityPlayer player) {
+    public static boolean leadsNoSide(EntityPlayer player) {
         for (TeamDef def : BY_NAME.values()) {
-            if (player.getName().equals(leadOf(player.world, def))) { return true; }
+            if (player.getName().equals(leadOf(player.world, def))) { return false; }
         }
-        return false;
+        return true;
     }
 
     public static List<String> leaders(World world) {
@@ -318,7 +320,7 @@ public final class ContentTeams {
     }
 
     @SuppressWarnings({"ConstantConditions", "ConstantValue"}) @Nullable public static String leadOf(World world, TeamDef def) {
-        if (!def.leads() || world == null) { return null; }
+        if (def.leaderless() || world == null) { return null; }
         if ("appointed".equals(def.lead)) { return def.leadIs.isEmpty() ? null : def.leadIs; }
         if ("vote".equals(def.lead)) { return voted(world, def); }
         if ("first".equals(def.lead)) { return firstHere(world, def, null); }
@@ -401,15 +403,41 @@ public final class ContentTeams {
     }
 
     @SubscribeEvent public static void onTick(TickEvent.WorldTickEvent event) {
-        if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END || event.world.provider.getDimension() != 0 || event.world.getTotalWorldTime() % STAND_IN_EVERY != 0) { return; }
+        if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END || event.world.provider.getDimension() != 0) { return; }
         MinecraftServer server = event.world.getMinecraftServer();
         if (server == null) { return; }
+        if (event.world.getTotalWorldTime() % DECIDED_EVERY == 0) { decided(server, event.world); }
+        if (event.world.getTotalWorldTime() % STAND_IN_EVERY != 0) { return; }
         for (TeamDef def : BY_NAME.values()) {
-            if (def.standsIn() && def.scoreboard) { standIn(server, (net.minecraft.world.WorldServer) event.world, def); }
+            if (def.standsIn() && def.scoreboard) { standIn(server, (net.minecraft.world.WorldServer) event.world, def, false); }
         }
     }
 
-    private static void standIn(MinecraftServer server, net.minecraft.world.WorldServer world, TeamDef def) {
+    private static void decided(MinecraftServer server, World world) {
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.leadRuns.isEmpty() || def.leaderless()) { continue; }
+            String lead = leadOf(world, def);
+            if (lead == null) {
+                DECIDED.remove(def.name);
+                continue;
+            }
+            if (lead.equals(DECIDED.get(def.name))) { continue; }
+            EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(lead);
+            if (player == null) { continue; }
+            DECIDED.put(def.name, lead);
+            ContentLog.LOGGER.info("{} is decided as the lead of {}, so {} runs", lead, def.displayName, def.leadRuns);
+            mctmods.resourcedatapackloader.util.Functions.runAs(player, def.leadRuns, "The lead of " + def.name);
+        }
+    }
+
+    public static void standInsNow(MinecraftServer server) {
+        net.minecraft.world.WorldServer world = server.getWorld(0);
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.standsIn() && def.scoreboard) { standIn(server, world, def, true); }
+        }
+    }
+
+    private static void standIn(MinecraftServer server, net.minecraft.world.WorldServer world, TeamDef def, boolean now) {
         boolean manned = false;
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             if (onTeam(player.world, player.getName(), def)) { manned = true; break; }
@@ -425,7 +453,7 @@ public final class ContentTeams {
             if (!standing.isEmpty()) { ContentLog.LOGGER.info("A player stands on {}, so its {} stand-in(s) of {} step aside", def.displayName, standing.size(), def.standIn); }
             return;
         }
-        if (!standing.isEmpty()) { return; }
+        if (!standing.isEmpty() || ContentScoring.eliminating() && !now) { return; }
         int[] at = def.standInAt;
         if (at == null || !world.isBlockLoaded(new net.minecraft.util.math.BlockPos(at[0], at[1], at[2]))) { return; }
         Entity made = EntityList.createEntityByIDFromName(id, world);

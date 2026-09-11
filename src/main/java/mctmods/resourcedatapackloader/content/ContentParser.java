@@ -579,7 +579,8 @@ public final class ContentParser {
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "intermissionSays", "Round cooldown {seconds}"),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "startsSays", "Round starting in {seconds}"),
                 opensBy(json, key),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"));
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"),
+                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false));
     }
 
     private static String opensBy(JsonObject json, ResourceLocation key) {
@@ -626,6 +627,7 @@ public final class ContentParser {
                 JsonUtils.getString(json, "leadOn", "").trim(),
                 JsonUtils.getString(json, "leadIs", "").trim(),
                 JsonUtils.getString(json, "leadSays", "You are the current round leader"),
+                JsonUtils.getString(json, "leadRuns", "").trim(),
                 JsonUtils.getBoolean(json, "balance", false),
                 JsonUtils.getBoolean(json, "scoreboard", true),
                 Math.max(0, JsonUtils.getInt(json, "picks", 0)),

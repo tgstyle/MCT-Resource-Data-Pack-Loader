@@ -126,7 +126,7 @@ public final class EntityAIDig extends EntityAIBase {
         IBlockState state = mob.world.getBlockState(pos);
         if (state.getMaterial() == Material.AIR || state.getMaterial().isLiquid() || state.getBlockHardness(mob.world, pos) < 0.0F) { return false; }
         ItemStack tool = mob.getHeldItemMainhand();
-        if (!ContentHardness.mayDig(mob, state, tool)) { return false; }
+        if (ContentHardness.digBarred(mob, state, tool)) { return false; }
         String needed = state.getBlock().getHarvestTool(state);
         if (needed == null || !tool.getItem().getToolClasses(tool).contains(needed)) { return false; }
         return tool.getItem().getHarvestLevel(tool, needed, null, state) >= state.getBlock().getHarvestLevel(state);
