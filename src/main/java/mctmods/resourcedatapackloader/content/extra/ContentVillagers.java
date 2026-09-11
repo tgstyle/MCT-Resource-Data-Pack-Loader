@@ -56,10 +56,12 @@ public final class ContentVillagers {
     public static boolean load() {
         if (loaded) { return wanted(); }
         loaded = true;
-        if (Config.contentOff() || !Config.content.villagers()) { return false; }
-        Json.eachFile(PackManager.VILLAGERS, "villager file", (key, contents) -> {
-            if (!ContentRegistry.reserved(key)) { readVillager(key, contents); }
-        });
+        if (!Config.content.villagers()) { return false; }
+        if (!Config.contentOff()) {
+            Json.eachFile(PackManager.VILLAGERS, "villager file", (key, contents) -> {
+                if (!ContentRegistry.reserved(key)) { readVillager(key, contents); }
+            });
+        }
         Json.eachFile(PackManager.TRADES, "trade file", (key, contents) -> {
             if (!ContentRegistry.reserved(key)) { readTrades(key, contents); }
         });

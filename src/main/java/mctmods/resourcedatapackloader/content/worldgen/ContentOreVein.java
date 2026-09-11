@@ -25,6 +25,9 @@ public final class ContentOreVein implements IContentChunkShape {
     private static final int FULL = 16;
     private static final int WANING = 20;
     private static final float TUBE_WALL = 5.0F;
+    private static final int KIND_PLAIN = 0;
+    private static final int KIND_BANDED = 1;
+    private static final int KIND_TUBE = 2;
     private final ShapeDef shape;
     private final int size;
     private final AmountDef attempts;
@@ -77,6 +80,15 @@ public final class ContentOreVein implements IContentChunkShape {
         return found;
     }
 
+    @Override public List<BlockPos> originsIn(ContentPlacer placer, ChunkPos chunk, Predicate<BlockPos> valid) {
+        List<BlockPos> origins = new ArrayList<>();
+        for (Vein vein : veinsOf(placer.level().getSeed(), placer.floorY(), placer.ceilingY(), chunk.x, chunk.z)) {
+            BlockPos pos = vein.pos();
+            if (valid.test(pos)) { origins.add(pos); }
+        }
+        return origins;
+    }
+
     @Override public void generateChunk(ContentPlacer placer, ChunkPos chunk, Predicate<BlockPos> valid) {
         int floor = placer.floorY();
         int ceiling = placer.ceilingY();
@@ -99,6 +111,9 @@ public final class ContentOreVein implements IContentChunkShape {
 
     private int write(ContentPlacer placer, RandomSource random, long seed, Vein vein, ChunkPos chunk, int lowest, int highest) {
         int placed = 0;
+        int kind = ShapeDef.BANDED.equals(shape.pattern()) ? KIND_BANDED : ShapeDef.TUBE.equals(shape.pattern()) ? KIND_TUBE : KIND_PLAIN;
+        float threshold = shape.threshold();
+        float density = shape.density();
         for (int x = chunk.getMinBlockX(); x <= chunk.getMaxBlockX(); x++) {
             int offX = x - vein.x();
             for (int z = chunk.getMinBlockZ(); z <= chunk.getMaxBlockZ(); z++) {
@@ -109,11 +124,11 @@ public final class ContentOreVein implements IContentChunkShape {
                     float away = Mth.sqrt(offX * offX + offY * offY + offZ * offZ);
                     float bound = boundary(away);
                     if (bound <= 0.0F) { continue; }
-                    if (shape.density() < 1.0F && Hashes.unit(seed, x, y, z) >= shape.density()) { continue; }
-                    float value = pattern(x, y, z) * bound;
-                    if (value <= shape.threshold()) { continue; }
+                    if (density < 1.0F && Hashes.unit(seed, x, y, z) >= density) { continue; }
+                    float value = pattern(kind, x, y, z) * bound;
+                    if (value <= threshold) { continue; }
                     if (placer.occupied(x, y, z)) { continue; }
-                    float tier = (value - shape.threshold()) / (1.0F - shape.threshold());
+                    float tier = (value - threshold) / (1.0F - threshold);
                     BlockState state = tier >= RICH && rich != null ? rich : tier >= NORMAL || poor == null ? placer.palette().choose(random) : poor;
                     if (placer.placeExactly(state, x, y, z)) { placed++; }
                 }
@@ -129,9 +144,9 @@ public final class ContentOreVein implements IContentChunkShape {
         return 0.5F * (1.0F - (away - WANING) / (REACH - WANING));
     }
 
-    private float pattern(int x, int y, int z) {
-        if (ShapeDef.BANDED.equals(shape.pattern())) { return banded(x, y, z); }
-        if (ShapeDef.TUBE.equals(shape.pattern())) { return tube(x, y, z); }
+    private float pattern(int kind, int x, int y, int z) {
+        if (kind == KIND_BANDED) { return banded(x, y, z); }
+        if (kind == KIND_TUBE) { return tube(x, y, z); }
         return plain(x, y, z);
     }
 

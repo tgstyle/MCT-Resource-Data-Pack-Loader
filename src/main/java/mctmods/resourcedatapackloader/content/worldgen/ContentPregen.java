@@ -17,6 +17,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
@@ -197,11 +198,16 @@ public final class ContentPregen {
 
     private static boolean madeUpFront(ResourceLocation dimension) { return !ids("pregenDimensionsWhenEntered", Config.chunks.pregenDimensionsWhenEntered()).contains(dimension); }
 
+    public static int spawnRadius() {
+        if (ContentControl.off(ContentControl.CHUNKS)) { return -1; }
+        return ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius());
+    }
+
     public static void onServerStarted(ServerStartedEvent event) {
         MinecraftServer server = event.getServer();
         if (ContentControl.off(ContentControl.CHUNKS) || busy()) { return; }
         int spawnChunks = ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius());
-        if (spawnChunks >= 0) { ContentLog.LOGGER.info("spawnChunkRadius is set to {}, which this line cannot apply: the game has no such setting before 1.20.5, so the spawn chunks stay as they are", spawnChunks); }
+        if (spawnChunks >= 0) { ContentLog.LOGGER.info("Holding {} chunk(s) around the spawn point through the spawn ticket the server took as the world started", spawnChunks); }
         int radius = wantedOnNewWorld();
         PregenMemory memory = PregenMemory.of(server);
         CompoundTag run = memory.run();
@@ -344,7 +350,7 @@ public final class ContentPregen {
         running = worker;
         if (chainBegun == 0L) { chainBegun = System.currentTimeMillis(); }
         heldDayTime = server.overworld().getDayTime();
-        holdEveryone(server);
+        holdEveryone(server, true);
         return worker.order.total();
     }
 
@@ -463,13 +469,36 @@ public final class ContentPregen {
                 ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);
             }
             chainBegun = 0L;
+            if (!stopping) { keepPristine(server); }
             Says.tellAll(server, ending, ChatFormatting.GREEN);
             releaseEveryone(server, !stopping);
         }
         if (asked != null) { asked.sendSystemMessage(Component.literal(Lang.tr(asked, "rdpl.pregen.finished", report())).withStyle(ChatFormatting.GREEN)); }
     }
 
-    private static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
+    public static void tellBar(MinecraftServer server, String said) {
+        ClientboundSetActionBarTextPacket packet = new ClientboundSetActionBarTextPacket(Component.literal(said));
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { player.connection.send(packet); }
+    }
+
+    private static void keepPristine(MinecraftServer server) {
+        if (!ContentControl.flag(ContentControl.CHUNKS, "pregenBackup", Config.chunks.pregenBackup()) || ContentPristine.already(server)) { return; }
+        String said = says("pregenBackupSays", Config.chunks.pregenBackupSays());
+        try { server.saveAllChunks(true, true, true); }
+        catch (RuntimeException notSaved) { ContentLog.LOGGER.warn("The worlds could not be flushed before the pristine copy, copying what is on disk", notSaved); }
+        long begun = System.currentTimeMillis();
+        int[] last = { -1 };
+        int files = ContentPristine.take(server, along -> {
+            if (said.isEmpty() || along == last[0]) { return; }
+            last[0] = along;
+            tellBar(server, said + " " + along + "%");
+        });
+        if (files > 0) { ContentPristine.mark(server); }
+        if (files > 0 && !said.isEmpty()) { tellBar(server, said + " " + Lang.tr("rdpl.pregen.done")); }
+        ContentLog.LOGGER.info("The pristine copy took {} ms", System.currentTimeMillis() - begun);
+    }
+
+    public static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
 
     private static String defaulted(String key, String fallback, String shipped, String langKey, @Nullable ServerPlayer player) {
         String said = says(key, fallback);
@@ -527,11 +556,16 @@ public final class ContentPregen {
         for (Held held : HELD.values()) { held.player.connection.send(still); }
     }
 
-    private static void holdEveryone(MinecraftServer server) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { hold(player); }
+    public static void anchored(ServerPlayer player) {
+        Held held = HELD.get(player.getUUID());
+        if (held != null) { held.rebase(player); }
     }
 
-    private static void hold(ServerPlayer player) {
+    public static void holdEveryone(MinecraftServer server, boolean fog) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { hold(player, fog); }
+    }
+
+    private static void hold(ServerPlayer player, boolean fog) {
         if (HELD.containsKey(player.getUUID())) { return; }
         CompoundTag data = player.getPersistentData();
         GameType before = data.contains(HELD_MODE) ? GameType.byId(data.getInt(HELD_MODE)) : player.gameMode.getGameModeForPlayer();
@@ -539,7 +573,7 @@ public final class ContentPregen {
         Held held = new Held(player, before);
         HELD.put(player.getUUID(), held);
         player.setGameMode(GameType.SPECTATOR);
-        RDPLNetwork.sendHold(player, true, held.warning);
+        RDPLNetwork.sendHold(player, true, held.warning, fog);
         if (!RDPLNetwork.reaches(player)) { flash(player, held); }
         player.connection.send(new ClientboundSetTimePacket(player.serverLevel().getGameTime(), heldDayTime, false));
         startFlashing();
@@ -606,7 +640,7 @@ public final class ContentPregen {
         player.connection.send(new ClientboundSetTitleTextPacket(Component.empty()));
     }
 
-    private static void releaseEveryone(MinecraftServer server, boolean welcomed) {
+    public static void releaseEveryone(MinecraftServer server, boolean welcomed) {
         if (HELD.isEmpty()) { return; }
         stopFlashing();
         int released = 0;
@@ -639,7 +673,7 @@ public final class ContentPregen {
         player.setPortalCooldown();
         ServerLevel level = player.serverLevel();
         player.connection.send(new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)));
-        RDPLNetwork.sendHold(player, false, "");
+        RDPLNetwork.sendHold(player, false, "", false);
         player.connection.send(new ClientboundClearTitlesPacket(true));
     }
 
@@ -649,12 +683,12 @@ public final class ContentPregen {
         if (pendingStart != null) {
             if (startTick < 0) { startTick = player.server.getTickCount() + 60; }
             heldDayTime = player.server.overworld().getDayTime();
-            hold(player);
+            hold(player, true);
             return;
         }
         ContentPregen worker = running;
         if (worker == null) { return; }
-        hold(player);
+        hold(player, true);
         String said = worker.sofar();
         if (!said.isEmpty()) { Says.tell(player, said, ChatFormatting.YELLOW); }
     }

@@ -61,7 +61,7 @@ public final class ContentWorldgen {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (!Config.worldgen.load()) { return; }
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
             WorldgenDef def = ContentWorldgenParser.parse(key, contents);
             if (def != null) { DEFS.put(key, def); }

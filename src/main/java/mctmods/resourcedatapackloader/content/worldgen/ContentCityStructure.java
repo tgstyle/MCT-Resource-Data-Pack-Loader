@@ -15,9 +15,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
 
+import javax.annotation.Nullable;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +35,8 @@ public final class ContentCityStructure extends Structure {
     private static final int LAMP_LEAST = 7;
     private static final int LAMP_SPREAD = 6;
     private static final long SALT = 0x51A3C7E9B1D0F42BL;
+    private static final int LEAST_OPEN = 8;
+    private static final int SLIDE = 48;
     private static final int TRESTLE_DROP = 3;
     private static final int SPAN_LEAST = 4;
     private static final int VERGE_RUN = 3;
@@ -40,10 +44,10 @@ public final class ContentCityStructure extends Structure {
     public ContentCityStructure(StructureSettings settings) { super(settings); }
 
     @Override @Nonnull protected Optional<GenerationStub> findGenerationPoint(@Nonnull GenerationContext context) {
-        if (!ContentCity.laying()) { return Optional.empty(); }
+        if (ContentCity.idle()) { return Optional.empty(); }
         ChunkPos chunk = context.chunkPos();
-        if (Math.floorMod(chunk.x, CityPlan.CHUNKS) != 0 || Math.floorMod(chunk.z, CityPlan.CHUNKS) != 0) { return Optional.empty(); }
-        CityPlan plan = CityPlan.of(context.seed(), Math.floorDiv(chunk.x, CityPlan.CHUNKS), Math.floorDiv(chunk.z, CityPlan.CHUNKS));
+        if (Math.floorMod(chunk.x, CityPlan.chunks()) != CityPlan.chunks() / 2 || Math.floorMod(chunk.z, CityPlan.chunks()) != CityPlan.chunks() / 2) { return Optional.empty(); }
+        CityPlan plan = CityPlan.of(context.seed(), Math.floorDiv(chunk.x, CityPlan.chunks()), Math.floorDiv(chunk.z, CityPlan.chunks()));
         if (plan == null) { return Optional.empty(); }
         BlockPos origin = new BlockPos(plan.windowX(), context.chunkGenerator().getSeaLevel(), plan.windowZ());
         return Optional.of(new GenerationStub(origin, builder -> pieces(context, plan, builder)));
@@ -54,21 +58,34 @@ public final class ContentCityStructure extends Structure {
         for (CityPlan.Junction junction : plan.junctions()) { levels.put(junction, junctionLevel(context, junction)); }
         int run = CityPlan.flatRun();
         Map<CityPlan.Rail, int[]> rails = new HashMap<>();
-        for (CityPlan.Rail rail : plan.rails()) { rails.put(rail, layRail(context, plan, rail, builder)); }
+        List<BoundingBox> claims = new ArrayList<>();
+        for (CityPlan.Rail rail : plan.rails()) { rails.put(rail, layRail(context, plan, rail, claims, builder)); }
+        Well well = well(context, plan, levels);
         Map<CityPlan.Line, int[]> profiles = new HashMap<>();
-        for (CityPlan.Line line : plan.alongX()) { profiles.put(line, lay(context, plan, line, levels, run, rails, builder)); }
-        for (CityPlan.Line line : plan.alongZ()) { profiles.put(line, lay(context, plan, line, levels, run, rails, builder)); }
-        for (CityPlan.Plot plot : plan.plots()) { seat(context, plan, plot, profiles, builder); }
-        for (Map.Entry<CityPlan.Line, int[]> held : profiles.entrySet()) { verges(held.getKey(), plan, held.getValue(), builder); }
-        plaza(context, plan, levels, builder);
+        List<StructurePiece> hatches = new ArrayList<>();
+        for (CityPlan.Line line : plan.alongX()) { profiles.put(line, lay(context, plan, line, levels, run, rails, well, hatches, builder)); }
+        for (CityPlan.Line line : plan.alongZ()) { profiles.put(line, lay(context, plan, line, levels, run, rails, well, hatches, builder)); }
+        int yielded = 0;
+        for (CityPlan.Plot plot : plan.plots()) {
+            if (claimed(claims, plot)) {
+                yielded++;
+                continue;
+            }
+            seat(context, plan, plot, profiles, builder);
+        }
+        if (yielded > 0) { ContentLog.LOGGER.debug("{} plot(s) of the district at {}, {} make way for open track and station stairs", yielded, plan.originX(), plan.originZ()); }
+        plaza(context, plan, well, builder);
         for (Map.Entry<CityPlan.Junction, Integer> crossing : levels.entrySet()) {
             CityPlan.Junction junction = crossing.getKey();
             if (!junction.alongX().covers(junction.alongZ().middle()) || !junction.alongZ().covers(junction.alongX().middle())) { continue; }
+            if (junction.alongX().alley() || junction.alongZ().alley() || (well != null && plan.plazaAt(junction.alongX()) && plan.plazaAt(junction.alongZ()))) { continue; }
             if (!plan.emits(junction.fromX(), junction.fromZ())) { continue; }
             PathIntersectDef design = ContentPathIntersects.forJunction(context.seed(), junction.fromX(), junction.fromZ());
             if (design == null) { continue; }
             builder.addPiece(new ContentCityIntersectPiece(crossing.getValue(), design.key().toString(), junction.fromX(), junction.toX(), junction.fromZ(), junction.toZ(), design.mouth().size()));
         }
+        for (StructurePiece hatch : hatches) { builder.addPiece(hatch); }
+        for (Map.Entry<CityPlan.Line, int[]> held : profiles.entrySet()) { verges(held.getKey(), plan, held.getValue(), builder); }
     }
 
     private static int junctionLevel(GenerationContext context, CityPlan.Junction junction) {
@@ -83,7 +100,7 @@ public final class ContentCityStructure extends Structure {
         return taken[taken.length / 2];
     }
 
-    private static int[] lay(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, int[]> rails, StructurePiecesBuilder builder) {
+    private static int[] lay(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, int[]> rails, @Nullable Well well, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
         int start = plan.spanStart(line);
         int span = plan.spanLength(line);
         int[] profile = new int[span];
@@ -103,11 +120,12 @@ public final class ContentCityStructure extends Structure {
                 if (row >= start && row < start + mine.length) { mine[row - start] = false; }
             }
         }
+        boolean[] sewered = mine.clone();
         for (Map.Entry<CityPlan.Rail, int[]> laid : rails.entrySet()) {
             CityPlan.Rail rail = laid.getKey();
-            if (rail.alongX() == line.alongX()) { continue; }
+            if (rail.subway() || rail.alongX() == line.alongX()) { continue; }
             int[] over = laid.getValue();
-            int seat = Math.floorMod(line.middle() - (rail.alongX() ? plan.originX() : plan.originZ()) + CityPlan.railTail(), over.length);
+            int seat = Math.floorMod(line.middle() - (rail.alongX() ? plan.originX() : plan.originZ()) + plan.tail(rail, true), over.length);
             CityGrade.pin(profile, held, start, rail.at(), rail.last(), over[seat]);
             for (int row = rail.at(); row <= rail.last(); row++) {
                 if (row >= start && row < start + mine.length) { mine[row - start] = false; }
@@ -125,20 +143,137 @@ public final class ContentCityStructure extends Structure {
         for (int at = 0; at < bored.length; at++) { held[at] |= bored[at]; }
         CityGrade.smooth(profile, held);
         String paving = ContentCity.paving(line.alley());
+        boolean[] paved = mine.clone();
+        if (well != null && plan.plazaAt(line)) {
+            BoundingBox square = well.box();
+            int reach = CityPlan.plazaPaved();
+            int low = (line.alongX() ? square.minX() : square.minZ()) - reach;
+            int high = (line.alongX() ? square.maxX() : square.maxZ()) + reach;
+            for (int row = low; row <= high; row++) {
+                if (row >= start && row < start + paved.length) { paved[row - start] = false; }
+            }
+        }
         int from = 0;
+        int pieces = 0;
         for (int at = 1; at <= profile.length; at++) {
-            boolean ends = at == profile.length || profile[at] != profile[from] || mine[at] != mine[from] || bridged[at] != bridged[from] || bored[at] != bored[from];
+            boolean ends = at == profile.length || profile[at] != profile[from] || paved[at] != paved[from] || bridged[at] != bridged[from] || bored[at] != bored[from];
             if (!ends) { continue; }
-            if (mine[from] && line.covers(start + from) && line.covers(start + at - 1) && plan.emitsAlong(line, start + from)) { builder.addPiece(piece(line, start + from, start + at - 1, profile[from], paving, bridged[from], bored[from])); }
+            int low = Math.max(start + from, line.from());
+            int high = Math.min(start + at - 1, line.to());
+            if (paved[from] && low <= high && plan.emitsAlong(line, low)) {
+                builder.addPiece(piece(line, low, high, profile[from], paving, bridged[from], bored[from]));
+                pieces++;
+            }
             from = at;
         }
-        lamps(context, plan, line, start, profile, mine, builder);
+        if (line.alley()) { ContentLog.LOGGER.debug("The alley at {} running {} to {} is laid in {} piece(s) at y {} to {}", line.at(), line.from(), line.to(), pieces, profile[Math.max(0, Math.min(profile.length - 1, line.from() - start))], profile[Math.max(0, Math.min(profile.length - 1, line.to() - start))]); }
+        if (ContentCity.sewers()) { sewers(plan, line, start, profile, sewered, bridged, rails, well, hatches, builder); }
+        lamps(context, plan, line, start, profile, paved, well, builder);
         ends(context, plan, line, start, profile, paving, bridged, builder);
         return profile;
     }
 
+    private static void sewers(CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] mine, boolean[] bridged, Map<CityPlan.Rail, int[]> rails, @Nullable Well well, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
+        int[] bores = bores(plan, line, rails);
+        int[] rows = sewerRows(plan, line, well);
+        if (line.alongX()) {
+            for (int row : hatchRows(plan, line, well)) {
+                int index = row - start;
+                if (!line.covers(row) || index < 0 || index >= profile.length || !mine[index] || bridged[index] || !plan.emitsAlong(line, row)) { continue; }
+                hatches.add(new ContentCitySewerHatchPiece(row, line.middle() + 1, profile[index]));
+            }
+        }
+        int from = 0;
+        for (int at = 1; at <= profile.length; at++) {
+            boolean ends = at == profile.length || profile[at] != profile[from] || mine[at] != mine[from] || bridged[at] != bridged[from];
+            if (!ends) { continue; }
+            int least = Math.max(start + from, line.from());
+            int most = Math.min(start + at - 1, line.to());
+            if (mine[from] && !bridged[from] && least <= most && plan.emitsAlong(line, least)) {
+                int fromX = line.alongX() ? least : line.middle();
+                int fromZ = line.alongX() ? line.middle() : least;
+                int toX = line.alongX() ? most : line.middle();
+                int toZ = line.alongX() ? line.middle() : most;
+                builder.addPiece(new ContentCitySewerPiece(fromX, fromZ, toX, toZ, profile[from], line.middle(), line.alongX(), rows, bores));
+            }
+            from = at;
+        }
+        joins(plan, line, start, profile, mine, bridged, rows, bores, builder);
+    }
+
+    private static void joins(CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] mine, boolean[] bridged, int[] rows, int[] bores, StructurePiecesBuilder builder) {
+        for (CityPlan.Line other : plan.crossing(line)) {
+            if (!other.covers(line.middle())) { continue; }
+            for (int end = 0; end < 2; end++) {
+                boolean low = end == 0;
+                int edge = low ? line.from() : line.to();
+                int beyond = low ? edge - 1 : edge + 1;
+                if (beyond < other.at() || beyond > other.last()) { continue; }
+                int least = low ? other.middle() + 1 : beyond;
+                int most = low ? beyond : other.middle() - 1;
+                int index = edge - start;
+                if (least > most || index < 0 || index >= profile.length || !mine[index] || bridged[index] || !plan.emitsAlong(line, least)) { continue; }
+                int fromX = line.alongX() ? least : line.middle();
+                int fromZ = line.alongX() ? line.middle() : least;
+                int toX = line.alongX() ? most : line.middle();
+                int toZ = line.alongX() ? line.middle() : most;
+                builder.addPiece(new ContentCitySewerPiece(fromX, fromZ, toX, toZ, profile[index], line.middle(), line.alongX(), rows, bores));
+                ContentLog.LOGGER.debug("The sewer under the {} at {} runs on from row {} to {} to join the sewer under the {} at {}", line.alley() ? "alley" : "street", line.at(), edge, low ? least : most, other.alley() ? "alley" : "street", other.at());
+            }
+        }
+    }
+
+    private static int[] sewerRows(CityPlan plan, CityPlan.Line line, @Nullable Well well) {
+        List<Integer> rows = new ArrayList<>();
+        for (CityPlan.Line other : plan.crossing(line)) {
+            if (other.from() > line.last() + 1 || other.to() < line.at() - 1) { continue; }
+            rows.add(other.middle());
+        }
+        if (well != null && ContentCity.sewerWellEntrance() && (line.equals(plan.plazaRow()) || line.equals(plan.plazaColumn()))) {
+            BoundingBox box = well.box();
+            rows.add((line.alongX() ? box.minX() : box.minZ()) - ContentCitySewerLoopPiece.LOOP);
+            rows.add((line.alongX() ? box.maxX() : box.maxZ()) + ContentCitySewerLoopPiece.LOOP);
+        }
+        int[] found = new int[rows.size()];
+        for (int at = 0; at < found.length; at++) { found[at] = rows.get(at); }
+        return found;
+    }
+
+    private static int[] hatchRows(CityPlan plan, CityPlan.Line line, @Nullable Well well) {
+        boolean plazaStreet = well != null && (line.equals(plan.plazaRow()) || line.equals(plan.plazaColumn()));
+        List<Integer> rows = new ArrayList<>();
+        for (CityPlan.Line other : plan.crossing(line)) {
+            if (plazaStreet && (other.equals(plan.plazaRow()) || other.equals(plan.plazaColumn()))) { continue; }
+            if (other.from() > line.last() + 1 || other.to() < line.at() - 1) { continue; }
+            rows.add(other.middle());
+        }
+        int[] found = new int[rows.size()];
+        for (int at = 0; at < found.length; at++) { found[at] = rows.get(at); }
+        return found;
+    }
+
+    private static int[] bores(CityPlan plan, CityPlan.Line line, Map<CityPlan.Rail, int[]> rails) {
+        List<Integer> found = new ArrayList<>();
+        int reach = (CityPlan.railWidth(true) - 1) / 2 + 1;
+        for (Map.Entry<CityPlan.Rail, int[]> held : rails.entrySet()) {
+            CityPlan.Rail rail = held.getKey();
+            if (!rail.subway() || rail.alongX() == line.alongX()) { continue; }
+            int[] over = held.getValue();
+            int start = (rail.alongX() ? plan.originX() : plan.originZ()) - plan.tail(rail, true);
+            int seat = line.middle() - start;
+            if (seat < 0 || seat >= over.length) { continue; }
+            found.add(rail.middle());
+            found.add(over[seat] - 1);
+            found.add(over[seat] + ContentCityRailPiece.CLEAR + 1);
+            found.add(reach);
+        }
+        int[] out = new int[found.size()];
+        for (int at = 0; at < out.length; at++) { out[at] = found.get(at); }
+        return out;
+    }
+
     private static void ends(GenerationContext context, CityPlan plan, CityPlan.Line line, int start, int[] profile, String paving, boolean[] bridged, StructurePiecesBuilder builder) {
-        if (!line.endsLow() && !line.endsHigh()) { return; }
+        if (line.alley() || (!line.endsLow() && !line.endsHigh())) { return; }
         RandomSource roll = RandomSource.create(context.seed() ^ SALT ^ (line.at() * 132897987541L + (line.alongX() ? 3L : 5L)));
         String closed = ContentCity.deadEnd(roll);
         int reach = Math.max(2, line.width() - 1);
@@ -182,9 +317,9 @@ public final class ContentCityStructure extends Structure {
         return new ContentCityPierPiece(line.at(), from, line.last(), to, level, line.middle(), false, line.width(), style, head);
     }
 
-    private static void lamps(GenerationContext context, CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] mine, StructurePiecesBuilder builder) {
+    private static void lamps(GenerationContext context, CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] mine, @Nullable Well well, StructurePiecesBuilder builder) {
         CityCross cross = CityCross.of(line.width(), line.alley());
-        if (cross.curb() <= 0) { return; }
+        if (line.alley() || cross.curb() <= 0) { return; }
         String named = ContentCity.lampStructure();
         ResourceLocation template = named.isEmpty() ? null : ResourceLocation.tryParse(named);
         if (template != null && context.structureTemplateManager().get(template).isEmpty()) {
@@ -193,18 +328,68 @@ public final class ContentCityStructure extends Structure {
         }
         if (template == null && ContentCity.lampBlock().isEmpty()) { return; }
         int height = ContentCity.lampHeight();
+        Vec3i span = template == null ? new Vec3i(3, height + 1, 3) : context.structureTemplateManager().get(template).orElseThrow().getSize(Rotation.NONE);
+        int offset = template == null ? -1 : 0;
+        int skipped = 0;
         RandomSource roll = RandomSource.create(context.seed() ^ SALT ^ (line.at() * 341873128712L + (line.alongX() ? 1L : 2L)));
         for (int at = LAMP_LEAST + roll.nextInt(LAMP_SPREAD); at < profile.length; at += LAMP_LEAST + roll.nextInt(LAMP_SPREAD)) {
-            if (!mine[at]) { continue; }
+            if (!mine[at] || !line.covers(start + at)) { continue; }
             for (int side = -1; side <= 1; side += 2) {
                 int across = line.middle() + side * cross.lampOffset();
                 int x = line.alongX() ? start + at : across;
                 int z = line.alongX() ? across : start + at;
                 if (!plan.emits(x, z)) { continue; }
+                BoundingBox stood = new BoundingBox(x + offset, 0, z + offset, x + offset + span.getX() - 1, 0, z + offset + span.getZ() - 1);
+                if (cleared(plan, line, well, stood)) {
+                    skipped++;
+                    continue;
+                }
                 if (template != null) { builder.addPiece(new ContentCityPlotPiece(context.structureTemplateManager(), template, Rotation.NONE, 100, new BlockPos(x, profile[at] + 1, z), "")); }
                 else { builder.addPiece(new ContentCityLampPiece(x, profile[at] + 1, z, height)); }
             }
         }
+        if (skipped > 0) { ContentLog.LOGGER.debug("The street at {} leaves out {} lamp(s) that would stand on the plaza, on another street or alley, or across the district edge, where a piece laid later clears the air over its paving", line.at(), skipped); }
+    }
+
+    private static boolean cleared(CityPlan plan, CityPlan.Line line, @Nullable Well well, BoundingBox stood) {
+        if ((line.alongX() ? stood.minX() : stood.minZ()) < line.from() || (line.alongX() ? stood.maxX() : stood.maxZ()) > line.to()) { return true; }
+        if (well != null) {
+            int reach = CityPlan.plazaPaved() + CityPlan.walkWidth() + ContentCityPlazaPiece.MOUTH_MOST;
+            BoundingBox box = well.box();
+            if (stood.maxX() >= box.minX() - reach && stood.minX() <= box.maxX() + reach && stood.maxZ() >= box.minZ() - reach && stood.minZ() <= box.maxZ() + reach) { return true; }
+        }
+        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
+            for (CityPlan.Line other : lines) {
+                if (other.equals(line)) { continue; }
+                int leastX = other.alongX() ? other.from() : other.at();
+                int mostX = other.alongX() ? other.to() : other.last();
+                int leastZ = other.alongX() ? other.at() : other.from();
+                int mostZ = other.alongX() ? other.last() : other.to();
+                if (stood.maxX() >= leastX && stood.minX() <= mostX && stood.maxZ() >= leastZ && stood.minZ() <= mostZ) { return true; }
+            }
+        }
+        return false;
+    }
+
+    public static boolean plantedAt(long seed, int x, int z) {
+        if (ContentCity.decorNames().isEmpty()) { return false; }
+        CityPlan plan = CityPlan.of(seed, Math.floorDiv(x, CityPlan.district()), Math.floorDiv(z, CityPlan.district()));
+        if (plan == null) { return false; }
+        boolean spot = false;
+        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
+            for (CityPlan.Line line : lines) {
+                int along = line.alongX() ? x : z;
+                int across = line.alongX() ? z : x;
+                if (Math.abs(across - line.middle()) != CityCross.of(line.width(), line.alley()).curb() + 1) { continue; }
+                if (Math.floorMod(along, VERGE_RUN) != 0 || !line.covers(along) || !plan.emitsAlong(line, along)) { continue; }
+                spot = true;
+                break;
+            }
+            if (spot) { break; }
+        }
+        if (!spot) { return false; }
+        String named = ContentCity.decor(RandomSource.create(ContentCityBlocks.spot(x, z)));
+        return named != null && ContentWorldgen.byName(named) != null;
     }
 
     private static void verges(CityPlan.Line line, CityPlan plan, int[] profile, StructurePiecesBuilder builder) {
@@ -243,23 +428,39 @@ public final class ContentCityStructure extends Structure {
         builder.addPiece(new ContentCityDecorPiece(line.alongX(), alongs, heights, sides, box));
     }
 
-    private static void plaza(GenerationContext context, CityPlan plan, Map<CityPlan.Junction, Integer> levels, StructurePiecesBuilder builder) {
+    private record Well(ResourceLocation template, BoundingBox box, int level) {}
+
+    @Nullable private static Well well(GenerationContext context, CityPlan plan, Map<CityPlan.Junction, Integer> levels) {
         CityPlan.Junction middle = new CityPlan.Junction(plan.plazaRow(), plan.plazaColumn());
         Integer level = levels.get(middle);
-        if (level == null || !middle.alongX().covers(middle.alongZ().middle()) || !middle.alongZ().covers(middle.alongX().middle())) { return; }
+        if (level == null || !middle.alongX().covers(middle.alongZ().middle()) || !middle.alongZ().covers(middle.alongX().middle())) {
+            ContentLog.LOGGER.debug("The district at {}, {} has no plaza: its middle streets do not cross", plan.originX(), plan.originZ());
+            return null;
+        }
         RandomSource roll = RandomSource.create(context.seed() ^ SALT ^ (plan.originX() * 341873128712L + plan.originZ() * 132897987541L));
         String named = ContentCity.wellStructure(roll);
-        if (named == null) { return; }
+        if (named == null) { return null; }
         ResourceLocation template = ResourceLocation.tryParse(named);
         if (template == null || context.structureTemplateManager().get(template).isEmpty()) {
             ContentCity.missingWell(named);
-            return;
+            return null;
         }
         Vec3i span = context.structureTemplateManager().get(template).orElseThrow().getSize(Rotation.NONE);
         int x = (middle.fromX() + middle.toX()) / 2 - span.getX() / 2;
         int z = (middle.fromZ() + middle.toZ()) / 2 - span.getZ() / 2;
-        if (!plan.emits(x, z)) { return; }
-        builder.addPiece(new ContentCityPlotPiece(context.structureTemplateManager(), template, Rotation.NONE, 100, new BlockPos(x, level, z), ""));
+        if (!plan.emits(x, z)) { return null; }
+        return new Well(template, new BoundingBox(x, level, z, x + span.getX() - 1, level + span.getY() - 1, z + span.getZ() - 1), level);
+    }
+
+    private static void plaza(GenerationContext context, CityPlan plan, @Nullable Well well, StructurePiecesBuilder builder) {
+        if (well == null) { return; }
+        BoundingBox box = well.box();
+        builder.addPiece(new ContentCityPlotPiece(context.structureTemplateManager(), well.template(), Rotation.NONE, 100, new BlockPos(box.minX(), well.level() + 1, box.minZ()), ""));
+        PathIntersectDef design = ContentPathIntersects.forJunction(context.seed(), box.minX(), box.minZ());
+        builder.addPiece(new ContentCityPlazaPiece(box.minX(), box.minZ(), box.maxX(), box.maxZ(), well.level(), CityPlan.plazaPaved(), CityPlan.walkWidth(), CityCross.of(CityPlan.streetFullWidth(), false).core(), design == null ? "" : design.key().toString(), plan.plazaColumn().middle(), plan.plazaRow().middle()));
+        ContentLog.LOGGER.debug("The well {} stands at {}, {} to {}, {} on the plaza of the district at {}, {}, at level {}", well.template(), box.minX(), box.minZ(), box.maxX(), box.maxZ(), plan.originX(), plan.originZ(), well.level());
+        if (!ContentCity.sewers() || !ContentCity.sewerWellEntrance()) { return; }
+        builder.addPiece(new ContentCitySewerLoopPiece(box.minX(), box.minZ(), box.maxX(), box.maxZ(), well.level(), plan.plazaColumn().middle(), plan.plazaRow().middle()));
     }
 
     private static void seat(GenerationContext context, CityPlan plan, CityPlan.Plot plot, Map<CityPlan.Line, int[]> profiles, StructurePiecesBuilder builder) {
@@ -295,20 +496,34 @@ public final class ContentCityStructure extends Structure {
         return new ContentCityPiece(line.at(), from, line.last(), to, level, paving, line.middle(), false, line.alley(), line.width(), bridged, bored);
     }
 
-    private static int[] layRail(GenerationContext context, CityPlan plan, CityPlan.Rail rail, StructurePiecesBuilder builder) {
-        int tail = CityPlan.railTail();
-        int start = (rail.alongX() ? plan.originX() : plan.originZ()) - tail;
-        int[] profile = new int[CityPlan.DISTRICT + tail * 2];
+    private static int[] layRail(GenerationContext context, CityPlan plan, CityPlan.Rail rail, List<BoundingBox> claims, StructurePiecesBuilder builder) {
+        boolean sub = rail.subway();
+        int climb = ContentCity.railClimb(sub);
+        int tailLow = plan.tail(rail, true);
+        int tailHigh = plan.tail(rail, false);
+        int start = (rail.alongX() ? plan.originX() : plan.originZ()) - tailLow;
+        int[] profile = new int[CityPlan.district() + tailLow + tailHigh];
         boolean[] held = new boolean[profile.length];
         int[] ground = new int[profile.length];
-        for (int at = 0; at < profile.length; at++) { profile[at] = alongRail(context, rail, start + at); }
-        CityGrade.flatRuns(profile, start, ContentCity.railClimb());
-        CityGrade.climb(profile, held, ContentCity.railClimb());
-        boolean[] bridged = railBridges(context, rail, start, profile, held, ground);
-        CityGrade.climb(profile, held, ContentCity.railClimb());
-        boolean[] bored = CityGrade.buriedRuns(profile, ground, held, bridged, ContentCity.railTunnelDepth());
+        int under = sub ? ContentCity.subwayDepth() : 0;
+        int[] rising = sub ? surfacing(context, plan, rail, start, profile.length) : null;
+        for (int at = 0; at < profile.length; at++) {
+            int top = alongRail(context, rail, start + at);
+            ground[at] = top;
+            profile[at] = top - (surfaced(rising, start + at) ? 0 : under);
+        }
+        CityGrade.flatRuns(profile, start, climb);
+        CityGrade.climb(profile, held, climb);
+        boolean[] bridged = new boolean[profile.length];
+        boolean[] bored = new boolean[profile.length];
+        if (sub) { for (int at = 0; at < bored.length; at++) { bored[at] = !(surfaced(rising, start + at) && profile[at] >= ground[at] - 1); } }
+        else {
+            bridged = railBridges(context, rail, start, profile, held, ground);
+            CityGrade.climb(profile, held, climb);
+            bored = CityGrade.buriedRuns(profile, ground, held, bridged, ContentCity.railTunnelDepth());
+        }
         for (int at = 0; at < bored.length; at++) { held[at] |= bored[at]; }
-        CityGrade.climb(profile, held, ContentCity.railClimb());
+        CityGrade.climb(profile, held, climb);
         int from = 0;
         for (int at = 1; at <= profile.length; at++) {
             boolean ends = at == profile.length || profile[at] != profile[from] || bridged[at] != bridged[from] || bored[at] != bored[from];
@@ -316,7 +531,214 @@ public final class ContentCityStructure extends Structure {
             builder.addPiece(railPiece(rail, start + from, start + at - 1, profile[from], bridged[from], bored[from]));
             from = at;
         }
+        open(rail, start, bored, claims);
+        if (sub && ContentCity.stations()) { stations(context, plan, rail, start, profile, rising, claims, builder); }
         return profile;
+    }
+
+    private static void open(CityPlan.Rail rail, int start, boolean[] bored, List<BoundingBox> claims) {
+        int from = 0;
+        for (int at = 1; at <= bored.length; at++) {
+            boolean ends = at == bored.length || bored[at] != bored[from];
+            if (!ends) { continue; }
+            if (!bored[from]) {
+                claims.add(rail.alongX() ? new BoundingBox(start + from, 0, rail.at(), start + at - 1, 0, rail.last()) : new BoundingBox(rail.at(), 0, start + from, rail.last(), 0, start + at - 1));
+            }
+            from = at;
+        }
+    }
+
+    @Nullable private static int[] streetsOver(CityPlan plan, CityPlan.Rail rail) {
+        int half = ContentCity.stationLength() / 2;
+        for (CityPlan.Line line : rail.alongX() ? plan.alongX() : plan.alongZ()) {
+            if (line.alley() || rail.middle() < line.at() || rail.middle() > line.last()) { continue; }
+            return new int[] {line.from() + half, line.to() - half};
+        }
+        int least = Integer.MAX_VALUE;
+        int most = Integer.MIN_VALUE;
+        for (CityPlan.Line line : rail.alongX() ? plan.alongZ() : plan.alongX()) {
+            if (line.alley() || !line.covers(rail.middle())) { continue; }
+            least = Math.min(least, line.middle());
+            most = Math.max(most, line.middle());
+        }
+        return least > most ? null : new int[] {least, most};
+    }
+
+    private static void stations(GenerationContext context, CityPlan plan, CityPlan.Rail rail, int start, int[] profile, @Nullable int[] rising, List<BoundingBox> claims, StructurePiecesBuilder builder) {
+        int half = ContentCity.stationLength() / 2;
+        int bedHalf = (rail.width() - 1) / 2 - ContentCity.railShoulderWidth(true);
+        if (bedHalf < 0 || half <= 0) { return; }
+        int[] streets = streetsOver(plan, rail);
+        if (streets == null) {
+            ContentLog.LOGGER.debug("The subway line at {} of the district at {}, {} has no street over it, so it gets no stations", rail.at(), plan.originX(), plan.originZ());
+            return;
+        }
+        int least = Math.max(start + half, streets[0]);
+        int most = Math.min(start + profile.length - 1 - half, streets[1]);
+        if (rising != null) {
+            int ramp = ContentCity.subwayDepth() * ContentCity.railClimb(true);
+            if (rising[1] > 0) { most = Math.min(most, rising[0] - ramp - 1); }
+            else { least = Math.max(least, rising[0] + ramp + 1); }
+        }
+        for (int wanted : hearts(plan, rail, least, most)) {
+            int[] found = claimAt(context, plan, rail, wanted, start, profile, least, most, bedHalf, claims);
+            if (found == null) { continue; }
+            int heart = found[0];
+            int level = profile[heart - start];
+            int from = heart - half;
+            int to = heart + half;
+            int fromX = rail.alongX() ? from : rail.at();
+            int fromZ = rail.alongX() ? rail.at() : from;
+            int toX = rail.alongX() ? to : rail.last();
+            int toZ = rail.alongX() ? rail.last() : to;
+            builder.addPiece(new ContentCityStationPiece(fromX, fromZ, toX, toZ, level, rail.middle(), rail.alongX(), bedHalf));
+            if (ContentCity.stationStructure().isEmpty()) {
+                builder.addPiece(new ContentCityStairsPiece(level, found[3], heart, found[1], found[2], rail.middle(), rail.alongX(), bedHalf));
+                entrance(context, plan, rail, heart, found[1], found[3], builder);
+            }
+            else {
+                Vec3i built = stationSpan(context);
+                builder.addPiece(new ContentCityStampPiece(level, found[3], heart, found[1], found[2], rail.middle(), rail.alongX(), bedHalf, built.getX(), built.getZ()));
+                if (!ContentCity.stationEntrance().isEmpty()) { ContentCity.entranceWithBuild(); }
+            }
+        }
+    }
+
+    private static Vec3i stationSpan(GenerationContext context) {
+        ResourceLocation named = ResourceLocation.tryParse(ContentCity.stationStructure());
+        if (named == null) { return Vec3i.ZERO; }
+        return context.structureTemplateManager().get(named).map(held -> held.getSize(Rotation.NONE)).orElse(Vec3i.ZERO);
+    }
+
+    private static void entrance(GenerationContext context, CityPlan plan, CityPlan.Rail rail, int row, int near, int top, StructurePiecesBuilder builder) {
+        String named = ContentCity.stationEntrance();
+        if (named.isEmpty()) { return; }
+        ResourceLocation template = ResourceLocation.tryParse(named);
+        if (template == null || context.structureTemplateManager().get(template).isEmpty()) {
+            ContentCity.missingEntrance(named);
+            return;
+        }
+        Vec3i span = context.structureTemplateManager().get(template).orElseThrow().getSize(Rotation.NONE);
+        int alongMid = row + ContentCityStairsPiece.RUN / 2;
+        int acrossMid = near + (ContentCityStairsPiece.WIDE - 1) / 2;
+        int leastX = (rail.alongX() ? alongMid : acrossMid) - span.getX() / 2;
+        int leastZ = (rail.alongX() ? acrossMid : alongMid) - span.getZ() / 2;
+        BoundingBox stood = new BoundingBox(leastX, 0, leastZ, leastX + span.getX() - 1, 0, leastZ + span.getZ() - 1);
+        if (onStreet(plan, stood)) {
+            ContentCity.entranceOnStreet();
+            return;
+        }
+        builder.addPiece(new ContentCityEntrancePiece(context.structureTemplateManager(), template, new BlockPos(leastX, top + 1, leastZ), row, near, top, rail.alongX()));
+    }
+
+    @Nullable private static int[] claimAt(GenerationContext context, CityPlan plan, CityPlan.Rail rail, int wanted, int start, int[] profile, int least, int most, int bedHalf, List<BoundingBox> claims) {
+        int out = ContentCity.outFromLine(bedHalf);
+        Vec3i built = ContentCity.stationStructure().isEmpty() ? Vec3i.ZERO : stationSpan(context);
+        boolean stamped = built.getX() > 0 && built.getZ() > 0;
+        int alongReach = stamped ? built.getX() : ContentCityStairsPiece.RUN + 1;
+        int acrossReach = stamped ? built.getZ() : ContentCityStairsPiece.WIDE;
+        for (int slide = 0; slide <= SLIDE; slide++) {
+            for (int way = 0; way < (slide == 0 ? 1 : 2); way++) {
+                int heart = wanted + (way == 0 ? slide : -slide);
+                if (heart < least || heart > most) { continue; }
+                if (heart - 1 < start || heart + alongReach >= start + profile.length) { continue; }
+                for (int side = 0; side < 2; side++) {
+                    int turn = side == 0 ? 1 : -1;
+                    int near = turn > 0 ? rail.middle() + out : rail.middle() - out - ContentCityStairsPiece.WIDE + 1;
+                    int leastAcross = near - 1;
+                    int mostAcross = near + acrossReach;
+                    BoundingBox claim = rail.alongX()
+                            ? new BoundingBox(heart - 1, 0, leastAcross, heart + alongReach, 0, mostAcross)
+                            : new BoundingBox(leastAcross, 0, heart - 1, mostAcross, 0, heart + alongReach);
+                    if (onStreet(plan, claim)) { continue; }
+                    int mid = near + ContentCityStairsPiece.WIDE / 2;
+                    int top = surface(context, rail.alongX() ? heart : mid, rail.alongX() ? mid : heart);
+                    if (top - profile[heart - start] < ContentCityStairsPiece.CLIMB_LEAST) { continue; }
+                    claims.add(claim);
+                    ContentLog.LOGGER.debug("A station on the line at {} claims rows {} to {} and across {} to {} for its way up, between rows {} and {}, the street at y {} under it", rail.at(), heart - 1, heart + alongReach, leastAcross, mostAcross, least, most, top);
+                    return new int[] {heart, near, turn, top};
+                }
+            }
+        }
+        return null;
+    }
+
+    private static List<Integer> hearts(CityPlan plan, CityPlan.Rail rail, int least, int most) {
+        List<Integer> found = new ArrayList<>();
+        if (ContentCity.stationLength() / 2 <= 0 || most < least) { return found; }
+        CityPlan.Line across = rail.alongX() ? plan.plazaColumn() : plan.plazaRow();
+        int anchor = across.middle();
+        int run = ContentCity.stationRun();
+        found.add(Math.max(least, Math.min(most, anchor)));
+        if (run <= 0) { return found; }
+        for (int heart = anchor - run; heart >= least; heart -= run) { found.add(heart); }
+        for (int heart = anchor + run; heart <= most; heart += run) { found.add(heart); }
+        return found;
+    }
+
+    @Nullable private static int[] surfacing(GenerationContext context, CityPlan plan, CityPlan.Rail rail, int least, int span) {
+        int chance = ContentCity.subwaySurfaces();
+        if (chance <= 0) { return null; }
+        RandomSource roll = RandomSource.create(context.seed() ^ SALT ^ (rail.at() * 341873128712L + (rail.alongX() ? 11L : 13L)));
+        if (roll.nextInt(100) >= chance) { return null; }
+        int depth = ContentCity.subwayDepth();
+        int ramp = depth * ContentCity.railClimb(true);
+        int shortest = ramp + LEAST_OPEN;
+        int most = least + span - 1;
+        if (most - least < shortest) { return null; }
+        int run = ramp + Math.max(LEAST_OPEN, CityPlan.railTail(true));
+        int half = ContentCity.stationLength() / 2;
+        int[] streets = streetsOver(plan, rail);
+        List<Integer> hearts = ContentCity.stations() && streets != null ? hearts(plan, rail, Math.max(least + half, streets[0]), Math.min(most - half, streets[1])) : List.of();
+        int stationLeast = Integer.MAX_VALUE;
+        int stationMost = Integer.MIN_VALUE;
+        for (int heart : hearts) {
+            stationLeast = Math.min(stationLeast, heart - half);
+            stationMost = Math.max(stationMost, heart + half);
+        }
+        boolean anyStation = !hearts.isEmpty();
+        int lowRow = streets == null ? least + run : Math.min(least + run, streets[0] - 1);
+        int highRow = streets == null ? most - run : Math.max(most - run, streets[1] + 1);
+        boolean canLow = lowRow - least >= shortest && (!anyStation || stationLeast > lowRow + ramp);
+        boolean canHigh = most - highRow >= shortest && (!anyStation || stationMost < highRow - ramp);
+        if (!canHigh && !canLow) { return null; }
+        boolean high = canHigh && (!canLow || roll.nextBoolean());
+        return high ? new int[] {highRow, 1} : new int[] {lowRow, -1};
+    }
+
+    private static boolean surfaced(@Nullable int[] rising, int row) {
+        if (rising == null) { return false; }
+        return rising[1] > 0 ? row >= rising[0] : row <= rising[0];
+    }
+
+    private static boolean onStreet(CityPlan plan, BoundingBox claim) {
+        int keep = CityPlan.plazaReach() + CityPlan.WELL_HALF;
+        int size = CityPlan.district();
+        int plazaX = plan.plazaColumn().middle();
+        int plazaZ = plan.plazaRow().middle();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int x = plazaX + dx * size;
+                int z = plazaZ + dz * size;
+                if (claim.maxX() >= x - keep && claim.minX() <= x + keep && claim.maxZ() >= z - keep && claim.minZ() <= z + keep) { return true; }
+            }
+        }
+        for (CityPlan.Line line : plan.alongX()) {
+            if (claim.maxZ() < line.at() || claim.minZ() > line.last()) { continue; }
+            if (!line.alley() || (claim.maxX() >= line.from() && claim.minX() <= line.to())) { return true; }
+        }
+        for (CityPlan.Line line : plan.alongZ()) {
+            if (claim.maxX() < line.at() || claim.minX() > line.last()) { continue; }
+            if (!line.alley() || (claim.maxZ() >= line.from() && claim.minZ() <= line.to())) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean claimed(List<BoundingBox> claims, CityPlan.Plot plot) {
+        for (BoundingBox claim : claims) {
+            if (claim.maxX() >= plot.fromX() && claim.minX() <= plot.toX() && claim.maxZ() >= plot.fromZ() && claim.minZ() <= plot.toZ()) { return true; }
+        }
+        return false;
     }
 
     private static boolean[] railBridges(GenerationContext context, CityPlan.Rail rail, int start, int[] profile, boolean[] held, int[] ground) {
@@ -351,8 +773,8 @@ public final class ContentCityStructure extends Structure {
     }
 
     private static ContentCityRailPiece railPiece(CityPlan.Rail rail, int from, int to, int level, boolean bridged, boolean bored) {
-        if (rail.alongX()) { return new ContentCityRailPiece(from, rail.at(), to, rail.last(), level, rail.middle(), true, rail.width(), bridged, bored); }
-        return new ContentCityRailPiece(rail.at(), from, rail.last(), to, level, rail.middle(), false, rail.width(), bridged, bored);
+        if (rail.alongX()) { return new ContentCityRailPiece(from, rail.at(), to, rail.last(), level, rail.middle(), true, rail.width(), bridged, bored, rail.subway()); }
+        return new ContentCityRailPiece(rail.at(), from, rail.last(), to, level, rail.middle(), false, rail.width(), bridged, bored, rail.subway());
     }
 
     private static int alongRail(GenerationContext context, CityPlan.Rail rail, int row) {
@@ -424,7 +846,7 @@ public final class ContentCityStructure extends Structure {
     }
 
     private static int surface(GenerationContext context, int x, int z) {
-        return context.chunkGenerator().getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState());
+        return context.chunkGenerator().getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState()) - 1;
     }
 
     @Override @Nonnull public StructureType<?> type() { return TYPE; }

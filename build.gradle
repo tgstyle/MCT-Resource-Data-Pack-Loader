@@ -50,6 +50,7 @@ ext {
     version_forge = versionProps['version_forge']
     version_forge_min = versionProps['version_forge_min']
     version_bp = versionProps.getProperty('version_bp', '[0,)')
+    version_curios = versionProps['version_curios']
     version_parchment = versionProps['version_parchment']
     mod_license = gradleProps['mod_license']
     mod_name = gradleProps['mod_name']
@@ -149,6 +150,7 @@ legacyForge {
             client()
             programArguments.addAll '--username', 'tgstyle', '--width', '1920', '--height', '1080'
             jvmArgument("-Djava.library.path=/usr/lib64")
+            jvmArgument('-Xmx4G')
             jvmArgument('-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile')
             environment 'LD_LIBRARY_PATH', '/usr/lib64'
         }
@@ -156,6 +158,7 @@ legacyForge {
         server {
             server()
             programArguments.addAll '--nogui'
+            jvmArgument('-Xmx4G')
             jvmArgument('-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile')
         }
 
@@ -175,6 +178,7 @@ repositories {
     mavenCentral()
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     maven { name = 'ParchmentMC' ; url = 'https://ldtteam.jfrog.io/artifactory/parchmentmc-public/' }
+    maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
 }
 
 configurations {
@@ -183,6 +187,7 @@ configurations {
 
 dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    modRuntimeOnly "top.theillusivec4.curios:curios-forge:${version_curios}"
 
     if (bpJar != null) {
         compileOnly files(bpJar)

@@ -67,7 +67,7 @@ public final class ContentCityDecorPiece extends StructurePiece {
         return laid.is(Blocks.DIRT_PATH);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int outside = 0;
         int bare = 0;
@@ -109,5 +109,11 @@ public final class ContentCityDecorPiece extends StructurePiece {
             entry.shape().generate(new ContentPlacer(level, entry.palette(), chunk), roll, at.immutable());
         }
         ContentLog.LOGGER.debug("A verge of {} spot(s) scattered {}: {} outside the chunk, {} over air, {} over paving, {} blocked above", spots.length, laid, outside, bare, paved, blocked);
+    }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box, chunk); }
+        finally { CityBiome.leave(); }
     }
 }

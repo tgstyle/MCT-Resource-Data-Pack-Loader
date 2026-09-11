@@ -68,7 +68,7 @@ public final class ContentCityIntersectPiece extends StructurePiece {
         tag.putInt(COLUMN_HIGH, columnHigh);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         PathIntersectDef def = ContentPathIntersects.byName(design);
         if (def == null) { return; }
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -127,5 +127,11 @@ public final class ContentCityIntersectPiece extends StructurePiece {
         if (named.isEmpty()) { return fallback; }
         Block found = Registered.find(ForgeRegistries.BLOCKS, ResourceLocation.tryParse(named));
         return found == null ? fallback : found.defaultBlockState();
+    }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box); }
+        finally { CityBiome.leave(); }
     }
 }

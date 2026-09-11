@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +18,12 @@ public final class ContentStacks {
         return item == null ? ItemStack.EMPTY : new ItemStack(item, count);
     }
 
-    public static boolean matches(ItemStack found, ItemStack wanted) { return wanted.hasTag() ? ItemStack.isSameItemSameTags(found, wanted) : ItemStack.isSameItem(found, wanted); }
+    public static boolean matches(ItemStack found, ItemStack wanted) { return plain(wanted) ? ItemStack.isSameItem(found, wanted) : ItemStack.isSameItemSameTags(found, wanted); }
+
+    private static boolean plain(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag == null || (tag.size() == 1 && tag.contains(ItemStack.TAG_DAMAGE) && tag.getInt(ItemStack.TAG_DAMAGE) == 0);
+    }
 
     @Nullable public static Item find(ResourceLocation key, @Nullable String value) {
         if (value == null || value.isEmpty()) { return null; }

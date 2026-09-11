@@ -126,6 +126,10 @@ public record ContentOreControl() implements BiomeModifier {
 
     private static boolean blacklist() { return ContentControl.flag(ContentControl.ORES, "oreTypesAreBlacklist", Config.worldgen.oreTypesAreBlacklist()); }
 
+    public static Map<String, Integer> blocked() {
+        synchronized (BLOCKED) { return Map.copyOf(BLOCKED); }
+    }
+
     public static boolean veinsBlocked() {
         if (!enabled()) { return false; }
         List<String> types = types();

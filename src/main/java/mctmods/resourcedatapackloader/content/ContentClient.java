@@ -1,5 +1,11 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.client.SplashDark;
+import mctmods.resourcedatapackloader.client.PouchKey;
+import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
+import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
+import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
@@ -7,6 +13,8 @@ import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -37,6 +45,7 @@ public final class ContentClient {
 
     public static void register(IEventBus modBus) {
         modBus.addListener(ContentClient::setup);
+        modBus.addListener(PouchKey::register);
         modBus.addListener(ContentClient::blockColors);
         modBus.addListener(ContentClient::itemColors);
         modBus.addListener(ContentClient::renderers);
@@ -46,6 +55,8 @@ public final class ContentClient {
     private static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.registered();
         if (type != null) { event.registerBlockEntityRenderer(type, ContentBannerRenderer::new); }
+        BlockEntityType<ContentContainerBlockEntity> chests = ContentContainers.registeredType();
+        if (chests != null) { event.registerBlockEntityRenderer(chests, ContentContainerRenderer::new); }
         Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$providers();
         for (EntityType<Mob> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
@@ -59,6 +70,9 @@ public final class ContentClient {
 
     private static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            SplashDark.apply();
+            MenuType<ContentContainerMenu> menu = ContentContainers.registeredMenu();
+            if (menu != null) { MenuScreens.register(menu, ContentContainerScreen::new); }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());

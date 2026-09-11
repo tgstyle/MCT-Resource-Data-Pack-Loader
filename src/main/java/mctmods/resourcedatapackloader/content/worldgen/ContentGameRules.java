@@ -38,7 +38,7 @@ public final class ContentGameRules {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.GAMERULES, "game rule file", (key, contents) -> {
             JsonObject json = GSON.fromJson(contents, JsonObject.class);
             if (json == null) { return; }

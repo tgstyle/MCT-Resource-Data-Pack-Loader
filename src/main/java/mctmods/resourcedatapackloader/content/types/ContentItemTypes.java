@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
+import mctmods.resourcedatapackloader.content.item.ContentContainerItem;
 import mctmods.resourcedatapackloader.content.item.ContentDrinkItem;
 import mctmods.resourcedatapackloader.content.item.ContentFoodItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
@@ -38,7 +39,8 @@ public final class ContentItemTypes {
     public static final String SEED = "seed";
     public static final String POTION = "potion";
     public static final String POTION_BOTTLE = "potion_bottle";
-    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE);
+    public static final String CONTAINER = "container";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER);
     private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
             "leggings", ArmorItem.Type.LEGGINGS, "legs", ArmorItem.Type.LEGGINGS, "boots", ArmorItem.Type.BOOTS, "feet", ArmorItem.Type.BOOTS);
 
@@ -58,6 +60,13 @@ public final class ContentItemTypes {
             case TOOL -> tool(def, variant, properties.stacksTo(1));
             case ARMOR -> armor(def, variant, properties.stacksTo(1));
             case SEED -> seed(def, variant, properties);
+            case CONTAINER -> {
+                if (def.holds() == null) {
+                    ContentLog.LOGGER.error("Item {} is a container but has no 'container' object, so there is no inventory for it to hold", variant.id());
+                    yield new Item(properties);
+                }
+                yield new ContentContainerItem(def, def.holds(), properties);
+            }
             default -> new Item(properties);
         };
     }

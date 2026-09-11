@@ -48,7 +48,7 @@ public final class ContentDimensions {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff() || !Config.content.dimensions()) { return; }
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             DimensionDef def = ContentDimensionParser.parse(key, contents);
@@ -107,7 +107,7 @@ public final class ContentDimensions {
             generator.addProperty("type", "minecraft:flat");
             JsonObject settings = new JsonObject();
             settings.addProperty("biome", DimensionDef.VOID.equals(def.terrain()) ? "minecraft:the_void" : DimensionDef.SINGLE.equals(def.biomeSource()) ? def.biome() : "minecraft:plains");
-            settings.addProperty("features", false);
+            settings.addProperty("features", true);
             settings.addProperty("lakes", false);
             settings.add("layers", DimensionDef.VOID.equals(def.terrain()) ? new JsonArray() : layers(def));
             generator.add("settings", settings);

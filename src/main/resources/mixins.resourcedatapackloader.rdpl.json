@@ -2,6 +2,7 @@
     "required": true,
     "minVersion": "0.8.5",
     "package": "mctmods.resourcedatapackloader.mixin.rdpl",
+    "plugin": "mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin",
     "compatibilityLevel": "JAVA_17",
     "refmap": "mixins.resourcedatapackloader.refmap.json",
     "mixins": [
@@ -36,7 +37,9 @@
         "common.MixinBoat",
         "common.MixinLevel",
         "common.IStructureManager",
+        "common.IMinecraftServer",
         "common.MixinChunkGenerator",
+        "common.MixinLakeFeature",
         "common.MixinMonsterRoomFeature",
         "common.MixinMineShaftCorridor",
         "common.MixinStrongholdPortalRoom",
@@ -54,7 +57,13 @@
         "common.MixinSugarCaneBlock",
         "common.MixinLeavesBlock",
         "common.MixinDirtPathBlock",
-        "common.MixinFarmBlock"
+        "common.MixinFarmBlock",
+        "common.MixinServerGamePacketListenerImpl",
+        "common.MixinDedicatedServer",
+        "common.MixinWorldDimensionData",
+        "common.IDedicatedServer",
+        "common.ISettings",
+        "common.MixinMinecraftServer"
     ],
     "client": [
         "client.IEntityRenderers",
@@ -66,7 +75,10 @@
         "client.MixinHumanoidArmorLayer",
         "client.MixinItemInHandLayer",
         "client.MixinLivingEntityRenderer",
-        "client.MixinWorldOpenFlows"
+        "client.MixinWorldOpenFlows",
+        "client.MixinClientTelemetryManager",
+        "client.MixinAccountProfileKeyPairManager",
+        "client.MixinLogoTexture"
     ],
     "server": [],
     "injectors": {

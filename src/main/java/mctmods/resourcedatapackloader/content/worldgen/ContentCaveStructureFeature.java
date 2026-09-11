@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
@@ -29,8 +30,6 @@ import java.util.Optional;
 
 public final class ContentCaveStructureFeature extends Feature<ContentCaveStructureFeature.Setup> {
     public static final ContentCaveStructureFeature INSTANCE = new ContentCaveStructureFeature();
-    private static final int CELLS = 128;
-    private static final int CELLS_Y = 64;
     private static final int FLAGS = 2;
     private static final Rotation[] TURNS = Rotation.values();
 
@@ -41,8 +40,8 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         if (region == null || !region.hasStructures()) { return false; }
         WorldGenLevel level = context.level();
         ChunkPos center = new ChunkPos(context.origin());
-        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", CELLS));
-        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", CELLS_Y));
+        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells()));
+        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY()));
         int spanXZ = cellsXZ >> 2;
         int spanY = cellsY >> 2;
         int blockX0 = center.getMinBlockX();

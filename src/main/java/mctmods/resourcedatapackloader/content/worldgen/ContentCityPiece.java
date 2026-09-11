@@ -80,13 +80,13 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         tag.putBoolean(BORED, bored);
     }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         BlockState road = stateOr(paving, Blocks.DIRT_PATH.defaultBlockState());
         if (bridged) { road = stateOr(ContentCity.bridgeBlock(), road); }
         BlockState edge = stateOr(ContentCity.lineBlock(), road);
         BlockState walk = stateOr(ContentCity.sidewalkBlock(), road);
         if (bridged) { walk = stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
-        BlockState centre = stateOr(ContentCity.centerBlock(), road);
+        BlockState center = stateOr(ContentCity.centerBlock(), road);
         BlockState under = bridged ? null : block(ContentCity.supportBlock());
         BlockState air = Blocks.AIR.defaultBlockState();
         CityCross cross = CityCross.of(width, alley);
@@ -97,13 +97,22 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
             for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+                if (CityBiome.moved(level, x, z)) {
+                    road = stateOr(ContentCity.paving(alley), Blocks.DIRT_PATH.defaultBlockState());
+                    if (bridged) { road = stateOr(ContentCity.bridgeBlock(), road); }
+                    edge = stateOr(ContentCity.lineBlock(), road);
+                    walk = stateOr(ContentCity.sidewalkBlock(), road);
+                    if (bridged) { walk = stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
+                    center = stateOr(ContentCity.centerBlock(), road);
+                    under = bridged ? null : block(ContentCity.supportBlock());
+                }
                 int across = alongX ? z : x;
                 int along = alongX ? x : z;
                 int offset = Math.abs(across - middle);
                 BlockState laid = switch (cross.role(offset)) {
                     case CityCross.WALK -> walk;
                     case CityCross.LINE -> edge;
-                    case CityCross.CORE -> offset == 0 && dashed(along, dash) ? centre : road;
+                    case CityCross.CORE -> offset == 0 && !alley && dashed(along, dash) ? center : road;
                     default -> road;
                 };
                 at.set(x, this.level, z);
@@ -114,7 +123,8 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 }
                 for (int up = 1; up <= CLEAR; up++) {
                     at.set(x, this.level + up, z);
-                    if (!level.getBlockState(at).isAir()) { level.setBlock(at, air, 2); }
+                    BlockState over = level.getBlockState(at);
+                    if (ContentCityTrees.clears(level, at, over)) { level.setBlock(at, air, 2); }
                 }
             }
         }
@@ -228,4 +238,10 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
     @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return bridged || bored ? TerrainAdjustment.NONE : TerrainAdjustment.BEARD_THIN; }
 
     @Override public int getGroundLevelDelta() { return 0; }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(level, box); }
+        finally { CityBiome.leave(); }
+    }
 }

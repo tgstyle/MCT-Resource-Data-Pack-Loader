@@ -1,121 +1,207 @@
-# Links
-- [Official Discord](https://discord.gg/ujY2mV9)
-
-- [Resource Data Pack Loader on CurseForge](https://www.curseforge.com/minecraft/mc-mods/mct-resource-data-pack-loader)
-- [Resource Data Pack Loader on Modrinth](https://modrinth.com/mod/mct-resource-data-pack-loader)
-
 # MCT Resource Data Pack Loader
-One global folder that overrides what Minecraft and mods provide, defines new content from JSON, and
-controls what generates — in every world, on clients and servers.
 
-Minecraft 1.12.2 has no data pack system, and Resource Loader only covers client assets. Advancements,
-loot tables, recipes and functions cannot be overridden without repacking a mod jar or copying files
-into every save. Adding a single ore or a single biome means writing a mod. This mod covers all of it
-from one folder.
+One folder that changes what Minecraft and your mods provide, adds new content from
+plain JSON, and controls what generates. It applies to every world, in singleplayer
+and on dedicated servers. This is the 1.20.1 Forge and 1.21.1 NeoForge line; both
+read the same packs.
 
-# Usage
-Put loose files or a zip in the `rdploader` folder, alongside `mods` and `config`.
+- [HOWTO.md](HOWTO.md), the full manual (English, Русский, Deutsch)
+- [Discord](https://discord.gg/ujY2mV9)
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/mct-resource-data-pack-loader)
+- [Modrinth](https://modrinth.com/mod/mct-resource-data-pack-loader)
+
+# Why it exists
+
+A data pack lives in one world's save, a resource pack is the player's to switch on,
+and adding a single ore or a single biome means writing a mod. This mod gives all of
+that one folder that applies everywhere, with nothing for players to enable.
+
+# Getting started
+
+Start the game once. The mod creates `rdploader` next to `mods` and `config`, and
+writes a `readme.txt` into it that covers the basics.
+
+Files go in by the same path they have inside a jar. To replace the iron ore
+texture, the file inside the Minecraft jar is
+`assets/minecraft/textures/block/iron_ore.png`, so your version goes at:
 
 ```
-rdploader/assets/<namespace>/...
-rdploader/<packname>.zip
+rdploader/assets/minecraft/textures/block/iron_ore.png
 ```
 
-Override paths match the layout inside a mod jar, so files can be copied straight across. Content is
-defined by adding a JSON file in the matching folder — the path is the identity, so
-`assets/mypack/blocks/ruby_ore.json` registers `mypack:ruby_ore`.
+That is the whole rule, and `data/` works the same way for loot tables, recipes,
+advancements and tags. You can also group files into named zips with a priority
+order, and turn any of them off by adding `.disabled` to the name.
+[HOWTO.md](HOWTO.md) has the full folder list, every block and item type, every
+worldgen shape, pack priority, resource pack precedence and the commands.
 
-See [HOWTO.md](HOWTO.md) for the full folder list, every block and item type, every worldgen shape,
-pack priority, resource pack precedence and the commands.
+# Replacing files
 
-# Overriding what already exists
-- Textures, models, blockstates, language files, sounds and anything else in a mod's `assets` folder
-- Advancements and loot tables, on dedicated servers as well as singleplayer
-- Recipes, replaced or added, and recipe removals by name, namespace or output
-- Loot injections, which add a pool to an existing table instead of replacing the whole thing
-- Structure templates (`.nbt`)
-- Functions (`.mcfunction`), which vanilla otherwise only reads per world
-- Registry renames, so worlds saved before a mod renamed a block or item keep it
-- Ore dictionary names, furnace recipes, fuel burn times, creative tabs and sound events
+Anything a mod keeps in its `assets` folder: textures, models, blockstates,
+language files, sounds, fonts, splash texts, guide books.
 
-# Defining new content
-Blocks in every common shape — basic, ore, falling, slab, stairs, fence, wall, pane, door, ladder,
-torch, log, leaves, sapling, crop, flower, cane, vine and portal. Items as basic, food, drink, tool,
-armor, seed, potion and potion bottle. Also fluids, tool and armor materials, potion effects,
-potion types, brewing recipes, villager professions with trades, game rules, biomes, village plots,
-entity variants and whole dimensions.
+Beyond assets, a pack can also replace or add advancements, loot tables, recipes,
+tags, functions and structure templates, and they work on dedicated servers too.
+Recipe removals delete recipes by name, namespace or output. Loot injections add a
+pool to an existing table instead of replacing the whole thing. Player loot gives
+players a loot table of their own when they die. Registry renames keep old worlds
+working after a mod renames a block. Furnace recipes, fuel burn times, creative tabs
+and sound events round it out.
 
-Saplings grow into a tree built from your own log and leaves, or into one of your structure
-templates. Leaves take a tint and drop your sapling. Portal blocks link two dimensions, remember who
-built them, and survive an explosion when they do. A dimension picks its own sky, fog and cloud
-colors, and can turn the sky, clouds or weather off entirely.
+# Changing what already exists
 
-An entity variant is a new entity built on one that already exists, vanilla or modded — its own
-registry name, name, spawn egg, loot table and skin, with its own health, damage, speed, jump,
-size, effects, equipment and temper. An aggressive rabbit that swells when it charges, a zombie
-that trades, a cow that shrugs off fire: all of it a file, and the entity it was built from is
-left exactly as it was.
+An `overrides/` file changes the properties of a block, item or potion that is
+already in the game, vanilla or modded, without replacing any of its files. The
+path names the target, so `overrides/minecraft/stone.json` changes
+`minecraft:stone`.
 
-Registration happens at the lowest priority, so a real mod always wins. Anything needing a tile
-entity, a GUI, an inventory or per-tick logic still needs a real mod.
+Blocks take hardness, blast resistance, light, light opacity, slipperiness, sound,
+harvest tool and level, and flammability. Items take stack size, durability and a
+container item, and any item can be made edible, with food values and effects, so
+wood can be eaten if a pack says so. A potion's effects can be rewritten outright.
+
+These are live: disable the pack and run `/rdplserver reload`, and every value snaps
+back to what it was, no restart needed.
+
+# Adding new content
+
+A pack can define blocks in every common shape: basic, ore, falling, slab, stairs,
+fence, fence gate, wall, pane, door, trapdoor, banner, ladder, torch, log, leaves,
+sapling, crop, flower, cane, vine, portal and container. Items come as basic, food,
+drink, tool, armor, seed, potion, potion bottle and pouch. Fluids, tool and armor
+materials, potion effects, potion types, brewing recipes, villager professions with
+trades, game rules, biomes, village plots, entity variants and whole dimensions are
+all files too.
+
+Each key under a file's `variants` is a registry name: `data/mypack/blocks/ore.json`
+holding `ruby_ore` registers `mypack:ruby_ore`. Ship a texture and the blockstate,
+the models, the loot table and the tags are written for you; a texture can itself
+be a JSON pixel map, so a pack need not ship a single PNG. If a real mod already
+registers that name, the mod wins.
+
+A few of these go further than a list can show. Saplings grow into trees built
+from your own log and leaves, or into your structure templates. Portal blocks link
+two dimensions and remember who built them, and a frame a player builds and lights
+can open one. Gates lock a portal or a dimension, vanilla ones included, behind an
+item held or paid, a recipe crafted, an advancement earned, or a mob slain. An
+entity variant is a new entity built on an existing one, with its own name, skin,
+stats, equipment, loot and any task the game has, while the original is left
+exactly as it was. A container holds an inventory of any size, draws as a chest or
+as a block of its own, fills from a loot table on first open, and as an item can be
+worn through Curios.
+
+Anything needing a block entity of its own, a screen, an inventory or per-tick
+logic still needs a real mod. A machine is out of reach; an ore, a fence, a food, a
+fluid or a crate is not.
 
 # Generating it
-Worldgen is a shape and a spread. Shapes cover ore blobs, long wandering veins, flat plates, hollow
-geodes, bowls, tapering spires, rough nodules, narrow vents, surface decoration, whole trees, vines,
-belts that span several chunks for stone regions, and your own `.nbt` templates. Spreads place them evenly, weighted toward a height, sprawling
-fractally, following the terrain, on cave floors and ceilings, or under water.
 
-Every entry is filtered by height, attempt count, target block, dimension, biome, temperature,
-rainfall and distance from spawn, and can be generated into chunks that already exist.
+Worldgen is a shape and a spread. Shapes cover ore blobs, long wandering veins,
+seeded noise deposits with rich and poor tiers, plates, geodes, bowls, spires,
+nodules, vents, surface decoration, whole trees, vines, multi-chunk belts for stone
+regions, per-block fields, and your own `.nbt` templates, alone or composed into
+buildings on a grid. Spreads place them evenly, weighted toward a height, fractally,
+along the terrain, on cave floors and ceilings, or under water.
+
+Every entry filters by height, attempts, target block, dimension, biome,
+temperature, rainfall and distance from spawn, and can generate into chunks that
+already exist. Cave regions paint named regions through the underground with their
+own covers, spawns and landmarks, and hardness groups make the rock itself vary in
+how it mines.
+
+# Cities
+
+A pack can lay a whole city: streets at any width with sidewalks, lines and lamps,
+bridges and tunnels where the ground demands them, railways and subways with
+stations, sewers under the streets, plazas, and buildings rolled from the pack's
+own plots or composed from structure maps. The plan is rolled, or drawn by hand on
+a city map, and every block of it answers to a setting a world template can change
+per biome.
 
 # Controlling what generates
+
 - Block ore generation by mod or by ore type, in either direction
-- Block biomes by mod or by name, in either direction, with unwanted biomes replaced on the finished
-  biome map so oceans, mesas and hill variants are reached too
-- Block other mods' world generators outright, or by what they make — ores, structures, flora, lakes
-  or terrain — which is how mods add what Forge's events never see
-- Suppress vanilla structures, or set how far apart they are seeded, which biomes they are allowed
-  in, how far from spawn they start, what they spawn and what their mob spawners hold
+- Block biomes by mod or by name, with unwanted ones replaced on the finished
+  biome map
+- Suppress vanilla structures, or set their spacing, biomes, distance from spawn,
+  how they seat into the terrain, and what their spawners hold
 - Set mob spawn rates and caps per biome
-- Swap blocks out of chunks that already exist, so an ore that leaked into a world can be cleaned up
-- Block crafting and furnace recipes by mod, with CraftTweaker and GroovyScript additions always
-  surviving
-- Flatten bedrock, per dimension and per biome, in new chunks or in ones that already exist
-- Shape the overworld itself — sea level, lava oceans and the terrain noise — applied as a world is
-  created, so worlds that already exist are untouched
-- Generate the overworld as a void with a platform, which also happens by itself if every biome is
-  blocked
+- Swap blocks out of existing chunks, so an ore that leaked into a world can be
+  cleaned up
+- Block crafting and furnace recipes by mod, with KubeJS and CraftTweaker
+  additions always surviving
+- Flatten bedrock, per dimension and per biome
+- Shape the overworld itself: its floor and ceiling, sea level, lava oceans and a
+  deep world under the vanilla terrain, applied only as a world is created
+- Generate the overworld as a void with a platform
+- Scale gravity, fall damage and jump strength per dimension, and stack dimensions
+  so that falling out of the bottom of one lands in the next
 
-A world template gathers those settings into one file so a pack ships a whole world shape at once,
-and every group answers to a config switch that leaves it to the pack, forces the config's own value,
-or turns the group off entirely so no pack can enable it.
+A world template gathers these into one file, so a pack ships a whole world shape
+at once. Every group also answers to a config switch that lets the pack decide,
+forces the config's value, or turns the group off entirely.
 
-# CoFH World
-Mods that require CoFH World load without it. Their generation files can be read straight out of
-their jars and generated through this mod instead, covering every CoFH generator and distribution
-that produces anything. It is off by default, and stands down when the real CoFH World is installed,
-which then generates as normal — translating those files into a pack is the supported route, and the
-only way to change what they generate.
+# World intro
+
+A pack can put a sequence of pages in front of a player entering the world:
+scrolling or still text over pictures, backgrounds that cycle, music behind the
+run. The player gets Next Page and Skip All, and the world stays paused behind it
+in singleplayer. It can play once per player per world or on every join.
+
+# Teams and scoring
+
+A pack can field sides on the vanilla scoreboard that mobs, players or anything
+spawning in a corner of the world join as they arrive, and objectives that score
+kills and deaths to those sides. A round ends on a score or a clock, the
+standings come up as chat or as a card, the map can reset itself for the next
+round, and rounds are counted into a match.
+
+# Pregeneration
+
+A pack can hand a player a world whose land is already there. `pregenOnNewWorld`
+makes every chunk around spawn the moment a world is created, for the overworld,
+a list of dimensions, or every dimension registered. A dimension can instead be
+made the first time somebody enters it.
+
+While it runs, everybody is held as a spectator with progress on screen, then
+released with a greeting when it is done. A finished dimension is written into the
+world and never made again, a stopped run resumes where it left off, and a pristine
+copy of the finished world can be kept for a later reset.
 
 # Good to know
-A pack whose name starts with `RDPLO` always overrides the player's selected resource packs, one
-starting with `RDPLN` never does, and anything else follows the `overrideResourcePacks` config.
 
-`/rdpl unused` lists files in your packs that nothing has asked for, which is usually a typo in a
-path. `/rdpl biome` and `/rdpl oregen` report what generated and what was blocked.
+A pack whose name starts with `RDPLO` always overrides the player's selected
+resource packs, one starting with `RDPLN` never does, and anything else follows
+the `overrideResourcePacks` config.
+
+`/rdpl unused` lists files in your packs that nothing has asked for, which is
+usually a typo in a path. `/rdplserver oregen` reports what was blocked. `/rdpl
+which` names the pack serving any file.
+
+A pack can stay on the server alone, with every player on a plain vanilla client,
+as long as it registers nothing. The `vanillaClients` config switch enforces
+exactly that. [HOWTO.md](HOWTO.md)'s Server-side packs section has the steps.
+
+The game's telemetry and chat reporting are switched off by default; `privacy` in
+the config puts them back.
 
 The mod's own report goes to `logs/rdpl.log` rather than the main log.
 
 # Requirements
-Requires [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter).
+
+1.20.1 needs Forge; 1.21.1 needs NeoForge. Blast Plaster and Curios are optional:
+the pack keys that drive them do nothing when they are absent.
 
 # Reporting issues
-When you are reporting bugs, please attach `logs/latest.log` and `logs/rdpl.log`, plus your mod and
-Forge version.
+
+Attach `logs/latest.log` and `logs/rdpl.log`, plus your mod and loader version.
 
 # Help translate the mod
+
 Feel free to translate the mod and put it in a pull request.
 
-# About Modpack and License
-Resource Data Pack Loader is licensed under the GNU GENERAL PUBLIC LICENSE Version 3. You may use it
-in modpacks, reviews or any other form as long as you abide by the terms.
+# License
+
+Resource Data Pack Loader is licensed under the GNU GENERAL PUBLIC LICENSE
+Version 3. You may use it in modpacks, reviews or any other form as long as you
+abide by the terms.

@@ -42,7 +42,7 @@ public final class ContentCity {
 
     public static boolean wanted() { return ContentControl.flag(ContentControl.STRUCTURES, "terrainAdaptation", Config.worldgen.terrainAdaptation()); }
 
-    public static boolean laying() { return laying; }
+    public static boolean idle() { return !laying; }
 
     public static String paving() {
         String named = ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock()).trim();
@@ -103,31 +103,44 @@ public final class ContentCity {
 
     public static int tunnelLightRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathTunnelLightRun", Config.worldgen.villagePathTunnelLightRun())); }
 
-    public static String railBedBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailBedBlock", Config.worldgen.villageRailBedBlock()).trim(); }
 
-    public static String railBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailBlock", Config.worldgen.villageRailBlock()).trim(); }
+    public static String railBedBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayBedBlock" : "villageRailBedBlock", sub ? Config.worldgen.villageSubwayBedBlock() : Config.worldgen.villageRailBedBlock()).trim(); }
 
-    public static String railTieBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailTieBlock", Config.worldgen.villageRailTieBlock()).trim(); }
 
-    public static String railShoulderBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailShoulderBlock", Config.worldgen.villageRailShoulderBlock()).trim(); }
+    public static String railBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayBlock" : "villageRailBlock", sub ? Config.worldgen.villageSubwayBlock() : Config.worldgen.villageRailBlock()).trim(); }
 
-    public static String railPowerBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailPowerBlock", Config.worldgen.villageRailPowerBlock()).trim(); }
 
-    public static String railPowerBase() { return ContentControl.text(ContentControl.VILLAGES, "villageRailPowerBase", Config.worldgen.villageRailPowerBase()).trim(); }
+    public static String railTieBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTieBlock" : "villageRailTieBlock", sub ? Config.worldgen.villageSubwayTieBlock() : Config.worldgen.villageRailTieBlock()).trim(); }
 
-    public static String railTrackSeat() { return ContentControl.text(ContentControl.VILLAGES, "villageRailTrackSeat", Config.worldgen.villageRailTrackSeat()).trim().toLowerCase(Locale.ROOT); }
 
-    public static int railTieRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTieRun", Config.worldgen.villageRailTieRun())); }
+    public static String railShoulderBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayShoulderBlock" : "villageRailShoulderBlock", sub ? Config.worldgen.villageSubwayShoulderBlock() : Config.worldgen.villageRailShoulderBlock()).trim(); }
 
-    public static int railTracks() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailTracks", Config.worldgen.villageRailTracks())); }
 
-    public static int railTrackGap() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailTrackGap", Config.worldgen.villageRailTrackGap())); }
+    public static String railPowerBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayPowerBlock" : "villageRailPowerBlock", sub ? Config.worldgen.villageSubwayPowerBlock() : Config.worldgen.villageRailPowerBlock()).trim(); }
 
-    public static int railShoulderWidth() { return railShoulderBlock().isEmpty() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailShoulderWidth", Config.worldgen.villageRailShoulderWidth())); }
 
-    public static int railPowerRun() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailPowerRun", Config.worldgen.villageRailPowerRun())); }
+    public static String railPowerBase(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayPowerBase" : "villageRailPowerBase", sub ? Config.worldgen.villageSubwayPowerBase() : Config.worldgen.villageRailPowerBase()).trim(); }
 
-    public static int railClimb() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailClimb", Config.worldgen.villageRailClimb())); }
+
+    public static String railTrackSeat(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", sub ? Config.worldgen.villageSubwayTrackSeat() : Config.worldgen.villageRailTrackSeat()).trim().toLowerCase(Locale.ROOT); }
+
+
+    public static int railTieRun(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTieRun" : "villageRailTieRun", sub ? Config.worldgen.villageSubwayTieRun() : Config.worldgen.villageRailTieRun())); }
+
+
+    public static int railTracks(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTracks" : "villageRailTracks", sub ? Config.worldgen.villageSubwayTracks() : Config.worldgen.villageRailTracks())); }
+
+
+    public static int railTrackGap(boolean sub) { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTrackGap" : "villageRailTrackGap", sub ? Config.worldgen.villageSubwayTrackGap() : Config.worldgen.villageRailTrackGap())); }
+
+
+    public static int railShoulderWidth(boolean sub) { return railShoulderBlock(sub).isEmpty() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayShoulderWidth" : "villageRailShoulderWidth", sub ? Config.worldgen.villageSubwayShoulderWidth() : Config.worldgen.villageRailShoulderWidth())); }
+
+
+    public static int railPowerRun(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayPowerRun" : "villageRailPowerRun", sub ? Config.worldgen.villageSubwayPowerRun() : Config.worldgen.villageRailPowerRun())); }
+
+
+    public static int railClimb(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayClimb" : "villageRailClimb", sub ? Config.worldgen.villageSubwayClimb() : Config.worldgen.villageRailClimb())); }
 
     public static String railSupportBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailSupportBlock", Config.worldgen.villageRailSupportBlock()).trim(); }
 
@@ -145,13 +158,90 @@ public final class ContentCity {
 
     public static int railFrameLeast() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameLeast", Config.worldgen.villageRailBridgeFrameLeast())); }
 
-    public static String railTunnelBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailTunnelBlock", Config.worldgen.villageRailTunnelBlock()).trim(); }
+    public static String railTunnelBlock() { return railTunnelBlock(false); }
+
+    public static String railTunnelBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTunnelBlock" : "villageRailTunnelBlock", sub ? Config.worldgen.villageSubwayTunnelBlock() : Config.worldgen.villageRailTunnelBlock()).trim(); }
 
     public static int railTunnelDepth() { return railTunnelBlock().isEmpty() ? 0 : Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelDepth", Config.worldgen.villageRailTunnelDepth())); }
 
-    public static String railTunnelLightBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailTunnelLightBlock", Config.worldgen.villageRailTunnelLightBlock()).trim(); }
+    public static int subwayLines() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayLines", Config.worldgen.villageSubwayLines())); }
 
-    public static int railTunnelLightRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelLightRun", Config.worldgen.villageRailTunnelLightRun())); }
+    public static int subwayDepth() { return Math.max(6, ContentControl.number(ContentControl.VILLAGES, "villageSubwayDepth", Config.worldgen.villageSubwayDepth())); }
+
+    public static boolean subways() { return subwayLines() > 0 && !railTunnelBlock(true).isEmpty(); }
+
+    public static int stationLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayStationLength", Config.worldgen.villageSubwayStationLength())); }
+
+    public static int stationRun() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayStationRun", Config.worldgen.villageSubwayStationRun())); }
+
+    public static int platformWidth() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayPlatformWidth", Config.worldgen.villageSubwayPlatformWidth())); }
+
+    public static String platformBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayPlatformBlock", Config.worldgen.villageSubwayPlatformBlock()).trim(); }
+
+    public static boolean stations() { return subways() && stationLength() > 0 && platformWidth() > 0; }
+
+    public static String stairBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayStairBlock", Config.worldgen.villageSubwayStairBlock()).trim(); }
+
+    public static String railingBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayRailingBlock", Config.worldgen.villageSubwayRailingBlock()).trim(); }
+
+    public static String benchBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayBenchBlock", Config.worldgen.villageSubwayBenchBlock()).trim(); }
+
+    public static String benchEndBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayBenchEndBlock", Config.worldgen.villageSubwayBenchEndBlock()).trim(); }
+
+    public static int benchLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayBenchLength", Config.worldgen.villageSubwayBenchLength())); }
+
+    public static int subwaySurfaces() { return Math.min(100, Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwaySurfaces", Config.worldgen.villageSubwaySurfaces()))); }
+
+    public static String stationStructure() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayStation", Config.worldgen.villageSubwayStation()).trim(); }
+
+    public static String stationEntrance() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayEntrance", Config.worldgen.villageSubwayEntrance()).trim(); }
+
+    public static int stationFoot() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayStationFoot", Config.worldgen.villageSubwayStationFoot())); }
+
+    public static int stationRepeat() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayStationRepeat", Config.worldgen.villageSubwayStationRepeat())); }
+
+    public static int outFromLine(int bedHalf) { return Math.max((CityPlan.streetFullWidth() - 1) / 2 + 4, bedHalf + platformWidth() + 3); }
+
+    public static String sewerBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerBlock", Config.worldgen.villageSewerBlock()).trim(); }
+
+    public static boolean sewers() { return !sewerBlock().isEmpty(); }
+
+    public static boolean sewerWellEntrance() { return ContentControl.flag(ContentControl.VILLAGES, "villageSewerWellEntrance", Config.worldgen.villageSewerWellEntrance()); }
+
+    public static int sewerDepth() { return Math.max(4, ContentControl.number(ContentControl.VILLAGES, "villageSewerDepth", Config.worldgen.villageSewerDepth())); }
+
+    public static int sewerHeight() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageSewerHeight", Config.worldgen.villageSewerHeight())); }
+
+    public static int sewerWidth() {
+        int asked = Math.max(3, ContentControl.number(ContentControl.VILLAGES, "villageSewerWidth", Config.worldgen.villageSewerWidth()));
+        return (asked & 1) == 0 ? asked + 1 : asked;
+    }
+
+    public static String sewerWaterBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerWaterBlock", Config.worldgen.villageSewerWaterBlock()).trim(); }
+
+    public static String sewerWalkBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerWalkBlock", Config.worldgen.villageSewerWalkBlock()).trim(); }
+
+    public static String sewerLightBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerLightBlock", Config.worldgen.villageSewerLightBlock()).trim(); }
+
+    public static int sewerLightRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageSewerLightRun", Config.worldgen.villageSewerLightRun())); }
+
+    public static String sewerLadderBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerLadderBlock", Config.worldgen.villageSewerLadderBlock()).trim(); }
+
+    public static String sewerCoverBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerCoverBlock", Config.worldgen.villageSewerCoverBlock()).trim(); }
+
+    public static String sewerMossBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerMossBlock", Config.worldgen.villageSewerMossBlock()).trim(); }
+
+    public static int sewerMossChance() { return Math.min(100, Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSewerMossChance", Config.worldgen.villageSewerMossChance()))); }
+
+    public static String sewerVineBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerVineBlock", Config.worldgen.villageSewerVineBlock()).trim(); }
+
+    public static int sewerVineChance() { return Math.min(100, Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSewerVineChance", Config.worldgen.villageSewerVineChance()))); }
+
+
+    public static String railTunnelLightBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTunnelLightBlock" : "villageRailTunnelLightBlock", sub ? Config.worldgen.villageSubwayTunnelLightBlock() : Config.worldgen.villageRailTunnelLightBlock()).trim(); }
+
+
+    public static int railTunnelLightRun(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTunnelLightRun" : "villageRailTunnelLightRun", sub ? Config.worldgen.villageSubwayTunnelLightRun() : Config.worldgen.villageRailTunnelLightRun())); }
 
     @Nullable public static String wellStructure(RandomSource roll) {
         List<PickDef> picks = new ArrayList<>();
@@ -276,6 +366,7 @@ public final class ContentCity {
         ContentCityBlocks.forget();
         laying = wanted();
         if (!laying) { return; }
+        CityPlan.reset();
         int spacing = CityPlan.spacing();
         if (spacing <= 0) {
             Summary.info("city", "terrainAdaptation is on but villageCitySpacing is 0, so no city districts are seeded");
@@ -287,7 +378,7 @@ public final class ContentCity {
             Summary.info("city", "Laying city map " + map.key() + ": " + map.cellsWide() + "x" + map.cellsDeep() + " cells of " + map.cell() + " blocks, one city in every " + spacing + " square, paved with " + paving());
             return;
         }
-        Summary.info("city", "Laying city streets: one district of " + CityPlan.DISTRICT + " blocks in every " + spacing + " square, paved with " + paving());
+        Summary.info("city", "Laying city streets: one district of " + CityPlan.district() + " blocks in every " + spacing + " square, paved with " + paving());
     }
 
     public static void residents(WorldGenLevel level, VillageDef def, BoundingBox box, IntFunction<BlockPos> spot) {
@@ -319,6 +410,26 @@ public final class ContentCity {
         if (MISSING.add(named)) { ContentLog.LOGGER.error("villagePathLampStructure names '{}', which could not be loaded, so the lamp blocks are stacked instead", named); }
     }
 
+    public static void missingStation(String named) {
+        if (MISSING.add(named)) { ContentLog.LOGGER.error("villageSubwayStation '{}' could not be loaded, so stations are carved instead of laid from the build", named); }
+    }
+
+    public static void stationTooShort(String named, int tall, int climb, int grown) {
+        if (MISSING.add(named + "@" + climb)) { ContentLog.LOGGER.info("The station build '{}' is {} block(s) tall and this station climbs {}, which the build cannot reach even grown to {}, so this one is carved instead", named, tall, climb, grown); }
+    }
+
+    public static void missingEntrance(String named) {
+        if (MISSING.add(named)) { ContentLog.LOGGER.error("villageSubwayEntrance '{}' could not be loaded, so the subway stairs come up bare", named); }
+    }
+
+    public static void entranceOnStreet() {
+        if (MISSING.add("entrance@street")) { ContentLog.LOGGER.info("A subway entrance would have stood on a street, so it is left off and the stairs come up bare"); }
+    }
+
+    public static void entranceWithBuild() {
+        if (MISSING.add("entrance@build")) { ContentLog.LOGGER.info("villageSubwayStation names a build, which carries its own way in, so villageSubwayEntrance is left off rather than stood beside it as a shut box"); }
+    }
+
     public static void missingWell(String named) {
         if (MISSING.add(named)) { ContentLog.LOGGER.error("villageWellStructure names '{}', which could not be loaded, so the plaza is left bare", named); }
     }
@@ -343,8 +454,8 @@ public final class ContentCity {
         structures.add(entry);
         JsonObject placement = new JsonObject();
         placement.addProperty("type", "minecraft:random_spread");
-        placement.addProperty("spacing", CityPlan.CHUNKS);
-        placement.addProperty("separation", CityPlan.CHUNKS - 1);
+        placement.addProperty("spacing", 1);
+        placement.addProperty("separation", 0);
         placement.addProperty("salt", 0x0C17E5);
         JsonObject set = new JsonObject();
         set.add("placement", placement);

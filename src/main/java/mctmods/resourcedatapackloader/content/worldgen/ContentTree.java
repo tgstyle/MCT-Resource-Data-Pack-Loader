@@ -13,9 +13,14 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -67,8 +72,10 @@ public final class ContentTree implements IContentShape {
         if (!clear(placer, position, tall)) { return false; }
         BlockPos below = position.below();
         if (level.getBlockState(below).is(Blocks.GRASS_BLOCK)) { level.setBlock(below, Blocks.DIRT.defaultBlockState(), FLAGS); }
-        canopy(placer, random, position, tall);
-        trunk(placer, position, tall);
+        Set<BlockPos> canopy = canopy(placer, random, position, tall);
+        Set<BlockPos> logs = trunk(placer, position, tall);
+        canopy.removeAll(logs);
+        settle(placer, canopy, logs);
         return true;
     }
 
@@ -99,7 +106,8 @@ public final class ContentTree implements IContentShape {
         return state.isAir() || state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS) || state.is(BlockTags.REPLACEABLE_BY_TREES) || state.is(Blocks.VINE);
     }
 
-    private void canopy(ContentPlacer placer, RandomSource random, BlockPos position, int tall) {
+    private Set<BlockPos> canopy(ContentPlacer placer, RandomSource random, BlockPos position, int tall) {
+        Set<BlockPos> placed = new HashSet<>();
         for (int y = position.getY() - 3 + tall; y <= position.getY() + tall; y++) {
             int depth = y - (position.getY() + tall);
             int reach = 1 - depth / 2;
@@ -109,17 +117,45 @@ public final class ContentTree implements IContentShape {
                     int offZ = z - position.getZ();
                     if (Math.abs(offX) == reach && Math.abs(offZ) == reach && (random.nextInt(2) == 0 || depth == 0)) { continue; }
                     if (blocked(placer.level(), new BlockPos(x, y, z))) { continue; }
-                    placer.placeExactly(leaves, x, y, z);
+                    if (placer.placeExactly(leaves, x, y, z)) { placed.add(new BlockPos(x, y, z)); }
                 }
             }
         }
+        return placed;
     }
 
-    private void trunk(ContentPlacer placer, BlockPos position, int tall) {
+    private Set<BlockPos> trunk(ContentPlacer placer, BlockPos position, int tall) {
+        Set<BlockPos> placed = new HashSet<>();
         for (int y = 0; y < tall; y++) {
             BlockPos at = position.above(y);
             if (blocked(placer.level(), at)) { continue; }
-            placer.placeExactly(log, at.getX(), at.getY(), at.getZ());
+            if (placer.placeExactly(log, at.getX(), at.getY(), at.getZ())) { placed.add(at); }
+        }
+        return placed;
+    }
+
+    private void settle(ContentPlacer placer, Set<BlockPos> canopy, Set<BlockPos> logs) {
+        if (leaves == null || !leaves.hasProperty(LeavesBlock.DISTANCE)) { return; }
+        Map<BlockPos, Integer> reached = new HashMap<>();
+        ArrayDeque<BlockPos> open = new ArrayDeque<>();
+        for (BlockPos wood : logs) {
+            reached.put(wood, 0);
+            open.add(wood);
+        }
+        while (!open.isEmpty()) {
+            BlockPos at = open.poll();
+            int step = reached.get(at) + 1;
+            if (step >= LeavesBlock.DECAY_DISTANCE) { continue; }
+            for (Direction side : Direction.values()) {
+                BlockPos next = at.relative(side);
+                if (!canopy.contains(next) || reached.containsKey(next)) { continue; }
+                reached.put(next, step);
+                open.add(next);
+            }
+        }
+        for (BlockPos leaf : canopy) {
+            int distance = reached.getOrDefault(leaf, LeavesBlock.DECAY_DISTANCE);
+            placer.placeExactly(leaves.setValue(LeavesBlock.DISTANCE, distance), leaf.getX(), leaf.getY(), leaf.getZ());
         }
     }
 

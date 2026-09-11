@@ -12,6 +12,7 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import java.util.ArrayList;
+import java.util.function.Predicate;
 
 public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup> {
     public static final ContentShapeFeature INSTANCE = new ContentShapeFeature();
@@ -27,7 +28,11 @@ public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup
 
     public static boolean run(ContentWorldgen.Entry entry, ContentPlacer placer, RandomSource random, ChunkPos center, BlockPos origin) {
         if (entry.shape() instanceof IContentChunkShape chunked) {
-            chunked.generateChunk(placer, center, pos -> ContentWorldgen.allows(entry, placer.level(), pos));
+            Predicate<BlockPos> valid = pos -> ContentWorldgen.allows(entry, placer.level(), pos);
+            chunked.generateChunk(placer, center, valid);
+            if (entry.def().follows()) {
+                for (BlockPos led : chunked.originsIn(placer, center, valid)) { ContentWorldgen.after(entry, placer, random, led, new ArrayList<>()); }
+            }
             return true;
         }
         boolean placed = entry.shape().generate(placer, random, origin);

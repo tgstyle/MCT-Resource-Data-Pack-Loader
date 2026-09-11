@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.network;
 
+import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
@@ -31,7 +32,10 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         }).add();
         channel.messageBuilder(MessageHold.class, 1, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHold::write).decoder(MessageHold::read).consumerMainThread((message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog()); }
+        }).add();
+        channel.messageBuilder(MessageNote.class, 5, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> buf.writeUtf(message.said())).decoder(buf -> new MessageNote(buf.readUtf())).consumerMainThread((message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said()); }
         }).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
@@ -40,10 +44,24 @@ public final class RDPLNetwork {
             ServerPlayer player = context.get().getSender();
             if (player != null) { ContentIntroPlay.finished(player); }
         }).add();
+        channel.messageBuilder(MessageOpenWorn.class, 4, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> buf.writeVarInt(message.after())).decoder(buf -> new MessageOpenWorn(buf.readVarInt())).consumerMainThread((message, context) -> {
+            ServerPlayer player = context.get().getSender();
+            if (player != null) { ContentWornContainers.open(player, message.after()); }
+        }).add();
     }
 
-    public static void sendHold(ServerPlayer player, boolean held, String warning) {
-        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held, warning)); }
+    public static void openWorn(int after) {
+        if (channel != null) { channel.sendToServer(new MessageOpenWorn(after)); }
+    }
+
+    public static void sendHold(ServerPlayer player, boolean held, String warning, boolean fog) {
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held, warning, fog)); }
+    }
+
+    public static boolean sendNote(ServerPlayer player, String said) {
+        if (channel == null || !reaches(player)) { return false; }
+        channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageNote(said));
+        return true;
     }
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {

@@ -42,7 +42,7 @@ public final class ContentPortalFrames {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.contentOff()) { return; }
+        if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.PORTALFRAMES, "portal frame", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             PortalFrameDef def = parse(key, contents);

@@ -18,6 +18,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 public final class ContentCityTrees {
     private static final int UP = 16;
     private static final int SUSTAIN = 6;
+    private static final int PLANTED_REACH = 2;
 
     private ContentCityTrees() {}
 
@@ -39,19 +40,43 @@ public final class ContentCityTrees {
                     if (!box.isInside(at)) { continue; }
                     BlockState state = level.getBlockState(at);
                     if (state.isAir()) { continue; }
-                    if (BlastPlasterUtil.isTreeWood(state)) { seeds.add(at.immutable()); }
+                    if (BlastPlasterUtil.isTreeWood(state)) { if (!planted(level, at)) { seeds.add(at.immutable()); } }
                     else if (state.getBlock() instanceof LeavesBlock) { canopy.add(at.immutable()); }
                     else if (state.is(Blocks.VINE)) { felled += clear(level, at); }
                 }
             }
         }
+        return felled + fell(level, seeds, canopy, box);
+    }
+
+    public static int fellOver(WorldGenLevel level, BoundingBox box, List<BlockPos> columns, int floor, int top) {
+        List<BlockPos> seeds = new ArrayList<>();
+        List<BlockPos> canopy = new ArrayList<>();
+        int felled = 0;
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (BlockPos column : columns) {
+            for (int y = floor; y <= top + UP; y++) {
+                at.set(column.getX(), y, column.getZ());
+                if (!box.isInside(at)) { continue; }
+                BlockState state = level.getBlockState(at);
+                if (state.isAir()) { continue; }
+                if (BlastPlasterUtil.isTreeWood(state)) { if (!planted(level, at)) { seeds.add(at.immutable()); } }
+                else if (state.getBlock() instanceof LeavesBlock) { canopy.add(at.immutable()); }
+                else if (state.is(Blocks.VINE)) { felled += clear(level, at); }
+            }
+        }
+        return felled + fell(level, seeds, canopy, box);
+    }
+
+    private static int fell(WorldGenLevel level, List<BlockPos> seeds, List<BlockPos> canopy, BoundingBox box) {
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         Predicate<BlockPos> within = box::isInside;
-        felled += fellTrees(level, seeds, within);
+        int felled = fellTrees(level, seeds, within);
         for (BlockPos leaf : canopy) {
             BlockState state = level.getBlockState(leaf);
             if (!(state.getBlock() instanceof LeavesBlock)) { continue; }
             if (state.hasProperty(LeavesBlock.PERSISTENT) && state.getValue(LeavesBlock.PERSISTENT)) { continue; }
-            if (sustained(level, leaf, box)) { continue; }
+            if (sustained(level, leaf)) { continue; }
             at.set(leaf.getX(), leaf.getY(), leaf.getZ());
             felled += clear(level, at);
         }
@@ -79,18 +104,34 @@ public final class ContentCityTrees {
         return felled;
     }
 
-    private static boolean sustained(WorldGenLevel level, BlockPos leaf, BoundingBox box) {
+    private static boolean sustained(WorldGenLevel level, BlockPos leaf) {
         BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
         for (int dx = -SUSTAIN; dx <= SUSTAIN; dx++) {
             for (int dy = -SUSTAIN; dy <= SUSTAIN; dy++) {
                 for (int dz = -SUSTAIN; dz <= SUSTAIN; dz++) {
                     probe.set(leaf.getX() + dx, leaf.getY() + dy, leaf.getZ() + dz);
-                    if (!box.isInside(probe)) { continue; }
                     if (BlastPlasterUtil.isTreeWood(level.getBlockState(probe))) { return true; }
                 }
             }
         }
         return false;
+    }
+
+    private static boolean planted(WorldGenLevel level, BlockPos wood) { return ContentCityStructure.plantedAt(level.getSeed(), wood.getX(), wood.getZ()); }
+
+    public static boolean clears(WorldGenLevel level, BlockPos at, BlockState state) {
+        if (state.isAir()) { return false; }
+        if (!(state.getBlock() instanceof LeavesBlock)) { return true; }
+        BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
+        for (int dx = -PLANTED_REACH; dx <= PLANTED_REACH; dx++) {
+            for (int dz = -PLANTED_REACH; dz <= PLANTED_REACH; dz++) {
+                for (int dy = -SUSTAIN; dy <= 0; dy++) {
+                    probe.set(at.getX() + dx, at.getY() + dy, at.getZ() + dz);
+                    if (BlastPlasterUtil.isTreeWood(level.getBlockState(probe)) && planted(level, probe)) { return false; }
+                }
+            }
+        }
+        return true;
     }
 
     private static int clear(WorldGenLevel level, BlockPos.MutableBlockPos at) {

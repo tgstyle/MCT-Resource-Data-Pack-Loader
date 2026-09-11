@@ -38,6 +38,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionResult;
@@ -79,6 +80,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.npc.Villager;
@@ -95,6 +97,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingBreatheEvent;
@@ -128,6 +131,7 @@ public final class ContentEntities {
     private static final String HOME_Z = "rdplHomeZ";
     private static final String BORN = "rdplBorn";
     private static final String CALM = "rdplCalmAt";
+    private static final String CRIED = "rdplCried";
     private static final String ROLLED = "rdplBabyRolled";
     private static final String YOUNG = "rdplBabyYoung";
     private static final int ROUSED = 60;
@@ -518,8 +522,13 @@ public final class ContentEntities {
             return;
         }
         if (def.baby() > 0.0F && mob.getPersistentData().getBoolean(YOUNG) && mob instanceof AgeableMob ageable && ageable.getAge() >= 0) { ageable.setAge(-24000); }
-        if (def.keepsSize()) { return; }
         boolean angry = stillRoused(mob);
+        CompoundTag heard = mob.getPersistentData();
+        if (angry != heard.getBoolean(CRIED)) {
+            if (angry) { cry(mob); }
+            heard.putBoolean(CRIED, angry);
+        }
+        if (def.keepsSize()) { return; }
         if (angry != mob.isSprinting()) {
             mob.setSprinting(angry);
             mob.refreshDimensions();
@@ -549,6 +558,8 @@ public final class ContentEntities {
     public static final int AMBIENT = 0;
     public static final int HURT = 1;
     public static final int DEATH = 2;
+    public static final int TARGET = 3;
+    public static final int EXPLODE = 4;
     private static final Map<String, SoundEvent> SOUNDS = new HashMap<>();
     private static final Map<String, List<String>> IMMUNITIES = Map.ofEntries(
             Map.entry("fall", List.of("minecraft:fall")), Map.entry("drown", List.of("minecraft:drown")),
@@ -566,13 +577,41 @@ public final class ContentEntities {
     @Nullable public static SoundEvent sound(Entity entity, int which) {
         EntityVariantDef def = BY_TYPE.get(entity.getType());
         if (def == null) { return null; }
-        String name = which == AMBIENT ? def.sounds().ambient() : which == HURT ? def.sounds().hurt() : def.sounds().death();
+        String name = switch (which) {
+            case HURT -> def.sounds().hurt();
+            case DEATH -> def.sounds().death();
+            case TARGET -> def.sounds().target();
+            case EXPLODE -> def.sounds().explode();
+            default -> def.sounds().ambient();
+        };
         if (name.isEmpty()) { return null; }
         if (SOUNDS.containsKey(name)) { return SOUNDS.get(name); }
         SoundEvent event = Registered.find(ForgeRegistries.SOUND_EVENTS, ResourceLocation.tryParse(name));
         if (event == null) { ContentLog.LOGGER.error("Entity variant {} names sound {}, which nothing registers", def.key(), name); }
         SOUNDS.put(name, event);
         return event;
+    }
+
+    private static void cry(Mob mob) {
+        SoundEvent cry = sound(mob, TARGET);
+        if (cry == null) { return; }
+        EntityVariantDef def = BY_TYPE.get(mob.getType());
+        float carries = (float) Math.max(1.0D, mob.getAttributeValue(Attributes.FOLLOW_RANGE) / 16.0D);
+        float varies = def == null ? 0.0F : def.sounds().targetVaries();
+        float pitch = varies <= 0.0F ? 1.0F : (float) Math.pow(2.0D, (mob.getRandom().nextFloat() * 2.0F - 1.0F) * varies / 12.0D);
+        mob.level().playSound(null, mob.getX(), mob.getY(), mob.getZ(), cry, mob.getSoundSource(), carries, pitch);
+    }
+
+    @Nullable public static SoundEvent explodeSound(@Nullable Entity exploder) {
+        if (exploder instanceof PrimedTnt tnt) { exploder = tnt.getOwner(); }
+        return exploder == null ? null : sound(exploder, EXPLODE);
+    }
+
+    public static void onExplosion(ExplosionEvent.Detonate event) {
+        if (event.getLevel().isClientSide()) { return; }
+        SoundEvent own = explodeSound(event.getExplosion().getDirectSourceEntity());
+        if (own == null) { return; }
+        event.getLevel().playSound(null, event.getExplosion().getPosition().x, event.getExplosion().getPosition().y, event.getExplosion().getPosition().z, own, SoundSource.BLOCKS, 4.0F, 1.0F);
     }
 
     public static int tint(Entity entity, String part) {
@@ -657,6 +696,7 @@ public final class ContentEntities {
 
     public static void generate() {
         MODIFIERS = 0;
+        if (Config.contentOff()) { return; }
         int eggs = 0;
         for (EntityVariantDef def : DEFS.values()) {
             if (!def.spawns().isEmpty()) { spawnModifiers(def); }

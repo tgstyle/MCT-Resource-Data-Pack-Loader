@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.recipe;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -14,17 +15,19 @@ public final class FurnaceBlocking {
     private static Set<String> whitelist = Collections.emptySet();
     private static Set<String> blocked = Collections.emptySet();
     private static boolean blockAll;
+    private static boolean off;
 
     private FurnaceBlocking() {}
 
     public static void reload() {
         BLOCKED.clear();
-        whitelist = Settings.lower(Config.recipes.furnaceWhitelist());
-        blocked = Settings.lower(Config.recipes.blockedFurnaceMods());
-        blockAll = Config.recipes.blockFurnaceRecipes();
+        off = ContentControl.off(ContentControl.RECIPES);
+        whitelist = Settings.lower(ContentControl.list(ContentControl.RECIPES, "furnaceWhitelist", Config.recipes.furnaceWhitelist()));
+        blocked = Settings.lower(ContentControl.list(ContentControl.RECIPES, "blockedFurnaceMods", Config.recipes.blockedFurnaceMods()));
+        blockAll = ContentControl.flag(ContentControl.RECIPES, "blockFurnaceRecipes", Config.recipes.blockFurnaceRecipes());
     }
 
-    public static boolean disabled() { return !blockAll && blocked.isEmpty(); }
+    public static boolean disabled() { return off || (!blockAll && blocked.isEmpty()); }
 
     public static boolean blocks(ItemStack result) {
         if (disabled()) { return false; }
@@ -44,6 +47,6 @@ public final class FurnaceBlocking {
         int total = BLOCKED.total();
         if (total == 0) { return; }
         Summary.info("furnace.blocked", "Blocked " + total + " furnace recipe(s)");
-        if (Config.recipes.logBlockedRecipes()) { BLOCKED.report("furnace recipe(s)"); }
+        if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes())) { BLOCKED.report("furnace recipe(s)"); }
     }
 }

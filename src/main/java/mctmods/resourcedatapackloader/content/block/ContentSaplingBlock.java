@@ -34,7 +34,7 @@ public class ContentSaplingBlock extends SaplingBlock {
     public ContentSaplingBlock(BlockDef def, ResourceLocation id, Properties properties) {
         super(new Grower(ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), properties);
         this.def = def;
-        this.sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
+        this.sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", List.of(), "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
     }
 
     public BlockDef getDef() { return def; }
@@ -53,7 +53,7 @@ public class ContentSaplingBlock extends SaplingBlock {
     }
 
     @Override public void advanceTree(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull RandomSource random) {
-        if (!sapling.usesStructure()) {
+        if (sapling.growsVanilla()) {
             super.advanceTree(level, pos, state, random);
             return;
         }
@@ -65,10 +65,11 @@ public class ContentSaplingBlock extends SaplingBlock {
     }
 
     private void placeStructure(ServerLevel level, BlockPos pos, RandomSource random) {
-        ResourceLocation named = ResourceLocation.tryParse(sapling.structure());
+        String grown = sapling.growsInto(random);
+        ResourceLocation named = ResourceLocation.tryParse(grown);
         Optional<StructureTemplate> held = named == null ? Optional.empty() : level.getStructureManager().get(named);
         if (held.isEmpty()) {
-            ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.key(), sapling.structure());
+            ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.key(), grown);
             return;
         }
         Vec3i size = held.get().getSize();

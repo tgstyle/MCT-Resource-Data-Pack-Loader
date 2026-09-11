@@ -284,7 +284,7 @@ public final class ContentWorldgenParser {
         return Json.strings(entry, "surface");
     }
 
-    private static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
+    public static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
         if (!entry.has(listKey)) { return List.of(); }
         List<PickDef> picked = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(entry, listKey)) {

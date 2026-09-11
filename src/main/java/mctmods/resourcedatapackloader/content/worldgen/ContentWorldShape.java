@@ -1,8 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IDedicatedServer;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.ISettings;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -24,6 +27,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.dedicated.DedicatedServerSettings;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
@@ -63,22 +68,38 @@ public final class ContentWorldShape {
     private static final Map<String, String[]> BASES = Map.of(
             "", new String[] { "normal", "overworld" }, "default", new String[] { "normal", "overworld" }, "normal", new String[] { "normal", "overworld" },
             "largebiomes", new String[] { "large_biomes", "large_biomes" }, "large_biomes", new String[] { "large_biomes", "large_biomes" },
-            "amplified", new String[] { "amplified", "amplified" });
+            "amplified", new String[] { "amplified", "amplified" }, "flat", new String[] { "flat", "overworld" }, "superflat", new String[] { "flat", "overworld" });
     private static final String BEDROCK_FLOOR = "bedrock_floor";
     private static final String BEDROCK_ROOF = "bedrock_roof";
     private static final Set<String> WARNED = new HashSet<>();
     private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
     @Nullable private static ResourceLocation presetId;
     @Nullable private static String presetName;
+    @Nullable private static ResourceLocation overrode;
 
     private ContentWorldShape() {}
 
     @Nullable public static ResourceLocation presetId() { return presetId; }
 
+    @Nullable public static ResourceLocation serverPreset(String levelType) {
+        if (presetId == null) { return null; }
+        String named = levelType.trim();
+        if (named.equals(presetId.toString())) { return null; }
+        for (String exception : ContentTerrain.worldTypeExceptions()) {
+            String kept = exception.trim();
+            if (kept.equalsIgnoreCase(named) || ("minecraft:" + kept).equalsIgnoreCase(named)) { return null; }
+        }
+        ContentLog.LOGGER.info("The server's level-type is '{}', but the packs ship the world preset {} ({}), so the world is made with that; name flat or debug_all_block_states as level-type to keep the game's own", named, presetId, presetName);
+        overrode = presetId;
+        return presetId;
+    }
+
     private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves) {
         boolean tall() { return minY != VANILLA_MIN || maxY != VANILLA_MAX; }
 
         boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans; }
+
+        boolean flat() { return "flat".equals(base[0]); }
     }
 
     public static void generate() {
@@ -126,7 +147,7 @@ public final class ContentWorldShape {
         String type = ContentTerrain.worldType().trim().toLowerCase(Locale.ROOT);
         String[] base = BASES.get(type);
         if (base == null) {
-            ContentLog.LOGGER.error("worldType '{}' is not one of default, largebiomes or amplified on this version, building the shaped world on default", type);
+            ContentLog.LOGGER.error("worldType '{}' is not one of default, largebiomes, amplified or flat on this version, building the shaped world on default", type);
             base = BASES.get("");
         }
         int minY = ContentTerrain.worldMinHeight();
@@ -144,7 +165,7 @@ public final class ContentWorldShape {
         }
         int seaLevel = -1;
         boolean lavaOceans = false;
-        JsonObject options = ContentTerrain.generatorOptions();
+        JsonObject options = "flat".equals(base[0]) ? null : ContentTerrain.generatorOptions();
         if (options != null) {
             seaLevel = GsonHelper.getAsInt(options, "seaLevel", -1);
             lavaOceans = GsonHelper.getAsBoolean(options, "useLavaOceans", false);
@@ -172,11 +193,15 @@ public final class ContentWorldShape {
         }
         out.addProperty("type", typeId);
         JsonObject generator = new JsonObject();
+        if (overworld && shape.flat()) {
+            out.add("generator", flat());
+            return out;
+        }
         if (isVoid) {
             generator.addProperty("type", "minecraft:flat");
             JsonObject settings = new JsonObject();
             settings.addProperty("biome", "minecraft:the_void");
-            settings.addProperty("features", false);
+            settings.addProperty("features", true);
             settings.addProperty("lakes", false);
             settings.add("layers", new JsonArray());
             generator.add("settings", settings);
@@ -216,6 +241,42 @@ public final class ContentWorldShape {
         generator.addProperty("settings", settingsId);
         out.add("generator", generator);
         return out;
+    }
+
+    private static JsonObject flat() {
+        JsonObject generator = new JsonObject();
+        generator.addProperty("type", "minecraft:flat");
+        JsonObject settings = new JsonObject();
+        settings.addProperty("biome", "minecraft:plains");
+        ContentTerrain.Flat asked = ContentTerrain.flat();
+        settings.addProperty("features", asked.decorated());
+        settings.addProperty("lakes", false);
+        JsonArray layers = new JsonArray();
+        int height = 0;
+        for (String written : asked.layers()) {
+            int star = written.indexOf('*');
+            int count = 1;
+            String name = written;
+            if (star >= 0) {
+                try { count = Math.max(1, Integer.parseInt(written.substring(0, star).trim())); }
+                catch (NumberFormatException notNumber) { ContentLog.LOGGER.error("generatorOptions flat layer '{}' does not start with a count, laying one", written); }
+                name = written.substring(star + 1).trim();
+            }
+            if (block(name, "generatorOptions") == null) { continue; }
+            JsonObject layer = new JsonObject();
+            layer.addProperty("block", name);
+            layer.addProperty("height", count);
+            layers.add(layer);
+            height += count;
+        }
+        settings.add("layers", layers);
+        JsonArray structures = new JsonArray();
+        structures.add(ResourceDataPackLoader.MOD_ID + ":" + ContentCity.STRUCTURE);
+        for (String set : asked.structures()) { structures.add(set); }
+        settings.add("structure_overrides", structures);
+        generator.add("settings", settings);
+        ContentLog.LOGGER.info("The overworld is flat: {} layer(s) {} block(s) deep, the pack's cities on it{}{}", layers.size(), height, asked.structures().isEmpty() ? "" : " with " + String.join(", ", asked.structures()), asked.decorated() ? ", decorated with the biome's features" : ", undecorated");
+        return generator;
     }
 
     private static String made(Shape shape, String suffix, String folder, JsonObject json) {
@@ -385,12 +446,23 @@ public final class ContentWorldShape {
     }
 
     public static void onServerStarted(ServerStartedEvent event) {
+        writeBack(event.getServer());
         ServerLevel level = event.getServer().overworld();
         if (level.getLevelData().getGameTime() != 0L) { return; }
         int border = ContentTerrain.worldBorder();
         if (border <= 0) { return; }
         level.getWorldBorder().setSize(border);
         Summary.info("border", "Set the world border to " + border + " blocks across");
+    }
+
+    private static void writeBack(MinecraftServer server) {
+        ResourceLocation wanted = overrode;
+        if (wanted == null || !(server instanceof DedicatedServer dedicated)) { return; }
+        overrode = null;
+        DedicatedServerSettings settings = ((IDedicatedServer) dedicated).rdpl$settings();
+        ((ISettings) settings.getProperties()).rdpl$properties().setProperty("level-type", wanted.toString());
+        settings.forceSave();
+        ContentLog.LOGGER.info("Wrote level-type={} back to server.properties, so the file names the preset the world was made with", wanted);
     }
 
     public static void onLevelLoad(LevelEvent.Load event) {
@@ -445,9 +517,10 @@ public final class ContentWorldShape {
         if (!voidApplies(level)) { return; }
         BlockPos center = platformCenter(level);
         if (level.isEmptyBlock(center)) { platform(level, center); }
-        if (player.getY() >= center.getY() + 1 && Math.abs(player.getX() - (center.getX() + 0.5D)) <= 0.5D && Math.abs(player.getZ() - (center.getZ() + 0.5D)) <= 0.5D) { return; }
+        if (player.getY() >= center.getY() + 1 && player.getY() < center.getY() + 2 && Math.abs(player.getX() - (center.getX() + 0.5D)) <= 0.5D && Math.abs(player.getZ() - (center.getZ() + 0.5D)) <= 0.5D) { return; }
         player.teleportTo(center.getX() + 0.5D, center.getY() + 1, center.getZ() + 0.5D);
         player.fallDistance = 0.0F;
+        ContentPregen.anchored(player);
     }
 
     private static BlockPos platformCenter(ServerLevel level) {
