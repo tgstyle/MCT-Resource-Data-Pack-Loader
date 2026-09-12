@@ -5891,6 +5891,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "enableDropSuppression": true,
   "dtSpecialDrops": true,
   "preventMobDrops": false,
+  "blockConversions": ["minecraft:stone=minecraft:cobblestone@0.75", "#logWood=minecraft:log:0@0.5"],
   "dimensions": {
     "-1": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "1": { "enableExplosionSmoke": false }
@@ -5918,6 +5919,9 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true oder false | Was das eigene TNT eines Spielers hinterlässt |
 | `enableDropSuppression`, `dtSpecialDrops` | true oder false | Drops innerhalb einer Explosion, und die eigenen Drops von Dynamic Trees |
 | `preventMobDrops` | true oder false | Ob von einer Explosion getötete Mobs noch etwas fallen lassen |
+| `blockConversions` | Liste von Regeln | Worin ein gesprengter Block verwandelt wird, statt unverändert zurückzukehren, sodass ein Bauwerk pro Explosion eine Stufe verfällt |
+
+`blockConversions` bestimmt, worin ein gesprengter Block verwandelt wird, statt unverändert zurückzukehren. Eine Regel lautet `<source>=<result>[@chance]`: die Quelle ist eine Block-ID, eine Block-ID mit Meta (`minecraft:log:1`) oder ein Ore-Dictionary-Name mit vorangestelltem `#`; das Ergebnis ist eine Block-ID, eine Block-ID mit Meta oder `nothing`, damit die Stelle leer bleibt; die Chance reicht von 0.0 bis 1.0 und ist standardmäßig 1.0. Die erste passende Regel gewinnt, spezifische Regeln gehören also über die allgemeinen, und ein Block, der bereits das Ergebnis einer Regel ist, wird nie erneut umgewandelt — eine Mauer gibt pro Explosion eine Stufe nach, statt ganz zu verschwinden.
 
 **Vollständig Vanilla-Optik:** `EJECT_DROPS` plus `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` und `playerTNTAlwaysDrops` alle aus. Jeder Schlüssel ist pro Dimension setzbar.
 

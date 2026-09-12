@@ -5891,6 +5891,7 @@ Blast Plaster (зависимость этого мода) отвечает за
   "enableDropSuppression": true,
   "dtSpecialDrops": true,
   "preventMobDrops": false,
+  "blockConversions": ["minecraft:stone=minecraft:cobblestone@0.75", "#logWood=minecraft:log:0@0.5"],
   "dimensions": {
     "-1": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "1": { "enableExplosionSmoke": false }
@@ -5918,6 +5919,9 @@ Blast Plaster (зависимость этого мода) отвечает за
 | `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true или false | Что оставляет после себя ТНТ самого игрока |
 | `enableDropSuppression`, `dtSpecialDrops` | true или false | Дроп внутри взрыва и собственный дроп Dynamic Trees |
 | `preventMobDrops` | true или false | Падает ли что-нибудь с мобов, убитых взрывом |
+| `blockConversions` | список правил | Во что превращается взорванный блок вместо того, чтобы вернуться прежним, так что постройка ветшает на шаг с каждым взрывом |
+
+`blockConversions` определяет, во что превращается взорванный блок вместо того, чтобы вернуться прежним. Правило записывается как `<source>=<result>[@chance]`: источник — идентификатор блока, идентификатор блока с метой (`minecraft:log:1`) или имя из ore dictionary с ведущим `#`; результат — идентификатор блока, идентификатор блока с метой или `nothing`, чтобы место осталось пустым; шанс задаётся от 0.0 до 1.0 и по умолчанию равен 1.0. Побеждает первое подходящее правило, поэтому частные правила ставят выше общих, а блок, который уже является результатом какого-либо правила, повторно не превращается — стена сдаёт по шагу за взрыв, а не стирается полностью.
 
 **Полностью ванильный вид:** `EJECT_DROPS` плюс выключенные `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` и `playerTNTAlwaysDrops`. Каждый ключ можно задать и по измерениям.
 

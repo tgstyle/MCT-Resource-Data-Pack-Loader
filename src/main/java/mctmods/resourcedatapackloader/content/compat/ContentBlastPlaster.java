@@ -93,6 +93,16 @@ public final class ContentBlastPlaster {
             return held.getAsInt();
         }
 
+        private List<String> strings(String key) {
+            JsonElement held = settings.get(key);
+            if (held == null || !held.isJsonArray()) { return null; }
+            List<String> given = new ArrayList<>();
+            for (JsonElement entry : held.getAsJsonArray()) {
+                if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) { given.add(entry.getAsString()); }
+            }
+            return given;
+        }
+
         @Override public mctmods.blastplaster.Config.ExplosionMode getExplosionMode() {
             JsonElement held = settings.get("explosionMode");
             if (held != null && held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
@@ -185,13 +195,8 @@ public final class ContentBlastPlaster {
         }
 
         @Override public List<String> getCustomEntitiesToHeal() {
-            JsonElement held = settings.get("customEntitiesToHeal");
-            if (held == null || !held.isJsonArray()) { return mctmods.blastplaster.Config.View.super.getCustomEntitiesToHeal(); }
-            List<String> given = new ArrayList<>();
-            for (JsonElement entry : held.getAsJsonArray()) {
-                if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) { given.add(entry.getAsString()); }
-            }
-            return given;
+            List<String> held = strings("customEntitiesToHeal");
+            return held != null ? held : mctmods.blastplaster.Config.View.super.getCustomEntitiesToHeal();
         }
 
         @Override public int getMinimumTicksBeforeHeal() {
@@ -222,6 +227,11 @@ public final class ContentBlastPlaster {
         @Override public int getMaxTreeSize() {
             Integer held = number("maxTreeSize");
             return held != null ? held : mctmods.blastplaster.Config.View.super.getMaxTreeSize();
+        }
+
+        @Override public List<String> getBlockConversions() {
+            List<String> held = strings("blockConversions");
+            return held != null ? held : mctmods.blastplaster.Config.View.super.getBlockConversions();
         }
 
         @Override public boolean enableDropSuppression() {
