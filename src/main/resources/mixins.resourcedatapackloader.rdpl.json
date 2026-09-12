@@ -130,6 +130,7 @@
     "common.MixinEntityTrackerEntry",
     "common.MixinEntityXPOrb",
     "common.MixinEntityZombie",
+    "common.MixinMobSpawnerBaseLogic",
     "common.MixinForgeChunkManager",
     "common.MixinForgeEventFactory",
     "common.MixinFunctionManager",

@@ -2,7 +2,9 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
+import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
@@ -392,6 +394,20 @@ public final class ContentEntities {
         return exploder == null ? null : soundEvent(exploder, 4);
     }
 
+    public static void fromSpawner(boolean adding) { SPAWNER.set(adding); }
+
+    private static List<PickDef> kin(EntityVariantDef def) {
+        List<PickDef> kept = new ArrayList<>();
+        List<TeamDef> sides = ContentTeams.claiming(def.registryName.toString());
+        for (PickDef choice : def.becomes) {
+            EntityVariantDef other = DEFS.get(new ResourceLocation(choice.name));
+            if (other == null || !other.base.equals(def.base)) { continue; }
+            List<TeamDef> theirs = ContentTeams.claiming(other.registryName.toString());
+            if (sides.isEmpty() ? theirs.isEmpty() : sides.stream().anyMatch(theirs::contains)) { kept.add(choice); }
+        }
+        return kept;
+    }
+
     public static boolean collectsExperience(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         return def != null && def.collectsExperience;
@@ -559,7 +575,8 @@ public final class ContentEntities {
 
     private static boolean swapped(EntityJoinWorldEvent event, EntityVariantDef def) {
         if (def.becomes.isEmpty() || SWAPPING.get() == Boolean.TRUE) { return false; }
-        String chosen = PickDef.pick(def.becomes, event.getWorld().rand, null);
+        List<PickDef> choices = SPAWNER.get() == Boolean.TRUE ? kin(def) : def.becomes;
+        String chosen = PickDef.pick(choices, event.getWorld().rand, null);
         if (chosen == null || chosen.equals(def.registryName.toString())) { return false; }
         ResourceLocation wanted = new ResourceLocation(chosen);
         if (!EntityList.isRegistered(wanted)) {
@@ -771,6 +788,7 @@ public final class ContentEntities {
     private static final String ROLLED = "rdplBabyRolled";
     private static final String YOUNG = "rdplBabyYoung";
     private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final ThreadLocal<Boolean> SPAWNER = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private static boolean stillRoused(EntityLiving living) {
         long now = living.world.getTotalWorldTime();
