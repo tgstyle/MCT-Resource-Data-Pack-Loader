@@ -1567,7 +1567,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "targetVaries": 3, "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "in_wall"],
@@ -1658,7 +1658,7 @@ PNG всегда побеждает. Если есть и `panel.png`, и `panel
 | `profession` | нет | `namespace:name` | случайно | Для жителя — профессия, которой он занят |
 | `baby` | нет | boolean или от 0.0 до 1.0 | `false` | Как часто существо появляется детёнышем и таким остаётся. `true` — всегда, число — такая доля |
 | `becomes` | нет | список | нет | Другие варианты, которыми этот может стать при появлении, по весу. См. ниже |
-| `sounds` | нет | объект | как у базовой | `ambient`, `hurt` и `death`, каждый — зарегистрированное звуковое событие |
+| `sounds` | нет | объект | как у базовой | `ambient`, `hurt` и `death`, каждый — зарегистрированное звуковое событие. Ещё два, для которых у основы звука нет: `target` играет один раз всякий раз, когда она берёт цель, а `explode` — как звучит её взрыв, подрывает ли она себя через `explodes` или бросает ТНТ через `throws`. `targetVaries` случайно сдвигает каждое воспроизведение `target` вверх или вниз не больше чем на столько полутонов, то есть `3` — до четверти октавы в обе стороны; `0` играет его как есть. Звук взрыва идёт вместо игрового |
 | `soundVolume` | нет | число | `1.0` | Насколько громкие эти звуки |
 | `soundPitch` | нет | число | `1.0` | Насколько высокие. Меньше 1 — ниже, больше 1 — писклявее |
 | `immuneTo` | нет | список видов урона | нет | Урон, который она стряхивает, по именам видов урона из игры: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `in_wall`, `freeze` и прочие |
@@ -4048,6 +4048,7 @@ Blast Plaster занимается тем, что происходит посл�
   "enableDropSuppression": true,
   "dtSpecialDrops": true,
   "preventMobDrops": false,
+  "blockConversions": ["minecraft:stone=minecraft:cobblestone@0.75", "#minecraft:logs=minecraft:stripped_oak_log@0.5"],
   "dimensions": {
     "minecraft:the_nether": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "minecraft:the_end": { "enableExplosionSmoke": false }
@@ -4075,6 +4076,9 @@ Blast Plaster занимается тем, что происходит посл�
 | `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true или false | Что оставляет после себя собственный ТНТ игрока |
 | `enableDropSuppression`, `dtSpecialDrops` | true или false | Дроп внутри взрыва и собственный дроп Dynamic Trees |
 | `preventMobDrops` | true или false | Роняют ли что-нибудь мобы, убитые взрывом |
+| `blockConversions` | список правил | Во что превращается взорванный блок вместо того, чтобы вернуться прежним, так что постройка ветшает на шаг с каждым взрывом |
+
+`blockConversions` определяет, во что превращается взорванный блок вместо того, чтобы вернуться прежним. Правило записывается как `<source>=<result>[@chance]`: источник — идентификатор блока или тег блока с ведущим `#`; результат — идентификатор блока или `nothing`, чтобы место осталось пустым; шанс задаётся от 0.0 до 1.0 и по умолчанию равен 1.0. Побеждает первое подходящее правило, поэтому частные правила ставят выше общих, а блок, который уже является результатом какого-либо правила, повторно не превращается — стена сдаёт по шагу за взрыв, а не стирается полностью.
 
 **Полностью ванильный вид:** `EJECT_DROPS` плюс `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` и `playerTNTAlwaysDrops` — все выключены. Каждый ключ можно задать на измерение.
 

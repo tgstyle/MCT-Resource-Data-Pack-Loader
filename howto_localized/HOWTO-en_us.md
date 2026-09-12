@@ -1567,7 +1567,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "targetVaries": 3, "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "in_wall"],
@@ -1658,7 +1658,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `profession` | no | `namespace:name` | random | For a villager, the trade it practices |
 | `baby` | no | boolean or 0.0 to 1.0 | `false` | How often one spawns young, and it stays that way. `true` is always, a number is that share of them |
 | `becomes` | no | list | none | Other variants this one may turn into as it spawns, by weight. See below |
-| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event |
+| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event. Two more it has no base sound for: `target` is played once each time it takes a target, and `explode` is what its blast sounds like, whether it blows itself up with `explodes` or throws TNT with `throws`. `targetVaries` shifts each `target` play up or down by a random amount within that many semitones, so `3` wanders a quarter octave either way; `0` plays it as it is. The blast sound goes out in place of the game's own |
 | `soundVolume` | no | number | `1.0` | How loud those sounds are |
 | `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
 | `immuneTo` | no | list of damage types | none | Damage it shrugs off, by the game's damage type names: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `in_wall`, `freeze` and the rest |
@@ -4047,6 +4047,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "enableDropSuppression": true,
   "dtSpecialDrops": true,
   "preventMobDrops": false,
+  "blockConversions": ["minecraft:stone=minecraft:cobblestone@0.75", "#minecraft:logs=minecraft:stripped_oak_log@0.5"],
   "dimensions": {
     "minecraft:the_nether": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "minecraft:the_end": { "enableExplosionSmoke": false }
@@ -4074,6 +4075,9 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true or false | What a player's own TNT leaves behind |
 | `enableDropSuppression`, `dtSpecialDrops` | true or false | Drops inside a blast, and Dynamic Trees' own drops |
 | `preventMobDrops` | true or false | Whether mobs killed by a blast still drop |
+| `blockConversions` | list of rules | What a blasted block turns into instead of returning as it was, so a build wears down one step per blast |
+
+`blockConversions` decides what a blasted block turns into instead of coming back as it was. A rule reads `<source>=<result>[@chance]`: the source is a block id, or a block tag with a leading `#`; the result is a block id, or `nothing` to leave the space empty; the chance runs 0.0 to 1.0 and defaults to 1.0. The first matching rule wins, so specific rules go above broad ones, and a block that is already some rule's result is never converted again — a wall gives up one step per blast rather than wearing away to nothing.
 
 **Fully vanilla appearance:** `EJECT_DROPS` plus `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` and `playerTNTAlwaysDrops` all off. Each key is per-dimension-capable.
 
