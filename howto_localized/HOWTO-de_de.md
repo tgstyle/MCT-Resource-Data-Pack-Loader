@@ -1567,7 +1567,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
   ],
-  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death" },
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "targetVaries": 3, "explode": "mypack:boom" },
   "soundVolume": 1.0,
   "soundPitch": 1.0,
   "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "in_wall"],
@@ -1658,7 +1658,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `profession` | nein | `namespace:name` | zufällig | Bei einem Dorfbewohner der Beruf, den er ausübt |
 | `baby` | nein | boolean oder 0.0 bis 1.0 | `false` | Wie oft eines jung erscheint, und es bleibt dabei. `true` heißt immer, eine Zahl heißt dieser Anteil |
 | `becomes` | nein | Liste | keine | Andere Varianten, zu denen diese beim Erscheinen werden kann, nach Gewicht. Siehe unten |
-| `sounds` | nein | Objekt | die der Basis | `ambient`, `hurt` und `death`, jeweils ein registriertes Sound-Event |
+| `sounds` | nein | Objekt | die der Basis | `ambient`, `hurt` und `death`, jeweils ein registriertes Sound-Event. Zwei weitere, für die die Basis keinen Laut hat: `target` wird einmal gespielt, sooft sie ein Ziel fasst, und `explode` ist der Klang ihrer Explosion, ob sie sich mit `explodes` selbst sprengt oder mit `throws` TNT wirft. `targetVaries` verschiebt jedes Abspielen von `target` zufällig um bis zu so viele Halbtöne nach oben oder unten, `3` also bis zu einer Vierteloktave in beide Richtungen; `0` spielt ihn unverändert. Auf dieser Version spielt das Spiel zusätzlich seinen eigenen Explosionsklang, weil ein 1.20.1-Client den Explosionsklang selbst wählt; auf 1.21.1 tritt `explode` an seine Stelle |
 | `soundVolume` | nein | Zahl | `1.0` | Wie laut diese Sounds sind |
 | `soundPitch` | nein | Zahl | `1.0` | Wie hoch sie klingen. Unter 1 tiefer, über 1 quietschiger |
 | `immuneTo` | nein | Liste von Schadensarten | keine | Schaden, der an ihr abprallt, nach den Schadensart-Namen des Spiels: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `in_wall`, `freeze` und der Rest |
@@ -4048,6 +4048,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "enableDropSuppression": true,
   "dtSpecialDrops": true,
   "preventMobDrops": false,
+  "blockConversions": ["minecraft:stone=minecraft:cobblestone@0.75", "#minecraft:logs=minecraft:stripped_oak_log@0.5"],
   "dimensions": {
     "minecraft:the_nether": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
     "minecraft:the_end": { "enableExplosionSmoke": false }
@@ -4075,6 +4076,9 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true oder false | Was das eigene TNT eines Spielers zurücklässt |
 | `enableDropSuppression`, `dtSpecialDrops` | true oder false | Drops innerhalb einer Explosion, und die eigenen Drops von Dynamic Trees |
 | `preventMobDrops` | true oder false | Ob von einer Explosion getötete Mobs noch droppen |
+| `blockConversions` | Liste von Regeln | Worin ein gesprengter Block verwandelt wird, statt unverändert zurückzukehren, sodass ein Bauwerk pro Explosion eine Stufe verfällt |
+
+`blockConversions` bestimmt, worin ein gesprengter Block verwandelt wird, statt unverändert zurückzukehren. Eine Regel lautet `<source>=<result>[@chance]`: die Quelle ist eine Block-ID oder ein Block-Tag mit vorangestelltem `#`; das Ergebnis ist eine Block-ID oder `nothing`, damit die Stelle leer bleibt; die Chance reicht von 0.0 bis 1.0 und ist standardmäßig 1.0. Die erste passende Regel gewinnt, spezifische Regeln gehören also über die allgemeinen, und ein Block, der bereits das Ergebnis einer Regel ist, wird nie erneut umgewandelt — eine Mauer gibt pro Explosion eine Stufe nach, statt ganz zu verschwinden.
 
 **Ganz wie Vanilla:** `EJECT_DROPS` plus `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` und `playerTNTAlwaysDrops` alle aus. Jeder Schlüssel ist pro Dimension setzbar.
 
