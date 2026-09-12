@@ -56,6 +56,21 @@ public final class GateStorage extends WorldSavedData {
         return now;
     }
 
+    public static int countGlobally(World world, String key) {
+        GateStorage data = get(world);
+        return data == null ? 0 : data.kills.getInteger(key);
+    }
+
+    public static void noteFor(EntityPlayer player, String key, int value) {
+        NBTTagCompound persisted = persisted(player);
+        NBTTagCompound tally = persisted.getCompoundTag(KILLS);
+        tally.setInteger(key, value);
+        persisted.setTag(KILLS, tally);
+        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+    }
+
+    public static int notedFor(EntityPlayer player, String key) { return persisted(player).getCompoundTag(KILLS).getInteger(key); }
+
     public static void clearTallyFor(EntityPlayer player, String key) {
         NBTTagCompound persisted = persisted(player);
         NBTTagCompound tally = persisted.getCompoundTag(KILLS);

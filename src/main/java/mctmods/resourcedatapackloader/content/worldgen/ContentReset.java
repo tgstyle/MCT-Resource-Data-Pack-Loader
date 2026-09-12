@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
+import mctmods.resourcedatapackloader.content.gate.GateStorage;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -21,6 +22,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentReset {
+    private static final String RESETS = "rdpl:mapresets";
+
     private ContentReset() {}
 
     public static int run(MinecraftServer server) {
@@ -41,10 +44,28 @@ public final class ContentReset {
         String runs = ContentPregen.says("resetRuns", Config.chunks.resetRuns).trim();
         if (!runs.isEmpty()) { mctmods.resourcedatapackloader.util.Functions.run(server, runs, "The reset"); }
         place(server);
+        noted(server);
         ContentPregen.releaseEveryone(true);
         ContentScoring.starting(server);
         ContentLog.LOGGER.info("The map was reset: {} entity(s) swept", swept);
         return swept;
+    }
+
+    private static void noted(MinecraftServer server) {
+        int count = GateStorage.tallyGlobally(server.getWorld(0), RESETS);
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { GateStorage.noteFor(player, RESETS, count); }
+    }
+
+    public static void arrived(EntityPlayerMP player) {
+        MinecraftServer server = player.getServer();
+        if (server == null) { return; }
+        int count = GateStorage.countGlobally(server.getWorld(0), RESETS);
+        if (count <= 0 || GateStorage.notedFor(player, RESETS) >= count) { return; }
+        GateStorage.noteFor(player, RESETS, count);
+        Landing landing = landingFor(server, ContentPregen.says("resetSendsTo", Config.chunks.resetSendsTo).trim(), player);
+        if (landing == null) { return; }
+        mctmods.resourcedatapackloader.util.world.Travel.to(player, landing.dimension, landing.x + 0.5D, landing.y, landing.z + 0.5D, player.rotationYaw, player.rotationPitch);
+        ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getName());
     }
 
     public static int sweep(MinecraftServer server) {

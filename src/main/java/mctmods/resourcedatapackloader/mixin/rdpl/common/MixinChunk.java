@@ -331,7 +331,8 @@ public abstract class MixinChunk {
     }
 
     @Redirect(method = "setBlockState", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/chunk/Chunk;getLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;)I"))
+            target = "Lnet/minecraft/world/chunk/Chunk;getLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;)I"),
+            expect = 0, require = 0)
     private int setBlockState_Rubic_noGetLightFor(Chunk instance, EnumSkyBlock type, BlockPos pos) {
         if (!rdpl$isColumn) { return instance.getLightFor(type, pos); }
         return 0;

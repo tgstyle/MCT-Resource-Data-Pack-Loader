@@ -23,8 +23,6 @@ public final class ContentOreVein implements IContentShape {
     public static final String DEFAULT = "default";
     public static final String BANDED = "banded";
     public static final String TUBE = "tube";
-    public static final float RICH = 0.88F;
-    public static final float NORMAL = 0.4F;
     private static final int OFFSET = 8;
     private static final int FULL = 16;
     private static final int WANING = 20;
@@ -137,7 +135,7 @@ public final class ContentOreVein implements IContentShape {
                     if (value <= shape.threshold) { continue; }
                     if (placer.occupied(world, x, y, z)) { continue; }
                     float tier = (value - shape.threshold) / (1.0F - shape.threshold);
-                    IBlockState state = tier >= RICH && rich != null ? rich : tier >= NORMAL || poor == null ? placer.choose(random) : poor;
+                    IBlockState state = tier >= shape.richAt && rich != null ? rich : tier >= shape.poorAt || poor == null ? placer.choose(random) : poor;
                     if (placer.placeExactly(world, state, x, y, z)) { placed++; }
                 }
             }

@@ -29,14 +29,11 @@ public final class ContentPristine {
         Path kept = server.getDataDirectory().toPath().resolve(FOLDER).resolve(server.getFolderName());
         Path stamp = kept.getParent().resolve(kept.getFileName().toString() + ".stamp");
         if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || !empty(save)) { return; }
-        try {
-            String held = new String(Files.readAllBytes(stamp), java.nio.charset.StandardCharsets.UTF_8);
-            if (!held.equals(fingerprint())) {
-                ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is not restored and the world is generated", server.getFolderName());
-                return;
-            }
+        if (!stamped(stamp)) {
+            ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is thrown away and the world is generated, then copied afresh", server.getFolderName());
+            clear(kept, stamp);
+            return;
         }
-        catch (IOException unreadable) { return; }
         long begun = System.currentTimeMillis();
         int files = copy(kept, save);
         if (files > 0) {
@@ -75,7 +72,37 @@ public final class ContentPristine {
     }
 
     public static boolean already(MinecraftServer server, WorldServer world) {
-        return Files.isDirectory(holdingFor(server, world));
+        Path kept = holdingFor(server, world);
+        if (!Files.isDirectory(kept)) { return false; }
+        Path stamp = stampFor(server, world);
+        if (stamped(stamp)) { return true; }
+        ContentLog.LOGGER.info("The pristine copy in {} was made by different packs, so it is thrown away and kept again from this world", kept);
+        clear(kept, stamp);
+        return false;
+    }
+
+    private static boolean stamped(Path stamp) {
+        try { return Files.isRegularFile(stamp) && new String(Files.readAllBytes(stamp), java.nio.charset.StandardCharsets.UTF_8).equals(fingerprint()); }
+        catch (IOException unreadable) { return false; }
+    }
+
+    private static void clear(Path kept, Path stamp) {
+        try {
+            if (Files.isDirectory(kept)) {
+                Files.walkFileTree(kept, new SimpleFileVisitor<Path>() {
+                    @Override @Nonnull public FileVisitResult visitFile(@Nonnull Path at, @Nonnull BasicFileAttributes attrs) throws IOException {
+                        Files.delete(at);
+                        return FileVisitResult.CONTINUE;
+                    }
+                    @Override @Nonnull public FileVisitResult postVisitDirectory(@Nonnull Path at, IOException broken) throws IOException {
+                        Files.delete(at);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+            Files.deleteIfExists(stamp);
+        }
+        catch (IOException broken) { ContentLog.LOGGER.warn("The stale pristine copy in {} could not be thrown away, so delete it by hand", kept, broken); }
     }
 
     private static Path stampFor(MinecraftServer server, WorldServer world) {

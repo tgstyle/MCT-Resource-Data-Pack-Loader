@@ -243,6 +243,9 @@ public final class ContentEntities {
         return def != null && def.steerable;
     }
 
+    private static final java.util.Map<Integer, Long> WAS_AT = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Float> FACED = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Float> HEALTHS = new java.util.HashMap<>();
     private static final int ENGAGE_EVERY = 100;
     private static int engageWatch;
 
@@ -255,13 +258,27 @@ public final class ContentEntities {
         int aimed = 0;
         int pathless = 0;
         int reaching = 0;
+        int walked = 0;
+        int spun = 0;
+        int hurt = 0;
+        java.util.List<EntityLiving> here = new java.util.ArrayList<>();
         long away = 0L;
+        java.util.Set<Integer> seen = new java.util.HashSet<>();
         for (WorldServer world : server.worlds) {
             if (world == null) { continue; }
             for (Entity entity : world.loadedEntityList) {
                 if (!(entity instanceof EntityLiving) || !BY_CLASS.containsKey(entity.getClass())) { continue; }
                 EntityLiving mob = (EntityLiving) entity;
                 mobs++;
+                seen.add(mob.getEntityId());
+                here.add(mob);
+                Float hp = HEALTHS.put(mob.getEntityId(), mob.getHealth());
+                if (hp != null && hp > mob.getHealth()) { hurt++; }
+                long at = mob.getPosition().toLong();
+                Long was = WAS_AT.put(mob.getEntityId(), at);
+                Float faced = FACED.put(mob.getEntityId(), mob.rotationYaw);
+                if (was != null && was != at) { walked++; }
+                if (was != null && was == at && faced != null && Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(mob.rotationYaw - faced)) >= 90.0F) { spun++; }
                 EntityLivingBase aim = mob.getAttackTarget();
                 if (aim == null) { continue; }
                 aimed++;
@@ -271,9 +288,71 @@ public final class ContentEntities {
                 if (gap <= mob.width * 2.0F + aim.width) { reaching++; }
             }
         }
+        int gone = 0;
+        for (java.util.Iterator<Integer> held = WAS_AT.keySet().iterator(); held.hasNext();) {
+            Integer id = held.next();
+            if (seen.contains(id)) { continue; }
+            held.remove();
+            FACED.remove(id);
+            HEALTHS.remove(id);
+            gone++;
+        }
+        int thickest = 0;
+        double spread = 0.0D;
+        if (!here.isEmpty()) {
+            double middleX = 0.0D;
+            double middleZ = 0.0D;
+            for (EntityLiving one : here) { middleX += one.posX; middleZ += one.posZ; }
+            middleX /= here.size();
+            middleZ /= here.size();
+            for (EntityLiving one : here) { spread += Math.sqrt((one.posX - middleX) * (one.posX - middleX) + (one.posZ - middleZ) * (one.posZ - middleZ)); }
+            spread /= here.size();
+            for (EntityLiving one : here) {
+                int near = 0;
+                for (EntityLiving other : here) { if (one.getDistanceSq(other) <= 64.0D) { near++; } }
+                thickest = Math.max(thickest, near);
+            }
+        }
+        if (!here.isEmpty()) {
+            double leastX = Double.MAX_VALUE;
+            double mostX = -Double.MAX_VALUE;
+            double leastZ = Double.MAX_VALUE;
+            double mostZ = -Double.MAX_VALUE;
+            for (EntityLiving one : here) {
+                leastX = Math.min(leastX, one.posX);
+                mostX = Math.max(mostX, one.posX);
+                leastZ = Math.min(leastZ, one.posZ);
+                mostZ = Math.max(mostZ, one.posZ);
+            }
+            int[][] cells = new int[11][11];
+            double wideX = Math.max(1.0D, mostX - leastX);
+            double wideZ = Math.max(1.0D, mostZ - leastZ);
+            for (EntityLiving one : here) {
+                int col = Math.min(10, (int) ((one.posX - leastX) / wideX * 11.0D));
+                int row = Math.min(10, (int) ((one.posZ - leastZ) / wideZ * 11.0D));
+                cells[row][col]++;
+            }
+            StringBuilder drawn = new StringBuilder();
+            for (int[] row : cells) {
+                if (drawn.length() > 0) { drawn.append('/'); }
+                for (int count : row) { drawn.append(count == 0 ? "." : count > 9 ? "+" : Character.forDigit(count, 10)); }
+            }
+            ContentLog.LOGGER.debug("Where they stand, {} mob(s) over x {} to {} and z {} to {}, eleven cells each way: {}",
+                    here.size(), (int) leastX, (int) mostX, (int) leastZ, (int) mostZ, drawn);
+        }
+        if (!FELL_TO.isEmpty()) {
+            ContentLog.LOGGER.debug("What has killed pack mobs so far: {}", FELL_TO);
+        }
         if (mobs == 0) { return; }
-        ContentLog.LOGGER.debug("Of {} pack mob(s), {} hold a target, {} of those have no path to walk to it, {} stand close enough to strike, and a target is {} block(s) off on average",
-                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed);
+        ContentLog.LOGGER.debug("Of {} pack mob(s), {} hold a target, {} of those have no path to walk to it, {} stand close enough to strike, and a target is {} block(s) off on average; {} moved since the last look, {} are gone since the last look and {} turned 90 degrees or more without leaving their block, {} lost health since the last look, the thickest crowd holds {} within 8 blocks and a mob stands {} block(s) from the middle of them all on average",
+                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed, walked, gone, spun, hurt, thickest, String.format(java.util.Locale.ROOT, "%.1f", spread));
+    }
+
+    private static final java.util.Map<String, Integer> FELL_TO = new java.util.LinkedHashMap<>();
+
+    @SubscribeEvent public static void onDeathWatch(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        if (!ContentLog.LOGGER.debugEnabled() || BY_CLASS.get(event.getEntityLiving().getClass()) == null) { return; }
+        FELL_TO.merge(event.getSource().damageType, 1, Integer::sum);
     }
 
     @SubscribeEvent public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
@@ -562,6 +641,9 @@ public final class ContentEntities {
     private static void body(EntityLivingBase alive, EntityVariantDef def) {
         if (def.hurtResistance >= 0) { alive.maxHurtResistantTime = def.hurtResistance; }
         if (def.stepHeight >= 0.0F) { alive.stepHeight = def.stepHeight; }
+        if (ContentLog.LOGGER.debugEnabled() && (def.hurtResistance >= 0 || def.stepHeight >= 0.0F || def.climbs != null || def.attackReach > 0.0F || def.knockback >= 0.0F || def.teleports)) {
+            ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} stands with step height {}, hurt resistance {}, attack reach {}, knockback {}, climbs {}, teleports {}", def.registryName, (int) alive.posX, (int) alive.posY, (int) alive.posZ, alive.stepHeight, alive.maxHurtResistantTime, def.attackReach, def.knockback, def.climbs, def.teleports);
+        }
         if (!def.ownBlast) { return; }
         if (alive instanceof EntityCreeper) {
             ((IEntityCreeper) alive).rdpl$setFuseTime(def.explosionFuse);

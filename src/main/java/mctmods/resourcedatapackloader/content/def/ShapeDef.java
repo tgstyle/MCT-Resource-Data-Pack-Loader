@@ -59,6 +59,8 @@ public final class ShapeDef {
     public float density = 1.0F;
     public String rich = "";
     public String poor = "";
+    public float richAt = 0.88F;
+    public float poorAt = 0.4F;
     public final List<PickDef> structures;
     public final List<PickDef> turns;
     public final List<PickDef> mirrors;

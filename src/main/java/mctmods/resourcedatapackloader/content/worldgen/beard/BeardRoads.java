@@ -645,7 +645,9 @@ public final class BeardRoads {
                         pier = true;
                         if (onPiling(start + i, across, acrossLeast, acrossMost)) { filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel); }
                     }
-                    if (bridged[i]) {
+                    boolean footing = grounded(world, at, x, profile[i], z);
+                    if (!bridged[i] || footing) { unrail(world, at, x, profile[i] + 1, z, planks); }
+                    if (bridged[i] && !footing) {
                         paved += deckBridge(world, box, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, gravel, at, dock, crossed, legs[i], frames[i]);
                         if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, at.getY(), at); }
                         continue;
@@ -693,7 +695,11 @@ public final class BeardRoads {
                 if (profile[i] == Integer.MIN_VALUE) {
                     IBlockState decked = deckState(world, box, alongX, start + i, across, acrossLeast, acrossMost, planks, dock, crossed);
                     if (decked == null) { continue; }
-                    paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, target, planks, gravel, at, dock, crossed, legs[i], frames[i]);
+                    if (bridgeDress(decked, planks)) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, target, planks, gravel, at, dock, crossed, legs[i], frames[i]); }
+                    else {
+                        unrail(world, at, x, target + 1, z, planks);
+                        at.setPos(x, target, z);
+                    }
                     if (!BeardKeep.holds(at.getX(), at.getY(), at.getZ())) {
                         world.setBlockState(at, decked, 2);
                         paved++;
@@ -707,6 +713,17 @@ public final class BeardRoads {
                     int merged = ((MergePiece) piece).centerAt(start + i);
                     if (Math.abs(across - merged) > (pathFullWidth() - 1) / 2) {
                         filled += vergeFill(world, piece, x, z, target, at);
+                        at.setPos(x, target, z);
+                        if (world.getBlockState(at).getMaterial().isReplaceable() && !BeardKeep.holds(x, target, z)) {
+                            at.setPos(x, target - 1, z);
+                            IBlockState footing = world.getBlockState(at);
+                            if (footing.getMaterial().isSolid() && !footing.getMaterial().isLiquid()) {
+                                at.setPos(x, target, z);
+                                IBlockState turf = BeardBlocks.fillGround(world, x, z);
+                                world.setBlockState(at, turf.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : turf, 2);
+                                filled++;
+                            }
+                        }
                         continue;
                     }
                     world.setBlockState(at, mergeSurface(alongX, x, z, start + i, merged, natural), 2);
@@ -1259,7 +1276,7 @@ public final class BeardRoads {
         List<StructureBoundingBox> found = new ArrayList<>();
         int reach = pathFullWidth() + 1;
         for (StructureComponent other : nearby) {
-            if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
+            if (other == piece || !(other instanceof StructureVillagePieces.Road)) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
             if (held.maxX >= box.minX - reach && held.minX <= box.maxX + reach && held.maxZ >= box.minZ - reach && held.minZ <= box.maxZ + reach) { found.add(held); }
         }
@@ -1424,7 +1441,9 @@ public final class BeardRoads {
                 boolean doorstep = held.getBlock() instanceof BlockStairs;
                 if (held.getMaterial().isSolid() && !held.getMaterial().isLiquid() && !doorstep) { continue; }
                 if (doorstep) { BeardKeep.letGo(x, level, z); }
-                if (!bridged) {
+                boolean standing = grounded(world, at, x, level, z);
+                at.setPos(x, level, z);
+                if (!bridged || standing) {
                     decked += groundToPlot(world, at, x, z, level);
                     continue;
                 }
@@ -1490,7 +1509,12 @@ public final class BeardRoads {
         if (world.getBlockState(at).getMaterial().isSolid()) { return 0; }
         IBlockState decked = deckState(world, box, alongX, row, across, acrossLeast, acrossMost, planks, dock, crossed);
         if (decked == null) { return 0; }
-        int laid = deckRail(world, box, alongX, row, across, acrossLeast, acrossMost, deckY, planks, support, at, dock, crossed, leg, toGround);
+        int laid = 0;
+        if (bridgeDress(decked, planks)) { laid = deckRail(world, box, alongX, row, across, acrossLeast, acrossMost, deckY, planks, support, at, dock, crossed, leg, toGround); }
+        else {
+            unrail(world, at, x, deckY + 1, z, planks);
+            at.setPos(x, deckY, z);
+        }
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return laid; }
         world.setBlockState(at, decked, 2);
         if (dock != null && cargoOn(world, alongX, row, across, acrossLeast, acrossMost, deckY, dock)) { laid++; }
@@ -1541,6 +1565,27 @@ public final class BeardRoads {
         int dash = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathCenterDash", Config.worldgen.villagePathCenterDash));
         if (dash > 0 && Math.floorMod(top.row(x, z), dash + 1) == dash) { return planks; }
         return ContentBeard.axised(center, top.alongX);
+    }
+
+    private static boolean bridgeDress(IBlockState decked, IBlockState planks) {
+        return decked == planks || decked == pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, planks);
+    }
+
+    private static boolean grounded(World world, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        if (y <= 1) { return false; }
+        if (world.getBlockState(at.setPos(x, y - 1, z)).getMaterial().isSolid()) { return true; }
+        if (world.isAirBlock(at.setPos(x, y - 1, z)) || y <= 2) { return false; }
+        return world.getBlockState(at.setPos(x, y - 2, z)).getMaterial().isSolid();
+    }
+
+    private static void unrail(World world, BlockPos.MutableBlockPos at, int x, int y, int z, IBlockState planks) {
+        IBlockState barrier = pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
+        if (barrier == planks || BeardKeep.holds(x, y, z)) { return; }
+        for (int up = 0; up < 3; up++) {
+            at.setPos(x, y + up, z);
+            if (world.getBlockState(at) != barrier) { break; }
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+        }
     }
 
     private static int deckRail(World world, StructureBoundingBox box, boolean alongX, int row, int across, int acrossLeast, int acrossMost, int deckY, IBlockState planks, IBlockState support, BlockPos.MutableBlockPos at, @Nullable Pier dock, List<StructureBoundingBox> crossed, boolean leg, boolean toGround) {

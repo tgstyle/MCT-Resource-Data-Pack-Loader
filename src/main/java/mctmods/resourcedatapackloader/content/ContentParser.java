@@ -582,7 +582,10 @@ public final class ContentParser {
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "leaderSays", "Type /rdpl round start"),
                 lobbyAt(key, JsonUtils.getJsonObject(json, "opens", new JsonObject())),
+                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "lobbyJoins", false),
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "joinsSays", "Round is in progress, you can join after it ends"),
                 JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false),
+                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "outSays", "You are out until the round ends"),
                 roundReset(key, JsonUtils.getJsonObject(json, "reset", new JsonObject())));
     }
 
@@ -1625,6 +1628,8 @@ public final class ContentParser {
         made.density = MathHelper.clamp(JsonUtils.getFloat(entry, "density", 1.0F), 0.0F, 1.0F);
         made.rich = JsonUtils.getString(entry, "rich", "");
         made.poor = JsonUtils.getString(entry, "poor", "");
+        made.richAt = MathHelper.clamp(JsonUtils.getFloat(entry, "richAt", 0.88F), 0.0F, 1.0F);
+        made.poorAt = MathHelper.clamp(JsonUtils.getFloat(entry, "poorAt", 0.4F), 0.0F, made.richAt);
         if (entry.has("at")) {
             JsonArray pinned = JsonUtils.getJsonArray(entry, "at");
             if (pinned.size() == 2) { made.at = new int[] { pinned.get(0).getAsInt(), pinned.get(1).getAsInt() }; }

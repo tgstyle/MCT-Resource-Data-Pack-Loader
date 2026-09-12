@@ -3761,6 +3761,8 @@ An `imprint` entry with `"locateAs": "Crypt"` registers every structure it place
 | `density` | vein | 0.0 to 1.0 | `1.0` | The share of qualifying blocks that are actually placed, a per-block coin |
 | `rich` | vein | block name | none | Placed in the top fifth of the field's range above `threshold`, the heart of the deposit, instead of the entry's blocks |
 | `poor` | vein | block name | none | Placed in the bottom two fifths of that range, the fringe, instead of the entry's blocks; the middle is the entry's own blocks. Either tier left out places the entry's blocks there |
+| `richAt` | vein | 0.0 to 1.0 | `0.88` | Where the rich tier starts in that range: `0.88` keeps the rich block to the strongest eighth of the deposit, a lower number makes the rich core fatter, `1.0` leaves no rich block at all |
+| `poorAt` | vein | 0.0 to 1.0 | `0.4` | Where the entry's own blocks start: below this the `poor` block is placed, so `0.4` gives a fringe of the bottom two fifths and `0.0` leaves no poor fringe. Clamped to `richAt` |
 
 ### Belts
 
@@ -4237,7 +4239,7 @@ Run it yourself before shipping, at the radius being shipped, start to finish. C
 
 | Key | What it does | Why you would set it |
 | --- | --- | --- |
-| `pregenBackup` | Copy the world to a pristine backup once pregeneration finishes, while the players are still held. Generation is then paid once: a later reset, or a new world on the same pack and seed, restores the copy instead of generating again, which is far faster than pregenerating twice. The copy is kept outside the save, at `rdpl-pristine/<world>` beside it, so another mod's backups do not sweep it up and it does not appear in a folder they manage | `false` |
+| `pregenBackup` | Copy the world to a pristine backup once pregeneration finishes, while the players are still held. Generation is then paid once: a later reset, or a new world on the same pack and seed, restores the copy instead of generating again, which is far faster than pregenerating twice. The copy is kept outside the save, at `rdpl-pristine/<world>` beside it, so another mod's backups do not sweep it up and it does not appear in a folder they manage. A copy whose packs no longer match the ones loaded is thrown away and kept again from the world in hand, so a pack change never resets to someone else's map | `false` |
 | `pregenBackupSays` | The mid-screen line players are shown while that copy is made, with the percentage after it. Empty shows nothing and the copy is made quietly | `Pack requested world backup` |
 | `resetSays` | The mid-screen line players are shown while `/rdplserver reset` or a round's end puts the map back. Empty resets quietly | `Pack requested map reset` |
 | `resetSendsTo` | Where players are put by a reset: `spawn`, a position as `x,y,z`, or `dimension:x,y,z` to send them into another world, which is how a reset drops everyone in a lobby rather than back in the arena | `spawn` |
@@ -4501,6 +4503,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `ends.afterMinutes` | int | `0` | The match ends after this many minutes. 0 never ends on time |
 | `ends.afterRounds` | int | `0` | For an objective another one `awardsTo`: the match ends once this many rounds have been awarded in all, whoever took them. 0 never ends on rounds |
 | `ends.lastStanding` | boolean | `false` | The round ends when only one side is left standing. The sides in play are those with a player or a living mob on them as the round opens, two at the least; a player who dies is out, back as a spectator until the round is over, and a side whose players are all out or gone and whose mobs are all dead has fallen. The side left standing takes the round, and `awardsTo` records it for that side whatever the score. With `resets` and `opens.by: leader` the game then goes back to the lobby. A side's `standIn` is not summoned again while such a round runs |
+| `ends.outSays` | text | `You are out until the round ends` | What a knocked-out player is told. Empty says nothing |
 | `ends.locksTeams` | boolean | `true` | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway |
 
 `ends` finishes the match, either the moment a side reaches `atScore` or once `afterMinutes` have passed. The standings are then shown, ranked by the game itself: as chat, or as a card if `results` asks for one. A player without this mod is told the same standings as chat lines, so nobody is left without a result. With `resets`, that end is a round's: the standings stand for `intermissionSeconds` while a cooldown counts down on the action bar, the map resets to the welcome, and the next round opens after a five-second count. `awardsTo` hands the round to the side that led, on an objective that `carries` across the reset. A carried objective can end on its own -- `atScore` for a best-of, `afterRounds` for a fixed count -- and its standing is cleared at the reset after, so a fresh match opens.
@@ -4526,6 +4529,8 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `opens.says` | text | `Waiting for {leader} to start the round` | Flashed mid-screen, the way the welcome is, to each player who does not lead: as they arrive in the lobby past the intro, once the welcome has shown; as the lobby opens again after a round; whenever it changes, as a lead comes or goes; and when they try something the lobby refuses. `{leader}` is the leads of every side, or `a leader` while nobody leads. Empty shows nothing |
 | `opens.leaderSays` | text | `Type /rdpl round start` | Flashed in the same way and at the same moments to a player who leads a side, in place of `opens.says`. Empty shows nothing |
 | `opens.lobby` | text | none | `x,y,z` in the overworld, or `dimension:x,y,z` in another world, such as `-1:0,64,0`, where everyone waits while the lobby holds: every player, and every living mob on a side, is stood on a ring around that spot, each facing its middle, so they stand staring at one another. Each is given an arc as wide as it is plus two blocks, so none overlaps another, and the ring grows as more arrive; it is laid out again whenever someone joins or leaves it. The height is the floor they stand on, found within three blocks either way. Players and mobs cross into that world and back directly, with no portal built. As the round opens players go to their side's `spawn`, and a mob that is still standing is put back where it was, in its own world |
+| `opens.lobbyJoins` | boolean | `false` | Put a player who logs in mid-round in the lobby as a spectator until the round ends, instead of where they logged out. Needs `opens.lobby` |
+| `opens.joinsSays` | text | `Round is in progress, you can join after it ends` | What they are told. Empty says nothing |
 
 ### Resetting a round
 

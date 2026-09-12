@@ -26,7 +26,7 @@ public final class BeardGrade {
                 if (sampled < world.getSeaLevel() - 1) { continue; }
                 across[count++] = sampled;
             }
-            if (count == 0) {
+            if (count * 2 <= acrossMost - acrossLeast + 1) {
                 profile[i] = Integer.MIN_VALUE;
                 continue;
             }

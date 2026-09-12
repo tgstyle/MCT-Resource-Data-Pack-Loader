@@ -83,7 +83,8 @@ public final class BeardOpen {
                     fenced = held instanceof BlockFence;
                     break;
                 }
-                for (int y = box.minY + ContentBeard.footingSink(piece) + 1; y <= box.maxY; y++) {
+                int seat = box.minY + ContentBeard.footingSink(piece) + (piece instanceof StructureVillagePieces.Road ? 2 : 1);
+                for (int y = seat; y <= box.maxY; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                     IBlockState held = world.getBlockState(at);

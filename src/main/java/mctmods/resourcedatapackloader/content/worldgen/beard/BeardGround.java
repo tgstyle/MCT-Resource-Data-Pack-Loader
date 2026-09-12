@@ -141,7 +141,7 @@ public final class BeardGround {
         int hangingOver = 0;
         int planted = 0;
         List<BlockPos> overhangs = new ArrayList<>();
-        boolean roadway = piece instanceof StructureVillagePieces.Path;
+        boolean roadway = piece instanceof StructureVillagePieces.Road;
         int courses = ContentBeard.groundCourse(piece);
         int yardTop = courses > 0 ? box.minY + courses - 1 : Integer.MIN_VALUE;
         int ceiling = Math.max(box.minY + 12, box.maxY + 1);
