@@ -171,8 +171,6 @@ public final class ContentPregen {
         return Math.max(asked, VANILLA_SPAWN_REACH);
     }
 
-    private static boolean asksForLand() { return ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld()) > 0 || reachesTheBorder(); }
-
     private static List<ResourceLocation> ids(String key, List<String> fallback) {
         List<ResourceLocation> out = new ArrayList<>();
         for (String entry : ContentControl.list(ContentControl.CHUNKS, key, fallback)) {
@@ -217,7 +215,7 @@ public final class ContentPregen {
                 ContentLog.LOGGER.info("Land was still being made in {} when the last session ended, and picking up again is off, so the world stands as far as it was made", dimension);
                 return;
             }
-            if (PENDING.isEmpty() && asksForLand()) {
+            if (PENDING.isEmpty() && (radius > 0 || reachesTheBorder())) {
                 for (ResourceLocation held : chosenDimensions(server)) {
                     if (!held.equals(dimension) && (reachesTheBorder() || memory.madeTo(held.toString()) < radius)) { PENDING.addLast(held); }
                 }
@@ -228,10 +226,11 @@ public final class ContentPregen {
             later(server, () -> start(null, server, ResourceKey.create(Registries.DIMENSION, dimension), run.getInt("middleX"), run.getInt("middleZ"), run.getInt("reach")));
             return;
         }
-        if (!asksForLand() || !PENDING.isEmpty()) { return; }
+        if ((radius <= 0 && !reachesTheBorder()) || !PENDING.isEmpty()) { return; }
         for (ResourceLocation dimension : chosenDimensions(server)) {
             if (reachesTheBorder() || memory.madeTo(dimension.toString()) < radius) { PENDING.addLast(dimension); }
         }
+        if (PENDING.isEmpty()) { return; }
         wantedRadius = radius;
         chaining = true;
         later(server, () -> nextDimension(server, radius));
@@ -250,7 +249,7 @@ public final class ContentPregen {
         if (ContentControl.off(ContentControl.CHUNKS)) { return; }
         int radius = wantedOnNewWorld();
         ResourceLocation id = entered.location();
-        if (!asksForLand() || madeUpFront(id)) { return; }
+        if ((radius <= 0 && !reachesTheBorder()) || madeUpFront(id)) { return; }
         if (running != null && running.dimension.equals(entered)) { return; }
         if (PENDING.contains(id)) { return; }
         ServerLevel level = server.getLevel(entered);

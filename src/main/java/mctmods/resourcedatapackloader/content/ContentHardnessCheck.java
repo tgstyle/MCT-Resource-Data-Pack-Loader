@@ -48,12 +48,16 @@ public final class ContentHardnessCheck {
     private static void look() {
         ContentLog.LOGGER.debug("Looking over {} whole block group(s) and {} exact state group(s) for hardness blockstate mismatches", ContentHardness.whole().size(), ContentHardness.exact().size());
         Set<BlockState> seen = new LinkedHashSet<>();
-        for (Map.Entry<Block, HardnessDef> entry : ContentHardness.whole().entrySet()) {
-            for (BlockState state : entry.getKey().getStateDefinition().getPossibleStates()) { measure(state, entry.getValue(), seen); }
+        for (Map.Entry<Block, List<HardnessDef>> entry : ContentHardness.whole().entrySet()) {
+            for (HardnessDef def : entry.getValue()) {
+                for (BlockState state : entry.getKey().getStateDefinition().getPossibleStates()) { measure(state, def, seen); }
+            }
         }
-        for (Map.Entry<BlockState, HardnessDef> entry : ContentHardness.exact().entrySet()) {
-            measure(entry.getKey(), entry.getValue(), seen);
-            others(entry.getKey(), entry.getValue());
+        for (Map.Entry<BlockState, List<HardnessDef>> entry : ContentHardness.exact().entrySet()) {
+            for (HardnessDef def : entry.getValue()) {
+                measure(entry.getKey(), def, seen);
+                others(entry.getKey(), def);
+            }
         }
         if (seen.isEmpty()) { ContentLog.LOGGER.debug("No hardness group asks for more than one step, so no blockstate needs variants"); }
     }
@@ -95,7 +99,6 @@ public final class ContentHardnessCheck {
 
     private static void shipped(BlockState state) {
         ResourceLocation name = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (name == null) { return; }
         String path = "blockstates/" + name.getPath() + ".json";
         chain(ResourceLocation.fromNamespaceAndPath(name.getNamespace(), path));
         boolean overriding = PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, name.getNamespace(), path, true);

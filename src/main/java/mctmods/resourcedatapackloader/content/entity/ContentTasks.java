@@ -13,6 +13,7 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -88,6 +89,7 @@ import javax.annotation.Nullable;
 
 public final class ContentTasks {
     private static final Map<String, Kind> KINDS = new LinkedHashMap<>();
+    private static final Map<EntityType<?>, Class<? extends LivingEntity>> CLASSES = new LinkedHashMap<>();
     private static final String WALKER = "a walking creature";
     private static final String TAME = "a tameable base, like a wolf, cat or parrot";
     private static final String ANY_NAME = "any living entity";
@@ -114,7 +116,7 @@ public final class ContentTasks {
         task("attackRanged", RangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", RangedAttackGoal.class, (m, t, d) -> new RangedAttackGoal((RangedAttackMob) m, t.speed(1.0D), t.cooldown(20), t.distance(15.0F)));
         task("attackRangedBow", Monster.class, "a monster that shoots, like a skeleton", RangedBowAttackGoal.class, ContentTasks::bow);
         task("avoidEntity", PathfinderMob.class, WALKER, AvoidEntityGoal.class, (m, t, d) -> {
-            Class<? extends LivingEntity> avoided = entity(t, d);
+            Class<? extends LivingEntity> avoided = entity(t, d, m.level());
             return avoided == null ? null : new AvoidEntityGoal<>((PathfinderMob) m, avoided, t.distance(6.0F), t.speed(1.0D), t.nearSpeed(1.2D));
         });
         task("beg", Wolf.class, "a wolf", BegGoal.class, (m, t, d) -> new BegGoal((Wolf) m, t.distance(8.0F)));
@@ -123,10 +125,10 @@ public final class ContentTasks {
         target("defendVillage", IronGolem.class, "an iron golem", DefendVillageTargetGoal.class, (m, t, d) -> new DefendVillageTargetGoal((IronGolem) m));
         task("eatGrass", Mob.class, ANY_NAME, EatBlockGoal.class, (m, t, d) -> new EatBlockGoal(m));
         target("findEntityNearest", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> {
-            Class<? extends LivingEntity> sought = entity(t, d);
-            return sought == null ? null : new NearestAttackableTargetGoal<>(m, sought, true);
+            Class<? extends LivingEntity> sought = entity(t, d, m.level());
+            return sought == null ? null : new NearestAttackableTargetGoal<>(m, sought, 10, true, false, ContentEntities::fairGame);
         });
-        target("findEntityNearestPlayer", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> new NearestAttackableTargetGoal<>(m, Player.class, true));
+        target("findEntityNearestPlayer", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> new NearestAttackableTargetGoal<>(m, Player.class, 10, true, false, ContentEntities::fairGame));
         task("fleeSun", PathfinderMob.class, WALKER, FleeSunGoal.class, (m, t, d) -> new FleeSunGoal((PathfinderMob) m, t.speed(1.0D)));
         task("follow", Mob.class, ANY_NAME, FollowMobGoal.class, (m, t, d) -> new FollowMobGoal(m, t.speed(1.0D), t.near(3.0F), t.distance(7.0F)));
         task("followOwner", TamableAnimal.class, TAME, FollowOwnerGoal.class, (m, t, d) -> new FollowOwnerGoal((TamableAnimal) m, t.speed(1.0D), t.near(10.0F), t.distance(2.0F)));
@@ -144,7 +146,7 @@ public final class ContentTasks {
         task("lookIdle", Mob.class, ANY_NAME, RandomLookAroundGoal.class, (m, t, d) -> new RandomLookAroundGoal(m));
         task("mate", Animal.class, "an animal", BreedGoal.class, (m, t, d) -> {
             if (t.entity().isEmpty()) { return new BreedGoal((Animal) m, t.speed(1.0D)); }
-            Class<? extends LivingEntity> partner = entity(t, d);
+            Class<? extends LivingEntity> partner = entity(t, d, m.level());
             if (partner == null) { return null; }
             if (!Animal.class.isAssignableFrom(partner)) {
                 ContentLog.LOGGER.error("Entity variant {} asks to mate with '{}', which is not an animal", d.key(), t.entity());
@@ -156,8 +158,8 @@ public final class ContentTasks {
         task("moveTowardsRestriction", PathfinderMob.class, WALKER, MoveTowardsRestrictionGoal.class, (m, t, d) -> new MoveTowardsRestrictionGoal((PathfinderMob) m, t.speed(1.0D)));
         task("moveTowardsTarget", PathfinderMob.class, WALKER, MoveTowardsTargetGoal.class, (m, t, d) -> new MoveTowardsTargetGoal((PathfinderMob) m, t.speed(0.9D), t.distance(32.0F)));
         target("nearestAttackableTarget", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> {
-            Class<? extends LivingEntity> sought = entity(t, d);
-            return sought == null ? null : new NearestAttackableTargetGoal<>(m, sought, t.sight(), t.nearby());
+            Class<? extends LivingEntity> sought = entity(t, d, m.level());
+            return sought == null ? null : new NearestAttackableTargetGoal<>(m, sought, 10, t.sight(), t.nearby(), ContentEntities::fairGame);
         });
         task("ocelotAttack", Mob.class, ANY_NAME, OcelotAttackGoal.class, (m, t, d) -> new OcelotAttackGoal(m));
         task("openDoor", Mob.class, ANY_NAME, OpenDoorGoal.class, (m, t, d) -> new OpenDoorGoal(m, t.close()));
@@ -170,7 +172,7 @@ public final class ContentTasks {
         task("skeletonRiders", SkeletonHorse.class, "a skeleton horse", SkeletonTrapGoal.class, (m, t, d) -> new SkeletonTrapGoal((SkeletonHorse) m));
         task("swimming", Mob.class, ANY_NAME, FloatGoal.class, (m, t, d) -> new FloatGoal(m));
         target("targetNonTamed", TamableAnimal.class, TAME, NonTameRandomTargetGoal.class, (m, t, d) -> {
-            Class<? extends LivingEntity> sought = entity(t, d);
+            Class<? extends LivingEntity> sought = entity(t, d, m.level());
             return sought == null ? null : new NonTameRandomTargetGoal<>((TamableAnimal) m, sought, t.sight(), null);
         });
         task("tempt", PathfinderMob.class, WALKER, TemptGoal.class, (m, t, d) -> {
@@ -182,12 +184,12 @@ public final class ContentTasks {
         task("wanderAvoidWater", PathfinderMob.class, WALKER, WaterAvoidingRandomStrollGoal.class, (m, t, d) -> t.chance() == null ? new WaterAvoidingRandomStrollGoal((PathfinderMob) m, t.speed(1.0D)) : new WaterAvoidingRandomStrollGoal((PathfinderMob) m, t.speed(1.0D), t.chance()));
         task("wanderAvoidWaterFlying", PathfinderMob.class, WALKER, WaterAvoidingRandomFlyingGoal.class, (m, t, d) -> new WaterAvoidingRandomFlyingGoal((PathfinderMob) m, t.speed(1.0D)));
         task("watchClosest", Mob.class, ANY_NAME, LookAtPlayerGoal.class, (m, t, d) -> {
-            Class<? extends LivingEntity> watched = t.entity().isEmpty() ? Player.class : entity(t, d);
+            Class<? extends LivingEntity> watched = t.entity().isEmpty() ? Player.class : entity(t, d, m.level());
             if (watched == null) { return null; }
             return t.chance() == null ? new LookAtPlayerGoal(m, watched, t.distance(8.0F)) : new LookAtPlayerGoal(m, watched, t.distance(8.0F), t.chance());
         });
         task("watchClosest2", Mob.class, ANY_NAME, LookAtPlayerGoal.class, (m, t, d) -> {
-            Class<? extends LivingEntity> watched = t.entity().isEmpty() ? Player.class : entity(t, d);
+            Class<? extends LivingEntity> watched = t.entity().isEmpty() ? Player.class : entity(t, d, m.level());
             return watched == null ? null : new LookAtPlayerGoal(m, watched, t.distance(8.0F), t.chance() == null ? 0.02F : t.chance());
         });
         task("zombieAttack", Zombie.class, "a zombie", ZombieAttackGoal.class, (m, t, d) -> new ZombieAttackGoal((Zombie) m, t.speed(1.0D), t.memory()));
@@ -295,24 +297,36 @@ public final class ContentTasks {
         }
     }
 
-    @Nullable private static Class<? extends LivingEntity> entity(TaskDef task, EntityVariantDef def) {
+    @Nullable private static Class<? extends LivingEntity> entity(TaskDef task, EntityVariantDef def, Level level) {
         if (task.entity().isEmpty()) {
             ContentLog.LOGGER.error("Entity variant {} asks for the task {} without saying which entity, add \"entity\"", def.key(), task.name());
             return null;
         }
-        return living(task.entity(), def.key());
+        return living(task.entity(), def.key(), level);
     }
 
-    @Nullable public static Class<? extends LivingEntity> living(String name, ResourceLocation owner) {
+    @Nullable public static Class<? extends LivingEntity> living(String name, ResourceLocation owner, Level level) {
         ResourceLocation location = ResourceLocation.tryParse(name);
         if (location != null && "minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return Player.class; }
         EntityType<?> type = location == null ? null : EntityType.byString(location.toString()).orElse(null);
-        Class<? extends Entity> found = type == null ? null : type.getBaseClass();
-        if (found == null || !LivingEntity.class.isAssignableFrom(found)) {
+        Class<? extends LivingEntity> found = type == null ? null : held(type, level);
+        if (found == null) {
             ContentLog.LOGGER.error("Entity variant {} names '{}', which is not a living entity that is registered", owner, name);
             return null;
         }
-        return found.asSubclass(LivingEntity.class);
+        return found;
+    }
+
+    @Nullable private static Class<? extends LivingEntity> held(EntityType<?> type, Level level) {
+        if (CLASSES.containsKey(type)) { return CLASSES.get(type); }
+        Class<? extends LivingEntity> found = null;
+        Entity made = null;
+        try { made = type.create(level); }
+        catch (RuntimeException refused) { ContentLog.LOGGER.debug("{} could not be made to read its class off, so nothing can be set to attack it: {}", EntityType.getKey(type), refused.toString()); }
+        if (made instanceof LivingEntity) { found = made.getClass().asSubclass(LivingEntity.class); }
+        if (made != null) { made.discard(); }
+        CLASSES.put(type, found);
+        return found;
     }
 
     @Nullable private static Set<Item> items(TaskDef task, EntityVariantDef def) {

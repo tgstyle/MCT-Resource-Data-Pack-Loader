@@ -39,21 +39,26 @@ public final class ContentPristine {
         return kept.getParent().resolve(kept.getFileName().toString() + ".stamp");
     }
 
-    public static boolean already(MinecraftServer server) { return Files.isDirectory(holdingFor(server)); }
+    public static boolean already(MinecraftServer server) {
+        Path kept = holdingFor(server);
+        if (!Files.isDirectory(kept)) { return false; }
+        Path stamp = stampFor(server);
+        if (stamped(stamp)) { return true; }
+        ContentLog.LOGGER.info("The pristine copy in {} was made by different packs, so it is thrown away and kept again from this world", kept);
+        clear(kept, stamp);
+        return false;
+    }
 
     public static void beforeWorldsLoad(MinecraftServer server) {
         Path save = save(server);
         Path kept = holdingFor(server);
         Path stamp = stampFor(server);
         if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || !bare(save)) { return; }
-        try {
-            String held = Files.readString(stamp, StandardCharsets.UTF_8);
-            if (!held.equals(fingerprint())) {
-                ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is not restored and the world is generated", save.getFileName());
-                return;
-            }
+        if (!stamped(stamp)) {
+            ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is thrown away and the world is generated, then copied afresh", save.getFileName());
+            clear(kept, stamp);
+            return;
         }
-        catch (IOException unreadable) { return; }
         long begun = System.currentTimeMillis();
         int files = give(server, along -> {});
         if (files > 0) { ContentLog.LOGGER.info("Restored {} from the pristine copy, {} file(s) in {} ms, so it is not generated again", save.getFileName(), files, System.currentTimeMillis() - begun); }
@@ -64,6 +69,31 @@ public final class ContentPristine {
         if (!Files.isDirectory(region)) { return true; }
         try (Stream<Path> held = Files.list(region)) { return held.findAny().isEmpty(); }
         catch (IOException unreadable) { return false; }
+    }
+
+    private static boolean stamped(Path stamp) {
+        try { return Files.isRegularFile(stamp) && Files.readString(stamp, StandardCharsets.UTF_8).equals(fingerprint()); }
+        catch (IOException unreadable) { return false; }
+    }
+
+    private static void clear(Path kept, Path stamp) {
+        try {
+            if (Files.isDirectory(kept)) {
+                Files.walkFileTree(kept, new SimpleFileVisitor<>() {
+                    @Override @Nonnull public FileVisitResult visitFile(@Nonnull Path at, @Nonnull BasicFileAttributes attrs) throws IOException {
+                        Files.delete(at);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override @Nonnull public FileVisitResult postVisitDirectory(@Nonnull Path at, IOException broken) throws IOException {
+                        Files.delete(at);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+            Files.deleteIfExists(stamp);
+        }
+        catch (IOException broken) { ContentLog.LOGGER.warn("The stale pristine copy in {} could not be thrown away, so delete it by hand", kept, broken); }
     }
 
     private static String fingerprint() {

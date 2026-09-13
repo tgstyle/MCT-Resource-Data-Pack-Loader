@@ -75,6 +75,7 @@ public final class PackManager {
     public static final String FURNACE = "furnace";
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String PLAYER_LOOT = "player_loot";
+    public static final String BLOCK_DROPS = "block_drops";
     public static final String REGISTRY_REMAP = "registry_remap";
     public static final String SOUNDS = "sounds";
     public static final String FUELS = "fuels";
@@ -85,6 +86,7 @@ public final class PackManager {
     public static final String SCORING = "scoring";
     public static final String OVERRIDES = "overrides";
     public static final String HARDNESS = "hardness";
+    public static final String ANVILS = "anvils";
     private static final String README = "readme.txt";
     private static final String README_BASE = "/assets/resourcedatapackloader/readme";
     private static final String README_FALLBACK = README_BASE + "_en_us.txt";
@@ -205,7 +207,7 @@ public final class PackManager {
         }
     }
 
-    private static final String[][] SINGULAR = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
+    private static final String[][] SINGULAR = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
 
     @Nullable private static String singular(String path) {
         for (String[] pair : SINGULAR) {

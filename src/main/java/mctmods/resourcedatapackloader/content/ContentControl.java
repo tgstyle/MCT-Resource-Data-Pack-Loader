@@ -85,7 +85,7 @@ public final class ContentControl {
             "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villagePlotsMost", "villagePlotsBackRow", "villageBlockSizes",
             "villageCitySpacing", "villageLayout", "voidPlatformBlock", "voidPlatformHeight", "voidPlatformSize",
             "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "cloudHeight",
-            "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "biomes", "worldBorder", "worldBelow",
+            "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "biomes", "worldBorder", "worldBelow",
             "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
             "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",

@@ -226,6 +226,7 @@ public final class ContentWorldgenParser {
             ContentLog.LOGGER.error("Worldgen {} asks for plane '{}', which is not {} or {}, using {}", key, plane, ShapeDef.CIRCLE, ShapeDef.SQUARE, ShapeDef.CIRCLE);
             plane = ShapeDef.CIRCLE;
         }
+        float richAt = Mth.clamp(GsonHelper.getAsFloat(entry, "richAt", 0.88F), 0.0F, 1.0F);
         return new ShapeDef(type,
                 ContentParser.amount(entry, "radius", ShapeDef.BELT.equals(type) ? 32 : 6, 0),
                 ContentParser.amount(entry, "height", ShapeDef.GEODE.equals(type) ? 8 : ShapeDef.TREE.equals(type) ? 5 : 1, 0),
@@ -259,7 +260,9 @@ public final class ContentWorldgenParser {
                 pattern(key, entry),
                 Mth.clamp(GsonHelper.getAsFloat(entry, "density", 1.0F), 0.0F, 1.0F),
                 GsonHelper.getAsString(entry, "rich", "").trim(),
-                GsonHelper.getAsString(entry, "poor", "").trim());
+                GsonHelper.getAsString(entry, "poor", "").trim(),
+                richAt,
+                Mth.clamp(GsonHelper.getAsFloat(entry, "poorAt", 0.4F), 0.0F, richAt));
     }
 
     private static String pattern(ResourceLocation key, JsonObject entry) {

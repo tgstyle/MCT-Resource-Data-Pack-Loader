@@ -35,14 +35,18 @@ public final class WorldIntroScreen extends Screen {
     private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
     private static final int FOOTER = 36;
+    private static final int FITS = 4;
+    private static final float SMALLEST = 0.5F;
     private static final float DERIVED_SPEED = 0.25F;
     private final List<IntroPageDef> pages;
     private final List<FormattedCharSequence> lines = new ArrayList<>();
+    private final List<String> written = new ArrayList<>();
     @Nullable private final SoundInstance music;
     private final boolean landBeingMade;
     private int page;
     private boolean sounding;
     private int wrapWidth = TEXT_WIDTH;
+    private float scale = 1.0F;
     private float totalScrollLength;
     private float ticks;
 
@@ -89,23 +93,24 @@ public final class WorldIntroScreen extends Screen {
     @Override public void tick() {
         ticks += 1.0F;
         IntroPageDef def = pages.get(page);
-        if (def.still() || page >= pages.size() - 1) { return; }
+        boolean timed = def.time() > IntroPageDef.DERIVE;
+        if (!timed && (def.still() || page >= pages.size() - 1)) { return; }
         if (ticks >= duration()) { advance(); }
     }
 
     @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         drawPageBackground(graphics, partialTick);
         IntroPageDef def = pages.get(page);
-        float scale = Crisp.scale(def.textScale());
-        float step = LINE_HEIGHT * scale;
+        float drawn = Crisp.scale(scale);
+        float step = LINE_HEIGHT * drawn;
         float y = offset(partialTick);
         graphics.enableScissor(0, 0, width, height - FOOTER);
         graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.pose().scale(drawn, drawn, 1.0F);
         for (FormattedCharSequence line : lines) {
             if (y > -step && y < height) {
-                float x = def.still() ? (width - font.width(line) * scale) / 2.0F : (width - wrapWidth * scale) / 2.0F;
-                graphics.drawString(font, line, Crisp.snap(x) / scale, Crisp.snap(y) / scale, 0xFFFFFF, true);
+                float x = def.still() ? (width - font.width(line) * drawn) / 2.0F : (width - wrapWidth * drawn) / 2.0F;
+                graphics.drawString(font, line, Crisp.snap(x) / drawn, Crisp.snap(y) / drawn, 0xFFFFFF, true);
             }
             y += step;
         }
@@ -162,7 +167,7 @@ public final class WorldIntroScreen extends Screen {
 
     private float offset(float partialTick) {
         IntroPageDef def = pages.get(page);
-        if (def.still()) { return (height - totalScrollLength) / 2.0F; }
+        if (def.still()) { return Math.max(0.0F, (height - FOOTER - totalScrollLength) / 2.0F); }
         float start = startOffset();
         float span = duration();
         if (span <= 0.0F) { return endOffset(); }
@@ -180,10 +185,24 @@ public final class WorldIntroScreen extends Screen {
     }
 
     private void loadPage() {
-        lines.clear();
-        totalScrollLength = 0.0F;
+        written.clear();
         IntroPageDef def = pages.get(page);
-        wrapWidth = (int) Mth.clamp((width - MARGIN) / def.textScale(), 1.0F, TEXT_WIDTH);
+        scale = def.textScale();
+        read(def);
+        if (!def.still()) {
+            wrap((int) Mth.clamp((width - MARGIN) / scale, 1.0F, TEXT_WIDTH));
+            return;
+        }
+        float room = height - FOOTER;
+        for (int tries = 0; tries < FITS; tries++) {
+            wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+            if (totalScrollLength <= room || scale <= SMALLEST) { return; }
+            scale = Math.max(SMALLEST, scale * room / totalScrollLength);
+        }
+        wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
+    }
+
+    private void read(IntroPageDef def) {
         if (def.text() == null) { return; }
         Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(def.text());
         if (resource.isEmpty()) {
@@ -193,13 +212,18 @@ public final class WorldIntroScreen extends Screen {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.get().open(), StandardCharsets.UTF_8))) {
             String name = Minecraft.getInstance().getUser().getName();
             String line;
-            while ((line = reader.readLine()) != null) {
-                String text = line.replace("PLAYERNAME", name);
-                if (text.isEmpty()) { lines.add(FormattedCharSequence.EMPTY); }
-                else { lines.addAll(font.split(Component.literal(text), wrapWidth)); }
-            }
+            while ((line = reader.readLine()) != null) { written.add(line.replace("PLAYERNAME", name)); }
         }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not read intro text {}, showing the page without it: {}", def.text(), ex.getMessage()); }
-        totalScrollLength = lines.size() * LINE_HEIGHT * def.textScale();
+    }
+
+    private void wrap(int widest) {
+        wrapWidth = widest;
+        lines.clear();
+        for (String text : written) {
+            if (text.isEmpty()) { lines.add(FormattedCharSequence.EMPTY); }
+            else { lines.addAll(font.split(Component.literal(text), wrapWidth)); }
+        }
+        totalScrollLength = lines.size() * LINE_HEIGHT * scale;
     }
 }

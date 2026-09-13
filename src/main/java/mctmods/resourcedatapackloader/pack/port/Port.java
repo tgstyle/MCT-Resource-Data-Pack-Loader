@@ -14,8 +14,9 @@ import java.util.Set;
 
 public final class Port {
     public static final String LANG_SUFFIX = ".lang";
+    private static final String SOUNDS = "sounds";
     private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
-    private static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "exposures", "overrides", "teams", "scoring", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
+    private static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
 
     private Port() {}
 
@@ -61,6 +62,7 @@ public final class Port {
     public static Mapped map(String path) {
         int slash = path.indexOf('/');
         String head = slash < 0 ? path : path.substring(0, slash);
+        if (slash > 0 && SOUNDS.equals(head) && !path.endsWith(".json")) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW); }
         if (slash < 0 || CLIENT_FOLDERS.contains(head)) { return client(path); }
         return data(path, head);
     }
@@ -88,7 +90,6 @@ public final class Port {
             case "advancements" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.ADVANCEMENT : Kind.RAW);
             case "functions" -> new Mapped(PackType.SERVER_DATA, path, Kind.FUNCTION);
             case "oredict" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.OREDICT : Kind.DROPPED);
-            case "block_drops" -> new Mapped(PackType.SERVER_DATA, path, Kind.DROPPED);
             case "structures", "tags" -> new Mapped(PackType.SERVER_DATA, path, Kind.RAW);
             default -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.DEFINITION : Kind.RAW);
         };

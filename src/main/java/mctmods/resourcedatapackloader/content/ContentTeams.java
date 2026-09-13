@@ -1,12 +1,18 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Scores;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.Travel;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -15,25 +21,43 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.Unbreakable;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
+import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentTeams {
     private static final Map<String, Map<String, String>> BALLOTS = new LinkedHashMap<>();
     private static final Map<String, String> CLAIMED = new LinkedHashMap<>();
     private static final Map<String, String> WAITING = new LinkedHashMap<>();
+    private static final Map<String, Map<String, String>> PICKED = new LinkedHashMap<>();
+    private static final Map<String, Set<String>> LEFT = new LinkedHashMap<>();
+    private static final Map<String, List<String>> ARRIVALS = new LinkedHashMap<>();
+    private static final Map<String, String> DECIDED = new LinkedHashMap<>();
+    private static final Set<String> UNMADE = new HashSet<>();
+    private static final int STAND_IN_EVERY = 100;
+    private static final int DECIDED_EVERY = 20;
     private static final Map<String, TeamDef> BY_NAME = new LinkedHashMap<>();
 
     private ContentTeams() {}
@@ -108,18 +132,37 @@ public final class ContentTeams {
             break;
         }
         TeamDef wanted = teamFor(entity, id);
-        if (wanted == null || !wanted.scoreboard()) { return; }
-        join(level, entity.getStringUUID(), wanted);
+        if (wanted != null && wanted.scoreboard()) { join(level, entity.getStringUUID(), wanted); }
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.picksFrom().contains(id)) { fill(level.getServer(), def, entity); }
+        }
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (BY_NAME.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         String named = player.getGameProfile().getName();
-        for (TeamDef def : BY_NAME.values()) {
-            if (def.players().contains(named)) {
-                join(player.serverLevel(), named, def);
-                return;
+        if (!pickedAlready(named)) {
+            for (TeamDef def : BY_NAME.values()) {
+                if (def.players().contains(named)) {
+                    join(player.serverLevel(), named, def);
+                    break;
+                }
             }
+        }
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.picksFrom().contains(TeamDef.PLAYERS)) { fill(player.server, def, player); }
+        }
+    }
+
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (BY_NAME.isEmpty() || !(event.getEntity() instanceof ServerPlayer leaving)) { return; }
+        String name = leaving.getGameProfile().getName();
+        MinecraftServer server = leaving.server;
+        for (TeamDef def : BY_NAME.values()) {
+            if (!TeamDef.FIRST.equals(def.lead()) || !name.equals(firstHere(server, def, null))) { continue; }
+            String next = firstHere(server, def, name);
+            ServerPlayer player = next == null ? null : server.getPlayerList().getPlayerByName(next);
+            if (player != null) { leadTold(player, def, " (" + name + " left)"); }
         }
     }
 
@@ -135,6 +178,19 @@ public final class ContentTeams {
         event.setCanceled(true);
     }
 
+    public static void onServerTick(ServerTickEvent.Post event) { tick(event.getServer()); }
+
+    private static void tick(MinecraftServer server) {
+        if (BY_NAME.isEmpty()) { return; }
+        ServerLevel overworld = server.overworld();
+        long now = overworld.getGameTime();
+        if (now % DECIDED_EVERY == 0) { decided(server); }
+        if (now % STAND_IN_EVERY != 0) { return; }
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.standsIn() && def.scoreboard()) { standIn(server, overworld, def, false); }
+        }
+    }
+
     @Nullable private static TeamDef teamFor(Entity entity, String id) {
         for (TeamDef def : BY_NAME.values()) {
             if (def.entities().contains(id)) { return def; }
@@ -143,33 +199,120 @@ public final class ContentTeams {
     }
 
     private static void join(ServerLevel level, String member, TeamDef def) {
-        Scoreboard board = Scores.board(level.getServer());
+        MinecraftServer server = level.getServer();
+        Scoreboard board = Scores.board(server);
         if (Scores.team(board, def.name()) == null) { field(level); }
         PlayerTeam team = Scores.team(board, def.name());
         if (team == null) { return; }
         PlayerTeam held = Scores.teamOf(board, member);
         if (held != null && def.name().equals(held.getName())) { return; }
+        Set<String> gone = LEFT.get(def.name());
+        if (gone != null) { gone.remove(member); }
         Scores.join(board, member, team);
+        ServerPlayer player = server.getPlayerList().getPlayerByName(member);
+        if (player == null) { return; }
+        give(player, def);
+        seated(member, def);
+        tellLead(server, def, member);
+    }
+
+    private static void seated(String member, TeamDef def) {
+        if (!TeamDef.FIRST.equals(def.lead())) { return; }
+        List<String> arrivals = ARRIVALS.computeIfAbsent(def.name(), team -> new ArrayList<>());
+        if (!arrivals.contains(member)) { arrivals.add(member); }
+    }
+
+    private static void tellLead(MinecraftServer server, TeamDef def, String member) {
+        ServerPlayer player = server.getPlayerList().getPlayerByName(member);
+        if (player == null || !TeamDef.FIRST.equals(def.lead()) || !member.equals(leadOf(server.overworld(), def))) { return; }
+        if (ContentWelcome.arrived(player)) { leadTold(player, def, ""); }
+    }
+
+    private static void leadTold(ServerPlayer player, TeamDef def, String how) {
+        if (!def.leadSays().isEmpty()) { Says.tell(player, def.leadSays().replace("{side}", def.displayName()) + how, def.color()); }
+        ContentLog.LOGGER.info("{} leads {}{}", player.getGameProfile().getName(), def.displayName(), how);
+    }
+
+    public static void greet(ServerPlayer player) {
+        PlayerTeam held = Scores.teamOf(Scores.board(player.server), player.getGameProfile().getName());
+        TeamDef def = held == null ? null : BY_NAME.get(held.getName());
+        if (def == null) { return; }
+        Says.tell(player, "You are on " + def.displayName(), def.color());
+        if (player.getGameProfile().getName().equals(leadOf(player.serverLevel(), def))) { leadTold(player, def, ""); }
+    }
+
+    @Nullable private static String firstHere(MinecraftServer server, TeamDef def, @Nullable String except) {
+        List<String> arrivals = ARRIVALS.get(def.name());
+        if (arrivals == null) { return null; }
+        for (String member : arrivals) {
+            if (member.equals(except)) { continue; }
+            if (server.getPlayerList().getPlayerByName(member) != null && onTeam(server, member, def)) { return member; }
+        }
+        return null;
+    }
+
+    public static boolean leadsNoSide(ServerPlayer player) {
+        for (TeamDef def : BY_NAME.values()) {
+            if (player.getGameProfile().getName().equals(leadOf(player.serverLevel(), def))) { return false; }
+        }
+        return true;
+    }
+
+    public static List<String> leaders(ServerLevel level) {
+        List<String> names = new ArrayList<>();
+        for (TeamDef def : BY_NAME.values()) {
+            String lead = leadOf(level, def);
+            if (lead != null && !names.contains(lead)) { names.add(lead); }
+        }
+        return names;
+    }
+
+    public static void placeAtSpawns(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            PlayerTeam held = Scores.teamOf(Scores.board(server), player.getGameProfile().getName());
+            TeamDef def = held == null ? null : BY_NAME.get(held.getName());
+            if (def == null || def.spawnAt() == null) { continue; }
+            Travel.to(player, server.overworld(), def.spawnAt()[0] + 0.5D, def.spawnAt()[1], def.spawnAt()[2] + 0.5D, player.getYRot(), player.getXRot());
+        }
+    }
+
+    public static void give(ServerPlayer player, TeamDef def) {
+        if (def.gives().isEmpty()) { return; }
+        for (ItemGiveDef one : def.gives()) {
+            ItemStack stack = ContentStacks.parse(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "teams/" + def.name()), one.item(), one.count());
+            if (stack.isEmpty()) { continue; }
+            if (one.unbreakable()) { stack.set(DataComponents.UNBREAKABLE, new Unbreakable(true)); }
+            if (!player.getInventory().add(stack)) { player.drop(stack, false); }
+        }
+        player.inventoryMenu.broadcastChanges();
+    }
+
+    public static void giveAll(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            PlayerTeam held = Scores.teamOf(Scores.board(server), player.getGameProfile().getName());
+            TeamDef def = held == null ? null : BY_NAME.get(held.getName());
+            if (def != null) { give(player, def); }
+        }
     }
 
     public static boolean standsFor(ServerLevel level, String voter, String choice, TeamDef def) {
-        if (!TeamDef.VOTE.equals(def.lead()) || !onTeam(level, voter, def) || !onTeam(level, choice, def)) { return false; }
+        if (!TeamDef.VOTE.equals(def.lead()) || !onTeam(level.getServer(), voter, def) || !onTeam(level.getServer(), choice, def)) { return false; }
         BALLOTS.computeIfAbsent(def.name(), team -> new LinkedHashMap<>()).put(voter, choice);
         return true;
     }
 
     public static boolean claim(ServerLevel level, String member, TeamDef def) {
-        if (!TeamDef.CLAIM.equals(def.lead()) || !onTeam(level, member, def)) { return false; }
+        if (!TeamDef.CLAIM.equals(def.lead()) || !onTeam(level.getServer(), member, def)) { return false; }
         String held = CLAIMED.get(def.name());
-        if (held != null && !held.equals(member) && onTeam(level, held, def)) { return false; }
+        if (held != null && !held.equals(member) && onTeam(level.getServer(), held, def)) { return false; }
         CLAIMED.put(def.name(), member);
         return true;
     }
 
     @Nullable public static String holding(TeamDef def) { return CLAIMED.get(def.name()); }
 
-    private static boolean onTeam(ServerLevel level, String member, TeamDef def) {
-        PlayerTeam held = Scores.teamOf(Scores.board(level.getServer()), member);
+    private static boolean onTeam(MinecraftServer server, String member, TeamDef def) {
+        PlayerTeam held = Scores.teamOf(Scores.board(server), member);
         return held != null && held.getName().equals(def.name());
     }
 
@@ -178,7 +321,7 @@ public final class ContentTeams {
         if (cast == null || cast.isEmpty()) { return null; }
         Map<String, Integer> tally = new LinkedHashMap<>();
         for (Map.Entry<String, String> ballot : cast.entrySet()) {
-            if (!onTeam(level, ballot.getKey(), def)) { continue; }
+            if (!onTeam(level.getServer(), ballot.getKey(), def)) { continue; }
             tally.merge(ballot.getValue(), 1, Integer::sum);
         }
         String best = null;
@@ -196,14 +339,16 @@ public final class ContentTeams {
     }
 
     @Nullable public static String leadOf(ServerLevel level, TeamDef def) {
-        if (!def.leads()) { return null; }
+        if (def.leaderless()) { return null; }
+        MinecraftServer server = level.getServer();
         if (TeamDef.APPOINTED.equals(def.lead())) { return def.leadIs().isEmpty() ? null : def.leadIs(); }
         if (TeamDef.VOTE.equals(def.lead())) { return voted(level, def); }
+        if (TeamDef.FIRST.equals(def.lead())) { return firstHere(server, def, null); }
         if (TeamDef.CLAIM.equals(def.lead())) {
             String held = CLAIMED.get(def.name());
-            return held != null && onTeam(level, held, def) ? held : null;
+            return held != null && onTeam(server, held, def) ? held : null;
         }
-        Scoreboard board = Scores.board(level.getServer());
+        Scoreboard board = Scores.board(server);
         PlayerTeam team = Scores.team(board, def.name());
         Objective objective = def.leadOn().isEmpty() ? null : Scores.objective(board, def.leadOn());
         if (team == null || objective == null) { return null; }
@@ -270,7 +415,190 @@ public final class ContentTeams {
         return best;
     }
 
-    public static boolean stand(ServerPlayer player) { return Scores.leave(Scores.board(player.server), player.getGameProfile().getName()); }
+    public static boolean stand(ServerPlayer player) {
+        String name = player.getGameProfile().getName();
+        PlayerTeam held = Scores.teamOf(Scores.board(player.server), name);
+        if (held == null || !Scores.leave(Scores.board(player.server), name)) { return false; }
+        TeamDef def = BY_NAME.get(held.getName());
+        if (def != null) { stoodDown(player.server, def, name); }
+        return true;
+    }
+
+    private static void stoodDown(MinecraftServer server, TeamDef def, String member) {
+        Map<String, String> held = PICKED.get(def.name());
+        if (held == null || held.remove(member) == null) { return; }
+        LEFT.computeIfAbsent(def.name(), team -> new HashSet<>()).add(member);
+        fill(server, def, null);
+    }
+
+    private static boolean left(TeamDef def, String member) {
+        Set<String> gone = LEFT.get(def.name());
+        return gone != null && gone.contains(member);
+    }
+
+    private static void decided(MinecraftServer server) {
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.leadRuns().isEmpty() || def.leaderless()) { continue; }
+            String lead = leadOf(server.overworld(), def);
+            if (lead == null) {
+                DECIDED.remove(def.name());
+                continue;
+            }
+            if (lead.equals(DECIDED.get(def.name()))) { continue; }
+            ServerPlayer player = server.getPlayerList().getPlayerByName(lead);
+            if (player == null) { continue; }
+            DECIDED.put(def.name(), lead);
+            ContentLog.LOGGER.info("{} is decided as the lead of {}, so {} runs", lead, def.displayName(), def.leadRuns());
+            Functions.runAs(player, def.leadRuns(), "The lead of " + def.name());
+        }
+    }
+
+    public static void standInsNow(MinecraftServer server) {
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.standsIn() && def.scoreboard()) { standIn(server, server.overworld(), def, true); }
+        }
+    }
+
+    private static void standIn(MinecraftServer server, ServerLevel level, TeamDef def, boolean now) {
+        boolean manned = false;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (onTeam(server, player.getGameProfile().getName(), def)) {
+                manned = true;
+                break;
+            }
+        }
+        ResourceLocation id = ResourceLocation.tryParse(def.standIn());
+        EntityType<?> kind = id == null ? null : EntityType.byString(id.toString()).orElse(null);
+        List<Entity> standing = new ArrayList<>();
+        for (Entity one : level.getAllEntities()) {
+            if (one instanceof Player || !one.isAlive() || one.getType() != kind) { continue; }
+            if (onTeam(server, one.getStringUUID(), def)) { standing.add(one); }
+        }
+        if (manned) {
+            for (Entity one : standing) { one.discard(); }
+            if (!standing.isEmpty()) { ContentLog.LOGGER.info("A player stands on {}, so its {} stand-in(s) of {} step aside", def.displayName(), standing.size(), def.standIn()); }
+            return;
+        }
+        if (!standing.isEmpty() || ContentScoring.standInWaits() && !now) { return; }
+        int[] at = def.standInAt();
+        if (at == null || !level.isLoaded(new BlockPos(at[0], at[1], at[2]))) { return; }
+        Entity made = kind == null ? null : kind.create(level);
+        if (made == null) {
+            if (UNMADE.add(def.name())) { ContentLog.LOGGER.error("Team {} names {} as its stand-in, which nothing registers, so the side has none; this is said once", def.name(), def.standIn()); }
+            return;
+        }
+        made.moveTo(at[0] + 0.5D, at[1], at[2] + 0.5D, 0.0F, 0.0F);
+        if (made instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(made.blockPosition()), MobSpawnType.EVENT, null); }
+        level.addFreshEntity(made);
+        join(level, made.getStringUUID(), def);
+        ContentLog.LOGGER.info("No player stands on {}, so a {} stands in at {}, {}, {}", def.displayName(), def.standIn(), at[0], at[1], at[2]);
+    }
+
+    public static void draw(MinecraftServer server) {
+        for (TeamDef def : BY_NAME.values()) {
+            if (def.picks() > 0 && def.scoreboard()) { draw(server, def, true, null); }
+        }
+    }
+
+    private static void fill(MinecraftServer server, TeamDef def, @Nullable Entity joining) {
+        if (def.picks() <= 0 || !def.scoreboard() || picked(server, def) >= def.picks()) { return; }
+        draw(server, def, false, joining);
+    }
+
+    private static void draw(MinecraftServer server, TeamDef def, boolean afresh, @Nullable Entity joining) {
+        ServerLevel overworld = server.overworld();
+        Scoreboard board = Scores.board(server);
+        Map<String, String> held = PICKED.computeIfAbsent(def.name(), team -> new LinkedHashMap<>());
+        Set<String> drawnBefore = new HashSet<>(held.keySet());
+        if (afresh) {
+            release(board, def, held);
+            LEFT.remove(def.name());
+        }
+        List<Entity> pool = new ArrayList<>();
+        if (def.picksFrom().contains(TeamDef.PLAYERS)) { pool.addAll(server.getPlayerList().getPlayers()); }
+        for (ServerLevel each : server.getAllLevels()) {
+            for (Entity one : each.getAllEntities()) {
+                if (one instanceof Player || !one.isAlive()) { continue; }
+                if (def.picksFrom().contains(EntityType.getKey(one.getType()).toString())) { pool.add(one); }
+            }
+        }
+        if (joining != null && !pool.contains(joining)) { pool.add(joining); }
+        Collections.shuffle(pool, new Random(overworld.getRandom().nextLong()));
+        int have = picked(server, def);
+        List<String> newlySeated = new ArrayList<>();
+        for (Entity one : pool) {
+            if (have >= def.picks()) { break; }
+            String member = one instanceof Player player ? player.getGameProfile().getName() : one.getStringUUID();
+            if (held.containsKey(member) || pickedAlready(member) || left(def, member)) { continue; }
+            PlayerTeam before = Scores.teamOf(board, member);
+            if (before != null && one instanceof Player) { continue; }
+            held.put(member, before == null ? "" : before.getName());
+            if (Scores.team(board, def.name()) == null) { field(overworld); }
+            PlayerTeam team = Scores.team(board, def.name());
+            if (team == null) { continue; }
+            Scores.join(board, member, team);
+            if (one instanceof ServerPlayer player) {
+                seated(member, def);
+                if (drawnBefore.contains(member)) { ContentLog.LOGGER.debug("{} was drawn for {} again", member, def.displayName()); }
+                else {
+                    if (ContentWelcome.arrived(player)) { Says.tell(player, "You were picked for " + def.displayName(), def.color()); }
+                    give(player, def);
+                    newlySeated.add(member);
+                }
+            }
+            ContentLog.LOGGER.info("{} was picked for {}", one.getName().getString(), def.displayName());
+            have++;
+        }
+        String lead = leadOf(overworld, def);
+        if (lead != null && newlySeated.contains(lead)) { tellLead(server, def, lead); }
+    }
+
+    private static void release(Scoreboard board, TeamDef def, Map<String, String> held) {
+        for (Map.Entry<String, String> one : held.entrySet()) {
+            PlayerTeam standing = Scores.teamOf(board, one.getKey());
+            if (standing == null || !standing.getName().equals(def.name())) { continue; }
+            Scores.leave(board, one.getKey());
+            PlayerTeam back = one.getValue().isEmpty() ? null : Scores.team(board, one.getValue());
+            if (back != null) { Scores.join(board, one.getKey(), back); }
+        }
+        held.clear();
+    }
+
+    private static int picked(MinecraftServer server, TeamDef def) {
+        Map<String, String> held = PICKED.get(def.name());
+        if (held == null) { return 0; }
+        Scoreboard board = Scores.board(server);
+        int count = 0;
+        for (String member : new ArrayList<>(held.keySet())) {
+            if (alive(server, member) && onTeam(server, member, def)) {
+                count++;
+                continue;
+            }
+            PlayerTeam standing = Scores.teamOf(board, member);
+            if (standing != null && standing.getName().equals(def.name())) { Scores.leave(board, member); }
+            held.remove(member);
+        }
+        return count;
+    }
+
+    private static boolean pickedAlready(String member) {
+        for (Map<String, String> held : PICKED.values()) {
+            if (held.containsKey(member)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean alive(MinecraftServer server, String member) {
+        if (member.length() != 36 || member.indexOf('-') != 8) { return server.getPlayerList().getPlayerByName(member) != null; }
+        UUID id;
+        try { id = UUID.fromString(member); }
+        catch (IllegalArgumentException notAnId) { return false; }
+        for (ServerLevel level : server.getAllLevels()) {
+            Entity held = level.getEntity(id);
+            if (held != null) { return held.isAlive(); }
+        }
+        return false;
+    }
 
     public static List<TeamDef> claiming(String entityId) {
         List<TeamDef> found = new ArrayList<>();

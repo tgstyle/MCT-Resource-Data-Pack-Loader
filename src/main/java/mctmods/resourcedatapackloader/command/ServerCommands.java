@@ -22,8 +22,8 @@ public final class ServerCommands {
     private ServerCommands() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(CommandShared.tree(NAME, ServerCommands::reload, "rdpl.command.serverunusednote", "rdpl.command.config.servernote", true).requires(source -> source.hasPermission(OPERATOR))
-                .then(Commands.literal("pregen")
+        dispatcher.register(CommandShared.tree(NAME, ServerCommands::reload, "rdpl.command.serverunusednote", "rdpl.command.config.servernote", true)
+                .then(Commands.literal("pregen").requires(source -> source.hasPermission(OPERATOR))
                         .then(Commands.literal("status").executes(context -> {
                             CommandShared.ran(context.getSource(), NAME, "pregen status");
                             CommandShared.send(context.getSource(), ChatFormatting.GREEN, Component.literal(ContentPregen.state()));

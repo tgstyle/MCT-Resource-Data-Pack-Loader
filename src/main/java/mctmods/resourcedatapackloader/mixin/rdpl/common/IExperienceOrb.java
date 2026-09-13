@@ -8,4 +8,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
     @Accessor("age") int rdpl$getAge();
 
     @Accessor("age") void rdpl$setAge(int age);
+
+    @Accessor("count") int rdpl$getCount();
+
+    @Accessor("count") void rdpl$setCount(int count);
 }

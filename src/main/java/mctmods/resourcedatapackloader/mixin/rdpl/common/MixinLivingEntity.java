@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -42,10 +43,13 @@ import net.minecraft.world.phys.Vec3;
         if (def != null && def.sounds().pitch() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().pitch()); }
     }
 
-    @Inject(method = "getJumpPower()F", at = @At("RETURN"), cancellable = true)
-    private void rdpl$jumpPower(CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "jumpFromGround", at = @At("RETURN"))
+    private void rdpl$jumpHigher(CallbackInfo ci) {
         EntityVariantDef def = rdpl$def();
-        if (def != null && def.physics().jumpMultiplier() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.physics().jumpMultiplier()); }
+        if (def == null || def.physics().jumpMultiplier() == 1.0F) { return; }
+        LivingEntity self = LivingEntity.class.cast(this);
+        Vec3 motion = self.getDeltaMovement();
+        self.setDeltaMovement(motion.x, motion.y * def.physics().jumpMultiplier(), motion.z);
     }
 
     @Inject(method = "getWaterSlowDown", at = @At("RETURN"), cancellable = true)

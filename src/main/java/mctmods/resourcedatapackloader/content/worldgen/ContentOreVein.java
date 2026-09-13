@@ -19,8 +19,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentOreVein implements IContentChunkShape {
-    public static final float RICH = 0.88F;
-    public static final float NORMAL = 0.4F;
     public static final int REACH = 24;
     private static final int FULL = 16;
     private static final int WANING = 20;
@@ -129,7 +127,7 @@ public final class ContentOreVein implements IContentChunkShape {
                     if (value <= threshold) { continue; }
                     if (placer.occupied(x, y, z)) { continue; }
                     float tier = (value - threshold) / (1.0F - threshold);
-                    BlockState state = tier >= RICH && rich != null ? rich : tier >= NORMAL || poor == null ? placer.palette().choose(random) : poor;
+                    BlockState state = tier >= shape.richAt() && rich != null ? rich : tier >= shape.poorAt() || poor == null ? placer.palette().choose(random) : poor;
                     if (placer.placeExactly(state, x, y, z)) { placed++; }
                 }
             }

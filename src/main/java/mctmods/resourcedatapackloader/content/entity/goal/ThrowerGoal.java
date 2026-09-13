@@ -63,6 +63,8 @@ public final class ThrowerGoal extends Goal {
     @Override public void stop() { target = null; }
 
     @Override public void tick() {
+        LivingEntity found = mob.getTarget();
+        if (found != null) { target = found; }
         if (reloading > 0 && --reloading == 0) { restock(); }
         if (retreating > 0) {
             retreating--;

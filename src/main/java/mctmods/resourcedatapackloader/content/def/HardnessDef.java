@@ -5,7 +5,10 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentField;
 import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
-public record HardnessDef(ResourceLocation key, List<BlockMatchDef> blocks, List<BlockMatchDef> except, float leastMining, float mostMining, float leastBlast, float mostBlast, int buckets, int minHeight, int maxHeight, List<String> requires, ContentField field) {
+public record HardnessDef(ResourceLocation key, List<BlockMatchDef> blocks, List<BlockMatchDef> except, float leastMining, float mostMining, float leastBlast, float mostBlast, int buckets, int minHeight, int maxHeight, List<String> requires, ContentField field,
+                          boolean keeps, boolean adventure, List<String> tools, List<String> teams, List<String> players, List<String> entities, String advancement, String becomesOn, String becomes) {
+    public boolean swaps() { return !becomesOn.isEmpty() && !becomes.isEmpty(); }
+
     public boolean rolls() { return buckets > 1 && (leastMining != mostMining || leastBlast != mostBlast); }
 
     public float mining(int bucket) { return at(leastMining, mostMining, bucket); }
