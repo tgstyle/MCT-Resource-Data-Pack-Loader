@@ -42,6 +42,10 @@ public final class CaveRegionDef {
     public final String skyStone;
     public final float skyIslands;
     public final float skyThickness;
+    public final String ambientSound;
+    public final float soundChance;
+    public final String particle;
+    public final float particleChance;
     private boolean resolved;
     private boolean skyResolved;
     @Nullable private IBlockState skyState;
@@ -55,7 +59,8 @@ public final class CaveRegionDef {
                          String floorCover, float floorChance, String ceilingCover, float ceilingChance,
                          List<String> coverReplace, int waterLevel, List<SpawnEntryDef> spawns, boolean keepDefaultSpawns,
                          List<PickDef> structures, float structureChance, String structureLoot, String biome,
-                         String skyStone, float skyIslands, float skyThickness) {
+                         String skyStone, float skyIslands, float skyThickness,
+                         String ambientSound, float soundChance, String particle, float particleChance) {
         this.key = key;
         this.weight = weight;
         this.minHeight = minHeight;
@@ -76,6 +81,10 @@ public final class CaveRegionDef {
         this.skyStone = skyStone;
         this.skyIslands = skyIslands;
         this.skyThickness = skyThickness;
+        this.ambientSound = ambientSound;
+        this.soundChance = soundChance;
+        this.particle = particle;
+        this.particleChance = particleChance;
     }
 
     public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness) || hasBiome(); }
@@ -95,6 +104,8 @@ public final class CaveRegionDef {
     public boolean hasSpawns() { return !spawns.isEmpty(); }
 
     public boolean hasStructures() { return !structures.isEmpty(); }
+
+    public boolean hasAmbience() { return !ambientSound.isEmpty() && soundChance > 0.0F || !particle.isEmpty() && particleChance > 0.0F; }
 
     public List<Biome.SpawnListEntry> spawnsFor(EnumCreatureType type) {
         if (spawnLists == null) {

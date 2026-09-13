@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
@@ -8,12 +9,15 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IDrawnRoad;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -38,7 +42,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import javax.annotation.Nullable;
 
-@Mixin(StructureVillagePieces.Path.class) public abstract class MixinVillagePath extends StructureVillagePieces.Road implements IRoadLayout {
+@Mixin(StructureVillagePieces.Path.class) public abstract class MixinVillagePath extends StructureVillagePieces.Road implements IRoadLayout, IDrawnRoad {
     @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$backOff(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
         StructureBoundingBox box = cir.getReturnValue();
         if (box == null || facing == null || !ContentBeard.wanted()) { return; }
@@ -84,6 +88,9 @@ import javax.annotation.Nullable;
     }
 
     @Unique private BeardRoads.Grade rdpl$stored;
+    @Unique private int rdpl$bulbEnds;
+    @Unique private int[] rdpl$lifts = new int[0];
+    @Unique @Nullable private JsonObject rdpl$keys;
 
     @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILjava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("TAIL"))
     private void rdpl$inheritBlock(StructureVillagePieces.Start start, int p_i45562_2_, Random rand, StructureBoundingBox p_i45562_4_, EnumFacing facing, CallbackInfo ci) {
@@ -203,8 +210,12 @@ import javax.annotation.Nullable;
 
     @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
         mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
+        JsonObject was = ContentControl.roadKeys(rdpl$keys);
         try { rdpl$paved(world, clip); }
-        finally { mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.leave(); }
+        finally {
+            ContentControl.roadKeys(was);
+            mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.leave();
+        }
     }
 
     @Unique private void rdpl$paved(World world, StructureBoundingBox clip) {
@@ -223,7 +234,30 @@ import javax.annotation.Nullable;
 
     @Override public void rdpl$repave(World world, StructureBoundingBox clip) { rdpl$pave(world, clip); }
 
-    @Inject(method = "writeStructureToNBT", at = @At("TAIL")) private void rdpl$keepLayout(NBTTagCompound tagCompound, CallbackInfo ci) { if (rdpl$stored != null) { rdpl$stored.write(tagCompound); } }
+    @Override public int rdpl$bulbEnds() { return rdpl$bulbEnds; }
 
-    @Inject(method = "readStructureFromNBT", at = @At("TAIL")) private void rdpl$loadLayout(NBTTagCompound tagCompound, TemplateManager p_143011_2_, CallbackInfo ci) { rdpl$stored = BeardRoads.Grade.read(tagCompound); }
+    @Override public void rdpl$bulbEnds(int ends) { rdpl$bulbEnds = ends; }
+
+    @Override public int[] rdpl$lifts() { return rdpl$lifts; }
+
+    @Override public void rdpl$lifts(int[] lifts) { rdpl$lifts = lifts; }
+
+    @Override public void rdpl$keys(@Nullable JsonObject keys) {
+        rdpl$keys = keys;
+        BeardRoads.drawn(this.getBoundingBox(), keys);
+    }
+
+    @Inject(method = "writeStructureToNBT", at = @At("TAIL")) private void rdpl$keepLayout(NBTTagCompound tagCompound, CallbackInfo ci) {
+        if (rdpl$stored != null) { rdpl$stored.write(tagCompound); }
+        if (rdpl$bulbEnds != 0) { tagCompound.setInteger("rdpl_bulbs", rdpl$bulbEnds); }
+        if (rdpl$lifts.length > 0) { tagCompound.setIntArray("rdpl_lifts", rdpl$lifts); }
+        if (rdpl$keys != null) { tagCompound.setString("rdpl_keys", rdpl$keys.toString()); }
+    }
+
+    @Inject(method = "readStructureFromNBT", at = @At("TAIL")) private void rdpl$loadLayout(NBTTagCompound tagCompound, TemplateManager p_143011_2_, CallbackInfo ci) {
+        rdpl$stored = BeardRoads.Grade.read(tagCompound);
+        rdpl$bulbEnds = tagCompound.getInteger("rdpl_bulbs");
+        rdpl$lifts = tagCompound.getIntArray("rdpl_lifts");
+        if (tagCompound.hasKey("rdpl_keys")) { rdpl$keys(new JsonParser().parse(tagCompound.getString("rdpl_keys")).getAsJsonObject()); }
+    }
 }

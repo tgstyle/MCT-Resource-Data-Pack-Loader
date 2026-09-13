@@ -55,11 +55,15 @@ public final class ContentPlacer {
     }
 
     public boolean occupied(World world, int x, int y, int z) {
-        if (y < floorY(world) || y >= ceilingY(world)) { return true; }
+        if (!replaces(world, x, y, z)) { return true; }
+        return wantsNearby && !beside(world, x, y, z);
+    }
+
+    public boolean replaces(World world, int x, int y, int z) {
+        if (y < floorY(world) || y >= ceilingY(world)) { return false; }
         BlockPos pos = scratch.setPos(x, y, z);
         IBlockState found = world.getBlockState(pos);
-        if (!found.getBlock().isReplaceableOreGen(found, world, pos, replaceable)) { return true; }
-        return wantsNearby && !beside(world, x, y, z);
+        return found.getBlock().isReplaceableOreGen(found, world, pos, replaceable);
     }
 
     private boolean beside(World world, int x, int y, int z) {

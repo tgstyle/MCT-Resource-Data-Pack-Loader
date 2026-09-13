@@ -1,23 +1,30 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import com.google.gson.JsonObject;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class CityMapDef {
     public static final int LIMIT = 64;
+    public static final int LIFT = 8;
 
-    public enum Kind { STREET, PLAZA, ALLEY, OPEN, GROW, PLOT }
+    public enum Kind { STREET, PLAZA, ALLEY, OPEN, GROW, PLOT, JUNCTION, BULB, ELEVATED }
 
     public static final class Cell {
         public final Kind kind;
         public final List<PickDef> picks;
+        public final int height;
+        @Nullable public final JsonObject settings;
 
-        public Cell(Kind kind, List<PickDef> picks) {
+        public Cell(Kind kind, List<PickDef> picks, int height, @Nullable JsonObject settings) {
+            this.settings = settings;
             this.kind = kind;
             this.picks = Collections.unmodifiableList(picks);
+            this.height = height;
         }
     }
 
@@ -27,8 +34,10 @@ public final class CityMapDef {
     public final String[] rows;
     public final int cellsWide;
     public final int cellsDeep;
+    @Nullable public final JsonObject settings;
 
-    public CityMapDef(ResourceLocation key, int cell, Map<Character, Cell> palette, String[] rows) {
+    public CityMapDef(ResourceLocation key, int cell, Map<Character, Cell> palette, String[] rows, @Nullable JsonObject settings) {
+        this.settings = settings;
         this.key = key;
         this.cell = cell;
         this.palette = Collections.unmodifiableMap(palette);
@@ -37,6 +46,23 @@ public final class CityMapDef {
         for (String row : rows) { wide = Math.max(wide, row.length()); }
         this.cellsWide = wide;
         this.cellsDeep = rows.length;
+    }
+
+    public boolean bulbHinted() {
+        for (Cell held : palette.values()) {
+            if (held.kind == Kind.BULB) { return true; }
+        }
+        return false;
+    }
+
+    @Nullable public JsonObject keysOf(char symbol) {
+        Cell held = palette.get(symbol);
+        return held == null ? null : held.settings;
+    }
+
+    public int heightOf(char symbol) {
+        Cell held = palette.get(symbol);
+        return held == null ? LIFT : held.height;
     }
 
     public Kind kindOf(char symbol) {

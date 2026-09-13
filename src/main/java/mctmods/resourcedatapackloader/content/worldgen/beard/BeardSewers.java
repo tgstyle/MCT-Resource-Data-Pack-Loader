@@ -173,13 +173,12 @@ public final class BeardSewers {
 
     private static List<StructureComponent> radials(StructureStart start, StructureBoundingBox box) {
         List<StructureComponent> found = new ArrayList<>();
-        int full = BeardRoads.pathFullWidth();
         int reach = ContentBeard.plazaReach();
         for (StructureComponent piece : start.getComponents()) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(road);
-            if ((alongX ? road.maxZ - road.minZ : road.maxX - road.minX) + 1 < full) { continue; }
+            if (BeardRoads.roadNarrow(road, alongX)) { continue; }
             int center = alongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
             if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
             int wellLo = alongX ? box.minX : box.minZ;
@@ -293,12 +292,11 @@ public final class BeardSewers {
     public static boolean covers(List<StructureComponent> pieces, int x, int z) {
         if (!on() || pieces == null) { return false; }
         int half = width() / 2;
-        int full = BeardRoads.pathFullWidth();
         for (StructureComponent piece : pieces) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = box.maxX - box.minX >= box.maxZ - box.minZ;
-            if (((alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1) < full) { continue; }
+            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
             int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
             boolean along = alongX ? x >= box.minX && x <= box.maxX : z >= box.minZ && z <= box.maxZ;
             if (along && Math.abs((alongX ? z : x) - center) <= half) { return true; }

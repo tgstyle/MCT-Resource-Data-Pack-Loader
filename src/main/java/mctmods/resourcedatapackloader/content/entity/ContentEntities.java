@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentTeams;
@@ -8,6 +10,7 @@ import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIAnvilWork;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAICharge;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIDig;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIFleeWhenHurt;
@@ -50,6 +53,7 @@ import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.item.EntityTNTPrimed;
 import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.EntityLivingBase;
@@ -171,7 +175,15 @@ public final class ContentEntities {
             made++;
             ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", entry.getKey(), def.attributes, def.equipment);
         }
+        if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(EntityReturningThrow.class).id(new ResourceLocation(ResourceDataPackLoader.MOD_ID, "returning_throw"), network).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
+    }
+
+    private static boolean throwsReturning() {
+        for (EntityVariantDef def : DEFS.values()) {
+            if (def.throwsItems && def.throwReturns) { return true; }
+        }
+        return false;
     }
 
     @Nullable public static ResourceLocation texture(Entity entity) {
@@ -362,7 +374,10 @@ public final class ContentEntities {
         if (!(living instanceof EntityLiving)) { return; }
         EntityVariantDef def = BY_CLASS.get(living.getClass());
         if (def == null) { return; }
-        if (def.collectsExperience && !living.world.isRemote && living.isEntityAlive()) { ContentMobExperience.collect((EntityLiving) living); }
+        if (def.collectsExperience && !living.world.isRemote && living.isEntityAlive()) {
+            ContentMobExperience.collect((EntityLiving) living);
+            ContentAnvils.gather((EntityLiving) living);
+        }
         if (def.scale == def.angryScale && def.scale == 1.0F && def.baby <= 0.0F && !def.amphibious && def.despawnTicks <= 0 && def.targetSound.isEmpty()) { return; }
         if (living.world.isRemote) {
             if (def.scale != 1.0F || def.scale != def.angryScale) { resize(living, living.isSprinting() ? def.angryScale : def.scale); }
@@ -532,6 +547,16 @@ public final class ContentEntities {
         return def == null || def.knockback < 0.0F ? strength : def.knockback;
     }
 
+    public static boolean lyingAsleep(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.sleepsByDay && entity.isSneaking();
+    }
+
+    public static boolean walks(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def != null && def.walks;
+    }
+
     @Nullable public static Boolean climbs(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         return def == null ? null : def.climbs;
@@ -619,6 +644,7 @@ public final class ContentEntities {
         EntityLiving living = (EntityLiving) entity;
         if (def.swims) { swimmer(living); }
         if (def.swoops) { flyer(living); }
+        if (def.walks) { walker(living, def); }
         if (def.climbs != null) { climber(living, def.climbs); }
         if (def.amphibious && living.getNavigator() instanceof PathNavigateGround) { ((PathNavigateGround) living.getNavigator()).setCanSwim(true); }
         if (def.breathesUnderwater || def.swims) {
@@ -685,6 +711,7 @@ public final class ContentEntities {
         if (ContentLog.LOGGER.debugEnabled() && (def.charges || def.pounces || def.sniffs > 0 || def.sleepsByDay || def.home > 0 || def.fleesWhenHurt > 0.0F || def.patrols || def.swoops || def.gusts)) {
             ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}", def.registryName, (int) living.posX, (int) living.posY, (int) living.posZ, def.charges ? " charges" : "", def.pounces ? " pounces" : "", def.sniffs > 0 ? " sniffs " + def.sniffs : "", def.fleesWhenHurt > 0.0F ? " flees under " + def.fleesWhenHurt : "", def.sleepsByDay ? " sleeps by day" : "", def.home > 0 ? " home " + def.home : "", def.patrols ? " patrols" : "", def.swoops ? " swoops" : "", def.gusts ? " gusts " + def.gustPower : "");
         }
+        if (def.collectsExperience && living instanceof EntityCreature) { living.tasks.addTask(0, new EntityAIAnvilWork((EntityCreature) living)); }
         settled(living, def);
         if (def.passive) {
             clear(living.targetTasks);
@@ -732,7 +759,7 @@ public final class ContentEntities {
             if (!already) { living.tasks.addTask(2, new EntityAIAttackMelee(creature, 1.2D, false)); }
         }
         if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
-        if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, carrying(def), def.explosionFuse, def.throwReload > 0 ? def.throwReload : def.explosionFuse, def.throwRetreat > 0 ? def.throwRetreat : def.explosionFuse, def.throwAmmo, def.throwPower, def.throwArc, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue())); }
+        if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, carrying(def), def.explosionFuse, def.throwReload > 0 ? def.throwReload : def.explosionFuse, def.throwRetreat > 0 ? def.throwRetreat : def.explosionFuse, def.throwAmmo, def.throwPower, def.throwArc, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue(), def.throwReturns)); }
         if (def.charges) { living.tasks.addTask(1, new EntityAICharge(creature, 2.0D)); }
         if (def.pounces) { living.tasks.addTask(1, new EntityAIPounce(creature)); }
         if (def.fleesWhenHurt > 0.0F) { living.tasks.addTask(0, new EntityAIFleeWhenHurt(creature, def.fleesWhenHurt, 1.4D)); }
@@ -867,6 +894,14 @@ public final class ContentEntities {
     private static void flyer(EntityLiving living) {
         ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateFlying(living, living.world));
         ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityFlyHelper(living));
+    }
+
+    private static void walker(EntityLiving living, EntityVariantDef def) {
+        if (!(living instanceof EntityRabbit)) {
+            ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.registryName, def.base);
+            return;
+        }
+        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
     }
 
     private static void swimmer(EntityLiving living) {

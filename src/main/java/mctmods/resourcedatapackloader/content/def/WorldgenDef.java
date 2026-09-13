@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlacer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpire;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpring;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTree;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVent;
@@ -135,7 +136,8 @@ public final class WorldgenDef {
 
     private IContentShape build(ContentPlacer placer, Set<Block> surface, @Nullable IBlockState outline, @Nullable IBlockState fill) {
         if (ShapeDef.PLATE.equals(shape.type)) { return new ContentPlate(placer, shape); }
-        if (ShapeDef.GEODE.equals(shape.type) && outline != null) { return new ContentGeode(placer, shape, outline, fill); }
+        if (ShapeDef.GEODE.equals(shape.type) && outline != null) { return new ContentGeode(placer, shape, outline, fill, registryName); }
+        if (ShapeDef.SPRING.equals(shape.type)) { return new ContentSpring(placer); }
         if (ShapeDef.LARGEVEIN.equals(shape.type)) { return new ContentLargeVein(placer, size, sparse, shape.slim); }
         if (ShapeDef.DECORATION.equals(shape.type)) { return new ContentDecoration(placer, size, shape, surface); }
         if (ShapeDef.TREE.equals(shape.type)) { return new ContentTree(size, shape, surface, registryName, new ContentImprint(placer, shape, registryName, replacesGiven)); }

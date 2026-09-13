@@ -115,6 +115,8 @@ public final class EntityVariantDef {
     public final float targetVaries;
     public final boolean bright;
     public final boolean collectsExperience;
+    public final boolean walks;
+    public final boolean throwReturns;
 
     public EntityVariantDef(ResourceLocation registryName, ResourceLocation base, String name, String texture, String lootTable, String profession, int career, float baby, boolean keepsBaseBaby, List<PickDef> becomes,
                             String ambientSound, String hurtSound, String deathSound, List<String> immuneTo, float jumpMultiplier, float fallDamage, boolean hitEffects, List<String> ignoresEffects, float soundVolume, float soundPitch, float waterSlowdown,
@@ -126,7 +128,7 @@ public final class EntityVariantDef {
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
                             boolean explodes, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower, float throwArc, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
                             List<String> biomes, List<String> biomeTypes, List<String> requires, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, int threatLeast, int threatHostile, List<TaskDef> tasks,
-                            float attackReach, int hurtResistance, float stepHeight, boolean hitFire, @Nullable Boolean climbs, boolean teleports, float knockback, boolean ownBlast, boolean digs, String targetSound, String explodeSound, float targetVaries, boolean bright, boolean collectsExperience) {
+                            float attackReach, int hurtResistance, float stepHeight, boolean hitFire, @Nullable Boolean climbs, boolean teleports, float knockback, boolean ownBlast, boolean digs, String targetSound, String explodeSound, float targetVaries, boolean bright, boolean collectsExperience, boolean walks, boolean throwReturns) {
         this.registryName = registryName;
         this.base = base;
         this.name = name;
@@ -233,5 +235,7 @@ public final class EntityVariantDef {
         this.targetVaries = targetVaries;
         this.bright = bright;
         this.collectsExperience = collectsExperience;
+        this.walks = walks;
+        this.throwReturns = throwReturns;
     }
 }

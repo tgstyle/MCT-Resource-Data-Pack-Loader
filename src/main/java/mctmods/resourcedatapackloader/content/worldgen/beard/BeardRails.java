@@ -271,7 +271,6 @@ public final class BeardRails {
     private static void seekRoad(List<StructureComponent> components, RailPiece rail, boolean alongX, int reach) {
         StructureBoundingBox box = rail.getBoundingBox();
         int mine = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
-        int full = BeardRoads.pathFullWidth();
         int best = Integer.MAX_VALUE;
         int wanted = mine;
         for (StructureComponent other : components) {
@@ -279,7 +278,7 @@ public final class BeardRails {
             StructureBoundingBox road = other.getBoundingBox();
             boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
             if (roadAlongX != alongX) { continue; }
-            if (((roadAlongX ? road.maxZ - road.minZ : road.maxX - road.minX) + 1) < full) { continue; }
+            if (BeardRoads.roadNarrow(road, roadAlongX)) { continue; }
             int center = roadAlongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
             int off = Math.abs(center - mine);
             if (off > reach || off >= best) { continue; }

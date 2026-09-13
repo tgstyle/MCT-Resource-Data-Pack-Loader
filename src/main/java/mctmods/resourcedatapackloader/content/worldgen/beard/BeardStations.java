@@ -175,12 +175,11 @@ public final class BeardStations {
     }
 
     private static boolean streetAlong(List<StructureComponent> components, boolean alongX, int center, int from, int to) {
-        int full = BeardRoads.pathFullWidth();
         for (StructureComponent piece : components) {
             if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             if (BeardPlots.roadAlongX(box) != alongX) { continue; }
-            if ((alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1 < full) { continue; }
+            if (BeardRoads.roadNarrow(box, alongX)) { continue; }
             if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
             if ((alongX ? box.minX : box.minZ) <= from && (alongX ? box.maxX : box.maxZ) >= to) { return true; }
         }

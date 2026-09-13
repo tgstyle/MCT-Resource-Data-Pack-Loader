@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.AnvilDef;
+import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.Config;
@@ -15,10 +16,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.PlayerAdvancements;
+import net.minecraft.block.BlockAnvil;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerRepair;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
@@ -26,6 +32,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
@@ -35,6 +42,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.items.ItemHandlerHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +57,7 @@ public final class ContentAnvils {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ItemStack, AnvilDef> OFFERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final int TOLD_EVERY = 40;
+    private static final float BREAK_CHANCE = 0.12F;
     private static final List<AnvilDef> DEFS = new ArrayList<>();
     private static final Map<AnvilDef, ItemStack> ITEMS = new IdentityHashMap<>();
     private static final Map<AnvilDef, ItemStack> WITH = new IdentityHashMap<>();
@@ -142,18 +151,19 @@ public final class ContentAnvils {
         return null;
     }
 
-    @SubscribeEvent public static void onAnvil(AnvilUpdateEvent event) {
-        if (DEFS.isEmpty() || event.getRight().isEmpty()) { return; }
-        AnvilDef def = holding(event.getLeft());
-        if (def == null) { return; }
+    private static boolean pairs(AnvilDef def, ItemStack left, ItemStack right) {
+        ItemStack wanted = ITEMS.get(def);
         ItemStack with = WITH.get(def);
-        if (!ContentStacks.matches(event.getRight(), with.getItem(), with.getMetadata()) || event.getRight().getCount() < def.withCount || event.getLeft().getCount() < def.itemCount) { return; }
-        ItemStack output = event.getLeft().copy();
+        return ContentStacks.matches(left, wanted.getItem(), wanted.getMetadata()) && left.getCount() >= def.itemCount && ContentStacks.matches(right, with.getItem(), with.getMetadata()) && right.getCount() >= def.withCount;
+    }
+
+    private static ItemStack worked(AnvilDef def, ItemStack left) {
+        ItemStack output = left.copy();
         output.setCount(def.itemCount);
         ItemStack result = RESULTS.get(def);
         if (result != null) {
             output = result.copy();
-            NBTTagCompound carried = event.getLeft().getTagCompound();
+            NBTTagCompound carried = left.getTagCompound();
             if (carried != null) { output.setTagCompound(carried.copy()); }
         }
         Map<Enchantment, Integer> held = EnchantmentHelper.getEnchantments(output);
@@ -164,12 +174,91 @@ public final class ContentAnvils {
             held.put(entry.getKey(), entry.getValue());
             rises = true;
         }
-        if (!rises && result == null && (!ENCHANTMENTS.get(def).isEmpty() || def.grants.isEmpty())) { return; }
+        if (!rises && result == null) { return ItemStack.EMPTY; }
         if (rises) { EnchantmentHelper.setEnchantments(held, output); }
+        return output;
+    }
+
+    @SubscribeEvent public static void onAnvil(AnvilUpdateEvent event) {
+        if (DEFS.isEmpty() || event.getRight().isEmpty()) { return; }
+        AnvilDef def = holding(event.getLeft());
+        if (def == null || !pairs(def, event.getLeft(), event.getRight())) { return; }
+        ItemStack output = worked(def, event.getLeft());
+        if (output.isEmpty()) {
+            if (!ENCHANTMENTS.get(def).isEmpty() || def.grants.isEmpty()) { return; }
+            output = event.getLeft().copy();
+            output.setCount(def.itemCount);
+        }
         OFFERED.put(output, def);
         event.setOutput(output);
         event.setCost(def.levels);
         event.setMaterialCost(def.withCount);
+    }
+
+    @Nullable public static AnvilDef affordable(EntityLiving mob, int level) {
+        ItemStack left = mob.getHeldItemMainhand();
+        ItemStack right = mob.getHeldItemOffhand();
+        if (DEFS.isEmpty() || left.isEmpty() || right.isEmpty()) { return null; }
+        for (AnvilDef def : DEFS) {
+            if (def.levels <= level && pairs(def, left, right) && !worked(def, left).isEmpty()) { return def; }
+        }
+        return null;
+    }
+
+    public static void gather(EntityLiving mob) {
+        if (DEFS.isEmpty()) { return; }
+        for (EntityItem dropped : mob.world.getEntitiesWithinAABB(EntityItem.class, mob.getEntityBoundingBox().grow(1.0D, 0.5D, 1.0D))) {
+            if (dropped.isDead || dropped.cannotPickup()) { continue; }
+            ItemStack stack = dropped.getItem();
+            if (!paysFor(stack)) { continue; }
+            ItemStack right = mob.getHeldItemOffhand();
+            int room = right.isEmpty() ? stack.getMaxStackSize() : ItemHandlerHelper.canItemStacksStack(right, stack) ? right.getMaxStackSize() - right.getCount() : 0;
+            int taken = Math.min(room, stack.getCount());
+            if (taken <= 0) { continue; }
+            mob.onItemPickup(dropped, taken);
+            if (right.isEmpty()) { mob.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, ItemHandlerHelper.copyStackWithSize(stack, taken)); }
+            else { right.grow(taken); }
+            stack.shrink(taken);
+            if (stack.isEmpty()) { dropped.setDead(); }
+            else { dropped.setItem(stack); }
+        }
+    }
+
+    private static boolean paysFor(ItemStack stack) {
+        for (AnvilDef def : DEFS) {
+            ItemStack with = WITH.get(def);
+            if (ContentStacks.matches(stack, with.getItem(), with.getMetadata())) { return true; }
+        }
+        return false;
+    }
+
+    public static void work(EntityLiving mob, AnvilDef def, BlockPos anvil) {
+        ItemStack left = mob.getHeldItemMainhand();
+        ItemStack right = mob.getHeldItemOffhand();
+        IBlockState state = mob.world.getBlockState(anvil);
+        if (state.getBlock() != Blocks.ANVIL || def.levels > ContentMobExperience.level(mob) || !pairs(def, left, right)) { return; }
+        ItemStack output = worked(def, left);
+        if (output.isEmpty()) { return; }
+        ContentMobExperience.addLevels(mob, -def.levels);
+        ItemStack kept = left.getCount() > def.itemCount ? ItemHandlerHelper.copyStackWithSize(left, left.getCount() - def.itemCount) : ItemStack.EMPTY;
+        mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, output);
+        if (!kept.isEmpty()) { mob.entityDropItem(kept, 0.5F); }
+        right.shrink(def.withCount);
+        if (right.isEmpty()) { mob.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, ItemStack.EMPTY); }
+        if (mob.getRNG().nextFloat() < BREAK_CHANCE) {
+            int damage = state.getValue(BlockAnvil.DAMAGE) + 1;
+            if (damage > 2) {
+                mob.world.setBlockToAir(anvil);
+                mob.world.playEvent(1029, anvil, 0);
+            }
+            else {
+                mob.world.setBlockState(anvil, state.withProperty(BlockAnvil.DAMAGE, damage), 2);
+                mob.world.playEvent(1030, anvil, 0);
+            }
+        }
+        else { mob.world.playEvent(1030, anvil, 0); }
+        ContentLog.LOGGER.info("{} worked {} at the anvil at {}, {}, {}: spent {} level(s) and {} {}, and holds {}", mob.getName(), def.registryName, anvil.getX(), anvil.getY(), anvil.getZ(), def.levels, def.withCount, def.with, output);
+        if (!def.grants.isEmpty()) { ContentLog.LOGGER.debug("Anvil work {} also grants {}, which only a player can earn, so {} earns nothing more", def.registryName, def.grants, mob.getName()); }
     }
 
     @SubscribeEvent public static void onTaken(AnvilRepairEvent event) {

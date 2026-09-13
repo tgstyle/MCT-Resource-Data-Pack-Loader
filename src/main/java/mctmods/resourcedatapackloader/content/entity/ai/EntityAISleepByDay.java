@@ -53,6 +53,7 @@ public final class EntityAISleepByDay extends EntityAIBase {
     @Override public void resetTask() {
         shade = null;
         settled = false;
+        mob.setSneaking(false);
         mob.getNavigator().clearPath();
     }
 
@@ -60,6 +61,7 @@ public final class EntityAISleepByDay extends EntityAIBase {
         if (settled) { return; }
         if (mob.getDistanceSq(shade.getX() + 0.5D, shade.getY(), shade.getZ() + 0.5D) <= 2.25D) {
             settled = true;
+            mob.setSneaking(true);
             mob.getNavigator().clearPath();
             return;
         }

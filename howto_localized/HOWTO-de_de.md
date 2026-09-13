@@ -80,6 +80,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Welt-Intro](#welt-intro)
 - [Teams](#teams)
 - [Wertung](#wertung)
+- [Raids](#raids)
 
 **Steuerung**
 - [Die Steuerungsebene](#die-steuerungsebene)
@@ -142,6 +143,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/gamerules/*.json` | Spielregeln für neue Welten. [Spielregeln](#spielregeln) |
 | `<namespace>/teams/*.json` | Seiten auf dem Vanilla-Scoreboard und wer ihnen beitritt. [Teams](#teams) |
 | `<namespace>/scoring/*.json` | Ziele, Punkte und wie eine Partie endet. [Wertung](#wertung) |
+| `<namespace>/raids/*.json` | Wellen, die ein Dorf heimsuchen, wenn ein Spieler ein Omen hineinträgt. [Raids](#raids) |
 | `<namespace>/entities/*.json` | Entity-Varianten, aufgebaut auf vorhandenen Entities. [Entity-Varianten](#entity-varianten) |
 | `<namespace>/hardness/*.json` | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen) |
 | `<namespace>/exposures/*.json` | Gefahren, denen Spieler nahe an oder beim Tragen benannter Blöcke und Items ausgesetzt sind. [Expositionen](#expositionen) |
@@ -1943,6 +1945,8 @@ Lege den genannten Gegenstand in den linken Platz eines Ambosses und seinen `wit
 
 Die eigenen Reparaturen und Kombinationen des Ambosses bleiben unberührt: Das hier antwortet nur, wenn links ein genannter Gegenstand liegt und rechts sein `with`.
 
+Ein Mob mit `collectsExperience` gibt hier ebenfalls seine Stufen aus. Solange er `item` in der Haupthand und `with` in der Nebenhand hält und `levels` bezahlen kann, geht er zu einem Amboss im Umkreis von 16 Blöcken und benutzt ihn, sobald er höchstens 3 Blöcke entfernt ist: Die Stufen gehen von seinen eigenen ab wie bei einem Spieler, `with` wird verbraucht, der Amboss nutzt sich ab wie unter einem Spieler, und das Ergebnis landet in seiner Haupthand. Läuft er über einen fallengelassenen Gegenstand, den ein Ambosswerk unter `with` nennt, hebt er ihn in die Nebenhand auf. `grants` und `locks` betreffen nur Spieler, also bringt `grants` einem Mob nichts ein, und keine Sperre hält ihn auf.
+
 ## Blockdrops
 
 *herstellung, beute und handel*
@@ -2312,6 +2316,7 @@ Rüstung wird überhaupt nur auf einer Entity gezeichnet, deren Renderer einen R
 | `maxFallHeight` | nein | int | der der Basis | Wie tief sie beim Wegfinden springt |
 | `climbs` | nein | boolean | wie die Basis | Klettert Wände hoch wie eine Spinne und findet ihren Weg darüber; `false` holt eine Spinne auf den Boden |
 | `teleports` | nein | boolean | `true` | Ob sich ein Enderman oder ein Shulker teleportieren darf. Aus bleibt er, wo er steht, auch bei Tageslicht und im Wasser |
+| `walks` | nein | boolean | `false` | Ein Kaninchen läuft wie andere Tiere, statt zu hoppeln. Nur ein Kaninchen liest das |
 | `pathPriorities` | nein | Objekt | keines | Wodurch sie läuft, als `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` und so weiter, jeweils eine Zahl, wobei negativ „nie“ heißt |
 | `leashable` | nein | boolean | `false` | Lässt sich an der Leine führen, auch wenn die kopierte Entity das nie konnte |
 | `steerable` | nein | boolean | `false` | Lässt sich beim Reiten lenken |
@@ -2357,7 +2362,7 @@ Rüstung wird überhaupt nur auf einer Entity gezeichnet, deren Renderer einen R
 | `picksUpLoot` | nein | boolean | `false` | Hebt auf, worüber sie läuft |
 | `lootTable` | nein | `namespace:entities/<name>` | die der Basis | Eine Beutetabelle, die beim ersten Öffnen durch einen Spieler in den Block gewürfelt wird, genau wie sich eine Verliestruhe füllt. Leer lässt ihn leer beginnen |
 | `experience` | nein | int | die der Basis | Wie viel Erfahrung sie droppt |
-| `collectsExperience` | nein | boolean | `false` | Sammelt Erfahrung wie ein Spieler: Kugeln im Umkreis von acht Blöcken treiben zu ihm und werden bei Berührung genommen, Reparatur auf seiner Ausrüstung wird zuerst bedient, und die Punkte bauen Stufen auf der Kurve des Spielers auf, gespeichert am Mob über einen Speicherstand hinweg. Was es tötet, lässt seine Erfahrung fallen, als hätte ein Spieler getötet, ein Block, den seine `digs`-Aufgabe bricht, lässt dessen eigene Erfahrung fallen, und ein Erfahrungswurf aus `block_drops` fällt ebenfalls für es. Beim Tod lässt es sieben pro Stufe fallen, höchstens hundert, außer `keepInventory` ist an. Ziele mit dem Kriterium `xp` oder `level` führen seine Summe und Stufe in einer Zeile unter seiner UUID, sodass eine Funktion sie mit `score_<Ziel>_min` liest |
+| `collectsExperience` | nein | boolean | `false` | Sammelt Erfahrung wie ein Spieler: Kugeln im Umkreis von acht Blöcken treiben zu ihm und werden bei Berührung genommen, Reparatur auf seiner Ausrüstung wird zuerst bedient, und die Punkte bauen Stufen auf der Kurve des Spielers auf, gespeichert am Mob über einen Speicherstand hinweg. Was es tötet, lässt seine Erfahrung fallen, als hätte ein Spieler getötet, ein Block, den seine `digs`-Aufgabe bricht, lässt dessen eigene Erfahrung fallen, und ein Erfahrungswurf aus `block_drops` fällt ebenfalls für es. Beim Tod lässt es sieben pro Stufe fallen, höchstens hundert, außer `keepInventory` ist an. Ziele mit dem Kriterium `xp` oder `level` führen seine Summe und Stufe in einer Zeile unter seiner UUID, sodass eine Funktion sie mit `score_<Ziel>_min` liest. Es gibt seine Stufen für Ambosswerk aus wie ein Spieler, siehe [Ambosswerk](#ambosswerk) |
 
 Eine Variante droppt das, was die kopierte Entity droppt, weil die Beutetabelle im Code dieser Entity festgeschrieben ist und nicht über den Namen nachgeschlagen wird. `lootTable` zeigt auf eine eigene Tabelle, die du dann wie jede andere unter `loot_tables/entities/<name>.json` mitlieferst.
 
@@ -2373,6 +2378,7 @@ Eine Variante droppt das, was die kopierte Entity droppt, weil die Beutetabelle 
 | `throwRetreat` | nein | int, Sekunden | `explosionFuse` | Wie lange es nach einem Wurf auf Abstand bleibt, ehe es sich wieder umdreht |
 | `throwPower` | nein | float | `1.0` | Wie kräftig es wirft. Verdoppeln verdoppelt ungefähr die Weite |
 | `throwArc` | nein | float | `0.35` | Wie steil der Wurfbogen ausfällt. Höher hängt länger, nahe null ist ein flacher Wurf, unter null wirft es nach unten |
+| `throwReturns` | nein | boolean | `false` | Was es wirft, fliegt wie ein Dreizack: Es trifft mit dem `attackDamage` der Variante, bei einer Basis ohne diesen Wert mit 8, und fliegt dann zurück in seine Hand, so wie Treue einen Dreizack zurückbringt. Es wird nie verbraucht, also gelten `throwAmmo` und `throwReload` dafür nicht. TNT wird geworfen wie immer |
 | `explodes` | nein | boolean | `false` | Sprengt sich neben ihrem Ziel in die Luft, wie ein Creeper. Braucht `hostile` |
 | `explosionPower` | nein | Zahl | `3.0` | Wie groß die Explosion ist. Ein Creeper ist 3, TNT ist 4. Auf einer Creeper-Basis ist es zugleich dessen eigene Explosion, auf einem Ghast die des Feuerballs |
 | `explosionFuse` | nein | int, Ticks | `30` | Wie lange sie zischt, bevor es losgeht. Auf einer Creeper-Basis ist es zugleich dessen eigene Lunte |
@@ -2381,7 +2387,7 @@ Eine Variante droppt das, was die kopierte Entity droppt, weil die Beutetabelle 
 | `pounces` | nein | boolean | `false` | Duckt sich, springt dann im Bogen auf ihr Ziel und schlägt beim Aufsetzen zu, wie ein Fuchs. Braucht `hostile` |
 | `sniffs` | nein | int, Blöcke | `0` | Hört Spieler, die sich innerhalb so vieler Blöcke bewegen, durch Wände hindurch, und geht dorthin, wo sie sie gehört hat; ein schleichender oder stehender Spieler wird nicht gehört, und einen, den sie dann sieht, nimmt sie ins Ziel. `0` hört nicht. Braucht `hostile` |
 | `fleesWhenHurt` | nein | 0,0 bis 1,0 | `0` | Bricht ab und läuft vor dem davon, mit dem sie kämpft, solange ihre Gesundheit unter diesem Anteil liegt, und kehrt zurück, sobald sie darüber ist. `0` flieht nie. Braucht `hostile` |
-| `sleepsByDay` | nein | boolean | `false` | Sucht bei Tag Schatten und steht dort still bis zur Nacht oder bis etwas sie angreift |
+| `sleepsByDay` | nein | boolean | `false` | Sucht bei Tag Schatten und steht dort still bis zur Nacht oder bis etwas sie angreift. Während sie ruht, liegt sie auf der Seite |
 | `home` | nein | int, Blöcke | `0` | Bleibt in so vielen Blöcken um die Stelle, an der sie zuerst stand, streift darin umher und geht zurück, wenn sie sich verläuft. `0` streift frei |
 | `patrols` | nein | boolean | `false` | Zieht in langen Etappen über das Land, mit anderen ihrer Art, die einem Anführer folgen, wie eine Plünderer-Patrouille. Eine Gruppe, die zusammen erscheint, wählt einen Anführer; die anderen bleiben wenige Blöcke bei ihm, und nimmt der Anführer ein Ziel, nehmen es alle. Ein Gefolgsmann, der seinen Anführer verliert, übernimmt selbst die Führung. Braucht `hostile` |
 | `swoops` | nein | boolean | `false` | Kreist über ihrem Ziel und stürzt hindurch, schlägt im Vorbeiflug zu, wie ein Phantom. Die Variante bekommt eine Flughilfe, fliegt also, solange sie jagt, und lässt sich im Leerlauf zu Boden; sie braucht eine Basis, die eine Kreatur ist, etwa einen Papagei, und eine Fledermaus ist keine. Braucht `hostile` |
@@ -3303,7 +3309,11 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "structureChance": 0.5,
   "skyStone": "minecraft:sandstone",
   "skyIslands": 0.2,
-  "skyThickness": 2.0
+  "skyThickness": 2.0,
+  "ambientSound": "minecraft:block.water.ambient",
+  "soundChance": 0.02,
+  "particle": "dripWater",
+  "particleChance": 0.002
 }
 ```
 
@@ -3328,6 +3338,10 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `skyStone` | Block | die Welteinstellung | Der Block, aus dem Himmelsinseln innerhalb dieser Region unter ihrer Oberfläche bestehen, eine Region trägt also eigene Inseln |
 | `skyIslands` | `-1` bis `1` | die Welteinstellung | Die Inselschwelle innerhalb der Region. Niedriger sammelt mehr Land |
 | `skyThickness` | `0` oder mehr | die Welteinstellung | Wie massiv die Inseln der Region sind |
+| `ambientSound` | Geräuschname | keiner | Ein Geräusch, das einem Spieler in der Region ab und zu vorgespielt wird, so wie moderne Biome ihre eigenen Höhlengeräusche ergänzen. Der Server schickt es nur diesem Spieler |
+| `soundChance` | 0,0 bis 1,0 | `0.0111` | Die Chance pro Tick, dass `ambientSound` spielt |
+| `particle` | Partikelname | keiner | Ein Partikel rund um einen Spieler in der Region, einer der Partikelnamen des Spiels wie `dripWater`, `happyVillager` oder `depthsuspend`. Nur Luft innerhalb der Region zeigt ihn |
+| `particleChance` | 0,0 bis 1,0 | `0.00625` | Die Partikeldichte moderner Biome: Pro Tick werden etwa 667 Stellen im Umkreis von 16 Blöcken versucht, und jede zeigt den Partikel mit dieser Chance |
 
 ### Zellen
 
@@ -3662,6 +3676,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `belt` | Ein Cluster über mehrere Chunks hinweg, für Gesteinsregionen |
 | `field` | Adern, die für jeden Block auf einmal ermittelt werden, mit derselben Form wie Härtegruppen |
 | `vein` | Eine Lagerstätte, als geseedetes Rauschfeld um einen Ursprung errechnet, wie Immersive Geology es macht: jeder Chunk schreibt seine eigene Scheibe jeder Ader, deren Reichweite von 24 Blöcken ihn berührt, also kaskadiert nichts, und `/rdplserver vein` kann sagen, wo eine Ader liegen wird, bevor das Land gebaut ist. Nutzt `size`, `attempts`, `rarity` und das Höhenband; `pattern` wählt das Aussehen |
+| `spring` | Eine Flüssigkeit, die aus einer Höhlenwand sickert: gesetzt, wo Gestein darüber, darunter und an drei Seiten steht und eine Seite offen ist, und zum Fließen gebracht |
 
 ### Größe und Form
 
@@ -3679,6 +3694,12 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `taper` | spire | `straight`, `bell`, `needle` | `straight` | Wie die Breite zur Spitze hin abnimmt. `straight` verjüngt gleichmäßig, `bell` bleibt unten breit und fällt dann ab, `needle` wird sofort dünn und läuft lang aus |
 | `outline` | geode | Blockname | keiner | Der Block der Kruste |
 | `fill` | geode | Blockname | keiner | Was die Mitte füllt. Weggelassen bleibt die Mitte hohl |
+| `middle` | geode | Blockname | keiner | Eine Schale zwischen dem Körper und `outline`, der Calcit einer modernen Amethystgeode |
+| `budding` | geode | Blockname | keiner | Ersetzt Körperblöcke, die zur hohlen Mitte zeigen, wie knospender Amethyst. Braucht `fill` |
+| `buddingChance` | geode | 0,0 bis 1,0 | `0.083` | Wie viele dieser Körperblöcke knospen |
+| `crystal` | geode | Blockname | keiner | Wächst in die Höhlung neben einem `budding`-Block, wie eine Amethystgruppe |
+| `crystalChance` | geode | 0,0 bis 1,0 | `0.35` | An wie vielen dieser Stellen einer wächst |
+| `crack` | geode | 0,0 bis 1,0 | `0` | Die Chance, dass eine Geode aufgebrochen ist: eine Röhre von der Mitte durch jede Schicht zu einer Seite, gefüllt mit `fill`. Moderne Amethystgeoden nehmen `0.95` |
 
 ### Platzierung
 
@@ -4061,6 +4082,7 @@ Ein Stadtplan zeichnet den Straßenplan eines Dorfes auf ein Raster, ein Zeichen
 {
   "name": "Downtown",
   "cell": 48,
+  "settings": { "villagePathCenterBlock": "minecraft:concrete:14" },
   "palette": {
     "#": "street",
     "+": "plaza",
@@ -4068,7 +4090,11 @@ Ein Stadtplan zeichnet den Straßenplan eines Dorfes auf ein Raster, ein Zeichen
     "T": ["mypack:tower_blue=1", "mypack:tower_gray=1"],
     "B": "mypack:block",
     "s": ["mypack:shop_blue=2", "mypack:shop_gray=1"],
-    "g": "grow"
+    "g": "grow",
+    "J": "junction",
+    "b": "bulb",
+    "E": { "kind": "elevated", "height": 8 },
+    "W": { "kind": "street", "settings": { "villagePathExtraWidth": 8, "villagePathSidewalkWidth": 3 } }
   },
   "map": [
     "sss#BBB#sss",
@@ -4088,18 +4114,23 @@ Ein Stadtplan zeichnet den Straßenplan eines Dorfes auf ein Raster, ein Zeichen
 | `cell` | Zahl | `48` | Das Rastermaß in Blöcken, 8 bis 128. Straßen laufen in der Breite des Packs durch die Mitte ihrer Zellen, Grundstücke sitzen mittig in ihren, eine Zelle braucht also das breiteste Grundstück plus Raum zur Straße hin |
 | `palette` | Objekt | keins | Was jedes Zeichen anlegt, unten aufgeführt |
 | `map` | Liste | keine | Die Zeilen, bis zu 64 mal 64 Zellen. Eine kürzere Zeile ist hinter ihrem Ende offen |
+| `settings` | Objekt | keins | Dorfeinstellungen nur für diesen Plan, unter den Namen, die eine Weltvorlage nutzt, etwa `villagePathCenterBlock`. Sie gehen vor denen der Vorlage, und die eigenen Dorfeinstellungen eines Bioms gehen weiterhin vor ihnen |
 
 | Wert | Was er tut |
 | --- | --- |
 | `"#": "street"` | Ein Lauf von Straßenzellen entlang einer Zeile oder Spalte wird ein Straßenkasten in der Breite des Packs. Wo ein Zeilenlauf einen Spaltenlauf kreuzt, wird die Kreuzung wie jede andere gestaltet. Eine einzelne Straßenzelle ohne Lauf in einer Achse wird als kurzer Stummel entlang der Zeile angelegt |
 | `"+": "plaza"` | Ein Brunnen mit seinem Platzring. Läufe gehen durch Platzzellen hindurch, Straßen treffen sich also am Brunnen, und ein Platz auf einer Kreuzung stellt seinen Brunnen, oder sein `villageWellStructure`-Mittelstück, wie einen Kreisverkehr mitten auf die Kreuzung. Der erste Platz in der Datei ist der Brunnen des Dorfes selbst, der den Plan dort festmacht, wo das Dorf gegründet wird; ein Plan ohne einen wird dort zentriert |
 | `"a": "alley"` | Ein schmaler Lauf. Gebäude stehen daran, aber er verbindet nichts, die Gassenregel wie gewohnt |
+| `"J": "junction"` | Eine Straßenzelle, die in beide Richtungen angelegt wird, sodass dort eine Kreuzung steht, auch wo die Zeichnung nur in eine Richtung hindurchläuft. Der Arm quer dazu ist eine Zelle lang |
+| `"b": "bulb"` | Eine Straßenzelle, die in einem Wendeplatz endet. Hat ein Plan eine solche Zelle, bekommen nur Straßenenden in diesen Zellen einen Wendeplatz, und jedes mit Platz dafür bekommt einen; ein Plan ohne sie behält drei von vier Enden |
+| `"E": { "kind": "elevated", "height": 8 }` | Eine Straßenzelle auf einer Fahrbahn `height` Blöcke, 2 bis 64, über dem höchsten Boden unter ihrem Abschnitt zusammenhängender erhöhter Zellen, mit einer Rampe von einem Block pro Reihe an jedem Ende. Eine Straße, die innerhalb des Abschnitts kreuzt, steigt mit. Ein Abschnitt, dessen Fahrbahn oder Rampen eine Reihe erreichen würden, die eine Bahnlinie oder ein Brunnen auf ihrer eigenen Höhe hält, bleibt ebenerdig, mit einer Zeile im Protokoll. Jeder Wert lässt sich so als Objekt schreiben, `kind` nennt das Wort |
+| `"W": { "kind": "street", "settings": { "villagePathExtraWidth": 8 } }` | Eine Straße, die mit eigenen Straßenschlüsseln angelegt und gepflastert wird, die vor denen des Plans und der Vorlage gehen. Ihre Breite folgt ihrem eigenen `villagePathExtraWidth`, `villagePathSidewalkWidth` und ihrer Linie, und Belag, Linien und Gehwege folgen ihren eigenen Blockschlüsseln, eine Allee oder eine Gasse bekommt also ein eigenes Zeichen. Ein Lauf nimmt die Schlüssel seiner ersten Zelle, die welche setzt. Wie breit oder schmal auch immer, eine gezeichnete Straße bleibt eine Straße: Sie wird nie für eine Gasse oder einen Wendeplatz gehalten |
 | `"T": "mypack:tower"` | Eine Grundstückszelle, angelegt aus dieser Grundstücksdefinition, mittig in der Zelle und zur nächsten Straße gewandt |
 | `"T": ["mypack:a=3", "mypack:b=1"]` | Dasselbe, nach Gewicht aus dem Weltseed und dem Platz der Zelle ausgelost, dieselbe Welt legt dort also immer dasselbe Grundstück an |
 | `"g": "grow"` | Dem Wachsen überlassen. Mit gesetztem `villagePlotsLeast` füllen die gewachsenen Viertel und die Straßennachfüllung solche Zellen und breiten sich vom Plan aus; ohne bleibt die Zelle offen |
 | `.` | Offener Boden, nichts angelegt |
 
-Jeder Plan lost eine der vier Richtungen aus dem Weltseed aus und dreht sich als Ganzes, ein Plan liest sich also von jeder Seite gleich. Straßen werden zuerst angelegt, ein Grundstück, das eine Straße oder ein anderes Grundstück überlappen würde, bleibt mit einer Zeile im Protokoll offen, und ein Grundstücksname, den kein Pack liefert, lässt seine Zelle genauso offen. Der Plan ändert nicht, wie die Teile gestaltet werden: die Straßenschlüssel, `villageBlocks`, die Laternen und der Brunnenersatz gelten wie für ein gewachsenes Dorf. Aus einem gezeichneten Plan wächst nichts heraus: neben seinen Straßen werden keine Gassen aufgefüllt, und seine Straßenenden bekommen ihre Wendeplätze, drei von vieren wie üblich, aber keine Häuser daran.
+Jeder Plan lost eine der vier Richtungen aus dem Weltseed aus und dreht sich als Ganzes, ein Plan liest sich also von jeder Seite gleich. Straßen werden zuerst angelegt, ein Grundstück, das eine Straße oder ein anderes Grundstück überlappen würde, bleibt mit einer Zeile im Protokoll offen, und ein Grundstücksname, den kein Pack liefert, lässt seine Zelle genauso offen. Der Plan ändert nicht, wie die Teile gestaltet werden: die Straßenschlüssel, `villageBlocks`, die Laternen und der Brunnenersatz gelten wie für ein gewachsenes Dorf. Aus einem gezeichneten Plan wächst nichts heraus: neben seinen Straßen werden keine Gassen aufgefüllt, und seine Straßenenden bekommen ihre Wendeplätze, drei von vieren wie üblich oder wie seine Wendeplatzzellen es sagen, aber keine Häuser daran.
 
 ## Retrogen
 
@@ -4583,6 +4614,66 @@ Jeder Spieler auf einer Seite, der online ist, stimmt ab, gleich auf welcher Sei
 | `results.image` | Text | leer | Ein auf der Karte gezeichnetes Bild statt eines Gegenstands |
 | `results.background` | Text | ein dunkles Schiefer | Die Hintergrundfarbe der Karte |
 | `results.seconds` | Zahl | `8` | Wie lange die Karte steht, mindestens eine Sekunde |
+
+## Raids
+
+*spielmodi*
+
+`<namespace>/raids/*.json`
+
+Der Dateiname ist deine Sache, gelesen wird nur der Ordner, und mehrere Dateien stapeln sich. Jede Datei ist ein Raid.
+
+Ein Raid ist der, den das Spiel ab 1.14 hat, aufgebaut auf den Dörfern, die 1.12.2 schon führt. Er beginnt, wenn ein Spieler mit dem Effekt `omen` in einem Dorf ist: Der Effekt wird entfernt, und für jeden Spieler innerhalb von `reach` um die Dorfmitte erscheint eine Bossleiste. Nach `waveDelay` Ticks trifft die erste Welle auf einem Ring um das Dorf ein und läuft zur Mitte, wobei sie unterwegs Spieler, Dorfbewohner und Eisengolems angreift. Die Leiste zeigt die Gesundheit, die der Welle bleibt, und zählt die Angreifer, sobald zwei oder weniger übrig sind. Ist eine Welle besiegt, wartet die nächste `waveDelay` Ticks. Ist die letzte Welle besiegt und zwei Sekunden lang nichts zurückgekommen, ist der Raid gewonnen; sind alle Dorfbewohner tot oder ist das Dorf selbst verschwunden, nachdem eine Welle kam, ist er verloren. So oder so zeigt die Leiste das dreißig Sekunden lang, und die passende Funktion läuft als jeder Spieler in Reichweite.
+
+Ein laufender Raid wird mit der Welt gespeichert, und seine Angreifer nehmen ihren Marsch nach dem Neuladen wieder auf. Er endet ohne Ausgang auf friedlich, nach `timeout` Ticks oder wenn keine Stelle um das Dorf eine Welle aufnehmen kann. Ein Dorf zählt erst, wenn ein Dorfbewohner seine Türen gefunden hat, also braucht ein Raid ein Dorf, das das Spiel bemerkt hat.
+
+Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner zur nächsten Tür, die das Dorf kennt, nach drinnen und bleiben dort. Ein `bell`-Block läutet, wenn ein Spieler ihn benutzt, und jede Glocke im Dorf läutet, wenn eine Welle eintrifft: Dorfbewohner im Umkreis von 48 Blöcken verstecken sich fünfzehn Sekunden lang, und Angreifer im Umkreis von 48 Blöcken leuchten drei Sekunden lang. Nichts erzeugt eine Glocke. Ein Pack, das eine will, definiert den Block, setzt ihn in eine NBT-Struktur und platziert diese Struktur im Dorf, als Grundstück oder als Brunnenersatz, damit die Glocke dort steht, wo die Dorfbewohner leben.
+
+```json
+{
+  "omen": "mypack:bad_omen",
+  "name": "Raid",
+  "color": "red",
+  "waveDelay": 300,
+  "spawnDistance": 32,
+  "sound": "mypack:raid_horn",
+  "wins": "mypack:raid_won",
+  "loses": "mypack:raid_lost",
+  "bell": "mypack:village_bell",
+  "waves": [
+    [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
+    [ { "entity": "minecraft:evocation_illager" }, { "entity": "minecraft:vindication_illager", "count": 4 } ]
+  ]
+}
+```
+
+### Der Raid
+
+*raids*
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `omen` | Effektname | keiner, Pflicht | Der Effekt, der den Raid startet, wenn sein Träger in einem Dorf ist. Jeder registrierte Effekt geht, auch ein eigener Trank eines Packs |
+| `name` | Text | `Raid` | Der Titel der Bossleiste |
+| `color` | Text | `red` | Die Farbe der Leiste: `pink`, `blue`, `red`, `green`, `yellow`, `purple` oder `white` |
+| `waves` | Liste von Wellen | keine, Pflicht | Jede Welle ist eine Liste von Gruppen, und die Wellen kommen der Reihe nach |
+| `waveDelay` | Zahl | `300` | Ticks vor der ersten Welle und zwischen dem Ende einer Welle und der nächsten |
+| `spawnDistance` | Zahl | `32` | Wie weit von der Dorfmitte eine Welle eintrifft. Zuerst wird das Doppelte versucht, dann dieser Wert, dann das Dorf selbst |
+| `reach` | Zahl | `96` | Spieler innerhalb so vieler Blöcke um die Mitte sehen die Leiste, und die Funktion zum Ausgang läuft als sie. Ein Angreifer, der sechzehn Blöcke darüber hinaus streunt, verlässt den Raid |
+| `timeout` | Zahl | `48000` | Ticks, nach denen ein unfertiger Raid ohne Ausgang endet. `0` beendet ihn nie |
+| `sound` | Geräuschname | keiner | Wird jedem Spieler in Reichweite von der Seite vorgespielt, aus der die Welle kommt, sobald sie eintrifft |
+| `wins` | Funktion | keine | Läuft als jeder Spieler in Reichweite, wenn der Raid gewonnen ist |
+| `loses` | Funktion | keine | Läuft als jeder Spieler in Reichweite, wenn der Raid verloren ist |
+| `bell` | Blockname oder Liste | keiner | Der Block, der als Glocke läutet, wenn ein Spieler ihn benutzt und immer wenn eine Welle eintrifft. Setze ihn über eine NBT-Struktur ins Dorf, denn nichts erzeugt ihn |
+
+### Eine Gruppe
+
+*raids*
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `entity` | Entity-Name | keiner, Pflicht | Was kommt. Eine Entity-Variante behält ihr ganzes eigenes Verhalten und bekommt den Marsch dazu |
+| `count` | Zahl oder `{ "min", "max" }` | `1` | Wie viele kommen |
 
 ---
 

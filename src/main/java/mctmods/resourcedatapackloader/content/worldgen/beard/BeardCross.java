@@ -39,7 +39,8 @@ public final class BeardCross {
     }
 
     public static BeardCross of(StructureBoundingBox box, boolean alongX) {
-        return new BeardCross(box, alongX, BeardRoads.pathFullWidth(), BeardRoads.pathLineColumns(), BeardRoads.pathSidewalkWidth());
+        int[] bands = BeardRoads.bandsOf(box);
+        return new BeardCross(box, alongX, bands[0], bands[1], bands[2]);
     }
 
     public boolean covers(int x, int z) {

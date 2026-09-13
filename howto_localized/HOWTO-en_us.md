@@ -80,6 +80,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [World intro](#world-intro)
 - [Teams](#teams)
 - [Scoring](#scoring)
+- [Raids](#raids)
 
 **Control**
 - [The control layer](#the-control-layer)
@@ -142,6 +143,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/gamerules/*.json` | Game rules for new worlds. [Game rules](#game-rules) |
 | `<namespace>/teams/*.json` | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams) |
 | `<namespace>/scoring/*.json` | Objectives, points and how a match ends. [Scoring](#scoring) |
+| `<namespace>/raids/*.json` | Waves that come for a village when a player brings an omen into it. [Raids](#raids) |
 | `<namespace>/entities/*.json` | Entity variants built on entities that already exist. [Entity variants](#entity-variants) |
 | `<namespace>/hardness/*.json` | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups) |
 | `<namespace>/exposures/*.json` | Hazards that expose players near or carrying named blocks and items. [Exposures](#exposures) |
@@ -1943,6 +1945,8 @@ Put the named item in an anvil's left slot and its `with` item in the right, and
 
 The anvil's own repairs and combinations are untouched: this only answers when the left holds a named item and the right holds its `with`.
 
+A mob with `collectsExperience` spends its levels here as well. While it holds `item` in its main hand and `with` in its off hand and has `levels` to pay, it walks to an anvil within 16 blocks and works it once it is within 3 blocks: the levels come off its own as they come off a player's, `with` is used up, the anvil wears as it does under a player, and the work ends up in its main hand. As it walks over a dropped item that some anvil work names under `with`, it picks it up into its off hand. `grants` and `locks` only concern players, so a mob earns nothing from `grants` and no lock holds it back.
+
 ## Block drops
 
 *crafting, loot and trade*
@@ -2312,6 +2316,7 @@ Armor is only ever drawn on an entity whose renderer has an armor layer, which i
 | `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
 | `climbs` | no | boolean | the base's | Climbs walls the way a spider does, and paths over them; `false` grounds a spider |
 | `teleports` | no | boolean | `true` | Whether an enderman or a shulker may teleport. Off, it stays where it stands, in daylight and in water too |
+| `walks` | no | boolean | `false` | A rabbit walks the way other animals do instead of moving in hops. Only a rabbit reads it |
 | `pathPriorities` | no | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
 | `leashable` | no | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
 | `steerable` | no | boolean | `false` | Can be steered while ridden |
@@ -2357,7 +2362,7 @@ Armor is only ever drawn on an entity whose renderer has an armor layer, which i
 | `picksUpLoot` | no | boolean | `false` | Picks up what it walks over |
 | `lootTable` | no | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
 | `experience` | no | int | the base's | How much experience it drops |
-| `collectsExperience` | no | boolean | `false` | Gathers experience the way a player does: orbs within eight blocks drift to it and are taken on touch, Mending on its gear is repaired first, and the points build levels on the player's own curve, kept on the mob through a save. What it kills drops its experience as if a player had made the kill, a block its `digs` task breaks drops the block's own experience, and a `block_drops` experience roll lands for it too. On death it drops seven per level up to a hundred, unless `keepInventory` is on. Objectives with the `xp` or `level` criterion carry its total and level on a row named by its UUID, so a function reads them with `score_<objective>_min` |
+| `collectsExperience` | no | boolean | `false` | Gathers experience the way a player does: orbs within eight blocks drift to it and are taken on touch, Mending on its gear is repaired first, and the points build levels on the player's own curve, kept on the mob through a save. What it kills drops its experience as if a player had made the kill, a block its `digs` task breaks drops the block's own experience, and a `block_drops` experience roll lands for it too. On death it drops seven per level up to a hundred, unless `keepInventory` is on. Objectives with the `xp` or `level` criterion carry its total and level on a row named by its UUID, so a function reads them with `score_<objective>_min`. It spends its levels on anvil work the way a player does, see [Anvil work](#anvil-work) |
 
 A variant drops whatever the entity it copies drops, because the loot table is fixed in that entity's own code rather than looked up by name. `lootTable` points it at a table of your own, which you then supply at `loot_tables/entities/<name>.json` like any other.
 
@@ -2373,6 +2378,7 @@ A variant drops whatever the entity it copies drops, because the loot table is f
 | `throwRetreat` | no | int, seconds | `explosionFuse` | How long it keeps away after a throw before turning back |
 | `throwPower` | no | float | `1.0` | How hard it throws. Doubling it roughly doubles the reach |
 | `throwArc` | no | float | `0.35` | How high it lobs. Higher hangs longer, near zero is a flat hurl, below zero throws downward |
+| `throwReturns` | no | boolean | `false` | What it throws flies like a trident: it hits for the variant's `attackDamage`, or 8 on a base without one, then flies back into its hand the way Loyalty brings a trident back. It is never used up, so `throwAmmo` and `throwReload` do not apply to it. TNT is thrown as ever |
 | `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
 | `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4. On a creeper base it is the creeper's own blast as well, and on a ghast the fireball's |
 | `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off. On a creeper base it is the creeper's own fuse as well |
@@ -2381,7 +2387,7 @@ A variant drops whatever the entity it copies drops, because the loot table is f
 | `pounces` | no | boolean | `false` | Crouches, then leaps onto its target in an arc and strikes on landing, the way a fox does. Needs `hostile` |
 | `sniffs` | no | int, blocks | `0` | Hears players moving within that many blocks, walls or not, and walks to where it heard them; a sneaking or standing player is not heard, and one it then sees becomes its target. `0` does not listen. Needs `hostile` |
 | `fleesWhenHurt` | no | 0.0 to 1.0 | `0` | Breaks off and runs from whoever it is fighting while its health is under that fraction, and comes back once above it. `0` never flees. Needs `hostile` |
-| `sleepsByDay` | no | boolean | `false` | Finds shade by day and stands still there until night or until something attacks it |
+| `sleepsByDay` | no | boolean | `false` | Finds shade by day and stands still there until night or until something attacks it. While it rests it lies on its side |
 | `home` | no | int, blocks | `0` | Keeps to that many blocks around the spot it first stood on, wandering inside it and walking back when it strays. `0` roams freely |
 | `patrols` | no | boolean | `false` | Walks the land in long legs with others of its kind following a leader, the way a pillager patrol does. A group that spawns together picks one leader; the rest keep within a few blocks of it, and when the leader takes a target they all do. A follower that loses its leader takes the lead itself. Needs `hostile` |
 | `swoops` | no | boolean | `false` | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile` |
@@ -3303,7 +3309,11 @@ Every key, shown at once. A real file writes only the ones it needs.
   "structureChance": 0.5,
   "skyStone": "minecraft:sandstone",
   "skyIslands": 0.2,
-  "skyThickness": 2.0
+  "skyThickness": 2.0,
+  "ambientSound": "minecraft:block.water.ambient",
+  "soundChance": 0.02,
+  "particle": "dripWater",
+  "particleChance": 0.002
 }
 ```
 
@@ -3328,6 +3338,10 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `skyStone` | block | the world setting | The block sky islands are made of under their surface inside this region, so one region carries islands of its own |
 | `skyIslands` | `-1` to `1` | the world setting | The island threshold inside the region. Lower gathers more land |
 | `skyThickness` | `0` or more | the world setting | How solid the region's islands are |
+| `ambientSound` | sound name | none | A sound played now and then to a player standing inside the region, the way modern biomes add their own cave sounds. Sent by the server to that player alone |
+| `soundChance` | 0.0 to 1.0 | `0.0111` | The chance each tick that `ambientSound` plays |
+| `particle` | particle name | none | A particle shown around a player inside the region, one of the game's particle names such as `dripWater`, `happyVillager` or `depthsuspend`. Only air inside the region shows it |
+| `particleChance` | 0.0 to 1.0 | `0.00625` | Modern biomes' particle density: each tick about 667 spots within 16 blocks are tried, and each shows the particle at this chance |
 
 ### Cells
 
@@ -3662,6 +3676,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `belt` | A cluster spanning several chunks, for stone regions |
 | `field` | Veins worked out for every block at once, sharing their shape with hardness groups |
 | `vein` | A deposit worked out as a seeded noise field around an origin, the way Immersive Geology does it: every chunk writes its own slice of every vein whose 24-block reach touches it, so nothing cascades, and `/rdplserver vein` can tell where a vein will be before the land is made. Uses `size`, `attempts`, `rarity` and the height band; `pattern` picks the look |
+| `spring` | A fluid leaking out of a cave wall: placed where rock stands above, below and on three sides with one side open, and set flowing |
 
 ### Size and form
 
@@ -3679,6 +3694,12 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `taper` | spire | `straight`, `bell`, `needle` | `straight` | How the width falls away toward the tip. `straight` narrows evenly, `bell` keeps its width low down then drops, `needle` thins at once into a long point |
 | `outline` | geode | block name | none | The crust block |
 | `fill` | geode | block name | none | What fills the middle. Left out, the middle is hollow |
+| `middle` | geode | block name | none | A shell between the body and `outline`, the calcite of a modern amethyst geode |
+| `budding` | geode | block name | none | Swapped in for body blocks that face the hollow middle, as budding amethyst is. Needs `fill` |
+| `buddingChance` | geode | 0.0 to 1.0 | `0.083` | How many of those body blocks bud |
+| `crystal` | geode | block name | none | Grown into the hollow beside a `budding` block, as an amethyst cluster is |
+| `crystalChance` | geode | 0.0 to 1.0 | `0.35` | How many of those spots grow one |
+| `crack` | geode | 0.0 to 1.0 | `0` | The chance a geode is cracked open: a tube from the middle out through every layer on one side, filled with `fill`. Modern amethyst geodes use `0.95` |
 
 ### Placement
 
@@ -4061,6 +4082,7 @@ A city map draws a village's street plan on a grid, one character to a cell, and
 {
   "name": "Downtown",
   "cell": 48,
+  "settings": { "villagePathCenterBlock": "minecraft:concrete:14" },
   "palette": {
     "#": "street",
     "+": "plaza",
@@ -4068,7 +4090,11 @@ A city map draws a village's street plan on a grid, one character to a cell, and
     "T": ["mypack:tower_blue=1", "mypack:tower_gray=1"],
     "B": "mypack:block",
     "s": ["mypack:shop_blue=2", "mypack:shop_gray=1"],
-    "g": "grow"
+    "g": "grow",
+    "J": "junction",
+    "b": "bulb",
+    "E": { "kind": "elevated", "height": 8 },
+    "W": { "kind": "street", "settings": { "villagePathExtraWidth": 8, "villagePathSidewalkWidth": 3 } }
   },
   "map": [
     "sss#BBB#sss",
@@ -4088,18 +4114,23 @@ A city map draws a village's street plan on a grid, one character to a cell, and
 | `cell` | number | `48` | The grid pitch in blocks, 8 to 128. Roads run down the middle of their cells at the pack's road width and plots are centered in theirs, so a cell wants the widest plot plus room to front the street |
 | `palette` | object | none | What each character lays, listed below |
 | `map` | list | none | The rows, up to 64 by 64 cells. A row shorter than the widest is open past its end |
+| `settings` | object | none | Village settings for this map alone, under the names a world template uses, such as `villagePathCenterBlock`. They win over the template's, and a biome's own village settings still win over them |
 
 | Value | What it does |
 | --- | --- |
 | `"#": "street"` | A run of street cells along a row or column becomes one road box at the pack's road width. Where a row run crosses a column run the junction is painted like any other. A lone street cell with no run in either axis is laid as a short stub along the row |
 | `"+": "plaza"` | A well with its plaza ring. Runs pass through plaza cells, so streets meet at the well, and a plaza on a crossing stands its well, or its `villageWellStructure` centerpiece, in the middle of the crossroads like a roundabout. The first plaza in the file is the village's own well, which pins the map to where the village founds; a map without one is centered there |
 | `"a": "alley"` | A narrow run. Buildings front it, but it connects nothing, the alley rule as usual |
+| `"J": "junction"` | A street cell laid in both directions, so a crossing stands there even where the drawing runs only one way through it. The arm across it is one cell long |
+| `"b": "bulb"` | A street cell that ends in a cul-de-sac. Once a map has a bulb cell, only road ends lying in bulb cells get a bulb, and every one with room for it does; a map without one keeps three ends in four |
+| `"E": { "kind": "elevated", "height": 8 }` | A street cell raised onto a deck `height` blocks, 2 to 64, above the highest ground under its stretch of joined elevated cells, with a ramp of one block a row at each end. A street crossing inside the stretch rises with it. A stretch whose deck or ramps would reach a row that a railway or a well holds at its own level stays at grade, with a line in the log. Any value can be written as an object this way, `kind` naming the word |
+| `"W": { "kind": "street", "settings": { "villagePathExtraWidth": 8 } }` | A street laid and paved with its own road keys, which win over the map's and the template's. Its width follows its own `villagePathExtraWidth`, `villagePathSidewalkWidth` and line, and its surface, lines and sidewalks follow its own block keys, so an avenue or a lane is drawn with a mark of its own. A run takes the keys of its first cell that sets any. However wide or narrow, a drawn street stays a street: it is never taken for an alley or a cul-de-sac |
 | `"T": "mypack:tower"` | A plot cell, laid from that plot definition, centered in the cell and facing the nearest street |
 | `"T": ["mypack:a=3", "mypack:b=1"]` | The same, rolled by weight from the world seed and the cell's spot, so the same world always lays the same plot there |
 | `"g": "grow"` | Left to the growth. With `villagePlotsLeast` set, the grown districts and the street infill fill such cells and spread outward from the map; without it the cell stays open |
 | `.` | Open ground, nothing laid |
 
-Every map rolls one of the four facings from the world seed and turns whole, so a plan reads the same from any side. Roads are laid first, so a plot that would overlap a road or another plot is left open with a line in the log, and a plot name no pack provides leaves its cell open the same way. The map does not change how the pieces dress: the road keys, `villageBlocks`, the lamps and the well replacement all read as they do for a grown village. Nothing grows out of a drawn map: no alleys are filled in beside its streets, and its road ends get their bulbs, three in four as usual, but no houses along them.
+Every map rolls one of the four facings from the world seed and turns whole, so a plan reads the same from any side. Roads are laid first, so a plot that would overlap a road or another plot is left open with a line in the log, and a plot name no pack provides leaves its cell open the same way. The map does not change how the pieces dress: the road keys, `villageBlocks`, the lamps and the well replacement all read as they do for a grown village. Nothing grows out of a drawn map: no alleys are filled in beside its streets, and its road ends get their bulbs, three in four as usual or as its bulb cells say, but no houses along them.
 
 ## Retrogen
 
@@ -4583,6 +4614,66 @@ Every online player on a side votes, whatever side they are on, with `/rdpl roun
 | `results.image` | text | empty | An image drawn on the card instead of an item |
 | `results.background` | text | a dark slate | The card's background color |
 | `results.seconds` | int | `8` | How long the card stands, at least one second |
+
+## Raids
+
+*game modes*
+
+`<namespace>/raids/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Each file is one raid.
+
+A raid is the one the game has from 1.14 on, built on the villages 1.12.2 already keeps. It starts when a player carrying the `omen` effect is inside a village: the effect is taken away, and a boss bar comes up for every player within `reach` of the village center. After `waveDelay` ticks the first wave arrives on a ring around the village and walks in toward the center, attacking players, villagers and iron golems on the way. The bar shows the health the wave has left, and counts the raiders once two or fewer remain. Once a wave is gone, the next one waits `waveDelay` ticks. When the last wave is gone and nothing has come back for two seconds, the raid is won; when every villager is dead or the village itself is gone after a wave has come, it is lost. Either way the bar says so for thirty seconds, and the matching function runs as every player in reach.
+
+A raid in progress is saved with the world, and its raiders take up their march again after a reload. It stops without an ending in peaceful, after `timeout` ticks, or when no spot around the village can take a wave. A village only counts once a villager has found its doors, so a raid needs a village the game has noticed.
+
+While a wave is on the village, its villagers run indoors to the nearest door the village knows and stay there. A `bell` block rings when a player uses it, and every bell in the village rings when a wave arrives: villagers within 48 blocks hide for fifteen seconds and raiders within 48 blocks glow for three. Nothing generates a bell. A pack that wants one defines the block, puts it into an NBT structure, and places that structure in the village, as a plot or as the well replacement, so the bell stands where the villagers live.
+
+```json
+{
+  "omen": "mypack:bad_omen",
+  "name": "Raid",
+  "color": "red",
+  "waveDelay": 300,
+  "spawnDistance": 32,
+  "sound": "mypack:raid_horn",
+  "wins": "mypack:raid_won",
+  "loses": "mypack:raid_lost",
+  "bell": "mypack:village_bell",
+  "waves": [
+    [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
+    [ { "entity": "minecraft:evocation_illager" }, { "entity": "minecraft:vindication_illager", "count": 4 } ]
+  ]
+}
+```
+
+### The raid
+
+*raids*
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `omen` | effect name | none, required | The effect that starts the raid when its holder is inside a village. Any registered effect will do, a pack's own potion included |
+| `name` | text | `Raid` | The boss bar's title |
+| `color` | text | `red` | The bar's color: `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white` |
+| `waves` | list of waves | none, required | Each wave is a list of groups, and the waves come in order |
+| `waveDelay` | int | `300` | Ticks before the first wave, and between the end of a wave and the next |
+| `spawnDistance` | int | `32` | How far from the village center a wave arrives. The first tries are at twice this, then at this, then inside the village |
+| `reach` | int | `96` | Players within this many blocks of the center see the bar, and the ending function runs as them. A raider that strays sixteen blocks past it leaves the raid |
+| `timeout` | int | `48000` | Ticks after which an unfinished raid stops without an ending. `0` never stops it |
+| `sound` | sound name | none | Played to every player in reach, from the side the wave comes from, as each wave arrives |
+| `wins` | function | none | Runs as every player in reach when the raid is won |
+| `loses` | function | none | Runs as every player in reach when the raid is lost |
+| `bell` | block name or list | none | The block that rings as a bell, when a player uses it and whenever a wave arrives. Place it in the village through an NBT structure, since nothing generates it |
+
+### A group
+
+*raids*
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `entity` | entity name | none, required | What comes. An entity variant keeps all of its own behavior and gains the march |
+| `count` | int or `{ "min", "max" }` | `1` | How many come |
 
 ---
 

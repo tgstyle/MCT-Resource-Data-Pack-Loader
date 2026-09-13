@@ -135,7 +135,7 @@ public final class ContentOreVein implements IContentShape {
                     if (value <= shape.threshold) { continue; }
                     if (placer.occupied(world, x, y, z)) { continue; }
                     float tier = (value - shape.threshold) / (1.0F - shape.threshold);
-                    IBlockState state = tier >= shape.richAt && rich != null ? rich : tier >= shape.poorAt || poor == null ? placer.choose(random) : poor;
+                    IBlockState state = shape.richAt < 1.0F && tier >= shape.richAt && rich != null ? rich : tier >= shape.poorAt || poor == null ? placer.choose(random) : poor;
                     if (placer.placeExactly(world, state, x, y, z)) { placed++; }
                 }
             }

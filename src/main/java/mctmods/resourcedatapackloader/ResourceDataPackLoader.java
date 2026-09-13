@@ -155,6 +155,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentThreat.class);
         }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
+        if (mctmods.resourcedatapackloader.content.worldgen.ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentCaveAmbience.class); }
         MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentProspect.class);
         if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
@@ -164,6 +165,7 @@ public class ResourceDataPackLoader {
         ContentGameRules.load();
         mctmods.resourcedatapackloader.content.ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
+        mctmods.resourcedatapackloader.content.ContentRaids.load();
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentMobExperience.class);

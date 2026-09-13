@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -25,6 +26,8 @@ public final class ContentControl {
     public static final String TERRAIN = "terrain";
     public static final String REPLACEMENTS = "replacements";
     public static final String VILLAGES = "villages";
+    private static final String LAYOUT = "villageLayout";
+    private static final ThreadLocal<JsonObject> ROAD_KEYS = new ThreadLocal<>();
     public static final String ENTITIES = "entities";
     public static final String CHUNKS = "chunks";
     public static final String BLAST_PLASTER = "blastPlaster";
@@ -74,6 +77,21 @@ public final class ContentControl {
             if (KNOWN.contains(entry.getKey())) { continue; }
             ContentLog.LOGGER.error("World template {} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", template.getKey(), entry.getKey());
         }
+    }
+
+    public static boolean ignores(String key) { return !KNOWN.contains(key); }
+
+    @Nullable public static JsonObject roadKeys() { return ROAD_KEYS.get(); }
+
+    @Nullable public static JsonObject roadKeys(@Nullable JsonObject keys) {
+        JsonObject was = ROAD_KEYS.get();
+        ROAD_KEYS.set(keys);
+        return was;
+    }
+
+    @Nullable private static JsonElement roadSetting(String group, String key) {
+        JsonObject road = VILLAGES.equals(group) && packDecides(group) ? ROAD_KEYS.get() : null;
+        return road != null && road.has(key) ? road.get(key) : null;
     }
 
     public static boolean off(String group) { return OFF.equals(mode(group)); }
@@ -154,7 +172,8 @@ public final class ContentControl {
     }
 
     public static String text(String group, String key, String fallback, @Nullable String section) {
-        JsonElement value = biomeSetting(group, key, section);
+        JsonElement value = roadSetting(group, key);
+        if (value == null) { value = biomeSetting(group, key, section); }
         if (value == null) { return text(group, key, fallback); }
         if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
         return value.getAsString();
@@ -216,6 +235,12 @@ public final class ContentControl {
 
     @Nullable private static JsonElement setting(String group, String key) {
         if (!packDecides(group)) { return null; }
+        JsonElement road = roadSetting(group, key);
+        if (road != null) { return road; }
+        if (VILLAGES.equals(group) && !LAYOUT.equals(key)) {
+            JsonElement drawn = ContentCityMaps.setting(key);
+            if (drawn != null) { return drawn; }
+        }
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || template.settings == null) { return null; }
         if (template != settingsFrom) {

@@ -23,6 +23,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         GlStateManager.scale(scale, scale, scale);
     }
 
+    @Inject(method = "applyRotations", at = @At("TAIL")) private void rdpl$lying(EntityLivingBase entityLiving, float ageInTicks, float rotationYaw, float partialTicks, CallbackInfo ci) {
+        if (entityLiving.deathTime > 0 || !ContentEntities.lyingAsleep(entityLiving)) { return; }
+        GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
+    }
+
     @Inject(method = "renderModel", at = @At("HEAD")) private void rdpl$tintBody(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, CallbackInfo ci) {
         int tint = ContentEntities.tint(entitylivingbaseIn, EntityVariantDef.BODY);
         rdpl$tint = tint;

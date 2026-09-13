@@ -95,6 +95,18 @@ public final class ContentMobExperience {
         if (level > before) { ContentLog.LOGGER.info("{} reached experience level {}, {} point(s) in all", mob.getName(), level, total); }
     }
 
+    public static void addLevels(EntityLiving mob, int levels) {
+        NBTTagCompound data = mob.getEntityData();
+        int level = data.getInteger(LEVEL) + levels;
+        if (level < 0) {
+            level = 0;
+            data.setFloat(PROGRESS, 0.0F);
+            data.setInteger(TOTAL, 0);
+        }
+        data.setInteger(LEVEL, level);
+        scores(mob, level, data.getInteger(TOTAL));
+    }
+
     private static int cap(int level) {
         if (level >= 30) { return 112 + (level - 30) * 9; }
         return level >= 15 ? 37 + (level - 15) * 5 : 7 + level * 2;

@@ -147,7 +147,7 @@ public final class CityGrowth {
                     ContentLog.LOGGER.debug("The dead end at {}, {} faces a neighboring village's site, so it rolls no cul-de-sac and stays open for that village's streets", endX, endZ);
                     continue;
                 }
-                if (SeededRandom.at(world, endX + dir, endZ + dir).nextInt(4) == 3) { continue; }
+                if (CityLayout.skipsBulb(piece, outward, SeededRandom.at(world, endX + dir, endZ + dir))) { continue; }
                 int least = (BeardRoads.pathFullWidth() + 1) / 2 + 1;
                 int found = 0;
                 int stem = 0;
@@ -411,6 +411,7 @@ public final class CityGrowth {
 
     public static boolean bulbWide(StructureComponent piece) {
         StructureBoundingBox box = piece.getBoundingBox();
+        if (BeardRoads.drawnKeys(box) != null) { return false; }
         return Math.min(box.maxX - box.minX, box.maxZ - box.minZ) + 1 > BeardRoads.pathFullWidth();
     }
 

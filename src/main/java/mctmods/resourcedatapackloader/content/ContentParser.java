@@ -36,6 +36,7 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.BossInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,7 +55,7 @@ public final class ContentParser {
             DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
     private static final Set<String> KNOWN_SHAPES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
             ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES,
-            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN)));
+            ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING)));
     public static final String PLACEHOLDER = "open";
     public static final String DEFAULT_STILL = "minecraft:blocks/water_still";
     public static final String DEFAULT_FLOW = "minecraft:blocks/water_flow";
@@ -400,8 +401,21 @@ public final class ContentParser {
                     return null;
                 }
                 List<String> names = new ArrayList<>();
+                int height = CityMapDef.LIFT;
+                JsonObject roadKeys = null;
                 if (mark.getValue().isJsonArray()) {
                     for (JsonElement choice : mark.getValue().getAsJsonArray()) { names.add(choice.getAsString().trim()); }
+                }
+                else if (mark.getValue().isJsonObject()) {
+                    JsonObject described = mark.getValue().getAsJsonObject();
+                    names.add(JsonUtils.getString(described, "kind", "").trim());
+                    height = MathHelper.clamp(JsonUtils.getInt(described, "height", CityMapDef.LIFT), 2, 64);
+                    if (described.has("settings") && described.get("settings").isJsonObject()) {
+                        roadKeys = described.getAsJsonObject("settings");
+                        for (Map.Entry<String, JsonElement> entry : roadKeys.entrySet()) {
+                            if (ContentControl.ignores(entry.getKey())) { ContentLog.LOGGER.error("City map {} mark '{}' sets '{}', which is not a setting anything reads, so it does nothing", key, symbol, entry.getKey()); }
+                        }
+                    }
                 }
                 else { names.add(mark.getValue().getAsString().trim()); }
                 CityMapDef.Kind kind = CityMapDef.Kind.PLOT;
@@ -413,13 +427,16 @@ public final class ContentParser {
                         case "alley": kind = CityMapDef.Kind.ALLEY; break;
                         case "open": kind = CityMapDef.Kind.OPEN; break;
                         case "grow": kind = CityMapDef.Kind.GROW; break;
+                        case "junction": kind = CityMapDef.Kind.JUNCTION; break;
+                        case "bulb": kind = CityMapDef.Kind.BULB; break;
+                        case "elevated": kind = CityMapDef.Kind.ELEVATED; break;
                         default: break;
                     }
                 }
                 if (kind == CityMapDef.Kind.PLOT) {
                     for (String name : names) { picks.add(weighted(name)); }
                 }
-                palette.put(symbol.charAt(0), new CityMapDef.Cell(kind, picks));
+                palette.put(symbol.charAt(0), new CityMapDef.Cell(kind, picks, height, roadKeys));
             }
         }
         for (String row : rows) {
@@ -435,7 +452,17 @@ public final class ContentParser {
             }
         }
         int cell = MathHelper.clamp(JsonUtils.getInt(json, "cell", 48), 8, 128);
-        return new CityMapDef(key, cell, palette, rows.toArray(new String[0]));
+        JsonObject settings = null;
+        if (json.has("settings")) {
+            if (json.get("settings").isJsonObject()) {
+                settings = json.getAsJsonObject("settings");
+                for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
+                    if (ContentControl.ignores(entry.getKey())) { ContentLog.LOGGER.error("City map {} sets '{}', which is not a setting anything reads, so it does nothing", key, entry.getKey()); }
+                }
+            }
+            else { ContentLog.LOGGER.error("City map {} has settings that are not an object of setting names, so it keeps the world template's", key); }
+        }
+        return new CityMapDef(key, cell, palette, rows.toArray(new String[0]), settings);
     }
 
     private static PickDef weighted(String entry) {
@@ -621,6 +648,63 @@ public final class ContentParser {
     private static int cardColor(JsonObject results, String name) {
         String asked = JsonUtils.getString(results, "background", "").trim();
         return asked.isEmpty() ? 0x1E2630 : ContentTypes.color(asked, name + " results background") & 0xFFFFFF;
+    }
+
+    @Nullable public static RaidDef raidFile(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        if (json == null) {
+            ContentLog.LOGGER.error("Raid file {} is empty, ignoring it", key);
+            return null;
+        }
+        String omen = JsonUtils.getString(json, "omen", "").trim();
+        if (omen.isEmpty()) {
+            ContentLog.LOGGER.error("Raid {} names no omen effect, and nothing else starts a raid, so it is left out", key);
+            return null;
+        }
+        String colorName = JsonUtils.getString(json, "color", "red").trim().toUpperCase(Locale.ROOT);
+        BossInfo.Color color = BossInfo.Color.RED;
+        try { color = BossInfo.Color.valueOf(colorName); }
+        catch (IllegalArgumentException notABarColor) { ContentLog.LOGGER.error("Raid {} asks for the bar color '{}', which is not pink, blue, red, green, yellow, purple or white, so it is red", key, colorName); }
+        List<List<RaidDef.Group>> waves = new ArrayList<>();
+        if (json.has("waves")) {
+            for (JsonElement wave : JsonUtils.getJsonArray(json, "waves")) {
+                if (!wave.isJsonArray()) {
+                    ContentLog.LOGGER.error("Raid {} has a wave that is not a list of groups, skipping it", key);
+                    continue;
+                }
+                List<RaidDef.Group> groups = new ArrayList<>();
+                for (JsonElement group : wave.getAsJsonArray()) {
+                    if (!group.isJsonObject() || JsonUtils.getString(group.getAsJsonObject(), "entity", "").trim().isEmpty()) {
+                        ContentLog.LOGGER.error("Raid {} has a group in wave {} that names no entity, skipping it", key, waves.size() + 1);
+                        continue;
+                    }
+                    groups.add(new RaidDef.Group(JsonUtils.getString(group.getAsJsonObject(), "entity", "").trim(), amount(group.getAsJsonObject(), "count", 1, 1)));
+                }
+                if (!groups.isEmpty()) { waves.add(groups); }
+            }
+        }
+        if (waves.isEmpty()) {
+            ContentLog.LOGGER.error("Raid {} has no wave with anyone in it, so it is left out", key);
+            return null;
+        }
+        return new RaidDef(key, omen,
+                JsonUtils.getString(json, "name", "Raid"),
+                color,
+                waves,
+                Math.max(1, JsonUtils.getInt(json, "waveDelay", 300)),
+                Math.max(8, JsonUtils.getInt(json, "spawnDistance", 32)),
+                Math.max(16, JsonUtils.getInt(json, "reach", 96)),
+                Math.max(0, JsonUtils.getInt(json, "timeout", 48000)),
+                JsonUtils.getString(json, "sound", "").trim(),
+                JsonUtils.getString(json, "wins", "").trim(),
+                JsonUtils.getString(json, "loses", "").trim(),
+                bells(json));
+    }
+
+    private static List<String> bells(JsonObject json) {
+        if (!json.has("bell")) { return Collections.emptyList(); }
+        if (json.get("bell").isJsonArray()) { return strings(json, "bell"); }
+        return Collections.singletonList(JsonUtils.getString(json, "bell", "").trim());
     }
 
     @Nullable public static TeamDef teamFile(ResourceLocation key, String contents) {
@@ -1295,7 +1379,11 @@ public final class ContentParser {
                 JsonUtils.getString(json, "biome", ""),
                 JsonUtils.getString(json, "skyStone", ""),
                 Json.bounded(json, "skyIslands", -1.0F, 1.0F, key),
-                Json.bounded(json, "skyThickness", 0.0F, 8.0F, key));
+                Json.bounded(json, "skyThickness", 0.0F, 8.0F, key),
+                JsonUtils.getString(json, "ambientSound", "").trim(),
+                MathHelper.clamp(JsonUtils.getFloat(json, "soundChance", 0.0111F), 0.0F, 1.0F),
+                JsonUtils.getString(json, "particle", "").trim(),
+                MathHelper.clamp(JsonUtils.getFloat(json, "particleChance", 0.00625F), 0.0F, 1.0F));
     }
 
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
@@ -1531,7 +1619,9 @@ public final class ContentParser {
                 JsonUtils.getString(sounds, "explode", ""),
                 Math.max(0.0F, JsonUtils.getFloat(sounds, "targetVaries", 0.0F)),
                 JsonUtils.getBoolean(json, "bright", false),
-                JsonUtils.getBoolean(json, "collectsExperience", false));
+                JsonUtils.getBoolean(json, "collectsExperience", false),
+                JsonUtils.getBoolean(json, "walks", false),
+                JsonUtils.getBoolean(json, "throwReturns", false));
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {
@@ -1630,6 +1720,12 @@ public final class ContentParser {
         made.poor = JsonUtils.getString(entry, "poor", "");
         made.richAt = MathHelper.clamp(JsonUtils.getFloat(entry, "richAt", 0.88F), 0.0F, 1.0F);
         made.poorAt = MathHelper.clamp(JsonUtils.getFloat(entry, "poorAt", 0.4F), 0.0F, made.richAt);
+        made.middle = JsonUtils.getString(entry, "middle", "");
+        made.budding = JsonUtils.getString(entry, "budding", "");
+        made.buddingChance = MathHelper.clamp(JsonUtils.getFloat(entry, "buddingChance", 0.083F), 0.0F, 1.0F);
+        made.crystal = JsonUtils.getString(entry, "crystal", "");
+        made.crystalChance = MathHelper.clamp(JsonUtils.getFloat(entry, "crystalChance", 0.35F), 0.0F, 1.0F);
+        made.crack = MathHelper.clamp(JsonUtils.getFloat(entry, "crack", 0.0F), 0.0F, 1.0F);
         if (entry.has("at")) {
             JsonArray pinned = JsonUtils.getJsonArray(entry, "at");
             if (pinned.size() == 2) { made.at = new int[] { pinned.get(0).getAsInt(), pinned.get(1).getAsInt() }; }

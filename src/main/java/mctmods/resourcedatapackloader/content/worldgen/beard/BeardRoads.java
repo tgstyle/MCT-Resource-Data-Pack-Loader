@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
+import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
@@ -37,7 +38,10 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.util.math.MathHelper;
+import com.google.gson.JsonObject;
+import java.util.Collections;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -320,6 +324,10 @@ public final class BeardRoads {
             if (piers > 0) { ContentLog.LOGGER.debug("Held {} pier row(s) of the road at {}, {} up to the water line, so they meet the decks either side", piers, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             int filled = piece == null ? 0 : BeardGrade.fillDips(profile, authority);
             if (filled > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Lifted {} row(s) of the road at {}, {} out of a dip, so it carries across at the level it meets on either side", filled, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
+            boolean[] anchored = new boolean[profile.length];
+            for (int i = 0; i < anchored.length; i++) { anchored[i] = plaza[i] && !aproned[i]; }
+            int raised = piece == null ? 0 : CityLayout.lift(world, piece, alongX, rowLeast, acrossLeast, acrossMost, profile, bridged, anchored);
+            if (raised > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Raised {} row(s) of the road at {}, {} onto the deck its city map draws there", raised, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             int decked = BeardGrade.deckDrops(profile, ground, bridged, authority, Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeDrop", Config.worldgen.villagePathBridgeDrop)));
             if (decked > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Decked {} row(s) of the road at {}, {} where its grade stands clear of the ground, so the drop is bridged rather than filled", decked, alongX ? rowLeast : acrossLeast, alongX ? acrossLeast : rowLeast); }
             int leveled = BeardGrade.levelDecks(profile, bridged, authority, 1);
@@ -497,275 +505,368 @@ public final class BeardRoads {
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} runs along {} from {} to {}, is asked for the patch of land from {}, {} to {}, {}, and so will lay rows {} to {}", box.minX, box.minZ, alongX ? "x" : "z", alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, clip.minX, clip.minZ, clip.maxX, clip.maxZ, least, most); }
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
-        Grade graded = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
-        if (graded != null && (graded.start != (alongX ? box.minX : box.minZ) || graded.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1)) {
-            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
-            graded = null;
-        }
+        Grade graded = storedGrade(piece, box, alongX);
         boolean stored = graded != null;
         if (graded == null) { graded = roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, acrossLeast, acrossMost, true); }
         boolean computed = graded != null;
-        if (graded == null) {
-            int rows = most - least + 1;
-            int[] profile = new int[rows];
-            for (int i = 0; i < rows; i++) {
-                int found = Integer.MIN_VALUE;
-                for (int across = acrossLeast; across <= acrossMost; across++) {
-                    int x = alongX ? least + i : across;
-                    int z = alongX ? across : least + i;
-                    BlockPos spot = new BlockPos(x, 64, z);
-                    if (!clip.isVecInside(spot)) { continue; }
-                    BlockPos top = GroundLevel.inWindow(world, spot).down();
-                    if (top.getY() < world.getSeaLevel() - 1 || world.getBlockState(top).getMaterial().isLiquid()) { continue; }
-                    if (top.getY() > found) { found = top.getY(); }
-                }
-                profile[i] = found;
-            }
-            int before = roadAnchor(world, alongX, least - 1, acrossLeast, acrossMost, path, gravel);
-            if (before != Integer.MIN_VALUE && profile[0] != Integer.MIN_VALUE) { profile[0] = Math.max(before - 1, Math.min(before + 1, profile[0])); }
-            int after = roadAnchor(world, alongX, most + 1, acrossLeast, acrossMost, path, gravel);
-            if (after != Integer.MIN_VALUE && profile[rows - 1] != Integer.MIN_VALUE) { profile[rows - 1] = Math.max(after - 1, Math.min(after + 1, profile[rows - 1])); }
-            int[] ground = profile.clone();
-            boolean[] bridged = BeardGrade.smooth(profile);
-            int capped = BeardGrade.capEmbankment(profile, ground, bridged, new boolean[profile.length]);
-            graded = new Grade(profile, ground, bridged, new boolean[profile.length], least, capped);
+        if (graded == null) { graded = groundGrade(world, clip, alongX, least, most, acrossLeast, acrossMost, path, gravel); }
+        traceGrade(box, alongX, graded, computed);
+        Paving paving = new Paving(world, piece, clip, alongX, path, gravel, planks, chosenSurface, cap, graded, nearby);
+        for (int i = Math.max(0, least - graded.start); i < graded.profile.length && graded.start + i <= most; i++) { paving.row(i); }
+        if (stored && (alongX ? clip.minZ : clip.minX) <= acrossLeast - 1 && (alongX ? clip.maxZ : clip.maxX) >= acrossMost + 1) {
+            for (int row = least; row <= most; row++) { graded.covered[row - graded.start] = true; }
         }
-        int start = graded.start;
+        if (piece instanceof MergePiece) { BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, new ArrayList<>(), new ArrayList<>(), ((MergePiece) piece)::centerAt); }
+        else {
+            List<StructureBoundingBox> sewerCrossed = new ArrayList<>(paving.crossed);
+            sewerCrossed.addAll(BeardSewers.loopCrossings(nearby, box));
+            BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, sewerCrossed, paving.crossed);
+        }
+        if ((paving.cut + paving.filled + paving.paved + paving.lined > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips, lined {} of tunnel", box.minX, box.minZ, paving.paved, paving.cut, paving.filled, paving.lined); }
+    }
+
+    @Nullable private static Grade storedGrade(StructureComponent piece, StructureBoundingBox box, boolean alongX) {
+        Grade graded = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
+        if (graded != null && (graded.start != (alongX ? box.minX : box.minZ) || graded.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1)) {
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
+            return null;
+        }
+        return graded;
+    }
+
+    private static Grade groundGrade(World world, StructureBoundingBox clip, boolean alongX, int least, int most, int acrossLeast, int acrossMost, IBlockState path, IBlockState gravel) {
+        int rows = most - least + 1;
+        int[] profile = new int[rows];
+        for (int i = 0; i < rows; i++) {
+            int found = Integer.MIN_VALUE;
+            for (int across = acrossLeast; across <= acrossMost; across++) {
+                int x = alongX ? least + i : across;
+                int z = alongX ? across : least + i;
+                BlockPos spot = new BlockPos(x, 64, z);
+                if (!clip.isVecInside(spot)) { continue; }
+                BlockPos top = GroundLevel.inWindow(world, spot).down();
+                if (top.getY() < world.getSeaLevel() - 1 || world.getBlockState(top).getMaterial().isLiquid()) { continue; }
+                if (top.getY() > found) { found = top.getY(); }
+            }
+            profile[i] = found;
+        }
+        int before = roadAnchor(world, alongX, least - 1, acrossLeast, acrossMost, path, gravel);
+        if (before != Integer.MIN_VALUE && profile[0] != Integer.MIN_VALUE) { profile[0] = Math.max(before - 1, Math.min(before + 1, profile[0])); }
+        int after = roadAnchor(world, alongX, most + 1, acrossLeast, acrossMost, path, gravel);
+        if (after != Integer.MIN_VALUE && profile[rows - 1] != Integer.MIN_VALUE) { profile[rows - 1] = Math.max(after - 1, Math.min(after + 1, profile[rows - 1])); }
+        int[] ground = profile.clone();
+        boolean[] bridged = BeardGrade.smooth(profile);
+        int capped = BeardGrade.capEmbankment(profile, ground, bridged, new boolean[profile.length]);
+        return new Grade(profile, ground, bridged, new boolean[profile.length], least, capped);
+    }
+
+    private static void traceGrade(StructureBoundingBox box, boolean alongX, Grade graded, boolean computed) {
+        if (!ContentLog.LOGGER.debugEnabled()) { return; }
         int[] profile = graded.profile;
-        int[] ground = graded.ground;
-        boolean[] bridged = graded.bridged;
-        int capped = graded.capped;
-        if (capped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Capped {} row(s) of the road at {}, {} to {} block(s) above their own ground", capped, box.minX, box.minZ, BeardGrade.CAP); }
-        if (ContentLog.LOGGER.debugEnabled()) {
-            StringBuilder trace = new StringBuilder();
-            for (int i = 0; i < profile.length; i++) {
-                if (i > 0) { trace.append(' '); }
-                trace.append(start + i).append(':');
-                if (ground[i] == Integer.MIN_VALUE) { trace.append('-'); }
-                else { trace.append(ground[i]); }
-                trace.append('/');
-                if (profile[i] == Integer.MIN_VALUE) { trace.append('-'); }
-                else { trace.append(profile[i]); }
-                if (bridged[i]) { trace.append('b'); }
+        if (graded.capped > 0) { ContentLog.LOGGER.debug("Capped {} row(s) of the road at {}, {} to {} block(s) above their own ground", graded.capped, box.minX, box.minZ, BeardGrade.CAP); }
+        StringBuilder trace = new StringBuilder();
+        for (int i = 0; i < profile.length; i++) {
+            if (i > 0) { trace.append(' '); }
+            trace.append(graded.start + i).append(':');
+            if (graded.ground[i] == Integer.MIN_VALUE) { trace.append('-'); }
+            else { trace.append(graded.ground[i]); }
+            trace.append('/');
+            if (profile[i] == Integer.MIN_VALUE) { trace.append('-'); }
+            else { trace.append(profile[i]); }
+            if (graded.bridged[i]) { trace.append('b'); }
+        }
+        ContentLog.LOGGER.debug("Profile of the road at {}, {} along {}, computed {}, as row:ground/graded, capped {} row(s) at {}: {}", box.minX, box.minZ, alongX ? "x" : "z", computed, graded.capped, BeardGrade.CAP, trace);
+        ContentLog.LOGGER.debug("The road at {}, {} grades from y {} to y {} along its length", box.minX, box.minZ, profile[0] == Integer.MIN_VALUE ? "water" : profile[0], profile[profile.length - 1] == Integer.MIN_VALUE ? "water" : profile[profile.length - 1]);
+    }
+
+    private enum Footing { DONE, PIER, GROUND }
+
+    private static final class Paving {
+        private final World world;
+        private final StructureComponent piece;
+        private final StructureBoundingBox box;
+        private final StructureBoundingBox clip;
+        private final boolean alongX;
+        private final IBlockState planks;
+        private final boolean chosenSurface;
+        private final DeadEndCap cap;
+        private final Grade graded;
+        private final int start;
+        private final int[] profile;
+        private final boolean[] bridged;
+        private final int acrossLeast;
+        private final int acrossMost;
+        private final int center;
+        private final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        private final Pier dock;
+        private final List<StructureBoundingBox> crossed;
+        private final List<StructureBoundingBox> touching = new ArrayList<>();
+        private final boolean[] tunnels;
+        private final boolean[] lit;
+        private final boolean[] frames;
+        private final boolean[] legs;
+        private IBlockState path;
+        private IBlockState gravel;
+        private IBlockState lining;
+        private IBlockState light;
+        private int cut;
+        private int filled;
+        private int paved;
+        private int lined;
+
+        private Paving(World world, StructureComponent piece, StructureBoundingBox clip, boolean alongX, IBlockState path, IBlockState gravel, IBlockState planks, boolean chosenSurface, DeadEndCap cap, Grade graded, List<StructureComponent> nearby) {
+            this.world = world;
+            this.piece = piece;
+            this.box = piece.getBoundingBox();
+            this.clip = clip;
+            this.alongX = alongX;
+            this.path = path;
+            this.gravel = gravel;
+            this.planks = planks;
+            this.chosenSurface = chosenSurface;
+            this.cap = cap;
+            this.graded = graded;
+            this.start = graded.start;
+            this.profile = graded.profile;
+            this.bridged = graded.bridged;
+            this.acrossLeast = alongX ? box.minZ : box.minX;
+            this.acrossMost = alongX ? box.maxZ : box.maxX;
+            int depth = tunnelDepth();
+            this.lining = tunnelBlock();
+            this.light = pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState());
+            int lightRun = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathTunnelLightRun", Config.worldgen.villagePathTunnelLightRun));
+            this.dock = pierFor(world, piece, alongX, box, graded);
+            this.crossed = crossings(nearby, piece, box);
+            for (StructureBoundingBox other : crossed) {
+                if (other.maxX >= box.minX - 1 && other.minX <= box.maxX + 1 && other.maxZ >= box.minZ - 1 && other.minZ <= box.maxZ + 1) { touching.add(other); }
             }
-            ContentLog.LOGGER.debug("Profile of the road at {}, {} along {}, computed {}, as row:ground/graded, capped {} row(s) at {}: {}", box.minX, box.minZ, alongX ? "x" : "z", computed, capped, BeardGrade.CAP, trace);
+            this.tunnels = new boolean[profile.length];
+            this.center = (acrossLeast + acrossMost) / 2;
+            for (int i = 0; i < tunnels.length; i++) { tunnels[i] = graded.tunneledAt(start + i, depth) && uncrossedRow(touching, alongX, start + i) && !insidePlaza(alongX ? start + i : center, alongX ? center : start + i); }
+            dropShortRuns(tunnels);
+            this.lit = tunnelLights(tunnels, start, lightRun);
+            this.frames = bridgeFrames(profile, bridged);
+            this.legs = bridgeLegs(profile, bridged);
+            for (int i = 0; i < legs.length; i++) { legs[i] |= frames[i]; }
+            trace();
         }
-        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} grades from y {} to y {} along its length", box.minX, box.minZ, profile[0] == Integer.MIN_VALUE ? "water" : profile[0], profile[profile.length - 1] == Integer.MIN_VALUE ? "water" : profile[profile.length - 1]); }
-        int cut = 0;
-        int filled = 0;
-        int paved = 0;
-        int lined = 0;
-        int depth = tunnelDepth();
-        IBlockState lining = tunnelBlock();
-        IBlockState light = pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState());
-        int lightRun = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathTunnelLightRun", Config.worldgen.villagePathTunnelLightRun));
-        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        Pier dock = pierFor(world, piece, alongX, box, graded);
-        List<StructureBoundingBox> crossed = crossings(nearby, piece, box);
-        List<StructureBoundingBox> touching = new ArrayList<>();
-        for (StructureBoundingBox other : crossed) {
-            if (other.maxX >= box.minX - 1 && other.minX <= box.maxX + 1 && other.maxZ >= box.minZ - 1 && other.minZ <= box.maxZ + 1) { touching.add(other); }
-        }
-        boolean[] tunnels = new boolean[profile.length];
-        int center = (acrossLeast + acrossMost) / 2;
-        for (int i = 0; i < tunnels.length; i++) { tunnels[i] = graded.tunneledAt(start + i, depth) && uncrossedRow(touching, alongX, start + i) && !insidePlaza(alongX ? start + i : center, alongX ? center : start + i); }
-        dropShortRuns(tunnels);
-        boolean[] lit = tunnelLights(tunnels, start, lightRun);
-        boolean[] frames = bridgeFrames(profile, bridged);
-        boolean[] legs = bridgeLegs(profile, bridged);
-        for (int i = 0; i < legs.length; i++) { legs[i] |= frames[i]; }
-        if (ContentLog.LOGGER.debugEnabled()) {
-            StringBuilder trace = new StringBuilder();
+
+        private void trace() {
+            if (!ContentLog.LOGGER.debugEnabled()) { return; }
+            StringBuilder roofed = new StringBuilder();
             for (int i = 0; i < tunnels.length; i++) {
                 if (!tunnels[i]) { continue; }
-                trace.append(' ').append(start + i);
-                if (lit[i]) { trace.append('*'); }
+                roofed.append(' ').append(start + i);
+                if (lit[i]) { roofed.append('*'); }
             }
-            if (trace.length() > 0) { ContentLog.LOGGER.debug("The road at {}, {} roofs row(s){}, lit where starred, with {} for the light", box.minX, box.minZ, trace, light.getBlock().getRegistryName()); }
+            if (roofed.length() > 0) { ContentLog.LOGGER.debug("The road at {}, {} roofs row(s){}, lit where starred, with {} for the light", box.minX, box.minZ, roofed, light.getBlock().getRegistryName()); }
+            if (!crossed.isEmpty()) { ContentLog.LOGGER.debug("The road at {}, {} sees {} crossing road box(es): {}", box.minX, box.minZ, crossed.size(), crossed); }
         }
-        if (!crossed.isEmpty() && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} sees {} crossing road box(es): {}", box.minX, box.minZ, crossed.size(), crossed); }
-        int middle = (acrossLeast + acrossMost) / 2;
-        for (int i = Math.max(0, least - start); i < profile.length && start + i <= most; i++) {
-            if (piece instanceof mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece && BeardBiome.moved(world, alongX ? start + i : middle, alongX ? middle : start + i)) {
+
+        private void row(int i) {
+            int row = start + i;
+            if (piece instanceof mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece && BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
                 path = pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
                 gravel = pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, ((mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()));
                 lining = tunnelBlock();
                 light = pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState());
             }
-            boolean tunnel = tunnels[i];
-            for (int across = acrossLeast; across <= acrossMost; across++) {
-                int x = alongX ? start + i : across;
-                int z = alongX ? across : start + i;
-                BlockPos spot = new BlockPos(x, 64, z);
-                if (!clip.isVecInside(spot)) {
-                    if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because it lies outside the patch of land it was asked for, {}, {} to {}, {}", box.minX, box.minZ, x, z, clip.minX, clip.minZ, clip.maxX, clip.maxZ); }
-                    continue;
-                }
-                if (insidePlaza(x, z)) { continue; }
-                BlockPos top = GroundLevel.inWindow(world, spot).down();
-                if (top.getY() < world.getSeaLevel()) { top = new BlockPos(x, world.getSeaLevel() - 1, z); }
-                if (profile[i] == Integer.MIN_VALUE) {
-                    boolean wet = false;
-                    int deckAt = Integer.MIN_VALUE;
-                    if (graded.deck[i] != Integer.MIN_VALUE) {
-                        for (int y = graded.deck[i]; y >= graded.deck[i] - 8 && y >= 1; y--) {
-                            IBlockState stood = world.getBlockState(at.setPos(x, y, z));
-                            if (stood.getBlock() == Blocks.AIR) { continue; }
-                            if (stood.getMaterial().isLiquid()) {
-                                wet = true;
-                                deckAt = y + 1;
-                            }
-                            break;
-                        }
-                    }
-                    else if (world.getBlockState(top).getMaterial().isLiquid()) {
+            for (int across = acrossLeast; across <= acrossMost; across++) { cell(i, across); }
+            if (frames[i] && uncrossedRow(touching, alongX, row) && (dock == null || !dock.covers(row))) {
+                int deckY = profile[i] != Integer.MIN_VALUE ? profile[i] : graded.deck[i];
+                if (deckY != Integer.MIN_VALUE) { paved += bridgeFrame(world, piece, alongX, row, acrossLeast, acrossMost, deckY, clip, at); }
+            }
+            if (profile[i] == Integer.MIN_VALUE || bridged[i]) { return; }
+            for (int side = 0; side < 2; side++) { side(i, side == 0 ? acrossLeast - 1 : acrossMost + 1); }
+        }
+
+        private void side(int i, int across) {
+            int x = alongX ? start + i : across;
+            int z = alongX ? across : start + i;
+            at.setPos(x, profile[i], z);
+            if (!clip.isVecInside(at)) { return; }
+            if (tunnels[i]) {
+                lined += tunnelWall(world, piece, at, x, z, profile[i], pathPalette("villagePathTunnelBlock", Config.worldgen.villagePathTunnelBlock, lining));
+                return;
+            }
+            filled += vergeFill(world, piece, x, z, profile[i], at);
+        }
+
+        private void cell(int i, int across) {
+            int x = alongX ? start + i : across;
+            int z = alongX ? across : start + i;
+            BlockPos spot = new BlockPos(x, 64, z);
+            if (!clip.isVecInside(spot)) {
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because it lies outside the patch of land it was asked for, {}, {} to {}, {}", box.minX, box.minZ, x, z, clip.minX, clip.minZ, clip.maxX, clip.maxZ); }
+                return;
+            }
+            if (insidePlaza(x, z)) { return; }
+            BlockPos top = GroundLevel.inWindow(world, spot).down();
+            if (top.getY() < world.getSeaLevel()) { top = new BlockPos(x, world.getSeaLevel() - 1, z); }
+            if (profile[i] == Integer.MIN_VALUE && ungraded(i, across, x, z, top)) { return; }
+            boolean pier = false;
+            if (profile[i] != Integer.MIN_VALUE) {
+                Footing footing = gradedFooting(i, across, x, z, top);
+                if (footing == Footing.DONE) { return; }
+                pier = footing == Footing.PIER;
+            }
+            surface(i, across, x, z, top, pier);
+        }
+
+        private boolean ungraded(int i, int across, int x, int z, BlockPos top) {
+            boolean wet = false;
+            int deckAt = Integer.MIN_VALUE;
+            if (graded.deck[i] != Integer.MIN_VALUE) {
+                for (int y = graded.deck[i]; y >= graded.deck[i] - 8 && y >= 1; y--) {
+                    IBlockState stood = world.getBlockState(at.setPos(x, y, z));
+                    if (stood.getBlock() == Blocks.AIR) { continue; }
+                    if (stood.getMaterial().isLiquid()) {
                         wet = true;
-                        deckAt = top.getY() + 1;
-                    }
-                    if (wet) {
-                        if (graded.held[i] && onPiling(start + i, across, acrossLeast, acrossMost)) { filled += BeardBlocks.fillPier(world, at, x, z, deckAt - 1, gravel); }
-                        paved += deckBridge(world, box, alongX, start + i, across, acrossLeast, acrossMost, deckAt, planks, gravel, at, dock, crossed, legs[i], frames[i]);
-                        if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, at.getY(), at); }
-                        continue;
-                    }
-                    if (graded.deck[i] == Integer.MIN_VALUE) {
-                        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because no grade was worked out for that row and the ground under it is {}, not water to bridge", box.minX, box.minZ, x, z, world.getBlockState(top).getBlock().getRegistryName()); }
-                        continue;
-                    }
-                }
-                boolean pier = false;
-                if (profile[i] != Integer.MIN_VALUE) {
-                    boolean wet = world.getBlockState(top).getMaterial().isLiquid();
-                    for (int y = profile[i] - 1; !wet && y >= profile[i] - 8; y--) {
-                        IBlockState stood = world.getBlockState(at.setPos(x, y, z));
-                        if (stood.getMaterial().isLiquid()) { wet = true; }
-                        else if (stood.getMaterial().isSolid()) { break; }
-                    }
-                    if (wet && graded.held[i]) {
-                        pier = true;
-                        if (onPiling(start + i, across, acrossLeast, acrossMost)) { filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel); }
-                    }
-                    boolean footing = grounded(world, at, x, profile[i], z);
-                    if (!bridged[i] || footing) { unrail(world, at, x, profile[i] + 1, z, planks); }
-                    if (bridged[i] && !footing) {
-                        paved += deckBridge(world, box, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, gravel, at, dock, crossed, legs[i], frames[i]);
-                        if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, at.getY(), at); }
-                        continue;
-                    }
-                    if (wet && !pier) {
-                        filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel);
-                        at.setPos(x, profile[i], z);
-                        if (!BeardKeep.holds(x, profile[i], z)) {
-                            IBlockState piered = chosenSurface ? path : pathForGround(world, x, z, path, gravel, true);
-                            boolean joint = squareAt(box, alongX, crossed, x, z);
-                            IBlockState dressed = dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, (acrossLeast + acrossMost) / 2, piered, planks, crossed);
-                            world.setBlockState(at, dressed != null ? dressed : piered, 2);
-                            paved++;
-                            if (joint) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, gravel, at, dock, crossed, false, false); }
-                        }
-                        continue;
-                    }
-                }
-                int target = profile[i] == Integer.MIN_VALUE ? graded.deck[i] : profile[i];
-                at.setPos(x, target, z);
-                IBlockState held = world.getBlockState(at);
-                Block base = held.getBlock();
-                if (held.getMaterial().isSolid() && held.getMaterial() != Material.WOOD && held.getMaterial() != Material.LEAVES && !BeardBlocks.terrainBlock(base) && base != path.getBlock() && base != gravel.getBlock() && base != planks.getBlock() && base != Blocks.GRASS_PATH && base != Blocks.PLANKS && base != Blocks.SANDSTONE && base != Blocks.RED_SANDSTONE && base != Blocks.HARDENED_CLAY && base != Blocks.STAINED_HARDENED_CLAY && base != Blocks.MYCELIUM) {
-                    if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {}, {} unpaved because {} was already standing there and is not a surface a road may be laid over", box.minX, box.minZ, x, target, z, base.getRegistryName()); }
-                    continue;
-                }
-                int clearTo = tunnel ? target + BORE : Math.max(target + 4, top.getY() + 2);
-                for (int y = target + 1; y <= clearTo; y++) {
-                    at.setPos(x, y, z);
-                    IBlockState above = world.getBlockState(at);
-                    Block up = above.getBlock();
-                    if (up == Blocks.AIR) { continue; }
-                    if (BeardKeep.holds(x, y, z) || BeardRails.railBlock(above)) { continue; }
-                    if (above.getMaterial().isLiquid()) { break; }
-                    if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
-                        BeardBlocks.note(world, at, "Paving the road");
-                        world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
-                        cut++;
-                        continue;
+                        deckAt = y + 1;
                     }
                     break;
                 }
-                if (profile[i] != Integer.MIN_VALUE && !pier) { filled += BeardBlocks.fillUnder(world, at, x, z, target - 1, target - FILL_UNDER); }
-                at.setPos(x, target, z);
-                if (profile[i] == Integer.MIN_VALUE) {
-                    IBlockState decked = deckState(world, box, alongX, start + i, across, acrossLeast, acrossMost, planks, dock, crossed);
-                    if (decked == null) { continue; }
-                    if (bridgeDress(decked, planks)) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, target, planks, gravel, at, dock, crossed, legs[i], frames[i]); }
-                    else {
-                        unrail(world, at, x, target + 1, z, planks);
-                        at.setPos(x, target, z);
-                    }
-                    if (!BeardKeep.holds(at.getX(), at.getY(), at.getZ())) {
-                        world.setBlockState(at, decked, 2);
-                        paved++;
-                    }
-                    if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, target, at); }
-                    continue;
-                }
-                boolean earthy = base == Blocks.GRASS || base == Blocks.DIRT || base == Blocks.MYCELIUM || base == Blocks.GRASS_PATH || base == Blocks.AIR || !world.getBlockState(at).getMaterial().isSolid();
-                IBlockState natural = chosenSurface ? path : pathForGround(world, x, z, path, gravel, earthy && !pier);
-                if (piece instanceof MergePiece) {
-                    int merged = ((MergePiece) piece).centerAt(start + i);
-                    if (Math.abs(across - merged) > (pathFullWidth() - 1) / 2) {
-                        filled += vergeFill(world, piece, x, z, target, at);
-                        at.setPos(x, target, z);
-                        if (world.getBlockState(at).getMaterial().isReplaceable() && !BeardKeep.holds(x, target, z)) {
-                            at.setPos(x, target - 1, z);
-                            IBlockState footing = world.getBlockState(at);
-                            if (footing.getMaterial().isSolid() && !footing.getMaterial().isLiquid()) {
-                                at.setPos(x, target, z);
-                                IBlockState turf = BeardBlocks.fillGround(world, x, z);
-                                world.setBlockState(at, turf.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : turf, 2);
-                                filled++;
-                            }
-                        }
-                        continue;
-                    }
-                    world.setBlockState(at, mergeSurface(alongX, x, z, start + i, merged, natural), 2);
-                    paved++;
-                    continue;
-                }
-                boolean joint = squareAt(box, alongX, crossed, x, z);
-                IBlockState dressed = dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, (acrossLeast + acrossMost) / 2, natural, planks, crossed);
-                world.setBlockState(at, dressed != null ? dressed : natural, 2);
-                paved++;
-                if (tunnel) { lined += roofCell(world, at, x, z, target + BORE + 1, lit[i] && across == center && light.getBlock() != Blocks.AIR ? light : lining); }
-                paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, target, at);
-                if (joint) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, target, planks, gravel, at, dock, crossed, false, false); }
             }
-            if (frames[i] && uncrossedRow(touching, alongX, start + i) && (dock == null || !dock.covers(start + i))) {
-                int deckY = profile[i] != Integer.MIN_VALUE ? profile[i] : graded.deck[i];
-                if (deckY != Integer.MIN_VALUE) { paved += bridgeFrame(world, piece, alongX, start + i, acrossLeast, acrossMost, deckY, clip, at); }
+            else if (world.getBlockState(top).getMaterial().isLiquid()) {
+                wet = true;
+                deckAt = top.getY() + 1;
             }
-            for (int side = 0; side < 2; side++) {
-                int across = side == 0 ? acrossLeast - 1 : acrossMost + 1;
-                int x = alongX ? start + i : across;
-                int z = alongX ? across : start + i;
-                if (profile[i] == Integer.MIN_VALUE || bridged[i]) { continue; }
+            if (wet) {
+                if (graded.held[i] && onPiling(start + i, across, acrossLeast, acrossMost)) { filled += BeardBlocks.fillPier(world, at, x, z, deckAt - 1, gravel); }
+                paved += deckBridge(world, box, alongX, start + i, across, acrossLeast, acrossMost, deckAt, planks, gravel, at, dock, crossed, legs[i], frames[i]);
+                if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, at.getY(), at); }
+                return true;
+            }
+            if (graded.deck[i] == Integer.MIN_VALUE) {
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because no grade was worked out for that row and the ground under it is {}, not water to bridge", box.minX, box.minZ, x, z, world.getBlockState(top).getBlock().getRegistryName()); }
+                return true;
+            }
+            return false;
+        }
+
+        private Footing gradedFooting(int i, int across, int x, int z, BlockPos top) {
+            boolean wet = world.getBlockState(top).getMaterial().isLiquid();
+            for (int y = profile[i] - 1; !wet && y >= profile[i] - 8; y--) {
+                IBlockState stood = world.getBlockState(at.setPos(x, y, z));
+                if (stood.getMaterial().isLiquid()) { wet = true; }
+                else if (stood.getMaterial().isSolid()) { break; }
+            }
+            boolean pier = false;
+            if (wet && graded.held[i]) {
+                pier = true;
+                if (onPiling(start + i, across, acrossLeast, acrossMost)) { filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel); }
+            }
+            boolean footing = grounded(world, at, x, profile[i], z);
+            if (!bridged[i] || footing) { unrail(world, at, x, profile[i] + 1, z, planks); }
+            if (bridged[i] && !footing) {
+                paved += deckBridge(world, box, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, gravel, at, dock, crossed, legs[i], frames[i]);
+                if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, at.getY(), at); }
+                return Footing.DONE;
+            }
+            if (wet && !pier) {
+                filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, gravel);
                 at.setPos(x, profile[i], z);
-                if (!clip.isVecInside(at)) { continue; }
-                if (tunnel) {
-                    lined += tunnelWall(world, piece, at, x, z, profile[i], pathPalette("villagePathTunnelBlock", Config.worldgen.villagePathTunnelBlock, lining));
+                if (!BeardKeep.holds(x, profile[i], z)) {
+                    IBlockState piered = chosenSurface ? path : pathForGround(world, x, z, path, gravel, true);
+                    boolean joint = squareAt(box, alongX, crossed, x, z);
+                    IBlockState dressed = dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, center, piered, planks, crossed);
+                    world.setBlockState(at, dressed != null ? dressed : piered, 2);
+                    paved++;
+                    if (joint) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, gravel, at, dock, crossed, false, false); }
+                }
+                return Footing.DONE;
+            }
+            return pier ? Footing.PIER : Footing.GROUND;
+        }
+
+        private void surface(int i, int across, int x, int z, BlockPos top, boolean pier) {
+            int target = profile[i] == Integer.MIN_VALUE ? graded.deck[i] : profile[i];
+            at.setPos(x, target, z);
+            IBlockState held = world.getBlockState(at);
+            Block base = held.getBlock();
+            if (standingInTheWay(held, base)) {
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {}, {} unpaved because {} was already standing there and is not a surface a road may be laid over", box.minX, box.minZ, x, target, z, base.getRegistryName()); }
+                return;
+            }
+            clearAbove(x, z, target, tunnels[i] ? target + BORE : Math.max(target + 4, top.getY() + 2));
+            if (profile[i] != Integer.MIN_VALUE && !pier) { filled += BeardBlocks.fillUnder(world, at, x, z, target - 1, target - FILL_UNDER); }
+            at.setPos(x, target, z);
+            if (profile[i] == Integer.MIN_VALUE) {
+                deckCell(i, across, x, z, target);
+                return;
+            }
+            boolean earthy = base == Blocks.GRASS || base == Blocks.DIRT || base == Blocks.MYCELIUM || base == Blocks.GRASS_PATH || base == Blocks.AIR || !world.getBlockState(at).getMaterial().isSolid();
+            IBlockState natural = chosenSurface ? path : pathForGround(world, x, z, path, gravel, earthy && !pier);
+            if (piece instanceof MergePiece) {
+                mergeCell(i, across, x, z, target, natural);
+                return;
+            }
+            boolean joint = squareAt(box, alongX, crossed, x, z);
+            IBlockState dressed = dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, center, natural, planks, crossed);
+            world.setBlockState(at, dressed != null ? dressed : natural, 2);
+            paved++;
+            if (tunnels[i]) { lined += roofCell(world, at, x, z, target + BORE + 1, lit[i] && across == center && light.getBlock() != Blocks.AIR ? light : lining); }
+            paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, target, at);
+            if (joint) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, target, planks, gravel, at, dock, crossed, false, false); }
+        }
+
+        private boolean standingInTheWay(IBlockState held, Block base) {
+            return held.getMaterial().isSolid() && held.getMaterial() != Material.WOOD && held.getMaterial() != Material.LEAVES && !BeardBlocks.terrainBlock(base) && base != path.getBlock() && base != gravel.getBlock() && base != planks.getBlock() && base != Blocks.GRASS_PATH && base != Blocks.PLANKS && base != Blocks.SANDSTONE && base != Blocks.RED_SANDSTONE && base != Blocks.HARDENED_CLAY && base != Blocks.STAINED_HARDENED_CLAY && base != Blocks.MYCELIUM;
+        }
+
+        private void clearAbove(int x, int z, int target, int clearTo) {
+            for (int y = target + 1; y <= clearTo; y++) {
+                at.setPos(x, y, z);
+                IBlockState above = world.getBlockState(at);
+                Block up = above.getBlock();
+                if (up == Blocks.AIR) { continue; }
+                if (BeardKeep.holds(x, y, z) || BeardRails.railBlock(above)) { continue; }
+                if (above.getMaterial().isLiquid()) { break; }
+                if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
+                    BeardBlocks.note(world, at, "Paving the road");
+                    world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                    cut++;
                     continue;
                 }
-                filled += vergeFill(world, piece, x, z, profile[i], at);
+                break;
             }
         }
-        if (stored && (alongX ? clip.minZ : clip.minX) <= acrossLeast - 1 && (alongX ? clip.maxZ : clip.maxX) >= acrossMost + 1) {
-            for (int row = least; row <= most; row++) { graded.covered[row - start] = true; }
+
+        private void deckCell(int i, int across, int x, int z, int target) {
+            IBlockState decked = deckState(world, box, alongX, start + i, across, acrossLeast, acrossMost, planks, dock, crossed);
+            if (decked == null) { return; }
+            if (bridgeDress(decked, planks)) { paved += deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, target, planks, gravel, at, dock, crossed, legs[i], frames[i]); }
+            else {
+                unrail(world, at, x, target + 1, z, planks);
+                at.setPos(x, target, z);
+            }
+            if (!BeardKeep.holds(at.getX(), at.getY(), at.getZ())) {
+                world.setBlockState(at, decked, 2);
+                paved++;
+            }
+            if (dock == null) { paved += deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, target, at); }
         }
-        if (piece instanceof MergePiece) { BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, new ArrayList<>(), new ArrayList<>(), ((MergePiece) piece)::centerAt); }
-        else {
-            List<StructureBoundingBox> sewerCrossed = new ArrayList<>(crossed);
-            sewerCrossed.addAll(BeardSewers.loopCrossings(nearby, box));
-            BeardSewers.lay(piece, world, clip, alongX, graded, least, most, acrossLeast, acrossMost, sewerCrossed, crossed);
+
+        private void mergeCell(int i, int across, int x, int z, int target, IBlockState natural) {
+            int merged = ((MergePiece) piece).centerAt(start + i);
+            if (Math.abs(across - merged) > (pathFullWidth() - 1) / 2) {
+                filled += vergeFill(world, piece, x, z, target, at);
+                at.setPos(x, target, z);
+                if (world.getBlockState(at).getMaterial().isReplaceable() && !BeardKeep.holds(x, target, z)) {
+                    at.setPos(x, target - 1, z);
+                    IBlockState footing = world.getBlockState(at);
+                    if (footing.getMaterial().isSolid() && !footing.getMaterial().isLiquid()) {
+                        at.setPos(x, target, z);
+                        IBlockState turf = BeardBlocks.fillGround(world, x, z);
+                        world.setBlockState(at, turf.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : turf, 2);
+                        filled++;
+                    }
+                }
+                return;
+            }
+            world.setBlockState(at, mergeSurface(alongX, x, z, start + i, merged, natural), 2);
+            paved++;
         }
-        if ((cut + filled + paved + lined > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips, lined {} of tunnel", box.minX, box.minZ, paved, cut, filled, lined); }
     }
 
     public static List<StructureBoundingBox> repairRoads(World world, StructureStart start) {
@@ -1574,7 +1675,7 @@ public final class BeardRoads {
     private static boolean grounded(World world, BlockPos.MutableBlockPos at, int x, int y, int z) {
         if (y <= 1) { return false; }
         if (world.getBlockState(at.setPos(x, y - 1, z)).getMaterial().isSolid()) { return true; }
-        if (world.isAirBlock(at.setPos(x, y - 1, z)) || y <= 2) { return false; }
+        if (world.isAirBlock(at.setPos(x, y - 1, z)) || y == 2) { return false; }
         return world.getBlockState(at.setPos(x, y - 2, z)).getMaterial().isSolid();
     }
 
@@ -1848,7 +1949,7 @@ public final class BeardRoads {
         if (Math.abs(across - acrossCenter) > core) { return null; }
         int found = arms(ew, ns, mine, crossed);
         if (Integer.bitCount(found) < 3) { return null; }
-        if (ew.maxZ - ew.minZ + 1 < pathFullWidth() || ns.maxX - ns.minX + 1 < pathFullWidth()) { return null; }
+        if (roadNarrow(ew, true) || roadNarrow(ns, false)) { return null; }
         IBlockState path = deckSquare(world, ew, ns) ? planks : road0;
         int otherCenter = alongX ? (ns.minX + ns.maxX) / 2 : (ew.minZ + ew.maxZ) / 2;
         PathIntersectDef def = ContentPathIntersects.forJunction(world, (ns.minX + ns.maxX) / 2, (ew.minZ + ew.maxZ) / 2);
@@ -2231,6 +2332,8 @@ public final class BeardRoads {
     }
 
     private static final TemplateMemo<Widths> WIDTHS = new TemplateMemo<>();
+    private static final TemplateMemo<Map<String, Widths>> KEYED_WIDTHS = new TemplateMemo<>();
+    private static final Map<StructureBoundingBox, JsonObject> DRAWN = Collections.synchronizedMap(new WeakHashMap<>());
 
     private static final class Widths {
         final boolean chosen = !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock).isEmpty();
@@ -2242,7 +2345,31 @@ public final class BeardRoads {
         final int minimumWidth = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathMinimumWidth", Config.worldgen.villagePathMinimumWidth));
     }
 
-    private static Widths widths() { return WIDTHS.get(Widths::new); }
+    private static Widths widths() {
+        JsonObject road = ContentControl.roadKeys();
+        if (road == null) { return WIDTHS.get(Widths::new); }
+        return KEYED_WIDTHS.get(ConcurrentHashMap::new).computeIfAbsent(road.toString(), keys -> new Widths());
+    }
+
+    private static Widths widthsFor(@Nullable JsonObject keys) {
+        JsonObject was = ContentControl.roadKeys(keys);
+        try { return widths(); }
+        finally { ContentControl.roadKeys(was); }
+    }
+
+    public static void drawn(StructureBoundingBox box, @Nullable JsonObject keys) {
+        if (keys == null) { DRAWN.remove(box); }
+        else { DRAWN.put(box, keys); }
+    }
+
+    @Nullable public static JsonObject drawnKeys(StructureBoundingBox box) { return DRAWN.get(box); }
+
+    public static int fullWidthFor(@Nullable JsonObject keys) { return widthsFor(keys).fullWidth; }
+
+    public static int[] bandsOf(StructureBoundingBox box) {
+        Widths held = widthsFor(DRAWN.get(box));
+        return new int[] { held.fullWidth, held.lineColumns, held.sidewalkWidth };
+    }
 
     public static boolean pathChosen() { return widths().chosen; }
 
@@ -2352,6 +2479,7 @@ public final class BeardRoads {
     }
 
     public static boolean roadNarrow(StructureBoundingBox box, boolean alongX) {
+        if (DRAWN.containsKey(box)) { return false; }
         return (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1 < pathFullWidth();
     }
 

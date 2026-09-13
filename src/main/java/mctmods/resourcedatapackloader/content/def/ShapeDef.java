@@ -22,6 +22,7 @@ public final class ShapeDef {
     public static final String BELT = "belt";
     public static final String FIELD = "field";
     public static final String VEIN = "vein";
+    public static final String SPRING = "spring";
     public static final String CIRCLE = "circle";
     public static final String SQUARE = "square";
     public static final String STRAIGHT = "straight";
@@ -61,6 +62,12 @@ public final class ShapeDef {
     public String poor = "";
     public float richAt = 0.88F;
     public float poorAt = 0.4F;
+    public String middle = "";
+    public String budding = "";
+    public float buddingChance = 0.083F;
+    public String crystal = "";
+    public float crystalChance = 0.35F;
+    public float crack = 0.0F;
     public final List<PickDef> structures;
     public final List<PickDef> turns;
     public final List<PickDef> mirrors;

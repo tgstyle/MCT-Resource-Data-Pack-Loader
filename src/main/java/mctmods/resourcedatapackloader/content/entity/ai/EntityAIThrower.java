@@ -1,10 +1,14 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.content.entity.EntityReturningThrow;
+
 import net.minecraft.block.BlockTNT;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityTNTPrimed;
 import net.minecraft.init.SoundEvents;
@@ -19,6 +23,7 @@ public final class EntityAIThrower extends EntityAIBase {
     private static final double REACH = 3.0D;
     private static final double NEAR = 0.4D;
     private static final double FURTHER = 0.03D;
+    private static final float TRIDENT_DAMAGE = 8.0F;
     private final EntityCreature mob;
     private final int fuse;
     private final int reload;
@@ -28,11 +33,13 @@ public final class EntityAIThrower extends EntityAIBase {
     private final float arc;
     private final double range;
     private final ItemStack pack;
+    private final boolean returns;
     private EntityLivingBase target;
     private int reloading;
     private int retreating;
 
-    public EntityAIThrower(EntityCreature mob, ItemStack pack, int fuse, int reload, int retreat, int carried, float power, float arc, double range) {
+    public EntityAIThrower(EntityCreature mob, ItemStack pack, int fuse, int reload, int retreat, int carried, float power, float arc, double range, boolean returns) {
+        this.returns = returns;
         this.mob = mob;
         this.fuse = fuse;
         this.reload = reload;
@@ -79,6 +86,12 @@ public final class EntityAIThrower extends EntityAIBase {
         double far = Math.max(1.0D, at.length());
         Vec3d push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
         if (isTnt(thrown)) { lit(push); }
+        else if (returns) {
+            flung(thrown, push);
+            mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            retreating = retreat;
+            return;
+        }
         else { tossed(thrown, push); }
         spend();
     }
@@ -107,6 +120,16 @@ public final class EntityAIThrower extends EntityAIBase {
         primed.motionZ = push.z;
         mob.world.spawnEntity(primed);
         mob.playSound(SoundEvents.ENTITY_TNT_PRIMED, 1.0F, 1.0F);
+    }
+
+    private void flung(ItemStack thrown, Vec3d push) {
+        IAttributeInstance strength = mob.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
+        EntityReturningThrow flying = new EntityReturningThrow(mob.world, mob, thrown, strength == null ? TRIDENT_DAMAGE : (float) strength.getAttributeValue());
+        flying.motionX = push.x;
+        flying.motionY = push.y;
+        flying.motionZ = push.z;
+        mob.world.spawnEntity(flying);
+        mob.playSound(SoundEvents.ENTITY_SNOWBALL_THROW, 1.0F, 1.0F);
     }
 
     private void tossed(ItemStack thrown, Vec3d push) {

@@ -312,7 +312,8 @@ public final class ContentBeard {
             if (meeting >= from && meeting <= to && !along.contains(meeting)) { along.add(meeting); }
         }
         int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
-        int off = BeardRoads.pathSidewalkWidth() > 0 && span == BeardRoads.pathFullWidth() ? 0 : 1;
+        int[] bands = BeardRoads.bandsOf(box);
+        int off = bands[2] > 0 && span == bands[0] ? 0 : 1;
         BeardRoads.Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
         if (grade == null) { grade = BeardRoads.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true); }
         int raised = 0;

@@ -114,6 +114,7 @@
     "common.MixinExplosion",
     "common.MixinEntityShulker",
     "common.MixinEntitySpider",
+    "common.MixinEntityRabbit",
     "common.MixinEntityArrow",
     "common.MixinEntityBat",
     "common.MixinEntityBoat",
