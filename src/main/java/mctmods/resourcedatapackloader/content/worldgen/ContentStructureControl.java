@@ -60,9 +60,10 @@ public final class ContentStructureControl {
         if (!enabled()) { return; }
         List<String> touched = new ArrayList<>();
         WorldTemplateDef template = ContentWorldTemplates.active();
+        ContentPopulateControl.load(template, touched);
         if (template != null) {
             for (Map.Entry<String, Boolean> entry : template.structures().entrySet()) {
-                if (entry.getValue()) { continue; }
+                if (entry.getValue() || ContentPopulateControl.populates(entry.getKey())) { continue; }
                 for (ResourceLocation set : sets(entry.getKey())) {
                     if (!appliesTo(set, template.dimensions())) { continue; }
                     JsonObject json = set(set);

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
+import mctmods.resourcedatapackloader.content.item.ContentBucketItem;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -15,6 +16,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -60,6 +64,12 @@ public final class ContentFluids {
         }
     }
 
+    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        for (Made made : MADE.values()) {
+            if (made.bucket != null) { event.registerItem(Capabilities.FluidHandler.ITEM, (stack, context) -> new FluidBucketWrapper(stack), made.bucket); }
+        }
+    }
+
     public static void registerItems(BiConsumer<ResourceLocation, Item> out) {
         for (Made made : MADE.values()) {
             if (made.bucket != null) { out.accept(made.bucketId(), made.bucket); }
@@ -83,7 +93,7 @@ public final class ContentFluids {
             this.still = new BaseFlowingFluid.Source(properties);
             this.flowing = new BaseFlowingFluid.Flowing(properties);
             this.block = def.createBlock() ? new ContentLiquidBlock(def, still, blockProperties(def)) : null;
-            this.bucket = def.bucket() ? new BucketItem(still, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
+            this.bucket = def.bucket() ? new ContentBucketItem(still, type, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
         }
 
         public BaseFlowingFluid.Source getStill() { return still; }

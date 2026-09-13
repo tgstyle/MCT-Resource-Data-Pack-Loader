@@ -62,7 +62,10 @@ public final class ContentGenerated {
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for item {}", entry.id(), ex); }
         }
         for (ContentFluids.Made made : ContentFluids.made()) {
-            try { fluidBlock(made); }
+            try {
+                fluidBlock(made);
+                fluidBucket(made);
+            }
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for fluid {}", made.def.id(), ex); }
         }
         blockTags(blockTags);
@@ -88,6 +91,14 @@ public final class ContentGenerated {
                 data(namespace, "worldgen/configured_feature/" + name + "_tree.json", tree(sapling));
             }
         }
+    }
+
+    private static void fluidBucket(ContentFluids.Made made) {
+        if (made.bucket == null) { return; }
+        String namespace = made.bucketId().getNamespace();
+        String path = "models/item/" + made.bucketId().getPath() + ".json";
+        if (provided(PackType.CLIENT_RESOURCES, namespace, path)) { return; }
+        asset(namespace, path, obj("parent", "neoforge:item/bucket", "loader", "neoforge:fluid_container", "fluid", made.def.id().toString()));
     }
 
     private static void fluidBlock(ContentFluids.Made made) {
@@ -322,13 +333,21 @@ public final class ContentGenerated {
             }
             case ContentBlockTypes.PORTAL -> {
                 String face = texture == null ? "minecraft:block/nether_portal" : texture;
-                model(def, namespace, name + "_x", portal(face, arr(0, 0, 6), arr(16, 16, 10), "north", "south"));
-                model(def, namespace, name + "_z", portal(face, arr(6, 0, 0), arr(10, 16, 16), "east", "west"));
-                model(def, namespace, name + "_flat", portal(face, arr(0, 6, 0), arr(16, 10, 16), "up", "down"));
-                blockstate(namespace, name, obj("variants", obj("axis=x", obj("model", main + "_x"), "axis=z", obj("model", main + "_z"), "axis=y", obj("model", main + "_flat"))));
+                if (def.fullCube()) {
+                    model(def, namespace, name, obj("parent", BLOCK + "cube_all", "textures", obj("all", face)));
+                    blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
+                }
+                else {
+                    model(def, namespace, name + "_x", portal(face, arr(0, 0, 6), arr(16, 16, 10), "north", "south"));
+                    model(def, namespace, name + "_z", portal(face, arr(6, 0, 0), arr(10, 16, 16), "east", "west"));
+                    model(def, namespace, name + "_flat", portal(face, arr(0, 6, 0), arr(16, 10, 16), "up", "down"));
+                    blockstate(namespace, name, obj("variants", obj("axis=x", obj("model", main + "_x"), "axis=z", obj("model", main + "_z"), "axis=y", obj("model", main + "_flat"))));
+                }
             }
             default -> {
-                model(def, namespace, name, cube(def, texture, "cube_all"));
+                String top = texture(namespace, name + "_top");
+                String bottom = texture(namespace, name + "_bottom");
+                model(def, namespace, name, top == null && bottom == null ? cube(def, texture, "cube_all") : bottomTop(def, texture, top, bottom));
                 blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
             }
         }
@@ -372,6 +391,10 @@ public final class ContentGenerated {
         return texture == null ? obj("parent", parent(def)) : obj("parent", BLOCK + template, "textures", obj("all", texture));
     }
 
+    private static JsonObject bottomTop(BlockDef def, @Nullable String side, @Nullable String top, @Nullable String bottom) {
+        return side == null ? obj("parent", parent(def)) : obj("parent", BLOCK + "cube_bottom_top", "textures", obj("bottom", bottom == null ? side : bottom, "top", top == null ? side : top, "side", side));
+    }
+
     private static JsonObject column(BlockDef def, @Nullable String side, @Nullable String end, String template) {
         return side == null ? obj("parent", parent(def)) : obj("parent", BLOCK + template, "textures", obj("end", end, "side", side));
     }
@@ -407,7 +430,7 @@ public final class ContentGenerated {
             case ContentBlockTypes.TRAPDOOR -> obj("parent", main + "_bottom");
             case ContentBlockTypes.BANNER -> obj("parent", "minecraft:item/template_banner");
             case ContentBlockTypes.CONTAINER -> chestItem(def, main);
-            case ContentBlockTypes.PORTAL -> obj("parent", main + "_x");
+            case ContentBlockTypes.PORTAL -> obj("parent", def.fullCube() ? main : main + "_x");
             case ContentBlockTypes.DOOR, ContentBlockTypes.LADDER, ContentBlockTypes.TORCH, ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE, ContentBlockTypes.PANE -> {
                 String flat = provided(PackType.CLIENT_RESOURCES, namespace, "textures/item/" + name + ".png") ? namespace + ":item/" + name : texture(namespace, name);
                 yield flat == null ? obj("parent", main) : obj("parent", ITEM_GENERATED, "textures", obj("layer0", flat));

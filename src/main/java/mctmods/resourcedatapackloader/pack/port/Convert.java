@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.content.ContentFormats;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -32,6 +33,23 @@ public final class Convert {
     private static final Pattern LANG_FLUID = Pattern.compile("^fluid\\.(?:([a-z0-9_]+)\\.)?([a-z0-9_]+)$");
     private static final Pattern LANG_TAB = Pattern.compile("^itemGroup\\.([a-z0-9_]+)$");
 
+    private static final List<String> VANILLA_DIMENSIONS = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
+    private static final Map<String, List<String>> LEGACY_STRUCTURES = Map.of(
+            "minecraft:overworld", List.of("villages", "mineshafts", "strongholds", "temples", "monuments", "mansions"),
+            "minecraft:the_nether", List.of("netherbridges"), "minecraft:the_end", List.of("endcities"));
+    private static final Map<String, List<String>> MODERN_STRUCTURES = Map.of(
+            "minecraft:overworld", List.of("ancient_cities", "buried_treasures", "ocean_ruins", "pillager_outposts", "ruined_portals", "shipwrecks", "trail_ruins", "trial_chambers"),
+            "minecraft:the_nether", List.of("nether_fossils"), "minecraft:the_end", List.of());
+
+    private static final Map<String, String> RENAMED_MODELS = Map.ofEntries(
+            Map.entry("trapdoor_bottom", "template_trapdoor_bottom"), Map.entry("trapdoor_top", "template_trapdoor_top"), Map.entry("trapdoor_open", "template_trapdoor_open"),
+            Map.entry("fence_gate_closed", "template_fence_gate"), Map.entry("fence_gate_open", "template_fence_gate_open"), Map.entry("wall_gate_closed", "template_fence_gate_wall"),
+            Map.entry("wall_gate_open", "template_fence_gate_wall_open"), Map.entry("door_bottom", "door_bottom_left"), Map.entry("door_bottom_rh", "door_bottom_right"),
+            Map.entry("door_top", "door_top_left"), Map.entry("door_top_rh", "door_top_right"), Map.entry("half_slab", "slab"), Map.entry("upper_slab", "slab_top"),
+            Map.entry("pane_post", "template_glass_pane_post"), Map.entry("pane_side", "template_glass_pane_side"), Map.entry("pane_side_alt", "template_glass_pane_side_alt"),
+            Map.entry("pane_noside", "template_glass_pane_noside"), Map.entry("pane_noside_alt", "template_glass_pane_noside_alt"), Map.entry("wall_post", "template_wall_post"),
+            Map.entry("wall_side", "template_wall_side"), Map.entry("torch_wall", "template_torch_wall"));
+
     public static final String GAME_LOOP = "gameLoopFunction";
 
     private Convert() {}
@@ -58,6 +76,7 @@ public final class Convert {
             }
         }
         if ("gamerules".equals(folder) || "blastplaster".equals(folder)) { renameDimensionKeys("gamerules".equals(folder) ? json : json.has("dimensions") && json.get("dimensions").isJsonObject() ? json.getAsJsonObject("dimensions") : new JsonObject(), pack); }
+        if ("worldtemplates".equals(folder) && json.has("structures") && json.get("structures").isJsonObject()) { modernStructuresOff(json, pack); }
         if ("dimensions".equals(folder)) {
             json.remove("id");
             json.remove("suffix");
@@ -77,6 +96,35 @@ public final class Convert {
         }
         walk(json, "", Context.NONE, pack, folder);
         return Ported.GSON.toJson(json);
+    }
+
+    private static void modernStructuresOff(JsonObject template, Ported pack) {
+        JsonObject structures = template.getAsJsonObject("structures");
+        List<String> dimensions = new ArrayList<>();
+        if (template.has("dimensions") && template.get("dimensions").isJsonArray()) {
+            for (JsonElement named : template.getAsJsonArray("dimensions")) { dimensions.add(ContentFormats.dimensionId(named.getAsString())); }
+        }
+        if (dimensions.isEmpty()) { dimensions.addAll(VANILLA_DIMENSIONS); }
+        List<String> added = new ArrayList<>();
+        for (String dimension : dimensions) {
+            List<String> legacy = LEGACY_STRUCTURES.get(dimension);
+            if (legacy == null || !allOff(structures, legacy)) { continue; }
+            for (String set : MODERN_STRUCTURES.get(dimension)) {
+                if (structures.has(set)) { continue; }
+                structures.addProperty(set, false);
+                added.add(set);
+            }
+        }
+        if (added.isEmpty()) { return; }
+        pack.rewrote();
+        pack.note("A world template turns off every structure 1.12.2 had, so the structures only this version has are turned off with them: " + String.join(", ", added));
+    }
+
+    private static boolean allOff(JsonObject structures, List<String> names) {
+        for (String name : names) {
+            if (!structures.has(name) || !structures.get(name).isJsonPrimitive() || structures.get(name).getAsBoolean()) { return false; }
+        }
+        return true;
     }
 
     private static void renameDimensionKeys(JsonObject json, Ported pack) {
@@ -304,7 +352,7 @@ public final class Convert {
             String variant = m.group(4);
             String suffix = "locked".equals(m.group(5)) ? ".locked" : "";
             boolean tile = "tile".equals(m.group(1));
-            String name = variant != null ? variant : tile ? pack.mainVariantOfBlockFile(namespace, file) : pack.mainVariantOfItemFile(namespace, file);
+            String name = variant != null ? pack.renamedIn(namespace, tile ? "blocks" : "items", file).getOrDefault(variant, variant) : tile ? pack.mainVariantOfBlockFile(namespace, file) : pack.mainVariantOfItemFile(namespace, file);
             if (name == null) { name = file.substring(file.lastIndexOf('/') + 1); }
             List<String> keys = new ArrayList<>();
             keys.add((tile ? "block." : "item.") + namespace + "." + name + suffix);
@@ -358,7 +406,13 @@ public final class Convert {
         }
         if (json.has("parent") && json.get("parent").isJsonPrimitive()) {
             String parent = json.get("parent").getAsString();
-            if (parent.indexOf(':') < 0 && !parent.startsWith("block/") && !parent.startsWith("item/") && !parent.startsWith("builtin/")) {
+            String bare = parent.startsWith("minecraft:") ? parent.substring("minecraft:".length()) : parent;
+            String renamed = RENAMED_MODELS.get(bare.startsWith("block/") ? bare.substring("block/".length()) : bare);
+            if (renamed != null && (bare.startsWith("block/") || bare.indexOf('/') < 0)) {
+                json.addProperty("parent", "minecraft:block/" + renamed);
+                pack.rewrote();
+            }
+            else if (parent.indexOf(':') < 0 && !parent.startsWith("block/") && !parent.startsWith("item/") && !parent.startsWith("builtin/")) {
                 json.addProperty("parent", "minecraft:block/" + parent);
                 pack.rewrote();
             }

@@ -34,6 +34,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.model.DynamicFluidContainerModel;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -45,7 +46,6 @@ import javax.annotation.Nonnull;
 
 public final class ContentClient {
     private static final int WHITE = 0xFFFFFF;
-    private static final int OPAQUE = 0xFF000000;
     private static final String BIOME = "biome";
     private static final String FOLIAGE = "foliage";
     private static final String GRASS = "grass";
@@ -103,7 +103,7 @@ public final class ContentClient {
 
                 @Override @Nonnull public ResourceLocation getFlowingTexture() { return made.def.flowing(); }
 
-                @Override public int getTintColor() { return made.def.color() | OPAQUE; }
+                @Override public int getTintColor() { return made.def.tint(); }
             }, made.type);
         }
         List<Item> banners = new ArrayList<>();
@@ -132,6 +132,9 @@ public final class ContentClient {
             if (tint.isEmpty()) { continue; }
             int fixed = fixed(tint, entry.id());
             event.register((stack, index) -> fixed >= 0 ? fixed : defaultBiome(tint), entry.item());
+        }
+        for (ContentFluids.Made made : ContentFluids.made()) {
+            if (made.bucket != null) { event.register(new DynamicFluidContainerModel.Colors(), made.bucket); }
         }
     }
 

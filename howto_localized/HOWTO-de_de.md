@@ -533,6 +533,7 @@ Ein Pack, das für die 1.12.2-Linie gemacht wurde, lädt so, wie es ist. Der Loa
 - Ein 1.12.2-Blockstate wird gar nicht ausgeliefert. Stattdessen werden seine Texturen gelesen und unter den Namen ausgeliefert, nach denen der Generator sucht, `textures/block/<variante>.png` mit `_top` und `_bottom`, wo der Blockstate `end`, `top` oder `bottom` hatte, sodass Blockstate und Modelle für jede Variante generiert werden, wie sie es für ein hier geschriebenes Pack würden.
 - Rezepte verlieren ihr `data` und bekommen geglättete IDs, `forge:ore_shaped` wird zu `minecraft:crafting_shaped` mit `ore`-Zutaten als `tag`, Beutetabellen verlieren `set_data` auf dieselbe Weise, und das `item` mit `data` eines Fortschritts wird zu `items`. Der `background` eines Fortschritts wandert von `textures/blocks/` nach `textures/block/`, und sein Symbol nennt das Item als `id`.
 - Das `gameLoopFunction` einer Spielregel-Datei wird zum Funktions-Tag `#minecraft:tick`, geschrieben als `data/minecraft/tags/function/tick.json`, da es die Spielregel nicht mehr gibt. Die eigenen Dimensionsnummern des Packs werden über seine `dimensions`-Dateien gelesen, sodass `"id": 7` in `dimensions/verdant.json` die 7 überall, wo das Pack sie nennt, zu `mypack:verdant` macht. Beide Seiten eines `villageBlocks`-Paars werden repariert, die Chance bleibt, und eine `registry_remap`-Datei darf die Pluralnamen `minecraft:blocks` und `minecraft:items` aus 1.12.2 behalten.
+- Eine Weltvorlage, die in einer Dimension jede Struktur abschaltet, die es in 1.12.2 gab, schaltet dort auch die Strukturen ab, die es nur in dieser Version gibt: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` und `trial_chambers` in der Oberwelt und `nether_fossils` im Nether. Bleibt einer der 1.12.2-Namen an, bleiben sie unberührt.
 - Funktionen werden wie geschrieben ausgeliefert, da eine 1.12.2-Befehlszeile nichts ist, was eine Portierung umschreiben kann, und das Log sagt es. `block_drops` wird übernommen, wie es ist, sein `meta` im Blocknamen oder in `properties` aufgelöst.
 
 Das Log trägt eine Zusammenfassungszeile pro portiertem Pack und eine Zeile für jede Datei, die es verschoben, ausgelassen oder nicht tragen konnte, und jeder Schlüssel, den diese Version nicht mehr liest, wird weiterhin vom Parser genannt, der ihm begegnet. Die Portierung ist ein bestmöglicher Versuch, kein fertiges Pack: Öffne das geschriebene Zip, lies diese Zeilen und stell von Hand fertig, was sie nennen, angefangen bei den Funktionen und jeder Textur, für die sie keinen Namen finden konnte.
@@ -893,7 +894,8 @@ assets/mypack/lang/en_us.json
 
 | Typ | Texturdateien, nach denen er sucht | Erzeugt aus |
 | --- | --- | --- |
-| `basic`, `ore`, `falling`, `flower`, `sapling`, `cane`, `leaves`, `container` ohne Truhe | `<name>` | `cube_all`, `cross` oder `leaves` |
+| `basic`, `ore`, `falling` | `<name>`, dazu `<name>_top` und `<name>_bottom` für Ober- und Unterseite, wenn das Pack sie mitbringt | `cube_all`, oder `cube_bottom_top`, wenn eine Ober- oder Unterseitentextur da ist |
+| `flower`, `sapling`, `cane`, `leaves`, `container` ohne Truhe | `<name>` | `cube_all`, `cross` oder `leaves` |
 | `log` | `<name>` für die Seite, `<name>_top` für die Enden | `cube_column` |
 | `slab` | `<name>` | `slab`, `slab_top` und ein `cube_all` für die Doppelstufe |
 | `stairs` | `<name>` | `stairs`, `inner_stairs`, `outer_stairs`, alle vierzig Zustände ausgeschrieben |
@@ -905,7 +907,7 @@ assets/mypack/lang/en_us.json
 | `fence_gate` | `<name>` | die vier Tormodelle, geschlossen und offen, in einer Mauer und außerhalb |
 | `ladder`, `vine`, `torch` | `<name>` | die eigene Vorlage des Spiels für jeden |
 | `crop` | `<name>_stage0` bis `<name>_stage<maxAge>`, oder `<name>` für alle | ein `crop`-Modell pro Stufe, `age=0` bis `7` darauf abgebildet |
-| `portal` | `<name>`, oder die des Netherportals | drei Portalplatten, eine je Achse |
+| `portal` | `<name>`, oder die des Netherportals | `cube_all` für einen `fullCube`-Block, wie ein Portalblock in 1.12.2; drei Portalplatten, eine je Achse, für einen ohne, etwa das Rahmenportal einer Dimension |
 | `banner` | sein eigenes Blatt, siehe [Banner](#banner) | das Bannermodell des Spiels |
 | `container` mit `chestModel` | das in `chestModel` genannte Truhenblatt | das `pack_chest`-Modell des Mods |
 
@@ -1236,7 +1238,7 @@ Der Pfad der Datei ist der Registry-Name der Flüssigkeit, sofern `name` ihn nic
 | `name` | nein | string | der Dateiname | Der Registry-Name der Flüssigkeit |
 | `still` | nein | Texturpfad | Vanilla-Wasser, stehend | Textur für die stehende Flüssigkeit |
 | `flow` | nein | Texturpfad | Vanilla-Wasser, fließend | Textur für die fließende Flüssigkeit |
-| `color` | nein | Hex-Farbe | keine | Färbung, die auf diese Texturen gelegt wird |
+| `color` | nein | Hex-Farbe | keine | Färbung, die auf diese Texturen gelegt wird. Auf den Standard-Wassertexturen wird sie mit dem Blau des Wassers aus 1.12.2 multipliziert, sodass eine für 1.12.2 gewählte Farbe hier gleich aussieht |
 | `bucket` | nein | boolean | `true` | Einen Eimer dafür registrieren |
 | `luminosity` | nein | 0 bis 15 | `0` | Abgegebenes Licht |
 | `density` | nein | int | `1000` | Negativ steigt nach oben, wie ein Gas |
@@ -4961,7 +4963,7 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 
 **Rollen** für die `roles` einer Weltvorlage. Jedes Biomtyp-Wort oben: jedes nennt ein Biom, das die Biome mit diesem Tag füllt, sobald die Sperre sie entfernt hat, `"ocean": "mypack:ruby_ocean"` setzt den Rubinozean also überall dorthin, wo ein Ozean gesperrt wurde.
 
-**Strukturen** für die `structures` einer Weltvorlage und die eigenen Listen der Gruppe `structures`: die 1.12.2-Namen `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges` und `endcities`, oder jedes Structure-Set, das das Spiel oder ein Mod mitbringt, etwa `pillager_outposts`, `ancient_cities`, `trail_ruins`, `shipwrecks`, `ocean_ruins`, `ruined_portals`, `nether_fossils`, `buried_treasures`, `desert_pyramids`, `jungle_temples`, `igloos`, `swamp_huts`, `woodland_mansions`, `ocean_monuments`, `nether_complexes`, `end_cities`. Ein 1.12.2-Name wird als die Sets gelesen, für die er stand, `temples` sind also die Pyramiden, die Dschungeltempel, die Iglus und die Sumpfhütten zusammen.
+**Strukturen** für die `structures` einer Weltvorlage und die eigenen Listen der Gruppe `structures`: die 1.12.2-Namen `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges` und `endcities`, oder jedes Structure-Set, das das Spiel oder ein Mod mitbringt, etwa `pillager_outposts`, `ancient_cities`, `trail_ruins`, `shipwrecks`, `ocean_ruins`, `ruined_portals`, `nether_fossils`, `buried_treasures`, `desert_pyramids`, `jungle_temples`, `igloos`, `swamp_huts`, `woodland_mansions`, `ocean_monuments`, `nether_complexes`, `end_cities`. Ein 1.12.2-Name wird als die Sets gelesen, für die er stand, `temples` sind also die Pyramiden, die Dschungeltempel, die Iglus und die Sumpfhütten zusammen. Die Populate-Namen aus 1.12.2 werden ebenfalls gelesen, als die Teile der Welt dieser Version, für die sie stehen: `caves` die Höhlen-Carver (die Rauschhöhlen sind `noiseCaves`), `ravines` die Schluchten, `dungeons` die Monsterräume, `lavalakes` die Lavaseen, `netherlava` die offenen Lavaquellen des Nethers, `fire` seine Feuerflecken, `glowstone` sein Glowstone, `ice` die gefrorene oberste Schicht und `animals` die Tiere, die beim Erzeugen eines Chunks gesetzt werden. `waterlakes` wird angenommen und bewirkt nichts, da es in dieser Version keine Wasserseen gibt.
 
 **Kreaturtypen** für Biom-Spawns und -Raten. `creature`, `monster`, `ambient`, `water`.
 

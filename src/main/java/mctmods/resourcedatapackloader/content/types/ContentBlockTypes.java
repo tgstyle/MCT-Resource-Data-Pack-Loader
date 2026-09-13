@@ -159,7 +159,7 @@ public final class ContentBlockTypes {
                     ContentLog.LOGGER.error("Block {} is a portal but has no 'portal' section, so it has nowhere to lead", variant.id());
                     yield List.of();
                 }
-                yield List.of(new Created(id, new ContentPortalBlock(def, def.portal(), properties.noOcclusion().lightLevel(state -> Math.max(variant.light(), 11))), ContentRegistry.MAIN));
+                yield List.of(new Created(id, new ContentPortalBlock(def, def.portal(), properties), ContentRegistry.MAIN));
             }
             default -> List.of(new Created(id, new ContentBlock(def, properties), ContentRegistry.MAIN));
         };
