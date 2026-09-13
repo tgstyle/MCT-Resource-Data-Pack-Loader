@@ -2,9 +2,12 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
+import mctmods.resourcedatapackloader.content.gate.GateStorage;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Scores;
 
 import net.minecraft.core.BlockPos;
@@ -16,6 +19,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import java.util.ArrayList;
@@ -23,6 +27,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentReset {
+    private static final String RESETS = "rdpl:mapresets";
+
     private ContentReset() {}
 
     public static int run(MinecraftServer server) {
@@ -32,13 +38,33 @@ public final class ContentReset {
         int swept = 0;
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities())) { swept = sweep(server); }
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsScores", Config.chunks.resetClearsScores())) { wipe(server); }
+        boolean inventory = ContentControl.flag(ContentControl.CHUNKS, "resetClearsInventory", Config.chunks.resetClearsInventory());
+        strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, "resetClearsExperience", Config.chunks.resetClearsExperience()));
+        if (inventory) { ContentTeams.giveAll(server); }
         String runs = ContentPregen.says("resetRuns", Config.chunks.resetRuns());
-        if (!runs.isEmpty()) { call(server, runs); }
+        if (!runs.isEmpty()) { Functions.run(server, runs, "The reset"); }
         place(server);
+        noted(server);
         ContentPregen.releaseEveryone(server, true);
         ContentScoring.starting(server);
         ContentLog.LOGGER.info("The map was reset: {} entity(s) swept", swept);
         return swept;
+    }
+
+    private static void noted(MinecraftServer server) {
+        int count = GateStorage.tallyGlobally(server, RESETS);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { GateStorage.noteFor(player, RESETS, count); }
+    }
+
+    public static void arrived(ServerPlayer player) {
+        MinecraftServer server = player.server;
+        int count = GateStorage.countGlobally(server, RESETS);
+        if (count <= 0 || GateStorage.notedFor(player, RESETS) >= count) { return; }
+        GateStorage.noteFor(player, RESETS, count);
+        Landing landing = landingFor(server, ContentPregen.says("resetSendsTo", Config.chunks.resetSendsTo()), player);
+        if (landing == null) { return; }
+        player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot());
+        ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getGameProfile().getName());
     }
 
     public static int sweep(MinecraftServer server) {
@@ -66,14 +92,15 @@ public final class ContentReset {
         ContentScoring.keep(server.overworld());
     }
 
-    private static void call(MinecraftServer server, String named) {
-        ResourceLocation id = ResourceLocation.tryParse(named);
-        var held = id == null ? null : server.getFunctions().get(id).orElse(null);
-        if (held == null) {
-            ContentLog.LOGGER.error("The reset asks to run the function {}, which no pack provides, so nothing is run", named);
-            return;
+    private static void strip(MinecraftServer server, boolean inventory, boolean experience) {
+        if (!inventory && !experience) { return; }
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (inventory) {
+                player.getInventory().clearContent();
+                player.containerMenu.setCarried(ItemStack.EMPTY);
+            }
+            if (experience) { player.giveExperienceLevels(-(player.experienceLevel + 1)); }
         }
-        server.getFunctions().execute(held, server.createCommandSourceStack().withSuppressedOutput());
     }
 
     private static void place(MinecraftServer server) {

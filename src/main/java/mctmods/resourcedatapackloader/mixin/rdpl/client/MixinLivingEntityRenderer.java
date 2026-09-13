@@ -30,9 +30,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         cir.setReturnValue(translucent ? RenderType.itemEntityTranslucentCull(texture) : bodyVisible ? model.renderType(texture) : glowing ? RenderType.outline(texture) : null);
     }
 
-    @Inject(method = "scale", at = @At("HEAD"))
-    private void rdpl$packScale(T livingEntity, PoseStack poseStack, float partialTickTime, CallbackInfo ci) {
-        float scale = ContentEntities.scale(livingEntity);
+    @Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;scale(Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;F)V"))
+    private void rdpl$packScale(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+        float scale = ContentEntities.scale(entity);
         if (scale != 1.0F) { poseStack.scale(scale, scale, scale); }
     }
 

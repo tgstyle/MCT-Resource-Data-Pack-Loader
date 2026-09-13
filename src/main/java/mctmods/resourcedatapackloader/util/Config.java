@@ -218,12 +218,16 @@ public final class Config {
         private final ForgeConfigSpec.BooleanValue lootInjections;
         private final ForgeConfigSpec.BooleanValue playerLoot;
         private final ForgeConfigSpec.BooleanValue registryRemaps;
+        private final ForgeConfigSpec.BooleanValue anvils;
+        private final ForgeConfigSpec.BooleanValue blockDrops;
 
         private Data(ForgeConfigSpec.Builder builder) {
             builder.comment("Loot and registry names").push("data");
             lootInjections = builder.comment("Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table [Default=true]").define("lootInjections", true);
             playerLoot = builder.comment("Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory [Default=true]").define("playerLoot", true);
             registryRemaps = builder.comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]").define("registryRemaps", true);
+            anvils = builder.comment("Apply anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then [Default=true]").define("anvils", true);
+            blockDrops = builder.comment("Apply block_drops/*.json files, which add to or replace what a block drops when a player breaks it, experience included, for blocks a pack does not own [Default=true]").define("blockDrops", true);
             builder.pop();
         }
 
@@ -232,6 +236,10 @@ public final class Config {
         public boolean playerLootOff() { return !playerLoot.get(); }
 
         public boolean registryRemapsOff() { return !registryRemaps.get(); }
+
+        public boolean anvilsOff() { return !anvils.get(); }
+
+        public boolean blockDropsOff() { return !blockDrops.get(); }
     }
 
     public static final class Tweaks {
@@ -502,7 +510,7 @@ public final class Config {
             worldgenDebug = builder.comment("Write the debug lines other messages refer to into logs/rdpl.log, such as which pack served a file and what each command did. Very verbose [Default=false]").define("worldgenDebug", false);
             worldTemplate = builder.comment("Which world template's settings apply. A pack adds one in worldtemplates/*.json and you name it here as namespace:name. 'auto' picks the template from the highest priority pack. Empty uses none [Default=auto]").define("worldTemplate", "auto");
             worldSeed = builder.comment("The seed every new world is made with, whatever was typed when it was made, written the same way it would be typed. Empty leaves the choice alone [Default=empty]").define("worldSeed", "");
-            worldGameMode = builder.comment("Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose [Default=empty]").define("worldGameMode", "");
+            worldGameMode = builder.comment("Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose. A dedicated server sets every world to its server.properties mode at each start, so there the pack's mode is written into server.properties (gamemode and hardcore) before the world loads [Default=empty]").define("worldGameMode", "");
             worldName = builder.comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=empty]").define("worldName", "");
             worldType = builder.comment("The world type the shaped world is built on, one of default, largebiomes, amplified or flat; flat is a superflat overworld built from the generatorOptions layers, with the pack's cities on it. The shape below (heights, deep stone, sea level, bedrock, void) is generated as a world preset of its own, listed under World Type on the world screen and chosen there whatever was picked. Empty builds on default [Default=empty]").define("worldType", "");
             worldTypeExceptions = builder.comment("World types a player picks that the generated preset leaves alone, such as flat or debug_all_block_states. Empty means every choice is replaced [Default=[flat, debug_all_block_states]]").defineListAllowEmpty("worldTypeExceptions", List.of("flat", "debug_all_block_states"), each -> each instanceof String);
@@ -604,7 +612,7 @@ public final class Config {
             villagePathSupportBlock = builder.comment("The block laid one layer under the street surface. Empty lays none [Default=empty]").define("villagePathSupportBlock", "");
             villagePathBridgeBlock = builder.comment("The block a street crosses water with. Empty decks a bridge with the street block [Default=empty]").define("villagePathBridgeBlock", "");
             villagePathBridgeSidewalkBlock = builder.comment("The block bridge sidewalks are decked with where a street crosses water. Empty keeps the normal sidewalk block on bridges [Default=empty]").define("villagePathBridgeSidewalkBlock", "");
-            villagePathBridgeBarrierBlock = builder.comment("The block bridge barriers are built from, stacked along both edges of the deck. Empty builds no barriers [Default=empty]").define("villagePathBridgeBarrierBlock", "");
+            villagePathBridgeBarrierBlock = builder.comment("The block bridge barriers are built from, stacked along both edges of the deck. None stands where the deck rests on ground. Empty builds no barriers [Default=empty]").define("villagePathBridgeBarrierBlock", "");
             villagePathBridgeBarrierHeight = builder.comment("How many blocks tall the bridge barriers stand [Default=1]").defineInRange("villagePathBridgeBarrierHeight", 1, 1, 16);
             villagePathBridgeDrop = builder.comment("How far a street's grade must stand clear of the ground before the drop under it is bridged rather than filled solid. 0 keeps streets out of the air, bridging water only [Default=0]").defineInRange("villagePathBridgeDrop", 0, 0, 64);
             villagePathBridgeFrameBlock = builder.comment("The block an overhead frame over a long bridge is built from: a post up each side of the deck and a beam across the top. Empty builds none [Default=empty]").define("villagePathBridgeFrameBlock", "");
@@ -1106,6 +1114,8 @@ public final class Config {
         private final ForgeConfigSpec.ConfigValue<String> resetRuns;
         private final ForgeConfigSpec.BooleanValue resetClearsEntities;
         private final ForgeConfigSpec.BooleanValue resetClearsScores;
+        private final ForgeConfigSpec.BooleanValue resetClearsInventory;
+        private final ForgeConfigSpec.BooleanValue resetClearsExperience;
         private final ForgeConfigSpec.IntValue spawnChunkRadius;
 
         private Chunks(ForgeConfigSpec.Builder builder) {
@@ -1128,13 +1138,15 @@ public final class Config {
             pregenStoppedSays = builder.comment("The message players see when generation is stopped early. Empty tells them nothing. Left at this default it speaks each player's language [Default=" + PREGEN_STOPPED + "]").define("pregenStoppedSays", PREGEN_STOPPED);
             pregenSpectatingSays = builder.comment("The mid-screen message players see while held in spectator during world generation. Empty shows nothing. Left at this default it speaks each player's language [Default=" + PREGEN_SPECTATING + "]").define("pregenSpectatingSays", PREGEN_SPECTATING);
             pregenLogo = builder.comment("Where the logo stands when pregeneration finishes: left, center or right, above the mid-screen text. It is always shown; an unknown word is read as center [Default=center]").define("pregenLogo", "center");
-            pregenBackup = builder.comment("Copy the world to a pristine backup once pregeneration finishes, while the players are still held. The copy is what a reset would restore [Default=false]").define("pregenBackup", false);
+            pregenBackup = builder.comment("Copy the world to a pristine backup once pregeneration finishes, while the players are still held. The copy is what a reset would restore, and a copy whose packs no longer match is thrown away and kept afresh [Default=false]").define("pregenBackup", false);
             pregenBackupSays = builder.comment("The mid-screen message players see while that backup is copied. Empty shows nothing [Default=Pack requested world backup]").define("pregenBackupSays", "Pack requested world backup");
             resetSays = builder.comment("The mid-screen line players are shown while /rdpl reset puts the map back. Empty resets quietly [Default=Pack requested map reset]").define("resetSays", "Pack requested map reset");
             resetSendsTo = builder.comment("Where players are put by a reset: spawn, a position as x,y,z, or dimension:x,y,z to send them into another world [Default=spawn]").define("resetSendsTo", "spawn");
             resetRuns = builder.comment("A function run after a reset has cleared the map, named namespace:path. Empty runs nothing [Default=empty]").define("resetRuns", "");
             resetClearsEntities = builder.comment("Remove every entity that is not a player when the map resets [Default=true]").define("resetClearsEntities", true);
             resetClearsScores = builder.comment("Set every objective the pack keeps back to nothing when the map resets, so a new match starts from zero. Teams themselves are kept [Default=true]").define("resetClearsScores", true);
+            resetClearsInventory = builder.comment("Empty every player's inventory, armor and off hand included, when the map is reset [Default=false]").define("resetClearsInventory", false);
+            resetClearsExperience = builder.comment("Set every player's experience back to level zero when the map is reset [Default=false]").define("resetClearsExperience", false);
             spawnChunkRadius = builder.comment("How far from the spawn point, in chunks, chunks are held loaded whether or not a player is there. On 1.20.1 it sets the spawn ticket the server holds from the moment a world starts, in place of the game's own 11; on 1.21.1 it sets the spawnChunkRadius game rule when a world starts. Either way the same number of chunks is held on both lines. The default 2 is what 1.21.1 itself uses, 25 chunks, and makes a new world here ready about five times sooner than the game's 11 does; -1 leaves each game its own, which is 441 chunks on 1.20.1 against 25 on 1.21.1 [Default=2]").defineInRange("spawnChunkRadius", 2, -1, 32);
             builder.pop();
         }
@@ -1178,6 +1190,10 @@ public final class Config {
         public boolean resetClearsEntities() { return !loaded() || resetClearsEntities.get(); }
 
         public boolean resetClearsScores() { return !loaded() || resetClearsScores.get(); }
+
+        public boolean resetClearsInventory() { return loaded() && resetClearsInventory.get(); }
+
+        public boolean resetClearsExperience() { return loaded() && resetClearsExperience.get(); }
 
         public int spawnChunkRadius() { return loaded() ? spawnChunkRadius.get() : -1; }
 

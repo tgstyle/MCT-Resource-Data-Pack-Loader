@@ -179,6 +179,7 @@ repositories {
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     maven { name = 'ParchmentMC' ; url = 'https://ldtteam.jfrog.io/artifactory/parchmentmc-public/' }
     maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
+    maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
 }
 
 configurations {
@@ -188,6 +189,8 @@ configurations {
 dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     modRuntimeOnly "top.theillusivec4.curios:curios-forge:${version_curios}"
+    modRuntimeOnly 'maven.modrinth:betterf3:xo6HmgWj'
+    modRuntimeOnly 'maven.modrinth:cloth-config:t8TXrZvZ'
 
     if (bpJar != null) {
         compileOnly files(bpJar)

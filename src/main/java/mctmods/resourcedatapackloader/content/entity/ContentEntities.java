@@ -3,10 +3,13 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
+import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.entity.goal.ChargeGoal;
+import mctmods.resourcedatapackloader.content.entity.goal.DigGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.FleeWhenHurtGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.GustGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.KamikazeGoal;
@@ -14,6 +17,7 @@ import mctmods.resourcedatapackloader.content.entity.goal.PatrolGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.PounceGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.SleepByDayGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.SniffGoal;
+import mctmods.resourcedatapackloader.content.entity.goal.StrikeGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.SwoopGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.ThrowerGoal;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
@@ -36,6 +40,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.TickEvent;
+import net.minecraft.server.MinecraftServer;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -50,6 +60,7 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
@@ -78,6 +89,8 @@ import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.item.PrimedTnt;
@@ -103,6 +116,8 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingBreatheEvent;
 import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
@@ -112,6 +127,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -137,6 +153,7 @@ public final class ContentEntities {
     private static final int ROUSED = 60;
     private static final long CALM_STEP = 10L;
     private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final ThreadLocal<Boolean> SPAWNER = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final Set<ResourceLocation> WARNED = new HashSet<>();
 
     private ContentEntities() {}
@@ -258,10 +275,126 @@ public final class ContentEntities {
         return TEXTURES.computeIfAbsent(def.texture(), ResourceLocation::tryParse);
     }
 
+    private static final Map<String, Integer> FELL_TO = new LinkedHashMap<>();
+
+    public static void onDeathWatch(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        if (!ContentLog.LOGGER.debugEnabled() || BY_TYPE.get(event.getEntity().getType()) == null) { return; }
+        String by = event.getSource().getMsgId();
+        FELL_TO.merge(by, 1, Integer::sum);
+    }
+
+    @Nullable private static LivingEntity struck;
+    private static long struckAt;
+    @Nullable private static EntityVariantDef struckBy;
+
+    public static boolean bright(Entity entity) {
+        EntityVariantDef def = BY_TYPE.get(entity.getType());
+        return def != null && def.flags().bright();
+    }
+
+    public static void fromSpawner(boolean adding) { SPAWNER.set(adding); }
+
+    private static List<PickDef> kin(EntityVariantDef def) {
+        List<PickDef> kept = new ArrayList<>();
+        List<TeamDef> sides = ContentTeams.claiming(def.key().toString());
+        for (PickDef choice : def.becomes()) {
+            ResourceLocation id = ResourceLocation.tryParse(choice.name());
+            EntityVariantDef other = id == null ? null : DEFS.get(id);
+            if (other == null || !other.base().equals(def.base())) { continue; }
+            List<TeamDef> theirs = ContentTeams.claiming(other.key().toString());
+            if (sides.isEmpty() ? theirs.isEmpty() : sides.stream().anyMatch(theirs::contains)) { kept.add(choice); }
+        }
+        return kept;
+    }
+
+    public static boolean collectsExperience(Entity entity) {
+        EntityVariantDef def = BY_TYPE.get(entity.getType());
+        return def != null && def.flags().collectsExperience();
+    }
+
+    public static boolean teleports(Entity entity) {
+        EntityVariantDef def = BY_TYPE.get(entity.getType());
+        return def == null || def.physics().teleports();
+    }
+
+    public static float baseBabyChance(Entity entity, float chance) {
+        EntityVariantDef def = BY_TYPE.get(entity.getType());
+        return def == null || def.flags().keepsBaseBaby() ? chance : 0.0F;
+    }
+
+    public static int hurtResistance(Entity entity, int vanilla) {
+        EntityVariantDef def = BY_TYPE.get(entity.getType());
+        return def == null || def.physics().hurtResistance() < 0 ? vanilla : def.physics().hurtResistance();
+    }
+
+    public static boolean struckFireless(Entity entity) {
+        return struckBy != null && !struckBy.combat().hitFire() && entity == struck && entity.level().getGameTime() == struckAt;
+    }
+
+    public static void onStruck(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        Entity by = event.getSource().getEntity();
+        if (by == null || event.getEntity().level().isClientSide()) { return; }
+        EntityVariantDef def = BY_TYPE.get(by.getType());
+        if (def == null) { return; }
+        struck = event.getEntity();
+        struckAt = struck.level().getGameTime();
+        struckBy = def;
+    }
+
+    public static void onKnockBack(net.minecraftforge.event.entity.living.LivingKnockBackEvent event) {
+        if (struckBy == null || event.getEntity() != struck || event.getEntity().level().getGameTime() != struckAt) { return; }
+        if (struckBy.combat().knockback() >= 0.0F) { event.setStrength(struckBy.combat().knockback()); }
+    }
+
+    public static void onEffect(MobEffectEvent.Applicable event) {
+        if (struckBy != null && !struckBy.combat().hitEffects() && event.getEntity() == struck && event.getEntity().level().getGameTime() == struckAt) {
+            event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+            return;
+        }
+        EntityVariantDef def = BY_TYPE.get(event.getEntity().getType());
+        if (def == null || def.ignoresEffects().isEmpty()) { return; }
+        ResourceLocation named = ForgeRegistries.MOB_EFFECTS.getKey(event.getEffectInstance().getEffect());
+        String id = named == null ? "" : named.toString();
+        if (def.effects().containsKey(id)) { return; }
+        for (String ignored : def.ignoresEffects()) {
+            if (ignored.equalsIgnoreCase("all") || ignored.equalsIgnoreCase(id)) {
+                event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+                return;
+            }
+        }
+    }
+
+    public static boolean fairGame(LivingEntity target) {
+        return !target.isInvulnerableTo(target.level().damageSources().generic());
+    }
+
+    public static double attackReachSqr(LivingEntity attacker, LivingEntity target, double vanilla) {
+        EntityVariantDef def = BY_TYPE.get(attacker.getType());
+        if (def == null || def.combat().attackReach() <= 0.0F) { return vanilla; }
+        return (double) def.combat().attackReach() * def.combat().attackReach() + target.getBbWidth();
+    }
+
+    private static final Set<ResourceLocation> PACED = new LinkedHashSet<>();
+
+    public static int attackInterval(LivingEntity attacker) {
+        AttributeInstance speed = attacker.getAttribute(Attributes.ATTACK_SPEED);
+        if (speed == null || speed.getValue() <= 0.0D) { return 20; }
+        int every = Math.max(1, (int) Math.round(20.0D / speed.getValue()));
+        EntityVariantDef def = BY_TYPE.get(attacker.getType());
+        if (def != null && PACED.add(def.key())) { ContentLog.LOGGER.debug("Entity variant {} strikes {} time(s) a second, so its blows are paced every {} tick(s) in place of the game's 20", def.key(), speed.getValue(), every); }
+        return every;
+    }
+
     public static float scale(Entity entity) {
         EntityVariantDef def = BY_TYPE.get(entity.getType());
         if (def == null) { return 1.0F; }
         return entity.isSprinting() ? def.angryScale() : def.scale();
+    }
+
+    public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
+        EntityVariantDef def = def(event.getEntity());
+        if (def == null || !def.flags().ignoresSpawnRules() || event.getResult() != Event.Result.DEFAULT) { return; }
+        event.setResult(event.getEntity().checkSpawnObstruction(event.getLevel()) ? Event.Result.ALLOW : Event.Result.DENY);
     }
 
     public static void onJoin(EntityJoinLevelEvent event) {
@@ -276,7 +409,8 @@ public final class ContentEntities {
 
     private static boolean swapped(ServerLevel level, Mob was, EntityVariantDef def) {
         if (def.becomes().isEmpty() || SWAPPING.get() == Boolean.TRUE || was.getPersistentData().getBoolean(DRESSED)) { return false; }
-        String chosen = PickDef.pick(def.becomes(), level.getRandom());
+        List<PickDef> choices = SPAWNER.get() == Boolean.TRUE ? kin(def) : def.becomes();
+        String chosen = PickDef.pick(choices, level.getRandom());
         if (chosen == null || chosen.equals(def.key().toString())) { return false; }
         EntityType<?> wanted = EntityType.byString(chosen).orElse(null);
         if (wanted == null) {
@@ -320,6 +454,8 @@ public final class ContentEntities {
         if (def.flags().leftHanded()) { mob.setLeftHanded(true); }
         mob.setCanPickUpLoot(def.flags().picksUpLoot());
         priorities(mob, def);
+        if (def.physics().stepHeight() >= 0.0F) { mob.setMaxUpStep(def.physics().stepHeight()); }
+        if (def.physics().climbs() != null) { climber(mob, def.physics().climbs()); }
 
         navigation(mob, def);
         behavior(mob, def);
@@ -421,6 +557,12 @@ public final class ContentEntities {
         }
     }
 
+    private static void climber(Mob mob, boolean climbs) {
+        IMob inner = (IMob) mob;
+        if (climbs && !(mob.getNavigation() instanceof WallClimberNavigation)) { inner.rdpl$setNavigation(new WallClimberNavigation(mob, mob.level())); }
+        else if (!climbs && mob.getNavigation() instanceof WallClimberNavigation) { inner.rdpl$setNavigation(new GroundPathNavigation(mob, mob.level())); }
+    }
+
     private static void navigation(Mob mob, EntityVariantDef def) {
         IMob inner = (IMob) mob;
         if (def.physics().swims()) {
@@ -448,7 +590,7 @@ public final class ContentEntities {
             return;
         }
         if (!def.hostile()) {
-            if (def.combat().any() || def.combat().explodes()) { ContentLog.LOGGER.error("Entity variant {} asks for a fighting behavior, but is not hostile, so it never takes a target to use it on", def.key()); }
+            if (def.combat().any() || def.combat().explodes() || def.combat().digs()) { ContentLog.LOGGER.error("Entity variant {} asks for a fighting behavior, but is not hostile, so it never takes a target to use it on", def.key()); }
             return;
         }
         if (!(mob instanceof PathfinderMob creature)) {
@@ -458,14 +600,20 @@ public final class ContentEntities {
         for (WrappedGoal wrapped : new ArrayList<>(mob.goalSelector.getAvailableGoals())) {
             if (wrapped.getGoal() instanceof AvoidEntityGoal || wrapped.getGoal() instanceof PanicGoal || tame(wrapped)) { mob.goalSelector.removeGoal(wrapped.getGoal()); }
         }
-        boolean already = false;
-        for (WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
-            if (wrapped.getGoal() instanceof MeleeAttackGoal) {
-                already = true;
-                break;
-            }
+        if (ownStrike(mob, def)) {
+            ContentTasks.drop(mob.goalSelector, MeleeAttackGoal.class);
+            mob.goalSelector.addGoal(2, new StrikeGoal(creature, 1.2D, false));
         }
-        if (!already) { mob.goalSelector.addGoal(2, new MeleeAttackGoal(creature, 1.2D, false)); }
+        else {
+            boolean already = false;
+            for (WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
+                if (wrapped.getGoal() instanceof MeleeAttackGoal) {
+                    already = true;
+                    break;
+                }
+            }
+            if (!already) { mob.goalSelector.addGoal(2, new MeleeAttackGoal(creature, 1.2D, false)); }
+        }
         EntityVariantDef.Combat combat = def.combat();
         if (combat.explodes()) { mob.goalSelector.addGoal(0, new KamikazeGoal(creature, combat.explosionPower(), combat.explosionFuse(), combat.explosionFire())); }
         if (combat.throwsItems()) { mob.goalSelector.addGoal(0, new ThrowerGoal(creature, carrying(def), combat.explosionFuse(), combat.throwReload() > 0 ? combat.throwReload() : combat.explosionFuse(), combat.throwRetreat() > 0 ? combat.throwRetreat() : combat.explosionFuse(), combat.throwAmmo(), combat.throwPower(), combat.throwArc(), mob.getAttributeValue(Attributes.FOLLOW_RANGE))); }
@@ -475,13 +623,24 @@ public final class ContentEntities {
         if (combat.sniffs() > 0) { mob.goalSelector.addGoal(3, new SniffGoal(creature, combat.sniffs())); }
         if (combat.gusts()) { mob.goalSelector.addGoal(1, new GustGoal(creature, combat.gustPower())); }
         if (combat.swoops()) { mob.goalSelector.addGoal(1, new SwoopGoal(creature)); }
+        if (combat.digs()) { mob.goalSelector.addGoal(1, new DigGoal(creature)); }
         if (combat.patrols()) { mob.goalSelector.addGoal(4, new PatrolGoal(creature)); }
         mob.targetSelector.addGoal(1, new HurtByTargetGoal(creature).setAlertOthers());
         int priority = 2;
         for (String name : def.targets().isEmpty() ? PLAYER_ONLY : def.targets()) {
-            Class<? extends LivingEntity> type = ContentTasks.living(name, def.key());
-            if (type != null) { mob.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(creature, type, true)); }
+            Class<? extends LivingEntity> type = ContentTasks.living(name, def.key(), mob.level());
+            if (type == null) { continue; }
+            EntityType<?> variant = EntityType.byString(name).filter(BY_TYPE::containsKey).orElse(null);
+            mob.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(creature, type, 10, true, false, variant == null ? ContentEntities::fairGame : found -> found.getType() == variant && fairGame(found)));
         }
+    }
+
+    private static boolean ownStrike(Mob mob, EntityVariantDef def) {
+        if (mob instanceof Monster) { return false; }
+        for (String name : def.attributes().keySet()) {
+            if (ContentAttributes.find(name, def.key()) == Attributes.ATTACK_DAMAGE) { return true; }
+        }
+        return false;
     }
 
     private static boolean tame(WrappedGoal wrapped) {
@@ -513,6 +672,7 @@ public final class ContentEntities {
         if (!(living instanceof Mob mob) || living.level().isClientSide) { return; }
         EntityVariantDef def = BY_TYPE.get(mob.getType());
         if (def == null) { return; }
+        if (def.flags().collectsExperience() && mob.isAlive()) { ContentMobExperience.collect(mob); }
         if (def.despawnTicks() > 0 && timeIsUp(mob, def)) {
             mob.discard();
             return;
@@ -618,6 +778,140 @@ public final class ContentEntities {
         EntityVariantDef def = BY_TYPE.get(entity.getType());
         if (def == null || def.tint() == 0 || !def.tintParts().contains(part)) { return 0; }
         return def.tint();
+    }
+
+
+    private static final Long2LongOpenHashMap WAS_AT = new Long2LongOpenHashMap();
+    private static final Long2LongOpenHashMap TICKED = new Long2LongOpenHashMap();
+    private static final Long2LongOpenHashMap GAPS = new Long2LongOpenHashMap();
+    private static final Long2LongOpenHashMap FACED = new Long2LongOpenHashMap();
+    private static final Long2LongOpenHashMap HEALTHS = new Long2LongOpenHashMap();
+    private static final int ENGAGE_EVERY = 100;
+    private static int engageWatch;
+
+    public static void onEngagement(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || BY_TYPE.isEmpty() || !ContentLog.LOGGER.debugEnabled()) { return; }
+        if (++engageWatch % ENGAGE_EVERY != 0) { return; }
+        tally(event.getServer());
+    }
+
+    private static void tally(@Nullable MinecraftServer server) {
+        if (server == null) { return; }
+        for (ServerLevel level : server.getAllLevels()) {
+            StringBuilder where = new StringBuilder();
+            for (net.minecraft.server.level.ServerPlayer player : level.players()) { where.append(' ').append(player.getGameProfile().getName()).append('@').append(player.chunkPosition()); }
+            ContentLog.LOGGER.debug("{} holds {} chunk(s) at entity-ticking status, spawn chunk {}, players:{}", level.dimension().location(), level.getChunkSource().getTickingGenerated(), new ChunkPos(level.getSharedSpawnPos()), where.isEmpty() ? " none" : where);
+        }
+        int mobs = 0;
+        int aimed = 0;
+        int pathless = 0;
+        int reaching = 0;
+        int slowed = 0;
+        int still = 0;
+        int walked = 0;
+        int ticking = 0;
+        int closing = 0;
+        int milling = 0;
+        int inRange = 0;
+        int inTickingChunk = 0;
+        int spun = 0;
+        int hurt = 0;
+        java.util.List<Mob> here = new java.util.ArrayList<>();
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet seen = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        long away = 0L;
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity entity : level.getAllEntities()) {
+                if (!(entity instanceof Mob mob) || !BY_TYPE.containsKey(mob.getType())) { continue; }
+                mobs++;
+                seen.add(mob.getId());
+                here.add(mob);
+                long hp = HEALTHS.put(mob.getId(), (long) (mob.getHealth() * 100.0F));
+                if (hp != HEALTHS.defaultReturnValue() && hp > (long) (mob.getHealth() * 100.0F)) { hurt++; }
+                long was = WAS_AT.put(mob.getId(), mob.blockPosition().asLong());
+                if (was != WAS_AT.defaultReturnValue() && was != mob.blockPosition().asLong()) { walked++; }
+                long faced = FACED.put(mob.getId(), (long) mob.getYRot());
+                if (was != WAS_AT.defaultReturnValue() && was == mob.blockPosition().asLong() && faced != FACED.defaultReturnValue() && Math.abs(net.minecraft.util.Mth.wrapDegrees(mob.getYRot() - faced)) >= 90.0F) { spun++; }
+                long ticked = TICKED.put(mob.getId(), mob.tickCount);
+                if (ticked != TICKED.defaultReturnValue() && ticked != mob.tickCount) { ticking++; }
+                if (level.getChunkSource().chunkMap.getDistanceManager().inEntityTickingRange(mob.chunkPosition().toLong())) { inRange++; }
+                LevelChunk stood = level.getChunkSource().getChunkNow(mob.chunkPosition().x, mob.chunkPosition().z);
+                if (stood != null && stood.getFullStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) { inTickingChunk++; }
+                LivingEntity aim = mob.getTarget();
+                if (aim == null) { continue; }
+                aimed++;
+                double gap = Math.sqrt(mob.distanceToSqr(aim));
+                away += (long) gap;
+                long before = GAPS.put(mob.getId(), (long) (gap * 100.0D));
+                if (before != GAPS.defaultReturnValue()) {
+                    if (before - (long) (gap * 100.0D) > 100L) { closing++; }
+                    else if (Math.abs(before - (long) (gap * 100.0D)) <= 100L) { milling++; }
+                }
+                if (mob.getNavigation().isDone()) { pathless++; }
+                if (ContentEntityTicks.thinksSlower(mob)) { slowed++; }
+                if (mob.isNoAi()) { still++; }
+                if (gap <= mob.getBbWidth() * 2.0F + aim.getBbWidth()) { reaching++; }
+            }
+        }
+        int gone = 0;
+        for (it.unimi.dsi.fastutil.longs.LongIterator held = WAS_AT.keySet().iterator(); held.hasNext();) {
+            long id = held.nextLong();
+            if (seen.contains(id)) { continue; }
+            held.remove();
+            FACED.remove(id);
+            HEALTHS.remove(id);
+            TICKED.remove(id);
+            GAPS.remove(id);
+            gone++;
+        }
+        int thickest = 0;
+        double spread = 0.0D;
+        if (!here.isEmpty()) {
+            double middleX = 0.0D;
+            double middleZ = 0.0D;
+            for (Mob one : here) { middleX += one.getX(); middleZ += one.getZ(); }
+            middleX /= here.size();
+            middleZ /= here.size();
+            for (Mob one : here) { spread += Math.sqrt((one.getX() - middleX) * (one.getX() - middleX) + (one.getZ() - middleZ) * (one.getZ() - middleZ)); }
+            spread /= here.size();
+            for (Mob one : here) {
+                int near = 0;
+                for (Mob other : here) { if (one.distanceToSqr(other) <= 64.0D) { near++; } }
+                thickest = Math.max(thickest, near);
+            }
+        }
+        if (!here.isEmpty()) {
+            double leastX = Double.MAX_VALUE;
+            double mostX = -Double.MAX_VALUE;
+            double leastZ = Double.MAX_VALUE;
+            double mostZ = -Double.MAX_VALUE;
+            for (Mob one : here) {
+                leastX = Math.min(leastX, one.getX());
+                mostX = Math.max(mostX, one.getX());
+                leastZ = Math.min(leastZ, one.getZ());
+                mostZ = Math.max(mostZ, one.getZ());
+            }
+            int[][] cells = new int[11][11];
+            double wideX = Math.max(1.0D, mostX - leastX);
+            double wideZ = Math.max(1.0D, mostZ - leastZ);
+            for (Mob one : here) {
+                int col = Math.min(10, (int) ((one.getX() - leastX) / wideX * 11.0D));
+                int row = Math.min(10, (int) ((one.getZ() - leastZ) / wideZ * 11.0D));
+                cells[row][col]++;
+            }
+            StringBuilder drawn = new StringBuilder();
+            for (int[] row : cells) {
+                if (!drawn.isEmpty()) { drawn.append('/'); }
+                for (int count : row) { drawn.append(count == 0 ? "." : count > 9 ? "+" : Character.forDigit(count, 10)); }
+            }
+            ContentLog.LOGGER.debug("Where they stand, {} mob(s) over x {} to {} and z {} to {}, eleven cells each way: {}",
+                    here.size(), (int) leastX, (int) mostX, (int) leastZ, (int) mostZ, drawn);
+        }
+        if (!FELL_TO.isEmpty()) {
+            ContentLog.LOGGER.debug("What has killed pack mobs so far: {}", FELL_TO);
+        }
+        if (mobs == 0) { return; }
+        ContentLog.LOGGER.debug("Of {} pack mob(s), {} hold a target, {} of those have no path to walk to it, {} stand close enough to strike, and a target is {} block(s) off on average; {} of {} still ticking moved since the last look, {} closed on their target and {} held the same distance, {} stand in entity-ticking range and {} in a chunk at entity-ticking status, {} are gone since the last look and {} turned 90 degrees or more without leaving their block, {} lost health since the last look, the thickest crowd holds {} within 8 blocks and a mob stands {} block(s) from the middle of them all on average, {} were given a slower pace this tick and {} have no AI at all",
+                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed, walked, ticking, closing, milling, inRange, inTickingChunk, gone, spun, hurt, thickest, String.format(java.util.Locale.ROOT, "%.1f", spread), slowed, still);
     }
 
     public static boolean steerable(Entity entity) {

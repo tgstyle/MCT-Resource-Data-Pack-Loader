@@ -66,6 +66,16 @@ public final class GateStorage extends SavedData {
         return now;
     }
 
+    public static int countGlobally(MinecraftServer server, String key) { return of(server).kills.getInt(key); }
+
+    public static void noteFor(Player player, String key, int value) {
+        CompoundTag tally = player.getPersistentData().getCompound(PERSISTED_KILLS);
+        tally.putInt(key, value);
+        player.getPersistentData().put(PERSISTED_KILLS, tally);
+    }
+
+    public static int notedFor(Player player, String key) { return player.getPersistentData().getCompound(PERSISTED_KILLS).getInt(key); }
+
     public static void clearTallyGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);
         data.kills.remove(key);

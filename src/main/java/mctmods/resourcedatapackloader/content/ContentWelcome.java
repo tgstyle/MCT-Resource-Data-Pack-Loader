@@ -11,23 +11,32 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentWelcome {
     private static final String KEY = "welcomeSays";
+    private static final Set<UUID> ARRIVED = new HashSet<>();
 
     private ContentWelcome() {}
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && !ContentPregen.welcomesLater(player) && ContentIntroPlay.skips(player)) { welcome(player); }
     }
+
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ARRIVED.remove(event.getEntity().getUUID()); }
+
+    public static boolean arrived(ServerPlayer player) { return ARRIVED.contains(player.getUUID()); }
 
     public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
@@ -38,6 +47,13 @@ public final class ContentWelcome {
     private static List<String> entries() { return ContentControl.list(ContentControl.CHUNKS, KEY, Config.chunks.welcomeSays()); }
 
     public static void welcome(ServerPlayer player) {
+        greet(player);
+        if (!ARRIVED.add(player.getUUID())) { return; }
+        ContentScoring.greet(player);
+        ContentTeams.greet(player);
+    }
+
+    private static void greet(ServerPlayer player) {
         List<String> entries = entries();
         boolean atDefault = entries.size() == 1 && entries.get(0).trim().equals(Config.WELCOME);
         String greeting = atDefault ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player, player.level().dimension(), true);
@@ -62,6 +78,13 @@ public final class ContentWelcome {
         if (id == null) { return null; }
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, id);
         return player.serverLevel().getServer().getLevel(key) == null ? null : key;
+    }
+
+    public static void show(ServerPlayer player, String said, ChatFormatting color) {
+        if (said.isEmpty() || RDPLNetwork.sendNote(player, said)) { return; }
+        player.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
+        player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(said).withStyle(color)));
+        player.connection.send(new ClientboundSetTitleTextPacket(Component.empty()));
     }
 
     private static void send(ServerPlayer player, String greeting) {

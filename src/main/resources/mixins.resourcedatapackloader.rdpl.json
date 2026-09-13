@@ -20,6 +20,10 @@
         "common.MixinBlockStateBase",
         "common.IMob",
         "common.IExperienceOrb",
+        "common.ILivingEntity",
+        "common.IChunkMap",
+        "common.MixinPlayerBreakRestriction",
+        "common.MixinAnvilMenu",
         "common.IItemEntity",
         "common.IMobCategory",
         "common.MixinExperienceOrb",
@@ -47,8 +51,16 @@
         "common.MixinNoiseBasedChunkGenerator",
         "common.MixinNearestAttackableTargetGoal",
         "common.MixinTargetGoal",
+        "common.MixinWalkNodeEvaluator",
         "common.MixinExplosionDamageCalculator",
         "common.MixinLivingEntity",
+        "common.MixinLivingEntityHurt",
+        "common.MixinEntityFire",
+        "common.MixinEnderMan",
+        "common.MixinZombieBaby",
+        "common.MixinBaseSpawner",
+        "common.MixinMeleeAttackGoal",
+        "common.MixinPathNavigation",
         "common.MixinMob",
         "common.MixinPackRepository",
         "common.MixinWorldLoaderPackConfig",
@@ -59,6 +71,7 @@
         "common.MixinDirtPathBlock",
         "common.MixinFarmBlock",
         "common.MixinServerGamePacketListenerImpl",
+        "common.MixinServerLevel",
         "common.MixinDedicatedServer",
         "common.MixinWorldDimensionData",
         "common.IDedicatedServer",
@@ -68,6 +81,8 @@
     "client": [
         "client.IEntityRenderers",
         "client.IWeightedBakedModel",
+        "client.IClientAdvancements",
+        "client.MixinEntityRenderer",
         "client.MixinGameRenderer",
         "client.MixinMinecraft",
         "client.MixinClientLevel",
@@ -80,7 +95,10 @@
         "client.MixinAccountProfileKeyPairManager",
         "client.MixinLogoTexture"
     ],
-    "server": [],
+    "server": [
+        "server.ISettings",
+        "server.MixinDedicatedServerGameMode"
+    ],
     "injectors": {
         "defaultRequire": 1
     }

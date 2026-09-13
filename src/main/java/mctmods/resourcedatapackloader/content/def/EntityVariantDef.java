@@ -3,9 +3,10 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public record EntityVariantDef(ResourceLocation key, ResourceLocation base, String name, boolean showName, String texture, String lootTable, String profession, int career, float baby,
-                               List<PickDef> becomes, Sounds sounds, List<String> immuneTo, Physics physics, int experience, float absorption, String creatureAttribute, Map<String, Integer> effects,
+                               List<PickDef> becomes, Sounds sounds, List<String> immuneTo, List<String> ignoresEffects, Physics physics, int experience, float absorption, String creatureAttribute, Map<String, Integer> effects,
                                boolean despawns, int despawnTicks, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
                                Egg egg, Tracking tracking, Map<String, Double> attributes, boolean hostile, boolean passive, List<String> targets, int tint, List<String> tintParts,
                                Combat combat, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
@@ -17,17 +18,17 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
 
     public record Sounds(String ambient, String hurt, String death, String target, String explode, float targetVaries, float volume, float pitch) {}
 
-    public record Physics(float jumpMultiplier, float fallDamage, int maxFallHeight, float waterSlowdown, boolean breathesUnderwater, boolean swims, boolean amphibious) {}
+    public record Physics(float jumpMultiplier, float fallDamage, int maxFallHeight, float waterSlowdown, boolean breathesUnderwater, boolean swims, boolean amphibious, float stepHeight, @Nullable Boolean climbs, boolean teleports, int hurtResistance) {}
 
     public record Flags(boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, boolean persistent, boolean silent, boolean picksUpLoot,
-                        boolean hideArmor, boolean hideHeld, boolean leashable, boolean steerable, boolean ignoresSpawnRules) {}
+                        boolean hideArmor, boolean hideHeld, boolean leashable, boolean steerable, boolean ignoresSpawnRules, boolean bright, boolean keepsBaseBaby, boolean collectsExperience) {}
 
     public record Egg(boolean wanted, int primary, int secondary) {}
 
     public record Tracking(int range, int frequency, boolean velocity) {}
 
     public record Combat(boolean explodes, float explosionPower, int explosionFuse, boolean explosionFire, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower,
-                         float throwArc, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower) {
+                         float throwArc, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, float attackReach, float knockback, boolean hitEffects, boolean hitFire, boolean digs) {
         public boolean any() { return explodes || throwsItems || charges || pounces || sniffs > 0 || fleesWhenHurt > 0.0F || patrols || swoops || gusts; }
     }
 

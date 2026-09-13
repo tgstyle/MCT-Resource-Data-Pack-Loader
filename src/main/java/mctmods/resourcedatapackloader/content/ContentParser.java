@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
+import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
@@ -35,7 +37,10 @@ import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import net.minecraft.world.scores.Team;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -606,6 +611,7 @@ public final class ContentParser {
         JsonObject results = GsonHelper.getAsJsonObject(json, "results", new JsonObject());
         JsonObject points = GsonHelper.getAsJsonObject(json, "points", new JsonObject());
         JsonObject ends = GsonHelper.getAsJsonObject(json, "ends", new JsonObject());
+        JsonObject opens = GsonHelper.getAsJsonObject(json, "opens", new JsonObject());
         Map<String, Integer> kills = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(points, "kill", new JsonObject()).entrySet()) { kills.put(entry.getKey().trim(), entry.getValue().getAsInt()); }
         return new ScoreDef(name, GsonHelper.getAsString(json, "displayName", name), criterion, slot, render,
@@ -629,7 +635,64 @@ public final class ContentParser {
                 GsonHelper.getAsBoolean(ends, "locksTeams", true),
                 GsonHelper.getAsInt(points, "ownKill", 0),
                 GsonHelper.getAsString(ends, "intermissionSays", "Round cooldown {seconds}"),
-                GsonHelper.getAsString(ends, "startsSays", "Round starting in {seconds}"));
+                GsonHelper.getAsString(ends, "startsSays", "Round starting in {seconds}"),
+                opensBy(opens, key),
+                GsonHelper.getAsString(opens, "says", "Waiting for {leader} to start the round"),
+                GsonHelper.getAsString(opens, "leaderSays", "Type /rdplserver round start"),
+                lobbyAt(key, opens),
+                GsonHelper.getAsBoolean(opens, "lobbyJoins", false),
+                GsonHelper.getAsString(opens, "joinsSays", "Round is in progress, you can join after it ends"),
+                GsonHelper.getAsBoolean(ends, "lastStanding", false),
+                GsonHelper.getAsString(ends, "outSays", "You are out until the round ends"),
+                roundReset(key, GsonHelper.getAsJsonObject(json, "reset", new JsonObject())));
+    }
+
+    private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {
+        String lead = GsonHelper.getAsString(reset, "lead", RoundResetDef.NONE).trim();
+        if (!RoundResetDef.NONE.equals(lead) && !RoundResetDef.NOW.equals(lead) && !RoundResetDef.VOTE.equals(lead)) {
+            ContentLog.LOGGER.error("Score file {} lets the lead reset the round by '{}', which is not none, now or vote, so the lead cannot", key, lead);
+            lead = RoundResetDef.NONE;
+        }
+        String players = GsonHelper.getAsString(reset, "players", RoundResetDef.NONE).trim();
+        if (!RoundResetDef.NONE.equals(players) && !RoundResetDef.VOTE.equals(players)) {
+            ContentLog.LOGGER.error("Score file {} lets players reset the round by '{}', which is not none or vote, so they cannot", key, players);
+            players = RoundResetDef.NONE;
+        }
+        return new RoundResetDef(lead, RoundResetDef.VOTE.equals(players), Json.strings(reset, "teams"),
+                Math.max(1, Math.min(100, GsonHelper.getAsInt(reset, "passPercent", 51))),
+                Math.max(5, GsonHelper.getAsInt(reset, "voteSeconds", 30)),
+                Math.max(0, GsonHelper.getAsInt(reset, "cooldownSeconds", 60)),
+                GsonHelper.getAsString(reset, "leadSays", "{player} reset the round"),
+                GsonHelper.getAsString(reset, "voteSays", "{player} calls a vote to reset the round: /rdplserver round vote yes or no, {seconds} seconds"),
+                GsonHelper.getAsString(reset, "tallySays", "Reset the round? {yes} yes, {no} no, {seconds}"),
+                GsonHelper.getAsString(reset, "passSays", "The vote passed, so the round is reset"),
+                GsonHelper.getAsString(reset, "failSays", "The vote failed, so the round goes on"));
+    }
+
+    private static String opensBy(JsonObject opens, ResourceLocation key) {
+        String asked = GsonHelper.getAsString(opens, "by", ScoreDef.AUTO).trim();
+        if (ScoreDef.AUTO.equals(asked) || ScoreDef.LEADER.equals(asked)) { return asked; }
+        ContentLog.LOGGER.error("Score file {} opens its round by '{}', which is not auto or leader, so it opens on its own", key, asked);
+        return ScoreDef.AUTO;
+    }
+
+    @Nullable private static ScoreDef.Place lobbyAt(ResourceLocation key, JsonObject opens) {
+        String asked = GsonHelper.getAsString(opens, "lobby", "").trim();
+        ResourceKey<Level> dimension = Level.OVERWORLD;
+        int comma = asked.indexOf(',');
+        int colon = comma < 0 ? -1 : asked.lastIndexOf(':', comma);
+        if (colon > 0) {
+            String named = asked.substring(0, colon).trim();
+            ResourceLocation id = "-1".equals(named) ? Level.NETHER.location() : "1".equals(named) ? Level.END.location() : "0".equals(named) ? Level.OVERWORLD.location() : ResourceLocation.tryParse(named);
+            if (id == null) {
+                ContentLog.LOGGER.error("Score file {} gives opens.lobby '{}', whose dimension is not a dimension id, so the lobby has no area of its own", key, asked);
+                return null;
+            }
+            dimension = ResourceKey.create(Registries.DIMENSION, id);
+            asked = asked.substring(colon + 1);
+        }
+        int[] at = point(key, asked, "Score file {} gives opens.lobby '{}', which is not three whole numbers x,y,z, so the lobby has no area of its own");
+        return at == null ? null : new ScoreDef.Place(dimension, at[0], at[1], at[2]);
     }
 
     private static int cardColor(JsonObject results, String name) {
@@ -662,13 +725,52 @@ public final class ContentParser {
                 Json.strings(json, "entities"), Json.strings(json, "players"), box(json, key),
                 GsonHelper.getAsBoolean(json, "joinable", true),
                 leadWay(json, name), GsonHelper.getAsString(json, "leadOn", "").trim(), GsonHelper.getAsString(json, "leadIs", "").trim(),
-                GsonHelper.getAsBoolean(json, "balance", false), GsonHelper.getAsBoolean(json, "scoreboard", true));
+                GsonHelper.getAsString(json, "leadSays", "You are the current round leader"), GsonHelper.getAsString(json, "leadRuns", "").trim(),
+                GsonHelper.getAsBoolean(json, "balance", false), GsonHelper.getAsBoolean(json, "scoreboard", true),
+                Math.max(0, GsonHelper.getAsInt(json, "picks", 0)), Json.strings(json, "picksFrom"), gives(key, json),
+                standIn(json), standInAt(key, json), point(key, GsonHelper.getAsString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"));
+    }
+
+    @Nullable static int[] point(ResourceLocation key, String asked, String refused) {
+        String at = asked.trim();
+        if (at.isEmpty()) { return null; }
+        String[] parts = at.split(",");
+        if (parts.length == 3) {
+            try { return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim()) }; }
+            catch (NumberFormatException notNumbers) { ContentLog.LOGGER.debug("{} holds {}, which does not read as whole numbers", key, at); }
+        }
+        ContentLog.LOGGER.error(refused, key, at);
+        return null;
+    }
+
+    private static String standIn(JsonObject json) {
+        if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return ""; }
+        return GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "standIn"), "entity", "").trim();
+    }
+
+    @Nullable private static int[] standInAt(ResourceLocation key, JsonObject json) {
+        if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return null; }
+        String at = GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "standIn"), "at", "");
+        int[] found = point(key, at, "Team file {} gives standIn an 'at' of '{}', which is not three whole numbers x,y,z, so no stand-in is kept");
+        if (found == null && at.trim().isEmpty()) { ContentLog.LOGGER.error("Team file {} gives standIn no 'at', so no stand-in is kept", key); }
+        return found;
+    }
+
+    private static List<ItemGiveDef> gives(ResourceLocation key, JsonObject json) {
+        List<ItemGiveDef> values = new ArrayList<>();
+        if (!json.has("gives")) { return values; }
+        for (JsonElement held : GsonHelper.getAsJsonArray(json, "gives")) {
+            if (held.isJsonPrimitive()) { values.add(new ItemGiveDef(held.getAsString().trim(), 1, false)); }
+            else if (held.isJsonObject()) { values.add(new ItemGiveDef(GsonHelper.getAsString(held.getAsJsonObject(), "item", "").trim(), Math.max(1, GsonHelper.getAsInt(held.getAsJsonObject(), "count", 1)), GsonHelper.getAsBoolean(held.getAsJsonObject(), "unbreakable", false))); }
+            else { ContentLog.LOGGER.error("Team file {} lists something under gives that is neither an item name nor an object, skipping it", key); }
+        }
+        return values;
     }
 
     private static String leadWay(JsonObject json, String team) {
         String asked = GsonHelper.getAsString(json, "lead", TeamDef.NONE).trim();
-        if (TeamDef.NONE.equals(asked) || TeamDef.TOP_SCORE.equals(asked) || TeamDef.APPOINTED.equals(asked) || TeamDef.VOTE.equals(asked) || TeamDef.CLAIM.equals(asked)) { return asked; }
-        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, topScore, appointed, vote or claim, so it has no lead", team, asked);
+        if (TeamDef.NONE.equals(asked) || TeamDef.FIRST.equals(asked) || TeamDef.TOP_SCORE.equals(asked) || TeamDef.APPOINTED.equals(asked) || TeamDef.VOTE.equals(asked) || TeamDef.CLAIM.equals(asked)) { return asked; }
+        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, first, topScore, appointed, vote or claim, so it has no lead", team, asked);
         return TeamDef.NONE;
     }
 

@@ -178,12 +178,21 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
             int from = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
             int to = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
             for (int along = from; along <= to; along++) {
+                if (grounded(level, at, alongX ? along : across, alongX ? across : along)) { continue; }
                 for (int up = 1; up <= height; up++) {
                     at.set(alongX ? along : across, this.level + up, alongX ? across : along);
                     if (box.isInside(at)) { level.setBlock(at, rail, 2); }
                 }
             }
         }
+    }
+
+    private boolean grounded(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z) {
+        BlockState below = level.getBlockState(at.set(x, this.level - 1, z));
+        if (!below.getCollisionShape(level, at).isEmpty()) { return true; }
+        if (below.isAir()) { return false; }
+        BlockState deeper = level.getBlockState(at.set(x, this.level - 2, z));
+        return !deeper.getCollisionShape(level, at).isEmpty();
     }
 
     private void frames(WorldGenLevel level, BoundingBox box, CityCross cross) {

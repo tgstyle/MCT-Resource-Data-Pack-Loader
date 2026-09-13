@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
+import mctmods.resourcedatapackloader.content.ContentRoundReset;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
@@ -59,39 +61,42 @@ import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.level.biome.Biome;
 
 public final class CommandShared {
+    static final int OPERATOR = 3;
+
     private CommandShared() {}
 
     static LiteralArgumentBuilder<CommandSourceStack> tree(String name, Command<CommandSourceStack> reload, String unusedNote, String configNote, boolean server) {
+        Predicate<CommandSourceStack> staff = source -> !server || source.hasPermission(OPERATOR);
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(name)
-                .then(Commands.literal("reload").executes(reload))
-                .then(Commands.literal("list").executes(context -> {
+                .then(Commands.literal("reload").requires(staff).executes(reload))
+                .then(Commands.literal("list").requires(staff).executes(context -> {
                     ran(context.getSource(), name, "list");
                     list(context.getSource(), name);
                     return 1;
                 }))
-                .then(Commands.literal("which").then(Commands.argument("file", StringArgumentType.greedyString()).executes(context -> {
+                .then(Commands.literal("which").requires(staff).then(Commands.argument("file", StringArgumentType.greedyString()).executes(context -> {
                     String target = StringArgumentType.getString(context, "file");
                     ran(context.getSource(), name, "which " + target);
                     which(context.getSource(), target);
                     return 1;
                 })))
-                .then(Commands.literal("pixelmap").then(Commands.argument("map", StringArgumentType.greedyString()).executes(context -> {
+                .then(Commands.literal("pixelmap").requires(staff).then(Commands.argument("map", StringArgumentType.greedyString()).executes(context -> {
                     String target = StringArgumentType.getString(context, "map");
                     ran(context.getSource(), name, "pixelmap " + target);
                     pixelmap(context.getSource(), target);
                     return 1;
                 })))
-                .then(Commands.literal("oregen").requires(source -> server).executes(context -> {
+                .then(Commands.literal("oregen").requires(source -> server && staff.test(source)).executes(context -> {
                     ran(context.getSource(), name, "oregen");
                     blockedReport(context.getSource(), ContentOreControl.blocked());
                     return 1;
                 }))
-                .then(Commands.literal("dimensions").requires(source -> server).executes(context -> {
+                .then(Commands.literal("dimensions").requires(source -> server && staff.test(source)).executes(context -> {
                     ran(context.getSource(), name, "dimensions");
                     dimensions(context.getSource());
                     return 1;
                 }))
-                .then(Commands.literal("gate").requires(source -> server).executes(context -> {
+                .then(Commands.literal("gate").requires(source -> server && staff.test(source)).executes(context -> {
                     ran(context.getSource(), name, "gate");
                     gates(context.getSource());
                     return 1;
@@ -108,7 +113,7 @@ public final class CommandShared {
                 .then(Commands.literal("revoke").requires(source -> source.hasPermission(2))
                         .then(Commands.argument("player", EntityArgument.player())
                         .then(Commands.argument("gate", StringArgumentType.string()).executes(context -> gateFor(context, name, false))))))
-                .then(Commands.literal("reset").requires(source -> server && source.hasPermission(2)).executes(context -> {
+                .then(Commands.literal("reset").requires(source -> server && staff.test(source)).executes(context -> {
                     ran(context.getSource(), name, "reset");
                     int swept = ContentReset.run(context.getSource().getServer());
                     send(context.getSource(), ChatFormatting.GREEN, Component.literal("The map was reset, " + swept + " entity(s) swept"));
@@ -127,7 +132,13 @@ public final class CommandShared {
                             for (String known : context.getSource().getOnlinePlayerNames()) { suggestions.suggest(known); }
                             return suggestions.buildFuture();
                         }).executes(context -> teamVote(context, name, StringArgumentType.getString(context, "player"))))))
-                .then(Commands.literal("biome")
+                .then(Commands.literal("round").requires(source -> server)
+                        .then(Commands.literal("start").executes(context -> roundStart(context, name)))
+                        .then(Commands.literal("reset").executes(context -> roundReset(context, name)))
+                        .then(Commands.literal("vote")
+                                .then(Commands.literal("yes").executes(context -> roundVote(context, name, true)))
+                                .then(Commands.literal("no").executes(context -> roundVote(context, name, false)))))
+                .then(Commands.literal("biome").requires(staff)
                         .then(Commands.literal("here").executes(context -> {
                             ran(context.getSource(), name, "biome here");
                             biomeHere(context.getSource());
@@ -143,12 +154,12 @@ public final class CommandShared {
                             biomeList(context.getSource(), true);
                             return 1;
                         }))))
-                .then(Commands.literal("unused").executes(context -> {
+                .then(Commands.literal("unused").requires(staff).executes(context -> {
                     ran(context.getSource(), name, "unused");
                     unused(context.getSource(), unusedNote);
                     return 1;
                 }))
-                .then(Commands.literal("config")
+                .then(Commands.literal("config").requires(staff)
                         .then(Commands.literal("unused").executes(context -> {
                             ran(context.getSource(), name, "config unused");
                             config(context.getSource(), false, configNote);
@@ -161,7 +172,7 @@ public final class CommandShared {
                         })));
         if (server) {
             root
-                    .then(Commands.literal("locate").then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
+                    .then(Commands.literal("locate").requires(staff).then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
                         for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
                         return suggestions.buildFuture();
                     }).executes(context -> {
@@ -192,7 +203,7 @@ public final class CommandShared {
                                         ran(context.getSource(), name, "goto " + place + " back");
                                         return goBack(context.getSource(), place);
                                     }))))
-                    .then(Commands.literal("vein").then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
+                    .then(Commands.literal("vein").requires(staff).then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
                         for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
                         return suggestions.buildFuture();
                     }).executes(context -> {
@@ -628,6 +639,35 @@ public final class CommandShared {
         boolean took = ContentTeams.claim(player.serverLevel(), player.getGameProfile().getName(), mine);
         send(source, took ? mine.color() : ChatFormatting.RED, Component.literal(took ? "You lead " + mine.displayName() : ContentTeams.holding(mine) + " already leads " + mine.displayName()));
         return took ? 1 : 0;
+    }
+
+    private static int roundStart(CommandContext<CommandSourceStack> context, String name) {
+        CommandSourceStack source = context.getSource();
+        ran(source, name, "round start");
+        String said = ContentScoring.start(source.getServer(), source.getPlayer(), source.getTextName(), source.hasPermission(2));
+        send(source, "The round starts".equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
+        return 1;
+    }
+
+    private static int roundReset(CommandContext<CommandSourceStack> context, String name) {
+        CommandSourceStack source = context.getSource();
+        ran(source, name, "round reset");
+        String said = ContentRoundReset.call(source.getServer(), source.getTextName(), source.getPlayer(), source.hasPermission(2));
+        send(source, ContentRoundReset.DONE.equals(said) || ContentRoundReset.CALLED.equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
+        return 1;
+    }
+
+    private static int roundVote(CommandContext<CommandSourceStack> context, String name, boolean yes) {
+        CommandSourceStack source = context.getSource();
+        ran(source, name, "round vote " + (yes ? "yes" : "no"));
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            send(source, ChatFormatting.RED, Component.literal("Only a player votes"));
+            return 0;
+        }
+        String said = ContentRoundReset.vote(source.getServer(), player, yes);
+        send(source, said.startsWith("You voted") ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
+        return 1;
     }
 
     private static int teamLeave(CommandContext<CommandSourceStack> context, String name) {

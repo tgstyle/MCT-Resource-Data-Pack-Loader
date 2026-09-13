@@ -9,7 +9,7 @@ public record ShapeDef(String type, AmountDef radius, AmountDef height, AmountDe
         List<String> surface, AmountDef stack, boolean seeSky, boolean checkStay, int scatterX, int scatterY, int scatterZ, String log, String leaves,
         boolean hanging, String structure, List<PickDef> structures, List<PickDef> turns, List<PickDef> mirrors, String taper, int integrity,
         int rarity, boolean perChunk, @Nullable ContentField field, float threshold, int fade, String lootTable, String locateAs, @Nullable int[] at,
-        String pattern, float density, String rich, String poor) {
+        String pattern, float density, String rich, String poor, float richAt, float poorAt) {
     public static final int MOST_REACH = 8;
     public static final String CLUSTER = "cluster";
     public static final String PLATE = "plate";
@@ -44,7 +44,7 @@ public record ShapeDef(String type, AmountDef radius, AmountDef height, AmountDe
 
     public static ShapeDef cluster() {
         return new ShapeDef(CLUSTER, AmountDef.of(6), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", List.of(), AmountDef.of(1), true, true,
-                8, 4, 8, "", "", false, "", List.of(), List.of(), List.of(), STRAIGHT, 100, 0, false, null, 0.5F, 0, "", "", null, DEFAULT, 1.0F, "", "");
+                8, 4, 8, "", "", false, "", List.of(), List.of(), List.of(), STRAIGHT, 100, 0, false, null, 0.5F, 0, "", "", null, DEFAULT, 1.0F, "", "", 0.88F, 0.4F);
     }
 
     public boolean isRound() { return CIRCLE.equals(plane); }
