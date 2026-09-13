@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -72,6 +73,8 @@ public final class ContentPotions {
         if (!BREWING.isEmpty()) { Summary.info("brewing", "Loaded " + BREWING.size() + " brewing recipe(s) from packs"); }
         return wanted();
     }
+
+    public static Set<ResourceLocation> keys() { return POTIONS.keySet(); }
 
     public static boolean wanted() { return !POTIONS.isEmpty() || !TYPES.isEmpty() || !BREWING.isEmpty(); }
 

@@ -26,6 +26,8 @@ public final class Ids {
     private static final int FLATTENED = 1451;
     private static final String MINECRAFT = "minecraft";
     private static final Map<String, Integer> BLOCK_IDS = new HashMap<>();
+    private static final int FIRST_LATE_BLOCK = 198;
+    private static final String[] LATE_BLOCKS = {"end_rod", "chorus_plant", "chorus_flower", "purpur_block", "purpur_pillar", "purpur_stairs", "purpur_double_slab", "purpur_slab", "end_bricks", "beetroots", "grass_path", "end_gateway", "repeating_command_block", "chain_command_block", "frosted_ice", "magma", "nether_wart_block", "red_nether_brick", "bone_block", "structure_void", "observer", "white_shulker_box", "orange_shulker_box", "magenta_shulker_box", "light_blue_shulker_box", "yellow_shulker_box", "lime_shulker_box", "pink_shulker_box", "gray_shulker_box", "silver_shulker_box", "cyan_shulker_box", "purple_shulker_box", "blue_shulker_box", "brown_shulker_box", "green_shulker_box", "red_shulker_box", "black_shulker_box", "white_glazed_terracotta", "orange_glazed_terracotta", "magenta_glazed_terracotta", "light_blue_glazed_terracotta", "yellow_glazed_terracotta", "lime_glazed_terracotta", "pink_glazed_terracotta", "gray_glazed_terracotta", "silver_glazed_terracotta", "cyan_glazed_terracotta", "purple_glazed_terracotta", "blue_glazed_terracotta", "brown_glazed_terracotta", "green_glazed_terracotta", "red_glazed_terracotta", "black_glazed_terracotta", "concrete", "concrete_powder", "", "", "structure_block"};
     private static final Map<String, String> ITEMS = new ConcurrentHashMap<>();
     private static final Map<String, Block> BLOCKS = new ConcurrentHashMap<>();
     private static final Map<String, String> ENTITIES = new ConcurrentHashMap<>();
@@ -58,13 +60,13 @@ public final class Ids {
 
     private static int current() { return SharedConstants.getCurrentVersion().getDataVersion().getVersion(); }
 
-    public static boolean isVanilla(String name) { return name.startsWith(MINECRAFT + ":") || name.indexOf(':') < 0; }
+    public static boolean isModded(String name) { return !name.startsWith(MINECRAFT + ":") && name.indexOf(':') >= 0; }
 
     private static String namespaced(String name) { return name.indexOf(':') < 0 ? MINECRAFT + ":" + name : name; }
 
     public static String item(String name, int meta) {
         String asked = namespaced(name.trim());
-        if (!isVanilla(asked)) { return asked; }
+        if (isModded(asked)) { return asked; }
         String key = asked + "@" + meta;
         String held = ITEMS.get(key);
         if (held != null) { return held; }
@@ -84,7 +86,7 @@ public final class Ids {
 
     public static Block block(String name, int meta) {
         String asked = namespaced(name.trim());
-        if (!isVanilla(asked)) { return new Block(asked, Map.of()); }
+        if (isModded(asked)) { return new Block(asked, Map.of()); }
         String key = asked + "@" + meta;
         Block held = BLOCKS.get(key);
         if (held != null) { return held; }
@@ -112,7 +114,7 @@ public final class Ids {
 
     public static String entity(String name) {
         String asked = namespaced(name.trim());
-        if (!isVanilla(asked)) { return asked; }
+        if (isModded(asked)) { return asked; }
         return ENTITIES.computeIfAbsent(asked, held -> {
             try { return DataFixers.getDataFixer().update(References.ENTITY_NAME, new Dynamic<>(JsonOps.INSTANCE, new JsonPrimitive(held)), LEGACY, current()).asString(held); }
             catch (RuntimeException failed) {
@@ -124,7 +126,7 @@ public final class Ids {
 
     public static String biome(String name) {
         String asked = namespaced(name.trim());
-        if (!isVanilla(asked)) { return asked; }
+        if (isModded(asked)) { return asked; }
         return BIOMES.computeIfAbsent(asked, held -> {
             try { return DataFixers.getDataFixer().update(References.BIOME, new Dynamic<>(JsonOps.INSTANCE, new JsonPrimitive(held)), LEGACY, current()).asString(held); }
             catch (RuntimeException failed) {
@@ -161,8 +163,10 @@ public final class Ids {
     private static synchronized Map<String, Integer> blockIds() {
         if (BLOCK_IDS.isEmpty()) {
             for (int id = 0; id < 256; id++) {
-                String name = ItemIdFix.getItem(id);
-                if (name != null) { BLOCK_IDS.putIfAbsent(name, id); }
+                BLOCK_IDS.putIfAbsent(ItemIdFix.getItem(id), id);
+            }
+            for (int i = 0; i < LATE_BLOCKS.length; i++) {
+                if (!LATE_BLOCKS[i].isEmpty()) { BLOCK_IDS.putIfAbsent("minecraft:" + LATE_BLOCKS[i], FIRST_LATE_BLOCK + i); }
             }
         }
         return BLOCK_IDS;

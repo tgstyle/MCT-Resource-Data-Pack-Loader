@@ -25,6 +25,7 @@ public final class RegistryRemaps {
     private static final Gson GSON = new GsonBuilder().create();
     private static final String REGISTRY = "registry";
     private static final String MAPPING = "mapping";
+    private static final Map<String, String> LEGACY_REGISTRIES = Map.of("minecraft:blocks", "minecraft:block", "minecraft:items", "minecraft:item", "minecraft:biomes", "minecraft:worldgen/biome", "minecraft:enchantments", "minecraft:enchantment", "minecraft:potions", "minecraft:mob_effect", "minecraft:potiontypes", "minecraft:potion", "minecraft:soundevents", "minecraft:sound_event", "minecraft:entities", "minecraft:entity_type", "minecraft:villagerprofessions", "minecraft:villager_profession");
     private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -45,7 +46,8 @@ public final class RegistryRemaps {
             ContentLog.LOGGER.error("Registry remap {} is empty, ignoring it", key);
             return 0;
         }
-        ResourceLocation registry = ResourceLocation.parse(GsonHelper.getAsString(json, REGISTRY));
+        String named = GsonHelper.getAsString(json, REGISTRY);
+        ResourceLocation registry = ResourceLocation.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
         JsonObject mapping = GsonHelper.getAsJsonObject(json, MAPPING);
         Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());
         int count = 0;

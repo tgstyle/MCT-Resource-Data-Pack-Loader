@@ -57,7 +57,7 @@ public final class ContentVillages {
         return found;
     }
 
-    private static int chance(VillageDef def) { return Math.max(1, def.weight()) * Math.max(1, def.mostCount() - def.leastCount() + 1); }
+    private static int chance(VillageDef def) { return Math.max(1, def.weight()) * Math.max(1, Math.max(def.width(), def.depth())); }
 
     public static int largestPlot() {
         int largest = 0;

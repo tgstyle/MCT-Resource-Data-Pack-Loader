@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 
 public final class Convert {
     private static final Set<String> BLOCK_KEYS = Set.of("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock");
-    private static final Set<String> ITEM_KEYS = Set.of("item", "items", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "ignitedBy", "saysIcon");
+    private static final Set<String> ITEM_KEYS = Set.of("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "ignitedBy", "saysIcon");
     private static final Set<String> ENTITY_KEYS = Set.of("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes");
     private static final Set<String> BIOME_KEYS = Set.of("biomes", "biome", "replaces", "baseBiome", "biomeNames", "roles", "biomeWhitelist");
     private static final Set<String> DIMENSION_KEYS = Set.of("dimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "blockGeneratorDimensions", "rubicWorldDimensions");
@@ -26,10 +26,13 @@ public final class Convert {
     private static final Set<String> RAW_CONTAINERS = Set.of("palette", "legend", "rows", "map", "pattern", "key", "notes", "attributes", "pathPriorities", "gameRules", "decoration", "spawnRates", "settings");
     private static final Pattern DIM_PREFIX = Pattern.compile("^(-?\\d+)=(.*)$");
     private static final Pattern REPLACEMENT = Pattern.compile("^([^=]+)=([^=]+)$");
+    private static final Pattern VILLAGE_BLOCK = Pattern.compile("^([^=]+)=([^=,]+)(,\\s*\\d+)?$");
     private static final Pattern LANG_TILE = Pattern.compile("^(tile|item)\\.([a-z0-9_]+)[:.]([a-z0-9_./-]+?)(?:\\.([a-z0-9_]+))?\\.(name|locked)$");
     private static final Pattern LANG_ENTITY = Pattern.compile("^entity\\.([a-z0-9_]+)\\.([a-z0-9_]+)\\.name$");
     private static final Pattern LANG_FLUID = Pattern.compile("^fluid\\.(?:([a-z0-9_]+)\\.)?([a-z0-9_]+)$");
     private static final Pattern LANG_TAB = Pattern.compile("^itemGroup\\.([a-z0-9_]+)$");
+
+    public static final String GAME_LOOP = "gameLoopFunction";
 
     private Convert() {}
 
@@ -49,6 +52,11 @@ public final class Convert {
             String tab = json.get("creativeTab").getAsString().trim();
             if (!tab.isEmpty() && tab.indexOf(':') < 0) { json.addProperty("creativeTab", pack.mainNamespace() + ":" + tab); }
         }
+        if ("gamerules".equals(folder)) {
+            for (Map.Entry<String, JsonElement> dimension : json.entrySet()) {
+                if (dimension.getValue().isJsonObject() && dimension.getValue().getAsJsonObject().remove(GAME_LOOP) != null) { pack.rewrote(); }
+            }
+        }
         if ("gamerules".equals(folder) || "blastplaster".equals(folder)) { renameDimensionKeys("gamerules".equals(folder) ? json : json.has("dimensions") && json.get("dimensions").isJsonObject() ? json.getAsJsonObject("dimensions") : new JsonObject(), pack); }
         if ("dimensions".equals(folder)) {
             json.remove("id");
@@ -65,7 +73,7 @@ public final class Convert {
     private static void renameDimensionKeys(JsonObject json, Ported pack) {
         List<String> keys = new ArrayList<>(json.keySet());
         for (String key : keys) {
-            String mapped = Ids.dimension(key);
+            String mapped = pack.dimension(key);
             if (!mapped.equals(key)) {
                 JsonElement held = json.remove(key);
                 json.add(mapped, held);
@@ -143,7 +151,7 @@ public final class Convert {
     @Nullable private static JsonElement primitive(String key, String parentKey, JsonPrimitive value, Context context, Ported pack) {
         if (context == Context.DIMENSION) {
             String named = value.isNumber() ? String.valueOf(value.getAsInt()) : value.getAsString().trim();
-            String mapped = Ids.dimension(named);
+            String mapped = pack.dimension(named);
             if (!mapped.equals(named) || value.isNumber()) {
                 pack.rewrote();
                 return new JsonPrimitive(mapped);
@@ -155,11 +163,17 @@ public final class Convert {
         if (DIMENSION_PREFIXED.contains(key)) {
             Matcher m = DIM_PREFIX.matcher(text.trim());
             if (m.matches()) {
-                String rest = "worldBelow".equals(key) || "worldAbove".equals(key) ? Ids.dimension(m.group(2).trim()) : m.group(2);
+                String rest = "worldBelow".equals(key) || "worldAbove".equals(key) ? pack.dimension(m.group(2).trim()) : m.group(2);
                 pack.rewrote();
-                return new JsonPrimitive(Ids.dimension(m.group(1)) + "=" + rest);
+                return new JsonPrimitive(pack.dimension(m.group(1)) + "=" + rest);
             }
             return null;
+        }
+        if ("villageBlocks".equals(key)) {
+            Matcher m = VILLAGE_BLOCK.matcher(text.trim());
+            if (!m.matches()) { return null; }
+            pack.rewrote();
+            return new JsonPrimitive(blockName(m.group(1).trim(), pack) + "=" + blockName(m.group(2).trim(), pack) + (m.group(3) == null ? "" : m.group(3)));
         }
         if ("blockReplacements".equals(key)) {
             Matcher m = REPLACEMENT.matcher(text.trim());
@@ -219,7 +233,7 @@ public final class Convert {
             pack.rewrote();
             return new JsonPrimitive(own);
         }
-        if (!Ids.isVanilla(name)) { return null; }
+        if (Ids.isModded(name)) { return null; }
         Ids.Block state = Ids.block(name, meta);
         if (state.name().equals(trimmed) && state.properties().isEmpty()) { return null; }
         pack.rewrote();
@@ -251,7 +265,7 @@ public final class Convert {
             if (!own.equals(trimmed)) { pack.rewrote(); }
             return own;
         }
-        if (!Ids.isVanilla(name)) { return text; }
+        if (Ids.isModded(name)) { return text; }
         String mapped = Ids.item(name, meta);
         if (!mapped.equals(trimmed)) { pack.rewrote(); }
         return mapped;
@@ -450,7 +464,22 @@ public final class Convert {
     public static String advancement(JsonObject json, Ported pack) {
         if (json.has("display") && json.get("display").isJsonObject()) {
             JsonObject display = json.getAsJsonObject("display");
-            if (display.has("icon") && display.get("icon").isJsonObject()) { stack(display.getAsJsonObject("icon"), pack); }
+            if (display.has("icon") && display.get("icon").isJsonObject()) {
+                JsonObject icon = display.getAsJsonObject("icon");
+                stack(icon, pack);
+                if (icon.has("item") && !icon.has("id")) {
+                    icon.add("id", icon.remove("item"));
+                    pack.rewrote();
+                }
+            }
+            if (display.has("background") && display.get("background").isJsonPrimitive()) {
+                String background = display.get("background").getAsString();
+                String moved = background.replace("textures/blocks/", "textures/block/").replace("textures/items/", "textures/item/");
+                if (!moved.equals(background)) {
+                    display.addProperty("background", moved);
+                    pack.rewrote();
+                }
+            }
         }
         if (json.has("criteria") && json.get("criteria").isJsonObject()) { predicates(json.get("criteria"), pack); }
         return Ported.GSON.toJson(json);

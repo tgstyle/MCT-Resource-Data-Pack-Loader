@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -45,6 +46,8 @@ public final class Ported {
     private final Set<String> notes = new LinkedHashSet<>();
     private final Set<String> taken = new LinkedHashSet<>();
     private final Map<String, Map<String, String>> renamed = new LinkedHashMap<>();
+    private final Set<String> ticking = new LinkedHashSet<>();
+    private final Map<String, String> dimensionIds = new LinkedHashMap<>();
     private boolean reported;
     private int moved;
     private int rewritten;
@@ -107,6 +110,7 @@ public final class Ported {
         for (String path : realPaths) {
             if (path.startsWith("blocks/") && path.endsWith(".json")) { learn(home, namespace, path, "blocks", blockFiles, blockVariants); }
             else if (path.startsWith("items/") && path.endsWith(".json")) { learn(home, namespace, path, "items", itemFiles, itemVariants); }
+            else if (path.startsWith("dimensions/") && path.endsWith(".json")) { dimensionId(home, namespace, path); }
         }
         for (String path : realPaths) {
             Port.Mapped mapped = Port.map(path);
@@ -119,6 +123,7 @@ public final class Ported {
                 case OREDICT -> expandOreDict(real, path);
                 case BLOCKSTATE -> aliases(home, namespace, real, path, realPaths);
                 default -> {
+                    if (path.startsWith("gamerules/") && path.endsWith(".json")) { gameLoop(real, path); }
                     if (mapped.type() == PackType.SERVER_DATA) { moved++; }
                     expose(mapped.type(), namespace, overrideTarget(mapped.path()), new Source(real, mapped.kind(), null));
                 }
@@ -136,6 +141,19 @@ public final class Ported {
         if (mapped.equals(target)) { return path; }
         note("'" + path + "' changes " + target + ", which is " + mapped + " now, so it is read as overrides/" + mapped.replace(':', '/') + ".json");
         return "overrides/" + mapped.replace(':', '/') + ".json";
+    }
+
+    private void dimensionId(Path home, String namespace, String path) {
+        JsonObject json = readJson(home.resolve(path));
+        if (json == null || !json.has("id") || !json.get("id").isJsonPrimitive() || !json.getAsJsonPrimitive("id").isNumber()) { return; }
+        String named = namespace + ":" + path.substring("dimensions/".length(), path.length() - ".json".length());
+        dimensionIds.put(String.valueOf(json.get("id").getAsInt()), named);
+        note("'" + path + "' was dimension " + json.get("id").getAsInt() + ", so that number is read as " + named + " wherever the pack names it");
+    }
+
+    public String dimension(String named) {
+        String own = dimensionIds.get(named.trim());
+        return own != null ? own : Ids.dimension(named);
     }
 
     private void learn(Path home, String namespace, String path, String folder, Map<String, Variants> files, Map<String, String> variants) {
@@ -163,6 +181,26 @@ public final class Ported {
 
     private void expose(PackType type, String namespace, String path, Source source) {
         exposed.computeIfAbsent(type, k -> new LinkedHashMap<>()).computeIfAbsent(namespace, k -> new LinkedHashMap<>()).putIfAbsent(path, source);
+    }
+
+    private void gameLoop(Path real, String path) {
+        JsonObject json = readJson(real);
+        if (json == null) { return; }
+        int before = ticking.size();
+        for (Map.Entry<String, JsonElement> dimension : json.entrySet()) {
+            if (!dimension.getValue().isJsonObject() || !dimension.getValue().getAsJsonObject().has(Convert.GAME_LOOP)) { continue; }
+            String function = dimension.getValue().getAsJsonObject().get(Convert.GAME_LOOP).getAsString().trim();
+            if (!function.isEmpty()) { ticking.add(function.indexOf(':') < 0 ? "minecraft:" + function : function); }
+        }
+        if (ticking.size() == before) { return; }
+        JsonObject tag = new JsonObject();
+        JsonArray values = new JsonArray();
+        ticking.forEach(values::add);
+        tag.add("values", values);
+        String tagPath = ContentFormats.FUNCTION_TAGS + "/tick.json";
+        cache.put(key(PackType.SERVER_DATA, "minecraft", tagPath), GSON.toJson(tag).getBytes(StandardCharsets.UTF_8));
+        expose(PackType.SERVER_DATA, "minecraft", tagPath, new Source(real, Port.Kind.DEFINITION, null));
+        note("'" + path + "' runs a gameLoopFunction, which is the #minecraft:tick function tag now, so it became " + tagPath + " under minecraft");
     }
 
     private void expandOreDict(Path real, String path) {

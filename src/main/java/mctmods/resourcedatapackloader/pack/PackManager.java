@@ -209,7 +209,7 @@ public final class PackManager {
 
     private static final String[][] SINGULAR = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
 
-    @Nullable private static String singular(String path) {
+    @Nullable public static String singular(String path) {
         for (String[] pair : SINGULAR) {
             if (path.startsWith(pair[0])) { return pair[1] + path.substring(pair[0].length()); }
         }

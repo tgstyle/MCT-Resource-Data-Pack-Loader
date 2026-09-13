@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 
 import com.google.gson.JsonObject;
@@ -64,7 +65,9 @@ public final class Port {
         String head = slash < 0 ? path : path.substring(0, slash);
         if (slash > 0 && SOUNDS.equals(head) && !path.endsWith(".json")) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW); }
         if (slash < 0 || CLIENT_FOLDERS.contains(head)) { return client(path); }
-        return data(path, head);
+        Mapped mapped = data(path, head);
+        String folder = PackManager.singular(mapped.path());
+        return folder == null ? mapped : new Mapped(mapped.type(), folder, mapped.kind());
     }
 
     private static Mapped client(String path) {
