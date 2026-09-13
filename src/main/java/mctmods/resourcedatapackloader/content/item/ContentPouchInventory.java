@@ -11,7 +11,7 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContentPouchInventory extends SimpleContainer {
+public final class ContentPouchInventory extends SimpleContainer {
     private final ItemStack pouch;
     private boolean loading;
 

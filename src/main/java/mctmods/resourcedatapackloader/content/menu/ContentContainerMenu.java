@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
 
-public class ContentContainerMenu extends AbstractContainerMenu {
+public final class ContentContainerMenu extends AbstractContainerMenu {
     public static final int SLOT = 18;
     private final Container held;
     private final ContainerDef def;

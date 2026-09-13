@@ -1639,6 +1639,8 @@ Entries under `add`:
 | `count` | no | int | `1` | How many come out |
 | `experience` | no | number | `0.0` | Experience per smelt. Iron ore gives 0.7 |
 
+An addition whose input something already smelts is ignored and the log names the recipe in the way, as 1.12.2 does; remove that recipe in the same file to replace it.
+
 Entries under `remove` are either a bare item name, which removes every recipe producing it, or an object naming `input`, `result`, or both to narrow it down. A removal naming neither is skipped and the log says so.
 
 `<namespace>/fuels/*.json`
@@ -5180,7 +5182,7 @@ What a 1.12.2 pack can write that this version does not read, and why. A pack th
 | Key | Where | Why |
 | --- | --- | --- |
 | `meta` | blocks, items, worldgen, block drops | Ids carry no metadata since the flattening. The port runs every `name:meta` through the game's data fixers and drops the key |
-| `oreDict` | blocks, items, furnace | The ore dictionary is gone. The port turns it into `tags` on the convention tags |
+| `oreDict` | blocks, items, furnace, fuels | The ore dictionary is gone. The port turns it into `tags` on the convention tags, and a fuel's into `tag` |
 | `modelMeta` | blocks | Models are generated per variant, so there is no metadata to map them by |
 | `disableOverrides`, `tolerateMissingInAdvancements`, `data.functions` | settings | A data pack replaces a vanilla recipe, advancement or function by shipping one under the same name |
 | `careers`, `texture`, `zombieTexture` | villagers | There have been no careers since 1.14, so each career becomes a villager file of its own. The look ships as `textures/entity/villager/profession/<name>.png` and `textures/entity/zombie_villager/profession/<name>.png` |

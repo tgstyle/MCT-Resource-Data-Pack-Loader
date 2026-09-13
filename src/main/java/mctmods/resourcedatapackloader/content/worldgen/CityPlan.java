@@ -716,24 +716,29 @@ public final class CityPlan {
             for (int offX = -reachX; offX <= reachX; offX++) {
                 int cityX = districtX + offX;
                 int cityZ = districtZ + offZ;
-                if (skipped(seed, cityX, cityZ)) { continue; }
-                CityPlan built = window(seed, map, cityX, cityZ, districtX, districtZ);
+                if (spacing > 1 && elsewhere(seed, cityX, cityZ)) { continue; }
+                CityPlan built = window(seed, map, cityX, cityZ, districtX, districtZ, spacing > 1);
                 if (built != null) { return built; }
             }
         }
         return null;
     }
 
-    @Nullable private static CityPlan window(long seed, CityMapDef map, int cityX, int cityZ, int districtX, int districtZ) {
-        int originX = cityX * district();
-        int originZ = cityZ * district();
-        int windowX = districtX * district();
-        int windowZ = districtZ * district();
+    private static boolean elsewhere(long seed, int cityX, int cityZ) {
+        int[] held = center(seed, cityX, cityZ);
+        return held[0] != cityX || held[1] != cityZ;
+    }
+
+    @Nullable private static CityPlan window(long seed, CityMapDef map, int cityX, int cityZ, int districtX, int districtZ, boolean centered) {
         Rotation turn = TURNS[Math.floorMod(Hashes.mix(seed ^ SALT, cityX, 3, cityZ), TURNS.length)];
         char[][] marks = map.marks(turn);
         CityMapDef.Kind[][] grid = map.kinds(marks);
         int deep = grid.length;
         int wide = grid[0].length;
+        int originX = cityX * district() + (centered ? district() / 2 - wide * map.cell() / 2 : 0);
+        int originZ = cityZ * district() + (centered ? district() / 2 - deep * map.cell() / 2 : 0);
+        int windowX = districtX * district();
+        int windowZ = districtZ * district();
         if (windowX + district() <= originX || windowX >= originX + wide * map.cell()) { return null; }
         if (windowZ + district() <= originZ || windowZ >= originZ + deep * map.cell()) { return null; }
         int full = fullWidth();
@@ -856,16 +861,6 @@ public final class CityPlan {
             if (gap < closest) { closest = gap; best = line; }
         }
         return best;
-    }
-
-    private static boolean skipped(long seed, int districtX, int districtZ) {
-        int spacing = spacing();
-        if (spacing <= 0) { return true; }
-        if (spacing == 1) { return false; }
-        int regionX = Math.floorDiv(districtX, spacing);
-        int regionZ = Math.floorDiv(districtZ, spacing);
-        long mixed = Hashes.mix(seed ^ SALT, regionX, 0, regionZ);
-        return districtX != regionX * spacing + Math.floorMod(mixed, spacing) || districtZ != regionZ * spacing + Math.floorMod(mixed >> 21, spacing);
     }
 
     public static int spacing() { return ContentControl.number(ContentControl.VILLAGES, "villageCitySpacing", Config.worldgen.villageCitySpacing()); }

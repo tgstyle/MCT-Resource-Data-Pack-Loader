@@ -116,6 +116,26 @@ public final class FurnaceRecipes {
 
     public static List<Addition> additions() { return Collections.unmodifiableList(ADDITIONS); }
 
+    public static boolean added(ResourceLocation id) {
+        for (Addition addition : ADDITIONS) {
+            if (addition.id().equals(id)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean removedByInput(Ingredient ingredient) {
+        for (Removal removal : REMOVALS) {
+            if (removal.input != null && removal.result == null && ingredient.test(new ItemStack(removal.input))) { return true; }
+        }
+        return false;
+    }
+
+    public static boolean smeltsAlready(Addition addition, Ingredient ingredient, ResourceLocation recipe) {
+        if (!ingredient.test(new ItemStack(addition.input())) || removedByInput(ingredient)) { return false; }
+        ContentLog.LOGGER.info("Ignored the furnace addition {}: its input already smelts by the recipe {}, and 1.12.2 ignores a conflicting input the same way. Remove that recipe under remove to replace it", addition.id(), recipe);
+        return true;
+    }
+
     public static boolean resolvedAtLoad() {
         for (Removal removal : REMOVALS) {
             if (removal.input != null) { return false; }

@@ -90,7 +90,7 @@ public final class RecipeLoading {
     }
 
     public static boolean late(ResourceLocation id, Recipe<?> recipe, ItemStack result) {
-        if (scripted(id) || !(recipe instanceof AbstractCookingRecipe cooking) || !FurnaceRecipes.removes(cooking.getIngredients(), result, true)) { return false; }
+        if (scripted(id) || FurnaceRecipes.added(id) || !(recipe instanceof AbstractCookingRecipe cooking) || !FurnaceRecipes.removes(cooking.getIngredients(), result, true)) { return false; }
         furnaceRemoved++;
         return true;
     }

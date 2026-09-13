@@ -26,7 +26,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Mixin(value = RecipeManager.class, priority = 1200) public abstract class MixinRecipeManager implements IRecipeFilter {
@@ -54,24 +56,34 @@ import java.util.Map;
     @Unique private void rdpl$rebuild(boolean late) {
         ImmutableMultimap.Builder<RecipeType<?>, RecipeHolder<?>> kept = ImmutableMultimap.builder();
         Map<ResourceLocation, RecipeHolder<?>> named = new LinkedHashMap<>();
+        List<RecipeHolder<?>> smelting = new ArrayList<>();
         for (RecipeHolder<?> holder : byName.values()) {
             ItemStack result = holder.value().getResultItem(registries);
             if (late ? RecipeLoading.late(holder.id(), holder.value(), result) : RecipeLoading.doomed(holder.id(), holder.value(), result)) { continue; }
             kept.put(holder.value().getType(), holder);
             named.put(holder.id(), holder);
+            if (holder.value().getType() == RecipeType.SMELTING) { smelting.add(holder); }
         }
         int added = 0;
         if (!late) {
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.additions()) {
-                if (named.containsKey(addition.id())) { continue; }
+                if (named.containsKey(addition.id()) || rdpl$smelts(smelting, addition)) { continue; }
                 RecipeHolder<SmeltingRecipe> holder = new RecipeHolder<>(addition.id(), new SmeltingRecipe("", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.experience(), RDPL_COOKING_TIME));
                 kept.put(RecipeType.SMELTING, holder);
                 named.put(addition.id(), holder);
+                smelting.add(holder);
                 added++;
             }
         }
         byType = kept.build();
         byName = ImmutableMap.copyOf(named);
         if (!late) { RecipeLoading.finish(added); }
+    }
+
+    @Unique private static boolean rdpl$smelts(List<RecipeHolder<?>> smelting, FurnaceRecipes.Addition addition) {
+        for (RecipeHolder<?> holder : smelting) {
+            if (!holder.value().getIngredients().isEmpty() && FurnaceRecipes.smeltsAlready(addition, holder.value().getIngredients().getFirst(), holder.id())) { return true; }
+        }
+        return false;
     }
 }

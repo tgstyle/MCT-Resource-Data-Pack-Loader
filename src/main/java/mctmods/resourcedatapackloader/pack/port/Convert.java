@@ -62,6 +62,15 @@ public final class Convert {
             json.remove("id");
             json.remove("suffix");
         }
+        if ("fuels".equals(folder) && json.has("fuels") && json.get("fuels").isJsonArray()) {
+            for (JsonElement element : json.getAsJsonArray("fuels")) {
+                if (!element.isJsonObject()) { continue; }
+                JsonObject fuel = element.getAsJsonObject();
+                if (!fuel.has("oreDict") || fuel.has("tag")) { continue; }
+                fuel.addProperty("tag", Ids.oreDictTag(fuel.remove("oreDict").getAsString()));
+                pack.rewrote();
+            }
+        }
         if ("worldgen".equals(folder) && json.has("block") && json.has("meta")) {
             json.addProperty("block", json.get("block").getAsString() + ":" + json.get("meta").getAsInt());
             json.remove("meta");

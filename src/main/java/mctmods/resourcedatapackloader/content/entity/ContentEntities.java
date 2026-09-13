@@ -22,6 +22,7 @@ import mctmods.resourcedatapackloader.content.entity.goal.SwoopGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.ThrowerGoal;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityType;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.ILivingEntity;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMob;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -85,6 +86,7 @@ import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -110,6 +112,7 @@ import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
@@ -274,6 +277,24 @@ public final class ContentEntities {
         EntityVariantDef def = def(event.getEntity());
         if (def == null || !def.flags().ignoresSpawnRules() || event.getResult() != MobSpawnEvent.PositionCheck.Result.DEFAULT) { return; }
         event.setResult(event.getEntity().checkSpawnObstruction(event.getLevel()) ? MobSpawnEvent.PositionCheck.Result.SUCCEED : MobSpawnEvent.PositionCheck.Result.FAIL);
+    }
+
+    public static void onLeave(EntityLeaveLevelEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel) || !(event.getEntity() instanceof Mob mob) || mob.getRemovalReason() == null || !mob.getRemovalReason().shouldDestroy()) { return; }
+        release(mob.goalSelector);
+        release(mob.targetSelector);
+        mob.setTarget(null);
+        mob.setLastHurtByMob(null);
+        ((ILivingEntity) mob).rdpl$setLastHurtMob(null);
+        ((ILivingEntity) mob).rdpl$setLastDamageSource(null);
+        mob.getCombatTracker().recheckStatus();
+    }
+
+    private static void release(GoalSelector selector) {
+        for (WrappedGoal wrapped : selector.getAvailableGoals()) {
+            if (wrapped.isRunning()) { wrapped.stop(); }
+        }
+        selector.removeAllGoals(goal -> true);
     }
 
     public static void onJoin(EntityJoinLevelEvent event) {

@@ -32,6 +32,7 @@
         "common.MixinEntity",
         "common.MixinExplosion",
         "common.MixinLevel",
+        "common.MixinMultiNoiseBiomeSource",
         "common.IStructureManager",
         "common.IMinecraftServer",
         "common.MixinChunkGenerator",
