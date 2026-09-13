@@ -3455,7 +3455,7 @@ Ein `imprint`-Eintrag mit `"locateAs": "Crypt"` registriert jede Struktur, die e
 | `fade` | field | int | `0` | Lässt das Band oben ausfransen statt glatt zu enden: über die obersten so vielen Blöcke des Höhenbereichs sinkt die Chance jedes Blocks Stufe für Stufe, derselbe Look, den die Engine `deepStone` am Übergang zur Welt darüber gibt |
 | `pattern` | vein | `default`, `banded` oder `tube` | `default` | Das Aussehen der Lagerstätte: ein verzerrter Klumpen, alle paar Blöcke gestapelte Schichten oder hohle Röhren, die sich durchs Gestein winden |
 | `density` | vein | 0.0 bis 1.0 | `1.0` | Der Anteil der passenden Blöcke, die wirklich gesetzt werden, eine Münze pro Block |
-| `rich` | vein | Blockname | keiner | Gesetzt im obersten Fünftel des Feldbereichs über `threshold`, dem Herz der Lagerstätte, statt der Blöcke des Eintrags |
+| `rich` | vein | Blockname | keiner | Gesetzt ab `richAt` aufwärts im Feldbereich über `threshold`, dem Herz der Lagerstätte, statt der Blöcke des Eintrags |
 | `poor` | vein | Blockname | keiner | Gesetzt in den unteren zwei Fünfteln dieses Bereichs, dem Rand, statt der Blöcke des Eintrags; die Mitte sind die Blöcke des Eintrags selbst. Eine weggelassene Stufe setzt dort die Blöcke des Eintrags |
 | `richAt` | vein | 0,0 bis 1,0 | `0.88` | Wo in diesem Bereich die reiche Stufe beginnt: `0.88` hält den reichen Block auf das stärkste Achtel der Lagerstätte, eine kleinere Zahl macht den reichen Kern dicker, `1.0` lässt gar keinen reichen Block zu |
 | `poorAt` | vein | 0,0 bis 1,0 | `0.4` | Wo die eigenen Blöcke des Eintrags beginnen: darunter wird der `poor`-Block gesetzt, `0.4` gibt also einen Rand aus den unteren zwei Fünfteln und `0.0` gar keinen armen Rand. Auf `richAt` begrenzt |
