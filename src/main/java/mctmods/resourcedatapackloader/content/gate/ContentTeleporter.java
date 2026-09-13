@@ -19,6 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -94,9 +95,9 @@ public final class ContentTeleporter implements ITeleporter {
 
     private static BlockPos stepOut(ServerLevel level, BlockPos portalPos) {
         BlockState held = level.getBlockState(portalPos);
-        if (!(held.getBlock() instanceof ContentPortalBlock)) { return portalPos.above(); }
+        if (!(held.getBlock() instanceof ContentPortalBlock block)) { return portalPos.above(); }
         Direction.Axis axis = held.getValue(ContentPortalBlock.AXIS);
-        if (axis == Direction.Axis.Y) { return portalPos.above(); }
+        if (axis == Direction.Axis.Y || block.getDef().fullCube()) { return portalPos.above(); }
         Direction[] sides = axis == Direction.Axis.X ? new Direction[] { Direction.NORTH, Direction.SOUTH } : new Direction[] { Direction.WEST, Direction.EAST };
         for (Direction side : sides) {
             BlockPos beside = portalPos.relative(side);
@@ -193,11 +194,13 @@ public final class ContentTeleporter implements ITeleporter {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 BlockPos at = portalPos.offset(dx, -1, dz);
-                if (!level.isLoaded(at) || !level.isEmptyBlock(at)) { continue; }
+                if (!level.isLoaded(at) || occupied(level, at)) { continue; }
                 level.setBlock(at, floor.defaultBlockState(), 2);
             }
         }
     }
+
+    private static boolean occupied(ServerLevel level, BlockPos at) { return !level.isEmptyBlock(at) && !(level.getBlockState(at).getBlock() instanceof LiquidBlock); }
 
     private static void clearAbove(ServerLevel level, BlockPos portalPos) {
         for (int dx = -1; dx <= 1; dx++) {

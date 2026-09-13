@@ -50,6 +50,7 @@
         "common.MixinStrongholdPortalRoom",
         "common.MixinMonsterThrone",
         "common.MixinNoiseBasedChunkGenerator",
+        "common.MixinPlacedFeature",
         "common.MixinNearestAttackableTargetGoal",
         "common.MixinTargetGoal",
         "common.MixinWalkNodeEvaluator",

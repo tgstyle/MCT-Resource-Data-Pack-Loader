@@ -28,6 +28,7 @@ import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.client.model.DynamicFluidContainerModel;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import java.util.Locale;
@@ -96,6 +97,9 @@ public final class ContentClient {
             if (tint.isEmpty()) { continue; }
             int fixed = fixed(tint, entry.id());
             event.register((stack, index) -> fixed >= 0 ? fixed : defaultBiome(tint), entry.item());
+        }
+        for (ContentFluids.Made made : ContentFluids.made()) {
+            if (made.bucket != null) { event.register(new DynamicFluidContainerModel.Colors(), made.bucket); }
         }
     }
 

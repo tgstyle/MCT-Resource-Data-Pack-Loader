@@ -100,5 +100,6 @@
   "rdpl.command.orenone": "Es wurde keine Erzgenerierung blockiert. Die Einstellungen sind vielleicht aus oder nicht verfügbar",
   "rdpl.command.oreblocked": "Bisher blockierte Erzgenerierung:",
   "key.categories.resourcedatapackloader": "Resource Data Pack Loader",
-  "key.resourcedatapackloader.open_worn": "Getragenen Behälter öffnen"
+  "key.resourcedatapackloader.open_worn": "Getragenen Behälter öffnen",
+  "rdpl.item.bucketFilled": "Eimer mit %s"
 }

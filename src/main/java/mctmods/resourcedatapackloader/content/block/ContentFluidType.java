@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
 public class ContentFluidType extends FluidType {
-    private static final int OPAQUE = 0xFF000000;
     private final FluidDef def;
 
     public ContentFluidType(FluidDef def) {
@@ -32,7 +31,7 @@ public class ContentFluidType extends FluidType {
 
             @Override @Nonnull public ResourceLocation getFlowingTexture() { return def.flowing(); }
 
-            @Override public int getTintColor() { return def.color() | OPAQUE; }
+            @Override public int getTintColor() { return def.tint(); }
         });
     }
 }

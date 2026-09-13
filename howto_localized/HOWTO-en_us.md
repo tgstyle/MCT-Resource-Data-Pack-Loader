@@ -533,6 +533,7 @@ A pack made for the 1.12.2 line loads as it is. The loader recognizes one by its
 - A 1.12.2 blockstate is not served at all. Its textures are read instead and served under the names the generator looks for, `textures/block/<variant>.png` with `_top` and `_bottom` where the blockstate had `end`, `top` or `bottom`, so the blockstate and the models are generated for each variant as they would be for a pack written here.
 - Recipes lose their `data` and gain flattened ids, `forge:ore_shaped` becomes `minecraft:crafting_shaped` with `ore` ingredients as `tag`, loot tables lose `set_data` the same way, and an advancement's `item` with `data` becomes `items`. An advancement's `background` moves from `textures/blocks/` to `textures/block/`.
 - A game rules file's `gameLoopFunction` becomes the `#minecraft:tick` function tag, written as `data/minecraft/tags/functions/tick.json`, since the game rule is gone. The pack's own dimension numbers are read through its `dimensions` files, so `"id": 7` in `dimensions/verdant.json` makes 7 `mypack:verdant` wherever the pack names it. Both sides of a `villageBlocks` pair are fixed, the chance kept, and a `registry_remap` file may keep 1.12.2's plural `minecraft:blocks` and `minecraft:items`.
+- A world template that turns off every structure 1.12.2 had in a dimension turns off the structures only this version has there too: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks` and `trail_ruins` in the overworld and `nether_fossils` in the Nether. Leave one of the 1.12.2 names on and they are left alone.
 - Functions are served as written, since a 1.12.2 command line is not something a port can rewrite, and the log says so. `block_drops` is carried as it is, its `meta` folded into the block name or its `properties`.
 
 The log carries one summary line per ported pack and a line for each file it moved, left out or could not carry, and every key this version no longer reads is still named by the parser that meets it. The port is a best effort, not a finished pack: open the written zip, read those lines, and finish by hand what it names, starting with the functions and any texture it could not find a name for.
@@ -893,7 +894,8 @@ assets/mypack/lang/en_us.json
 
 | Type | Texture files it looks for | Generated from |
 | --- | --- | --- |
-| `basic`, `ore`, `falling`, `flower`, `sapling`, `cane`, `leaves`, `container` without a chest | `<name>` | `cube_all`, `cross` or `leaves` |
+| `basic`, `ore`, `falling` | `<name>`, with `<name>_top` and `<name>_bottom` for the top and bottom faces where the pack ships them | `cube_all`, or `cube_bottom_top` when a top or bottom texture is there |
+| `flower`, `sapling`, `cane`, `leaves`, `container` without a chest | `<name>` | `cube_all`, `cross` or `leaves` |
 | `log` | `<name>` for the side, `<name>_top` for the ends | `cube_column` |
 | `slab` | `<name>` | `slab`, `slab_top` and a `cube_all` double |
 | `stairs` | `<name>` | `stairs`, `inner_stairs`, `outer_stairs`, all forty states written out |
@@ -905,7 +907,7 @@ assets/mypack/lang/en_us.json
 | `fence_gate` | `<name>` | the four gate models, closed and open, in a wall and out |
 | `ladder`, `vine`, `torch` | `<name>` | the game's own template for each |
 | `crop` | `<name>_stage0` up to `<name>_stage<maxAge>`, or `<name>` for all | one `crop` model per stage, `age=0` to `7` mapped onto them |
-| `portal` | `<name>`, or the nether portal's | three portal slabs, one per axis |
+| `portal` | `<name>`, or the nether portal's | `cube_all` for a `fullCube` block, as a portal block is on 1.12.2; three portal slabs, one per axis, for one that is not, such as a dimension's frame portal |
 | `banner` | its own sheet, see [Banners](#banners) | the game's banner model |
 | `container` with `chestModel` | the chest sheet named in `chestModel` | the mod's `pack_chest` model |
 
@@ -1236,7 +1238,7 @@ The file's path is the fluid's registry name unless `name` overrides it.
 | `name` | no | string | the file name | The fluid's registry name |
 | `still` | no | texture path | vanilla water still | Texture for the still fluid |
 | `flow` | no | texture path | vanilla water flowing | Texture for the flowing fluid |
-| `color` | no | hex color | none | Tint applied to those textures |
+| `color` | no | hex color | none | Tint applied to those textures. On the default water textures it is multiplied by the blue of 1.12.2's water, so a color picked for 1.12.2 looks the same here |
 | `bucket` | no | boolean | `true` | Register a bucket for it |
 | `luminosity` | no | 0 to 15 | `0` | Light emitted |
 | `density` | no | int | `1000` | Negative floats upward, like a gas |
@@ -4961,7 +4963,7 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 **Roles** for a world template's `roles`. Any biome type word above: each names a biome that fills the biomes carrying that tag once blocking has removed them, so `"ocean": "mypack:ruby_ocean"` puts the ruby ocean wherever an ocean was blocked.
 
-**Structures** for a world template's `structures` and for the `structures` group's own lists: the 1.12.2 names `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges` and `endcities`, or any structure set the game or a mod ships, such as `pillager_outposts`, `ancient_cities`, `trail_ruins`, `shipwrecks`, `ocean_ruins`, `ruined_portals`, `nether_fossils`, `buried_treasures`, `desert_pyramids`, `jungle_temples`, `igloos`, `swamp_huts`, `woodland_mansions`, `ocean_monuments`, `nether_complexes`, `end_cities`. A 1.12.2 name is read as the sets it stood for, so `temples` is the pyramids, the jungle temples, the igloos and the swamp huts together.
+**Structures** for a world template's `structures` and for the `structures` group's own lists: the 1.12.2 names `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges` and `endcities`, or any structure set the game or a mod ships, such as `pillager_outposts`, `ancient_cities`, `trail_ruins`, `shipwrecks`, `ocean_ruins`, `ruined_portals`, `nether_fossils`, `buried_treasures`, `desert_pyramids`, `jungle_temples`, `igloos`, `swamp_huts`, `woodland_mansions`, `ocean_monuments`, `nether_complexes`, `end_cities`. A 1.12.2 name is read as the sets it stood for, so `temples` is the pyramids, the jungle temples, the igloos and the swamp huts together. The 1.12.2 populate names are read too, as the parts of this version's world they stand for: `caves` the cave carvers (the noise caves are `noiseCaves`), `ravines` the canyons, `dungeons` the monster rooms, `lavalakes` the lava lakes, `netherlava` the Nether's open lava springs, `fire` the Nether's fire patches, `glowstone` its glowstone, `ice` the frozen top layer and `animals` the animals placed as a chunk is made. `waterlakes` is accepted and does nothing, since this version has no water lakes.
 
 **Creature types** for biome spawns and rates. `creature`, `monster`, `ambient`, `water`.
 

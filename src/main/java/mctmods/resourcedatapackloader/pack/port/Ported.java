@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 
 public final class Ported {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private static final Set<String> PRIMARY_TEXTURES = Set.of("all", "cross", "texture", "side", "pane", "torch", "crop", "particle", "layer0", "wall", "top", "end");
+    private static final List<String> PRIMARY_TEXTURES = List.of("all", "cross", "texture", "side", "pane", "torch", "crop", "particle", "layer0", "wall", "top", "end");
     private final String name;
     private final Path root;
     private final Set<String> namespaces = new LinkedHashSet<>();
@@ -123,12 +123,23 @@ public final class Ported {
                 case OREDICT -> expandOreDict(real, path);
                 case BLOCKSTATE -> aliases(home, namespace, real, path, realPaths);
                 default -> {
+                    if (generatedModel(namespace, path)) {
+                        dropped++;
+                        note("'" + path + "' shares its name with a block whose models are generated, so it is left out and the generated model is used");
+                        continue;
+                    }
                     if (path.startsWith("gamerules/") && path.endsWith(".json")) { gameLoop(real, path); }
                     if (mapped.type() == PackType.SERVER_DATA) { moved++; }
                     expose(mapped.type(), namespace, overrideTarget(mapped.path()), new Source(real, mapped.kind(), null));
                 }
             }
         }
+    }
+
+    private boolean generatedModel(String namespace, String path) {
+        if (!path.startsWith("models/block/") || !path.endsWith(".json")) { return false; }
+        String name = path.substring("models/block/".length(), path.length() - ".json".length());
+        return blockVariants.containsKey(namespace + ":" + name);
     }
 
     private String overrideTarget(String path) {
@@ -225,12 +236,21 @@ public final class Ported {
         JsonObject defaults = json.has("defaults") && json.get("defaults").isJsonObject() ? json.getAsJsonObject("defaults") : new JsonObject();
         JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
         JsonObject blocks = variants.has("blocks") && variants.get("blocks").isJsonObject() ? variants.getAsJsonObject("blocks") : new JsonObject();
+        Map<String, String> original = new LinkedHashMap<>();
+        for (Map.Entry<String, String> rename : renamedIn(namespace, "blocks", file).entrySet()) { original.put(rename.getValue(), rename.getKey()); }
+        Map<String, String> modeled = new LinkedHashMap<>();
+        Map<Integer, String> stages = new LinkedHashMap<>();
+        if (!json.has("forge_marker")) { gatherModels(home, json, modeled, stages); }
         int made = 0;
         for (String variant : new LinkedHashSet<>(held.byMeta().values())) {
+            String key = original.getOrDefault(variant, variant);
             Map<String, String> textures = new LinkedHashMap<>();
             gather(defaults, textures);
-            if (blocks.has(variant) && blocks.get(variant).isJsonObject()) { gather(blocks.getAsJsonObject(variant), textures); }
-            if (!json.has("forge_marker") && variants.has("normal")) { gatherModel(home, variants.get("normal"), textures); }
+            if (blocks.has(key) && blocks.get(key).isJsonObject()) { gather(blocks.getAsJsonObject(key), textures); }
+            textures.putAll(modeled);
+            for (Map.Entry<Integer, String> stage : stages.entrySet()) {
+                if (alias(namespace, realPaths, home, "textures/block/" + variant + "_stage" + stage.getKey(), stage.getValue())) { made++; }
+            }
             String primary = null;
             for (String candidate : PRIMARY_TEXTURES) {
                 if (textures.containsKey(candidate)) {
@@ -249,6 +269,25 @@ public final class Ported {
         }
         dropped++;
         note("'" + path + "' is a 1.12.2 blockstate: it is not served, " + made + " texture name(s) were taken from it and the blockstate and models are generated");
+    }
+
+    private void gatherModels(Path home, JsonObject json, Map<String, String> textures, Map<Integer, String> stages) {
+        if (json.has("variants") && json.get("variants").isJsonObject()) {
+            for (Map.Entry<String, JsonElement> variant : json.getAsJsonObject("variants").entrySet()) {
+                Map<String, String> found = new LinkedHashMap<>();
+                gatherModel(home, variant.getValue(), found);
+                textures.putAll(found);
+                if (variant.getKey().startsWith("age=") && found.containsKey("crop")) {
+                    try { stages.put(Integer.parseInt(variant.getKey().substring("age=".length())), found.get("crop")); }
+                    catch (NumberFormatException ignored) { note("A crop blockstate names the variant '" + variant.getKey() + "', whose age is not a number"); }
+                }
+            }
+        }
+        if (json.has("multipart") && json.get("multipart").isJsonArray()) {
+            for (JsonElement part : json.getAsJsonArray("multipart")) {
+                if (part.isJsonObject() && part.getAsJsonObject().has("apply")) { gatherModel(home, part.getAsJsonObject().get("apply"), textures); }
+            }
+        }
     }
 
     private void gatherModel(Path home, JsonElement normal, Map<String, String> textures) {

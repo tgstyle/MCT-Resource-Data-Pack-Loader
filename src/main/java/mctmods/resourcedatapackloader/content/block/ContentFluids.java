@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
+import mctmods.resourcedatapackloader.content.item.ContentBucketItem;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -83,7 +84,7 @@ public final class ContentFluids {
             this.still = new ForgeFlowingFluid.Source(properties);
             this.flowing = new ForgeFlowingFluid.Flowing(properties);
             this.block = def.createBlock() ? new ContentLiquidBlock(def, this::getStill, blockProperties(def)) : null;
-            this.bucket = def.bucket() ? new BucketItem(this::getStill, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
+            this.bucket = def.bucket() ? new ContentBucketItem(this::getStill, type, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
         }
 
         public ForgeFlowingFluid.Source getStill() { return still; }

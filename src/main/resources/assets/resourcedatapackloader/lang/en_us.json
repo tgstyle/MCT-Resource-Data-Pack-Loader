@@ -100,5 +100,6 @@
   "rdpl.command.gateopened": "Opened %s for %s (%s scope)",
   "rdpl.command.gateclosed": "Closed %s for %s (%s scope)",
   "rdpl.command.nogate": "No gate is named %s",
-  "rdpl.command.closed": " closed"
+  "rdpl.command.closed": " closed",
+  "rdpl.item.bucketFilled": "%s Bucket"
 }
