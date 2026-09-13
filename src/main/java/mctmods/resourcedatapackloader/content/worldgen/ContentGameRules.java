@@ -88,6 +88,7 @@ public final class ContentGameRules {
         for (Map.Entry<String, String> rule : wanted.entrySet()) { tag.putString(rule.getKey(), rule.getValue()); }
         held = new GameRules(new Dynamic<>(NbtOps.INSTANCE, tag));
         BUILT.put(level, held);
+        if (level.dimension() == Level.OVERWORLD && wanted.containsKey(GameRules.RULE_DAYLIGHT.getId())) { level.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(held.getBoolean(GameRules.RULE_DAYLIGHT), ((ServerLevel) level).getServer()); }
         ContentLog.LOGGER.debug("Dimension {} keeps its own game rules: {}", level.dimension().location(), wanted);
         return held;
     }

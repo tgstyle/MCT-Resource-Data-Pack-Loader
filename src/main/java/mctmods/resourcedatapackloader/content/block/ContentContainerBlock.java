@@ -32,7 +32,7 @@ import net.minecraftforge.network.NetworkHooks;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentContainerBlock extends BaseEntityBlock implements IContentContainer {
+@SuppressWarnings("deprecation") public final class ContentContainerBlock extends BaseEntityBlock implements IContentContainer {
     private final BlockDef def;
     private final ContainerDef container;
 
@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(HorizontalDirectionalBlock.FACING); }
 
-    @Override @Nullable public BlockState getStateForPlacement(BlockPlaceContext context) {
+    @Override @Nonnull public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) {
         return defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection().getOpposite());
     }
 
@@ -63,7 +63,7 @@ import javax.annotation.Nullable;
 
     @Override @Nonnull public RenderShape getRenderShape(@Nonnull BlockState state) { return container.chestModel() ? RenderShape.ENTITYBLOCK_ANIMATED : RenderShape.MODEL; }
 
-    @Override @Nullable public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentContainerBlockEntity(pos, state); }
+    @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentContainerBlockEntity(pos, state); }
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
         if (!level.isClientSide() || !container.chestModel()) { return null; }

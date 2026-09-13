@@ -8,7 +8,7 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 
-public class ContentPouchInventory extends SimpleContainer {
+public final class ContentPouchInventory extends SimpleContainer {
     public static final String HELD = "RdplHeld";
     private final ItemStack pouch;
     private boolean loading;

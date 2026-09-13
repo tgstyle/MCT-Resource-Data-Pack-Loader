@@ -25,6 +25,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (!mustSee && ContentEntities.def(mob) != null) { targetConditions.ignoreLineOfSight(); }
     }
 
+    @Inject(method = "start", at = @At("TAIL"))
+    private void rdpl$forget(CallbackInfo ci) { target = null; }
+
     @Inject(method = "findTarget", at = @At("TAIL"))
     private void rdpl$docile(CallbackInfo ci) {
         if (ContentThreat.docile(target, mob)) { target = null; }

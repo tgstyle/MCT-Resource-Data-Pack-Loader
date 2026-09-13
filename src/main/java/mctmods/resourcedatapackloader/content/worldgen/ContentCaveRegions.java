@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -24,20 +25,31 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.event.level.LevelEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentCaveRegions {
@@ -46,13 +58,17 @@ public final class ContentCaveRegions {
     private static final ResourceLocation DRIPSTONE = ResourceLocation.fromNamespaceAndPath("minecraft", "dripstone_caves");
     private static final String OVERWORLD = "minecraft:overworld";
     private static final String NETHER = "minecraft:the_nether";
-    private static final int SEA = 64;
-    private static final float SHALLOWEST = 0.2F;
-    private static final float DEEPEST = 1.0F;
+    private static final float UNREACHABLE = 2.0F;
+    private static final int MEMO_LIMIT = 4096;
+    private static final Object NONE = new Object();
+    private static final ThreadLocal<Map<Long, Object>> MEMO = ThreadLocal.withInitial(HashMap::new);
+    private static final Map<BiomeSource, Bound> BOUND = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, CaveRegionDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Made> MADE = new LinkedHashMap<>();
     private static boolean loaded;
+
+    private record Bound(long seed, List<CaveRegionDef> regions, Map<ResourceLocation, Holder<Biome>> biomes) {}
 
     private ContentCaveRegions() {}
 
@@ -81,12 +97,9 @@ public final class ContentCaveRegions {
         int plain = Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight()));
         int total = plain;
         for (CaveRegionDef def : active) { total += def.weight(); }
-        float low = -1.0F;
         int structured = 0;
         for (CaveRegionDef def : active) {
-            float width = total <= 0 ? 0.0F : 2.0F * def.weight() / total;
-            JsonObject point = point(def, low, low + width);
-            low += width;
+            JsonObject point = point();
             Set<Block> replace = new LinkedHashSet<>();
             for (BlockMatchDef match : def.coverReplace()) {
                 Block block = Registered.find(ForgeRegistries.BLOCKS, match.block());
@@ -106,9 +119,9 @@ public final class ContentCaveRegions {
                 writeFeature(def, STRUCTURE_FEATURE, "_structures", "underground_structures");
                 structured++;
             }
-            ContentLog.LOGGER.debug("Cave region {} takes the underground at humidity {} and depth {}", def.key(), point.get("humidity"), point.get("depth"));
+            ContentLog.LOGGER.debug("Cave region {} is rolled in cells from y {} to {} at weight {} against the plain weight {}", def.key(), def.minHeight() == CaveRegionDef.WORLD_FLOOR ? "the floor" : def.minHeight(), def.maxHeight(), def.weight(), plain);
         }
-        if (!MADE.isEmpty()) { Summary.info("caveregions.generated", "Generated " + MADE.size() + " cave biome(s) from cave regions, " + plain + " parts in " + total + " of the underground left plain" + (structured > 0 ? ", " + structured + " placing structures" : "")); }
+        if (!MADE.isEmpty()) { Summary.info("caveregions.generated", "Generated " + MADE.size() + " cave biome(s) from cave regions, " + plain + " parts in " + total + " of each height band left plain" + (structured > 0 ? ", " + structured + " placing structures" : "")); }
     }
 
     public static boolean any() { return !MADE.isEmpty(); }
@@ -184,18 +197,103 @@ public final class ContentCaveRegions {
         return biome;
     }
 
-    private static JsonObject point(CaveRegionDef def, float humidityLow, float humidityHigh) {
-        float shallow = def.maxHeight() == Integer.MAX_VALUE ? SHALLOWEST : Mth.clamp((SEA - def.maxHeight()) / 128.0F, SHALLOWEST, DEEPEST);
-        float deep = def.minHeight() == CaveRegionDef.WORLD_FLOOR ? DEEPEST : Mth.clamp((SEA - def.minHeight()) / 128.0F, SHALLOWEST, DEEPEST);
-        if (deep < shallow) { deep = shallow; }
+    public static void onLevelLoad(LevelEvent.Load event) {
+        if (MADE.isEmpty() || !(event.getLevel() instanceof ServerLevel level)) { return; }
+        String dimension = level.dimension().location().toString();
+        Registry<Biome> registry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        List<CaveRegionDef> regions = new ArrayList<>();
+        Map<ResourceLocation, Holder<Biome>> biomes = new HashMap<>();
+        for (Made made : MADE.values()) {
+            if (!appliesTo(made.def(), dimension)) { continue; }
+            Holder<Biome> held = registry.getHolder(ResourceKey.create(Registries.BIOME, made.def().key())).orElse(null);
+            if (held == null) { continue; }
+            regions.add(made.def());
+            biomes.put(made.def().key(), held);
+        }
+        if (regions.isEmpty()) { return; }
+        BOUND.put(level.getChunkSource().getGenerator().getBiomeSource(), new Bound(level.getSeed(), List.copyOf(regions), Map.copyOf(biomes)));
+    }
+
+    @Nullable public static Holder<Biome> biomeAt(BiomeSource source, int quartX, int quartY, int quartZ) {
+        if (BOUND.isEmpty()) { return null; }
+        Bound bound = BOUND.get(source);
+        if (bound == null) { return null; }
+        CaveRegionDef def = regionAt(bound, quartX, quartY, quartZ);
+        return def == null ? null : bound.biomes().get(def.key());
+    }
+
+    @Nullable private static CaveRegionDef regionAt(Bound bound, int qx, int qy, int qz) {
+        long memoKey = bound.seed() * 0x9E3779B97F4A7C15L ^ (((long) System.identityHashCode(bound) & 0xFF) << 54) ^ (((long) qx & 0x3FFFF) << 36) ^ (((long) qy & 0x3FFFF) << 18) ^ ((long) qz & 0x3FFFF);
+        Map<Long, Object> memo = MEMO.get();
+        Object held = memo.get(memoKey);
+        if (held != null) { return clampBand(held == NONE ? null : (CaveRegionDef) held, qy << 2); }
+        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells()));
+        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY()));
+        CaveRegionDef found = resolve(bound.seed(), bound.regions(), qx, qy, qz, cellsXZ >> 2, cellsY >> 2);
+        if (memo.size() > MEMO_LIMIT) { memo.clear(); }
+        memo.put(memoKey, found == null ? NONE : found);
+        return clampBand(found, qy << 2);
+    }
+
+    @Nullable private static CaveRegionDef clampBand(@Nullable CaveRegionDef def, int y) {
+        if (def == null || y < def.minHeight() || y > def.maxHeight()) { return null; }
+        return def;
+    }
+
+    @Nullable private static CaveRegionDef resolve(long seed, List<CaveRegionDef> defs, int qx, int qy, int qz, int spanXZ, int spanY) {
+        int cellX = Math.floorDiv(qx, spanXZ);
+        int cellY = Math.floorDiv(qy, spanY);
+        int cellZ = Math.floorDiv(qz, spanXZ);
+        long bestDistance = Long.MAX_VALUE;
+        long bestHash = 0;
+        int bestCenterY = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int cx = cellX + dx;
+                    int cy = cellY + dy;
+                    int cz = cellZ + dz;
+                    long cellHash = Hashes.mix(seed, cx, cy, cz);
+                    long jx = cx * (long) spanXZ + Math.floorMod(cellHash, spanXZ);
+                    long jy = cy * (long) spanY + Math.floorMod(cellHash >>> 20, spanY);
+                    long jz = cz * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ);
+                    long offX = jx - qx;
+                    long offY = (jy - qy) * spanXZ / Math.max(1, spanY);
+                    long offZ = jz - qz;
+                    long distance = offX * offX + offY * offY + offZ * offZ;
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestHash = cellHash;
+                        bestCenterY = (int) (jy << 2);
+                    }
+                }
+            }
+        }
+        return regionForCell(bestHash, bestCenterY, defs);
+    }
+
+    @Nullable private static CaveRegionDef regionForCell(long cellHash, int centerY, List<CaveRegionDef> defs) {
+        int plain = Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight()));
+        int total = plain;
+        for (CaveRegionDef def : defs) {
+            if (centerY >= def.minHeight() && centerY <= def.maxHeight()) { total += def.weight(); }
+        }
+        if (total <= 0) { return null; }
+        long roll = Math.floorMod(cellHash >>> 13, total);
+        if (roll < plain) { return null; }
+        roll -= plain;
+        for (CaveRegionDef def : defs) {
+            if (centerY < def.minHeight() || centerY > def.maxHeight()) { continue; }
+            if (roll < def.weight()) { return def; }
+            roll -= def.weight();
+        }
+        return null;
+    }
+
+    private static JsonObject point() {
         JsonObject point = new JsonObject();
-        point.add("temperature", WorldgenJson.range(-1.0F, 1.0F));
-        point.add("humidity", WorldgenJson.range(humidityLow, humidityHigh));
-        point.add("continentalness", WorldgenJson.range(-1.0F, 1.0F));
-        point.add("erosion", WorldgenJson.range(-1.0F, 1.0F));
-        point.add("depth", WorldgenJson.range(shallow, deep));
-        point.add("weirdness", WorldgenJson.range(-1.0F, 1.0F));
-        point.addProperty("offset", 0.0F);
+        for (String parameter : new String[] {"temperature", "humidity", "continentalness", "erosion", "depth", "weirdness"}) { point.add(parameter, WorldgenJson.range(UNREACHABLE, UNREACHABLE)); }
+        point.addProperty("offset", 1.0F);
         return point;
     }
 

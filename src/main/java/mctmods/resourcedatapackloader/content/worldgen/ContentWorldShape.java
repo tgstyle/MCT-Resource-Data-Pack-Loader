@@ -470,6 +470,7 @@ public final class ContentWorldShape {
         MinecraftServer server = level.getServer();
         int time = ContentTerrain.worldTime();
         if (time >= 0) {
+            level.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
             level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
             level.setDayTime(time);
         }

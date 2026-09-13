@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -60,7 +61,7 @@ import java.util.Map;
         int added = 0;
         if (!late) {
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.additions()) {
-                if (named.containsKey(addition.id())) { continue; }
+                if (named.containsKey(addition.id()) || rdpl$smelts(kept.getOrDefault(RecipeType.SMELTING, Map.of()).values(), addition)) { continue; }
                 rdpl$keep(kept, named, new SmeltingRecipe(addition.id(), "", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.experience(), RDPL_COOKING_TIME));
                 added++;
             }
@@ -70,6 +71,13 @@ import java.util.Map;
         recipes = byType.build();
         byName = ImmutableMap.copyOf(named);
         if (!late) { RecipeLoading.finish(added); }
+    }
+
+    @Unique private static boolean rdpl$smelts(Collection<Recipe<?>> smelting, FurnaceRecipes.Addition addition) {
+        for (Recipe<?> recipe : smelting) {
+            if (!recipe.getIngredients().isEmpty() && FurnaceRecipes.smeltsAlready(addition, recipe.getIngredients().get(0), recipe.getId())) { return true; }
+        }
+        return false;
     }
 
     @Unique private static ItemStack rdpl$result(Recipe<?> recipe) {

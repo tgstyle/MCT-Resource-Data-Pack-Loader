@@ -1639,6 +1639,8 @@ Einträge unter `add`:
 | `count` | nein | int | `1` | Wie viele herauskommen |
 | `experience` | nein | Zahl | `0.0` | Erfahrung pro Schmelzvorgang. Eisenerz gibt 0.7 |
 
+Ein Zusatz, dessen Eingabe schon etwas schmilzt, wird ignoriert, und das Log nennt das Rezept, das im Weg steht, wie auf 1.12.2; entferne dieses Rezept in derselben Datei, um es zu ersetzen.
+
 Einträge unter `remove` sind entweder ein bloßer Itemname, der jedes Rezept entfernt, das ihn herstellt, oder ein Objekt, das mit `input`, `result` oder beidem eingrenzt. Eine Entfernung, die weder das eine noch das andere nennt, wird übersprungen, und das Log sagt es.
 
 `<namespace>/fuels/*.json`
@@ -5180,7 +5182,7 @@ Was ein Pack für 1.12.2 schreiben kann, diese Version aber nicht liest, und war
 | Schlüssel | Wo | Warum |
 | --- | --- | --- |
 | `meta` | Blöcke, Items, Worldgen, Block-Drops | Seit dem Flattening tragen IDs keine Metadaten. Die Portierung schickt jedes `name:meta` durch die Datenfixer des Spiels und verwirft den Schlüssel |
-| `oreDict` | Blöcke, Items, Ofen | Das Ore Dictionary gibt es nicht mehr. Die Portierung macht daraus `tags` auf den Konventions-Tags |
+| `oreDict` | Blöcke, Items, Ofen, Brennstoffe | Das Ore Dictionary gibt es nicht mehr. Die Portierung macht daraus `tags` auf den Konventions-Tags, bei einem Brennstoff `tag` |
 | `modelMeta` | Blöcke | Modelle werden pro Variante erzeugt, es gibt also keine Metadaten, nach denen sie sich zuordnen ließen |
 | `disableOverrides`, `tolerateMissingInAdvancements`, `data.functions` | Einstellungen | Ein Datapack ersetzt ein Vanilla-Rezept, -Advancement oder eine -Funktion, indem es eines unter demselben Namen mitliefert |
 | `careers`, `texture`, `zombieTexture` | Dorfbewohner | Seit 1.14 gibt es keine Karrieren mehr, also wird jede Karriere eine eigene Dorfbewohner-Datei. Das Aussehen liegt unter `textures/entity/villager/profession/<name>.png` und `textures/entity/zombie_villager/profession/<name>.png` |

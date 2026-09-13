@@ -7,9 +7,7 @@ import mctmods.resourcedatapackloader.util.Registered;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
@@ -86,7 +84,7 @@ public final class ContentCityBlocks extends StructureProcessor {
         if (integrity < 100 && Math.floorMod(mix(at), 100) >= integrity) { return null; }
         readRules();
         if (RULES.isEmpty()) { return info; }
-        ResourceLocation named = BuiltInRegistries.BLOCK.getResourceKey(info.state().getBlock()).map(ResourceKey::location).orElse(null);
+        ResourceLocation named = ForgeRegistries.BLOCKS.getKey(info.state().getBlock());
         Rule rule = named == null ? null : RULES.get(named.toString());
         if (rule == null) { return info; }
         if (rule.chance() < 100 && Math.floorMod(mix(at) >> 8, 100) >= rule.chance()) { return info; }
