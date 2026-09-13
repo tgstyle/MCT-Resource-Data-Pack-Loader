@@ -12,7 +12,6 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) ist dieselbe Stadt auf einer Rubic-Welt mit Decke bei 512 und Wolken auf 384, sodass Türme 256 Blöcke über der Straße stehen, und jeder Bezirk würfelt eine Blocktiefe von 16, 32 oder 64, sodass sich ein grobes Raster mit einem feinen mischt.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) zeichnet dieselbe Stadt aus einer Stadtkarte, statt sie zu würfeln: ein Zeichenraster mit 48 Blöcken je Zelle und einer Palette für Straßen, Plätze, Gassen und gewichtete Gebäudeauswahlen, sodass der Blockplan von Hand gelegt ist.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) lässt vier Fraktionen in einer Bedrock-Arena unter ewiger Nacht aufeinander los: jede Seite ist ein echtes Vanilla-Scoreboard-Team, dem ihre Mobs beim Spawnen beitreten, eine Seite punktet für jeden Mob einer anderen Seite, den sie tötet, eine Runde endet nach zwei Minuten mit einer Karte, und drei Runden ergeben ein Match.
-- [RDPLExampleAdventureMine.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleAdventureMine.zip) startet eine flache Steinwelt im Abenteuermodus, zieht jeden Spieler auf ein Team Miners, das eine Eisenspitzhacke und Brot bekommt, und lässt diese Spitzhacke die Kohle abbauen und sonst nichts: Die Kohle geht nie aus, jeder zehnte Abbau lässt auch einen Eisenbarren fallen, und zehn Eisen in der Hand machen jeden Kohleblock der Welt zu Golderz
 
 ---
 
@@ -1863,7 +1862,7 @@ Der Pfad der Datei ist der Registry-Name des Effekts, `mypack/potions/ruby_sight
 | `instant` | nein | boolean | `false` | Wirkt einmalig statt über die Zeit |
 | `effectiveness` | nein | float | `0.5` | Wie hoch die Mob-KI ihn einschätzt |
 | `icon` | nein | Objekt mit `x` und `y` | `0`, `0` | Wo das Symbol im Blatt sitzt |
-| `iconTexture` | nein | Texturpfad | Vanilla-Blatt | Dein eigenes Symbolblatt |
+| `iconTexture` | nein | Texturpfad | das RDPL-Symbol, oder das Vanilla-Blatt, wenn `icon` gesetzt ist | Dein eigenes Symbol, 18 mal 18 |
 | `attributes` | nein | Liste von Objekten | keine | `attribute`, `uuid`, `amount` (`0.0`), `operation` (`0`) |
 
 ### Trankarten
@@ -6269,7 +6268,7 @@ Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der 
 - Funktionen, die im Datenordner einer Welt liegen, schlagen weiterhin eine Funktion aus einem Pack, und die eigenen Fortschritte dieser Welt ebenso.
 - Eine Struktur, die schon generiert wurde, bleibt geladen, bis du die Welt verlässt.
 - Groß- und Kleinschreibung im Dateinamen zählt. Passt die Schreibweise deiner Datei nicht zu dem, wonach das Spiel gefragt hat, lädt RDPL sie trotzdem, warnt dich aber – denn unter Linux würde sie überhaupt nicht gefunden.
-- Leg eine `pack.png` in `rdploader`, um dem Pack ein Symbol zu geben.
+- Leg eine `pack.png` in `rdploader`, um dem Pack ein Symbol zu geben. Ohne eine zeigt es das RDPL-Symbol.
 - Der Ordner lässt sich mit der Option `rootDirectory` in `config/mct_resourcedatapackloader_mixin.cfg` verschieben oder umbenennen. Ein absoluter Pfad geht auch, und es braucht einen Neustart.
 - Blockstates, die ein nacktes Vanilla-Modell nennen, erben auch Vanillas Texturen. Eltern-Modelle wie `cube_all` und `cross` nehmen ihre Texturen aus dem Blockstate und sind unproblematisch.
 - `forge_marker: 1` unterstützt kein Multipart, Blockstates für Ranken müssen also reines Vanilla-Multipart sein, mit den Texturen im Modell selbst.

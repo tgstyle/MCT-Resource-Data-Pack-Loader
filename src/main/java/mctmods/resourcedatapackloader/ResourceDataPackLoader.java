@@ -101,6 +101,7 @@ import java.util.List;
 @Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);after:baubles;")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
+    public static final String ICON = "textures/gui/icon.png";
     @Mod.Instance(MOD_ID) public static ResourceDataPackLoader INSTANCE;
 
     static {

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentOwners;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
@@ -103,7 +104,7 @@ public final class ContentPotions {
                 ContentTypes.color(JsonUtils.getString(json, "color", "FFFFFF"), key.toString()),
                 JsonUtils.getInt(icon, "x", 0),
                 JsonUtils.getInt(icon, "y", 0),
-                JsonUtils.getString(json, "iconTexture", ""),
+                JsonUtils.getString(json, "iconTexture", json.has("icon") ? "" : ResourceDataPackLoader.MOD_ID + ":" + ResourceDataPackLoader.ICON),
                 JsonUtils.getBoolean(json, "instant", false),
                 JsonUtils.getFloat(json, "effectiveness", 0.5F),
                 Collections.unmodifiableList(attributes),

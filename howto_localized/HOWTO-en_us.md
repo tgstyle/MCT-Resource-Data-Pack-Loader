@@ -12,7 +12,6 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) is that same city on a rubic world with its ceiling at 512 and the clouds lifted to 384, so towers stand 256 blocks over the street, and every district rolls a block depth of 16, 32 or 64 so a coarse grid mixes with a fine one.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
-- [RDPLExampleAdventureMine.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleAdventureMine.zip) starts a flat stone world in adventure mode, draws every player onto a Miners team that is handed an iron pickaxe and bread, and lets that pickaxe mine the coal and nothing else: the coal never runs out, one break in ten also drops an iron ingot, and holding ten iron turns every coal block in the world to gold ore
 
 ---
 
@@ -1863,7 +1862,7 @@ The file's path is the effect's registry name, so `mypack/potions/ruby_sight.jso
 | `instant` | no | boolean | `false` | Applies once instead of over time |
 | `effectiveness` | no | float | `0.5` | How much mob AI values it |
 | `icon` | no | object with `x` and `y` | `0`, `0` | Where the icon sits in the sheet |
-| `iconTexture` | no | texture path | vanilla sheet | Your own icon sheet |
+| `iconTexture` | no | texture path | the RDPL icon, or the vanilla sheet when `icon` is set | Your own 18 by 18 icon |
 | `attributes` | no | list of objects | none | `attribute`, `uuid`, `amount` (`0.0`), `operation` (`0`) |
 
 ### Potion types
@@ -6269,7 +6268,7 @@ These sit in the `commands` group, so `control.commands` in the config decides w
 - Functions saved in a world's own data folder still beat a function from a pack, and so do that world's own advancements.
 - A structure that has already generated stays loaded until you leave the world.
 - Filename case matters. If your file's capitalization doesn't match what the game asked for, RDPL still loads it but warns you, because on Linux it wouldn't be found at all.
-- Put a `pack.png` in `rdploader` to give the pack an icon.
+- Put a `pack.png` in `rdploader` to give the pack an icon. Without one it shows the RDPL icon.
 - The folder can be moved or renamed with the `rootDirectory` option in `config/mct_resourcedatapackloader_mixin.cfg`. An absolute path works too, and it needs a restart.
 - Blockstates naming a bare vanilla model inherit vanilla's textures too. Parent models such as `cube_all` and `cross` take their textures from the blockstate and are fine.
 - `forge_marker: 1` does not support multipart, so vine blockstates have to be plain vanilla multipart with the textures baked into the model.

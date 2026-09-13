@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
 
 import net.minecraft.client.gui.GuiScreenResourcePacks;
@@ -13,7 +14,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 
 @SideOnly(Side.CLIENT) public final class PackListEntry extends ResourcePackListEntry {
-    private static final ResourceLocation UNKNOWN_PACK = new ResourceLocation("textures/misc/unknown_pack.png");
+    private static final ResourceLocation FALLBACK_ICON = new ResourceLocation(ResourceDataPackLoader.MOD_ID, ResourceDataPackLoader.ICON);
     private static ResourceLocation normalIcon;
     private static ResourceLocation overrideIcon;
     private final RDPLResourcePack pack;
@@ -60,6 +61,6 @@ import java.io.IOException;
 
     private ResourceLocation load() {
         try { return mc.getTextureManager().getDynamicTextureLocation("rdplpackicon", new DynamicTexture(pack.getPackImage())); }
-        catch (IOException missing) { return UNKNOWN_PACK; }
+        catch (IOException missing) { return FALLBACK_ICON; }
     }
 }
