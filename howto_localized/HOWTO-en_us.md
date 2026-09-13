@@ -3455,7 +3455,7 @@ An `imprint` entry with `"locateAs": "Crypt"` registers every structure it place
 | `fade` | field | int | `0` | Speckle out the top of the band instead of ending it flat: over the top this many blocks of the height range, each block's odds of placing thin out step by step, the same look the engine gives `deepStone` where it meets the world above |
 | `pattern` | vein | `default`, `banded` or `tube` | `default` | The deposit's look: a warped blob, layers stacked every few blocks, or hollow tubes winding through the rock |
 | `density` | vein | 0.0 to 1.0 | `1.0` | The share of qualifying blocks that are actually placed, a per-block coin |
-| `rich` | vein | block name | none | Placed in the top fifth of the field's range above `threshold`, the heart of the deposit, instead of the entry's blocks |
+| `rich` | vein | block name | none | Placed from `richAt` up in the field's range above `threshold`, the heart of the deposit, instead of the entry's blocks |
 | `poor` | vein | block name | none | Placed in the bottom two fifths of that range, the fringe, instead of the entry's blocks; the middle is the entry's own blocks. Either tier left out places the entry's blocks there |
 | `richAt` | vein | 0.0 to 1.0 | `0.88` | Where the rich tier starts in that range: `0.88` keeps the rich block to the strongest eighth of the deposit, a lower number makes the rich core fatter, `1.0` leaves no rich block at all |
 | `poorAt` | vein | 0.0 to 1.0 | `0.4` | Where the entry's own blocks start: below this the `poor` block is placed, so `0.4` gives a fringe of the bottom two fifths and `0.0` leaves no poor fringe. Clamped to `richAt` |

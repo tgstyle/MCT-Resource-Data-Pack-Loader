@@ -127,7 +127,7 @@ public final class ContentOreVein implements IContentChunkShape {
                     if (value <= threshold) { continue; }
                     if (placer.occupied(x, y, z)) { continue; }
                     float tier = (value - threshold) / (1.0F - threshold);
-                    BlockState state = tier >= shape.richAt() && rich != null ? rich : tier >= shape.poorAt() || poor == null ? placer.palette().choose(random) : poor;
+                    BlockState state = shape.richAt() < 1.0F && tier >= shape.richAt() && rich != null ? rich : tier >= shape.poorAt() || poor == null ? placer.palette().choose(random) : poor;
                     if (placer.placeExactly(state, x, y, z)) { placed++; }
                 }
             }
