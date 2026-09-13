@@ -1808,6 +1808,8 @@ Einträge unter `add`:
 | `count` | nein | int | `1` | Wie viele herauskommen |
 | `experience` | nein | Zahl | `0.0` | Erfahrung pro Schmelzvorgang. Eisenerz gibt 0.7 |
 
+Ein Zusatz, dessen Eingabe schon etwas schmilzt, wird ignoriert, und das Log nennt, was diese Eingabe jetzt ergibt; entferne dieses Rezept in derselben Datei, um es zu ersetzen.
+
 Einträge unter `remove` sind entweder ein bloßer Itemname, der jedes Rezept entfernt, das ihn herstellt, oder ein Objekt, das mit `input`, `result` oder beidem eingrenzt. Eine Entfernung, die weder das eine noch das andere nennt, wird übersprungen, und das Log sagt es.
 
 `<namespace>/fuels/*.json`

@@ -102,6 +102,11 @@ public final class FurnaceRecipes {
         ItemStack input = ContentStacks.parse(key, inputName, 1);
         ItemStack output = ContentStacks.parse(key, outputName, JsonUtils.getInt(json, "count", 1));
         if (input.isEmpty() || output.isEmpty()) { return false; }
+        ItemStack existing = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingResult(input);
+        if (!existing.isEmpty()) {
+            ContentLog.LOGGER.info("Ignored the furnace addition {} -> {} in {}: its input already smelts into {}. Remove that recipe under remove to replace it", inputName, outputName, key, existing);
+            return false;
+        }
         net.minecraft.item.crafting.FurnaceRecipes.instance().addSmeltingRecipe(input, output, JsonUtils.getFloat(json, "experience", 0.0F));
         return true;
     }

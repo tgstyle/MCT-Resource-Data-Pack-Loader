@@ -58,7 +58,7 @@ import javax.annotation.Nullable;
         if (def.soundType != null) { setSoundType(def.soundType); }
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
-        setGraphicsLevel(!def.opaque);
+        leavesFancy = !def.opaque;
         setDefaultState(this.blockState.getBaseState()
                 .withProperty(property, def.at(0).name)
                 .withProperty(DECAYABLE, Boolean.TRUE)

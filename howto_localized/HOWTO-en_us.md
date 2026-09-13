@@ -1808,6 +1808,8 @@ Entries under `add`:
 | `count` | no | int | `1` | How many come out |
 | `experience` | no | number | `0.0` | Experience per smelt. Iron ore gives 0.7 |
 
+An addition whose input something already smelts is ignored, and the log names what that input smelts into now; remove that recipe in the same file to replace it.
+
 Entries under `remove` are either a bare item name, which removes every recipe producing it, or an object naming `input`, `result`, or both to narrow it down. A removal naming neither is skipped and the log says so.
 
 `<namespace>/fuels/*.json`
