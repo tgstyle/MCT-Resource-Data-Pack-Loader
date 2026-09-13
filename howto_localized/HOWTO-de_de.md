@@ -4,7 +4,7 @@
 
 Ein fertiges Beispiel. Leg es direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
 
-- [RDPLRubyExample.zip](../example/RDPLRubyExample.zip) nutzt jede Art von Datei, die diese Version des Loaders liest, und alles darin ist nach dem Rubin benannt: jeder Block- und Item-Typ, das, was er an Vanilla ändert, die Welt, die er generiert, die Dimension unter dieser Welt und die Bildschirme, die der Spieler beim Betreten sieht. Er enthält kein einziges Bild: Jede Textur ist eine in JSON gezeichnete Pixelkarte.
+- [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) nutzt fast jede Art von Datei, die der Loader liest: Blöcke, Items, ein Fluid, ein Kreativ-Tab, Biome, eine Weltvorlage, eine Dimension hinter einem Tor, Worldgen, einen Trank und sein Brauen, einen Dorfbewohner mit Handel, Rezepte, Beute, Änderungen an Vanilla-Dingen, einen Sound, einen Fortschritt und eine Funktion. Seine readme sagt, was im Spiel zu prüfen ist.
 
 Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Packs; die wenigen Stellen, an denen sich die beiden unterscheiden, sind mit **1.20.1** und **1.21.1** markiert.
 
@@ -259,7 +259,7 @@ Groß-/Kleinschreibung ist egal; ein Leerzeichen, Bindestrich oder Unterstrich n
 
 **Ein Pack deaktivieren:** `.disabled` an den Namen anhängen.
 
-Eine `pack.mcmeta` in der Wurzel des Zips ist willkommen, aber nicht nötig: Der Mod stellt jedes Pack dem Spiel unter einem einzigen eigenen Eintrag vor, mit dem Pack-Format, das das Spiel erwartet, sodass ein Pack nie an einer Formatnummer veraltet. Leg eine `pack.png` daneben, um dem Eintrag des Ordners ein Symbol zu geben.
+Eine `pack.mcmeta` in der Wurzel des Zips ist willkommen, aber nicht nötig: Der Mod stellt jedes Pack dem Spiel unter einem einzigen eigenen Eintrag vor, mit dem Pack-Format, das das Spiel erwartet, sodass ein Pack nie an einer Formatnummer veraltet. Leg eine `pack.png` daneben, um dem Eintrag des Ordners ein Symbol zu geben. Ohne eine zeigt der Eintrag das RDPL-Symbol.
 
 ## Ressourcenpakete: wer gewinnt
 
@@ -531,7 +531,8 @@ Ein Pack, das für die 1.12.2-Linie gemacht wurde, lädt so, wie es ist. Der Loa
 - `variants` behalten ihre Schlüssel; `meta` fällt weg und `oreDict` wird zu `tags`, über die Abbildung des Ore Dictionary auf die Konventions-Tags. Eine `oredict/*.json`-Datei wird zu einer Item-Tag-Datei pro Namen, den sie ergänzt. Ein bloßes `creativeTab` bekommt den Namespace des Packs.
 - Eine `.lang`-Datei wird als das `.json` ausgeliefert, das das Spiel liest, mit `tile.mypack:datei.variante.name` als `block.mypack.variante`, `item.` ebenso, `itemGroup.x` als `itemGroup.mypack.x`, `fluid.x` als beide Fluid-Schlüssel, und alles andere wie geschrieben.
 - Ein 1.12.2-Blockstate wird gar nicht ausgeliefert. Stattdessen werden seine Texturen gelesen und unter den Namen ausgeliefert, nach denen der Generator sucht, `textures/block/<variante>.png` mit `_top` und `_bottom`, wo der Blockstate `end`, `top` oder `bottom` hatte, sodass Blockstate und Modelle für jede Variante generiert werden, wie sie es für ein hier geschriebenes Pack würden.
-- Rezepte verlieren ihr `data` und bekommen geglättete IDs, `forge:ore_shaped` wird zu `minecraft:crafting_shaped` mit `ore`-Zutaten als `tag`, Beutetabellen verlieren `set_data` auf dieselbe Weise, und das `item` mit `data` eines Fortschritts wird zu `items`.
+- Rezepte verlieren ihr `data` und bekommen geglättete IDs, `forge:ore_shaped` wird zu `minecraft:crafting_shaped` mit `ore`-Zutaten als `tag`, Beutetabellen verlieren `set_data` auf dieselbe Weise, und das `item` mit `data` eines Fortschritts wird zu `items`. Der `background` eines Fortschritts wandert von `textures/blocks/` nach `textures/block/`.
+- Das `gameLoopFunction` einer Spielregel-Datei wird zum Funktions-Tag `#minecraft:tick`, geschrieben als `data/minecraft/tags/functions/tick.json`, da es die Spielregel nicht mehr gibt. Die eigenen Dimensionsnummern des Packs werden über seine `dimensions`-Dateien gelesen, sodass `"id": 7` in `dimensions/verdant.json` die 7 überall, wo das Pack sie nennt, zu `mypack:verdant` macht. Beide Seiten eines `villageBlocks`-Paars werden repariert, die Chance bleibt, und eine `registry_remap`-Datei darf die Pluralnamen `minecraft:blocks` und `minecraft:items` aus 1.12.2 behalten.
 - Funktionen werden wie geschrieben ausgeliefert, da eine 1.12.2-Befehlszeile nichts ist, was eine Portierung umschreiben kann, und das Log sagt es. `block_drops` wird übernommen, wie es ist, sein `meta` im Blocknamen oder in `properties` aufgelöst.
 
 Das Log trägt eine Zusammenfassungszeile pro portiertem Pack und eine Zeile für jede Datei, die es verschoben, ausgelassen oder nicht tragen konnte, und jeder Schlüssel, den diese Version nicht mehr liest, wird weiterhin vom Parser genannt, der ihm begegnet. Die Portierung ist ein bestmöglicher Versuch, kein fertiges Pack: Öffne das geschriebene Zip, lies diese Zeilen und stell von Hand fertig, was sie nennen, angefangen bei den Funktionen und jeder Textur, für die sie keinen Namen finden konnte.
@@ -1675,8 +1676,6 @@ Der Pfad der Datei ist der Registry-Name des Effekts, `mypack/potions/ruby_sight
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
-  "icon": { "x": 0, "y": 0 },
-  "iconTexture": "mypack:textures/gui/effects.png",
   "attributes": [
     { "attribute": "minecraft:generic.movement_speed", "uuid": "91AEAA56-376B-4498-935B-2F7F68070635", "amount": 0.2, "operation": 2 }
   ]
@@ -1691,9 +1690,9 @@ Der Pfad der Datei ist der Registry-Name des Effekts, `mypack/potions/ruby_sight
 | `beneficial` | nein | boolean | `false` | Wird als guter Effekt angezeigt |
 | `instant` | nein | boolean | `false` | Wirkt einmalig statt über die Zeit |
 | `effectiveness` | nein | float | `0.5` | Wie hoch die Mob-KI ihn einschätzt |
-| `icon` | nein | Objekt mit `x` und `y` | `0`, `0` | Wo das Symbol im Blatt sitzt |
-| `iconTexture` | nein | Texturpfad | Vanilla-Blatt | Dein eigenes Symbolblatt |
 | `attributes` | nein | Liste von Objekten | keine | `attribute` (die Id des Spiels, etwa `minecraft:generic.movement_speed`), `uuid`, `amount` (`0.0`), `operation` (`0`) |
+
+Das Symbol des Effekts ist die Textur `assets/<namespace>/textures/mob_effect/<name>.png`, 18 mal 18 wie die des Spiels. Ein Effekt, der keine mitbringt, zeigt das RDPL-Symbol.
 
 ### Trankarten
 
@@ -5118,7 +5117,7 @@ Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der 
 - Rezepte, Beutetabellen, Fortschritte und Funktionen sind hier die eigenen Datendateien des Spiels, `/reload` nimmt also eine Änderung auf und `/rdpl reload` eine neue Datei.
 - Eine Struktur, die schon generiert wurde, bleibt geladen, bis du die Welt verlässt.
 - Groß- und Kleinschreibung im Dateinamen zählt. Passt die Schreibweise deiner Datei nicht zu dem, wonach das Spiel gefragt hat, lädt RDPL sie trotzdem, warnt dich aber, denn unter Linux würde sie überhaupt nicht gefunden.
-- Leg eine `pack.png` in `rdploader`, um dem Pack ein Symbol zu geben.
+- Leg eine `pack.png` in `rdploader`, um dem Pack ein Symbol zu geben. Ohne eine zeigt es das RDPL-Symbol.
 - Der Ordner lässt sich mit der Option `rootDirectory` in `config/resourcedatapackloader-common.toml` verschieben oder umbenennen. Ein absoluter Pfad geht auch, und es braucht einen Neustart.
 - Ein Modell, das ein fertiges Vanilla-Modell nennt, erbt auch Vanillas Texturen. Eltern-Modelle wie `cube_all` und `cross` nehmen ihre Texturen aus dem Modell, das sie nennt, und sind unproblematisch.
 - Telemetrie und Chat-Meldung des Spiels sind aus, solange `privacy` in der Kategorie `tweaks` an ist, was der Standard ist: Nichts wird gesendet, keine Chatnachricht wird signiert, und ein Server mit dem Mod führt für niemanden eine Chat-Sitzung.
@@ -5186,6 +5185,8 @@ Was ein Pack für 1.12.2 schreiben kann, diese Version aber nicht liest, und war
 | `disableOverrides`, `tolerateMissingInAdvancements`, `data.functions` | Einstellungen | Ein Datapack ersetzt ein Vanilla-Rezept, -Advancement oder eine -Funktion, indem es eines unter demselben Namen mitliefert |
 | `careers`, `texture`, `zombieTexture` | Dorfbewohner | Seit 1.14 gibt es keine Karrieren mehr, also wird jede Karriere eine eigene Dorfbewohner-Datei. Das Aussehen liegt unter `textures/entity/villager/profession/<name>.png` und `textures/entity/zombie_villager/profession/<name>.png` |
 | `career` | Handel, Entities | Keine Karrieren; nenne den Beruf selbst |
+| `icon`, `iconTexture` | Tränke | Das Symbol eines Effekts ist seine eigene Textur, `textures/mob_effect/<name>.png`, kein Platz auf einem Blatt |
+| `gameLoopFunction` | Spielregeln | Die Spielregel gibt es nicht mehr; das Funktions-Tag `#minecraft:tick` führt eine Funktion jeden Tick aus, und die Portierung schreibt eines |
 | `id` | Biome, Dimensionen | Biome und Dimensionen kennt man an ihrer Ressourcen-Location, nie an einer Zahl |
 | `suffix`, `keepLoaded` | Dimensionen | Der Speicherordner folgt dem Namen der Dimension. Nur die Oberwelt hat Spawn-Chunks, eine Dimension, die geladen bleiben muss, bekommt also ein `forceload` |
 | `baseHeight`, `heightVariation` | Biome | Die Geländehöhe gehört den Noise-Einstellungen, nicht dem Biom |

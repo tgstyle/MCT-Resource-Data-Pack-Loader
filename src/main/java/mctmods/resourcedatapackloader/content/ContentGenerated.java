@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
+import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.pack.FallbackIcon;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -67,6 +69,7 @@ public final class ContentGenerated {
         blockTags(blockTags);
         tags(itemTags, Map.of(), ContentFormats.ITEM_TAGS);
         worn();
+        potionIcons();
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
 
@@ -644,6 +647,15 @@ public final class ContentGenerated {
     @Nullable private static String textureOr(String namespace, String name, @Nullable String fallback) {
         String found = texture(namespace, name);
         return found == null ? fallback : found;
+    }
+
+    private static void potionIcons() {
+        byte[] icon = FallbackIcon.bytes();
+        if (icon == null) { return; }
+        for (ResourceLocation key : ContentPotions.keys()) {
+            String path = "textures/mob_effect/" + key.getPath() + ".png";
+            if (!provided(PackType.CLIENT_RESOURCES, key.getNamespace(), path)) { GeneratedResources.put(PackType.CLIENT_RESOURCES, key.getNamespace(), path, icon); }
+        }
     }
 
     private static boolean provided(PackType type, String namespace, String path) { return PackManager.get().provides(type, namespace, path); }

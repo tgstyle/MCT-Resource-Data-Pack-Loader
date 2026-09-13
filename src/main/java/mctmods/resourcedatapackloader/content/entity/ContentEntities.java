@@ -631,7 +631,7 @@ public final class ContentEntities {
             Class<? extends LivingEntity> type = ContentTasks.living(name, def.key(), mob.level());
             if (type == null) { continue; }
             EntityType<?> variant = EntityType.byString(name).filter(BY_TYPE::containsKey).orElse(null);
-            mob.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(creature, type, 10, true, false, variant == null ? ContentEntities::fairGame : found -> found.getType() == variant && fairGame(found)));
+            mob.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(creature, type, 10, !def.combat().digs(), false, variant == null ? ContentEntities::fairGame : found -> found.getType() == variant && fairGame(found)));
         }
     }
 

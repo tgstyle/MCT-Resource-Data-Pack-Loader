@@ -17,7 +17,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.MissingMappingsEvent;
-import net.minecraftforge.registries.RegistryManager;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +27,7 @@ public final class RegistryRemaps {
     private static final Gson GSON = new GsonBuilder().create();
     private static final String REGISTRY = "registry";
     private static final String MAPPING = "mapping";
+    private static final Map<String, String> LEGACY_REGISTRIES = Map.of("minecraft:blocks", "minecraft:block", "minecraft:items", "minecraft:item", "minecraft:biomes", "minecraft:worldgen/biome", "minecraft:enchantments", "minecraft:enchantment", "minecraft:potions", "minecraft:mob_effect", "minecraft:potiontypes", "minecraft:potion", "minecraft:soundevents", "minecraft:sound_event", "minecraft:entities", "minecraft:entity_type", "minecraft:villagerprofessions", "minecraft:villager_profession");
     private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -48,7 +48,8 @@ public final class RegistryRemaps {
             ContentLog.LOGGER.error("Registry remap {} is empty, ignoring it", key);
             return 0;
         }
-        ResourceLocation registry = ResourceLocation.parse(GsonHelper.getAsString(json, REGISTRY));
+        String named = GsonHelper.getAsString(json, REGISTRY);
+        ResourceLocation registry = ResourceLocation.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
         JsonObject mapping = GsonHelper.getAsJsonObject(json, MAPPING);
         Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());
         int count = 0;
@@ -78,12 +79,10 @@ public final class RegistryRemaps {
         if (GENERATION.stale()) { reload(); }
         Map<ResourceLocation, ResourceLocation> target = REMAPS.get(event.getKey().location());
         if (target == null) { return; }
-        remap(event, (ResourceKey<? extends Registry<Object>>) event.getKey(), target);
+        remap(event, (ResourceKey<? extends Registry<Object>>) event.getKey(), (IForgeRegistry<Object>) event.getRegistry(), target);
     }
 
-    private static <T> void remap(MissingMappingsEvent event, ResourceKey<? extends Registry<T>> key, Map<ResourceLocation, ResourceLocation> target) {
-        IForgeRegistry<T> pool = RegistryManager.ACTIVE.getRegistry(key.location());
-        if (pool == null) { return; }
+    private static <T> void remap(MissingMappingsEvent event, ResourceKey<? extends Registry<T>> key, IForgeRegistry<T> pool, Map<ResourceLocation, ResourceLocation> target) {
         for (MissingMappingsEvent.Mapping<T> mapping : event.getAllMappings(key)) {
             ResourceLocation renamed = follow(target, mapping.getKey());
             if (renamed == null) { continue; }

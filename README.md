@@ -189,8 +189,8 @@ The mod's own report goes to `logs/rdpl.log` rather than the main log.
 
 # Requirements
 
-1.20.1 needs Forge; 1.21.1 needs NeoForge. Blast Plaster and Curios are optional:
-the pack keys that drive them do nothing when they are absent.
+1.20.1 needs Forge; 1.21.1 needs NeoForge. Blast Plaster is required.
+Curios is optional: the pack keys that drive it do nothing when it is absent.
 
 # Reporting issues
 

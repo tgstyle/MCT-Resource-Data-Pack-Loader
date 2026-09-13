@@ -44,9 +44,9 @@ Drop it straight into `rdploader` and look at how each file is written.
 
 Leg es direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
 
-- **[RDPLRubyExample.zip](example/RDPLRubyExample.zip)** uses every kind of file this version of the loader reads, all of it named for ruby: every block and item type, the things it changes about vanilla, the world it generates, the dimension under that world, and the screens the player sees on the way in. It ships no images at all: every texture is a pixel map drawn in JSON.
-  Использует все виды файлов, которые читает эта версия загрузчика, и всё в нём названо в честь рубина: все типы блоков и предметов, то, что он меняет в ванили, мир, который он генерирует, измерение под этим миром и экраны, которые игрок видит на входе. В нём нет ни одной картинки: каждая текстура — пиксельная карта, нарисованная в JSON.
-  Nutzt jede Art von Datei, die diese Version des Loaders liest, und alles darin ist nach dem Rubin benannt: jeder Block- und Item-Typ, das, was er an Vanilla ändert, die Welt, die er generiert, die Dimension unter dieser Welt und die Bildschirme, die der Spieler beim Betreten sieht. Er enthält kein einziges Bild: Jede Textur ist eine in JSON gezeichnete Pixelkarte.
+- **[RDPLExamplePack.zip](example/RDPLExamplePack.zip)** uses nearly every kind of file the loader reads: blocks, items, a fluid, a creative tab, biomes, a world template, a dimension behind a gate, worldgen, a potion and its brewing, a villager and trades, recipes, loot, overrides of vanilla things, a sound, an advancement and a function. Its readme says what to check in game.
+  Использует почти все виды файлов, которые читает загрузчик: блоки, предметы, жидкость, вкладку творческого режима, биомы, шаблон мира, измерение за вратами, генерацию, зелье и его варку, жителя с торговлей, рецепты, лут, изменения ванильных вещей, звук, достижение и функцию. В его readme сказано, что проверить в игре.
+  Nutzt fast jede Art von Datei, die der Loader liest: Blöcke, Items, ein Fluid, ein Kreativ-Tab, Biome, eine Weltvorlage, eine Dimension hinter einem Tor, Worldgen, einen Trank und sein Brauen, einen Dorfbewohner mit Handel, Rezepte, Beute, Änderungen an Vanilla-Dingen, einen Sound, einen Fortschritt und eine Funktion. Seine readme sagt, was im Spiel zu prüfen ist.
 
 ---
 

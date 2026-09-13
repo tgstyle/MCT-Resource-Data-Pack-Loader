@@ -48,7 +48,9 @@ public final class RDPLResourcePack implements PackResources {
             return () -> new ByteArrayInputStream(meta);
         }
         Path file = PackManager.get().packFile(name);
-        return file == null ? null : IoSupplier.create(file);
+        if (file != null) { return IoSupplier.create(file); }
+        byte[] icon = FallbackIcon.FILE.equals(name) ? FallbackIcon.bytes() : null;
+        return icon == null ? null : () -> new ByteArrayInputStream(icon);
     }
 
     @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull ResourceLocation location) {

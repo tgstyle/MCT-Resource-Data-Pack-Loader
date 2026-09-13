@@ -4,7 +4,7 @@
 
 One working example. Drop it straight into `rdploader` and look at how each file is written.
 
-- [RDPLRubyExample.zip](../example/RDPLRubyExample.zip) uses every kind of file this version of the loader reads, all of it named for ruby: every block and item type, the things it changes about vanilla, the world it generates, the dimension under that world, and the screens the player sees on the way in. It ships no images at all: every texture is a pixel map drawn in JSON.
+- [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) uses nearly every kind of file the loader reads: blocks, items, a fluid, a creative tab, biomes, a world template, a dimension behind a gate, worldgen, a potion and its brewing, a villager and trades, recipes, loot, overrides of vanilla things, a sound, an advancement and a function. Its readme says what to check in game.
 
 This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the few places where the two differ are marked **1.20.1** and **1.21.1**.
 
@@ -259,7 +259,7 @@ Case-insensitive; a space, dash or underscore after the number is optional; the 
 
 **Disable a pack** by appending `.disabled` to its name.
 
-A `pack.mcmeta` at the root of the zip is welcome but not needed: the mod presents every pack to the game under one entry of its own, with the pack format the game expects, so a pack never goes stale on a format number. Put a `pack.png` beside it to give the folder's entry an icon.
+A `pack.mcmeta` at the root of the zip is welcome but not needed: the mod presents every pack to the game under one entry of its own, with the pack format the game expects, so a pack never goes stale on a format number. Put a `pack.png` beside it to give the folder's entry an icon. Without one the entry shows the RDPL icon.
 
 ## Resource packs: who wins
 
@@ -531,7 +531,8 @@ A pack made for the 1.12.2 line loads as it is. The loader recognizes one by its
 - `variants` keep their keys; `meta` is dropped and `oreDict` becomes `tags` through the ore dictionary's mapping onto the convention tags. An `oredict/*.json` file becomes one item tag file per name it adds to. A bare `creativeTab` takes the pack's namespace.
 - A `.lang` file is served as the `.json` the game reads, with `tile.mypack:file.variant.name` as `block.mypack.variant`, `item.` the same way, `itemGroup.x` as `itemGroup.mypack.x`, `fluid.x` as both fluid keys, and everything else as written.
 - A 1.12.2 blockstate is not served at all. Its textures are read instead and served under the names the generator looks for, `textures/block/<variant>.png` with `_top` and `_bottom` where the blockstate had `end`, `top` or `bottom`, so the blockstate and the models are generated for each variant as they would be for a pack written here.
-- Recipes lose their `data` and gain flattened ids, `forge:ore_shaped` becomes `minecraft:crafting_shaped` with `ore` ingredients as `tag`, loot tables lose `set_data` the same way, and an advancement's `item` with `data` becomes `items`.
+- Recipes lose their `data` and gain flattened ids, `forge:ore_shaped` becomes `minecraft:crafting_shaped` with `ore` ingredients as `tag`, loot tables lose `set_data` the same way, and an advancement's `item` with `data` becomes `items`. An advancement's `background` moves from `textures/blocks/` to `textures/block/`.
+- A game rules file's `gameLoopFunction` becomes the `#minecraft:tick` function tag, written as `data/minecraft/tags/functions/tick.json`, since the game rule is gone. The pack's own dimension numbers are read through its `dimensions` files, so `"id": 7` in `dimensions/verdant.json` makes 7 `mypack:verdant` wherever the pack names it. Both sides of a `villageBlocks` pair are fixed, the chance kept, and a `registry_remap` file may keep 1.12.2's plural `minecraft:blocks` and `minecraft:items`.
 - Functions are served as written, since a 1.12.2 command line is not something a port can rewrite, and the log says so. `block_drops` is carried as it is, its `meta` folded into the block name or its `properties`.
 
 The log carries one summary line per ported pack and a line for each file it moved, left out or could not carry, and every key this version no longer reads is still named by the parser that meets it. The port is a best effort, not a finished pack: open the written zip, read those lines, and finish by hand what it names, starting with the functions and any texture it could not find a name for.
@@ -1675,8 +1676,6 @@ The file's path is the effect's registry name, so `mypack/potions/ruby_sight.jso
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
-  "icon": { "x": 0, "y": 0 },
-  "iconTexture": "mypack:textures/gui/effects.png",
   "attributes": [
     { "attribute": "minecraft:generic.movement_speed", "uuid": "91AEAA56-376B-4498-935B-2F7F68070635", "amount": 0.2, "operation": 2 }
   ]
@@ -1691,9 +1690,9 @@ The file's path is the effect's registry name, so `mypack/potions/ruby_sight.jso
 | `beneficial` | no | boolean | `false` | Shown as a good effect |
 | `instant` | no | boolean | `false` | Applies once instead of over time |
 | `effectiveness` | no | float | `0.5` | How much mob AI values it |
-| `icon` | no | object with `x` and `y` | `0`, `0` | Where the icon sits in the sheet |
-| `iconTexture` | no | texture path | vanilla sheet | Your own icon sheet |
 | `attributes` | no | list of objects | none | `attribute` (the game's id, such as `minecraft:generic.movement_speed`), `uuid`, `amount` (`0.0`), `operation` (`0`) |
+
+The effect's icon is the texture `assets/<namespace>/textures/mob_effect/<name>.png`, 18 by 18 like the game's own. An effect that ships none shows the RDPL icon.
 
 ### Potion types
 
@@ -5118,7 +5117,7 @@ These sit in the `commands` group, so `control.commands` in the config decides w
 - Recipes, loot tables, advancements and functions are the game's own data files here, so `/reload` picks up an edit and `/rdpl reload` a new file.
 - A structure that has already generated stays loaded until you leave the world.
 - Filename case matters. If your file's capitalization doesn't match what the game asked for, RDPL still loads it but warns you, because on Linux it wouldn't be found at all.
-- Put a `pack.png` in `rdploader` to give the pack an icon.
+- Put a `pack.png` in `rdploader` to give the pack an icon. Without one it shows the RDPL icon.
 - The folder can be moved or renamed with the `rootDirectory` option in `config/resourcedatapackloader-common.toml`. An absolute path works too, and it needs a restart.
 - A model naming a finished vanilla model inherits vanilla's textures too. Parent models such as `cube_all` and `cross` take their textures from the model that names them and are fine.
 - The game's telemetry and chat reporting are off while `privacy` in the `tweaks` category is on, which it is by default: nothing is sent, no chat message is signed, and a server running the mod keeps no chat session for anyone.
@@ -5186,6 +5185,8 @@ What a 1.12.2 pack can write that this version does not read, and why. A pack th
 | `disableOverrides`, `tolerateMissingInAdvancements`, `data.functions` | settings | A data pack replaces a vanilla recipe, advancement or function by shipping one under the same name |
 | `careers`, `texture`, `zombieTexture` | villagers | There have been no careers since 1.14, so each career becomes a villager file of its own. The look ships as `textures/entity/villager/profession/<name>.png` and `textures/entity/zombie_villager/profession/<name>.png` |
 | `career` | trades, entities | No careers; name the profession itself |
+| `icon`, `iconTexture` | potions | An effect's icon is its own texture, `textures/mob_effect/<name>.png`, not a place on a sheet |
+| `gameLoopFunction` | game rules | The game rule is gone; the `#minecraft:tick` function tag runs a function every tick, and the port writes one |
 | `id` | biomes, dimensions | Biomes and dimensions are known by their resource location, never by a number |
 | `suffix`, `keepLoaded` | dimensions | The save folder follows the dimension's name. Only the overworld has spawn chunks, so a dimension that must stay loaded takes a `forceload` |
 | `baseHeight`, `heightVariation` | biomes | Terrain height belongs to the noise settings, not to the biome |
