@@ -65,6 +65,7 @@ import javax.annotation.Nullable;
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(AXIS); }
 
     @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
+        if (getDef().fullCube()) { return Shapes.block(); }
         return switch (state.getValue(AXIS)) {
             case Y -> FLAT;
             case Z -> ALONG_Z;
