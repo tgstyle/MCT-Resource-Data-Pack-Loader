@@ -73,7 +73,7 @@ public final class ContentTeleporter implements ITeleporter {
         IBlockState held = world.getBlockState(portalPos);
         if (!(held.getBlock() instanceof ContentBlockPortal)) { return portalPos.up(); }
         int meta = held.getBlock().getMetaFromState(held);
-        if (meta == ContentPortals.FLAT) { return portalPos.up(); }
+        if (meta == ContentPortals.FLAT || ((ContentBlockPortal) held.getBlock()).getDef().fullCube) { return portalPos.up(); }
         EnumFacing[] sides = meta == ContentPortals.ALONG_X
                 ? new EnumFacing[] { EnumFacing.NORTH, EnumFacing.SOUTH }
                 : new EnumFacing[] { EnumFacing.WEST, EnumFacing.EAST };
@@ -118,7 +118,10 @@ public final class ContentTeleporter implements ITeleporter {
 
     private BlockPos landing(World world, BlockPos from) {
         BlockPos ground = world.getTopSolidOrLiquidBlock(new BlockPos(from.getX(), 0, from.getZ()));
-        if (ground.getY() > 0) { return ground; }
+        if (ground.getY() > 0) {
+            while (ground.getY() < world.getHeight() - 4 && world.getBlockState(ground).getMaterial().isLiquid()) { ground = ground.up(); }
+            return ground;
+        }
         return new BlockPos(from.getX(), clamp(world, from.getY()), from.getZ());
     }
 
@@ -184,11 +187,13 @@ public final class ContentTeleporter implements ITeleporter {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 BlockPos at = portalPos.add(dx, -1, dz);
-                if (!world.isBlockLoaded(at) || !world.isAirBlock(at)) { continue; }
+                if (!world.isBlockLoaded(at) || occupied(world, at)) { continue; }
                 world.setBlockState(at, floor.getDefaultState(), 2);
             }
         }
     }
+
+    private static boolean occupied(World world, BlockPos at) { return !world.isAirBlock(at) && !world.getBlockState(at).getMaterial().isLiquid(); }
 
     private void clearAbove(World world, BlockPos portalPos) {
         for (int dx = -1; dx <= 1; dx++) {
