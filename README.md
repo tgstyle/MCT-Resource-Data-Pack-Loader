@@ -127,7 +127,7 @@ A world template gathers these into one file, so a pack ships a whole world shap
 at once. Every group also answers to a config switch that lets the pack decide,
 forces the config's value, or turns the group off entirely.
 
-# Rubic worlds
+# 1.12.2 Rubic worlds
 
 A pack can ask for a world built out of cubes instead of 256 block columns, and
 the world grows in both directions: a floor far below zero, a ceiling far above
