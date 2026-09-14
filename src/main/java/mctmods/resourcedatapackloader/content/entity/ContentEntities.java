@@ -206,7 +206,7 @@ public final class ContentEntities {
     @Nullable public static SoundEvent soundEvent(Entity entity, int which) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         if (def == null) { return null; }
-        String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : which == 2 ? def.deathSound : which == 3 ? def.targetSound : def.explodeSound;
+        String name = which == 0 ? def.ambientSound : which == 1 ? def.hurtSound : which == 2 ? def.deathSound : which == 3 ? def.targetSound : which == 4 ? def.explodeSound : def.throwSound;
         if (name.isEmpty()) { return null; }
         if (SOUNDS.containsKey(name)) { return SOUNDS.get(name); }
         ResourceLocation key = new ResourceLocation(name);

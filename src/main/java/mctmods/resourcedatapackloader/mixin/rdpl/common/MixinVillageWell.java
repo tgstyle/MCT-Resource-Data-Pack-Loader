@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.world.SeededRandom;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
 import java.util.Objects;
 import java.util.Random;
+import javax.annotation.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.Inject;
 import net.minecraft.world.gen.structure.template.Template;
@@ -35,11 +36,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
     @Inject(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Well;getBiomeSpecificBlockState(Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/state/IBlockState;", ordinal = 0), cancellable = true)
     private void rdpl$centerpiece(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
         if (!(worldIn instanceof WorldServer)) { return; }
-        if (rdpl$CENTERPIECES.stale()) { rdpl$CENTERPIECES.load(ContentControl.list(ContentControl.VILLAGES, "villageWellStructure", Config.worldgen.villageWellStructure)); }
-        if (rdpl$CENTERPIECES.isEmpty()) { return; }
         StructureBoundingBox box = getBoundingBox();
-        WeightedPicks.Pick chosen = rdpl$CENTERPIECES.pick(SeededRandom.at(worldIn, box.minX, box.minZ));
-        if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return; }
+        WeightedPicks.Pick chosen = rdpl$chosen(worldIn, box);
+        if (chosen == null) { return; }
         WorldServer server = (WorldServer) worldIn;
         Template loaded = server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(chosen.name));
         if (loaded == null) {
@@ -72,6 +71,19 @@ import org.spongepowered.asm.mixin.injection.Redirect;
         cir.setReturnValue(true);
     }
 
+    @Unique @Nullable private static WeightedPicks.Pick rdpl$chosen(World worldIn, StructureBoundingBox box) {
+        if (rdpl$CENTERPIECES.stale()) { rdpl$CENTERPIECES.load(ContentControl.list(ContentControl.VILLAGES, "villageWellStructure", Config.worldgen.villageWellStructure)); }
+        if (rdpl$CENTERPIECES.isEmpty()) { return null; }
+        WeightedPicks.Pick chosen = rdpl$CENTERPIECES.pick(SeededRandom.at(worldIn, box.minX, box.minZ));
+        return chosen == null || WeightedPicks.EMPTY.equals(chosen.name) ? null : chosen;
+    }
+
+    @Unique private int rdpl$seated(World worldIn, int found) {
+        if (found < 0 || rdpl$chosen(worldIn, getBoundingBox()) == null) { return found; }
+        ContentLog.LOGGER.debug("{} at {}, {} measured its ground at y {} and seats its centerpiece floor on the surface at y {}", getClass().getSimpleName(), getBoundingBox().minX, getBoundingBox().minZ, found, found - 1);
+        return found - 1;
+    }
+
     @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Well;getAverageGroundLevel(Lnet/minecraft/world/World;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)I"))
     private int rdpl$lowestGround(StructureVillagePieces.Well well, World worldIn, StructureBoundingBox structurebb) {
         StructureBoundingBox box = getBoundingBox();
@@ -80,9 +92,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
             return box.maxY - 3;
         }
         int found = getAverageGroundLevel(worldIn, structurebb);
-        if (!ContentBeard.wanted() || found < 0) { return found; }
+        if (!ContentBeard.wanted() || found < 0) { return rdpl$seated(worldIn, found); }
         int lowest = ContentBeard.lowestIn(worldIn, box.minX - 1, box.minZ - 1, box.maxX + 1, box.maxZ + 1, structurebb);
-        if (lowest == Integer.MAX_VALUE) { return found; }
+        if (lowest == Integer.MAX_VALUE) { return rdpl$seated(worldIn, found); }
         ContentLog.LOGGER.debug("{} measured its ground at y {} and builds at y {}, so its rim sits flush with the lowest ground touching it", getClass().getSimpleName(), found, lowest - 1);
         return lowest - 1;
     }

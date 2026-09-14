@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.EntityReturningThrow;
 
 import net.minecraft.block.BlockTNT;
@@ -16,6 +17,8 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 public final class EntityAIThrower extends EntityAIBase {
@@ -24,6 +27,8 @@ public final class EntityAIThrower extends EntityAIBase {
     private static final double NEAR = 0.4D;
     private static final double FURTHER = 0.03D;
     private static final float TRIDENT_DAMAGE = 8.0F;
+    private static final float TRIDENT_SPEED = 1.6F;
+    private static final int THROW_SOUND = 5;
     private final EntityCreature mob;
     private final int fuse;
     private final int reload;
@@ -87,9 +92,8 @@ public final class EntityAIThrower extends EntityAIBase {
         Vec3d push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
         if (isTnt(thrown)) { lit(push); }
         else if (returns) {
-            flung(thrown, push);
+            flung(thrown);
             mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
-            retreating = retreat;
             return;
         }
         else { tossed(thrown, push); }
@@ -119,17 +123,18 @@ public final class EntityAIThrower extends EntityAIBase {
         primed.motionY = push.y;
         primed.motionZ = push.z;
         mob.world.spawnEntity(primed);
-        mob.playSound(SoundEvents.ENTITY_TNT_PRIMED, 1.0F, 1.0F);
+        thrownWith(SoundEvents.ENTITY_TNT_PRIMED);
     }
 
-    private void flung(ItemStack thrown, Vec3d push) {
+    private void flung(ItemStack thrown) {
         IAttributeInstance strength = mob.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
         EntityReturningThrow flying = new EntityReturningThrow(mob.world, mob, thrown, strength == null ? TRIDENT_DAMAGE : (float) strength.getAttributeValue());
-        flying.motionX = push.x;
-        flying.motionY = push.y;
-        flying.motionZ = push.z;
+        double dx = target.posX - mob.posX;
+        double dy = target.getEntityBoundingBox().minY + target.height / 3.0F - flying.posY;
+        double dz = target.posZ - mob.posZ;
+        flying.shoot(dx, dy + MathHelper.sqrt(dx * dx + dz * dz) * 0.2D, dz, TRIDENT_SPEED * power, 14 - mob.world.getDifficulty().getId() * 4);
         mob.world.spawnEntity(flying);
-        mob.playSound(SoundEvents.ENTITY_SNOWBALL_THROW, 1.0F, 1.0F);
+        thrownWith(SoundEvents.ENTITY_SNOWBALL_THROW);
     }
 
     private void tossed(ItemStack thrown, Vec3d push) {
@@ -139,7 +144,12 @@ public final class EntityAIThrower extends EntityAIBase {
         flying.motionY = push.y;
         flying.motionZ = push.z;
         mob.world.spawnEntity(flying);
-        mob.playSound(SoundEvents.ENTITY_SNOWBALL_THROW, 1.0F, 1.0F);
+        thrownWith(SoundEvents.ENTITY_SNOWBALL_THROW);
+    }
+
+    private void thrownWith(SoundEvent fallback) {
+        SoundEvent own = ContentEntities.soundEvent(mob, THROW_SOUND);
+        mob.playSound(own != null ? own : fallback, 1.0F, 1.0F);
     }
 
     private void backAway() {

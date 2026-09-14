@@ -29,6 +29,7 @@ public final class EntityReturningThrow extends Entity {
     private static final int LIFE = 1200;
     private static final double CATCH_DISTANCE_SQ = 2.25D;
     private static final double DRAG = 0.99D;
+    private static final double SPREAD = 0.0075D;
     private UUID ownerId;
     private EntityLivingBase owner;
     private float damage;
@@ -48,6 +49,16 @@ public final class EntityReturningThrow extends Entity {
         ownerId = thrower.getUniqueID();
         this.damage = damage;
         dataManager.set(STACK, stack.copy());
+    }
+
+    public void shoot(double x, double y, double z, float velocity, float inaccuracy) {
+        double length = MathHelper.sqrt(x * x + y * y + z * z);
+        motionX = (x / length + rand.nextGaussian() * SPREAD * inaccuracy) * velocity;
+        motionY = (y / length + rand.nextGaussian() * SPREAD * inaccuracy) * velocity;
+        motionZ = (z / length + rand.nextGaussian() * SPREAD * inaccuracy) * velocity;
+        face();
+        prevRotationYaw = rotationYaw;
+        prevRotationPitch = rotationPitch;
     }
 
     @Override protected void entityInit() { dataManager.register(STACK, ItemStack.EMPTY); }

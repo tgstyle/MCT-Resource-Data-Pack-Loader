@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIHideIndoors;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIRaidBreakDoor;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIRaidMarch;
 import mctmods.resourcedatapackloader.content.raid.ActiveRaid;
 import mctmods.resourcedatapackloader.content.raid.RaidStorage;
@@ -13,6 +14,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.monster.EntityIronGolem;
@@ -32,6 +34,8 @@ import net.minecraft.village.Village;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -128,6 +132,19 @@ public final class ContentRaids {
         }
     }
 
+    @SubscribeEvent public static void onRaiderHit(LivingAttackEvent event) {
+        if (raider(event.getEntityLiving()) && raider(event.getSource().getTrueSource())) { event.setCanceled(true); }
+    }
+
+    @SubscribeEvent public static void onRaiderTarget(LivingSetAttackTargetEvent event) {
+        if (!raider(event.getTarget()) || !raider(event.getEntityLiving()) || !(event.getEntityLiving() instanceof EntityLiving)) { return; }
+        EntityLiving living = (EntityLiving) event.getEntityLiving();
+        living.setRevengeTarget(null);
+        living.setAttackTarget(null);
+    }
+
+    private static boolean raider(@Nullable Entity entity) { return entity != null && !entity.world.isRemote && entity.getEntityData().hasKey(ActiveRaid.RAIDER); }
+
     @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
         if (event.getWorld().isRemote || DEFS.isEmpty()) { return; }
         Entity entity = event.getEntity();
@@ -137,6 +154,7 @@ public final class ContentRaids {
         }
         if (!(entity instanceof EntityCreature) || !entity.getEntityData().hasKey(ActiveRaid.RAIDER)) { return; }
         EntityCreature raider = (EntityCreature) entity;
+        raider.tasks.addTask(1, new EntityAIRaidBreakDoor(raider));
         raider.tasks.addTask(4, new EntityAIRaidMarch(raider));
         raider.targetTasks.addTask(3, new EntityAINearestAttackableTarget<>(raider, EntityPlayer.class, true));
         raider.targetTasks.addTask(4, new EntityAINearestAttackableTarget<>(raider, EntityVillager.class, false));

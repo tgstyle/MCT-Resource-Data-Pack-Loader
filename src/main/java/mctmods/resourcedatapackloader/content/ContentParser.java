@@ -1621,7 +1621,8 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "bright", false),
                 JsonUtils.getBoolean(json, "collectsExperience", false),
                 JsonUtils.getBoolean(json, "walks", false),
-                JsonUtils.getBoolean(json, "throwReturns", false));
+                JsonUtils.getBoolean(json, "throwReturns", false),
+                JsonUtils.getString(sounds, "throw", ""));
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {
