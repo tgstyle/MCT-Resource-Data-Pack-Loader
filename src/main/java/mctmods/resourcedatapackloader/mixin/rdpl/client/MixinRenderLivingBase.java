@@ -25,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "applyRotations", at = @At("TAIL")) private void rdpl$lying(EntityLivingBase entityLiving, float ageInTicks, float rotationYaw, float partialTicks, CallbackInfo ci) {
         if (entityLiving.deathTime > 0 || !ContentEntities.lyingAsleep(entityLiving)) { return; }
+        GlStateManager.translate(0.0F, entityLiving.width / 2.0F, 0.0F);
         GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
     }
 
