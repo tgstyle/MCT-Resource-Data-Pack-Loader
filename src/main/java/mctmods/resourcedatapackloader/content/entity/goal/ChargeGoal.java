@@ -10,12 +10,12 @@ import javax.annotation.Nullable;
 
 public final class ChargeGoal extends Goal {
     private static final int RUN = 40;
-    private static final int REST = 60;
+    private static final int REST = 180;
     private final PathfinderMob mob;
     private final double speed;
     @Nullable private LivingEntity target;
     private int running;
-    private int resting;
+    private int restUntil;
 
     public ChargeGoal(PathfinderMob mob, double speed) {
         this.mob = mob;
@@ -26,10 +26,7 @@ public final class ChargeGoal extends Goal {
     @Override public boolean requiresUpdateEveryTick() { return true; }
 
     @Override public boolean canUse() {
-        if (resting > 0) {
-            resting--;
-            return false;
-        }
+        if (mob.tickCount < restUntil) { return false; }
         LivingEntity found = mob.getTarget();
         if (found == null || !found.isAlive() || !mob.onGround()) { return false; }
         double away = mob.distanceToSqr(found);
@@ -46,11 +43,12 @@ public final class ChargeGoal extends Goal {
     @Override public void stop() {
         target = null;
         running = 0;
-        resting = REST;
+        restUntil = mob.tickCount + REST;
         mob.getNavigation().stop();
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         if (target == null) { return; }
         running--;
         mob.getLookControl().setLookAt(target, 30.0F, 30.0F);

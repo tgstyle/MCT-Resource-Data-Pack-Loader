@@ -6,14 +6,13 @@ It applies to every world, in singleplayer and on servers, and there is nothing
 to switch on.
 
 
-WHAT IS HERE SO FAR
+MORE THAN OVERRIDES
 -------------------
 
-This version of the mod is being brought over from Minecraft 1.12.2 one piece
-at a time. What is here now is the pack folder itself: overriding what
-Minecraft and mods provide, in every world, on clients and servers. Defining
-new content from JSON, deciding what generates, and the rest follow as they are
-ported, and HOWTO.md, shipped alongside the mod, describes each one as it lands.
+Packs here can also define new blocks, items, biomes and whole dimensions from
+JSON files, decide what generates and where, lock dimensions behind a key or a
+mob that must be slain, and make a world's land ahead of time so nobody ever
+waits on a chunk. HOWTO.md, shipped alongside the mod, covers all of it.
 
 
 HOW TO ADD A FILE
@@ -146,6 +145,122 @@ work on a dedicated server as well, and a change to them takes effect with
 /reload.
 
 
+ADDING NEW CONTENT
+------------------
+
+A pack can also add blocks, items and fluids of its own, described as JSON. You
+do not need to write or build a mod for this.
+
+Definitions sit under data, one folder for each kind of thing. Each key inside
+"variants" is a name, so a file at
+
+    rdploader/data/mypack/blocks/ores.json
+
+holding a variant called ruby_ore registers mypack:ruby_ore. The file's own
+name only groups things. If a real mod already registers that name, the mod
+wins and your variant is skipped.
+
+The simplest block is a few lines:
+
+    {
+      "type": "ore",
+      "material": "rock",
+      "harvestTool": "pickaxe",
+      "variants": {
+        "ruby_ore": { "hardness": 3.0, "harvestLevel": 1 }
+      }
+    }
+
+You still supply the model, blockstate, texture and language entry under
+assets, the same way as any other file in this folder.
+
+Each of these is a folder under data/<yourpack>:
+
+    blocks           items            fluids           materials
+    tabs             sounds           biomes           worldgen
+    caveregions      dimensions       worldtemplates   worldintro
+    gates            gamerules        teams            scoring
+    raids            entities         hardness         anvils
+    exposures        overrides        villages         pathintersects
+    structuremaps    citymaps         portalframes     blastplaster
+    structure        recipe           recipe_removals  furnace
+    fuels            brewing          potions          potion_types
+    villagers        trades           loot_table       loot_injections
+    block_drops      player_loot      advancement      function
+    tags             registry_remap
+
+Blocks come in these shapes, set by the "type" field:
+
+    basic   ore     falling   slab    stairs   fence    door
+    pane    wall    ladder    torch   crop     flower   cane
+    log     leaves  sapling   vine    portal   trapdoor fence_gate
+    banner  bell    container
+
+and items in these:
+
+    basic   food    drink     potion  tool     armor    seed
+    potion_bottle   container
+
+A potion type is named by the lang key item.minecraft.potion.effect.<baseName>,
+with splash_potion, lingering_potion or tipped_arrow in place of potion for the
+other forms. A potion_bottle item is your own container for them: it takes a
+creativeTab like any other item and holds the potion types you name in
+potionTypes.
+
+A villagers/<name>.json file defines a profession. A trades/*.json file adds
+trades to any profession, whether yours or one of Minecraft's, naming the
+profession and the level the trade appears at.
+
+An entities/<name>.json file makes a new entity out of one that is already here.
+It names the entity to build on, and what is different about it: its name, its
+looks, how much health and damage it has, how it moves, how it fights and what
+it drops. It is an entity of its own, with its own spawn egg and loot table,
+and the one it was built from is left alone.
+
+A villages/<name>.json file adds a plot a city or village can build from one of
+your .nbt templates, and a raids/<name>.json file sends waves at a village when
+a player brings an omen into it.
+
+A worldintro/<name>.json file plays a run of pages when somebody enters the
+world, before they take control. The words are plain .txt files under
+assets/<yourpack>/texts. It can play once per player or on every join.
+
+A teams/<name>.json file fields a side on the game's scoreboard and says what
+joins it, and a scoring/<name>.json file is an objective that scores points to
+those sides and decides how a match ends.
+
+
+WHOLE WORLDS
+------------
+
+A pack is not limited to single things. dimensions/<name>.json registers a
+dimension with its own terrain, biomes and sky. gates/<name>.json puts a
+condition on reaching one, such as holding or spending an item. A block of
+type portal sends whoever walks in to another dimension, and portalframes lets
+a player build and light a frame of their own.
+
+worldtemplates/<name>.json gathers a world's settings into one file, so a pack
+can ship a whole world shape at once instead of asking for a dozen config
+edits. It can shape the overworld itself too, such as its sea level and
+whether its oceans are lava.
+
+worldgen is more than ore. An entry places a shape, from a small blob of your
+block to one of your own .nbt templates, and decides how often, how high and in
+which biomes it appears.
+
+A biomes/<name>.json file defines a biome: its climate and colors, the blocks
+it is made of, what decorates it, what spawns in it, and where it generates.
+
+
+WHERE THIS STOPS
+----------------
+
+This describes what a thing is, not what it does over time. Anything needing a
+block entity, a screen or code running every tick still needs a real mod, with
+one exception: a block of type container holds an inventory with a screen of
+its own. A machine is out of reach; an ore, a fence, a food or a fluid is not.
+
+
 SEEING YOUR CHANGES
 -------------------
 
@@ -185,6 +300,18 @@ Language files trip people up most often: they are en_us.json, not en_US.json.
 
 Check your files sit inside an 'assets' or 'data' folder. A zip without either
 is skipped, and the log says so.
+
+
+ADVANCEMENTS AND RECIPES
+------------------------
+
+A recipe a script adds or replaces is known by the name the script gives it.
+To have an advancement unlock it, drop an advancement file in here that names
+that recipe, and the advancement works end to end again.
+
+Give such a recipe a fixed name in the script. A name made up for you can
+change the moment you edit the recipe, so it is not safe to point an
+advancement at.
 
 
 The rdploader folder itself can be moved or renamed with the rootDirectory option

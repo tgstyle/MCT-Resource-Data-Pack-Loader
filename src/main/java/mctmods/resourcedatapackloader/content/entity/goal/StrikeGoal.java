@@ -8,11 +8,12 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import javax.annotation.Nonnull;
 
 public final class StrikeGoal extends MeleeAttackGoal {
     public StrikeGoal(PathfinderMob mob, double speed, boolean followingTargetEvenIfNotSeen) { super(mob, speed, followingTargetEvenIfNotSeen); }
 
-    @Override protected void checkAndPerformAttack(LivingEntity target) {
+    @Override protected void checkAndPerformAttack(@Nonnull LivingEntity target) {
         if (!canPerformAttack(target)) { return; }
         resetAttackCooldown();
         mob.swing(InteractionHand.MAIN_HAND);

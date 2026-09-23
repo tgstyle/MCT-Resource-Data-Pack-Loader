@@ -23,8 +23,6 @@ public class ContentTorchBlock extends TorchBlock {
         this.flame = flame(def);
     }
 
-    public BlockDef getDef() { return def; }
-
     static ParticleOptions flame(BlockDef def) {
         if (!BlockDef.PARTICLE_COLORED.equals(def.torchParticle())) { return ParticleTypes.FLAME; }
         int color = def.torchColor();

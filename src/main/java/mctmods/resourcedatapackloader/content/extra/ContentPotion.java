@@ -11,6 +11,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import javax.annotation.Nonnull;
 
 public final class ContentPotion extends MobEffect {
     private final PotionDef def;
@@ -21,6 +22,10 @@ public final class ContentPotion extends MobEffect {
         for (AttributeDef modifier : def.attributes()) {
             Holder<Attribute> attribute = ContentAttributes.find(modifier.attribute(), def.key());
             if (attribute == null) { continue; }
+            if (modifier.operation() < 0 || modifier.operation() >= AttributeModifier.Operation.values().length) {
+                ContentLog.LOGGER.error("Attribute modifier for {} has an unusable operation {}, skipping it", def.key(), modifier.operation());
+                continue;
+            }
             ResourceLocation id = modifierId(def, modifier);
             if (id == null) { continue; }
             addAttributeModifier(attribute, id, modifier.amount(), AttributeModifier.Operation.BY_ID.apply(modifier.operation()));
@@ -40,4 +45,6 @@ public final class ContentPotion extends MobEffect {
     }
 
     @Override public boolean isInstantenous() { return def.instant(); }
+
+    @Override @Nonnull public String getDescriptionId() { return def.name(); }
 }

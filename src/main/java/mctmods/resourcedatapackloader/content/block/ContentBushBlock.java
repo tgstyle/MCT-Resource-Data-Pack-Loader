@@ -11,11 +11,14 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
 public class ContentBushBlock extends BushBlock {
+    static final VoxelShape SHAPE = Block.box(4.8D, 0.0D, 4.8D, 11.2D, 9.6D, 11.2D);
     private final BlockDef def;
     private final GrowthDef growth;
     private Set<Block> soil = Collections.emptySet();
@@ -26,19 +29,14 @@ public class ContentBushBlock extends BushBlock {
         this.growth = growth;
     }
 
-    public BlockDef getDef() { return def; }
-
     public void resolveSoil() { soil = ContentRegistry.resolveSoil(growth.soil(), def.key()); }
+
+    @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return SHAPE; }
 
     @Override @Nonnull protected MapCodec<? extends BushBlock> codec() { return MapCodec.unit(this); }
 
-    @Override protected boolean mayPlaceOn(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos) {
-        if (soil.isEmpty()) { return super.mayPlaceOn(state, level, pos); }
-        return soil.contains(state.getBlock());
-    }
-
     @Override protected boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) {
         if (growth.needsSky() && !level.canSeeSky(pos)) { return false; }
-        return super.canSurvive(state, level, pos);
+        return ContentRegistry.sustains(soil, level, pos.below(), state);
     }
 }

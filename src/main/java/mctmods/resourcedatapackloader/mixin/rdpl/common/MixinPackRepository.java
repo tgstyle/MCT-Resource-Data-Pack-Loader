@@ -2,16 +2,15 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.pack.PackFinder;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Collection;
 import java.util.List;
 
-@Mixin(value = PackRepository.class, priority = 2100) public abstract class MixinPackRepository {
-    @Inject(method = "rebuildSelected", at = @At("RETURN"), cancellable = true)
-    private void rdpl$seatPacks(Collection<String> ids, CallbackInfoReturnable<List<Pack>> cir) { cir.setReturnValue(PackFinder.seat(cir.getReturnValue())); }
+@Mixin(PackRepository.class) public abstract class MixinPackRepository {
+    @WrapMethod(method = "rebuildSelected")
+    private List<Pack> rdpl$seatPacks(Collection<String> ids, Operation<List<Pack>> original) { return PackFinder.seat(original.call(ids)); }
 }

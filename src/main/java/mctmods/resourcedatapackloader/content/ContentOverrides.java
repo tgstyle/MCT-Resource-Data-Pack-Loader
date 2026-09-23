@@ -47,8 +47,8 @@ import javax.annotation.Nullable;
 
 public final class ContentOverrides {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final List<String> TOOLS = List.of("pickaxe", "axe", "shovel", "hoe");
-    private static final List<String> TIERS = List.of("minecraft:needs_stone_tool", "minecraft:needs_iron_tool", "minecraft:needs_diamond_tool");
+    private static final List<String> TOOLS = List.of("pickaxe", "axe", "shovel", "hoe", "sword");
+    private static final List<String> TIERS = List.of("minecraft:needs_stone_tool", "minecraft:needs_iron_tool", "minecraft:needs_diamond_tool", ContentFormats.NEEDS_NETHERITE_TOOL);
     private static final int DEFAULT_FIRE_SPREAD = 5;
     private static final float DEFAULT_EAT_SECONDS = 1.6F;
     private static final Map<ResourceLocation, OverrideDef> DEFS = new LinkedHashMap<>();
@@ -88,7 +88,7 @@ public final class ContentOverrides {
             if (def.harvestTool() == null || !ContentRegistry.available(def.requires(), def.target()) || !BuiltInRegistries.BLOCK.containsKey(def.target())) { continue; }
             ContentGenerated.harvestTags(tags, def.target(), def.harvestTool(), def.harvestToolLevel());
             for (String tool : TOOLS) {
-                if (!tool.equals(def.harvestTool())) { ContentGenerated.tag(removed, "minecraft:mineable/" + tool, def.target()); }
+                if (!tool.equals(def.harvestTool())) { ContentGenerated.tag(removed, mineable(tool), def.target()); }
             }
             int tier = Math.min(def.harvestToolLevel(), TIERS.size());
             for (int i = 0; i < TIERS.size(); i++) {
@@ -96,6 +96,8 @@ public final class ContentOverrides {
             }
         }
     }
+
+    private static String mineable(String tool) { return "sword".equals(tool) ? ContentFormats.MINEABLE_SWORD : "minecraft:mineable/" + tool; }
 
     private static void load() {
         if (!LOADED.stale()) { return; }
@@ -109,7 +111,7 @@ public final class ContentOverrides {
                 ContentLog.LOGGER.error("Override file {} does not name a target. The path must be overrides/<namespace>/<name>.json, such as overrides/minecraft/stone.json", source);
                 return;
             }
-            ResourceLocation target = ResourceLocation.tryParse(path.substring(0, split) + ":" + path.substring(split + 1));
+            ResourceLocation target = ContentParser.location(path.substring(0, split) + ":" + path.substring(split + 1));
             if (target == null) {
                 ContentLog.LOGGER.error("Override file {} names target '{}', which is not a valid id", source, path);
                 return;
@@ -175,14 +177,14 @@ public final class ContentOverrides {
         if (block == null) { return false; }
         BLOCKS.computeIfAbsent(block, BlockSnapshot::of);
         IBlockBehaviour inside = (IBlockBehaviour) block;
-        if (def.resistance() != null) { inside.rdpl$setExplosionResistance(Math.max(0.0F, def.resistance())); }
+        if (def.hardness() != null) { inside.rdpl$setExplosionResistance(Math.max(inside.rdpl$getExplosionResistance(), def.hardness())); }
+        if (def.resistance() != null) { inside.rdpl$setExplosionResistance(Math.max(0.0F, ContentTypes.legacyResistance(def.resistance()))); }
         if (def.slipperiness() != null) { inside.rdpl$setFriction(def.slipperiness()); }
         if (def.soundType() != null) { inside.rdpl$setSoundType(ContentTypes.soundType(def.soundType(), inside.rdpl$getSoundType(), def.source())); }
         for (BlockState state : block.getStateDefinition().getPossibleStates()) {
             IBlockStateBase held = (IBlockStateBase) state;
             if (def.hardness() != null) { held.rdpl$setDestroySpeed(def.hardness()); }
             if (def.light() != null) { held.rdpl$setLightEmission(Math.clamp(def.light(), 0, 15)); }
-            if (def.harvestTool() != null) { held.rdpl$setRequiresCorrectToolForDrops(true); }
         }
         if (def.lightOpacity() != null) { lights.put(block, Math.clamp(def.lightOpacity(), 0, 15)); }
         if (def.flammability() != null) {
@@ -206,6 +208,7 @@ public final class ContentOverrides {
         if (def.containerItem() != null) {
             Item container = ContentStacks.find(def.source(), def.containerItem());
             if (container != null) { inside.rdpl$setCraftingRemainingItem(container); }
+            else { ContentLog.LOGGER.error("Override {} names container item {}, which does not exist", def.source(), def.containerItem()); }
         }
         OverrideDef.FoodDef food = def.food();
         if (food != null) { builder.set(DataComponents.FOOD, food(def, food, item.components().get(DataComponents.FOOD))); }
@@ -213,13 +216,21 @@ public final class ContentOverrides {
         return true;
     }
 
+    public static DataComponentMap validating(Item item, DataComponentMap components) {
+        DataComponentMap defaults = item.components();
+        if (!defaults.has(DataComponents.MAX_DAMAGE) || defaults.getOrDefault(DataComponents.MAX_STACK_SIZE, 1) <= 1) { return components; }
+        return DataComponentMap.builder().addAll(components).set(DataComponents.MAX_STACK_SIZE, null).build();
+    }
+
     private static FoodProperties food(OverrideDef def, OverrideDef.FoodDef food, @Nullable FoodProperties was) {
         FoodProperties.Builder builder = new FoodProperties.Builder().nutrition(food.heal()).saturationModifier(food.saturation());
         if (food.alwaysEdible()) { builder.alwaysEdible(); }
         if (was != null && was.eatSeconds() < DEFAULT_EAT_SECONDS) { builder.fast(); }
         if (was != null) { was.usingConvertsTo().ifPresent(stack -> builder.usingConvertsTo(stack.getItem())); }
-        if (food.effects().isEmpty() && was != null) {
+        if (was != null) {
+            if (!food.effects().isEmpty()) { ContentLog.LOGGER.error("Override {} puts effects on {}, which is already food. Effects on existing food are not supported, only heal, saturation and alwaysEdible were applied", def.source(), def.target()); }
             for (FoodProperties.PossibleEffect effect : was.effects()) { builder.effect(effect.effectSupplier(), effect.probability()); }
+            return builder.build();
         }
         for (PotionEffectDef entry : food.effects()) {
             MobEffectInstance made = effect(def, entry);
@@ -271,20 +282,18 @@ public final class ContentOverrides {
 
     @Nullable private static String stringOrNull(JsonObject json, String key) { return json.has(key) ? GsonHelper.getAsString(json, key) : null; }
 
-    private record BlockSnapshot(float resistance, float friction, SoundType sound, float[] speeds, int[] lights, boolean[] tools) {
+    private record BlockSnapshot(float resistance, float friction, SoundType sound, float[] speeds, int[] lights) {
         static BlockSnapshot of(Block block) {
             IBlockBehaviour inside = (IBlockBehaviour) block;
             List<BlockState> states = block.getStateDefinition().getPossibleStates();
             float[] speeds = new float[states.size()];
             int[] lights = new int[states.size()];
-            boolean[] tools = new boolean[states.size()];
             for (int i = 0; i < states.size(); i++) {
                 IBlockStateBase state = (IBlockStateBase) states.get(i);
                 speeds[i] = state.rdpl$getDestroySpeed();
                 lights[i] = state.rdpl$getLightEmission();
-                tools[i] = states.get(i).requiresCorrectToolForDrops();
             }
-            return new BlockSnapshot(inside.rdpl$getExplosionResistance(), inside.rdpl$getFriction(), inside.rdpl$getSoundType(), speeds, lights, tools);
+            return new BlockSnapshot(inside.rdpl$getExplosionResistance(), inside.rdpl$getFriction(), inside.rdpl$getSoundType(), speeds, lights);
         }
 
         void restore(Block block) {
@@ -297,7 +306,6 @@ public final class ContentOverrides {
                 IBlockStateBase state = (IBlockStateBase) states.get(i);
                 state.rdpl$setDestroySpeed(speeds[i]);
                 state.rdpl$setLightEmission(lights[i]);
-                state.rdpl$setRequiresCorrectToolForDrops(tools[i]);
             }
         }
     }

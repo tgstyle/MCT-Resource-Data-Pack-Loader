@@ -142,15 +142,18 @@ neoForge {
 }
 
 def bpJar = null
-def bpDir = file('../MCT-Blast-Plaster-21/build/libs')
-def bpJars = bpDir.exists() ? fileTree(bpDir) {
-    include '*-dev.jar'
-    exclude '**/*-sources.jar'
-}.files : []
+def bpDir = new File(projectDir, '../MCT-Blast-Plaster-21/build/libs')
+def bpSource = (bpDir.listFiles() ?: new File[0]).findAll { it.name.endsWith('-dev.jar') }.max { it.lastModified() }
 
-if (!bpJars.isEmpty()) {
-    bpJar = bpJars.sort { a, b -> a.lastModified() <=> b.lastModified() }.last()
-    logger.lifecycle("Found Blast Plaster dev JAR: ${bpJar.name}")
+if (bpSource != null) {
+    bpJar = new File(projectDir, 'build/blastplaster/blastplaster-dev.jar')
+    if (!bpJar.exists() || bpJar.length() != bpSource.length() || bpJar.lastModified() != bpSource.lastModified()) {
+        bpJar.parentFile.mkdirs()
+        def staged = File.createTempFile('blastplaster-dev', '.jar', bpJar.parentFile)
+        java.nio.file.Files.copy(bpSource.toPath(), staged.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES)
+        java.nio.file.Files.move(staged.toPath(), bpJar.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+    }
+    logger.lifecycle("Found Blast Plaster dev JAR: ${bpSource.name}")
 } else {
     logger.warn('No Blast Plaster dev JAR found in ../MCT-Blast-Plaster-21/build/libs, build one there first')
 }

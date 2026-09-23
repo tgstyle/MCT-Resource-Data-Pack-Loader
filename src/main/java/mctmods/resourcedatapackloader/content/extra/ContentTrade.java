@@ -11,6 +11,7 @@ import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentTrade implements VillagerTrades.ItemListing {
@@ -34,7 +35,7 @@ public final class ContentTrade implements VillagerTrades.ItemListing {
 
     private static AmountDef amount(TradeStackDef def) { return def.max() <= def.min() ? AmountDef.of(def.min()) : new AmountDef(def.min(), def.max()); }
 
-    @Nullable @Override public MerchantOffer getOffer(@Nullable Entity trader, RandomSource random) {
+    @Nullable @Override public MerchantOffer getOffer(@Nullable Entity trader, @Nonnull RandomSource random) {
         ItemStack first = sized(buy, buyCount, random);
         if (first.isEmpty()) { return null; }
         ItemStack second = sized(buySecondary, buySecondaryCount, random);

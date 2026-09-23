@@ -12,7 +12,7 @@ public final class ContentSpire implements IContentShape {
     public ContentSpire(ShapeDef shape) { this.shape = shape; }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int radius = Math.min(ShapeDef.MOST_REACH, Math.max(0, shape.radius().pick(random)));
+        int radius = Math.clamp(shape.radius().pick(random), 0, ShapeDef.MOST_REACH);
         int height = Math.max(1, shape.height().pick(random));
         int step = shape.hanging() ? -1 : 1;
         boolean round = shape.isRound();

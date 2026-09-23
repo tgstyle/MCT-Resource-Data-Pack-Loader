@@ -14,7 +14,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RespawnAnchorBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -24,6 +27,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public final class GateEvents {
     private static final long QUIET_MILLIS = 2000L;
@@ -110,14 +114,21 @@ public final class GateEvents {
     }
 
     private static void retreat(ServerPlayer player) {
-        ServerLevel level = player.server.getLevel(player.getRespawnDimension());
-        BlockPos target = player.getRespawnPosition();
-        if (level == null || target == null) {
-            level = player.server.overworld();
-            target = level.getSharedSpawnPos();
-        }
-        BlockPos feet = ContentDimensions.landing(level, target, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        ServerLevel level = player.serverLevel();
+        BlockPos bed = safeBed(player, level);
+        BlockPos feet = ContentDimensions.landing(level, bed == null ? level.getSharedSpawnPos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
         player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, player.getYRot(), player.getXRot());
+    }
+
+    @Nullable private static BlockPos safeBed(ServerPlayer player, ServerLevel level) {
+        BlockPos bed = player.getRespawnPosition();
+        if (bed == null || !player.getRespawnDimension().equals(level.dimension())) { return null; }
+        BlockState state = level.getBlockState(bed);
+        if (state.getBlock() instanceof BedBlock) { return BedBlock.findStandUpPosition(EntityType.PLAYER, level, bed, state.getValue(BedBlock.FACING), player.getRespawnAngle()).map(BlockPos::containing).orElse(null); }
+        if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0) { return RespawnAnchorBlock.findStandUpPosition(EntityType.PLAYER, level, bed).map(BlockPos::containing).orElse(null); }
+        if (!player.isRespawnForced()) { return null; }
+        BlockState above = level.getBlockState(bed.above());
+        return state.getBlock().isPossibleToRespawnInThis(state) && above.getBlock().isPossibleToRespawnInThis(above) ? bed : null;
     }
 
     private static boolean quiet(ServerPlayer player) {

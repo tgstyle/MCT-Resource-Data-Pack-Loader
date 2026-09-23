@@ -35,6 +35,7 @@ public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup
             }
             return true;
         }
+        if (entry.shape() instanceof ContentImprint imprint && imprint.pinned()) { return imprint.placePinned(placer, center, origin); }
         boolean placed = entry.shape().generate(placer, random, origin);
         if (placed && entry.def().follows()) { ContentWorldgen.after(entry, placer, random, origin, new ArrayList<>()); }
         return placed;

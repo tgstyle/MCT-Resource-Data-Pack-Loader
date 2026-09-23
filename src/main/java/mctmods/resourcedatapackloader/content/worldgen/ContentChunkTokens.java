@@ -9,7 +9,7 @@ import java.util.Set;
 
 public final class ContentChunkTokens {
     private static final Codec<Set<String>> CODEC = Codec.STRING.listOf().xmap(held -> Set.copyOf(new LinkedHashSet<>(held)), List::copyOf);
-    private static final AttachmentType<Set<String>> TOKENS = AttachmentType.<Set<String>>builder(() -> Set.<String>of()).serialize(CODEC, held -> !held.isEmpty()).build();
+    private static final AttachmentType<Set<String>> TOKENS = AttachmentType.<Set<String>>builder(() -> Set.of()).serialize(CODEC, held -> !held.isEmpty()).build();
 
     private ContentChunkTokens() {}
 

@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Settings;
-import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.world.item.ItemStack;
 import java.util.Collections;
@@ -33,20 +32,10 @@ public final class FurnaceBlocking {
         if (disabled()) { return false; }
         String owner = RecipeBlocking.owner(result);
         if (owner == null) { return false; }
-        if (blocked.contains(owner)) { return count(owner); }
-        if (blockAll && !whitelist.contains(owner)) { return count(owner); }
-        return false;
+        boolean blocks = blocked.contains(owner) || (blockAll && !whitelist.contains(owner));
+        if (blocks) { BLOCKED.count(owner); }
+        return blocks;
     }
 
-    private static boolean count(String owner) {
-        BLOCKED.count(owner);
-        return true;
-    }
-
-    public static void report() {
-        int total = BLOCKED.total();
-        if (total == 0) { return; }
-        Summary.info("furnace.blocked", "Blocked " + total + " furnace recipe(s)");
-        if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes())) { BLOCKED.report("furnace recipe(s)"); }
-    }
+    public static void report() { RecipeBlocking.summarize(BLOCKED, "furnace.blocked", "furnace recipe(s)"); }
 }

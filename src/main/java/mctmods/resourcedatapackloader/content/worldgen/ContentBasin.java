@@ -12,7 +12,7 @@ public final class ContentBasin implements IContentShape {
     public ContentBasin(ShapeDef shape) { this.shape = shape; }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int radius = Math.min(ShapeDef.MOST_REACH * 2, Math.max(1, shape.radius().pick(random)));
+        int radius = Math.clamp(shape.radius().pick(random), 1, ShapeDef.MOST_REACH * 2);
         int depth = Math.max(1, shape.height().pick(random));
         boolean round = shape.isRound();
         int span = radius * radius;

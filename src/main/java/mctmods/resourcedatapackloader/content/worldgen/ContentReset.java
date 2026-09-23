@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
@@ -32,20 +33,20 @@ public final class ContentReset {
     private ContentReset() {}
 
     public static int run(MinecraftServer server) {
-        String said = ContentPregen.says("resetSays", Config.chunks.resetSays());
-        ContentPregen.holdEveryone(server, false);
-        if (!said.isEmpty()) { ContentPregen.tellBar(server, said); }
+        String said = ContentPregenProgress.says("resetSays", Config.chunks.resetSays());
+        ContentPregenHold.holdEveryone(server, false);
+        if (!said.isEmpty()) { ContentPregenHold.tellBar(server, said); }
         int swept = 0;
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities())) { swept = sweep(server); }
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsScores", Config.chunks.resetClearsScores())) { wipe(server); }
         boolean inventory = ContentControl.flag(ContentControl.CHUNKS, "resetClearsInventory", Config.chunks.resetClearsInventory());
         strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, "resetClearsExperience", Config.chunks.resetClearsExperience()));
         if (inventory) { ContentTeams.giveAll(server); }
-        String runs = ContentPregen.says("resetRuns", Config.chunks.resetRuns());
+        String runs = ContentPregenProgress.says("resetRuns", Config.chunks.resetRuns());
         if (!runs.isEmpty()) { Functions.run(server, runs, "The reset"); }
         place(server);
         noted(server);
-        ContentPregen.releaseEveryone(server, true);
+        ContentPregenHold.releaseEveryone(server, true);
         ContentScoring.starting(server);
         ContentLog.LOGGER.info("The map was reset: {} entity(s) swept", swept);
         return swept;
@@ -61,7 +62,7 @@ public final class ContentReset {
         int count = GateStorage.countGlobally(server, RESETS);
         if (count <= 0 || GateStorage.notedFor(player, RESETS) >= count) { return; }
         GateStorage.noteFor(player, RESETS, count);
-        Landing landing = landingFor(server, ContentPregen.says("resetSendsTo", Config.chunks.resetSendsTo()), player);
+        Landing landing = landingFor(server, ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo()), player);
         if (landing == null) { return; }
         player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot());
         ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getGameProfile().getName());
@@ -104,7 +105,7 @@ public final class ContentReset {
     }
 
     private static void place(MinecraftServer server) {
-        String asked = ContentPregen.says("resetSendsTo", Config.chunks.resetSendsTo());
+        String asked = ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo());
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Landing landing = landingFor(server, asked, player);
             if (landing == null) { continue; }
@@ -122,7 +123,7 @@ public final class ContentReset {
         int comma = asked.indexOf(',');
         int colon = comma < 0 ? -1 : asked.lastIndexOf(':', comma);
         if (colon > 0) {
-            ResourceLocation id = ResourceLocation.tryParse(asked.substring(0, colon).trim());
+            ResourceLocation id = ResourceLocation.tryParse(ContentFormats.dimensionId(asked.substring(0, colon)));
             ServerLevel named = id == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
             if (named == null) {
                 ContentLog.LOGGER.error("resetSendsTo names the dimension '{}', which is not loaded, so players stay where they are", asked.substring(0, colon));
@@ -132,11 +133,11 @@ public final class ContentReset {
             where = asked.substring(colon + 1);
         }
         String[] parts = where.split(",");
-        if (parts.length != 3) {
-            ContentLog.LOGGER.error("resetSendsTo is '{}', which is not spawn, x,y,z or dimension:x,y,z, so players stay where they are", asked);
+        if (parts.length != 2 && parts.length != 3) {
+            ContentLog.LOGGER.error("resetSendsTo is '{}', which is not spawn, x,z, x,y,z, dimension:x,z or dimension:x,y,z, so players stay where they are", asked);
             return null;
         }
-        try { return new Landing(level, Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()), Integer.parseInt(parts[2].trim())); }
+        try { return new Landing(level, Integer.parseInt(parts[0].trim()), parts.length == 3 ? Integer.parseInt(parts[1].trim()) : level.getSeaLevel() + 1, Integer.parseInt(parts[parts.length - 1].trim())); }
         catch (NumberFormatException notNumbers) {
             ContentLog.LOGGER.error("resetSendsTo is '{}', whose position is not three whole numbers, so players stay where they are", asked);
             return null;

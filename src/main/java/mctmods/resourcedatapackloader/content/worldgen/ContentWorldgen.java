@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.BlockWeightDef;
+import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.FollowDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -46,6 +47,7 @@ import javax.annotation.Nullable;
 public final class ContentWorldgen {
     public static final String SHAPE_FEATURE = "shape";
     public static final String SPREAD_PLACEMENT = "spread";
+    public static final String RINGS_PLACEMENT = "rings";
     public static final String RETROGEN_TOKENS = "retrogen";
     private static final String UNDERGROUND = "underground_ores";
     private static final String VEGETAL = "vegetal_decoration";
@@ -61,12 +63,12 @@ public final class ContentWorldgen {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (!Config.worldgen.load()) { return; }
+        if (Config.worldgen.loadOff()) { return; }
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
+            if (ContentRegistry.reserved(key)) { return; }
             WorldgenDef def = ContentWorldgenParser.parse(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
-        if (!DEFS.isEmpty()) { Summary.info("worldgen", "Loaded " + DEFS.size() + " worldgen entries"); }
     }
 
     public static void generate() {
@@ -78,7 +80,8 @@ public final class ContentWorldgen {
             ENTRIES.put(def.key(), entry);
             write(entry);
         }
-        if (!ENTRIES.isEmpty()) { Summary.info("worldgen.features", "Generated " + ENTRIES.size() + " feature(s) from worldgen entries"); }
+        if (!ENTRIES.isEmpty()) { Summary.info("worldgen", "Generating " + ENTRIES.size() + " vein type(s) from packs"); }
+        if (Config.worldgen.blockOres() && ENTRIES.isEmpty()) { ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above"); }
         ContentRetrogen.setup(ENTRIES.values());
     }
 
@@ -166,14 +169,16 @@ public final class ContentWorldgen {
         if (!entry.def().needsBiome()) { return true; }
         if (!ContentPlacer.loaded(level, pos)) { return false; }
         Holder<Biome> biome = level.getBiome(pos);
-        if (!entry.def().caveRegions().isEmpty() && !inRegion(entry, biome)) { return false; }
         if (entry.def().hasBiomeFilter() && matches(entry, biome) == entry.def().biomesAreBlacklist()) { return false; }
         return entry.def().climateAllows(biome.value().getBaseTemperature(), biome.value().getModifiedClimateSettings().downfall());
     }
 
-    private static boolean inRegion(Entry entry, Holder<Biome> biome) {
+    public static boolean inRegion(Entry entry, WorldGenLevel level, BlockPos pos) {
+        if (entry.def().caveRegions().isEmpty()) { return true; }
+        if (!ContentPlacer.loaded(level, pos)) { return false; }
         for (ResourceLocation region : entry.def().caveRegions()) {
-            if (biome.is(region)) { return true; }
+            CaveRegionDef def = ContentCaveRegions.def(region);
+            if (def != null && ContentCaveRegions.holds(level, def, pos)) { return true; }
         }
         return false;
     }
@@ -247,7 +252,7 @@ public final class ContentWorldgen {
             }
         }
         ContentPalette palette = new ContentPalette(states, weights, targets, exact, nearby, nearbyExact, surface);
-        IContentShape shape = build(def, state(def.shape().outline(), key), state(def.shape().fill(), key), state(def.shape().log(), key), state(def.shape().leaves(), key));
+        IContentShape shape = build(def, extra(def.shape().outline(), key), extra(def.shape().fill(), key), extra(def.shape().log(), key), extra(def.shape().leaves(), key));
         return new Entry(def, palette, shape, biomeNames(def), biomeTags(def), dimensions(def));
     }
 
@@ -257,7 +262,7 @@ public final class ContentWorldgen {
             case ShapeDef.PLATE: return new ContentPlate(shape);
             case ShapeDef.LARGEVEIN: return new ContentLargeVein(def.size(), def.sparse(), shape.slim());
             case ShapeDef.DECORATION: return new ContentDecoration(def.size(), shape);
-            case ShapeDef.TREE: return new ContentTree(def.size(), shape, log, leaves, def.key());
+            case ShapeDef.TREE: return new ContentTree(def.size(), shape, log, leaves, def.key(), new ContentImprint(shape, def.key(), def.replacesGiven()));
             case ShapeDef.VINES: return new ContentVines(def.size(), shape);
             case ShapeDef.BASIN: return new ContentBasin(shape);
             case ShapeDef.SPIRE: return new ContentSpire(shape);
@@ -265,9 +270,10 @@ public final class ContentWorldgen {
             case ShapeDef.VENT: return new ContentVent(shape);
             case ShapeDef.IMPRINT: return new ContentImprint(shape, def.key(), def.replacesGiven());
             case ShapeDef.BELT: return new ContentBelt(shape, def.minHeight(), def.maxHeight(), def.key());
+            case ShapeDef.SPRING: return new ContentSpring();
             case ShapeDef.VEIN: return new ContentOreVein(shape, def.size(), def.attempts(), def.minHeight(), def.maxHeight(), def.key(), tier(def, shape.rich(), "rich"), tier(def, shape.poor(), "poor"));
             case ShapeDef.GEODE:
-                if (outline != null) { return new ContentGeode(shape, outline, fill); }
+                if (outline != null) { return new ContentGeode(shape, outline, fill, layer(def, shape.middle(), "middle"), layer(def, shape.budding(), "budding"), layer(def, shape.crystal(), "crystal")); }
                 ContentLog.LOGGER.error("Worldgen {} makes a geode but names no registered outline block, so it generates as a cluster", def.key());
                 return new ContentVein(def.size(), def.sparse());
             case ShapeDef.FIELD:
@@ -276,6 +282,19 @@ public final class ContentWorldgen {
                 return new ContentVein(def.size(), def.sparse());
             default: return new ContentVein(def.size(), def.sparse());
         }
+    }
+
+    @Nullable private static BlockState extra(String named, ResourceLocation key) {
+        BlockState state = state(named, key);
+        if (state == null && !named.isEmpty()) { ContentLog.LOGGER.error("Worldgen {} names block {} in its shape, which is not registered, leaving it out", key, named); }
+        return state;
+    }
+
+    @Nullable private static BlockState layer(WorldgenDef def, String named, String which) {
+        if (named.isEmpty()) { return null; }
+        BlockState state = state(named, def.key());
+        if (state == null) { ContentLog.LOGGER.error("Worldgen {} names block {} as its geode {}, which is not registered, leaving that layer out", def.key(), named, which); }
+        return state;
     }
 
     @Nullable private static BlockState tier(WorldgenDef def, String named, String which) {

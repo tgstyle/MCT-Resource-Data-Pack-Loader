@@ -43,6 +43,7 @@ public final class KamikazeGoal extends Goal {
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         LivingEntity found = mob.getTarget();
         if (found != null) { target = found; }
         if (target == null || !target.isAlive()) {

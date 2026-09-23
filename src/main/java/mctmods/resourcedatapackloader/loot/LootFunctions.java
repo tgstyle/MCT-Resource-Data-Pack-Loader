@@ -9,6 +9,7 @@ public final class LootFunctions {
     public static final String NAMESPACE = "rdpl";
     public static final DeferredRegister<LootItemFunctionType<?>> REGISTER = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, NAMESPACE);
     public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<KilledName>> KILLED_NAME = REGISTER.register("killed_name", () -> new LootItemFunctionType<>(KilledName.CODEC));
+    public static final DeferredHolder<LootItemFunctionType<?>, LootItemFunctionType<DropRoll>> DROP_ROLL = REGISTER.register("drop_roll", () -> new LootItemFunctionType<>(DropRoll.CODEC));
 
     private LootFunctions() {}
 }

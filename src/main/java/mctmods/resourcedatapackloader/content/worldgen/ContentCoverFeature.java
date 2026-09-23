@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
@@ -15,9 +17,10 @@ public final class ContentCoverFeature extends Feature<ContentCoverFeature.Setup
 
     @Override public boolean place(FeaturePlaceContext<Setup> context) {
         ContentCover cover = ContentCaveRegions.cover(context.config().region());
-        if (cover == null) { return false; }
+        CaveRegionDef region = ContentCaveRegions.def(context.config().region());
+        if (cover == null || region == null) { return false; }
         ChunkPos center = new ChunkPos(context.origin());
-        cover.generateChunk(new ContentPlacer(context.level(), ContentCaveRegions.palette(context.config().region()), center, ContentPlacer.CHUNK_ONLY), center, pos -> true);
+        cover.generateChunk(new ContentPlacer(context.level(), ContentCaveRegions.palette(context.config().region()), center, ContentPlacer.CHUNK_ONLY), center, pos -> ContentCaveRegions.holds(context.level(), region, pos));
         return true;
     }
 

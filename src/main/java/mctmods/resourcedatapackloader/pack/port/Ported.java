@@ -23,6 +23,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,6 +35,9 @@ import javax.annotation.Nullable;
 public final class Ported {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final List<String> PRIMARY_TEXTURES = List.of("all", "cross", "texture", "side", "pane", "torch", "crop", "particle", "layer0", "wall", "top", "end");
+    private static final String WALL = "_wall";
+    private static final List<String> ROTATIONS = List.of("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15");
+    private static final List<String> FACINGS = List.of("north", "south", "west", "east");
     private final String name;
     private final Path root;
     private final Set<String> namespaces = new LinkedHashSet<>();
@@ -41,6 +45,7 @@ public final class Ported {
     private final Map<String, Variants> itemFiles = new LinkedHashMap<>();
     private final Map<String, String> blockVariants = new LinkedHashMap<>();
     private final Map<String, String> itemVariants = new LinkedHashMap<>();
+    private final Map<String, String> banners = new LinkedHashMap<>();
     private final Map<PackType, Map<String, Map<String, Source>>> exposed = new EnumMap<>(PackType.class);
     private final Map<String, byte[]> cache = new ConcurrentHashMap<>();
     private final Set<String> notes = new LinkedHashSet<>();
@@ -48,6 +53,9 @@ public final class Ported {
     private final Map<String, Map<String, String>> renamed = new LinkedHashMap<>();
     private final Set<String> ticking = new LinkedHashSet<>();
     private final Map<String, String> dimensionIds = new LinkedHashMap<>();
+    private final Map<String, Integer> dimensionFloors = new LinkedHashMap<>();
+    private final List<Integer> templateFloors = new ArrayList<>();
+    private final Set<String> plots = new LinkedHashSet<>();
     private boolean reported;
     private int moved;
     private int rewritten;
@@ -61,6 +69,8 @@ public final class Ported {
     private record Variants(String main, Map<Integer, String> byMeta) {}
 
     private record Source(Path real, Port.Kind kind, @Nullable String extra) {}
+
+    private record Banner(String name, String property, List<String> values, String layer) {}
 
     public String mainNamespace() { return namespaces.isEmpty() ? "minecraft" : namespaces.iterator().next(); }
 
@@ -84,6 +94,17 @@ public final class Ported {
             return id.substring(0, id.indexOf(':')) + ":" + named;
         }
         return variants.containsKey(id) ? id : null;
+    }
+
+    public List<String> ownItems(String id) { return variantNames(itemFiles.containsKey(id) ? itemFiles.get(id) : blockFiles.get(id), id); }
+
+    public List<String> ownBlocks(String id) { return variantNames(blockFiles.containsKey(id) ? blockFiles.get(id) : itemFiles.get(id), id); }
+
+    private static List<String> variantNames(@Nullable Variants held, String id) {
+        if (held == null) { return List.of(id); }
+        Set<String> names = new LinkedHashSet<>();
+        for (String named : held.byMeta().values()) { names.add(id.substring(0, id.indexOf(':')) + ":" + named); }
+        return List.copyOf(names);
     }
 
     @Nullable public String mainVariantOfBlockFile(String namespace, String file) {
@@ -110,7 +131,12 @@ public final class Ported {
         for (String path : realPaths) {
             if (path.startsWith("blocks/") && path.endsWith(".json")) { learn(home, namespace, path, "blocks", blockFiles, blockVariants); }
             else if (path.startsWith("items/") && path.endsWith(".json")) { learn(home, namespace, path, "items", itemFiles, itemVariants); }
-            else if (path.startsWith("dimensions/") && path.endsWith(".json")) { dimensionId(home, namespace, path); }
+            else if (path.startsWith("dimensions/") && path.endsWith(".json")) {
+                dimensionId(home, namespace, path);
+                dimensionFloor(home, namespace, path);
+            }
+            else if (path.startsWith("worldtemplates/") && path.endsWith(".json")) { templateFloor(home, path); }
+            else if (path.startsWith("villages/") && path.endsWith(".json")) { plots.add(namespace + ":" + path.substring("villages/".length(), path.length() - ".json".length())); }
         }
         for (String path : realPaths) {
             Port.Mapped mapped = Port.map(path);
@@ -121,37 +147,125 @@ public final class Ported {
                     note("'" + path + "' has no twin on this version and is left out");
                 }
                 case OREDICT -> expandOreDict(real, path);
-                case BLOCKSTATE -> aliases(home, namespace, real, path, realPaths);
+                case BLOCKSTATE -> {
+                    Banner banner = banner(namespace, path);
+                    if (banner != null) { bannerState(namespace, real, path, banner); }
+                    else { aliases(home, namespace, real, path, realPaths); }
+                }
                 default -> {
-                    if (generatedModel(namespace, path)) {
+                    if (generatedModel(namespace, path, realPaths)) {
                         dropped++;
                         note("'" + path + "' shares its name with a block whose models are generated, so it is left out and the generated model is used");
                         continue;
                     }
                     if (path.startsWith("gamerules/") && path.endsWith(".json")) { gameLoop(real, path); }
                     if (mapped.type() == PackType.SERVER_DATA) { moved++; }
-                    expose(mapped.type(), namespace, overrideTarget(mapped.path()), new Source(real, mapped.kind(), null));
+                    for (String exposedPath : overrideTargets(mapped.path())) { expose(mapped.type(), namespace, exposedPath, new Source(real, mapped.kind(), null)); }
                 }
             }
         }
     }
 
-    private boolean generatedModel(String namespace, String path) {
+    private boolean generatedModel(String namespace, String path, List<String> realPaths) {
         if (!path.startsWith("models/block/") || !path.endsWith(".json")) { return false; }
         String name = path.substring("models/block/".length(), path.length() - ".json".length());
-        return blockVariants.containsKey(namespace + ":" + name);
+        String file = blockVariants.get(namespace + ":" + name);
+        if (file == null) { return false; }
+        return !banners.containsKey(namespace + ":" + file) || !realPaths.contains("blockstates/" + file + ".json");
     }
 
-    private String overrideTarget(String path) {
-        if (!path.startsWith("overrides/") || !path.endsWith(".json")) { return path; }
+    @Nullable private Banner banner(String namespace, String path) {
+        String file = path.substring("blockstates/".length(), path.length() - ".json".length());
+        boolean wall = file.endsWith(WALL) && !banners.containsKey(namespace + ":" + file);
+        String standing = wall ? file.substring(0, file.length() - WALL.length()) : file;
+        String layer = banners.get(namespace + ":" + standing);
+        Variants held = blockFiles.get(namespace + ":" + standing);
+        if (layer == null || held == null) { return null; }
+        return wall ? new Banner(held.main() + WALL, "facing", FACINGS, layer) : new Banner(held.main(), "rotation", ROTATIONS, layer);
+    }
+
+    private void bannerState(String namespace, Path real, String path, Banner banner) {
+        JsonObject json = readJson(real);
+        if (json == null) { return; }
+        JsonObject defaults = json.has("defaults") && json.get("defaults").isJsonObject() ? json.getAsJsonObject("defaults") : new JsonObject();
+        JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
+        JsonObject byValue = variants.has(banner.property()) && variants.get(banner.property()).isJsonObject() ? variants.getAsJsonObject(banner.property()) : null;
+        JsonObject states = new JsonObject();
+        for (String value : banner.values()) {
+            JsonObject entry = merged(defaults, firstEntry(byValue != null ? byValue.get(value) : variants.get(banner.property() + "=" + value)));
+            if (!entry.has("model") || !entry.get("model").isJsonPrimitive()) { continue; }
+            String model = entry.get("model").getAsString();
+            JsonObject child = new JsonObject();
+            child.addProperty("parent", (model.indexOf(':') < 0 ? "minecraft" : model.substring(0, model.indexOf(':'))) + ":block/" + model.substring(model.indexOf(':') + 1));
+            if (entry.has("textures") && entry.get("textures").isJsonObject()) {
+                JsonObject textures = new JsonObject();
+                for (Map.Entry<String, JsonElement> texture : entry.getAsJsonObject("textures").entrySet()) {
+                    String held = texture.getValue().isJsonPrimitive() ? texture.getValue().getAsString() : null;
+                    if (held != null) { textures.addProperty(texture.getKey(), held.startsWith("#") ? held : ConvertAssets.texturePath(held)); }
+                }
+                child.add("textures", textures);
+            }
+            if (entry.has("transform") && entry.get("transform").isJsonObject()) {
+                JsonObject transform = entry.getAsJsonObject("transform").deepCopy();
+                if (!transform.has("origin")) { transform.addProperty("origin", "center"); }
+                child.add("transform", transform);
+            }
+            if (!banner.layer().isEmpty() && !"solid".equals(banner.layer())) { child.addProperty("render_type", "minecraft:" + banner.layer()); }
+            String childName = banner.name() + "_" + banner.property() + "_" + value;
+            serve(namespace, "models/block/" + childName + ".json", real, child);
+            JsonObject state = new JsonObject();
+            state.addProperty("model", namespace + ":block/" + childName);
+            for (String turn : new String[] {"x", "y", "uvlock"}) {
+                if (entry.has(turn)) { state.add(turn, entry.get(turn)); }
+            }
+            states.add(banner.property() + "=" + value, state);
+        }
+        if (states.isEmpty()) {
+            dropped++;
+            note("'" + path + "' names no model for any " + banner.property() + ", so it is left out and the banner is drawn from its texture");
+            return;
+        }
+        JsonObject out = new JsonObject();
+        out.add("variants", states);
+        serve(namespace, "blockstates/" + banner.name() + ".json", real, out);
+        note("'" + path + "' is a 1.12.2 banner blockstate: it became blockstates/" + banner.name() + ".json and " + states.size() + " model(s) turning the pack's own banner model");
+    }
+
+    private static JsonObject merged(JsonObject defaults, @Nullable JsonObject variant) {
+        JsonObject out = defaults.deepCopy();
+        if (variant == null) { return out; }
+        for (Map.Entry<String, JsonElement> field : variant.entrySet()) {
+            if ("textures".equals(field.getKey()) && field.getValue().isJsonObject() && out.has("textures") && out.get("textures").isJsonObject()) {
+                for (Map.Entry<String, JsonElement> texture : field.getValue().getAsJsonObject().entrySet()) { out.getAsJsonObject("textures").add(texture.getKey(), texture.getValue()); }
+            }
+            else { out.add(field.getKey(), field.getValue().deepCopy()); }
+        }
+        return out;
+    }
+
+    @Nullable private static JsonObject firstEntry(@Nullable JsonElement held) {
+        if (held == null) { return null; }
+        if (held.isJsonArray()) { return !held.getAsJsonArray().isEmpty() && held.getAsJsonArray().get(0).isJsonObject() ? held.getAsJsonArray().get(0).getAsJsonObject() : null; }
+        return held.isJsonObject() ? held.getAsJsonObject() : null;
+    }
+
+    private void serve(String namespace, String path, Path real, JsonObject json) {
+        cache.put(key(PackType.CLIENT_RESOURCES, namespace, path), GSON.toJson(json).getBytes(StandardCharsets.UTF_8));
+        expose(PackType.CLIENT_RESOURCES, namespace, path, new Source(real, Port.Kind.BLOCKSTATE, null));
+    }
+
+    private List<String> overrideTargets(String path) {
+        if (!path.startsWith("overrides/") || !path.endsWith(".json")) { return List.of(path); }
         String[] parts = path.substring("overrides/".length(), path.length() - ".json".length()).split("/", 2);
-        if (parts.length != 2 || !"minecraft".equals(parts[0])) { return path; }
+        if (parts.length != 2 || !"minecraft".equals(parts[0])) { return List.of(path); }
         String target = "minecraft:" + parts[1];
-        String block = Ids.block(target, 0).name();
-        String mapped = block.equals(target) ? Ids.item(target, 0) : block;
-        if (mapped.equals(target)) { return path; }
-        note("'" + path + "' changes " + target + ", which is " + mapped + " now, so it is read as overrides/" + mapped.replace(':', '/') + ".json");
-        return "overrides/" + mapped.replace(':', '/') + ".json";
+        List<String> blocks = Ids.blocks(target);
+        List<String> mapped = blocks.equals(List.of(target)) ? Ids.items(target) : blocks;
+        if (mapped.equals(List.of(target))) { return List.of(path); }
+        List<String> paths = new ArrayList<>();
+        for (String name : mapped) { paths.add("overrides/" + name.replace(':', '/') + ".json"); }
+        note("'" + path + "' changes " + target + ", which is " + String.join(", ", mapped) + " now, so it is read as the override of each");
+        return paths;
     }
 
     private void dimensionId(Path home, String namespace, String path) {
@@ -160,6 +274,35 @@ public final class Ported {
         String named = namespace + ":" + path.substring("dimensions/".length(), path.length() - ".json".length());
         dimensionIds.put(String.valueOf(json.get("id").getAsInt()), named);
         note("'" + path + "' was dimension " + json.get("id").getAsInt() + ", so that number is read as " + named + " wherever the pack names it");
+    }
+
+    private void dimensionFloor(Path home, String namespace, String path) {
+        JsonObject json = readJson(home.resolve(path));
+        JsonObject terrain = json != null && json.has("terrain") && json.get("terrain").isJsonObject() ? json.getAsJsonObject("terrain") : null;
+        if (terrain == null || !terrain.has("type") || !terrain.get("type").isJsonPrimitive() || !Convert.FLAT.equalsIgnoreCase(terrain.get("type").getAsString().trim())) { return; }
+        boolean floored = terrain.has("minHeight") && terrain.get("minHeight").isJsonPrimitive() && terrain.getAsJsonPrimitive("minHeight").isNumber();
+        dimensionFloors.put(namespace + ":" + path.substring("dimensions/".length(), path.length() - ".json".length()), floored ? terrain.get("minHeight").getAsInt() : Convert.FLAT_FLOOR);
+    }
+
+    private void templateFloor(Path home, String path) {
+        JsonObject json = readJson(home.resolve(path));
+        templateFloors.add(json != null && json.has("settings") && json.get("settings").isJsonObject() ? Convert.flatShift(json.getAsJsonObject("settings")) : 0);
+    }
+
+    public List<String> plots() { return List.copyOf(plots); }
+
+    public int overworldShift() {
+        if (templateFloors.isEmpty()) { return 0; }
+        int first = templateFloors.getFirst();
+        for (int floor : templateFloors) {
+            if (floor != first) { return 0; }
+        }
+        return first;
+    }
+
+    public int shiftIn(String named) {
+        String id = dimension(named);
+        return Convert.OVERWORLD.equals(id) ? overworldShift() : dimensionFloors.getOrDefault(id, 0);
     }
 
     public String dimension(String named) {
@@ -188,6 +331,10 @@ public final class Ported {
             variants.put(namespace + ":" + named, file);
         }
         if (main != null) { files.put(namespace + ":" + file, new Variants(main, byMeta)); }
+        if (main != null && "blocks".equals(folder) && json.has("type") && json.get("type").isJsonPrimitive() && "banner".equals(json.get("type").getAsString())) {
+            String layer = json.has("renderLayer") && json.get("renderLayer").isJsonPrimitive() ? json.get("renderLayer").getAsString().trim().toLowerCase(Locale.ROOT) : "";
+            banners.put(namespace + ":" + file, layer);
+        }
     }
 
     private void expose(PackType type, String namespace, String path, Source source) {
@@ -217,7 +364,7 @@ public final class Ported {
     private void expandOreDict(Path real, String path) {
         JsonObject json = readJson(real);
         if (json == null) { return; }
-        for (Map.Entry<String, JsonObject> tag : Convert.oreDict(json, this).entrySet()) {
+        for (Map.Entry<String, JsonObject> tag : ConvertRecipes.oreDict(json, this).entrySet()) {
             String id = tag.getKey();
             String namespace = id.substring(0, id.indexOf(':'));
             String tagPath = ContentFormats.ITEM_TAGS + "/" + id.substring(id.indexOf(':') + 1) + ".json";
@@ -225,7 +372,7 @@ public final class Ported {
             expose(PackType.SERVER_DATA, namespace, tagPath, new Source(real, Port.Kind.OREDICT, id));
             moved++;
         }
-        note("'" + path + "' became " + Convert.oreDict(json, this).size() + " item tag file(s)");
+        note("'" + path + "' became " + ConvertRecipes.oreDict(json, this).size() + " item tag file(s)");
     }
 
     private void aliases(Path home, String namespace, Path real, String path, List<String> realPaths) {
@@ -351,17 +498,14 @@ public final class Ported {
         String contents = Files.readString(source.real(), StandardCharsets.UTF_8);
         try {
             String out = switch (source.kind()) {
-                case LANG -> Convert.lang(contents, this);
-                case FUNCTION -> {
-                    note("'" + path + "' is a 1.12.2 function and is served as written; commands that changed since need rewriting by hand");
-                    yield contents;
-                }
+                case LANG -> ConvertAssets.lang(contents, this);
+                case FUNCTION -> path.endsWith(".mcfunction") ? Commands.function(contents, path, this) : contents;
                 case DEFINITION -> Convert.definition(JsonParser.parseString(contents).getAsJsonObject(), path.substring(0, path.indexOf('/')), namespace, path.substring(path.indexOf('/') + 1, path.length() - ".json".length()), this);
-                case MODEL -> Convert.model(JsonParser.parseString(contents).getAsJsonObject(), this);
-                case PIXELMAP -> Convert.pixelMap(JsonParser.parseString(contents).getAsJsonObject(), this);
-                case RECIPE -> Convert.recipe(JsonParser.parseString(contents).getAsJsonObject(), this);
-                case LOOT -> Convert.loot(JsonParser.parseString(contents).getAsJsonObject(), this);
-                case ADVANCEMENT -> Convert.advancement(JsonParser.parseString(contents).getAsJsonObject(), this);
+                case MODEL -> ConvertAssets.model(JsonParser.parseString(contents).getAsJsonObject(), this);
+                case PIXELMAP -> ConvertAssets.pixelMap(JsonParser.parseString(contents).getAsJsonObject(), this);
+                case RECIPE -> ConvertRecipes.recipe(JsonParser.parseString(contents).getAsJsonObject(), namespace, this);
+                case LOOT -> ConvertLoot.loot(JsonParser.parseString(contents).getAsJsonObject(), namespace, this);
+                case ADVANCEMENT -> ConvertAdvancements.advancement(JsonParser.parseString(contents).getAsJsonObject(), this);
                 default -> contents;
             };
             return out.getBytes(StandardCharsets.UTF_8);

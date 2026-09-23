@@ -11,10 +11,10 @@ import mctmods.resourcedatapackloader.util.Json;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 
 public final class ContentDimensionParser {
     private static final Gson GSON = new Gson();
+    private static final int CLOUD_HEIGHT = 128;
     private static final Set<String> KNOWN_TERRAIN = Set.of(DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END);
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
 
@@ -66,25 +67,25 @@ public final class ContentDimensionParser {
                 maxHeight = DimensionDef.UNSET;
             }
         }
-        JsonObject options = terrain.has("generatorOptions") && terrain.get("generatorOptions").isJsonObject() ? terrain.getAsJsonObject("generatorOptions") : new JsonObject();
+        JsonObject options = customized(key, terrain);
         String fog = GsonHelper.getAsString(sky, "fogColor", "").trim();
         String skyColor = GsonHelper.getAsString(sky, "skyColor", "").trim();
         String cloudColor = GsonHelper.getAsString(sky, "cloudColor", "").trim();
         String respawn = GsonHelper.getAsString(sky, "respawnDimension", "").trim();
         ResourceLocation respawnDimension = respawn.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(respawn));
         if (!respawn.isEmpty() && respawnDimension == null) { ContentLog.LOGGER.error("Dimension {} names respawnDimension '{}', which is not a dimension id, so respawns stay where the game puts them", key, respawn); }
-        return new DimensionDef(key, type, flatLayers(key, terrain), GsonHelper.getAsBoolean(terrain, "structures", true), source,
+        return new DimensionDef(key, type, flatOptions(terrain), GsonHelper.getAsBoolean(terrain, "structures", true), source,
                 GsonHelper.getAsString(biomes, "biome", "minecraft:plains").trim(), minHeight, maxHeight,
                 options.has("seaLevel") ? GsonHelper.getAsInt(options, "seaLevel") : -1, GsonHelper.getAsBoolean(options, "useLavaOceans", false),
                 GsonHelper.getAsBoolean(sky, "hasSkyLight", true), GsonHelper.getAsBoolean(sky, "surfaceWorld", true), GsonHelper.getAsBoolean(sky, "spawning", true),
-                sky.has("cloudHeight") ? GsonHelper.getAsInt(sky, "cloudHeight") : -1, Math.max(1.0E-5D, GsonHelper.getAsDouble(sky, "movementFactor", 1.0D)),
+                GsonHelper.getAsInt(sky, "cloudHeight", CLOUD_HEIGHT), Math.max(1.0E-5D, GsonHelper.getAsDouble(sky, "movementFactor", 1.0D)),
                 fog.isEmpty() ? -1 : ContentParser.color(fog, key + " fogColor") & 0xFFFFFF, skyColor.isEmpty() ? -1 : ContentParser.color(skyColor, key + " skyColor") & 0xFFFFFF,
                 cloudColor.isEmpty() ? -1 : ContentParser.color(cloudColor, key + " cloudColor") & 0xFFFFFF, GsonHelper.getAsLong(sky, "fixedTime", -1L),
                 GsonHelper.getAsBoolean(sky, "sunriseColors", true), GsonHelper.getAsBoolean(sky, "nether", false), GsonHelper.getAsBoolean(sky, "beds", true),
                 GsonHelper.getAsBoolean(sky, "waterVaporizes", false), GsonHelper.getAsBoolean(sky, "showFog", false), Mth.clamp(GsonHelper.getAsFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
                 GsonHelper.getAsFloat(sky, "starBrightness", -1.0F), GsonHelper.getAsBoolean(sky, "renderSky", true), GsonHelper.getAsBoolean(sky, "renderClouds", true),
                 GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, GsonHelper.getAsBoolean(sky, "respawn", true),
-                sky.has("groundLevel") ? GsonHelper.getAsInt(sky, "groundLevel") : DimensionDef.UNSET, gameRules(key, json), Json.strings(json, "requires"), portal(key, json));
+                GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options);
     }
 
     @Nullable private static DimensionPortalDef portal(ResourceLocation key, JsonObject json) {
@@ -105,24 +106,24 @@ public final class ContentDimensionParser {
         return travel == null ? null : new DimensionPortalDef(frames, GsonHelper.getAsString(entry, "ignitedBy", "minecraft:flint_and_steel").trim(), color, back, travel);
     }
 
-    private static List<String> flatLayers(ResourceLocation key, JsonObject terrain) {
+    private static List<String> flatOptions(JsonObject terrain) {
         if (!terrain.has("generatorOptions")) { return FLAT_DEFAULT; }
         JsonElement options = terrain.get("generatorOptions");
         if (options.isJsonArray()) { return Json.strings(terrain, "generatorOptions"); }
-        if (!options.isJsonPrimitive()) { return FLAT_DEFAULT; }
-        String written = options.getAsString().trim();
-        if (written.isEmpty()) { return FLAT_DEFAULT; }
-        String[] parts = written.split(";");
-        String layers = parts.length > 1 ? parts[1] : parts[0];
-        List<String> found = new ArrayList<>();
-        for (String layer : layers.split(",")) {
-            if (!layer.trim().isEmpty()) { found.add(layer.trim()); }
+        if (!options.isJsonPrimitive() || options.getAsString().trim().isEmpty() || options.getAsString().trim().startsWith("{")) { return FLAT_DEFAULT; }
+        return List.of(options.getAsString().trim());
+    }
+
+    private static JsonObject customized(ResourceLocation key, JsonObject terrain) {
+        JsonElement options = terrain.get("generatorOptions");
+        if (options == null) { return new JsonObject(); }
+        if (options.isJsonObject()) { return options.getAsJsonObject(); }
+        if (!options.isJsonPrimitive() || !options.getAsString().trim().startsWith("{")) { return new JsonObject(); }
+        try { return GSON.fromJson(options.getAsString(), JsonObject.class); }
+        catch (JsonParseException unreadable) {
+            ContentLog.LOGGER.error("Dimension {} has generatorOptions '{}', which is not readable JSON, so the terrain keeps its own settings", key, options.getAsString());
+            return new JsonObject();
         }
-        if (found.isEmpty()) {
-            ContentLog.LOGGER.error("Dimension {} has flat generator options '{}' naming no layers, using the default ground", key, written);
-            return FLAT_DEFAULT;
-        }
-        return found;
     }
 
     public static Map<String, String> gameRules(ResourceLocation key, JsonObject json) {

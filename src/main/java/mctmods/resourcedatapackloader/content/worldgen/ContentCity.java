@@ -5,17 +5,27 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
+import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -27,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -35,8 +46,15 @@ public final class ContentCity {
     public static final String STRUCTURE = "city";
     private static final String OVERWORLD_BIOMES = "#minecraft:is_overworld";
     private static final String DEFAULT_PAVING = "minecraft:dirt_path";
+    public static final String SIDEWALK_END = "sidewalk";
+    private static final String BARRIER_END = "barrier";
+    private static final String EMPTY = "empty";
+    private static final int CARGO_MOST = 8;
+    private static final long INFESTED_SALT = 0x2031B1E5L;
+    private static final int INFESTED_ODDS = 50;
     private static final Set<String> MISSING = new LinkedHashSet<>();
     private static boolean laying;
+    @Nullable private static Vec3i stationSpan;
 
     private ContentCity() {}
 
@@ -54,6 +72,10 @@ public final class ContentCity {
         String named = ContentControl.text(ContentControl.VILLAGES, "villagePathAlleyBlock", Config.worldgen.villagePathAlleyBlock()).trim();
         return named.isEmpty() ? paving() : named;
     }
+
+    public static boolean pathChosen() { return !ContentControl.text(ContentControl.VILLAGES, "villagePathBlock", Config.worldgen.villagePathBlock()).trim().isEmpty(); }
+
+    public static boolean pavingChosen(boolean alley) { return pathChosen() || (alley && !ContentControl.text(ContentControl.VILLAGES, "villagePathAlleyBlock", Config.worldgen.villagePathAlleyBlock()).trim().isEmpty()); }
 
     public static String lineBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathLineBlock", Config.worldgen.villagePathLineBlock()).trim(); }
 
@@ -75,6 +97,15 @@ public final class ContentCity {
 
     public static String bridgeBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock()).trim(); }
 
+    public static BlockState planks(@Nullable CityPlan plan) {
+        String type = plan == null ? "" : plan.villageType();
+        if ("savanna".equals(type)) { return Blocks.ACACIA_PLANKS.defaultBlockState(); }
+        if ("taiga".equals(type)) { return Blocks.SPRUCE_PLANKS.defaultBlockState(); }
+        return Blocks.OAK_PLANKS.defaultBlockState();
+    }
+
+    public static BlockState support(@Nullable CityPlan plan) { return CityPalette.stateOr(supportBlock(), plan != null && "desert".equals(plan.villageType()) ? Blocks.SANDSTONE.defaultBlockState() : Blocks.GRAVEL.defaultBlockState()); }
+
     public static String bridgeSidewalkBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock()).trim(); }
 
     public static String bridgeBarrierBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock()).trim(); }
@@ -89,11 +120,11 @@ public final class ContentCity {
 
     public static String frameTopBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathBridgeFrameTopBlock", Config.worldgen.villagePathBridgeFrameTopBlock()).trim(); }
 
-    public static int frameHeight() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeFrameHeight", Config.worldgen.villagePathBridgeFrameHeight())); }
+    public static int frameHeight() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeFrameHeight", Config.worldgen.villagePathBridgeFrameHeight())); }
 
-    public static int frameRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeFrameRun", Config.worldgen.villagePathBridgeFrameRun())); }
+    public static int frameRun() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeFrameRun", Config.worldgen.villagePathBridgeFrameRun())); }
 
-    public static int frameLeast() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeFrameLeast", Config.worldgen.villagePathBridgeFrameLeast())); }
+    public static int frameLeast() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villagePathBridgeFrameLeast", Config.worldgen.villagePathBridgeFrameLeast())); }
 
     public static String tunnelBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathTunnelBlock", Config.worldgen.villagePathTunnelBlock()).trim(); }
 
@@ -122,7 +153,37 @@ public final class ContentCity {
     public static String railPowerBase(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayPowerBase" : "villageRailPowerBase", sub ? Config.worldgen.villageSubwayPowerBase() : Config.worldgen.villageRailPowerBase()).trim(); }
 
 
-    public static String railTrackSeat(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", sub ? Config.worldgen.villageSubwayTrackSeat() : Config.worldgen.villageRailTrackSeat()).trim().toLowerCase(Locale.ROOT); }
+    public static boolean trackInBed(BlockState track, boolean sub) {
+        String named = ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", sub ? Config.worldgen.villageSubwayTrackSeat() : Config.worldgen.villageRailTrackSeat()).trim().toLowerCase(Locale.ROOT);
+        if (named.isEmpty() || "auto".equals(named)) { return !(track.getBlock() instanceof BaseRailBlock); }
+        if (named.startsWith("i")) { return true; }
+        if (named.startsWith("o")) { return false; }
+        if (MISSING.add("seat|" + named)) { ContentLog.LOGGER.error("villageRailTrackSeat '{}' is not auto, on or in, so the track is seated the way its block asks for", named); }
+        return !(track.getBlock() instanceof BaseRailBlock);
+    }
+
+    public static boolean railsAlongX(RandomSource roll, boolean sub) {
+        String named = ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayDirection" : "villageRailDirection", sub ? Config.worldgen.villageSubwayDirection() : Config.worldgen.villageRailDirection()).trim().toLowerCase(Locale.ROOT);
+        if (named.isEmpty() || "any".equals(named)) { return roll.nextBoolean(); }
+        if (named.startsWith("e") || named.startsWith("w")) { return true; }
+        if (named.startsWith("n") || named.startsWith("s")) { return false; }
+        if (MISSING.add("direction|" + named)) { ContentLog.LOGGER.error("villageRailDirection '{}' is not ew, ns or any, so the lines run as they roll", named); }
+        return roll.nextBoolean();
+    }
+
+    public static int railAskedWidth(boolean sub) { return Math.max(3, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayWidth" : "villageRailWidth", sub ? Config.worldgen.villageSubwayWidth() : Config.worldgen.villageRailWidth())); }
+
+    public static int railTrackCount(boolean sub) {
+        int asked = railTracks(sub);
+        if (asked > 0) { return asked; }
+        return railAskedWidth(sub) >= 5 ? 2 : 1;
+    }
+
+    public static int railBed(boolean sub) { return Math.max(railAskedWidth(sub), (railTrackCount(sub) - 1) * railTrackGap(sub) + 3); }
+
+    public static int railBedHalf(boolean sub) { return (railBed(sub) - 1) / 2; }
+
+    public static int stationReach() { return stationsOn() ? outFromLine(railBedHalf(true)) + ContentCityStairsPiece.WIDE + 1 : 0; }
 
 
     public static int railTieRun(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTieRun" : "villageRailTieRun", sub ? Config.worldgen.villageSubwayTieRun() : Config.worldgen.villageRailTieRun())); }
@@ -134,7 +195,7 @@ public final class ContentCity {
     public static int railTrackGap(boolean sub) { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTrackGap" : "villageRailTrackGap", sub ? Config.worldgen.villageSubwayTrackGap() : Config.worldgen.villageRailTrackGap())); }
 
 
-    public static int railShoulderWidth(boolean sub) { return railShoulderBlock(sub).isEmpty() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayShoulderWidth" : "villageRailShoulderWidth", sub ? Config.worldgen.villageSubwayShoulderWidth() : Config.worldgen.villageRailShoulderWidth())); }
+    public static int railShoulderWidth(boolean sub) { return CityPalette.stateOr(railShoulderBlock(sub), Blocks.AIR.defaultBlockState()).isAir() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayShoulderWidth" : "villageRailShoulderWidth", sub ? Config.worldgen.villageSubwayShoulderWidth() : Config.worldgen.villageRailShoulderWidth())); }
 
 
     public static int railPowerRun(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayPowerRun" : "villageRailPowerRun", sub ? Config.worldgen.villageSubwayPowerRun() : Config.worldgen.villageRailPowerRun())); }
@@ -152,23 +213,23 @@ public final class ContentCity {
 
     public static String railFrameTopBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageRailBridgeFrameTopBlock", Config.worldgen.villageRailBridgeFrameTopBlock()).trim(); }
 
-    public static int railFrameHeight() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameHeight", Config.worldgen.villageRailBridgeFrameHeight())); }
+    public static int railFrameHeight() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameHeight", Config.worldgen.villageRailBridgeFrameHeight())); }
 
-    public static int railFrameRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameRun", Config.worldgen.villageRailBridgeFrameRun())); }
+    public static int railFrameRun() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameRun", Config.worldgen.villageRailBridgeFrameRun())); }
 
-    public static int railFrameLeast() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameLeast", Config.worldgen.villageRailBridgeFrameLeast())); }
+    public static int railFrameLeast() { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, "villageRailBridgeFrameLeast", Config.worldgen.villageRailBridgeFrameLeast())); }
 
     public static String railTunnelBlock() { return railTunnelBlock(false); }
 
     public static String railTunnelBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTunnelBlock" : "villageRailTunnelBlock", sub ? Config.worldgen.villageSubwayTunnelBlock() : Config.worldgen.villageRailTunnelBlock()).trim(); }
 
-    public static int railTunnelDepth() { return railTunnelBlock().isEmpty() ? 0 : Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelDepth", Config.worldgen.villageRailTunnelDepth())); }
+    public static int railTunnelDepth() { return CityPalette.stateOr(railTunnelBlock(), Blocks.AIR.defaultBlockState()).isAir() ? 0 : Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villageRailTunnelDepth", Config.worldgen.villageRailTunnelDepth())); }
 
     public static int subwayLines() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayLines", Config.worldgen.villageSubwayLines())); }
 
     public static int subwayDepth() { return Math.max(6, ContentControl.number(ContentControl.VILLAGES, "villageSubwayDepth", Config.worldgen.villageSubwayDepth())); }
 
-    public static boolean subways() { return subwayLines() > 0 && !railTunnelBlock(true).isEmpty(); }
+    public static boolean subways() { return subwayLines() > 0; }
 
     public static int stationLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayStationLength", Config.worldgen.villageSubwayStationLength())); }
 
@@ -178,9 +239,11 @@ public final class ContentCity {
 
     public static String platformBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayPlatformBlock", Config.worldgen.villageSubwayPlatformBlock()).trim(); }
 
-    public static boolean stations() { return subways() && stationLength() > 0 && platformWidth() > 0; }
+    public static boolean stations() { return subways() && stationsOn(); }
 
-    public static String stairBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayStairBlock", Config.worldgen.villageSubwayStairBlock()).trim(); }
+    private static boolean stationsOn() { return stationSpan != null && stationLength() > 0 && platformWidth() > 0; }
+
+    @Nullable public static Vec3i stationSpan() { return stationSpan; }
 
     public static String railingBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayRailingBlock", Config.worldgen.villageSubwayRailingBlock()).trim(); }
 
@@ -193,8 +256,6 @@ public final class ContentCity {
     public static int subwaySurfaces() { return Math.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSubwaySurfaces", Config.worldgen.villageSubwaySurfaces()), 0, 100); }
 
     public static String stationStructure() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayStation", Config.worldgen.villageSubwayStation()).trim(); }
-
-    public static String stationEntrance() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayEntrance", Config.worldgen.villageSubwayEntrance()).trim(); }
 
     public static int stationFoot() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayStationFoot", Config.worldgen.villageSubwayStationFoot())); }
 
@@ -229,6 +290,15 @@ public final class ContentCity {
 
     public static String sewerCoverBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerCoverBlock", Config.worldgen.villageSewerCoverBlock()).trim(); }
 
+    public static void ironCover(BlockState cover) {
+        if (cover.getBlock().defaultMapColor() != MapColor.METAL || !MISSING.add("cover|iron")) { return; }
+        ContentLog.LOGGER.error("villageSewerCoverBlock '{}' is iron, which no player can open by hand, so the manholes will be shut to anyone without a redstone signal", sewerCoverBlock());
+    }
+
+    public static String vergeBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathVergeBlock", Config.worldgen.villagePathVergeBlock()).trim(); }
+
+    public static String vergeWaterBlock() { return ContentControl.text(ContentControl.VILLAGES, "villagePathVergeWaterBlock", Config.worldgen.villagePathVergeWaterBlock()).trim(); }
+
     public static String sewerMossBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerMossBlock", Config.worldgen.villageSewerMossBlock()).trim(); }
 
     public static int sewerMossChance() { return Math.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerMossChance", Config.worldgen.villageSewerMossChance()), 0, 100); }
@@ -244,36 +314,59 @@ public final class ContentCity {
     public static int railTunnelLightRun(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTunnelLightRun" : "villageRailTunnelLightRun", sub ? Config.worldgen.villageSubwayTunnelLightRun() : Config.worldgen.villageRailTunnelLightRun())); }
 
     @Nullable public static String wellStructure(RandomSource roll) {
-        List<PickDef> picks = new ArrayList<>();
-        for (String entry : ContentControl.list(ContentControl.VILLAGES, "villageWellStructure", Config.worldgen.villageWellStructure())) {
-            String text = entry.trim();
-            if (text.isEmpty()) { continue; }
-            int at = text.lastIndexOf('=');
-            if (at < 0) {
-                picks.add(new PickDef(text, 1));
-                continue;
-            }
-            try { picks.add(new PickDef(text.substring(0, at).trim(), Math.max(1, Integer.parseInt(text.substring(at + 1).trim())))); }
-            catch (NumberFormatException notNumber) {
-                if (MISSING.add(entry)) { ContentLog.LOGGER.error("villageWellStructure entry '{}' is not a name or a name=weight, so it is left out", entry); }
-            }
-        }
-        String picked = PickDef.pick(picks, roll);
-        return picked == null || picked.isEmpty() ? null : picked;
+        String picked = PickDef.pick(weighted("villageWellStructure", ContentControl.list(ContentControl.VILLAGES, "villageWellStructure", Config.worldgen.villageWellStructure())), roll);
+        return picked == null || picked.isEmpty() || EMPTY.equals(picked) ? null : picked;
     }
 
-    @Nullable public static String deadEnd(RandomSource roll) {
+    private static List<PickDef> weighted(String key, List<String> entries) {
+        List<PickDef> picks = new ArrayList<>();
+        for (String entry : entries) {
+            String text = entry.trim();
+            if (text.isEmpty()) { continue; }
+            int at = text.indexOf('=');
+            String name = at <= 0 ? "" : text.substring(0, at).trim();
+            String weight = at <= 0 ? "" : text.substring(at + 1).trim();
+            if (name.isEmpty() || weight.isEmpty()) {
+                if (MISSING.add(key + "|" + entry)) { ContentLog.LOGGER.error("{} entry '{}' is not written as name=weight, ignoring it", key, entry); }
+                continue;
+            }
+            int asked;
+            try { asked = Integer.parseInt(weight); }
+            catch (NumberFormatException notNumber) {
+                if (MISSING.add(key + "|" + entry)) { ContentLog.LOGGER.error("{} entry '{}' gives a weight of '{}', which is not a whole number, ignoring the entry", key, entry, weight); }
+                continue;
+            }
+            if (asked < 1) {
+                if (MISSING.add(key + "|" + entry)) { ContentLog.LOGGER.error("{} entry '{}' asks for a weight of {}, which is below 1, ignoring the entry", key, entry, asked); }
+                continue;
+            }
+            picks.add(new PickDef(name, asked));
+        }
+        return picks;
+    }
+
+    public static TerrainAdjustment adaptation() {
+        TerrainAdjustment found = TerrainAdjustment.BEARD_THIN;
+        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAdaptation", Config.worldgen.structureAdaptation())) {
+            int at = entry.indexOf('=');
+            if (at <= 0 || !entry.substring(0, at).trim().equalsIgnoreCase("villages")) { continue; }
+            String mode = entry.substring(at + 1).trim().toLowerCase(Locale.ROOT);
+            for (TerrainAdjustment held : TerrainAdjustment.values()) {
+                if (held.getSerializedName().equals(mode)) { found = held; }
+            }
+        }
+        return found;
+    }
+
+    @Nullable public static String deadEnd(RandomSource roll, boolean paved, boolean railed) {
         List<PickDef> picks = new ArrayList<>();
         for (String entry : ContentControl.list(ContentControl.VILLAGES, "villagePathDeadEnds", Config.worldgen.villagePathDeadEnds())) {
             String text = entry.trim();
-            if (!text.isEmpty()) { picks.add(new PickDef(text, 1)); }
+            if (!(SIDEWALK_END.equals(text) && paved) && !(BARRIER_END.equals(text) && railed)) { continue; }
+            picks.add(new PickDef(text, 1));
         }
         String picked = PickDef.pick(picks, roll);
         return picked == null || picked.isEmpty() ? null : picked;
-    }
-
-    public static void missingDeadEnd(String named) {
-        if (MISSING.add(named)) { ContentLog.LOGGER.error("villagePathDeadEnds names '{}', which could not be loaded, so a cul-de-sac closes that street instead", named); }
     }
 
     public record Cargo(String name, int height) {}
@@ -282,6 +375,12 @@ public final class ContentCity {
 
     @Nullable public static String pierStyle(RandomSource roll) {
         List<PickDef> picks = new ArrayList<>();
+        for (String style : pierStyles()) { picks.add(new PickDef(style, 1)); }
+        return PickDef.pick(picks, roll);
+    }
+
+    public static Set<String> pierStyles() {
+        Set<String> styles = new LinkedHashSet<>();
         for (String entry : ContentControl.list(ContentControl.VILLAGES, "villagePathPiers", Config.worldgen.villagePathPiers())) {
             String text = entry.trim().toLowerCase(Locale.ROOT);
             if (text.isEmpty()) { continue; }
@@ -289,17 +388,24 @@ public final class ContentCity {
                 if (MISSING.add(entry)) { ContentLog.LOGGER.error("villagePathPiers names style '{}', which is not railed, pilings or boardwalk, so it is left out", entry); }
                 continue;
             }
-            picks.add(new PickDef(text, 1));
+            styles.add(text);
         }
-        return PickDef.pick(picks, roll);
+        return styles;
     }
 
     @Nullable public static Cargo pierCargo(RandomSource roll) {
-        List<PickDef> picks = new ArrayList<>();
         List<Cargo> stood = new ArrayList<>();
+        String picked = PickDef.pick(cargo(stood), roll);
+        if (picked == null) { return null; }
+        Cargo held = stood.get(Integer.parseInt(picked));
+        return held.name().isEmpty() ? null : held;
+    }
+
+    private static List<PickDef> cargo(List<Cargo> stood) {
+        List<PickDef> picks = new ArrayList<>();
         for (String entry : ContentControl.list(ContentControl.VILLAGES, "villagePathPierCargo", Config.worldgen.villagePathPierCargo())) {
             String text = entry.trim();
-            int at = text.indexOf('=');
+            int at = text.lastIndexOf('=');
             if (at <= 0) {
                 if (MISSING.add(entry)) { ContentLog.LOGGER.error("villagePathPierCargo entry '{}' is not written as block=weight, so it is left out", entry); }
                 continue;
@@ -308,44 +414,43 @@ public final class ContentCity {
             String rest = text.substring(at + 1).trim();
             int comma = rest.indexOf(',');
             int height = 1;
-            try {
-                if (comma >= 0) {
-                    height = Mth.clamp(Integer.parseInt(rest.substring(comma + 1).trim()), 1, 8);
-                    rest = rest.substring(0, comma).trim();
-                }
-                picks.add(new PickDef(Integer.toString(stood.size()), Math.max(1, Integer.parseInt(rest))));
+            if (comma >= 0) {
+                height = cargoHeight(named, rest.substring(comma + 1).trim());
+                rest = rest.substring(0, comma).trim();
             }
+            int weight;
+            try { weight = Integer.parseInt(rest); }
             catch (NumberFormatException notNumber) {
-                if (MISSING.add(entry)) { ContentLog.LOGGER.error("villagePathPierCargo entry '{}' carries a weight or height that is not a number, so it is left out", entry); }
+                if (MISSING.add(entry)) { ContentLog.LOGGER.error("villagePathPierCargo entry '{}' carries a weight that is not a number, so it is left out", entry); }
                 continue;
             }
+            if (weight < 1) {
+                if (MISSING.add(entry)) { ContentLog.LOGGER.error("villagePathPierCargo entry '{}' asks for a weight of {}, which is below 1, ignoring the entry", entry, weight); }
+                continue;
+            }
+            picks.add(new PickDef(Integer.toString(stood.size()), weight));
             stood.add(new Cargo("empty".equals(named) ? "" : named, height));
         }
-        String picked = PickDef.pick(picks, roll);
-        if (picked == null) { return null; }
-        Cargo held = stood.get(Integer.parseInt(picked));
-        return held.name().isEmpty() ? null : held;
+        return picks;
+    }
+
+    private static int cargoHeight(String named, String written) {
+        int asked;
+        try { asked = Integer.parseInt(written); }
+        catch (NumberFormatException wrong) {
+            if (MISSING.add("cargo|" + named + "|" + written)) { ContentLog.LOGGER.error("villagePathPierCargo gives {} a height of '{}', which is not a whole number, so one block is stood there", named, written); }
+            return 1;
+        }
+        if (asked >= 1 && asked <= CARGO_MOST) { return asked; }
+        if (MISSING.add("cargo|" + named + "|" + written)) { ContentLog.LOGGER.error("villagePathPierCargo gives {} a height of {}, which is not between 1 and {}, so one block is stood there", named, asked, CARGO_MOST); }
+        return 1;
     }
 
     public static List<String> decorNames() { return ContentControl.list(ContentControl.VILLAGES, "villageDecor", Config.worldgen.villageDecor()); }
 
     @Nullable public static String decor(RandomSource roll) {
-        List<PickDef> picks = new ArrayList<>();
-        for (String entry : ContentControl.list(ContentControl.VILLAGES, "villageDecor", Config.worldgen.villageDecor())) {
-            String text = entry.trim();
-            if (text.isEmpty()) { continue; }
-            int at = text.lastIndexOf('=');
-            if (at < 0) {
-                picks.add(new PickDef(text, 1));
-                continue;
-            }
-            try { picks.add(new PickDef(text.substring(0, at).trim(), Math.max(1, Integer.parseInt(text.substring(at + 1).trim())))); }
-            catch (NumberFormatException notNumber) {
-                if (MISSING.add(entry)) { ContentLog.LOGGER.error("villageDecor entry '{}' is not a name or a name=weight, so it is left out", entry); }
-            }
-        }
-        String picked = PickDef.pick(picks, roll);
-        return picked == null || picked.isEmpty() || "empty".equals(picked) ? null : picked;
+        String picked = PickDef.pick(weighted("villageDecor", decorNames()), roll);
+        return picked == null || picked.isEmpty() || EMPTY.equals(picked) ? null : picked;
     }
 
     public static void missingDecor(String named) {
@@ -364,8 +469,20 @@ public final class ContentCity {
 
     public static void begin() {
         ContentCityBlocks.forget();
+        CityPalette.forget();
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null) { ContentVillages.joinVillages(server.registryAccess()); }
+        stationSpan = null;
         laying = wanted();
         if (!laying) { return; }
+        int cargo = cargo(new ArrayList<>()).size();
+        if (cargo > 0) { ContentLog.LOGGER.info("Piers carry {} kind(s) of cargo", cargo); }
+        int decor = weighted("villageDecor", decorNames()).size();
+        if (decor > 0) { ContentLog.LOGGER.info("Villages scatter {} kind(s) of decoration along their roads", decor); }
+        StructureTemplateManager templates = server == null ? null : server.getStructureManager();
+        stationSpan = ContentCityTemplates.stationBuild(templates);
+        ContentVillages.measure(templates);
+        ContentVillages.vanilla(server == null ? Map.of() : ContentCityTemplates.vanillaHouses(server, templates));
         CityPlan.reset();
         int spacing = CityPlan.spacing();
         if (spacing <= 0) {
@@ -384,20 +501,26 @@ public final class ContentCity {
     public static void residents(WorldGenLevel level, VillageDef def, BoundingBox box, IntFunction<BlockPos> spot) {
         if (def.villagers() <= 0) { return; }
         EntityType<?> kind = EntityType.VILLAGER;
-        if (!def.villagerEntity().isEmpty()) {
+        boolean vanilla = def.villagerEntity().isEmpty();
+        if (!vanilla) {
             kind = EntityType.byString(def.villagerEntity()).orElse(null);
             if (kind == null) {
                 if (MISSING.add(def.key() + "|" + def.villagerEntity())) { ContentLog.LOGGER.error("Village plot {} wants {} to live in it, which nothing registers", def.key(), def.villagerEntity()); }
                 return;
             }
         }
+        int districtX = CityPlan.districtOf(box.minX(), true);
+        int districtZ = CityPlan.districtOf(box.minZ(), false);
+        boolean infested = vanilla && Math.floorMod(Hashes.mix(level.getSeed() ^ INFESTED_SALT, districtX, 0, districtZ), INFESTED_ODDS) == 0;
         for (int index = 0; index < def.villagers(); index++) {
             BlockPos at = spot.apply(index);
             if (!box.isInside(at)) { continue; }
-            Entity made = kind.create(level.getLevel());
+            Entity made = (infested ? EntityType.ZOMBIE_VILLAGER : kind).create(level.getLevel());
             if (made == null) { return; }
             made.moveTo(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, 0.0F, 0.0F);
             if (made instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(at), MobSpawnType.STRUCTURE, null); }
+            if (vanilla) { ContentVillagers.professed(made, level.getRandom()); }
+            if (infested && made instanceof Mob mob) { mob.setPersistenceRequired(); }
             level.addFreshEntity(made);
         }
     }
@@ -411,23 +534,7 @@ public final class ContentCity {
     }
 
     public static void missingStation(String named) {
-        if (MISSING.add(named)) { ContentLog.LOGGER.error("villageSubwayStation '{}' could not be loaded, so stations are carved instead of laid from the build", named); }
-    }
-
-    public static void stationTooShort(String named, int tall, int climb, int grown) {
-        if (MISSING.add(named + "@" + climb)) { ContentLog.LOGGER.info("The station build '{}' is {} block(s) tall and this station climbs {}, which the build cannot reach even grown to {}, so this one is carved instead", named, tall, climb, grown); }
-    }
-
-    public static void missingEntrance(String named) {
-        if (MISSING.add(named)) { ContentLog.LOGGER.error("villageSubwayEntrance '{}' could not be loaded, so the subway stairs come up bare", named); }
-    }
-
-    public static void entranceOnStreet() {
-        if (MISSING.add("entrance@street")) { ContentLog.LOGGER.info("A subway entrance would have stood on a street, so it is left off and the stairs come up bare"); }
-    }
-
-    public static void entranceWithBuild() {
-        if (MISSING.add("entrance@build")) { ContentLog.LOGGER.info("villageSubwayStation names a build, which carries its own way in, so villageSubwayEntrance is left off rather than stood beside it as a shut box"); }
+        if (MISSING.add(named)) { ContentLog.LOGGER.error("villageSubwayStation '{}' could not be loaded, so no subway stations are built", named); }
     }
 
     public static void missingWell(String named) {

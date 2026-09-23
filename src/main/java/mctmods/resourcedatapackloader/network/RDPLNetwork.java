@@ -36,12 +36,12 @@ public final class RDPLNetwork {
             if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); }
         });
         registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (message, context) -> {
-            if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player, message.after()); }
+            if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); }
         });
     }
 
-    public static void openWorn(int after) {
-        PacketDistributor.sendToServer(new MessageOpenWorn(after));
+    public static void openWorn() {
+        PacketDistributor.sendToServer(new MessageOpenWorn());
     }
 
     public static void sendHold(ServerPlayer player, boolean held, String warning, boolean fog) {

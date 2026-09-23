@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 public final class FallbackIcon {
     public static final String FILE = "pack.png";
+    public static final String TEXTURE = "resourcedatapackloader:textures/gui/icon.png";
     private static final String PATH = "/assets/resourcedatapackloader/textures/gui/icon.png";
     @Nullable private static byte[] bytes;
 

@@ -13,7 +13,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -62,8 +62,8 @@ public final class ContentPaths {
         if (!player.mayUseItemAt(pos, face, held)) { return; }
         level.playSound(player, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
         if (!level.isClientSide) {
-            level.setBlock(pos, result.defaultBlockState(), Block.UPDATE_ALL_IMMEDIATE);
-            held.hurtAndBreak(1, (ServerLevel) level, player, broken -> player.onEquippedItemBroken(broken, EquipmentSlot.MAINHAND));
+            level.setBlock(pos, Block.updateFromNeighbourShapes(result.defaultBlockState(), level, pos), Block.UPDATE_ALL_IMMEDIATE);
+            held.hurtAndBreak(1, (ServerLevel) level, player, broken -> player.onEquippedItemBroken(broken, LivingEntity.getSlotForHand(event.getHand())));
         }
         event.setCancellationResult(InteractionResult.SUCCESS);
         event.setCanceled(true);

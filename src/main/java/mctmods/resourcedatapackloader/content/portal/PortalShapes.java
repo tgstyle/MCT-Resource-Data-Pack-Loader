@@ -74,13 +74,13 @@ public final class PortalShapes {
         for (String row : rows) {
             if (repeated(row)) {
                 if (out.isEmpty()) { return null; }
-                String last = out.get(out.size() - 1);
+                String last = out.getLast();
                 for (int again = 0; again < tall; again++) { out.add(last); }
                 continue;
             }
             out.add(stretch(row, wide));
         }
-        int width = out.isEmpty() ? 0 : out.get(0).length();
+        int width = out.isEmpty() ? 0 : out.getFirst().length();
         for (String row : out) {
             if (row.length() != width) { return null; }
         }
@@ -96,7 +96,7 @@ public final class PortalShapes {
                 continue;
             }
             char before = built.isEmpty() ? PortalFrameDef.SKIP : built.charAt(built.length() - 1);
-            for (int again = 0; again < wide; again++) { built.append(before); }
+            built.repeat(before, wide);
         }
         return built.toString();
     }

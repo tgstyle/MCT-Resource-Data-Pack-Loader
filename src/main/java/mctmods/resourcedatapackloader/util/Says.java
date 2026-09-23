@@ -26,7 +26,7 @@ public final class Says {
     public static void tell(ServerPlayer player, String said, ChatFormatting color) {
         if (said.isEmpty()) { return; }
         if (!card() || !RDPLNetwork.reaches(player)) {
-            player.sendSystemMessage(Component.literal(said).withStyle(color));
+            line(player, color, said);
             return;
         }
         String iconName = ContentControl.text(ContentControl.CHUNKS, "saysIcon", Config.chunks.saysIcon()).trim();
@@ -37,6 +37,11 @@ public final class Says {
         RDPLNetwork.sendCard(player, new MessageCard("", List.of(said), icon, image, background, rgb(color), CARD_TICKS));
     }
 
+    public static void line(ServerPlayer player, ChatFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        player.sendSystemMessage(Component.literal(said).withStyle(color));
+    }
+
     public static void tellAll(MinecraftServer server, String said, ChatFormatting color) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, said, color); }
     }
@@ -44,7 +49,16 @@ public final class Says {
     public static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard()); }
 
     private static int rgb(ChatFormatting color) {
-        Integer value = color.getColor();
-        return value == null ? PLAIN : value;
+        return switch (color) {
+            case GREEN -> 0x55FF55;
+            case RED -> 0xFF5555;
+            case GOLD -> 0xFFAA00;
+            case AQUA -> 0x55FFFF;
+            case GRAY -> 0xAAAAAA;
+            case WHITE -> 0xFFFFFF;
+            case LIGHT_PURPLE -> 0xFF55FF;
+            case BLUE -> 0x5555FF;
+            default -> PLAIN;
+        };
     }
 }

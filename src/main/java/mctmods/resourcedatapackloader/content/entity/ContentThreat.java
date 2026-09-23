@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -43,15 +45,15 @@ public final class ContentThreat {
     private static final Map<UUID, Integer> BANDS = new HashMap<>();
     private static final Map<Level, List<Carrier>> CARRIERS = new HashMap<>();
     private static final Map<Level, Integer> OTHERS = new HashMap<>();
+    private static volatile Map<Level, List<Spot>> spots = Map.of();
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final Map<Integer, String> SAYS = new HashMap<>();
-    private static List<String> rawItems = null;
+    private static final TemplateMemo<Boolean> LIVE = new TemplateMemo<>();
     private static int[] scratch = new int[0];
     private static int[] levels = new int[0];
     private static int most;
     private static float spawnRate;
     private static float notice;
-    private static boolean live;
 
     private ContentThreat() {}
 
@@ -61,17 +63,11 @@ public final class ContentThreat {
 
     private record Carrier(Entity entity, int band) {}
 
-    private static boolean disabled() {
-        if (ContentControl.off(ContentControl.SPAWNING)) { return true; }
-        List<String> items = ContentControl.list(ContentControl.SPAWNING, "threatItems", Config.worldgen.threatItems());
-        if (!items.equals(rawItems)) {
-            rawItems = List.copyOf(items);
-            live = read(items);
-        }
-        return !live;
-    }
+    private record Spot(double x, double y, double z, int band) {}
 
-    private static boolean read(List<String> items) {
+    private static boolean disabled() { return !LIVE.get(ContentThreat::read); }
+
+    private static boolean read() {
         ENTRIES.clear();
         SAYS.clear();
         List<Integer> bands = new ArrayList<>();
@@ -90,7 +86,7 @@ public final class ContentThreat {
                 break;
             }
         }
-        for (String entry : items) { parse(entry); }
+        for (String entry : ContentControl.list(ContentControl.SPAWNING, "threatItems", Config.worldgen.threatItems())) { parse(entry); }
         for (String entry : ContentControl.list(ContentControl.SPAWNING, "threatSays", Config.worldgen.threatSays())) {
             String[] parts = entry.split("=", 2);
             if (parts.length < 2) {
@@ -147,8 +143,14 @@ public final class ContentThreat {
 
     public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
-        if (server.getTickCount() % SAMPLE != 0 || disabled()) { return; }
-        for (ServerLevel level : server.getAllLevels()) { sample(level); }
+        if (server.getTickCount() % SAMPLE != 0) { return; }
+        if (disabled()) {
+            spots = Map.of();
+            return;
+        }
+        Map<Level, List<Spot>> found = new HashMap<>();
+        for (ServerLevel level : server.getAllLevels()) { found.put(level, sample(level)); }
+        spots = Map.copyOf(found);
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { BANDS.remove(event.getEntity().getUUID()); }
@@ -159,8 +161,9 @@ public final class ContentThreat {
         OTHERS.remove(level);
     }
 
-    private static void sample(ServerLevel level) {
+    private static List<Spot> sample(ServerLevel level) {
         List<Carrier> carriers = new ArrayList<>();
+        List<Spot> placed = new ArrayList<>();
         int others = 0;
         int highest = 0;
         for (Entity entity : level.getAllEntities()) {
@@ -171,6 +174,7 @@ public final class ContentThreat {
             if (entity instanceof ServerPlayer player) { noteBand(player, score, band); }
             if (band == 0) { continue; }
             carriers.add(new Carrier(entity, band));
+            placed.add(new Spot(entity.getX(), entity.getY(), entity.getZ(), band));
             if (entity instanceof Player) { continue; }
             others++;
             highest = Math.max(highest, band);
@@ -178,6 +182,7 @@ public final class ContentThreat {
         CARRIERS.put(level, carriers.isEmpty() ? Collections.emptyList() : carriers);
         Integer before = OTHERS.put(level, others);
         if (before == null ? others > 0 : before != others) { ContentLog.LOGGER.debug("Dimension {} holds {} threat carrier(s) beyond the players, the highest in band {} of {}", level.dimension().location(), others, highest, levels.length); }
+        return List.copyOf(placed);
     }
 
     private static void noteBand(ServerPlayer player, int score, int band) {
@@ -246,14 +251,31 @@ public final class ContentThreat {
     }
 
     public static boolean allowed(Entity entity) {
-        EntityVariantDef def = ContentEntities.def(entity);
-        int least = def == null ? 0 : def.threatLeast();
+        int least = least(entity);
         if (least <= 0) { return true; }
         if (disabled()) { return false; }
         return bandNear(entity.level(), entity.getX(), entity.getY(), entity.getZ(), REACH) >= least;
     }
 
+    public static boolean deniedAtGeneration(Entity entity) {
+        int least = least(entity);
+        if (least <= 0) { return false; }
+        List<Spot> near = spots.get(entity.level());
+        if (near == null) { return true; }
+        for (Spot spot : near) {
+            if (spot.band() >= least && entity.distanceToSqr(spot.x(), spot.y(), spot.z()) <= REACH) { return false; }
+        }
+        return true;
+    }
+
+    private static int least(Entity entity) {
+        EntityVariantDef def = ContentEntities.def(entity);
+        return def == null ? 0 : def.threatLeast();
+    }
+
     public static boolean docile(@Nullable LivingEntity target, Entity mob) { return target instanceof Player player && !provokes(player, mob); }
+
+    public static boolean plainNearestTarget(Object goal) { return goal.getClass() == NearestAttackableTargetGoal.class; }
 
     public static boolean provokes(Player player, Entity mob) {
         EntityVariantDef def = ContentEntities.def(mob);

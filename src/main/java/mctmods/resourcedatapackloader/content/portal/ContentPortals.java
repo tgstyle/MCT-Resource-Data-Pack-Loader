@@ -50,8 +50,9 @@ public final class ContentPortals {
         for (Map.Entry<ResourceLocation, DimensionDef> entry : opening().entrySet()) {
             DimensionDef dimension = entry.getValue();
             DimensionPortalDef portal = dimension.portal();
-            if (portal == null || !ContentRegistry.available(dimension.requires(), dimension.key())) { continue; }
+            if (portal == null) { continue; }
             ResourceLocation name = blockName(entry.getKey());
+            if (ContentRegistry.hasDef(name)) { continue; }
             BlockDef def = ContentParser.block(name, blockJson(entry.getKey(), portal));
             if (def == null) { continue; }
             ContentRegistry.addDef(def);

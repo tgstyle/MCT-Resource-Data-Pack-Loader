@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,8 +15,6 @@ public final class Blocked {
         for (int value : counts.values()) { total += value; }
         return total;
     }
-
-    public Map<String, Integer> map() { return Collections.unmodifiableMap(counts); }
 
     public void report(String what) {
         for (Map.Entry<String, Integer> entry : counts.entrySet()) {

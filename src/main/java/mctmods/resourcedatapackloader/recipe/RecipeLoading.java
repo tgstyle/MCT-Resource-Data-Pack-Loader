@@ -1,44 +1,58 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
 import mctmods.resourcedatapackloader.recipe.interfaces.IRecipeFilter;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
 import java.util.HashMap;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class RecipeLoading {
     private static final String ITEM = "item";
     private static final String CONDITIONS = "conditions";
     private static final String NEOFORGE_CONDITIONS = "neoforge:conditions";
+    private static final FileToIdConverter FILES = FileToIdConverter.json("recipe");
     private static final Map<String, Boolean> REGISTERED = new HashMap<>();
     private static int removedByFile;
     private static int removedByName;
     private static int removedByOutput;
     private static int skipped;
-    private static int furnaceRemoved;
-    private static int furnaceAdded;
     @Nullable private static IRecipeFilter attached;
     private static final Set<String> SCRIPTED = Set.of("crafttweaker", "kubejs", "groovyscript");
+    private static final Set<ResourceLocation> LOADED = new HashSet<>();
     private static boolean rebuilt;
 
     private RecipeLoading() {}
 
-    public static void begin(Map<ResourceLocation, JsonElement> recipes) {
+    public static void begin(Map<ResourceLocation, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, BiConsumer<ResourceLocation, JsonElement> parse) {
         rebuilt = false;
         RecipeRemovals.reload();
         FurnaceRecipes.reload();
+        FurnaceRecipes.begin();
         RecipeBlocking.reload();
         FurnaceBlocking.reload();
         REGISTERED.clear();
@@ -46,8 +60,7 @@ public final class RecipeLoading {
         removedByName = 0;
         removedByOutput = 0;
         skipped = 0;
-        furnaceRemoved = 0;
-        furnaceAdded = 0;
+        keepOriginals(recipes, manager, conditions, parse);
         boolean skipMissing = Config.recipes.skipMissingItems();
         Iterator<Map.Entry<ResourceLocation, JsonElement>> iterator = recipes.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -59,11 +72,6 @@ public final class RecipeLoading {
                 removedByFile++;
                 continue;
             }
-            if (!scripted(id) && RecipeRemovals.removesName(id)) {
-                iterator.remove();
-                removedByName++;
-                continue;
-            }
             if (!skipMissing) { continue; }
             String missing = missingItem(entry.getValue(), id.getNamespace());
             if (missing == null) { continue; }
@@ -71,36 +79,72 @@ public final class RecipeLoading {
             iterator.remove();
             skipped++;
         }
+        LOADED.clear();
+        LOADED.addAll(recipes.keySet());
+    }
+
+    @SuppressWarnings("resource") private static void keepOriginals(Map<ResourceLocation, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, BiConsumer<ResourceLocation, JsonElement> parse) {
+        for (Map.Entry<ResourceLocation, List<Resource>> stack : manager.listResourceStacks("recipe", path -> path.getPath().endsWith(".json")).entrySet()) {
+            List<Resource> layers = stack.getValue();
+            if (layers.size() < 2 || !(layers.getLast().source() instanceof RDPLResourcePack)) { continue; }
+            ResourceLocation id = FILES.fileToId(stack.getKey());
+            JsonElement held = recipes.get(id);
+            if (id.getPath().startsWith("_") || held != null && RecipeRemovals.isRemoval(held)) { continue; }
+            JsonElement original = original(layers);
+            if (original != null && failed(id, held, conditions, parse)) { recipes.put(id, original); }
+        }
+    }
+
+    private static boolean failed(ResourceLocation id, @Nullable JsonElement held, Predicate<JsonElement> conditions, BiConsumer<ResourceLocation, JsonElement> parse) {
+        if (held == null) {
+            ContentLog.LOGGER.error("Parsing error in recipe {} while reading it, leaving the original in place: it is not valid JSON", id);
+            return true;
+        }
+        if (!conditions.test(held)) {
+            ContentLog.LOGGER.debug("Recipe {} was skipped by its own conditions, leaving the original in place", id);
+            return true;
+        }
+        try { parse.accept(id, held); }
+        catch (IllegalArgumentException | JsonParseException ex) {
+            ContentLog.LOGGER.error("Parsing error in recipe {} while building it, leaving the original in place: {}", id, ex.getMessage());
+            return true;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("resource") @Nullable private static JsonElement original(List<Resource> layers) {
+        for (int i = layers.size() - 2; i >= 0; i--) {
+            Resource layer = layers.get(i);
+            if (layer.source() instanceof RDPLResourcePack) { continue; }
+            try (Reader reader = layer.openAsReader()) { return JsonParser.parseReader(reader); }
+            catch (IOException | JsonParseException ex) { return null; }
+        }
+        return null;
     }
 
     public static boolean doomed(ResourceLocation id, Recipe<?> recipe, ItemStack result) {
-        if (scripted(id)) { return false; }
+        if (spared(id)) { return false; }
+        if (recipe instanceof AbstractCookingRecipe) { return (FurnaceRecipes.resolvedAtLoad() && FurnaceRecipes.removes(recipe.getIngredients(), result)) || FurnaceBlocking.blocks(result); }
+        if (recipe.getType() != RecipeType.CRAFTING) { return false; }
+        if (RecipeRemovals.removesName(id)) {
+            removedByName++;
+            return true;
+        }
         if (RecipeRemovals.removesOutput(result)) {
             removedByOutput++;
             return true;
         }
-        if (recipe instanceof AbstractCookingRecipe cooking) {
-            if (FurnaceRecipes.removes(cooking.getIngredients(), result, false)) {
-                furnaceRemoved++;
-                return true;
-            }
-            return FurnaceBlocking.blocks(result);
-        }
         return RecipeBlocking.blocks(id, result);
     }
 
-    public static boolean late(ResourceLocation id, Recipe<?> recipe, ItemStack result) {
-        if (scripted(id) || FurnaceRecipes.added(id) || !(recipe instanceof AbstractCookingRecipe cooking) || !FurnaceRecipes.removes(cooking.getIngredients(), result, true)) { return false; }
-        furnaceRemoved++;
-        return true;
-    }
+    public static boolean late(ResourceLocation id, Recipe<?> recipe, ItemStack result) { return recipe instanceof AbstractCookingRecipe && FurnaceRecipes.removesLate(id, recipe.getIngredients(), result, spared(id)); }
 
     public static void attach(IRecipeFilter filter) {
         attached = filter;
         rebuilt = true;
     }
 
-    public static boolean scripted(ResourceLocation id) { return SCRIPTED.contains(id.getNamespace().toLowerCase(Locale.ROOT)); }
+    private static boolean spared(ResourceLocation id) { return !LOADED.contains(id) || SCRIPTED.contains(id.getNamespace().toLowerCase(Locale.ROOT)); }
 
     public static void afterReload(IRecipeFilter filter) {
         if (rebuilt) { return; }
@@ -112,18 +156,19 @@ public final class RecipeLoading {
         IRecipeFilter filter = attached;
         if (filter == null || FurnaceRecipes.resolvedAtLoad()) { return; }
         filter.rdpl$filterLate();
-        FurnaceRecipes.report(furnaceRemoved, furnaceAdded);
+        FurnaceBlocking.report();
+        FurnaceRecipes.report();
     }
 
-    public static void finish(int added) {
-        furnaceAdded = added;
+    public static void finish() {
         REGISTERED.clear();
         if (skipped > 0) { Summary.info("recipes.skipped", "Skipped " + skipped + " recipe(s) that use items which are not registered, usually content a mod's config has disabled"); }
         int removed = removedByFile + removedByName + removedByOutput;
         if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " recipe(s): " + removedByFile + " by a remove file, " + removedByName + " by name, " + removedByOutput + " by output"); }
         RecipeBlocking.report();
+        if (!FurnaceRecipes.resolvedAtLoad()) { return; }
         FurnaceBlocking.report();
-        if (FurnaceRecipes.resolvedAtLoad()) { FurnaceRecipes.report(furnaceRemoved, furnaceAdded); }
+        FurnaceRecipes.report();
     }
 
     @Nullable private static String missingItem(JsonElement element, String namespace) {

@@ -45,9 +45,4 @@ public final class DimensionValues<T> {
         T scoped = byDimension.get(dimension);
         return scoped != null ? scoped : everywhere;
     }
-
-    public Map<String, T> scoped(List<String> asked) {
-        at("", asked);
-        return byDimension;
-    }
 }

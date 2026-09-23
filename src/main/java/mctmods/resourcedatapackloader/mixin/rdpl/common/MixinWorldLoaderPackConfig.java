@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import com.llamalad7.mixinextras.expression.Definition;
-import com.llamalad7.mixinextras.expression.Expression;
 import mctmods.resourcedatapackloader.pack.PackFinder;
 
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
 import net.minecraft.server.WorldLoader;
 import net.minecraft.server.packs.PackResources;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,5 +15,5 @@ import java.util.List;
     @Definition(id = "openAllSelected", method = "Lnet/minecraft/server/packs/repository/PackRepository;openAllSelected()Ljava/util/List;")
     @Expression("? = ?.openAllSelected()")
     @ModifyVariable(method = "createResourceManager", at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER))
-    private List<PackResources> rdpl$beforeOwn(List<PackResources> opened) { return PackFinder.beforeOwn(opened); }
+    private List<PackResources> rdpl$beforeOwn(List<PackResources> list) { return PackFinder.beforeOwn(list); }
 }

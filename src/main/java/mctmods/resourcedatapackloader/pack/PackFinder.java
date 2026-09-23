@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.ChatFormatting;
+import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackSelectionConfig;
@@ -19,12 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class PackFinder implements RepositorySource {
     private static final String KUBEJS = "dev.latvian.mods.kubejs.";
     private static final PackSource SOURCE = PackSource.create(name -> Component.translatable("pack.nameAndSource", name, Component.translatable("rdpl.pack.source")).withStyle(ChatFormatting.GRAY), true);
+    private static final PackSource PLAIN = PackSource.create(UnaryOperator.identity(), true);
     private final PackType type;
 
     public PackFinder(PackType type) { this.type = type; }
@@ -61,14 +64,22 @@ public final class PackFinder implements RepositorySource {
 
     private void offer(Consumer<Pack> out, boolean overriding) {
         String id = RDPLResourcePack.id(overriding);
-        PackLocationInfo location = new PackLocationInfo(id, Component.literal(id), SOURCE, Optional.empty());
+        PackLocationInfo location = new PackLocationInfo(id, Component.literal(id), tierSource(), Optional.empty());
         PackSelectionConfig selection = new PackSelectionConfig(true, overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, true);
-        Pack pack = Pack.readMetaAndCreate(location, RDPLResourcePack.supplier(type, overriding), type, selection);
-        if (pack == null) {
+        Pack.ResourcesSupplier supplier = RDPLResourcePack.supplier(type, overriding);
+        Pack.Metadata meta = Pack.readPackMetadata(location, supplier, SharedConstants.getCurrentVersion().getPackVersion(type));
+        if (meta == null) {
             ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", id, type.getDirectory());
             return;
         }
-        out.accept(pack);
+        out.accept(new Pack(location, supplier, described(meta, overriding), selection));
+    }
+
+    private PackSource tierSource() { return type == PackType.CLIENT_RESOURCES ? PLAIN : SOURCE; }
+
+    private Pack.Metadata described(Pack.Metadata meta, boolean overriding) {
+        if (type != PackType.CLIENT_RESOURCES) { return meta; }
+        return new Pack.Metadata(Component.translatable(overriding ? "rdpl.gui.packList.override" : "rdpl.gui.packList.normal"), meta.compatibility(), meta.requestedFeatures(), meta.overlays(), meta.isHidden());
     }
 
     public static List<Pack> seat(List<Pack> selected) {

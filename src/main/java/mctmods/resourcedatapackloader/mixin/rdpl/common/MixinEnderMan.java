@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(EnderMan.class) public abstract class MixinEnderMan {
     @Inject(method = "teleport()Z", at = @At("HEAD"), cancellable = true)
     private void rdpl$staysPut(CallbackInfoReturnable<Boolean> cir) {
-        if (!ContentEntities.teleports((Entity) (Object) this)) { cir.setReturnValue(Boolean.FALSE); }
+        if (ContentEntities.staysPut(Entity.class.cast(this))) { cir.setReturnValue(Boolean.FALSE); }
     }
 }

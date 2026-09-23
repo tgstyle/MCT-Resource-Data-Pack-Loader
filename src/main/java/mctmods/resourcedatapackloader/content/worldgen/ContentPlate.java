@@ -12,7 +12,7 @@ public final class ContentPlate implements IContentShape {
     public ContentPlate(ShapeDef shape) { this.shape = shape; }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int radius = Math.min(ShapeDef.MOST_REACH, Math.max(0, shape.radius().pick(random)));
+        int radius = Math.clamp(shape.radius().pick(random), 0, ShapeDef.MOST_REACH);
         int thickness = Math.max(0, shape.height().pick(random));
         int centerY = origin.getY() + 1;
         boolean round = shape.isRound();

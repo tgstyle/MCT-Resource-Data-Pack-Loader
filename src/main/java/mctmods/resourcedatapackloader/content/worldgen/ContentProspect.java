@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.loot.BlockDrops;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -13,10 +14,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -123,9 +129,23 @@ public final class ContentProspect {
         read(player, level, event.getPos(), entry);
         int wear = Math.max(WEAR, ContentControl.number(ContentControl.ORES, "prospectWear", Config.worldgen.prospectWear()));
         if (held.isDamageableItem()) { held.hurtAndBreak(wear - 1, player, EquipmentSlot.MAINHAND); }
-        if (drops()) { return; }
-        event.setCanceled(true);
-        level.destroyBlock(event.getPos(), false, player);
+    }
+
+    public static void onDrops(BlockDropsEvent event) {
+        if (!(event.getBreaker() instanceof ServerPlayer player) || !player.isShiftKeyDown() || drops() || idle() || holding(player.getMainHandItem()) == null) { return; }
+        event.getDrops().clear();
+        event.setDroppedExperience(0);
+        ServerLevel level = event.getLevel();
+        List<ItemStack> stacks = BlockDrops.prospected(event.getState(), level, event.getPos(), player, event.getTool());
+        if (!level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) { return; }
+        for (ItemStack stack : stacks) { event.getDrops().add(dropped(level, event.getPos(), stack)); }
+    }
+
+    private static ItemEntity dropped(ServerLevel level, BlockPos pos, ItemStack stack) {
+        double half = EntityType.ITEM.getHeight() / 2.0D;
+        ItemEntity entity = new ItemEntity(level, pos.getX() + 0.5D + Mth.nextDouble(level.random, -0.25D, 0.25D), pos.getY() + 0.5D + Mth.nextDouble(level.random, -0.25D, 0.25D) - half, pos.getZ() + 0.5D + Mth.nextDouble(level.random, -0.25D, 0.25D), stack);
+        entity.setDefaultPickUpDelay();
+        return entity;
     }
 
     private static void read(ServerPlayer player, ServerLevel level, BlockPos at, Entry entry) {

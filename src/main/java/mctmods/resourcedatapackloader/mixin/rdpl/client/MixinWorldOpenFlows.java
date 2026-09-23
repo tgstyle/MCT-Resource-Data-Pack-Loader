@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(WorldOpenFlows.class) public abstract class MixinWorldOpenFlows {
     @Inject(method = "confirmWorldCreation", at = @At("HEAD"), cancellable = true)
     private static void rdpl$skipCreationWarning(Minecraft minecraft, CreateWorldScreen screen, Lifecycle lifecycle, Runnable loadWorld, boolean skipWarnings, CallbackInfo ci) {
-        if (Config.tweaks.experimentalWarning() || lifecycle != Lifecycle.experimental()) { return; }
+        if (Config.tweaks.experimentalWarning() || lifecycle == Lifecycle.stable()) { return; }
         ContentLog.LOGGER.debug("Skipping the experimental settings warning for the new world, tweaks.experimentalWarning is off");
         loadWorld.run();
         ci.cancel();

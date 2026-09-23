@@ -55,7 +55,7 @@ public final class ContentMaterials {
         defense.put(ArmorItem.Type.BODY, def.reduction()[2]);
         ResourceLocation texture = ResourceLocation.tryParse(def.armorTexture());
         List<ArmorMaterial.Layer> layers = List.of(new ArmorMaterial.Layer(texture == null ? def.key() : texture));
-        return new ArmorMaterial(defense, def.enchantability(), sound(def.equipSound()), () -> repair(def), layers, def.toughness(), 0.0F);
+        return new ArmorMaterial(defense, def.enchantability(), sound(def.equipSound()), () -> Ingredient.EMPTY, layers, def.toughness(), 0.0F);
     }
 
     private static TagKey<Block> incorrect(int level) {

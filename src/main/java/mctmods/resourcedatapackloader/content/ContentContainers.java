@@ -12,7 +12,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +52,10 @@ public final class ContentContainers {
         type = BlockEntityType.Builder.of(ContentContainerBlockEntity::new, blocks.toArray(Block[]::new)).build(DSL.remainderType());
         helper.register(ID, type);
         ContentLog.LOGGER.info("Registered the container block entity type for {} pack container block(s)", blocks.size());
+    }
+
+    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        if (type != null) { event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (held, side) -> new InvWrapper(held)); }
     }
 
     public static void registerMenu(RegisterEvent.RegisterHelper<MenuType<?>> helper) {

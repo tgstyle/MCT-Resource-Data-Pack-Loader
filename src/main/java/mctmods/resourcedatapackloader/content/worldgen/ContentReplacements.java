@@ -35,7 +35,6 @@ import javax.annotation.Nullable;
 
 public final class ContentReplacements {
     private static final int FLAGS = 2 | 16;
-    private static final int PER_TICK = 4;
     private static final Map<BlockState, BlockState> EXACT = new HashMap<>();
     private static final Map<Block, BlockState> WHOLE = new LinkedHashMap<>();
     private static final Map<BlockState, String> KEYS = new IdentityHashMap<>();
@@ -89,10 +88,9 @@ public final class ContentReplacements {
         if (!(event.getLevel() instanceof ServerLevel level)) { return; }
         Deque<ChunkPos> queue = QUEUES.get(level.dimension());
         if (queue == null || queue.isEmpty()) { return; }
-        int budget = PER_TICK;
-        while (budget > 0 && !queue.isEmpty()) {
-            ChunkPos pos = queue.pollFirst();
-            if (!level.hasChunk(pos.x, pos.z)) { continue; }
+        boolean worked = false;
+        while (!queue.isEmpty() && ContentRetrogen.canCatchUp(level, queue.peekFirst())) {
+            ChunkPos pos = queue.removeFirst();
             LevelChunk chunk = level.getChunk(pos.x, pos.z);
             Set<String> already = ContentChunkTokens.get(chunk);
             if (already.contains(token)) { continue; }
@@ -100,8 +98,10 @@ public final class ContentReplacements {
             Set<String> tokens = new HashSet<>(already);
             tokens.add(token);
             ContentChunkTokens.put(chunk, tokens);
-            budget--;
+            worked = true;
+            ContentRetrogen.caughtUp(level, pos);
         }
+        if (worked && queue.isEmpty()) { report(); }
     }
 
     private static void replace(ServerLevel level, LevelChunk chunk) {

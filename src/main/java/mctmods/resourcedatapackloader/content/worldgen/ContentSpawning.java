@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMobCategory;
@@ -12,12 +13,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import java.util.Locale;
 
 public final class ContentSpawning {
+    public static final String ANIMALS = "animals";
+
     private ContentSpawning() {}
 
     public static void applyCaps() {
@@ -37,23 +42,37 @@ public final class ContentSpawning {
     }
 
     public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
-        if (ContentControl.off(ContentControl.SPAWNING) || event.getSpawner() != null || event.getSpawnType() != MobSpawnType.NATURAL) { return; }
         ServerLevel level = event.getLevel().getLevel();
+        if (ContentVoidWorld.voidApplies(level)) {
+            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+            return;
+        }
         if (!ContentDimensions.spawns(level)) {
             event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
             return;
         }
+        boolean spawner = event.getSpawnType() == MobSpawnType.SPAWNER;
+        if (!spawner && placed(event.getSpawnType())) { return; }
         Mob mob = event.getEntity();
-        if (!ContentThreat.allowed(mob)) {
+        if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
+            if (ContentThreat.deniedAtGeneration(mob)) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
+            return;
+        }
+        if (!spawner && !ContentThreat.allowed(mob)) {
             event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
             return;
         }
-        if (!(mob instanceof Enemy)) { return; }
         BlockPos pos = mob.blockPosition();
-        int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight());
-        if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
-            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        if (!(mob instanceof Enemy)) {
+            if (!spawner && mob instanceof Animal && animalGround(event.getLevel(), pos) && mob.checkSpawnObstruction(event.getLevel())) { event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED); }
             return;
+        }
+        if (!spawner) {
+            int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight());
+            if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
+                event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+                return;
+            }
         }
         float rate = rateFor(level, pos) * ContentThreat.spawnRate(level, pos);
         if (rate == 1.0F) { return; }
@@ -66,6 +85,18 @@ public final class ContentSpawning {
             return;
         }
         if (level.random.nextFloat() < rate - 1.0F) { event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED); }
+    }
+
+    public static void onPlacementCheck(MobSpawnEvent.SpawnPlacementCheck event) {
+        if (event.getDefaultResult() || event.getResult() != MobSpawnEvent.SpawnPlacementCheck.Result.DEFAULT || placed(event.getSpawnType()) || event.getEntityType().getCategory() != MobCategory.CREATURE) { return; }
+        if (animalGround(event.getLevel(), event.getPos())) { event.setResult(MobSpawnEvent.SpawnPlacementCheck.Result.SUCCEED); }
+    }
+
+    private static boolean placed(MobSpawnType type) { return type != MobSpawnType.NATURAL && type != MobSpawnType.CHUNK_GENERATION; }
+
+    private static boolean animalGround(ServerLevelAccessor level, BlockPos pos) {
+        if (ContentRegistry.lacks(ANIMALS, level.getBlockState(pos.below()).getBlock())) { return false; }
+        return level.getRawBrightness(pos, 0) > 8;
     }
 
     private static float rateFor(ServerLevel level, BlockPos pos) {

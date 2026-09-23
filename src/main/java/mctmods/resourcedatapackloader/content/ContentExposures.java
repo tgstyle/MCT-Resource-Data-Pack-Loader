@@ -14,7 +14,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -25,6 +27,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -33,7 +36,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentExposures {
@@ -200,7 +205,7 @@ public final class ContentExposures {
     }
 
     @Nullable private static Holder<MobEffect> effect(String name, ExposureDef def, String what) {
-        Holder<MobEffect> found = Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(name));
+        Holder<MobEffect> found = Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(name.toLowerCase(Locale.ROOT)));
         if (found == null) { ContentLog.LOGGER.error("Exposure {} names effect {} as its {}, which nothing registers, so that part does nothing", def.key(), name, what); }
         return found;
     }
@@ -208,7 +213,7 @@ public final class ContentExposures {
     private static DamageSource source(ExposureDef def, ServerPlayer player) {
         ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, def.key());
         Holder<DamageType> type = player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(key).orElse(null);
-        return type == null ? player.damageSources().magic() : new DamageSource(type);
+        return type == null ? player.damageSources().magic() : new ExposureDamage(type);
     }
 
     private static Map<Block, Integer> blockLevels(ExposureDef def) {
@@ -253,5 +258,16 @@ public final class ContentExposures {
             GeneratedResources.put(PackType.SERVER_DATA, "minecraft", "tags/damage_type/" + tag + ".json", values.toString());
         }
         Summary.info("exposures.generated", "Generated " + names.size() + " damage type(s) from exposures");
+    }
+
+    private static final class ExposureDamage extends DamageSource {
+        private ExposureDamage(Holder<DamageType> type) { super(type); }
+
+        @Override @Nonnull public Component getLocalizedDeathMessage(@Nonnull LivingEntity victim) {
+            String message = "death.attack." + type().msgId();
+            LivingEntity killer = victim.getKillCredit();
+            if (killer != null && Language.getInstance().has(message + ".player")) { return Component.translatable(message + ".player", victim.getDisplayName(), killer.getDisplayName()); }
+            return Component.translatable(message, victim.getDisplayName());
+        }
     }
 }

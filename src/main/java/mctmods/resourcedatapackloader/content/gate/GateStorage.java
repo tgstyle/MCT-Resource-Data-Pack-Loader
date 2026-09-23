@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.util.PlayerPersisted;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.server.MinecraftServer;
@@ -33,32 +35,32 @@ public final class GateStorage extends SavedData {
         return tag;
     }
 
-    public static boolean unlockedFor(Player player, String key) { return player.getPersistentData().getCompound(PERSISTED).getBoolean(key); }
+    public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.of(player, PERSISTED).getCompound(PERSISTED).getBoolean(key); }
 
     public static void unlockFor(Player player, String key) {
-        CompoundTag gates = player.getPersistentData().getCompound(PERSISTED);
+        CompoundTag gates = PlayerPersisted.of(player, PERSISTED).getCompound(PERSISTED);
         gates.putBoolean(key, true);
-        player.getPersistentData().put(PERSISTED, gates);
+        PlayerPersisted.of(player, PERSISTED).put(PERSISTED, gates);
     }
 
     public static void lockFor(Player player, String key) {
-        CompoundTag gates = player.getPersistentData().getCompound(PERSISTED);
+        CompoundTag gates = PlayerPersisted.of(player, PERSISTED).getCompound(PERSISTED);
         gates.remove(key);
-        player.getPersistentData().put(PERSISTED, gates);
+        PlayerPersisted.of(player, PERSISTED).put(PERSISTED, gates);
     }
 
     public static int tallyFor(Player player, String key) {
-        CompoundTag tally = player.getPersistentData().getCompound(PERSISTED_KILLS);
+        CompoundTag tally = PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS);
         int now = tally.getInt(key) + 1;
         tally.putInt(key, now);
-        player.getPersistentData().put(PERSISTED_KILLS, tally);
+        PlayerPersisted.of(player, PERSISTED_KILLS).put(PERSISTED_KILLS, tally);
         return now;
     }
 
     public static void clearTallyFor(Player player, String key) {
-        CompoundTag tally = player.getPersistentData().getCompound(PERSISTED_KILLS);
+        CompoundTag tally = PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS);
         tally.remove(key);
-        player.getPersistentData().put(PERSISTED_KILLS, tally);
+        PlayerPersisted.of(player, PERSISTED_KILLS).put(PERSISTED_KILLS, tally);
     }
 
     public static int tallyGlobally(MinecraftServer server, String key) {
@@ -72,12 +74,12 @@ public final class GateStorage extends SavedData {
     public static int countGlobally(MinecraftServer server, String key) { return of(server).kills.getInt(key); }
 
     public static void noteFor(Player player, String key, int value) {
-        CompoundTag tally = player.getPersistentData().getCompound(PERSISTED_KILLS);
+        CompoundTag tally = PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS);
         tally.putInt(key, value);
-        player.getPersistentData().put(PERSISTED_KILLS, tally);
+        PlayerPersisted.of(player, PERSISTED_KILLS).put(PERSISTED_KILLS, tally);
     }
 
-    public static int notedFor(Player player, String key) { return player.getPersistentData().getCompound(PERSISTED_KILLS).getInt(key); }
+    public static int notedFor(Player player, String key) { return PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS).getInt(key); }
 
     public static void clearTallyGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);

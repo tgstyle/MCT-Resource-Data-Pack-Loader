@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 public final class ContentWorldgenParser {
     private static final Gson GSON = new Gson();
     private static final Set<String> KNOWN_SHAPES = Set.of(ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION,
-            ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN);
+            ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING);
     private static final Set<String> KNOWN_SPREADS = Set.of(SpreadDef.EVEN, SpreadDef.CENTERED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED);
 
     private ContentWorldgenParser() {}
@@ -101,14 +101,26 @@ public final class ContentWorldgenParser {
     private static List<PickDef> indicators(ResourceLocation key, JsonObject json) {
         List<PickDef> picked = new ArrayList<>();
         for (String entry : Json.strings(json, "indicators")) {
-            int at = entry.indexOf('=');
-            String name = (at < 0 ? entry : entry.substring(0, at)).trim().toLowerCase(Locale.ROOT);
-            int weight = 1;
-            if (at >= 0) {
-                try { weight = Integer.parseInt(entry.substring(at + 1).trim()); }
-                catch (NumberFormatException bad) { ContentLog.LOGGER.error("Worldgen definition {} has an indicators entry '{}' whose weight is not a number, reading it as 1", key, entry); }
+            int at = entry.indexOf('=', Math.max(0, entry.indexOf(']')));
+            String name = at < 0 ? "" : entry.substring(0, at).trim().toLowerCase(Locale.ROOT);
+            String said = at < 0 ? "" : entry.substring(at + 1).trim();
+            int comma = said.indexOf(',');
+            if (comma >= 0) { said = said.substring(0, comma).trim(); }
+            if (name.isEmpty() || said.isEmpty()) {
+                ContentLog.LOGGER.error("Worldgen definition {} has an indicators entry '{}', which is not written as name=weight, ignoring it", key, entry);
+                continue;
             }
-            if (!name.isEmpty()) { picked.add(new PickDef(name, Math.max(1, weight))); }
+            int weight;
+            try { weight = Integer.parseInt(said); }
+            catch (NumberFormatException bad) {
+                ContentLog.LOGGER.error("Worldgen definition {} has an indicators entry '{}' giving a weight of '{}', which is not a whole number, ignoring the entry", key, entry, said);
+                continue;
+            }
+            if (weight < 1) {
+                ContentLog.LOGGER.error("Worldgen definition {} has an indicators entry '{}' asking for a weight of {}, which is below 1, ignoring the entry", key, entry, weight);
+                continue;
+            }
+            picked.add(new PickDef(name, weight));
         }
         return List.copyOf(picked);
     }
@@ -256,13 +268,19 @@ public final class ContentWorldgenParser {
                 Math.max(0, GsonHelper.getAsInt(entry, "fade", 0)),
                 GsonHelper.getAsString(entry, "lootTable", "").trim(),
                 GsonHelper.getAsString(entry, "locateAs", "").trim(),
-                pinned(key, entry),
+                pinned(key, entry, type),
                 pattern(key, entry),
                 Mth.clamp(GsonHelper.getAsFloat(entry, "density", 1.0F), 0.0F, 1.0F),
                 GsonHelper.getAsString(entry, "rich", "").trim(),
                 GsonHelper.getAsString(entry, "poor", "").trim(),
                 richAt,
-                Mth.clamp(GsonHelper.getAsFloat(entry, "poorAt", 0.4F), 0.0F, richAt));
+                Mth.clamp(GsonHelper.getAsFloat(entry, "poorAt", 0.4F), 0.0F, richAt),
+                GsonHelper.getAsString(entry, "middle", "").trim(),
+                GsonHelper.getAsString(entry, "budding", "").trim(),
+                Mth.clamp(GsonHelper.getAsFloat(entry, "buddingChance", 0.083F), 0.0F, 1.0F),
+                GsonHelper.getAsString(entry, "crystal", "").trim(),
+                Mth.clamp(GsonHelper.getAsFloat(entry, "crystalChance", 0.35F), 0.0F, 1.0F),
+                Mth.clamp(GsonHelper.getAsFloat(entry, "crack", 0.0F), 0.0F, 1.0F));
     }
 
     private static String pattern(ResourceLocation key, JsonObject entry) {
@@ -272,10 +290,10 @@ public final class ContentWorldgenParser {
         return ShapeDef.DEFAULT;
     }
 
-    @Nullable private static int[] pinned(ResourceLocation key, JsonObject entry) {
+    @Nullable private static int[] pinned(ResourceLocation key, JsonObject entry, String type) {
         if (!entry.has("at")) { return null; }
         JsonArray at = GsonHelper.getAsJsonArray(entry, "at");
-        if (at.size() == 2) { return new int[] { at.get(0).getAsInt(), at.get(1).getAsInt() }; }
+        if (at.size() == 2) { return ShapeDef.IMPRINT.equals(type) ? new int[] { at.get(0).getAsInt(), at.get(1).getAsInt() } : null; }
         ContentLog.LOGGER.error("Worldgen {} pins its imprint with 'at', which needs exactly [x, z], so it places by chance instead", key);
         return null;
     }

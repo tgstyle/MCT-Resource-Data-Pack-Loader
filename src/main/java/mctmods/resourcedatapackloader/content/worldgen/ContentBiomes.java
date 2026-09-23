@@ -20,41 +20,60 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.JsonOps;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentBiomes {
     public static final String OVERWORLD_TAG = "minecraft:is_overworld";
     public static final String OVERWORLD = "minecraft:overworld";
-    public static final String NETHER = "minecraft:the_nether";
     private static final float VANILLA_OFFSET = 0.001F;
     private static final float[][] BANDS = { { -1.0F, -0.45F }, { -0.45F, -0.15F }, { -0.15F, 0.2F }, { 0.2F, 0.55F }, { 0.55F, 1.0F } };
-    private static final float[] BAND_STEPS = { 0.15F, 0.5F, 0.9F, 1.5F };
     private static final Map<String, Integer> CLIMATES = Map.of("icy", 0, "cool", 1, "medium", 2, "warm", 3, "desert", 4);
     private static final Map<String, String> VILLAGES = Map.of("", "plains", "oak", "plains", "sandstone", "desert", "acacia", "savanna", "spruce", "taiga");
     private static final String EXTRA_TREES = "extratreechance";
     private static final String FALLS = "falls";
+    private static final String SPAWN_TARGET = "spawn_target";
     private static final String TREES = "trees";
+    private static final String SAND = "minecraft:sand";
+    private static final String MYCELIUM = "minecraft:mycelium";
+    private static final String TERRACOTTA = "minecraft:terracotta";
     private static final List<Map.Entry<String, List<String>>> KINDS = List.of(
             Map.entry(TREES, List.of("tree", "dark_forest_vegetation", "bamboo_vegetation")),
             Map.entry("bigmushrooms", List.of("mushroom_island_vegetation")),
             Map.entry("mushrooms", List.of("brown_mushroom", "red_mushroom")),
             Map.entry("flowers", List.of("flower", "sunflower")),
-            Map.entry("grass", List.of("grass")),
+            Map.entry("grass", List.of("patch_grass", "patch_tall_grass")),
             Map.entry("deadbush", List.of("dead_bush")),
             Map.entry("reeds", List.of("sugar_cane")),
             Map.entry("cacti", List.of("cactus")),
@@ -68,10 +87,15 @@ public final class ContentBiomes {
             Map.entry("ice", List.of("ice_spike", "ice_patch")),
             Map.entry("fossils", List.of("fossil")),
             Map.entry("rocks", List.of("forest_rock")));
+    private static final Set<String> SWITCHES = Set.of(FALLS, "pumpkins", "desertwells", "ice", "fossils", "rocks");
     private static final Set<String> HEAD_MODIFIERS = Set.of("minecraft:count", "minecraft:rarity_filter", "minecraft:noise_threshold_count", "minecraft:noise_based_count");
     private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Made> MADE = new LinkedHashMap<>();
+    private static Set<Block> packGround = Set.of();
+    private static Set<Block> packStone = Set.of();
+    private static Map<ResourceLocation, Soil> packSoil = Map.of();
     private static final Map<ResourceLocation, Set<String>> TAGS = new LinkedHashMap<>();
+    private static final Map<BiomeSource, List<Band>> HEIGHT_BANDS = Collections.synchronizedMap(new WeakHashMap<>());
     private static boolean loaded;
 
     private ContentBiomes() {}
@@ -107,15 +131,73 @@ public final class ContentBiomes {
             json.add("values", values);
             GeneratedResources.put(PackType.SERVER_DATA, tag.getKey().getNamespace(), ContentFormats.BIOME_TAGS + "/" + tag.getKey().getPath() + ".json", json.toString());
         }
+        for (Made made : MADE.values()) {
+            if (!made.def().replaces().isEmpty() && !made.def().banded()) { ContentLog.LOGGER.info("Biome {} names replaces but no minHeight or maxHeight; replaces only narrows a height band, so it does nothing here", made.def().key()); }
+        }
+        packGround = packBlocks(true);
+        packStone = packBlocks(false);
+        packSoil = packSoils();
         if (!MADE.isEmpty()) { Summary.info("biomes.generated", "Generated " + MADE.size() + " biome(s) from packs, placed in the overworld through the generated preset"); }
     }
 
     public static boolean any() { return !MADE.isEmpty(); }
 
-    public static boolean placesBiomes(String dimension) {
-        if (OVERWORLD.equals(dimension) && any()) { return true; }
-        if (ContentCaveRegions.placesIn(dimension)) { return true; }
-        return ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(dimension) && (OVERWORLD.equals(dimension) || NETHER.equals(dimension));
+    public static boolean packGround(BlockState state) { return packGround.contains(state.getBlock()); }
+
+    public static boolean packStone(BlockState state) { return packStone.contains(state.getBlock()); }
+
+    @Nullable public static Soil soil(Holder<Biome> biome) { return biome.unwrapKey().map(key -> packSoil.get(key.location())).orElse(null); }
+
+    private static Map<ResourceLocation, Soil> packSoils() {
+        Map<ResourceLocation, Soil> soils = new LinkedHashMap<>();
+        for (Map.Entry<ResourceLocation, Made> made : MADE.entrySet()) { soils.put(made.getKey(), new Soil(soilBlock(made.getValue().top()), soilBlock(made.getValue().filler()))); }
+        return Map.copyOf(soils);
+    }
+
+    private static Block soilBlock(@Nullable ResourceLocation id) {
+        Block block = Registered.find(BuiltInRegistries.BLOCK, id);
+        return block == null ? Blocks.AIR : block;
+    }
+
+    public record Soil(Block top, Block filler) {}
+
+    private static Set<Block> packBlocks(boolean soil) {
+        Set<Block> ground = new HashSet<>();
+        for (Made made : MADE.values()) {
+            if (soil) {
+                addGround(ground, made.top());
+                addGround(ground, made.filler());
+            }
+            addGround(ground, made.stone());
+        }
+        ground.remove(Blocks.AIR);
+        return Set.copyOf(ground);
+    }
+
+    private static void addGround(Set<Block> ground, @Nullable ResourceLocation id) {
+        Block block = Registered.find(BuiltInRegistries.BLOCK, id);
+        if (block != null) { ground.add(block); }
+    }
+
+    public static Set<ResourceLocation> known() {
+        Set<ResourceLocation> known = new LinkedHashSet<>(MADE.keySet());
+        known.addAll(ContentCaveRegions.made());
+        for (MultiNoiseBiomeSourceParameterList.Preset preset : List.of(MultiNoiseBiomeSourceParameterList.Preset.OVERWORLD, MultiNoiseBiomeSourceParameterList.Preset.NETHER)) {
+            for (Pair<Climate.ParameterPoint, ResourceKey<Biome>> pair : MultiNoiseBiomeSourceParameterList.knownPresets().get(preset).values()) { known.add(pair.getSecond().location()); }
+        }
+        for (ResourceKey<Biome> end : List.of(Biomes.THE_END, Biomes.END_HIGHLANDS, Biomes.END_MIDLANDS, Biomes.SMALL_END_ISLANDS, Biomes.END_BARRENS, Biomes.THE_VOID)) { known.add(end.location()); }
+        return known;
+    }
+
+    public static boolean shipped(ResourceLocation biome) {
+        String path = "worldgen/biome/" + biome.getPath() + ".json";
+        return GameData.has(ResourceLocation.fromNamespaceAndPath(biome.getNamespace(), path)) || GeneratedResources.has(PackType.SERVER_DATA, biome.getNamespace(), path) || PackManager.get().provides(PackType.SERVER_DATA, biome.getNamespace(), path);
+    }
+
+    public static boolean placesBiomes(String list, String scope) {
+        if (OVERWORLD.equals(list) && any()) { return true; }
+        if (ContentCaveRegions.placesIn(scope)) { return true; }
+        return ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(scope);
     }
 
     @Nullable public static BiomeDef def(ResourceLocation key) {
@@ -123,44 +205,75 @@ public final class ContentBiomes {
         return made == null ? null : made.def();
     }
 
-    public static JsonArray biomes(String dimension) {
+    @Nullable public static String villageKind(ResourceLocation key) {
+        BiomeDef def = def(key);
+        return def == null ? null : VILLAGES.getOrDefault(def.villageType(), VILLAGES.get(""));
+    }
+
+    public static JsonArray biomes(String list, String scope) {
         JsonArray out = new JsonArray();
-        Map<ResourceLocation, ResourceLocation> taken = new LinkedHashMap<>();
-        boolean blocking = ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(dimension);
+        boolean blocking = ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(scope);
         ContentBiomeControl.reset();
-        boolean overworld = OVERWORLD.equals(dimension);
+        boolean overworld = OVERWORLD.equals(list);
+        int placed = 0;
         for (Made made : overworld ? MADE.values() : List.<Made>of()) {
-            if (made.def().replaces().isEmpty()) {
-                out.add(entry(blocking ? ContentBiomeControl.place(made.def().key()) : made.def().key().toString(), made.point()));
-                continue;
+            if (made.point() != null) {
+                out.add(entry(blocking ? ContentBiomeControl.place(made.def().key(), scope) : made.def().key().toString(), made.point()));
+                placed++;
             }
-            for (String named : made.def().replaces()) {
-                ResourceLocation replaced = ResourceLocation.tryParse(named.trim());
-                if (replaced == null) { ContentLog.LOGGER.error("Biome {} replaces '{}', which is not a biome id, leaving it out", made.def().key(), named); }
-                else { taken.put(replaced, made.def().key()); }
-            }
+            if (made.def().banded()) { out.add(entry(made.def().key().toString(), ContentCaveRegions.unreachable())); }
         }
-        ContentCaveRegions.points(dimension, out);
-        Set<ResourceLocation> found = new LinkedHashSet<>();
+        ContentCaveRegions.points(scope, out);
         for (Pair<Climate.ParameterPoint, ResourceKey<Biome>> pair : MultiNoiseBiomeSourceParameterList.knownPresets().get(overworld ? MultiNoiseBiomeSourceParameterList.Preset.OVERWORLD : MultiNoiseBiomeSourceParameterList.Preset.NETHER).values()) {
             ResourceLocation id = pair.getSecond().location();
             JsonObject point = encode(pair.getFirst());
-            ResourceLocation by = taken.get(id);
             point.addProperty("offset", VANILLA_OFFSET);
-            if (by != null) { found.add(id); }
-            ResourceLocation placed = by == null ? id : by;
-            out.add(entry(blocking ? ContentBiomeControl.place(placed) : placed.toString(), point));
+            out.add(entry(blocking ? ContentBiomeControl.place(id, scope) : id.toString(), point));
         }
-        if (blocking) { ContentBiomeControl.report(dimension); }
-        for (Map.Entry<ResourceLocation, ResourceLocation> replaced : taken.entrySet()) {
-            if (!found.contains(replaced.getKey())) { ContentLog.LOGGER.error("Biome {} replaces {}, which the overworld does not place, so that replacement does nothing", replaced.getValue(), replaced.getKey()); }
-        }
-        for (Made made : overworld ? MADE.values() : List.<Made>of()) {
-            if (made.def().replaces().isEmpty()) { ContentLog.LOGGER.debug("Biome {} takes the overworld at temperature {}, humidity {} (inland, every erosion and weirdness)", made.def().key(), made.point().get("temperature"), made.point().get("humidity")); }
-            else { ContentLog.LOGGER.debug("Biome {} takes over the overworld places of {}", made.def().key(), made.def().replaces()); }
-        }
-        ContentLog.LOGGER.debug("The {} biome list holds {} entries, {} of them the pack's own boxes and {} vanilla places re-pointed", dimension, out.size(), overworld ? MADE.size() - (int) taken.values().stream().distinct().count() : 0, found.size());
+        if (blocking) { ContentBiomeControl.report(scope); }
+        ContentLog.LOGGER.debug("The {} biome list for {} holds {} entries, {} of them the pack's own climate boxes", list, scope, out.size(), placed);
         return out;
+    }
+
+    public static void onLevelLoad(LevelEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
+        if (level.dimension() == Level.OVERWORLD) { ContentBiomeControl.reset(); }
+        BiomeSource source = level.getChunkSource().getGenerator().getBiomeSource();
+        HEIGHT_BANDS.remove(source);
+        Registry<Biome> registry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        List<Band> bands = new ArrayList<>();
+        for (Made made : MADE.values()) {
+            if (!made.def().banded()) { continue; }
+            Holder<Biome> held = registry.getHolder(ResourceKey.create(Registries.BIOME, made.def().key())).orElse(null);
+            if (held == null || !source.possibleBiomes().contains(held)) { continue; }
+            Set<String> replaces = new LinkedHashSet<>();
+            for (String named : made.def().replaces()) { replaces.add(named.trim().toLowerCase(Locale.ROOT)); }
+            bands.add(new Band(made.def().minHeight(), made.def().maxHeight(), Set.copyOf(replaces), held));
+        }
+        if (!bands.isEmpty()) { HEIGHT_BANDS.put(source, List.copyOf(bands)); }
+    }
+
+    @Nullable public static Holder<Biome> bandAt(BiomeSource source, int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
+        if (HEIGHT_BANDS.isEmpty()) { return null; }
+        List<Band> bands = HEIGHT_BANDS.get(source);
+        if (bands == null) { return null; }
+        int y = QuartPos.toBlock(quartY) + 1;
+        String under = null;
+        for (Band band : bands) {
+            if (y < band.minHeight() || y > band.maxHeight()) { continue; }
+            if (!band.replaces().isEmpty()) {
+                if (under == null) { under = surface(source, quartX, quartY, quartZ, sampler); }
+                if (!band.replaces().contains(under)) { continue; }
+            }
+            return band.biome();
+        }
+        return null;
+    }
+
+    private static String surface(BiomeSource source, int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
+        if (!(source instanceof MultiNoiseBiomeSource noise)) { return ""; }
+        Climate.TargetPoint at = sampler.sample(quartX, quartY, quartZ);
+        return noise.getNoiseBiome(new Climate.TargetPoint(at.temperature(), at.humidity(), at.continentalness(), at.erosion(), 0L, at.weirdness())).unwrapKey().map(key -> key.location().toString()).orElse("");
     }
 
     public static void surface(JsonObject settings) {
@@ -189,28 +302,28 @@ public final class ContentBiomes {
     }
 
     public static void spawnTargets(JsonObject settings) {
-        JsonArray targets = new JsonArray();
+        JsonArray targets = settings.has(SPAWN_TARGET) ? GsonHelper.getAsJsonArray(settings, SPAWN_TARGET) : new JsonArray();
+        int added = 0;
         for (Made made : MADE.values()) {
-            if (made.def().playerSpawn()) { targets.add(made.point().deepCopy()); }
+            if (!made.def().playerSpawn() || made.point() == null) { continue; }
+            targets.add(made.point().deepCopy());
+            added++;
         }
-        if (targets.isEmpty()) { return; }
-        settings.add("spawn_target", targets);
-        ContentLog.LOGGER.debug("The world spawn is looked for in the climate of {} biome(s) that ask for it, in place of the game's own anywhere-inland target", targets.size());
+        if (added == 0) { return; }
+        settings.add(SPAWN_TARGET, targets);
+        ContentLog.LOGGER.debug("The world spawn may also be looked for in the climate of {} biome(s) that ask for it, beside the game's own anywhere-inland target", added);
     }
 
     @Nullable private static JsonObject build(BiomeDef def) {
         JsonObject base = GameData.json(ResourceLocation.fromNamespaceAndPath(def.baseBiome().getNamespace(), "worldgen/biome/" + def.baseBiome().getPath() + ".json"));
-        if (base == null) {
-            ContentLog.LOGGER.error("Biome {} is built on {}, which is not a biome the game or a mod ships, so it is skipped", def.key(), def.baseBiome());
-            return null;
+        if (base == null && !ContentBiomeParser.PLAINS.equals(def.baseBiome())) {
+            ContentLog.LOGGER.error("Biome {} is built on {}, which is not a biome the game or a mod ships, so it is built on {}", def.key(), def.baseBiome(), ContentBiomeParser.PLAINS);
+            base = GameData.json(ResourceLocation.fromNamespaceAndPath(ContentBiomeParser.PLAINS.getNamespace(), "worldgen/biome/" + ContentBiomeParser.PLAINS.getPath() + ".json"));
         }
+        if (base == null) { return null; }
         JsonObject biome = base.deepCopy();
-        float temperature = def.temperature();
-        if (def.snow() && temperature >= 0.15F) {
-            ContentLog.LOGGER.debug("Biome {} asks for snow at temperature {}; this line snows below 0.15, so the biome is written at 0.1", def.key(), temperature);
-            temperature = 0.1F;
-        }
-        biome.addProperty("temperature", temperature);
+        if (def.snow() && def.temperature() >= 0.15F) { ContentLog.LOGGER.debug("Biome {} asks for snow at temperature {}, and snow only falls below 0.15, so it rains there", def.key(), def.temperature()); }
+        biome.addProperty("temperature", def.temperature());
         biome.addProperty("downfall", def.rainfall());
         biome.addProperty("has_precipitation", def.rain());
         JsonObject effects = GsonHelper.getAsJsonObject(biome, "effects", new JsonObject());
@@ -234,7 +347,7 @@ public final class ContentBiomes {
             for (String category : new ArrayList<>(out.keySet())) { out.add(category, new JsonArray()); }
         }
         for (BiomeSpawnDef spawn : def.spawns()) {
-            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(spawn.entity()) && !ContentEntities.defines(spawn.entity())) {
+            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(spawn.entity()) && ContentEntities.undefined(spawn.entity())) {
                 ContentLog.LOGGER.error("Biome {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
                 continue;
             }
@@ -257,6 +370,7 @@ public final class ContentBiomes {
         }
         JsonArray out = new JsonArray();
         int extra = def.decoration().getOrDefault(EXTRA_TREES, 0);
+        boolean noExtra = def.decoration().containsKey(EXTRA_TREES) && extra <= 0;
         for (JsonElement element : steps) {
             JsonArray step = new JsonArray();
             List<String> ids = new ArrayList<>();
@@ -267,9 +381,9 @@ public final class ContentBiomes {
             for (String id : ids) {
                 String kind = kindOf(id);
                 Integer count = kind == null ? null : def.decoration().get(kind);
-                if (count == null) { step.add(id); }
+                if (count == null) { step.add(TREES.equals(kind) && noExtra ? withoutExtra(def, id) : id); }
                 else if (count <= 0) { ContentLog.LOGGER.debug("Biome {} turns '{}' off, dropping {}", def.key(), kind, id); }
-                else if (FALLS.equals(kind)) { step.add(id); }
+                else if (SWITCHES.contains(kind)) { step.add(id); }
                 else { step.add(counted(def, id, count, kind)); }
                 if (TREES.equals(kind) && extra > 0 && (count == null || count > 0)) {
                     String rarer = rarer(def, id, extra);
@@ -306,6 +420,30 @@ public final class ContentBiomes {
         return made == null ? id : made;
     }
 
+    private static String withoutExtra(BiomeDef def, String id) {
+        ResourceLocation feature = ResourceLocation.tryParse(id);
+        JsonObject placed = feature == null ? null : GameData.json(ResourceLocation.fromNamespaceAndPath(feature.getNamespace(), "worldgen/placed_feature/" + feature.getPath() + ".json"));
+        if (placed == null) { return id; }
+        for (JsonElement modifier : GsonHelper.getAsJsonArray(placed, "placement", new JsonArray())) {
+            if (!modifier.isJsonObject() || !"minecraft:count".equals(GsonHelper.getAsString(modifier.getAsJsonObject(), "type", ""))) { continue; }
+            JsonElement count = modifier.getAsJsonObject().get("count");
+            if (count == null || !count.isJsonObject() || !"minecraft:weighted_list".equals(GsonHelper.getAsString(count.getAsJsonObject(), "type", ""))) { return id; }
+            int least = Integer.MAX_VALUE;
+            for (JsonElement entry : GsonHelper.getAsJsonArray(count.getAsJsonObject(), "distribution", new JsonArray())) {
+                JsonElement data = entry.isJsonObject() ? entry.getAsJsonObject().get("data") : null;
+                if (data == null || !data.isJsonPrimitive() || !data.getAsJsonPrimitive().isNumber()) { return id; }
+                least = Math.min(least, data.getAsInt());
+            }
+            if (least == Integer.MAX_VALUE) { return id; }
+            JsonObject head = new JsonObject();
+            head.addProperty("type", "minecraft:count");
+            head.addProperty("count", least);
+            String made = rewritten(def, id, head, "no_extra");
+            return made == null ? id : made;
+        }
+        return id;
+    }
+
     @Nullable private static String rarer(BiomeDef def, String id, int percent) {
         JsonObject head = new JsonObject();
         head.addProperty("type", "minecraft:rarity_filter");
@@ -339,17 +477,12 @@ public final class ContentBiomes {
         return def.key().getNamespace() + ":" + path;
     }
 
-    private static JsonObject box(BiomeDef def) {
+    @Nullable private static JsonObject box(BiomeDef def) {
+        if (def.climate().isEmpty() || def.weight() <= 0) { return null; }
         int band = CLIMATES.getOrDefault(def.climate(), -1);
         if (band < 0) {
-            if (!def.climate().isEmpty()) { ContentLog.LOGGER.error("Biome {} asks for climate '{}', which is not one of icy, cool, medium, warm or desert, so its own temperature places it", def.key(), def.climate()); }
-            band = BANDS.length - 1;
-            for (int step = 0; step < BAND_STEPS.length; step++) {
-                if (def.temperature() < BAND_STEPS[step]) {
-                    band = step;
-                    break;
-                }
-            }
+            ContentLog.LOGGER.error("Biome {} asks for climate '{}', which is not one of icy, cool, medium, warm or desert, so it is registered but not placed", def.key(), def.climate());
+            return null;
         }
         float width = Mth.clamp(def.weight() / 25.0F, 0.1F, 2.0F);
         float low = Mth.clamp(def.rainfall() * 2.0F - 1.0F - width / 2.0F, -1.0F, 1.0F - width);
@@ -378,7 +511,9 @@ public final class ContentBiomes {
     private static void tags(BiomeDef def) {
         String id = def.key().toString();
         tag(OVERWORLD_TAG, id, def);
-        for (String type : def.types()) {
+        List<String> types = def.types().isEmpty() ? guessed(def) : def.types();
+        if (def.types().isEmpty()) { ContentLog.LOGGER.debug("Biome {} lists no types, guessing them from its properties: {}", def.key(), types); }
+        for (String type : types) {
             String named = ContentFormats.biomeTag(type);
             if (named == null) { ContentLog.LOGGER.error("Biome {} lists type '{}', which no biome tag on this line answers to", def.key(), type); }
             else { tag(named, id, def); }
@@ -392,6 +527,33 @@ public final class ContentBiomes {
             tag("minecraft:has_structure/village_" + kind, id, def);
         }
         if (def.strongholds()) { tag("minecraft:stronghold_biased_to", id, def); }
+    }
+
+    private static List<String> guessed(BiomeDef def) {
+        List<String> types = new ArrayList<>();
+        int trees = def.decoration().getOrDefault(TREES, 0);
+        boolean humid = def.rainfall() > 0.85F;
+        float temperature = def.temperature();
+        if (trees >= 3) {
+            if (humid && temperature >= 0.9F) { types.add("jungle"); }
+            else if (!humid) {
+                types.add("forest");
+                if (temperature <= 0.2F) { types.add("coniferous"); }
+            }
+        }
+        else { types.add("plains"); }
+        if (humid) { types.add("wet"); }
+        if (def.rainfall() < 0.15F) { types.add("dry"); }
+        if (temperature > 0.85F) { types.add("hot"); }
+        if (temperature < 0.15F) { types.add("cold"); }
+        if (trees > 0 && trees < 3) { types.add("sparse"); }
+        else if (trees >= 10) { types.add("dense"); }
+        if (def.snow()) { types.add("snowy"); }
+        if (!SAND.equals(def.topBlock()) && temperature >= 1.0F && def.rainfall() < 0.2F) { types.add("savanna"); }
+        if (SAND.equals(def.topBlock())) { types.add("sandy"); }
+        else if (MYCELIUM.equals(def.topBlock())) { types.add("mushroom"); }
+        if (TERRACOTTA.equals(def.fillerBlock())) { types.add("mesa"); }
+        return types;
     }
 
     private static void tag(String named, String biome, BiomeDef def) {
@@ -413,5 +575,7 @@ public final class ContentBiomes {
         return id;
     }
 
-    private record Made(BiomeDef def, @Nullable ResourceLocation top, @Nullable ResourceLocation filler, @Nullable ResourceLocation stone, JsonObject point) {}
+    private record Made(BiomeDef def, @Nullable ResourceLocation top, @Nullable ResourceLocation filler, @Nullable ResourceLocation stone, @Nullable JsonObject point) {}
+
+    private record Band(int minHeight, int maxHeight, Set<String> replaces, Holder<Biome> biome) {}
 }

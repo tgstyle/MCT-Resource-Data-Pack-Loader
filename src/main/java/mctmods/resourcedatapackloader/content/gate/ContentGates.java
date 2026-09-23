@@ -55,7 +55,13 @@ public final class ContentGates {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             BY_DIMENSION.computeIfAbsent(def.dimension(), id -> new ArrayList<>()).add(def);
         }
-        if (!BY_DIMENSION.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + DEFS.size() + " gate(s)"); }
+        if (!BY_DIMENSION.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + count() + " gate(s)"); }
+    }
+
+    private static int count() {
+        int total = 0;
+        for (List<GateDef> defs : BY_DIMENSION.values()) { total += defs.size(); }
+        return total;
     }
 
     @Nullable private static GateDef parse(ResourceLocation key, String contents) {
@@ -81,7 +87,7 @@ public final class ContentGates {
                 GsonHelper.getAsBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
     }
 
-    public static boolean enabled() { return !BY_DIMENSION.isEmpty(); }
+    public static boolean idle() { return BY_DIMENSION.isEmpty(); }
 
     public static List<GateDef> forDimension(ResourceLocation dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
 
@@ -109,9 +115,9 @@ public final class ContentGates {
         if (!announce || def.unlockedMessage().isEmpty()) { return; }
         String message = def.unlockedMessage().replace("%dim%", def.name()).replace("%player%", player.getName().getString());
         if (def.global()) {
-            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) { Says.tell(online, message, ChatFormatting.GREEN); }
+            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) { Says.line(online, ChatFormatting.GREEN, message); }
         }
-        else { Says.tell(player, message, ChatFormatting.GREEN); }
+        else { Says.line(player, ChatFormatting.GREEN, message); }
     }
 
     public static void lock(ServerPlayer player, GateDef def) {

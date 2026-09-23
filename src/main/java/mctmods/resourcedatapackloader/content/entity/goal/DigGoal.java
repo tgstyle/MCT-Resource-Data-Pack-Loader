@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 public final class DigGoal extends Goal {
     private static final int LOOK = 10;
+    private static final int REST = 30;
     private static final int SWING = 6;
     private static final double SPEED = 1.0D;
     private final PathfinderMob mob;
@@ -26,7 +27,7 @@ public final class DigGoal extends Goal {
     @Nullable private BlockPos digging;
     private int total;
     private int left;
-    private int rest;
+    private int restUntil;
 
     public DigGoal(PathfinderMob mob) {
         this.mob = mob;
@@ -36,8 +37,8 @@ public final class DigGoal extends Goal {
     @Override public boolean requiresUpdateEveryTick() { return true; }
 
     @Override public boolean canUse() {
-        if (--rest > 0) { return false; }
-        rest = LOOK;
+        if (mob.tickCount < restUntil) { return false; }
+        restUntil = mob.tickCount + REST;
         LivingEntity found = mob.getTarget();
         if (unwanted(found)) { return false; }
         target = found;
@@ -61,6 +62,7 @@ public final class DigGoal extends Goal {
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         LivingEntity aim = mob.getTarget();
         if (aim != null) { target = aim; }
         aim = target;

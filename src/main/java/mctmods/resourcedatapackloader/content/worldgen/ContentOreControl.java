@@ -14,15 +14,23 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.OreFeature;
+import net.minecraft.world.level.levelgen.feature.ScatteredOreFeature;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public record ContentOreControl() implements BiomeModifier {
     public static final String ID = "ore_control";
@@ -40,9 +49,8 @@ public record ContentOreControl() implements BiomeModifier {
             Map.entry("DIAMOND", "diamond"), Map.entry("LAPIS", "lapis"), Map.entry("EMERALD", "emerald"), Map.entry("QUARTZ", "quartz"), Map.entry("DIRT", "dirt"),
             Map.entry("GRAVEL", "gravel"), Map.entry("DIORITE", "diorite"), Map.entry("GRANITE", "granite"), Map.entry("ANDESITE", "andesite"), Map.entry("TUFF", "tuff"),
             Map.entry("CLAY", "clay"), Map.entry("SILVERFISH", "infested"));
-    private static final Map<String, String> DIMENSION_TAGS = Map.of("minecraft:overworld", "minecraft:is_overworld", "minecraft:the_nether", "minecraft:is_nether", "minecraft:the_end", "minecraft:is_end");
     private static final Map<String, Integer> BLOCKED = new LinkedHashMap<>();
-    private static final Set<String> WARNED = new LinkedHashSet<>();
+    private static volatile Map<ChunkGenerator, Set<PlacedFeature>> scoped = Map.of();
     private static boolean reported;
 
     public static boolean enabled() {
@@ -61,24 +69,53 @@ public record ContentOreControl() implements BiomeModifier {
         List<String> types = types();
         if (ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres())) { Summary.info("oregen", "Blocking ore generation except from " + (whitelist.isEmpty() ? "nothing" : whitelist)); }
         if (!types.isEmpty()) { Summary.info("oregen.types", (blacklist() ? "Blocking these ore types outright: " : "Allowing only these ore types to generate: ") + types); }
+        if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres()) && !whitelist.contains("minecraft")) { ContentLog.LOGGER.warn("oreWhitelist leaves out minecraft, but blockOres is off, so nothing is being blocked by mod. Turn blockOres on for the whitelist to mean anything"); }
     }
 
     @Override public void modify(@Nonnull Holder<Biome> biome, @Nonnull Phase phase, @Nonnull ModifiableBiomeInfo.BiomeInfo.Builder builder) {
-        if (phase != Phase.REMOVE || !enabled() || !inScope(biome)) { return; }
+        if (phase != Phase.REMOVE || !enabled() || !dimensions().isEmpty()) { return; }
         Set<String> whitelist = whitelist();
         List<String> types = types();
         boolean byMod = ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres());
         boolean blacklist = blacklist();
         for (GenerationStep.Decoration step : GenerationStep.Decoration.values()) {
-            builder.getGenerationSettings().getFeatures(step).removeIf(feature -> blocked(feature, whitelist, types, byMod, blacklist));
+            builder.getGenerationSettings().getFeatures(step).removeIf(feature -> blocked(feature.unwrapKey().map(ResourceKey::location).orElse(null), feature.value(), whitelist, types, byMod, blacklist));
         }
+    }
+
+    public static void onLevelLoad(LevelEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
+        Map<ChunkGenerator, Set<PlacedFeature>> next = level.dimension() == Level.OVERWORLD ? new IdentityHashMap<>() : new IdentityHashMap<>(scoped);
+        List<String> dimensions = dimensions();
+        if (enabled() && !dimensions.isEmpty() && inScope(level.dimension().location().toString(), dimensions)) {
+            Set<String> whitelist = whitelist();
+            List<String> types = types();
+            boolean byMod = ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres());
+            boolean blacklist = blacklist();
+            Set<PlacedFeature> features = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (Map.Entry<ResourceKey<PlacedFeature>, PlacedFeature> entry : level.registryAccess().registryOrThrow(Registries.PLACED_FEATURE).entrySet()) {
+                if (blocked(entry.getKey().location(), entry.getValue(), whitelist, types, byMod, blacklist)) { features.add(entry.getValue()); }
+            }
+            next.put(level.getChunkSource().getGenerator(), features);
+            ContentLog.LOGGER.debug("Ore blocking refuses {} ore feature(s) in {}", features.size(), level.dimension().location());
+        }
+        scoped = next;
+    }
+
+    private static boolean ore(PlacedFeature feature) {
+        Feature<?> kind = feature.feature().value().feature();
+        return kind instanceof OreFeature || kind instanceof ScatteredOreFeature;
+    }
+
+    public static boolean refuses(ChunkGenerator generator, PlacedFeature feature) {
+        Set<PlacedFeature> held = scoped.get(generator);
+        return held != null && held.contains(feature);
     }
 
     @Override @Nonnull public MapCodec<? extends BiomeModifier> codec() { return CODEC; }
 
-    private static boolean blocked(Holder<PlacedFeature> feature, Set<String> whitelist, List<String> types, boolean byMod, boolean blacklist) {
-        ResourceLocation id = feature.unwrapKey().map(ResourceKey::location).orElse(null);
-        if (id == null || !id.getPath().contains("ore")) { return false; }
+    private static boolean blocked(@Nullable ResourceLocation id, PlacedFeature feature, Set<String> whitelist, List<String> types, boolean byMod, boolean blacklist) {
+        if (id == null || !ore(feature) || ContentWorldgen.entry(id) != null) { return false; }
         String type = typeOf(id.getPath());
         boolean denied = !types.isEmpty() && types.contains(type) == blacklist;
         if (!denied && byMod && !whitelist.contains(id.getNamespace())) { denied = true; }
@@ -95,17 +132,12 @@ public record ContentOreControl() implements BiomeModifier {
         return CUSTOM;
     }
 
-    private static boolean inScope(Holder<Biome> biome) {
-        List<String> dimensions = ContentControl.list(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions());
-        if (dimensions.isEmpty()) { return true; }
+    private static List<String> dimensions() { return ContentControl.list(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions()); }
+
+    private static boolean inScope(String dimension, List<String> dimensions) {
         boolean listed = false;
         for (String named : dimensions) {
-            String tag = DIMENSION_TAGS.get(ContentFormats.dimensionId(named));
-            if (tag == null) {
-                if (WARNED.add(named)) { ContentLog.LOGGER.error("blockOreDimensions names {}, which is not one of the three dimensions with a biome tag, so it cannot scope ore blocking", named); }
-                continue;
-            }
-            if (biome.is(TagKey.create(Registries.BIOME, ResourceLocation.parse(tag)))) {
+            if (ContentFormats.dimensionId(named).equals(dimension)) {
                 listed = true;
                 break;
             }
@@ -131,8 +163,10 @@ public record ContentOreControl() implements BiomeModifier {
         synchronized (BLOCKED) { return Map.copyOf(BLOCKED); }
     }
 
-    public static boolean veinsBlocked() {
+    public static boolean veinsBlocked(String dimension) {
         if (!enabled()) { return false; }
+        List<String> dimensions = dimensions();
+        if (!dimensions.isEmpty() && !inScope(dimension, dimensions)) { return false; }
         List<String> types = types();
         boolean blacklist = blacklist();
         boolean byType = !types.isEmpty() && (types.contains("IRON") == blacklist || types.contains("COPPER") == blacklist);

@@ -18,6 +18,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -29,7 +30,7 @@ import javax.annotation.Nullable;
 public final class ContentGameRules {
     private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, Map<String, String>> BY_DIMENSION = new LinkedHashMap<>();
-    private static final Map<Level, GameRules> BUILT = new WeakHashMap<>();
+    private static final Map<Level, GameRules> BUILT = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Set<String> KNOWN = new LinkedHashSet<>();
     private static boolean loaded;
 
@@ -79,16 +80,16 @@ public final class ContentGameRules {
     }
 
     @Nullable public static GameRules forLevel(Level level) {
-        if (BY_DIMENSION.isEmpty() || !(level instanceof ServerLevel)) { return null; }
+        if (BY_DIMENSION.isEmpty()) { return null; }
         GameRules held = BUILT.get(level);
         if (held != null) { return held; }
         Map<String, String> wanted = BY_DIMENSION.get(level.dimension().location());
         if (wanted == null) { return null; }
-        CompoundTag tag = level.getLevelData().getGameRules().createTag();
+        CompoundTag tag = new GameRules().createTag();
         for (Map.Entry<String, String> rule : wanted.entrySet()) { tag.putString(rule.getKey(), rule.getValue()); }
         held = new GameRules(new Dynamic<>(NbtOps.INSTANCE, tag));
         BUILT.put(level, held);
-        if (level.dimension() == Level.OVERWORLD && wanted.containsKey(GameRules.RULE_DAYLIGHT.getId())) { level.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(held.getBoolean(GameRules.RULE_DAYLIGHT), ((ServerLevel) level).getServer()); }
+        if (level instanceof ServerLevel serverLevel && level.dimension() == Level.OVERWORLD && wanted.containsKey(GameRules.RULE_DAYLIGHT.getId())) { level.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(held.getBoolean(GameRules.RULE_DAYLIGHT), serverLevel.getServer()); }
         ContentLog.LOGGER.debug("Dimension {} keeps its own game rules: {}", level.dimension().location(), wanted);
         return held;
     }

@@ -1,17 +1,16 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Hashes;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor;
@@ -20,22 +19,31 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 public final class ContentCityBlocks extends StructureProcessor {
-    private static final StructureProcessorType<ContentCityBlocks> TYPE = () -> MapCodec.unit(new ContentCityBlocks(100));
+    private static final StructureProcessorType<ContentCityBlocks> TYPE = () -> MapCodec.unit(new ContentCityBlocks(100, false));
+    private static final String AT = "at=";
+    private static final String UNDER = "under=";
+    private static final int ALWAYS = 100;
     private static final Set<String> WARNED = new LinkedHashSet<>();
-    private static final Map<String, Rule> RULES = new LinkedHashMap<>();
+    private static final List<Rule> RULES = new ArrayList<>();
+    private static final ThreadLocal<List<CityRails.Laid>> BORES = ThreadLocal.withInitial(List::of);
     private static boolean read;
     private final int integrity;
+    private final boolean ruled;
 
-    public record Rule(BlockState state, int chance) {}
+    private record Rule(ContentStates.Spec from, BlockState to, int chance, @Nullable ContentStates.Spec at, @Nullable ContentStates.Spec under) {
+        boolean plain() { return chance >= ALWAYS && at == null && under == null; }
+    }
 
-    public ContentCityBlocks(int integrity) { this.integrity = integrity; }
+    public ContentCityBlocks(int integrity, boolean ruled) {
+        this.integrity = integrity;
+        this.ruled = ruled;
+    }
 
     public static int integrityOf(StructurePlaceSettings settings) {
         for (StructureProcessor processor : settings.getProcessors()) {
@@ -44,53 +52,132 @@ public final class ContentCityBlocks extends StructureProcessor {
         return 100;
     }
 
+    public static void bored(List<CityRails.Laid> bores) { BORES.set(bores); }
+
+    public static void unbored() { BORES.remove(); }
+
     public static void forget() {
-        RULES.clear();
-        read = false;
+        synchronized (RULES) {
+            RULES.clear();
+            read = false;
+        }
     }
 
     private static void readRules() {
-        if (read) { return; }
-        read = true;
-        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks())) {
-            String text = entry.trim().toLowerCase(Locale.ROOT);
-            int at = text.indexOf('=');
-            if (at <= 0) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlocks entry '{}' is not written as original=replacement, so it is left out", entry); }
-                continue;
+        synchronized (RULES) {
+            if (read) { return; }
+            read = true;
+            for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks())) {
+                Rule rule = rule(entry);
+                if (rule != null) { RULES.add(rule); }
             }
-            String from = text.substring(0, at).trim();
-            String rest = text.substring(at + 1).trim();
-            int chance = 100;
-            int comma = rest.indexOf(',');
-            if (comma >= 0) {
-                try { chance = Integer.parseInt(rest.substring(comma + 1).trim()); }
-                catch (NumberFormatException notNumber) {
-                    if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlocks entry '{}' carries '{}' after the comma, which this line reads only as a chance out of 100, so the entry is left out", entry, rest.substring(comma + 1).trim()); }
-                    continue;
-                }
-                rest = rest.substring(0, comma).trim();
-            }
-            Block found = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(rest));
-            if (found == null) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlocks entry '{}' names block '{}', which is not registered, so it is left out", entry, rest); }
-                continue;
-            }
-            RULES.put(from, new Rule(found.defaultBlockState(), Math.clamp(chance, 1, 100)));
+            long plain = RULES.stream().filter(Rule::plain).count();
+            if (plain > 0) { ContentLog.LOGGER.info("Villages build with {} replaced block(s), whatever any other mod asks for", plain); }
+            if (RULES.size() > plain) { ContentLog.LOGGER.info("Villages weather {} block(s) by rule as their pieces lay them", RULES.size() - plain); }
         }
+    }
+
+    private static int split(String text) {
+        int depth = 0;
+        for (int at = 0; at < text.length(); at++) {
+            char held = text.charAt(at);
+            if (held == '[' || held == '{') { depth++; }
+            else if (held == ']' || held == '}') { depth--; }
+            else if (held == '=' && depth == 0) { return at; }
+        }
+        return -1;
+    }
+
+    @Nullable private static Rule rule(String entry) {
+        List<String> fields = Settings.entries(entry);
+        int split = split(fields.getFirst());
+        String left = split < 0 ? "" : fields.getFirst().substring(0, split).trim();
+        String right = split < 0 ? "" : fields.getFirst().substring(split + 1).trim();
+        if (left.isEmpty() || right.isEmpty()) {
+            if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlocks entry '{}' is not written as original=replacement, ignoring it", entry); }
+            return null;
+        }
+        ContentStates.Spec from = state(left, entry);
+        ContentStates.Spec to = state(right, entry);
+        if (from == null || to == null) { return null; }
+        int chance = ALWAYS;
+        ContentStates.Spec at = null;
+        ContentStates.Spec under = null;
+        for (int field = 1; field < fields.size(); field++) {
+            String said = fields.get(field).trim();
+            if (said.isEmpty()) { continue; }
+            if (said.startsWith(AT)) {
+                at = state(said.substring(AT.length()), entry);
+                if (at == null) { return null; }
+            }
+            else if (said.startsWith(UNDER)) {
+                under = state(said.substring(UNDER.length()), entry);
+                if (under == null) { return null; }
+            }
+            else {
+                chance = chance(said, entry);
+                if (chance < 0) { return null; }
+            }
+        }
+        return new Rule(from, to.state(), chance, at, under);
+    }
+
+    @Nullable private static ContentStates.Spec state(String written, String entry) {
+        ContentStates.Spec found = ContentStates.spec(written, "villageBlocks entry '" + entry + "'");
+        if (found == null && WARNED.add(entry + "|" + written)) { ContentLog.LOGGER.error("villageBlocks entry '{}' names block '{}', which is not registered, ignoring the entry", entry, written); }
+        return found;
+    }
+
+    private static int chance(String said, String entry) {
+        int asked;
+        try { asked = Integer.parseInt(said); }
+        catch (NumberFormatException wrong) {
+            if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlocks entry '{}' says '{}', which is neither a chance out of 100 nor an at= or under= block, ignoring the entry", entry, said); }
+            return -1;
+        }
+        if (asked >= 1 && asked <= ALWAYS) { return asked; }
+        if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlocks entry '{}' asks for a chance of {}, which is not between 1 and 100, ignoring the entry", entry, asked); }
+        return -1;
+    }
+
+    private static boolean differs(BlockState held, ContentStates.Spec wanted) { return wanted.exact() ? held != wanted.state() : !held.is(wanted.state().getBlock()); }
+
+    static BlockState swapped(BlockState laid) {
+        readRules();
+        Rule found = null;
+        for (Rule rule : RULES) {
+            if (!rule.plain()) { continue; }
+            if (rule.to() == laid) { return laid; }
+            if (differs(laid, rule.from())) { continue; }
+            if (found == null || rule.from().exact() || !found.from().exact()) { found = rule; }
+        }
+        return found == null ? laid : found.to();
+    }
+
+    public static BlockState ruled(LevelReader level, long seed, BlockPos pos, BlockState laid) {
+        readRules();
+        if (RULES.isEmpty()) { return laid; }
+        BlockState held = swapped(laid);
+        for (Rule rule : RULES) {
+            if (rule.plain() || differs(held, rule.from())) { continue; }
+            if (rule.at() != null && differs(level.getBlockState(pos), rule.at())) { continue; }
+            if (rule.under() != null && differs(level.getBlockState(pos.below()), rule.under())) { continue; }
+            if (rule.chance() < ALWAYS && Math.floorMod(Hashes.mix(seed, pos.getX(), pos.getY(), pos.getZ()), ALWAYS) >= rule.chance()) { continue; }
+            return rule.to();
+        }
+        return held;
     }
 
     @Override @Nullable public StructureTemplate.StructureBlockInfo process(@Nonnull LevelReader level, @Nonnull BlockPos offset, @Nonnull BlockPos pos, @Nonnull StructureTemplate.StructureBlockInfo raw, @Nonnull StructureTemplate.StructureBlockInfo info, @Nonnull StructurePlaceSettings settings, @Nullable StructureTemplate template) {
         BlockPos at = info.pos();
         if (integrity < 100 && Math.floorMod(mix(at), 100) >= integrity) { return null; }
-        readRules();
-        if (RULES.isEmpty()) { return info; }
-        ResourceLocation named = BuiltInRegistries.BLOCK.getResourceKey(info.state().getBlock()).map(ResourceKey::location).orElse(null);
-        Rule rule = named == null ? null : RULES.get(named.toString());
-        if (rule == null) { return info; }
-        if (rule.chance() < 100 && Math.floorMod(mix(at) >> 8, 100) >= rule.chance()) { return info; }
-        return new StructureTemplate.StructureBlockInfo(at, rule.state(), info.nbt());
+        if (CityRails.insideBore(BORES.get(), at.getX(), at.getY(), at.getZ())) { return null; }
+        if (!ruled) { return info; }
+        BlockState changed = ruled(level, level instanceof WorldGenLevel held ? held.getSeed() : 0L, at, info.state());
+        return changed == info.state() ? info : new StructureTemplate.StructureBlockInfo(at, changed, info.nbt());
     }
+
+    public static long spot(long seed, int x, int z) { return Hashes.mix(seed, x, 0, z); }
 
     public static long spot(int x, int z) { return mix(new BlockPos(x, 0, z)); }
 

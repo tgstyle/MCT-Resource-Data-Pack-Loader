@@ -12,7 +12,7 @@ public final class ContentNodule implements IContentShape {
     public ContentNodule(ShapeDef shape) { this.shape = shape; }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int radius = Math.min(ShapeDef.MOST_REACH, Math.max(1, shape.radius().pick(random)));
+        int radius = Math.clamp(shape.radius().pick(random), 1, ShapeDef.MOST_REACH);
         int span = radius * radius;
         int core = shape.slim() ? (radius - 1) * (radius - 1) : -1;
         boolean placed = false;

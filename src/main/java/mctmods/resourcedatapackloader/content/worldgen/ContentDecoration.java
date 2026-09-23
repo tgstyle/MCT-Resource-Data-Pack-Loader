@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class ContentDecoration implements IContentShape {
     private final AmountDef size;
@@ -39,7 +38,7 @@ public final class ContentDecoration implements IContentShape {
             int y = origin.getY() + ContentPlacer.scatter(random, scatterY);
             BlockPos pos = new BlockPos(x, y, z);
             if (placer.unreadable(pos)) { continue; }
-            if (seeSky && y < level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z)) { continue; }
+            if (seeSky && ContentPlacer.underCover(level, x, y, z)) { continue; }
             if (!placer.palette().surface().isEmpty() && !placer.palette().surface().contains(level.getBlockState(pos.below()).getBlock())) { continue; }
             if (placer.occupied(x, y, z)) { continue; }
             BlockState chosen = placer.palette().choose(random);

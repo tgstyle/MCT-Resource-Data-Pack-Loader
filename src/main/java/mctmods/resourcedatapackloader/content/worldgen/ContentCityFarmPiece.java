@@ -1,21 +1,20 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
-import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Hashes;
 
 import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -23,12 +22,12 @@ import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 
+import java.util.List;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
-public final class ContentCityFarmPiece extends StructurePiece implements PieceBeardifierModifier {
+public final class ContentCityFarmPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityFarmPiece::new;
-    private static final int FOOTING = 4;
+    private static final long CROP_SALT = 0x6A7F11L;
     private static final String LEVEL = "Level";
     private static final String EDGE = "Edge";
     private static final String SOIL = "Soil";
@@ -37,6 +36,11 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     private static final String WATER = "Water";
     private static final String ROW = "Row";
     private static final String PLOT = "Plot";
+    private static final String HEIGHT = "Height";
+    private static final String TURN = "Turn";
+    private static final String KEEP = "Keep";
+    private static final String ROADS = "Roads";
+    private static final int BANK_REACH = 4;
     private final int level;
     private final String edge;
     private final String soil;
@@ -45,8 +49,12 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     private final boolean water;
     private final int row;
     private final String plot;
+    private final int height;
+    private final Rotation turn;
+    private final int[] keep;
+    private final int[] roads;
 
-    public ContentCityFarmPiece(int fromX, int fromZ, int toX, int toZ, int level, int height, String edge, String soil, String ground, String crops, boolean water, int row, String plot) {
+    public ContentCityFarmPiece(int fromX, int fromZ, int toX, int toZ, int level, int height, String edge, String soil, String ground, String crops, boolean water, int row, String plot, Rotation turn, int[] keep, int[] roads) {
         super(TYPE, 0, new BoundingBox(fromX, level, fromZ, toX, level + height, toZ));
         this.level = level;
         this.edge = edge;
@@ -56,6 +64,10 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         this.water = water;
         this.row = row;
         this.plot = plot;
+        this.height = height;
+        this.turn = turn;
+        this.keep = keep;
+        this.roads = roads;
     }
 
     public ContentCityFarmPiece(CompoundTag tag) {
@@ -68,6 +80,10 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         this.water = tag.getBoolean(WATER);
         this.row = tag.getInt(ROW);
         this.plot = tag.getString(PLOT);
+        this.height = tag.contains(HEIGHT) ? tag.getInt(HEIGHT) : boundingBox.maxY() - tag.getInt(LEVEL);
+        this.turn = tag.contains(TURN) ? Rotation.valueOf(tag.getString(TURN)) : Rotation.NONE;
+        this.keep = tag.getIntArray(KEEP);
+        this.roads = tag.getIntArray(ROADS);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {
@@ -79,91 +95,138 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         tag.putBoolean(WATER, water);
         tag.putInt(ROW, row);
         tag.putString(PLOT, plot);
+        tag.putInt(HEIGHT, height);
+        tag.putString(TURN, turn.name());
+        tag.putIntArray(KEEP, keep);
+        tag.putIntArray(ROADS, roads);
     }
 
-    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
+    private boolean crosswise() { return turn == Rotation.CLOCKWISE_90 || turn == Rotation.COUNTERCLOCKWISE_90; }
+
+    private int wide() { return (crosswise() ? boundingBox.maxZ() - boundingBox.minZ() : boundingBox.maxX() - boundingBox.minX()) + 1; }
+
+    private int deep() { return (crosswise() ? boundingBox.maxX() - boundingBox.minX() : boundingBox.maxZ() - boundingBox.minZ()) + 1; }
+
+    private BlockPos world(int x, int y, int z) {
+        int worldX = switch (turn) {
+            case CLOCKWISE_90 -> boundingBox.maxX() - z;
+            case COUNTERCLOCKWISE_90 -> boundingBox.minX() + z;
+            default -> boundingBox.minX() + x;
+        };
+        int worldZ = switch (turn) {
+            case CLOCKWISE_180 -> boundingBox.maxZ() - z;
+            case CLOCKWISE_90, COUNTERCLOCKWISE_90 -> boundingBox.minZ() + x;
+            default -> boundingBox.minZ() + z;
+        };
+        return new BlockPos(worldX, level + y, worldZ);
+    }
+
+    private void put(WorldGenLevel world, BoundingBox box, BlockPos at, BlockState state) {
+        if (box.isInside(at)) { world.setBlock(at, ContentCityBlocks.ruled(world, world.getSeed(), at, state), 2); }
+    }
+
+    private void plant(WorldGenLevel world, BoundingBox box, List<CityRails.Laid> bores, BlockPos at, BlockState state) {
+        if (CityRails.insideBore(bores, at.getX(), at.getY(), at.getZ())) { return; }
+        put(world, box, at, state);
+    }
+
+    @Override @Nonnull public BoundingBox stood() { return getBoundingBox(); }
+
+    @Override public int fellFloor() { return level - 1; }
+
+    @Override @Nonnull public BoundingBox owned() { return getBeardifierBox(); }
+
+    private void laid(@Nonnull WorldGenLevel world, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
         BlockState fence = stateOr(edge, Blocks.OAK_LOG.defaultBlockState());
         BlockState tilled = stateOr(soil, Blocks.FARMLAND.defaultBlockState());
         BlockState under = stateOr(ground, Blocks.DIRT.defaultBlockState());
         BlockState pond = Blocks.WATER.defaultBlockState();
         BlockState air = Blocks.AIR.defaultBlockState();
         BoundingBox held = getBoundingBox();
-        ContentCityTrees.fellAround(level, held, box, this.level - 1, held.maxY(), 2);
+        List<CityRails.Laid> bores = CityRails.subways(CityGround.of(world), held.minX(), held.minZ(), held.maxX(), held.maxZ());
+        ContentCityTrees.fellAround(world, manager, chunk, this, box);
+        CityPlotGround.soil(world, held, box, level, plot);
+        int lastX = wide() - 1;
+        int lastZ = deep() - 1;
         int step = water ? row + 1 : row;
-        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
-                boolean rim = x == held.minX() || x == held.maxX() || z == held.minZ() || z == held.maxZ();
-                boolean channel = !rim && water && Math.floorMod(x - held.minX() - 1, step) == row;
-                BlockState laid = rim ? fence : channel ? pond : tilled;
-                at.set(x, this.level, z);
-                level.setBlock(at, laid, 2);
-                for (int up = 1; up <= held.maxY() - this.level; up++) {
-                    at.set(x, this.level + up, z);
-                    if (!level.getBlockState(at).isAir()) { level.setBlock(at, air, 2); }
-                }
+        for (int x = 0; x <= lastX; x++) {
+            for (int z = 0; z <= lastZ; z++) {
+                for (int y = 1; y <= height; y++) { plant(world, box, bores, world(x, y, z), air); }
+            }
+        }
+        for (int x = 0; x <= lastX; x++) {
+            boolean rimRow = x == 0 || x == lastX;
+            boolean channel = !rimRow && water && (x - 1) % step == row;
+            for (int z = 0; z <= lastZ; z++) {
+                boolean rim = rimRow || z == 0 || z == lastZ;
+                plant(world, box, bores, world(x, 0, z), rim ? fence : channel ? pond : tilled);
                 if (!rim && !channel) {
-                    at.set(x, this.level + 1, z);
-                    BlockState grown = crop(x, z);
-                    if (grown != null && box.isInside(at)) { level.setBlock(at, grown, 2); }
-                }
-                for (int down = 1; down <= FOOTING; down++) {
-                    at.set(x, this.level - down, z);
-                    if (!box.isInside(at)) { break; }
-                    BlockState below = level.getBlockState(at);
-                    if (!below.isAir() && below.getFluidState().isEmpty()) { break; }
-                    level.setBlock(at, under, 2);
+                    BlockPos at = world(x, 1, z);
+                    plant(world, box, bores, at, crop(world.getSeed(), at));
                 }
             }
         }
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int z = 0; z <= lastZ; z++) {
+            for (int x = 0; x <= lastX; x++) {
+                BlockPos top = world(x, height, z);
+                for (int y = top.getY(); y < world.getMaxBuildHeight(); y++) {
+                    at.set(top.getX(), y, top.getZ());
+                    if (!box.isInside(at) || world.getBlockState(at).isAir()) { break; }
+                    world.setBlock(at, air, 2);
+                }
+                BlockPos foot = world(x, -1, z);
+                for (int y = foot.getY(); y > world.getMinBuildHeight(); y--) {
+                    at.set(foot.getX(), y, foot.getZ());
+                    if (!box.isInside(at)) { break; }
+                    BlockState below = world.getBlockState(at);
+                    if (!below.isAir() && below.getFluidState().isEmpty()) { break; }
+                    put(world, box, at.immutable(), under);
+                }
+            }
+        }
+        CityPlotGround.footing(world, held, box, level, under, bores);
+        CityPlotGround.liftOffRoof(world, held, box);
+        CityPlotGround.bankRing(world, held, box, level, keep, roads, bankBores(world), true, plot);
         VillageDef def = ContentVillages.byKey(plot);
         if (def == null) { return; }
-        ContentCity.residents(level, def, box, index -> new BlockPos(boundingBox.minX() + def.villagerX() + index, boundingBox.minY() + def.villagerY(), boundingBox.minZ() + def.villagerZ()));
+        ContentCity.residents(world, def, box, index -> world(def.villagerX() + index, def.villagerY(), def.villagerZ()));
     }
 
-    @Nullable private BlockState crop(int x, int z) {
-        if (crops.isEmpty()) { return ripe(Blocks.WHEAT.defaultBlockState()); }
-        String[] names = crops.split(",");
-        String named = names[Math.floorMod((int) mix(x, z), names.length)].trim();
-        BlockState grown = block(named);
-        return grown == null ? null : ripe(grown);
+    private List<CityRails.Laid> bankBores(WorldGenLevel world) {
+        BoundingBox held = getBoundingBox();
+        return CityRails.subways(CityGround.of(world), held.minX() - BANK_REACH, held.minZ() - BANK_REACH, held.maxX() + BANK_REACH, held.maxZ() + BANK_REACH);
     }
 
-    private static BlockState ripe(BlockState grown) {
-        if (!grown.hasProperty(BlockStateProperties.AGE_7)) { return grown; }
-        return grown.setValue(BlockStateProperties.AGE_7, 7);
+    public void ringBeyond(@Nonnull WorldGenLevel world, @Nonnull BoundingBox box) {
+        BoundingBox held = getBoundingBox();
+        if (CityPlotGround.ringMisses(held, box)) { return; }
+        CityBiome.within(world, box, () -> CityPlotGround.bankRing(world, held, box, level, keep, roads, bankBores(world), true, plot));
     }
 
-    private static long mix(int x, int z) {
-        long held = x * 0x2545F4914F6CDD1DL ^ z * 0xCBF29CE484222325L;
-        held ^= held >>> 33;
-        held *= 0xFF51AFD7ED558CCDL;
-        return held ^ (held >>> 33);
-    }
-
-    @Nullable private static BlockState block(String named) {
-        if (named.isEmpty()) { return null; }
-        Block found = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(named));
-        return found == null ? null : found.defaultBlockState();
+    private BlockState crop(long seed, BlockPos at) {
+        String[] names = crops.isEmpty() ? new String[0] : crops.split(",");
+        RandomSource roll = RandomSource.create(Hashes.mix(seed ^ CROP_SALT, at.getX(), at.getY(), at.getZ()));
+        BlockState chosen = names.length == 0 ? Blocks.WHEAT.defaultBlockState() : stateOr(names[roll.nextInt(names.length)].trim(), Blocks.WHEAT.defaultBlockState());
+        if (!(chosen.getBlock() instanceof CropBlock grown)) { return chosen; }
+        return grown.getStateForAge(roll.nextInt(grown.getMaxAge() + 1));
     }
 
     private static BlockState stateOr(String named, BlockState fallback) {
-        BlockState found = block(named);
+        if (named.isEmpty()) { return fallback; }
+        BlockState found = ContentStates.known(named, "a village plot");
         return found == null ? fallback : found;
     }
 
-    @Override @Nonnull public BoundingBox getBeardifierBox() {
-        BoundingBox held = getBoundingBox();
-        return new BoundingBox(held.minX(), level, held.minZ(), held.maxX(), level, held.maxZ());
-    }
+    @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(getBoundingBox(), level); }
 
-    @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return TerrainAdjustment.BEARD_THIN; }
+    @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return ContentCity.adaptation(); }
 
-    @Override public int getGroundLevelDelta() { return 0; }
+    @Override public int getGroundLevelDelta() { return 1; }
 
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
-        try { laid(level, box); }
+    @Override public void postProcess(@Nonnull WorldGenLevel world, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        CityBiome.enter(world, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid(world, manager, chunk, box); }
         finally { CityBiome.leave(); }
     }
 }

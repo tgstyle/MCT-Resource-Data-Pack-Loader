@@ -1,9 +1,15 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
+
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -20,6 +26,8 @@ public final class ThrowerGoal extends Goal {
     private static final double REACH = 3.0D;
     private static final double NEAR = 0.4D;
     private static final double FURTHER = 0.03D;
+    private static final float TRIDENT_DAMAGE = 8.0F;
+    private static final float TRIDENT_SPEED = 1.6F;
     private final PathfinderMob mob;
     private final int fuse;
     private final int reload;
@@ -29,11 +37,13 @@ public final class ThrowerGoal extends Goal {
     private final float arc;
     private final double range;
     private final ItemStack pack;
+    private final boolean returns;
     @Nullable private LivingEntity target;
     private int reloading;
     private int retreating;
 
-    public ThrowerGoal(PathfinderMob mob, ItemStack pack, int fuse, int reload, int retreat, int carried, float power, float arc, double range) {
+    public ThrowerGoal(PathfinderMob mob, ItemStack pack, int fuse, int reload, int retreat, int carried, float power, float arc, double range, boolean returns) {
+        this.returns = returns;
         this.mob = mob;
         this.fuse = fuse;
         this.reload = reload;
@@ -63,6 +73,7 @@ public final class ThrowerGoal extends Goal {
     @Override public void stop() { target = null; }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         LivingEntity found = mob.getTarget();
         if (found != null) { target = found; }
         if (reloading > 0 && --reloading == 0) { restock(); }
@@ -84,6 +95,11 @@ public final class ThrowerGoal extends Goal {
         double far = Math.max(1.0D, at.length());
         Vec3 push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
         if (isTnt(thrown)) { lit(push); }
+        else if (returns) {
+            flung(thrown, target);
+            mob.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            return;
+        }
         else { tossed(thrown, push); }
         spend();
     }
@@ -109,7 +125,18 @@ public final class ThrowerGoal extends Goal {
         primed.setFuse(fuse);
         primed.setDeltaMovement(push);
         mob.level().addFreshEntity(primed);
-        mob.playSound(SoundEvents.TNT_PRIMED, 1.0F, 1.0F);
+        thrownWith(SoundEvents.TNT_PRIMED);
+    }
+
+    private void flung(ItemStack thrown, LivingEntity aimed) {
+        AttributeInstance strength = mob.getAttribute(Attributes.ATTACK_DAMAGE);
+        ReturningThrow flying = new ReturningThrow(mob.level(), mob, thrown, strength == null ? TRIDENT_DAMAGE : (float) strength.getValue());
+        double dx = aimed.getX() - mob.getX();
+        double dy = aimed.getBoundingBox().minY + aimed.getBbHeight() / 3.0F - flying.getY();
+        double dz = aimed.getZ() - mob.getZ();
+        flying.shoot(dx, dy + Math.sqrt(dx * dx + dz * dz) * 0.2D, dz, TRIDENT_SPEED * power, 14 - mob.level().getDifficulty().getId() * 4);
+        mob.level().addFreshEntity(flying);
+        thrownWith(SoundEvents.SNOWBALL_THROW);
     }
 
     private void tossed(ItemStack thrown, Vec3 push) {
@@ -117,7 +144,12 @@ public final class ThrowerGoal extends Goal {
         flying.setPickUpDelay(40);
         flying.setDeltaMovement(push);
         mob.level().addFreshEntity(flying);
-        mob.playSound(SoundEvents.SNOWBALL_THROW, 1.0F, 1.0F);
+        thrownWith(SoundEvents.SNOWBALL_THROW);
+    }
+
+    private void thrownWith(SoundEvent fallback) {
+        SoundEvent own = ContentEntities.sound(mob, ContentEntities.THROW);
+        mob.playSound(own != null ? own : fallback, 1.0F, 1.0F);
     }
 
     private void backAway() {

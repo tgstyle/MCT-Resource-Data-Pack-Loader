@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.block.ContentPortalBlock;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -73,8 +74,9 @@ public final class ContentTeleporter {
         if (linked != null && level.getBlockState(linked).getBlock() instanceof ContentPortalBlock) { portalPos = linked; }
         else {
             portalPos = landing(level, mapped);
-            if (!rebuild(level, portalPos)) {
-                if (def.platform()) { support(level, portalPos); }
+            boolean adrift = def.platform() && !occupied(level, portalPos.below());
+            if (!rebuild(level, portalPos, adrift)) {
+                if (adrift) { support(level, portalPos); }
                 level.setBlock(portalPos, portalState, 2);
                 clearAbove(level, portalPos);
             }
@@ -101,19 +103,19 @@ public final class ContentTeleporter {
     }
 
     public static void remember(Entity entity, ResourceLocation dimension, BlockPos pos) {
-        CompoundTag portals = entity.getPersistentData().getCompound(PORTALS);
+        CompoundTag portals = PlayerPersisted.of(entity, PORTALS).getCompound(PORTALS);
         portals.putLong(dimension.toString(), pos.asLong());
-        entity.getPersistentData().put(PORTALS, portals);
+        PlayerPersisted.of(entity, PORTALS).put(PORTALS, portals);
     }
 
     private static void forget(Entity entity, ResourceLocation dimension) {
-        CompoundTag portals = entity.getPersistentData().getCompound(PORTALS);
+        CompoundTag portals = PlayerPersisted.of(entity, PORTALS).getCompound(PORTALS);
         portals.remove(dimension.toString());
-        entity.getPersistentData().put(PORTALS, portals);
+        PlayerPersisted.of(entity, PORTALS).put(PORTALS, portals);
     }
 
     @Nullable private static BlockPos remembered(Entity entity, ResourceLocation dimension) {
-        CompoundTag portals = entity.getPersistentData().getCompound(PORTALS);
+        CompoundTag portals = PlayerPersisted.of(entity, PORTALS).getCompound(PORTALS);
         String key = dimension.toString();
         return portals.contains(key) ? BlockPos.of(portals.getLong(key)) : null;
     }
@@ -124,25 +126,23 @@ public final class ContentTeleporter {
     }
 
     private static BlockPos landing(ServerLevel level, BlockPos from) {
-        BlockPos ground = ContentDimensions.landing(level, new BlockPos(from.getX(), 0, from.getZ()), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
-        if (ground.getY() > level.getMinBuildHeight() + 1) { return ground; }
+        BlockPos ground = ContentDimensions.top(level, new BlockPos(from.getX(), 0, from.getZ()), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        if (ground.getY() > level.getMinBuildHeight()) { return ground; }
         return new BlockPos(from.getX(), Mth.clamp(from.getY(), level.getMinBuildHeight() + SEARCH_LOW, level.getMaxBuildHeight() - 4), from.getZ());
     }
 
-    private boolean rebuild(ServerLevel level, BlockPos landing) {
+    private static void hold(ServerLevel level, BlockPos at) { level.getChunkAt(at); }
+
+    private boolean rebuild(ServerLevel level, BlockPos landing, boolean adrift) {
         if (fit == null || fit.holes().isEmpty()) { return false; }
         BlockPos anchor = lowest(fit.holes());
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, BlockState> edges = new LinkedHashMap<>();
         for (BlockPos hole : fit.holes()) { holes.add(shift(hole, anchor, landing)); }
         for (Map.Entry<BlockPos, BlockState> edge : fit.edge().entrySet()) { edges.put(shift(edge.getKey(), anchor, landing), edge.getValue()); }
-        for (BlockPos at : holes) {
-            if (!level.isLoaded(at)) { return false; }
-        }
-        for (BlockPos at : edges.keySet()) {
-            if (!level.isLoaded(at)) { return false; }
-        }
-        if (def.platform()) { footing(level, edges.keySet(), holes); }
+        for (BlockPos at : holes) { hold(level, at); }
+        for (BlockPos at : edges.keySet()) { hold(level, at); }
+        if (adrift) { footing(level, edges.keySet(), holes); }
         for (BlockPos at : holes) { level.removeBlock(at, false); }
         for (Map.Entry<BlockPos, BlockState> edge : edges.entrySet()) { level.setBlock(edge.getKey(), edge.getValue(), 2); }
         for (BlockPos at : holes) { level.setBlock(at, portalState, 2); }
@@ -153,7 +153,7 @@ public final class ContentTeleporter {
     private static BlockPos shift(BlockPos from, BlockPos anchor, BlockPos landing) { return landing.offset(from.getX() - anchor.getX(), from.getY() - anchor.getY(), from.getZ() - anchor.getZ()); }
 
     private static BlockPos lowest(List<BlockPos> holes) {
-        BlockPos found = holes.get(0);
+        BlockPos found = holes.getFirst();
         for (BlockPos hole : holes) {
             if (hole.getY() < found.getY()) { found = hole; }
         }
@@ -173,19 +173,17 @@ public final class ContentTeleporter {
             columns.add(new BlockPos(at.getX(), 0, at.getZ()));
         }
         if (bed == Integer.MAX_VALUE) { return; }
-        for (BlockPos column : columns) {
-            BlockPos at = new BlockPos(column.getX(), bed - 1, column.getZ());
-            if (!level.isLoaded(at) || level.getBlockState(at).isFaceSturdy(level, at, Direction.UP)) { continue; }
-            level.setBlock(at, floor.defaultBlockState(), 2);
-        }
+        for (BlockPos column : columns) { pad(level, new BlockPos(column.getX(), bed + 1, column.getZ()), floor); }
     }
 
-    private void support(ServerLevel level, BlockPos portalPos) {
-        Block floor = block(def.platformBlock());
+    private void support(ServerLevel level, BlockPos portalPos) { pad(level, portalPos, block(def.platformBlock())); }
+
+    private static void pad(ServerLevel level, BlockPos above, Block floor) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                BlockPos at = portalPos.offset(dx, -1, dz);
-                if (!level.isLoaded(at) || occupied(level, at)) { continue; }
+                BlockPos at = above.offset(dx, -1, dz);
+                hold(level, at);
+                if (occupied(level, at)) { continue; }
                 level.setBlock(at, floor.defaultBlockState(), 2);
             }
         }

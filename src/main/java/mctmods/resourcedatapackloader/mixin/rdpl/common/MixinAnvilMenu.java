@@ -14,15 +14,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AnvilMenu.class) public abstract class MixinAnvilMenu {
     @Unique private ItemStack rdpl$leftKept = ItemStack.EMPTY;
+    @Unique private ItemStack rdpl$rightKept = ItemStack.EMPTY;
 
     @Inject(method = "onTake", at = @At("HEAD"))
-    private void rdpl$noteWhatStays(Player player, ItemStack taken, CallbackInfo ci) { rdpl$leftKept = ContentAnvils.leftAfterWork((AnvilMenu) (Object) this, taken); }
+    private void rdpl$noteWhatStays(Player player, ItemStack taken, CallbackInfo ci) {
+        AnvilMenu menu = AnvilMenu.class.cast(this);
+        rdpl$leftKept = ContentAnvils.leftAfterWork(menu, taken);
+        rdpl$rightKept = ContentAnvils.rightAfterWork(menu, taken);
+    }
 
     @ModifyArg(method = "onTake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/Container;setItem(ILnet/minecraft/world/item/ItemStack;)V", ordinal = 0), index = 1)
     private ItemStack rdpl$keepWhatStays(ItemStack emptied) { return rdpl$leftKept; }
 
     @Inject(method = "onTake", at = @At("RETURN"))
     private void rdpl$offerTheNext(Player player, ItemStack taken, CallbackInfo ci) {
+        if (!rdpl$rightKept.isEmpty()) {
+            AnvilMenu.class.cast(this).getSlot(1).set(rdpl$rightKept);
+            rdpl$rightKept = ItemStack.EMPTY;
+        }
         if (rdpl$leftKept.isEmpty()) { return; }
         rdpl$leftKept = ItemStack.EMPTY;
         ((AnvilMenu) (Object) this).createResult();

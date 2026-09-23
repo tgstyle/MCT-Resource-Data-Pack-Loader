@@ -10,6 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -29,7 +30,7 @@ public class ContentPotionItem extends PotionItem {
         this.id = id;
     }
 
-    @Override @Nonnull public Component getName(@Nonnull ItemStack stack) { return Component.translatable(getDescriptionId()); }
+    @Override @Nonnull public Component getName(@Nonnull ItemStack stack) { return Component.translatable(Items.POTION.getDescriptionId(stack)); }
 
     public List<ItemStack> stacks() {
         if (stacks == null) { stacks = resolve(); }

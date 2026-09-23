@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +17,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.LlamaSpit;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -33,7 +36,7 @@ public final class ContentEntityTicks {
     private static final int SNAPSHOT = 100;
     private static final Map<Level, Long2BooleanOpenHashMap> FAR = new HashMap<>();
     private static final Map<Level, Long> CHECKED = new HashMap<>();
-    private static Slowing slowing;
+    private static final TemplateMemo<Slowing> SLOWING = new TemplateMemo<>();
     private static long considered;
     private static long slowed;
 
@@ -42,15 +45,16 @@ public final class ContentEntityTicks {
     private record Slowing(boolean on, int rate, int recheck, double reach, Set<String> kinds, Set<String> spared) {}
 
     public static void reload() {
-        slowing = null;
+        SLOWING.forget();
         considered = 0L;
         slowed = 0L;
         FAR.clear();
         CHECKED.clear();
     }
 
-    private static Slowing slowing() {
-        if (slowing != null) { return slowing; }
+    private static Slowing slowing() { return SLOWING.get(ContentEntityTicks::readSlowing); }
+
+    private static Slowing readSlowing() {
         boolean on = !ContentControl.off(ContentControl.ENTITIES) && ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities());
         int rate = Math.max(1, ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate()));
         int recheck = Math.max(1, ContentControl.number(ContentControl.ENTITIES, "slowRecheck", Config.entities.slowRecheck()));
@@ -63,9 +67,8 @@ public final class ContentEntityTicks {
         }
         Set<String> spared = new HashSet<>();
         for (String name : ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed())) { spared.add(name.trim().toLowerCase(Locale.ROOT)); }
-        slowing = new Slowing(on, rate, recheck, distance * distance, kinds, spared);
         if (on && rate > 1) { ContentLog.LOGGER.debug("Entities more than {} block(s) from every player are given one tick in {}", (int) distance, rate); }
-        return slowing;
+        return new Slowing(on, rate, recheck, distance * distance, kinds, spared);
     }
 
     public static void onLevelUnload(LevelEvent.Unload event) {
@@ -76,14 +79,21 @@ public final class ContentEntityTicks {
 
     public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
-        if (server.getTickCount() % SNAPSHOT != 0 || (considered == 0L && slowed == 0L)) { return; }
-        double mean = server.getAverageTickTimeNanos() / 1.0E6D;
-        double rate = Math.min(20.0D, 1000.0D / Math.max(50.0D, mean));
-        int chunks = 0;
-        for (ServerLevel level : server.getAllLevels()) { chunks += level.getChunkSource().getLoadedChunksCount(); }
-        ContentLog.LOGGER.debug(String.format(Locale.ROOT, "Every second the server manages %.1f rounds of %.1f ms, holding %d chunk(s). Of %d entities asked about since the last look, %d were given a slower pace", rate, mean, chunks, considered, slowed));
+        if (server.getTickCount() % SNAPSHOT != 0) { return; }
+        long asked = considered;
+        long paced = slowed;
         considered = 0L;
         slowed = 0L;
+        if (!ContentLog.LOGGER.debugEnabled()) { return; }
+        double mean = server.getAverageTickTimeNanos() / 1.0E6D;
+        double rate = Math.min(20.0D, 1000.0D / Math.max(50.0D, mean));
+        int entities = 0;
+        int chunks = 0;
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity ignored : level.getAllEntities()) { entities++; }
+            chunks += level.getChunkSource().getLoadedChunksCount();
+        }
+        ContentLog.LOGGER.debug(String.format(Locale.ROOT, "Every second the server manages %.1f rounds of %.1f ms, holding %d chunk(s) and %d entity/entities. Of %d asked about since the last look, %d were given a slower pace", rate, mean, chunks, entities, asked, paced));
     }
 
     public static boolean frozen(Entity entity) { return !(entity instanceof Player) && ContentPregen.holdsStill(entity.level()); }
@@ -144,7 +154,7 @@ public final class ContentEntityTicks {
     private static boolean kindSlowed(Entity entity, Slowing slowing) {
         if (entity instanceof ItemEntity) { return slowing.kinds().contains("items"); }
         if (entity instanceof ExperienceOrb) { return slowing.kinds().contains("experience"); }
-        if (entity instanceof Projectile) { return slowing.kinds().contains("projectiles"); }
+        if (entity instanceof AbstractArrow || entity instanceof ThrowableProjectile || entity instanceof LlamaSpit) { return slowing.kinds().contains("projectiles"); }
         return false;
     }
 

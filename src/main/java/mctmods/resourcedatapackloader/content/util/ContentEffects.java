@@ -2,12 +2,17 @@ package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.RomanNumerals;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentEffects {
@@ -30,7 +35,7 @@ public final class ContentEffects {
             int duration = Integer.parseInt(parts[1].trim());
             int amplifier = Integer.parseInt(parts[2].trim());
             boolean ambient = parts.length > 3 && Boolean.parseBoolean(parts[3].trim());
-            return new MobEffectInstance(effect, duration, amplifier, ambient, true);
+            return new MobEffectInstance(effect, duration, amplifier, ambient, false);
         }
         catch (NumberFormatException ex) {
             ContentLog.LOGGER.error("Potion '{}' for {} has a bad number", value, context);
@@ -39,4 +44,11 @@ public final class ContentEffects {
     }
 
     public static MobEffectInstance copy(MobEffectInstance effect) { return new MobEffectInstance(effect); }
+
+    public static void tooltip(@Nullable MobEffectInstance effect, List<Component> tooltip) {
+        if (effect == null || !effect.getEffect().value().isBeneficial()) { return; }
+        String level = RomanNumerals.of(effect.getAmplifier());
+        MutableComponent name = Component.translatable(effect.getDescriptionId());
+        tooltip.add((level.isEmpty() ? name : name.append(" " + level)).withStyle(ChatFormatting.GREEN));
+    }
 }

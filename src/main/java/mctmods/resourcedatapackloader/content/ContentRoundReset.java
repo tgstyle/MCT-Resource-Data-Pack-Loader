@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
-import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Scores;
@@ -48,7 +48,7 @@ public final class ContentRoundReset {
             return DONE;
         }
         if (RoundResetDef.NONE.equals(way)) { return reset.playersVote() ? "Your side cannot call a vote to reset the round" : "Only a side's leader resets the round"; }
-        if (voting != null) { return "A reset vote is already running: /rdplserver round vote yes or no"; }
+        if (voting != null) { return "A reset vote is already running: /rdpl round vote yes or no"; }
         long wait = quietUntil - System.currentTimeMillis();
         if (wait > 0L) { return "A reset vote was just held, so another can be called in " + (wait + 999L) / 1000L + " second(s)"; }
         voting = def;
@@ -81,7 +81,7 @@ public final class ContentRoundReset {
         decide(server);
         if (voting == null || voting.reset().tallySays().isEmpty()) { return; }
         int[] counted = counted(server);
-        ContentPregen.tellBar(server, voting.reset().tallySays().replace("{yes}", Integer.toString(counted[0])).replace("{no}", Integer.toString(counted[1])).replace("{seconds}", Integer.toString(left)));
+        ContentPregenHold.tellBar(server, voting.reset().tallySays().replace("{yes}", Integer.toString(counted[0])).replace("{no}", Integer.toString(counted[1])).replace("{seconds}", Integer.toString(left)));
     }
 
     private static String wayFor(ServerPlayer who, RoundResetDef reset) {

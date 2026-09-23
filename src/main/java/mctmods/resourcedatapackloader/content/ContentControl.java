@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -18,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 public final class ContentControl {
@@ -26,6 +28,7 @@ public final class ContentControl {
     public static final String BEDROCK = "bedrock";
     public static final String VOID = "void";
     public static final String ORES = "ores";
+    public static final String GENERATORS = "generators";
     public static final String BIOMES = "biomes";
     public static final String SPAWNING = "spawning";
     public static final String STRUCTURES = "structures";
@@ -38,15 +41,21 @@ public final class ContentControl {
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
+    private static final String LAYOUT = "villageLayout";
+    private static final ThreadLocal<JsonObject> ROAD_KEYS = new ThreadLocal<>();
     private static final Set<String> WARNED = new LinkedHashSet<>();
     private static final Set<String> KNOWN = Set.of(
-            "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeWhitelist",
+            "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeTemperatureCenterY",
+            "biomeTemperatureHeightFactor", "biomeTemperatureScaleMaxY", "biomeWhitelist",
             "blockBiomeDimensions", "blockBiomeDimensionsAreBlacklist", "blockBiomes", "blockFurnaceRecipes",
-            "blockOres", "blockRecipes", "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist",
+            "blockOres", "blockRecipes", "blockWorldGenerators", "generatorWhitelist", "blockedGenerators", "generatorTypes",
+            "generatorTypesAreBlacklist", "generatorTypeMap", "blockGeneratorDimensions", "blockGeneratorDimensionsAreBlacklist", "logBlockedGenerators",
+            "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist",
             "blockReplacementKey", "blockReplacementMaxHeight", "blockReplacementMinHeight", "blockReplacements",
-            "blockedFurnaceMods", "blockedRecipeMods", "creatureCap", "flatBedrock", "flatBedrockBiomes",
+            "blockedFurnaceMods", "blockedRecipeMods", "creatureCap", "dragonFight", "flatBedrock", "flatBedrockBiomes",
             "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions", "flatBedrockDimensionsAreBlacklist",
-            "flatBedrockRoof", "retrogen", "adoptExistingChunks", "furnaceWhitelist", "generatorOptions",
+            "flatBedrockRoof", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockBiomeTypes", "flatBedrockRetrogen",
+            "retrogen", "adoptExistingChunks", "furnaceWhitelist", "generatorOptions",
             "logBlockReplacements", "logBlockedBiomes", "logBlockedOres", "logBlockedRecipes", "monsterCap",
             "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "blockOreDimensions",
             "blockOreDimensionsAreBlacklist", "oreWhitelist", "prospectItems", "prospectItemsAreBlacklist",
@@ -54,21 +63,21 @@ public final class ContentControl {
             "pregenDimensionsWhenEntered", "pregenOnNewWorld", "pregenFinishedSays", "pregenResume",
             "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "welcomeSays",
             "saysCard", "saysIcon", "saysColor", "saysImage", "recipeMatch", "recipeWhitelist", "slowDistance",
-            "slowDistantEntities", "slowRate", "slowRecheck", "slowedKinds", "spawnChunkRadius", "structureBiomes",
+            "slowDistantEntities", "slowRate", "slowRecheck", "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes",
             "structureBiomesAreBlacklist", "structureMinDistanceFromSpawn", "structureSeparation",
             "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation", "gotoLevel",
             "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "structureSpawns", "surfaceDayMonsterRate",
             "monsterSpawnLight", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice",
             "threatSays", "deepStone", "noiseCaves", "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate", "villageBlocks",
-            "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStairBlock", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villageSubwayStation", "villageSubwayEntrance", "villageSubwayStationFoot", "villageSubwayStationRepeat",
+            "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat",
             "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance",
             "villageDecor", "villagePieces", "villagePiecesAreBlacklist", "villagePathBlock",
             "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth", "villagePathCenterBlock",
             "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock", "villagePathSidewalkWidth",
             "villagePathAlleyBlock", "villagePathAlleyChance", "villagePathMinimumWidth", "villagePathIntersects",
             "villagePathFlatRun", "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock",
-            "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathTunnelBlock",
+            "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathVergeBlock", "villagePathVergeWaterBlock", "villagePathTunnelBlock",
             "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villagePathPiers",
             "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight",
             "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds",
@@ -82,9 +91,12 @@ public final class ContentControl {
             "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock",
             "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun",
             "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth",
-            "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villagePlotsMost", "villagePlotsBackRow", "villageBlockSizes",
+            "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villageRailLinks", "villageRailLinkLeast",
+            "villageRailLinkMost", "villageRailLinkBridgeMost", "villageRailLinkTunnelMost", "villageRailLinkStation",
+            "villageRailLinkStationLength", "villageRailLinkPlatformWidth", "villageRailLinkPlatformBlock",
+            "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageBlockSizes",
             "villageCitySpacing", "villageLayout", "voidPlatformBlock", "voidPlatformHeight", "voidPlatformSize",
-            "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "cloudHeight",
+            "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight",
             "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "biomes", "worldBorder", "worldBelow",
             "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
             "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
@@ -179,6 +191,32 @@ public final class ContentControl {
         }
     }
 
+    public static boolean ignores(String key) { return !KNOWN.contains(key); }
+
+    public static <T> T onRoad(@Nullable JsonObject keys, Supplier<T> reading) {
+        JsonObject was = ROAD_KEYS.get();
+        road(keys);
+        try { return reading.get(); }
+        finally { road(was); }
+    }
+
+    public static void layOnRoad(@Nullable JsonObject keys, Runnable laying) {
+        JsonObject was = ROAD_KEYS.get();
+        road(keys);
+        try { laying.run(); }
+        finally { road(was); }
+    }
+
+    private static void road(@Nullable JsonObject keys) {
+        if (keys == null) { ROAD_KEYS.remove(); }
+        else { ROAD_KEYS.set(keys); }
+    }
+
+    @Nullable private static JsonElement roadSetting(String group, String key) {
+        JsonObject road = VILLAGES.equals(group) && packDecides(group) ? ROAD_KEYS.get() : null;
+        return road != null && road.has(key) ? road.get(key) : null;
+    }
+
     public static boolean off(String group) { return OFF.equals(mode(group)); }
 
     public static boolean packDecides(String group) { return DEFAULT.equals(mode(group)); }
@@ -205,7 +243,8 @@ public final class ContentControl {
     }
 
     public static String text(String group, String key, String fallback) {
-        JsonElement value = biomeSetting(group, key);
+        JsonElement value = roadSetting(group, key);
+        if (value == null) { value = biomeSetting(group, key); }
         if (value == null) { value = setting(group, key); }
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
@@ -215,11 +254,21 @@ public final class ContentControl {
     public static List<String> list(String group, String key, List<String> fallback) {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
+        return texts(value, key, "a list of text values", fallback);
+    }
+
+    public static List<String> lines(String group, String key, List<String> fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
         if (value.isJsonPrimitive()) { return List.of(value.getAsString()); }
-        if (!value.isJsonArray()) { return rejected(key, "a list of text values", fallback); }
+        return texts(value, key, "a text value or a list of them", fallback);
+    }
+
+    private static List<String> texts(JsonElement value, String key, String wanted, List<String> fallback) {
+        if (!value.isJsonArray()) { return rejected(key, wanted, fallback); }
         List<String> found = new ArrayList<>();
         for (JsonElement entry : value.getAsJsonArray()) {
-            if (!entry.isJsonPrimitive()) { return rejected(key, "a list of text values", fallback); }
+            if (!entry.isJsonPrimitive()) { return rejected(key, wanted, fallback); }
             found.add(entry.getAsString());
         }
         return found;
@@ -247,6 +296,12 @@ public final class ContentControl {
 
     @Nullable private static JsonElement setting(String group, String key) {
         if (!packDecides(group)) { return null; }
+        JsonElement road = roadSetting(group, key);
+        if (road != null) { return road; }
+        if (VILLAGES.equals(group) && !LAYOUT.equals(key)) {
+            JsonElement drawn = ContentCityMaps.setting(key);
+            if (drawn != null) { return drawn; }
+        }
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || template.settings() == null) { return null; }
         if (template != settingsFrom) {
@@ -281,6 +336,7 @@ public final class ContentControl {
         if (BEDROCK.equals(group)) { return Config.control.bedrock(); }
         if (VOID.equals(group)) { return Config.control.voidWorld(); }
         if (ORES.equals(group)) { return Config.control.ores(); }
+        if (GENERATORS.equals(group)) { return Config.control.generators(); }
         if (BIOMES.equals(group)) { return Config.control.biomes(); }
         if (SPAWNING.equals(group)) { return Config.control.spawning(); }
         if (STRUCTURES.equals(group)) { return Config.control.structures(); }

@@ -1,20 +1,27 @@
 package mctmods.resourcedatapackloader.content.types;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public final class ContentTypes {
     private static final float UNBREAKABLE = 3600000.0F;
+    private static final float LEGACY_RESISTANCE = 0.6F;
+    private static final Set<String> HOLDS_BACK_LIQUID = Set.of("portal", "structure_void");
     private static final Map<String, Preset> MATERIALS = new HashMap<>();
     private static final Map<String, MapColor> MAP_COLORS = new HashMap<>();
     private static final Map<String, SoundType> SOUND_TYPES = new HashMap<>();
@@ -22,42 +29,42 @@ public final class ContentTypes {
     private ContentTypes() {}
 
     static {
-        material("air", MapColor.NONE, SoundType.EMPTY, false);
-        material("grass", MapColor.GRASS, SoundType.GRASS, true);
-        material("ground", MapColor.DIRT, SoundType.GRAVEL, true);
-        material("wood", MapColor.WOOD, SoundType.WOOD, true);
-        material("rock", MapColor.STONE, SoundType.STONE, true);
-        material("iron", MapColor.METAL, SoundType.METAL, true);
-        material("anvil", MapColor.METAL, SoundType.ANVIL, true);
-        material("water", MapColor.WATER, SoundType.EMPTY, false);
-        material("lava", MapColor.FIRE, SoundType.EMPTY, false);
-        material("leaves", MapColor.PLANT, SoundType.GRASS, true);
-        material("plants", MapColor.PLANT, SoundType.GRASS, false);
-        material("vine", MapColor.PLANT, SoundType.VINE, false);
-        material("sponge", MapColor.COLOR_YELLOW, SoundType.GRASS, true);
-        material("cloth", MapColor.WOOL, SoundType.WOOL, true);
-        material("fire", MapColor.NONE, SoundType.WOOL, false);
-        material("sand", MapColor.SAND, SoundType.SAND, true);
-        material("circuits", MapColor.NONE, SoundType.STONE, false);
-        material("carpet", MapColor.WOOL, SoundType.WOOL, true);
-        material("glass", MapColor.NONE, SoundType.GLASS, true);
-        material("redstone_light", MapColor.NONE, SoundType.GLASS, true);
-        material("tnt", MapColor.FIRE, SoundType.GRASS, true);
-        material("coral", MapColor.PLANT, SoundType.CORAL_BLOCK, true);
-        material("ice", MapColor.ICE, SoundType.GLASS, true);
-        material("packed_ice", MapColor.ICE, SoundType.GLASS, true);
-        material("snow", MapColor.SNOW, SoundType.SNOW, true);
-        material("crafted_snow", MapColor.SNOW, SoundType.SNOW, true);
-        material("cactus", MapColor.PLANT, SoundType.WOOL, true);
-        material("clay", MapColor.CLAY, SoundType.GRAVEL, true);
-        material("gourd", MapColor.PLANT, SoundType.WOOD, true);
-        material("dragon_egg", MapColor.PLANT, SoundType.STONE, true);
-        material("portal", MapColor.NONE, SoundType.GLASS, false);
-        material("cake", MapColor.NONE, SoundType.WOOL, true);
-        material("web", MapColor.WOOL, SoundType.WOOL, false);
-        material("piston", MapColor.STONE, SoundType.STONE, true);
-        material("barrier", MapColor.NONE, SoundType.STONE, true);
-        material("structure_void", MapColor.NONE, SoundType.STONE, false);
+        material("air", MapColor.NONE, false, false, false, true, PushReaction.NORMAL);
+        material("grass", MapColor.GRASS, true, false, false, false, PushReaction.NORMAL);
+        material("ground", MapColor.DIRT, true, false, false, false, PushReaction.NORMAL);
+        material("wood", MapColor.WOOD, true, false, true, false, PushReaction.NORMAL);
+        material("rock", MapColor.STONE, true, true, false, false, PushReaction.NORMAL);
+        material("iron", MapColor.METAL, true, true, false, false, PushReaction.NORMAL);
+        material("anvil", MapColor.METAL, true, true, false, false, PushReaction.BLOCK);
+        material("water", MapColor.WATER, false, false, false, true, PushReaction.DESTROY);
+        material("lava", MapColor.FIRE, false, false, false, true, PushReaction.DESTROY);
+        material("leaves", MapColor.PLANT, true, false, true, false, PushReaction.DESTROY);
+        material("plants", MapColor.PLANT, false, false, false, false, PushReaction.DESTROY);
+        material("vine", MapColor.PLANT, false, false, true, true, PushReaction.DESTROY);
+        material("sponge", MapColor.COLOR_YELLOW, true, false, false, false, PushReaction.NORMAL);
+        material("cloth", MapColor.WOOL, true, false, true, false, PushReaction.NORMAL);
+        material("fire", MapColor.NONE, false, false, false, true, PushReaction.DESTROY);
+        material("sand", MapColor.SAND, true, false, false, false, PushReaction.NORMAL);
+        material("circuits", MapColor.NONE, false, false, false, false, PushReaction.DESTROY);
+        material("carpet", MapColor.WOOL, false, false, true, false, PushReaction.NORMAL);
+        material("glass", MapColor.NONE, true, false, false, false, PushReaction.NORMAL);
+        material("redstone_light", MapColor.NONE, true, false, false, false, PushReaction.NORMAL);
+        material("tnt", MapColor.FIRE, true, false, true, false, PushReaction.NORMAL);
+        material("coral", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
+        material("ice", MapColor.ICE, true, false, false, false, PushReaction.NORMAL);
+        material("packed_ice", MapColor.ICE, true, false, false, false, PushReaction.NORMAL);
+        material("snow", MapColor.SNOW, false, true, false, true, PushReaction.DESTROY);
+        material("crafted_snow", MapColor.SNOW, true, true, false, false, PushReaction.NORMAL);
+        material("cactus", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
+        material("clay", MapColor.CLAY, true, false, false, false, PushReaction.NORMAL);
+        material("gourd", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
+        material("dragon_egg", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
+        material("portal", MapColor.NONE, false, false, false, false, PushReaction.BLOCK);
+        material("cake", MapColor.NONE, true, false, false, false, PushReaction.DESTROY);
+        material("web", MapColor.WOOL, false, true, false, false, PushReaction.DESTROY);
+        material("piston", MapColor.STONE, true, false, false, false, PushReaction.BLOCK);
+        material("barrier", MapColor.NONE, true, true, false, false, PushReaction.BLOCK);
+        material("structure_void", MapColor.NONE, false, false, false, true, PushReaction.NORMAL);
         MAP_COLORS.put("air", MapColor.NONE);
         MAP_COLORS.put("grass", MapColor.GRASS);
         MAP_COLORS.put("sand", MapColor.SAND);
@@ -92,7 +99,7 @@ public final class ContentTypes {
         MAP_COLORS.put("diamond", MapColor.DIAMOND);
         MAP_COLORS.put("lapis", MapColor.LAPIS);
         MAP_COLORS.put("emerald", MapColor.EMERALD);
-        MAP_COLORS.put("obsidian", MapColor.COLOR_BLACK);
+        MAP_COLORS.put("obsidian", MapColor.PODZOL);
         MAP_COLORS.put("netherrack", MapColor.NETHER);
         SOUND_TYPES.put("wood", SoundType.WOOD);
         SOUND_TYPES.put("ground", SoundType.GRAVEL);
@@ -108,13 +115,51 @@ public final class ContentTypes {
         SOUND_TYPES.put("slime", SoundType.SLIME_BLOCK);
     }
 
-    private static void material(String name, MapColor color, SoundType sound, boolean solid) { MATERIALS.put(name, new Preset(color, sound, solid)); }
+    private static void material(String name, MapColor color, boolean blocks, boolean tool, boolean burns, boolean replaceable, PushReaction push) { MATERIALS.put(name, new Preset(color, SoundType.STONE, blocks, tool, burns, replaceable, push)); }
 
     public static Preset material(String name, Object context) {
         Preset preset = MATERIALS.get(key(name));
         if (preset != null) { return preset; }
         ContentLog.LOGGER.error("Unknown material '{}' in {}, using rock", name, context);
         return MATERIALS.get("rock");
+    }
+
+    public static String materialName(BlockDef def) {
+        return switch (def.type()) {
+            case ContentBlockTypes.LOG -> "wood";
+            case ContentBlockTypes.LEAVES -> "leaves";
+            case ContentBlockTypes.VINE -> "vine";
+            case ContentBlockTypes.TORCH, ContentBlockTypes.LADDER -> "circuits";
+            case ContentBlockTypes.CROP -> "plants";
+            default -> def.material();
+        };
+    }
+
+    @SuppressWarnings("deprecation") public static boolean washedAway(BlockState state) {
+        ContentRegistry.BlockEntry entry = ContentRegistry.entry(state.getBlock());
+        return entry != null && !state.blocksMotion() && !HOLDS_BACK_LIQUID.contains(materialName(entry.def()));
+    }
+
+    private static String modelledType(String type) { return ContentBlockTypes.borrowsModel(type) ? ContentBlockTypes.BASIC : type; }
+
+    private static Preset preset(BlockDef def, String type) {
+        if (ContentBlockTypes.borrowsModel(type)) { return modelled(ContentBlockTypes.base(def), type); }
+        Preset preset = material(materialName(def), def.key());
+        return switch (type) {
+            case ContentBlockTypes.LOG -> preset.sounding(SoundType.WOOD);
+            case ContentBlockTypes.LEAVES, ContentBlockTypes.CROP -> preset.sounding(SoundType.GRASS);
+            default -> preset;
+        };
+    }
+
+    @SuppressWarnings("deprecation") private static Preset modelled(BlockState model, String type) {
+        ContentRegistry.BlockEntry entry = ContentRegistry.entry(model.getBlock());
+        MapColor color = model.getMapColor(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        if (entry != null) {
+            Preset preset = preset(entry.def(), modelledType(entry.def().type()));
+            return new Preset(ContentBlockTypes.STAIRS.equals(type) ? color : preset.color(), model.getSoundType(), preset.blocks(), preset.tool(), preset.burns(), preset.replaceable(), preset.push());
+        }
+        return new Preset(color, model.getSoundType(), model.isSolid(), model.requiresCorrectToolForDrops(), model.ignitedByLava(), model.canBeReplaced(), model.getPistonPushReaction());
     }
 
     public static MapColor mapColor(String name, MapColor fallback, Object context) {
@@ -133,6 +178,10 @@ public final class ContentTypes {
         return fallback;
     }
 
+    public static SoundType sound(BlockDef def, String type) { return sound(def, preset(def, type)); }
+
+    private static SoundType sound(BlockDef def, Preset preset) { return soundType(def.soundType(), preset.sound(), def.key()); }
+
     public static Rarity rarity(String name, Object context) {
         if (name == null || name.isEmpty()) { return Rarity.COMMON; }
         try { return Rarity.valueOf(name.toUpperCase(Locale.ROOT)); }
@@ -142,26 +191,32 @@ public final class ContentTypes {
         }
     }
 
-    public static BlockBehaviour.Properties properties(BlockDef def, BlockVariant variant, boolean plant) {
-        Preset preset = material(def.material(), def.key());
+    public static float legacyResistance(float written) { return written * LEGACY_RESISTANCE; }
+
+    @SuppressWarnings("deprecation") public static BlockBehaviour.Properties properties(BlockDef def, BlockVariant variant, String type) {
+        Preset preset = preset(def, type);
         BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
-                .mapColor(mapColor(def.mapColor(), preset.color(), def.key()))
-                .sound(soundType(def.soundType(), preset.sound(), def.key()))
-                .friction(def.slipperiness());
-        float resistance = variant.resistance() / Math.max(0.01F, def.explosionResistanceDivisor());
+                .mapColor(ContentBlockTypes.borrowsModel(type) ? preset.color() : mapColor(def.mapColor(), preset.color(), def.key()))
+                .sound(sound(def, preset))
+                .friction(def.slipperiness())
+                .pushReaction(preset.push());
+        float resistance = legacyResistance(variant.resistance() / Math.max(0.01F, def.explosionResistanceDivisor()));
         if (variant.hardness() < 0.0F) { properties = properties.strength(-1.0F, UNBREAKABLE); }
         else { properties = properties.strength(variant.hardness(), resistance); }
         int light = variant.light();
         if (light > 0) { properties = properties.lightLevel(state -> light); }
-        if (variant.harvestLevelOr(def.harvestToolLevel()) > 0) { properties = properties.requiresCorrectToolForDrops(); }
-        if (!def.opaque() || !def.fullCube()) { properties = properties.noOcclusion(); }
-        if (def.flammability() > 0) { properties = properties.ignitedByLava(); }
-        if (plant || !preset.solid()) { properties = properties.noCollission().pushReaction(PushReaction.DESTROY); }
-        if (plant) { properties = properties.randomTicks(); }
+        if (preset.tool()) { properties = properties.requiresCorrectToolForDrops(); }
+        if (!def.opaque() || !def.fullCube() || def.container() != null && def.container().chestModel()) { properties = properties.noOcclusion(); }
+        if (preset.burns()) { properties = properties.ignitedByLava(); }
+        if (preset.replaceable()) { properties = properties.replaceable(); }
+        properties = preset.blocks() ? properties.forceSolidOn() : properties.forceSolidOff();
+        if (ContentBlockTypes.plant(type)) { properties = properties.noCollission().randomTicks(); }
         return properties;
     }
 
     private static String key(String name) { return name == null ? "" : name.trim().toLowerCase(Locale.ROOT); }
 
-    public record Preset(MapColor color, SoundType sound, boolean solid) {}
+    public record Preset(MapColor color, SoundType sound, boolean blocks, boolean tool, boolean burns, boolean replaceable, PushReaction push) {
+        Preset sounding(SoundType other) { return new Preset(color, other, blocks, tool, burns, replaceable, push); }
+    }
 }

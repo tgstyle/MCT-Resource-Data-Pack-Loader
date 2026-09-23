@@ -42,6 +42,7 @@ public final class ContentBannerRenderer implements BlockEntityRenderer<ContentB
 
     @Override public void render(@Nonnull ContentBannerBlockEntity entity, float partialTick, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int light, int overlay) {
         BlockState state = entity.getBlockState();
+        if (entity.getLevel() != null && state.getBlock() instanceof IContentBanner banner && banner.modeled()) { return; }
         pose.pushPose();
         long time;
         if (entity.getLevel() == null) {

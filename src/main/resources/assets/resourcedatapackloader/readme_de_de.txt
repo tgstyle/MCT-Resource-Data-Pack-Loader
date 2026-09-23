@@ -6,15 +6,14 @@ selbst mitbringt. Es gilt für jede Welt, im Einzelspieler wie auf Servern, und
 es gibt nichts einzuschalten.
 
 
-WAS SCHON DA IST
-----------------
+MEHR ALS NUR ÜBERSCHREIBEN
+--------------------------
 
-Diese Fassung der Mod wird Stück für Stück von Minecraft 1.12.2 herübergeholt.
-Was jetzt da ist, ist der Pack-Ordner selbst: das Überschreiben dessen, was
-Minecraft und Mods mitbringen, in jeder Welt, auf Clients wie auf Servern.
-Neue Inhalte aus JSON, die Kontrolle darüber, was generiert, und der Rest
-folgen, sobald sie übertragen sind, und HOWTO.md, die der Mod beiliegt,
-beschreibt jedes davon, sobald es da ist.
+Packs hier können auch neue Blöcke, Items, Biome und ganze Dimensionen aus
+JSON-Dateien beschreiben, festlegen, was wo generiert, Dimensionen hinter einem
+Schlüssel oder einem zu erlegenden Mob verschließen und das Land einer Welt im
+Voraus erzeugen, sodass niemand je auf einen Chunk wartet. HOWTO.md, die der Mod
+beiliegt, behandelt all das.
 
 
 EINE DATEI HINZUFÜGEN
@@ -153,6 +152,128 @@ funktioniert also auch auf einem dedizierten Server, und eine Änderung daran
 greift mit /reload.
 
 
+NEUEN INHALT HINZUFÜGEN
+-----------------------
+
+Ein Pack kann auch eigene Blöcke, Items und Flüssigkeiten hinzufügen, als JSON
+beschrieben. Dafür musst du keine Mod schreiben oder bauen.
+
+Definitionen liegen unter data, ein Ordner für jede Art von Ding. Jeder
+Schlüssel in "variants" ist ein Name, also registriert eine Datei unter
+
+    rdploader/data/mypack/blocks/ores.json
+
+mit einer Variante namens ruby_ore den Block mypack:ruby_ore. Der Name der
+Datei selbst gruppiert nur. Registriert eine echte Mod diesen Namen bereits,
+gewinnt die Mod und deine Variante wird übersprungen.
+
+Der einfachste Block sind ein paar Zeilen:
+
+    {
+      "type": "ore",
+      "material": "rock",
+      "harvestTool": "pickaxe",
+      "variants": {
+        "ruby_ore": { "hardness": 3.0, "harvestLevel": 1 }
+      }
+    }
+
+Modell, Blockstate, Textur und Spracheintrag lieferst du weiterhin unter
+assets, genau wie jede andere Datei in diesem Ordner.
+
+Jeder davon ist ein Ordner unter data/<deinpack>:
+
+    blocks           items            fluids           materials
+    tabs             sounds           biomes           worldgen
+    caveregions      dimensions       worldtemplates   worldintro
+    gates            gamerules        teams            scoring
+    raids            entities         hardness         anvils
+    exposures        overrides        villages         pathintersects
+    structuremaps    citymaps         portalframes     blastplaster
+    structure        recipe           recipe_removals  furnace
+    fuels            brewing          potions          potion_types
+    villagers        trades           loot_table       loot_injections
+    block_drops      player_loot      advancement      function
+    tags             registry_remap
+
+Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
+
+    basic   ore     falling   slab    stairs   fence    door
+    pane    wall    ladder    torch   crop     flower   cane
+    log     leaves  sapling   vine    portal   trapdoor fence_gate
+    banner  bell    container
+
+und Items in diesen:
+
+    basic   food    drink     potion  tool     armor    seed
+    potion_bottle   container
+
+Eine Trankart heißt nach dem Sprachschlüssel
+item.minecraft.potion.effect.<baseName>, mit splash_potion, lingering_potion
+oder tipped_arrow statt potion für die anderen Formen. Ein Item vom Typ
+potion_bottle ist dein eigenes Gefäß dafür: Es nimmt wie jedes andere Item
+einen creativeTab und enthält die Trankarten, die du in potionTypes nennst.
+
+Eine Datei villagers/<name>.json definiert einen Beruf. Eine Datei
+trades/*.json fügt jedem Beruf Handel hinzu, ob deinem oder einem von
+Minecraft, und nennt den Beruf und die Stufe, auf der der Handel erscheint.
+
+Eine Datei entities/<name>.json macht aus einem vorhandenen Wesen ein neues. Sie
+nennt das Wesen, auf dem es aufbaut, und was an ihm anders ist: seinen Namen,
+sein Aussehen, wie viel Leben und Schaden es hat, wie es sich bewegt, wie es
+kämpft und was es fallen lässt. Es ist ein eigenes Wesen mit eigenem Spawn-Ei
+und eigener Beutetabelle, und das Wesen, auf dem es aufbaut, bleibt unberührt.
+
+Eine Datei villages/<name>.json fügt ein Grundstück hinzu, das eine Stadt oder
+ein Dorf aus einer deiner .nbt-Vorlagen bauen kann, und eine Datei
+raids/<name>.json schickt Wellen gegen ein Dorf, wenn ein Spieler ein Omen
+hineinträgt.
+
+Eine Datei worldintro/<name>.json spielt eine Folge von Seiten ab, wenn jemand
+die Welt betritt, bevor er die Kontrolle übernimmt. Die Texte sind einfache
+.txt-Dateien unter assets/<deinpack>/texts. Sie kann einmal pro Spieler oder
+bei jedem Beitritt laufen.
+
+Eine Datei teams/<name>.json stellt eine Seite auf der Anzeigetafel des Spiels
+auf und legt fest, wer ihr beitritt, und eine Datei scoring/<name>.json ist ein
+Ziel, das diesen Seiten Punkte gibt und entscheidet, wie eine Partie endet.
+
+
+GANZE WELTEN
+------------
+
+Ein Pack ist nicht auf einzelne Dinge beschränkt. dimensions/<name>.json
+registriert eine Dimension mit eigenem Gelände, eigenen Biomen und eigenem
+Himmel. gates/<name>.json knüpft eine Bedingung daran, sie zu erreichen, etwa
+einen Gegenstand zu halten oder auszugeben. Ein Block vom Typ portal schickt
+jeden, der hineingeht, in eine andere Dimension, und mit portalframes kann ein
+Spieler einen eigenen Rahmen bauen und entzünden.
+
+worldtemplates/<name>.json fasst die Einstellungen einer Welt in einer Datei
+zusammen, sodass ein Pack eine ganze Weltform auf einmal liefern kann, statt um
+ein Dutzend Änderungen an der Konfiguration zu bitten. Es kann auch die
+Oberwelt selbst formen, etwa ihren Meeresspiegel und ob ihre Ozeane aus Lava
+sind.
+
+worldgen ist mehr als Erz. Ein Eintrag setzt eine Form, von einem kleinen
+Klumpen deines Blocks bis zu einer deiner eigenen .nbt-Vorlagen, und legt fest,
+wie oft, wie hoch und in welchen Biomen sie erscheint.
+
+Eine Datei biomes/<name>.json definiert ein Biom: sein Klima und seine Farben,
+die Blöcke, aus denen es besteht, was es schmückt, was darin spawnt und wo es
+generiert.
+
+
+WO ES AUFHÖRT
+-------------
+
+Das beschreibt, was ein Ding ist, nicht was es über die Zeit tut. Alles, was
+eine Blockentität, einen Bildschirm oder Code in jedem Tick braucht, braucht
+weiterhin eine echte Mod, mit einer Ausnahme: Ein Block vom Typ container hält
+ein Inventar mit eigenem Bildschirm. Eine Maschine ist außer Reichweite; ein
+Erz, ein Zaun, ein Essen oder eine Flüssigkeit nicht.
+
+
 ÄNDERUNGEN SEHEN
 ----------------
 
@@ -194,6 +315,19 @@ en_us.json, nicht en_US.json.
 
 Prüfe, ob deine Dateien in einem 'assets'- oder 'data'-Ordner liegen. Ein Zip
 ohne einen von beiden wird übersprungen, und das Log sagt es.
+
+
+FORTSCHRITTE UND REZEPTE
+------------------------
+
+Ein Rezept, das ein Skript hinzufügt oder ersetzt, trägt den Namen, den das
+Skript ihm gibt. Soll ein Fortschritt es freischalten, lege hier eine
+Fortschrittsdatei ab, die dieses Rezept nennt, und der Fortschritt funktioniert
+wieder von Anfang bis Ende.
+
+Gib einem solchen Rezept im Skript einen festen Namen. Ein Name, der für dich
+erfunden wird, kann sich ändern, sobald du das Rezept bearbeitest, und taugt
+deshalb nicht als Ziel für einen Fortschritt.
 
 
 Der Ordner rdploader selbst lässt sich mit der Option rootDirectory in

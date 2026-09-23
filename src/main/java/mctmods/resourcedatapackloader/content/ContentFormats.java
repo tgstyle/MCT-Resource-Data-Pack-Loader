@@ -1,11 +1,14 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.ItemDef;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentFormats {
@@ -15,7 +18,6 @@ public final class ContentFormats {
     public static final String BIOME_TAGS = "tags/worldgen/biome";
     public static final String ENTITY_TYPE_TAGS = "tags/entity_type";
     public static final String BIOME_MODIFIERS = "neoforge/biome_modifier";
-    public static final String ADD_SPAWNS = "neoforge:add_spawns";
     public static final String ADD_FEATURES = "neoforge:add_features";
     public static final String ANY_HOLDER_SET = "neoforge:any";
     public static final String CONFIGURED_FEATURES = "worldgen/configured_feature";
@@ -26,9 +28,12 @@ public final class ContentFormats {
     public static final String DENSE_TAG = "is_dense_vegetation";
     public static final String WATER_TAG = "is_aquatic";
     public static final String POI_TAGS = "tags/point_of_interest_type";
+    public static final String MINEABLE_SWORD = "resourcedatapackloader:mineable/sword";
+    public static final String NEEDS_NETHERITE_TOOL = "neoforge:needs_netherite_tool";
     public static final String FUNCTION_TAGS = "tags/function";
     private static final String SILK_TOUCH = "{\"condition\":\"minecraft:match_tool\",\"predicate\":{\"predicates\":{\"minecraft:enchantments\":[{\"enchantments\":\"minecraft:silk_touch\",\"levels\":{\"min\":1}}]}}}";
     private static final String SHEARS = "{\"condition\":\"minecraft:match_tool\",\"predicate\":{\"items\":\"minecraft:shears\"}}";
+    private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
     private ContentFormats() {}
 
@@ -42,7 +47,7 @@ public final class ContentFormats {
                 case "pickaxe" -> List.of("minecraft:pickaxes", "minecraft:cluster_max_harvestables", "c:tools/mining_tool", "c:tools");
                 case "axe" -> List.of("minecraft:axes", "c:tools/mining_tool", "c:tools/melee_weapon", "c:tools");
                 case "shovel" -> List.of("minecraft:shovels", "c:tools/mining_tool", "c:tools");
-                case "sword" -> List.of("minecraft:swords", "c:tools/melee_weapon", "c:tools");
+                case "sword" -> List.of("minecraft:enchantable/mining", "minecraft:enchantable/mining_loot", "minecraft:enchantable/durability", "c:tools/melee_weapon", "c:tools");
                 default -> List.of();
             };
             case "armor" -> switch (def.slot()) {
@@ -111,8 +116,23 @@ public final class ContentFormats {
             case "0" -> "minecraft:overworld";
             case "-1" -> "minecraft:the_nether";
             case "1" -> "minecraft:the_end";
-            default -> wanted;
+            default -> {
+                if (!wanted.isEmpty() && (wanted.charAt(0) == '-' || Character.isDigit(wanted.charAt(0))) && wanted.matches("-?\\d+") && WARNED.add(wanted)) { ContentLog.LOGGER.warn("Dimension {} is a 1.12.2 dimension number, and only 0, -1 and 1 still stand for a dimension, so it names none. Name the dimension by its id, such as mypack:verdant", wanted); }
+                yield wanted;
+            }
         };
     }
 
+    @Nullable public static String vanillaTab(String named) {
+        return switch (named) {
+            case "buildingBlocks", "building_blocks" -> "minecraft:building_blocks";
+            case "decorations", "functional_blocks" -> "minecraft:functional_blocks";
+            case "redstone", "redstone_blocks" -> "minecraft:redstone_blocks";
+            case "transportation", "tools", "tools_and_utilities" -> "minecraft:tools_and_utilities";
+            case "misc", "materials", "ingredients" -> "minecraft:ingredients";
+            case "food", "brewing", "food_and_drinks" -> "minecraft:food_and_drinks";
+            case "combat", "colored_blocks", "natural_blocks", "spawn_eggs", "op_blocks" -> "minecraft:" + named;
+            default -> null;
+        };
+    }
 }

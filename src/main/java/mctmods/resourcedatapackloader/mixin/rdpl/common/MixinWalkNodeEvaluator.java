@@ -15,12 +15,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WalkNodeEvaluator.class) public abstract class MixinWalkNodeEvaluator {
+    @Unique private int rdpl$owner;
     @Unique private int rdpl$world;
     @Unique private long rdpl$tick;
     @Unique private boolean rdpl$remembering;
 
     @Inject(method = "prepare", at = @At("TAIL"))
     private void rdpl$whenAndWhere(PathNavigationRegion region, Mob mob, CallbackInfo ci) {
+        rdpl$owner = System.identityHashCode(getClass());
         rdpl$world = mob.level().dimension().location().hashCode();
         rdpl$tick = mob.level().getGameTime();
         rdpl$remembering = true;
@@ -34,10 +36,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     private PathType rdpl$sharedKind(WalkNodeEvaluator self, PathfindingContext context, int x, int y, int z) {
         if (!rdpl$remembering) { return self.getPathType(context, x, y, z); }
         PathNodeMemo memo = PathNodeMemo.held();
-        PathType held = memo.known(rdpl$world, rdpl$tick, x, y, z);
+        PathType held = memo.known(rdpl$owner, rdpl$world, rdpl$tick, x, y, z);
         if (held != null) { return held; }
         PathType found = self.getPathType(context, x, y, z);
-        memo.remember(rdpl$world, rdpl$tick, x, y, z, found);
+        memo.remember(rdpl$owner, rdpl$world, rdpl$tick, x, y, z, found);
         return found;
     }
 }

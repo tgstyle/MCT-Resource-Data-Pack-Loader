@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -53,11 +54,16 @@ public final class LootInjections {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
             return;
         }
+        ResourceLocation table = ContentParser.location(target);
+        if (table == null) {
+            ContentLog.LOGGER.error("Loot injection {} names the table '{}', which is not a valid id, ignoring it", key, target);
+            return;
+        }
         if (!json.has(POOLS)) {
             ContentLog.LOGGER.error("Loot injection {} has no pools, ignoring it", key);
             return;
         }
-        List<JsonElement> pools = BY_TABLE.computeIfAbsent(ResourceLocation.parse(target), k -> new ArrayList<>());
+        List<JsonElement> pools = BY_TABLE.computeIfAbsent(table, k -> new ArrayList<>());
         for (JsonElement element : GsonHelper.getAsJsonArray(json, POOLS)) {
             pools.add(element);
             count[0]++;

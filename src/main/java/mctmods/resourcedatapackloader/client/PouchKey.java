@@ -18,9 +18,8 @@ import javax.annotation.Nullable;
 
 public final class PouchKey {
     public static final String CATEGORY = "key.categories." + ResourceDataPackLoader.MOD_ID;
-    public static final String NAME = "key." + ResourceDataPackLoader.MOD_ID + ".open_worn";
+    public static final String NAME = "key." + ResourceDataPackLoader.MOD_ID + ".pouch";
     @Nullable private static KeyMapping key;
-    private static int opened = -1;
 
     private PouchKey() {}
 
@@ -31,21 +30,15 @@ public final class PouchKey {
     }
 
     public static void screen(ScreenEvent.KeyPressed.Pre event) {
-        if (key == null || !(event.getScreen() instanceof ContentContainerScreen) || !key.matches(event.getKeyCode(), event.getScanCode())) { return; }
-        RDPLNetwork.openWorn(opened);
-        opened++;
+        if (key == null || !(event.getScreen() instanceof ContentContainerScreen screen) || screen.getMenu().worn() < 0 || !key.matches(event.getKeyCode(), event.getScanCode())) { return; }
+        RDPLNetwork.openWorn();
         event.setCanceled(true);
     }
 
     public static void tick(ClientTickEvent.Post ignoredEvent) {
         if (key == null) { return; }
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null) { return; }
-        boolean pressed = false;
-        while (key.consumeClick()) { pressed = true; }
-        if (!pressed) { return; }
-        if (client.screen == null) { opened = -1; }
-        RDPLNetwork.openWorn(opened);
-        opened++;
+        if (client.player == null || client.screen != null) { return; }
+        while (key.consumeClick()) { RDPLNetwork.openWorn(); }
     }
 }

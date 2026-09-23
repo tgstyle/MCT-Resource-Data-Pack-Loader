@@ -9,10 +9,10 @@ import mctmods.resourcedatapackloader.content.gate.PortalStorage;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -57,13 +57,12 @@ public final class ContentPortalBlock extends ContentBlock {
         registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.X));
     }
 
-    public PortalDef portal() { return portal; }
-
     public BlockState oriented(PortalFit fit) { return defaultBlockState().setValue(AXIS, fit.flat() ? Direction.Axis.Y : fit.alongX() ? Direction.Axis.X : Direction.Axis.Z); }
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(AXIS); }
 
     @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
+        if (getDef().bounds() != null) { return super.getShape(state, level, pos, context); }
         if (getDef().fullCube()) { return Shapes.block(); }
         return switch (state.getValue(AXIS)) {
             case Y -> FLAT;
@@ -168,8 +167,7 @@ public final class ContentPortalBlock extends ContentBlock {
 
     private void sound(ServerPlayer player) {
         if (portal.sound().isEmpty()) { return; }
-        ResourceLocation key = ResourceLocation.tryParse(portal.sound());
-        SoundEvent event = key == null ? null : BuiltInRegistries.SOUND_EVENT.getOptional(key).orElse(null);
+        SoundEvent event = ContentSounds.find(portal.sound());
         if (event == null) { return; }
         player.level().playSound(null, player.blockPosition(), event, SoundSource.BLOCKS, 1.0F, 1.0F);
     }

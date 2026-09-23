@@ -27,6 +27,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import java.util.Optional;
 
 public final class ContentMobExperience {
+    private static final float MENDING_RATIO = 2.0F;
     private static final String LEVEL = "rdplXpLevel";
     private static final String PROGRESS = "rdplXp";
     private static final String TOTAL = "rdplXpTotal";
@@ -55,21 +56,21 @@ public final class ContentMobExperience {
 
     private static void take(Mob mob, ExperienceOrb orb) {
         mob.take(orb, 1);
-        int value = mob.level() instanceof ServerLevel level ? mended(level, mob, orb.value) : orb.value;
+        int value = mob.level() instanceof ServerLevel ? mended(mob, orb.value) : orb.value;
         if (value > 0) { add(mob, value); }
         IExperienceOrb held = (IExperienceOrb) orb;
         held.rdpl$setCount(held.rdpl$getCount() - 1);
         if (held.rdpl$getCount() <= 0) { orb.discard(); }
     }
 
-    private static int mended(ServerLevel level, Mob mob, int value) {
-        Optional<EnchantedItemInUse> found = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, mob, ItemStack::isDamaged);
-        if (found.isEmpty()) { return value; }
+    private static int mended(Mob mob, int value) {
+        Optional<EnchantedItemInUse> found = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, mob, stack -> true);
+        if (found.isEmpty() || !found.get().itemStack().isDamaged()) { return value; }
         ItemStack mended = found.get().itemStack();
-        int offered = EnchantmentHelper.modifyDurabilityToRepairFromXp(level, mended, roundAverage(value * mended.getXpRepairRatio()));
-        int repaired = Math.min(offered, mended.getDamageValue());
+        float ratio = MENDING_RATIO * mended.getXpRepairRatio();
+        int repaired = Math.min(roundAverage(value * ratio), mended.getDamageValue());
         mended.setDamageValue(mended.getDamageValue() - repaired);
-        return repaired <= 0 ? value : value - repaired * value / offered;
+        return value - roundAverage(repaired / ratio);
     }
 
     private static void pull(ExperienceOrb orb, Mob mob) {
@@ -99,6 +100,18 @@ public final class ContentMobExperience {
         if (level > before) { ContentLog.LOGGER.info("{} reached experience level {}, {} point(s) in all", mob.getName().getString(), level, total); }
     }
 
+    public static void addLevels(Mob mob, int levels) {
+        CompoundTag data = mob.getPersistentData();
+        int level = data.getInt(LEVEL) + levels;
+        if (level < 0) {
+            level = 0;
+            data.putFloat(PROGRESS, 0.0F);
+            data.putInt(TOTAL, 0);
+        }
+        data.putInt(LEVEL, level);
+        scores(mob, level, data.getInt(TOTAL));
+    }
+
     private static int cap(int level) {
         if (level >= 30) { return 112 + (level - 30) * 9; }
         return level >= 15 ? 37 + (level - 15) * 5 : 7 + level * 2;
@@ -122,13 +135,13 @@ public final class ContentMobExperience {
     public static void onHurt(LivingDamageEvent.Pre event) {
         LivingEntity hurt = event.getEntity();
         Entity by = event.getSource().getEntity();
-        if (hurt.level().isClientSide() || hurt instanceof Player || !(by instanceof Mob) || !ContentEntities.collectsExperience(by)) { return; }
+        if (hurt.level().isClientSide() || hurt instanceof Player || !(by instanceof Mob) || ContentEntities.ignoresExperience(by)) { return; }
         ((ILivingEntity) hurt).rdpl$setLastHurtByPlayerTime(CREDIT);
     }
 
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity died = event.getEntity();
-        if (event.isCanceled() || !(died.level() instanceof ServerLevel level) || !(died instanceof Mob) || !ContentEntities.collectsExperience(died)) { return; }
+        if (event.isCanceled() || !(died.level() instanceof ServerLevel level) || !(died instanceof Mob) || ContentEntities.ignoresExperience(died)) { return; }
         int dropped = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) ? 0 : Math.min(level(died) * 7, 100);
         CompoundTag data = died.getPersistentData();
         data.remove(LEVEL);

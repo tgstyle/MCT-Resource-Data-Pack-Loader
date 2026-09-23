@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.PotionDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.PotionTypeDef;
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.pack.FallbackIcon;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -33,11 +34,11 @@ import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -51,10 +52,10 @@ public final class ContentPotions {
 
     private ContentPotions() {}
 
-    public static boolean load() {
-        if (loaded) { return wanted(); }
+    public static void load() {
+        if (loaded) { return; }
         loaded = true;
-        if (!Config.content.potions()) { return false; }
+        if (!Config.content.potions()) { return; }
         if (!Config.contentOff()) {
             Json.eachFile(PackManager.POTIONS, "potion file", (key, contents) -> {
                 if (!ContentRegistry.reserved(key)) { readPotion(key, contents); }
@@ -62,21 +63,18 @@ public final class ContentPotions {
             Json.eachFile(PackManager.POTION_TYPES, "potion type file", (key, contents) -> {
                 if (!ContentRegistry.reserved(key)) { readType(key, contents); }
             });
-        }
-        if (Config.content.brewing()) {
-            Json.eachFile(PackManager.BREWING, "brewing file", (key, contents) -> {
-                if (!ContentRegistry.reserved(key)) { readBrewing(key, contents); }
-            });
+            if (Config.content.brewing()) {
+                Json.eachFile(PackManager.BREWING, "brewing file", (key, contents) -> {
+                    if (!ContentRegistry.reserved(key)) { readBrewing(key, contents); }
+                });
+            }
         }
         if (!POTIONS.isEmpty()) { Summary.info("potions", "Loaded " + POTIONS.size() + " potion effect(s) from packs"); }
         if (!TYPES.isEmpty()) { Summary.info("potion_types", "Loaded " + TYPES.size() + " potion type(s) from packs"); }
         if (!BREWING.isEmpty()) { Summary.info("brewing", "Loaded " + BREWING.size() + " brewing recipe(s) from packs"); }
-        return wanted();
     }
 
-    public static Set<ResourceLocation> keys() { return POTIONS.keySet(); }
-
-    public static boolean wanted() { return !POTIONS.isEmpty() || !TYPES.isEmpty() || !BREWING.isEmpty(); }
+    public static Collection<PotionDef> defs() { return POTIONS.values(); }
 
     private static void readPotion(ResourceLocation key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
@@ -84,7 +82,6 @@ public final class ContentPotions {
             ContentLog.LOGGER.error("Potion file {} is empty, ignoring it", key);
             return;
         }
-        if (json.has(ICON) || json.has("iconTexture")) { ContentLog.LOGGER.warn("Potion {} sets an icon, which this line does not read. Ship the icon as assets/{}/textures/mob_effect/{}.png instead", key, key.getNamespace(), key.getPath()); }
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
             for (JsonElement element : GsonHelper.getAsJsonArray(json, "attributes")) {
@@ -111,7 +108,7 @@ public final class ContentPotions {
                 ContentParser.color(GsonHelper.getAsString(json, "color", "FFFFFF"), key.toString()),
                 GsonHelper.getAsInt(icon, "x", 0),
                 GsonHelper.getAsInt(icon, "y", 0),
-                GsonHelper.getAsString(json, "iconTexture", ""),
+                GsonHelper.getAsString(json, "iconTexture", json.has(ICON) ? "" : FallbackIcon.TEXTURE),
                 GsonHelper.getAsBoolean(json, "instant", false),
                 GsonHelper.getAsFloat(json, "effectiveness", 0.5F),
                 Collections.unmodifiableList(attributes),
@@ -172,7 +169,7 @@ public final class ContentPotions {
         for (PotionDef def : POTIONS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             if (BuiltInRegistries.MOB_EFFECT.containsKey(def.key())) {
-                ContentLog.LOGGER.warn("A potion effect named {} is already registered, skipping the pack entry", def.key());
+                ContentLog.LOGGER.debug("Potion {} is already registered, leaving it alone", def.key());
                 continue;
             }
             helper.register(def.key(), new ContentPotion(def));
@@ -186,7 +183,7 @@ public final class ContentPotions {
         for (PotionTypeDef def : TYPES.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             if (BuiltInRegistries.POTION.containsKey(def.key())) {
-                ContentLog.LOGGER.warn("A potion type named {} is already registered, skipping the pack entry", def.key());
+                ContentLog.LOGGER.debug("Potion type {} is already registered, leaving it alone", def.key());
                 continue;
             }
             List<MobEffectInstance> effects = new ArrayList<>();

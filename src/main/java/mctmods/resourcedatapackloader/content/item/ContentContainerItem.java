@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.item;
 
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
-import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 
 import net.minecraft.network.chat.Component;
@@ -15,39 +14,34 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 
 public class ContentContainerItem extends Item {
-    private final ItemDef def;
     private final ContainerDef container;
 
-    public ContentContainerItem(ItemDef def, ContainerDef container, Properties properties) {
+    public ContentContainerItem(ContainerDef container, Properties properties) {
         super(properties.stacksTo(1));
-        this.def = def;
         this.container = container;
     }
-
-    public ItemDef getDef() { return def; }
-
-    public ContainerDef container() { return container; }
 
     @Override @Nonnull public InteractionResultHolder<ItemStack> use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         if (level.isClientSide() || !(player instanceof ServerPlayer server)) { return InteractionResultHolder.success(held); }
-        open(server, held);
+        open(server, held, () -> server.getItemInHand(hand), -1);
         return InteractionResultHolder.consume(held);
     }
 
-    public void open(ServerPlayer player, ItemStack held) {
+    public void open(ServerPlayer player, ItemStack held, Supplier<ItemStack> source, int worn) {
         ContentPouchInventory inventory = new ContentPouchInventory(held, container);
         MenuProvider provider = new MenuProvider() {
             @Override @Nonnull public Component getDisplayName() { return held.getHoverName(); }
 
             @Override @Nonnull public AbstractContainerMenu createMenu(int id, @Nonnull Inventory bag, @Nonnull Player opening) {
-                return new ContentContainerMenu(id, bag, inventory, container, held);
+                return new ContentContainerMenu(id, bag, inventory, container, held, source, worn);
             }
         };
-        player.openMenu(provider, extra -> ContentContainerMenu.write(extra, container));
+        player.openMenu(provider, extra -> ContentContainerMenu.write(extra, container, worn));
     }
 }

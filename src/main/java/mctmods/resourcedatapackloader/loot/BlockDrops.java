@@ -29,11 +29,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EnderChestBlock;
+import net.minecraft.world.level.block.IronBarsBlock;
+import net.minecraft.world.level.block.WebBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -69,7 +73,6 @@ public final class BlockDrops extends LootModifier {
     private static final Gson GSON = new Gson();
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
-    private static final ThreadLocal<Boolean> DIGGING = ThreadLocal.withInitial(() -> false);
 
     static { REGISTER.register("block_drops", () -> CODEC); }
 
@@ -80,8 +83,6 @@ public final class BlockDrops extends LootModifier {
     private record Rule(@Nullable List<BlockState> states, boolean replace, String advancement, List<Drop> drops) {}
 
     private record Drop(ItemStack item, boolean experience, AmountDef count, float chance, int fortune, String silkTouch) {}
-
-    public static void digging(boolean digging) { DIGGING.set(digging); }
 
     public static void reload() {
         BY_BLOCK.clear();
@@ -174,13 +175,25 @@ public final class BlockDrops extends LootModifier {
         if (GENERATION.stale()) { reload(); }
         List<Rule> rules = BY_BLOCK.get(state.getBlock());
         if (rules == null) { return generatedLoot; }
-        ServerLevel level = context.getLevel();
-        ItemStack tool = context.getParamOrNull(LootContextParams.TOOL);
         Player player = context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Player held ? held : null;
-        if (player == null && !DIGGING.get()) { return generatedLoot; }
-        boolean silk = tool != null && level(level, tool, Enchantments.SILK_TOUCH) > 0;
-        int fortuneLevel = tool == null ? 0 : level(level, tool, Enchantments.FORTUNE);
-        RandomSource random = context.getRandom();
+        roll(rules, generatedLoot, state, context.getLevel(), BlockPos.containing(origin), player, context.getParamOrNull(LootContextParams.TOOL), context.getParamOrNull(LootContextParams.EXPLOSION_RADIUS), context.getRandom(), false);
+        return generatedLoot;
+    }
+
+    public static List<ItemStack> prospected(BlockState state, ServerLevel level, BlockPos pos, Player player, ItemStack tool) {
+        ObjectArrayList<ItemStack> dropped = new ObjectArrayList<>();
+        if (Config.data.blockDropsOff()) { return dropped; }
+        if (GENERATION.stale()) { reload(); }
+        List<Rule> rules = BY_BLOCK.get(state.getBlock());
+        if (rules == null) { return dropped; }
+        roll(rules, dropped, state, level, pos, player, tool, null, level.getRandom(), true);
+        return dropped;
+    }
+
+    private static void roll(List<Rule> rules, ObjectArrayList<ItemStack> generatedLoot, BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemStack tool, @Nullable Float radius, RandomSource random, boolean prospecting) {
+        boolean silk = silk(state, level, pos, player, tool);
+        boolean withheld = prospecting && !silk;
+        int fortuneLevel = silk || tool == null ? 0 : level(level, tool, Enchantments.FORTUNE);
         for (Rule rule : rules) {
             if (rule.states() != null && !rule.states().contains(state)) { continue; }
             if (!rule.advancement().isEmpty() && !Advancements.has(player, rule.advancement())) { continue; }
@@ -193,16 +206,24 @@ public final class BlockDrops extends LootModifier {
                 if (drop.fortune() > 0 && fortuneLevel > 0) { count += random.nextInt(drop.fortune() * fortuneLevel + 1); }
                 if (count <= 0) { continue; }
                 if (drop.experience()) {
-                    state.getBlock().popExperience(level, BlockPos.containing(origin), count);
+                    level.addFreshEntity(new ExperienceOrb(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, count));
                     continue;
                 }
+                if (withheld || radius != null && random.nextFloat() > 1.0F / radius) { continue; }
                 generatedLoot.add(drop.item().copyWithCount(count));
             }
         }
-        return generatedLoot;
     }
 
-    private static int level(ServerLevel level, ItemStack tool, ResourceKey<Enchantment> enchantment) {
+    private static boolean silk(BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemStack tool) { return player != null && tool != null && level(level, tool, Enchantments.SILK_TOUCH) > 0 && silkHarvests(state, level, pos); }
+
+    private static boolean silkHarvests(BlockState state, ServerLevel level, BlockPos pos) {
+        Block block = state.getBlock();
+        if (block instanceof IronBarsBlock || block instanceof WebBlock || block instanceof EnderChestBlock) { return true; }
+        return !state.hasBlockEntity() && Block.isShapeFullBlock(block.defaultBlockState().getShape(level, pos));
+    }
+
+    static int level(ServerLevel level, ItemStack tool, ResourceKey<Enchantment> enchantment) {
         return level.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolder(enchantment).map(tool::getEnchantmentLevel).orElse(0);
     }
 }

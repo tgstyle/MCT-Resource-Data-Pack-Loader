@@ -26,7 +26,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     }
 
     @Inject(method = "start", at = @At("TAIL"))
-    private void rdpl$forget(CallbackInfo ci) { target = null; }
+    private void rdpl$forget(CallbackInfo ci) {
+        if (ContentThreat.plainNearestTarget(this)) { target = null; }
+    }
 
     @Inject(method = "findTarget", at = @At("TAIL"))
     private void rdpl$docile(CallbackInfo ci) {

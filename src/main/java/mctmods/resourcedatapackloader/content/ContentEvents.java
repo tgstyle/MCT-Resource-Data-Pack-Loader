@@ -9,7 +9,8 @@ import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
+import mctmods.resourcedatapackloader.content.entity.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
@@ -24,6 +25,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveStructureFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCity;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityBulbPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityCapPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityDeckPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityDecorPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityPlazaPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCitySewerHatchPiece;
@@ -31,7 +34,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCitySewerLoopPiece
 import mctmods.resourcedatapackloader.content.worldgen.ContentCitySewerPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityStationPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityStairsPiece;
-import mctmods.resourcedatapackloader.content.worldgen.ContentCityEntrancePiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityStampPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityFarmPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityIntersectPiece;
@@ -41,8 +43,12 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCityPierPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityPlotPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityRailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityStructure;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCityWellPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPlotPoolElement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentFlatSource;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
@@ -51,6 +57,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentMapStructure;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpreadPlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructureRings;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSpread;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
@@ -58,25 +65,23 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public final class ContentEvents {
@@ -90,19 +95,27 @@ public final class ContentEvents {
                 helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.STRUCTURE_FEATURE), ContentCaveStructureFeature.INSTANCE);
             });
         }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC)); }
+        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC);
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
+            });
+        }
+        else if (event.getRegistryKey().equals(Registries.CHUNK_GENERATOR)) { event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentFlatSource.ID), ContentFlatSource.CODEC)); }
         else if (event.getRegistryKey().equals(Registries.STRUCTURE_TYPE)) { event.register(Registries.STRUCTURE_TYPE, helper -> {
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE), ContentCityStructure.TYPE);
         }); }
+        else if (event.getRegistryKey().equals(Registries.STRUCTURE_POOL_ELEMENT)) { event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE)); }
         else if (event.getRegistryKey().equals(Registries.STRUCTURE_PIECE)) { event.register(Registries.STRUCTURE_PIECE, helper -> {
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_piece"), ContentCityPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plot"), ContentCityPlotPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_deck"), ContentCityDeckPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_lamp"), ContentCityLampPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_rail"), ContentCityRailPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_farm"), ContentCityFarmPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_bulb"), ContentCityBulbPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_cap"), ContentCityCapPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_pier"), ContentCityPierPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_intersect"), ContentCityIntersectPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_decor"), ContentCityDecorPiece.TYPE);
@@ -110,12 +123,17 @@ public final class ContentEvents {
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_loop"), ContentCitySewerLoopPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_hatch"), ContentCitySewerHatchPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plaza"), ContentCityPlazaPiece.TYPE);
+            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_well"), ContentCityWellPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_station"), ContentCityStationPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stairs"), ContentCityStairsPiece.TYPE);
             helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stamp"), ContentCityStampPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_entrance"), ContentCityEntrancePiece.TYPE);
         }); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) { event.register(Registries.STRUCTURE_PLACEMENT, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE)); }
+        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) {
+            event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE);
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RINGS_PLACEMENT), ContentStructureRings.TYPE);
+            });
+        }
         else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
         else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
         if (Config.contentOff()) {
@@ -129,10 +147,11 @@ public final class ContentEvents {
         else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
         else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
         else if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) { event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs); }
-        else if (event.getRegistryKey().equals(Registries.ENTITY_TYPE)) { event.register(Registries.ENTITY_TYPE, ContentEntities::registerTypes); }
+        else if (event.getRegistryKey().equals(Registries.ENTITY_TYPE)) { event.register(Registries.ENTITY_TYPE, ContentEntityTypes::registerTypes); }
         else if (event.getRegistryKey().equals(Registries.BLOCK_ENTITY_TYPE)) {
             event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register);
             event.register(Registries.BLOCK_ENTITY_TYPE, ContentContainers::register);
+            event.register(Registries.BLOCK_ENTITY_TYPE, ContentBells::register);
         }
         else if (event.getRegistryKey().equals(Registries.MENU)) { event.register(Registries.MENU, ContentContainers::registerMenu); }
         else if (event.getRegistryKey().equals(Registries.SOUND_EVENT)) { event.register(Registries.SOUND_EVENT, ContentSounds::register); }
@@ -154,10 +173,10 @@ public final class ContentEvents {
         if (count > 0) { Summary.info("content.blocks", "Registered " + count + " block(s) from packs"); }
     }
 
-    private static int registerBlocks(RegisterEvent.RegisterHelper<Block> helper, boolean stairs) {
+    private static int registerBlocks(RegisterEvent.RegisterHelper<Block> helper, boolean modeled) {
         int count = 0;
         for (BlockDef def : ContentRegistry.blockDefs()) {
-            if (ContentBlockTypes.STAIRS.equals(def.type()) != stairs || !ContentRegistry.available(def.requires(), def.key())) { continue; }
+            if (ContentBlockTypes.borrowsModel(def.type()) != modeled || !ContentRegistry.available(def.requires(), def.key())) { continue; }
             for (BlockVariant variant : def.variants()) {
                 if (BuiltInRegistries.BLOCK.containsKey(variant.id())) {
                     ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack definition", variant.id());
@@ -179,7 +198,7 @@ public final class ContentEvents {
 
     private static void registerItems(RegisterEvent.RegisterHelper<Item> helper) {
         int count = 0;
-        ContentEntities.registerEggs(helper);
+        ContentEntityTypes.registerEggs(helper);
         for (ContentRegistry.BlockEntry entry : new ArrayList<>(ContentRegistry.blocks())) {
             Item item = ContentBlockTypes.item(entry);
             if (item == null || BuiltInRegistries.ITEM.containsKey(entry.id())) { continue; }
@@ -218,11 +237,12 @@ public final class ContentEvents {
 
     private static void generateData() {
         ContentGenerated.generate();
-        ContentEntities.generate();
+        ContentEntityTypes.generate();
         ContentExposures.generate();
         ContentBiomes.generate();
         ContentCaveRegions.generate();
         ContentOreControl.generate();
+        ContentGeneratorControl.load();
         ContentStructureControl.generate();
         ContentStructureMaps.generate();
         ContentCity.generate();
@@ -255,20 +275,32 @@ public final class ContentEvents {
         int count = 0;
         for (TabDef def : ContentRegistry.tabDefs()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            ResourceKey<CreativeModeTab> key = ResourceKey.create(Registries.CREATIVE_MODE_TAB, def.key());
-            CreativeModeTab tab = CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup." + def.key().getNamespace() + "." + def.key().getPath().replace('/', '.')))
-                    .icon(() -> icon(def))
-                    .displayItems((parameters, out) -> {
-                        for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-                            if (def.key().equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), out::accept); }
-                        }
-                    })
-                    .build();
-            helper.register(key, tab);
+            helper.register(ResourceKey.create(Registries.CREATIVE_MODE_TAB, def.id()), tab(def.id(), def.key(), def.icon()));
+            count++;
+        }
+        Set<ResourceLocation> undeclared = new LinkedHashSet<>();
+        for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+            ResourceLocation named = entry.tab().isEmpty() ? null : ResourceLocation.tryParse(entry.tab());
+            if (named == null || "minecraft".equals(named.getNamespace()) || ContentRegistry.tab(entry.tab()) != null || BuiltInRegistries.CREATIVE_MODE_TAB.containsKey(named)) { continue; }
+            undeclared.add(named);
+        }
+        for (ResourceLocation named : undeclared) {
+            helper.register(ResourceKey.create(Registries.CREATIVE_MODE_TAB, named), tab(named, named, ""));
             count++;
         }
         if (count > 0) { Summary.info("content.tabs", "Registered " + count + " creative tab(s) from packs"); }
+    }
+
+    private static CreativeModeTab tab(ResourceLocation id, ResourceLocation source, String declared) {
+        return CreativeModeTab.builder()
+                .title(Component.translatable("itemGroup." + id.getNamespace() + "." + id.getPath().replace('/', '.')))
+                .icon(() -> icon(id, source, declared))
+                .displayItems((parameters, out) -> {
+                    for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+                        if (id.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), out::accept); }
+                    }
+                })
+                .build();
     }
 
     private static void show(Item item, Consumer<ItemStack> out) {
@@ -279,11 +311,11 @@ public final class ContentEvents {
         for (ItemStack stack : bottle.stacks()) { out.accept(stack.copy()); }
     }
 
-    private static ItemStack icon(TabDef def) {
-        ItemStack declared = ContentStacks.parse(def.key(), def.icon(), 1);
+    private static ItemStack icon(ResourceLocation id, ResourceLocation source, String named) {
+        ItemStack declared = ContentStacks.parse(source, named, 1);
         if (!declared.isEmpty()) { return declared; }
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-            if (def.key().equals(ResourceLocation.tryParse(entry.tab()))) { return new ItemStack(entry.item()); }
+            if (id.equals(ResourceLocation.tryParse(entry.tab()))) { return new ItemStack(entry.item()); }
         }
         return new ItemStack(Blocks.STONE);
     }
@@ -294,14 +326,5 @@ public final class ContentEvents {
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
             if (tab.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), event::accept); }
         }
-    }
-
-    public static void onBreak(BlockEvent.BreakEvent event) {
-        if (event.getLevel() instanceof ServerLevel level) { ContentDrops.release(level, event.getPos(), event.getState()); }
-    }
-
-    public static void onDetonate(ExplosionEvent.Detonate event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
-        for (BlockPos pos : event.getAffectedBlocks()) { ContentDrops.release(level, pos, level.getBlockState(pos)); }
     }
 }

@@ -69,14 +69,14 @@ public final class ContentBiomeParser {
                 spawnChance(key, GsonHelper.getAsFloat(json, "spawnChance", 0.1F)),
                 rate(rates, "surfaceDay"), rate(rates, "surfaceNight"), rate(rates, "undergroundDay"), rate(rates, "undergroundNight"),
                 GsonHelper.getAsBoolean(json, "keepDefaultSpawns", false),
-                spawns(key, json),
+                spawns(key, json, 10, 0),
                 json.has("minHeight") || json.has("maxHeight"),
                 GsonHelper.getAsInt(json, "minHeight", Integer.MIN_VALUE),
                 GsonHelper.getAsInt(json, "maxHeight", Integer.MAX_VALUE),
                 Json.strings(json, "replaces"), Json.strings(json, "requires"));
     }
 
-    public static List<BiomeSpawnDef> spawns(ResourceLocation key, JsonObject json) {
+    public static List<BiomeSpawnDef> spawns(ResourceLocation key, JsonObject json, int weight, int max) {
         if (!json.has("spawns")) { return List.of(); }
         List<BiomeSpawnDef> spawns = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "spawns")) {
@@ -96,15 +96,18 @@ public final class ContentBiomeParser {
                 continue;
             }
             int min = Math.max(1, GsonHelper.getAsInt(entry, "min", 1));
-            spawns.add(new BiomeSpawnDef(entity, category, Math.max(1, GsonHelper.getAsInt(entry, "weight", 10)), min, Math.max(min, GsonHelper.getAsInt(entry, "max", min))));
+            spawns.add(new BiomeSpawnDef(entity, category, Math.max(1, GsonHelper.getAsInt(entry, "weight", weight)), min, Math.max(min, GsonHelper.getAsInt(entry, "max", Math.max(min, max)))));
         }
         return List.copyOf(spawns);
     }
 
     @Nullable private static String category(String written) {
-        String wanted = written.trim().toLowerCase(Locale.ROOT);
+        String wanted = written.trim().replace("_", "").toLowerCase(Locale.ROOT);
         if ("water".equals(wanted)) { return "water_creature"; }
-        return CATEGORIES.contains(wanted) ? wanted : null;
+        for (String category : CATEGORIES) {
+            if (category.replace("_", "").equals(wanted)) { return category; }
+        }
+        return null;
     }
 
     private static float spawnChance(ResourceLocation key, float wanted) {

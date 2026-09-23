@@ -31,6 +31,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class WorldIntroScreen extends Screen {
+    private static final ResourceLocation DIRT = ResourceLocation.withDefaultNamespace("textures/block/dirt.png");
     private static final int TEXT_WIDTH = 274;
     private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
@@ -159,7 +160,7 @@ public final class WorldIntroScreen extends Screen {
     private float endOffset() {
         IntroPageDef def = pages.get(page);
         if (def.settle()) {
-            float step = LINE_HEIGHT * def.textScale();
+            float step = LINE_HEIGHT * scale;
             return (height - step) / 2.0F - Math.max(lines.size() - 1, 0) * step;
         }
         return def.up() ? -totalScrollLength - 24.0F : height + 24.0F;
@@ -177,7 +178,9 @@ public final class WorldIntroScreen extends Screen {
     private void drawPageBackground(GuiGraphics graphics, float partialTick) {
         IntroPageDef def = pages.get(page);
         if (def.backgrounds().isEmpty()) {
-            graphics.fill(0, 0, width, height, 0xFF000000);
+            graphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
+            graphics.blit(DIRT, 0, 0, 0, 0.0F, 0.0F, width, height, 32, 32);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             return;
         }
         int index = def.cycles() ? (int) ((ticks + partialTick) / (def.interval() * 20.0F)) % def.backgrounds().size() : 0;
@@ -190,6 +193,7 @@ public final class WorldIntroScreen extends Screen {
         scale = def.textScale();
         read(def);
         if (!def.still()) {
+            scale = Crisp.scale(scale);
             wrap((int) Mth.clamp((width - MARGIN) / scale, 1.0F, TEXT_WIDTH));
             return;
         }

@@ -43,15 +43,22 @@ public final class ServerCommands {
                                 return 0;
                             }
                             BlockPos at = BlockPos.containing(source.getPosition());
-                            long total = ContentPregen.start(source.getPlayer(), source.getServer(), source.getLevel().dimension(), at.getX() >> 4, at.getZ() >> 4, radius);
+                            long total = ContentPregen.start(source, source.getServer(), source.getLevel().dimension(), at.getX() >> 4, at.getZ() >> 4, radius);
                             CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.pregenmaking", total, at.getX() >> 4, at.getZ() >> 4, source.getLevel().dimension().location().toString()));
                             return 1;
                         })))
                 .then(Commands.literal("intro").executes(context -> {
                     CommandSourceStack source = context.getSource();
                     CommandShared.ran(source, NAME, "intro");
+                    if (ContentIntroPlay.disabled()) {
+                        source.sendFailure(CommandShared.tr("rdpl.command.intronone"));
+                        return 0;
+                    }
                     ServerPlayer player = source.getPlayer();
-                    if (player == null) { return 0; }
+                    if (player == null) {
+                        source.sendFailure(CommandShared.tr("rdpl.command.introplayer"));
+                        return 0;
+                    }
                     ContentIntroPlay.replay(player);
                     CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.introreplay"));
                     return 1;

@@ -19,7 +19,7 @@ public record WorldgenDef(ResourceLocation key, ResourceLocation block, List<Blo
 
     public boolean follows() { return !indicators.isEmpty() || !then.isEmpty(); }
 
-    public boolean needsBiome() { return !caveRegions.isEmpty() || hasBiomeFilter() || hasClimateFilter(); }
+    public boolean needsBiome() { return hasBiomeFilter() || hasClimateFilter(); }
 
     public boolean climateAllows(float temperature, float rainfall) {
         return temperature >= leastTemperature && temperature <= mostTemperature && rainfall >= leastRainfall && rainfall <= mostRainfall;

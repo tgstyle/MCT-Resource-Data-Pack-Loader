@@ -1,12 +1,13 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.HardnessDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.gate.GateStorage;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
 import mctmods.resourcedatapackloader.content.worldgen.ContentField;
-import mctmods.resourcedatapackloader.loot.BlockDrops;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeManager;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkMap;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -127,10 +128,8 @@ public final class ContentHardness {
             }
             TOOLS.put(def, tools);
             if (!def.swaps()) { continue; }
-            ResourceLocation id = ResourceLocation.tryParse(def.becomes());
-            Block target = id == null ? null : Registered.find(BuiltInRegistries.BLOCK, id);
-            if (target == null) { ContentLog.LOGGER.error("Hardness group {} becomes {}, which is not a registered block, so it never turns", def.key(), def.becomes()); }
-            else { BECOMES.put(def, target.defaultBlockState()); }
+            BlockState target = ContentStates.known(def.becomes(), def.key() + " becomes");
+            if (target != null) { BECOMES.put(def, target); }
         }
         anyRolls = rolls;
     }
@@ -235,24 +234,20 @@ public final class ContentHardness {
     }
 
     public static void dig(LivingEntity digger, BlockPos pos) {
-        BlockDrops.digging(true);
-        try { breakFor(digger, pos); }
-        finally { BlockDrops.digging(false); }
-    }
-
-    private static void breakFor(LivingEntity digger, BlockPos pos) {
         if (!(digger.level() instanceof ServerLevel level)) { return; }
         BlockState state = level.getBlockState(pos);
+        int earned = ContentEntities.ignoresExperience(digger) ? 0 : ContentBlock.dug(state, level);
         if (breaksAway(state, null)) {
-            level.destroyBlock(pos, true, digger);
+            if (level.destroyBlock(pos, true, digger) && earned > 0) { state.getBlock().popExperience(level, pos, earned); }
             return;
         }
         Block.dropResources(state, level, pos, level.getBlockEntity(pos), digger, ItemStack.EMPTY);
+        if (earned > 0) { state.getBlock().popExperience(level, pos, earned); }
         level.levelEvent(BREAK_EFFECT, pos, Block.getId(state));
     }
 
     public static void onDrops(BlockDropsEvent event) {
-        if (event.getBreaker() instanceof Mob mob && ContentEntities.def(mob) != null && !ContentEntities.collectsExperience(mob)) { event.setDroppedExperience(0); }
+        if (event.getBreaker() instanceof Mob mob && ContentEntities.def(mob) != null && ContentEntities.ignoresExperience(mob)) { event.setDroppedExperience(0); }
     }
 
     public static float miningAt(@Nullable BlockState state, @Nullable LivingEntity who, int x, int y, int z) {
@@ -390,15 +385,13 @@ public final class ContentHardness {
     public static void onLevelTick(LevelTickEvent.Post event) {
         if (SWAPS.isEmpty() || !(event.getLevel() instanceof ServerLevel level)) { return; }
         Deque<ChunkPos> queue = SWAPS.get(level.dimension());
-        int budget = Config.worldgen.retrogenChunksPerTick();
-        while (queue != null && budget > 0 && !queue.isEmpty()) {
-            ChunkPos pos = queue.pollFirst();
-            LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x, pos.z);
-            if (chunk == null) { continue; }
+        while (queue != null && !queue.isEmpty() && ContentRetrogen.canCatchUp(level, queue.peekFirst())) {
+            ChunkPos pos = queue.removeFirst();
+            LevelChunk chunk = level.getChunk(pos.x, pos.z);
             List<HardnessDef> defs = missing(level.getServer(), chunk);
             if (defs.isEmpty()) { continue; }
             swapped(level, chunk, defs);
-            budget--;
+            ContentRetrogen.caughtUp(level, pos);
         }
     }
 
@@ -458,8 +451,8 @@ public final class ContentHardness {
         float[] mining = range(json, "miningTime");
         float[] blast = range(json, "blastResistance");
         int buckets = Math.clamp(GsonHelper.getAsInt(json, "buckets", 10), 1, 256);
-        int minHeight = GsonHelper.getAsInt(json, "minHeight", 0);
-        int maxHeight = GsonHelper.getAsInt(json, "maxHeight", 255);
+        int minHeight = GsonHelper.getAsInt(json, "minHeight", Integer.MIN_VALUE);
+        int maxHeight = GsonHelper.getAsInt(json, "maxHeight", Integer.MAX_VALUE);
         if (maxHeight < minHeight) {
             ContentLog.LOGGER.error("Hardness group {} has maxHeight below minHeight, swapping them", key);
             int swap = minHeight;

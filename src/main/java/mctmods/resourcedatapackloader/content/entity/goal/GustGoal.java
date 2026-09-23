@@ -13,13 +13,13 @@ import javax.annotation.Nullable;
 
 public final class GustGoal extends Goal {
     private static final int WIND = 20;
-    private static final int REST = 60;
+    private static final int REST = 180;
     private static final double SPREAD = 3.0D;
     private final PathfinderMob mob;
     private final float power;
     @Nullable private LivingEntity target;
     private int winding;
-    private int resting;
+    private int restUntil;
 
     public GustGoal(PathfinderMob mob, float power) {
         this.mob = mob;
@@ -30,10 +30,7 @@ public final class GustGoal extends Goal {
     @Override public boolean requiresUpdateEveryTick() { return true; }
 
     @Override public boolean canUse() {
-        if (resting > 0) {
-            resting--;
-            return false;
-        }
+        if (mob.tickCount < restUntil) { return false; }
         LivingEntity found = mob.getTarget();
         if (found == null || !found.isAlive()) { return false; }
         double away = mob.distanceToSqr(found);
@@ -50,10 +47,11 @@ public final class GustGoal extends Goal {
 
     @Override public void stop() {
         target = null;
-        resting = REST;
+        restUntil = mob.tickCount + REST;
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         if (target == null) { return; }
         mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
         winding++;

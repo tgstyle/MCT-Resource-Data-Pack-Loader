@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -15,10 +16,13 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CookingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.neoforged.neoforge.common.conditions.ConditionalOps;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,22 +30,23 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-@Mixin(value = RecipeManager.class, priority = 1200) public abstract class MixinRecipeManager implements IRecipeFilter {
+@Mixin(RecipeManager.class) public abstract class MixinRecipeManager implements IRecipeFilter {
     @Unique private static final int RDPL_COOKING_TIME = 200;
     @Shadow @Final private HolderLookup.Provider registries;
     @Shadow private Multimap<RecipeType<?>, RecipeHolder<?>> byType;
     @Shadow private Map<ResourceLocation, RecipeHolder<?>> byName;
 
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
-    private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> loaded, ResourceManager manager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.begin(loaded); }
+    private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
+        ConditionalOps<JsonElement> ops = ((IContextAwareReloadListener) this).rdpl$makeConditionalOps();
+        RecipeLoading.begin(object, resourceManager, json -> ICondition.conditionsMatched(ops, json), (id, json) -> Recipe.CONDITIONAL_CODEC.parse(ops, json).getOrThrow(JsonParseException::new));
+    }
 
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN"))
-    private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> loaded, ResourceManager manager, ProfilerFiller profiler, CallbackInfo ci) {
+    private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
         rdpl$rebuild(false);
         RecipeLoading.attach(this);
     }
@@ -56,34 +61,22 @@ import java.util.Map;
     @Unique private void rdpl$rebuild(boolean late) {
         ImmutableMultimap.Builder<RecipeType<?>, RecipeHolder<?>> kept = ImmutableMultimap.builder();
         Map<ResourceLocation, RecipeHolder<?>> named = new LinkedHashMap<>();
-        List<RecipeHolder<?>> smelting = new ArrayList<>();
         for (RecipeHolder<?> holder : byName.values()) {
             ItemStack result = holder.value().getResultItem(registries);
             if (late ? RecipeLoading.late(holder.id(), holder.value(), result) : RecipeLoading.doomed(holder.id(), holder.value(), result)) { continue; }
             kept.put(holder.value().getType(), holder);
             named.put(holder.id(), holder);
-            if (holder.value().getType() == RecipeType.SMELTING) { smelting.add(holder); }
         }
-        int added = 0;
-        if (!late) {
-            for (FurnaceRecipes.Addition addition : FurnaceRecipes.additions()) {
-                if (named.containsKey(addition.id()) || rdpl$smelts(smelting, addition)) { continue; }
-                RecipeHolder<SmeltingRecipe> holder = new RecipeHolder<>(addition.id(), new SmeltingRecipe("", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.experience(), RDPL_COOKING_TIME));
+        if (late) {
+            for (FurnaceRecipes.Addition addition : FurnaceRecipes.settle()) {
+                if (named.containsKey(addition.id())) { continue; }
+                RecipeHolder<SmeltingRecipe> holder = new RecipeHolder<>(addition.id(), new SmeltingRecipe("", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.output().getCount() * Math.min(addition.experience(), 1.0F), RDPL_COOKING_TIME));
                 kept.put(RecipeType.SMELTING, holder);
                 named.put(addition.id(), holder);
-                smelting.add(holder);
-                added++;
             }
         }
         byType = kept.build();
         byName = ImmutableMap.copyOf(named);
-        if (!late) { RecipeLoading.finish(added); }
-    }
-
-    @Unique private static boolean rdpl$smelts(List<RecipeHolder<?>> smelting, FurnaceRecipes.Addition addition) {
-        for (RecipeHolder<?> holder : smelting) {
-            if (!holder.value().getIngredients().isEmpty() && FurnaceRecipes.smeltsAlready(addition, holder.value().getIngredients().getFirst(), holder.id())) { return true; }
-        }
-        return false;
+        if (!late) { RecipeLoading.finish(); }
     }
 }

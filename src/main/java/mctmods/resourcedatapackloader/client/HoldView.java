@@ -30,7 +30,7 @@ public final class HoldView {
     private static final int PULSE_CYCLE = 1500;
     private static final int PULSE_HELD = 750;
     private static final int PULSE_FADE = 500;
-    private static final float PULSE_LEAST = 0.05F;
+    private static final float PULSE_LEAST = 0.11F;
     private static String warning = "";
     private static String note = "";
     private static boolean fogging;

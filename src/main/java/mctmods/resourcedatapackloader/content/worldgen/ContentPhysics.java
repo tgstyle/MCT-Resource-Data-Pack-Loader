@@ -23,6 +23,8 @@ public final class ContentPhysics {
 
     public static double gravity(Level level) { return GRAVITY.factor(level); }
 
+    public static boolean openAir(LivingEntity living) { return !living.isInWater() && !living.isInLava() && !living.isFallFlying(); }
+
     public static void onFall(LivingFallEvent event) {
         double factor = FALL_DAMAGE.factor(event.getEntity().level());
         if (factor != 1.0D) { event.setDamageMultiplier((float) (event.getDamageMultiplier() * factor)); }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
@@ -31,7 +32,7 @@ public final class ContentWelcome {
     private ContentWelcome() {}
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && !ContentPregen.welcomesLater(player) && ContentIntroPlay.skips(player)) { welcome(player); }
+        if (event.getEntity() instanceof ServerPlayer player && !ContentPregenHold.welcomesLater(player) && ContentIntroPlay.skips(player)) { welcome(player); }
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ARRIVED.remove(event.getEntity().getUUID()); }
@@ -39,9 +40,8 @@ public final class ContentWelcome {
     public static boolean arrived(ServerPlayer player) { return ARRIVED.contains(player.getUUID()); }
 
     public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        String greeting = greetingFor(player, event.getTo(), false);
-        if (greeting != null) { send(player, greeting); }
+        if (ContentPregen.busy() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
+        if (greetingFor(player, event.getTo(), false) != null) { welcome(player); }
     }
 
     private static List<String> entries() { return ContentControl.list(ContentControl.CHUNKS, KEY, Config.chunks.welcomeSays()); }
@@ -57,7 +57,12 @@ public final class ContentWelcome {
         List<String> entries = entries();
         boolean atDefault = entries.size() == 1 && entries.getFirst().trim().equals(Config.WELCOME);
         String greeting = atDefault ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player, player.level().dimension(), true);
-        if (greeting != null && !greeting.isEmpty() && !RDPLNetwork.sendNote(player, greeting)) { send(player, greeting); }
+        if (greeting == null || greeting.isEmpty()) { return; }
+        if (Says.card()) {
+            Says.tell(player, greeting, ChatFormatting.GREEN);
+            return;
+        }
+        show(player, greeting, ChatFormatting.GREEN);
     }
 
     @Nullable private static String greetingFor(ServerPlayer player, ResourceKey<Level> dimension, boolean fallBack) {
@@ -74,10 +79,11 @@ public final class ContentWelcome {
     }
 
     @Nullable private static ResourceKey<Level> dimensionNamed(ServerPlayer player, String name) {
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        String named = ContentFormats.dimensionId(name);
+        ResourceLocation id = ResourceLocation.tryParse(named);
         if (id == null) { return null; }
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, id);
-        return player.serverLevel().getServer().getLevel(key) == null ? null : key;
+        return named.contains(":") || name.trim().matches("-?\\d+") || player.serverLevel().getServer().getLevel(key) != null ? key : null;
     }
 
     public static void show(ServerPlayer player, String said, ChatFormatting color) {
@@ -85,14 +91,5 @@ public final class ContentWelcome {
         player.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
         player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(said).withStyle(color)));
         player.connection.send(new ClientboundSetTitleTextPacket(Component.empty()));
-    }
-
-    private static void send(ServerPlayer player, String greeting) {
-        if (Says.card()) {
-            Says.tell(player, greeting, ChatFormatting.GREEN);
-            return;
-        }
-        player.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
-        player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(greeting).withStyle(ChatFormatting.GREEN)));
     }
 }

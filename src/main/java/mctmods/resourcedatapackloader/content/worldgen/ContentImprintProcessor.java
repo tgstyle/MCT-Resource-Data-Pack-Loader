@@ -7,6 +7,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentImprintProcessor extends StructureProcessor {
@@ -15,11 +16,11 @@ public final class ContentImprintProcessor extends StructureProcessor {
 
     public ContentImprintProcessor(@Nullable ContentPlacer placer) { this.placer = placer; }
 
-    @Override @Nullable public StructureTemplate.StructureBlockInfo process(LevelReader level, BlockPos offset, BlockPos pos, StructureTemplate.StructureBlockInfo raw,
-            StructureTemplate.StructureBlockInfo info, StructurePlaceSettings settings, @Nullable StructureTemplate template) {
+    @Override @Nullable public StructureTemplate.StructureBlockInfo process(@Nonnull LevelReader level, @Nonnull BlockPos offset, @Nonnull BlockPos pos, @Nonnull StructureTemplate.StructureBlockInfo raw,
+            @Nonnull StructureTemplate.StructureBlockInfo info, @Nonnull StructurePlaceSettings settings, @Nullable StructureTemplate template) {
         if (placer == null) { return info; }
         return placer.occupied(info.pos().getX(), info.pos().getY(), info.pos().getZ()) ? null : info;
     }
 
-    @Override protected StructureProcessorType<?> getType() { return TYPE; }
+    @Override @Nonnull protected StructureProcessorType<?> getType() { return TYPE; }
 }

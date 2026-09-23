@@ -14,6 +14,6 @@ public record PickDef(String name, int weight) {
             roll -= Math.max(1, choice.weight());
             if (roll < 0) { return choice.name(); }
         }
-        return choices.get(0).name();
+        return choices.getFirst().name();
     }
 }
