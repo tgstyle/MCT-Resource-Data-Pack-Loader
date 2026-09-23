@@ -1,14 +1,19 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
+import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.def.MaterialDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
+import mctmods.resourcedatapackloader.content.item.ContentDrinkItem;
+import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IFireBlock;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.PackRequirements;
@@ -19,9 +24,16 @@ import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonParseException;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.registries.ForgeRegistries;
 import java.nio.file.Files;
 import java.util.Collection;
@@ -29,6 +41,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -45,8 +58,8 @@ public final class ContentRegistry {
     private static final Map<ResourceLocation, BlockEntry> BLOCKS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, ItemEntry> ITEMS = new LinkedHashMap<>();
     private static final Map<Block, BlockEntry> BY_BLOCK = new LinkedHashMap<>();
-    private static final Map<Item, ItemEntry> BY_ITEM = new LinkedHashMap<>();
     private static final Set<String> WARNED = new HashSet<>();
+    private static final Set<String> CLAIMED = new HashSet<>();
     private static boolean loaded;
 
     private ContentRegistry() {}
@@ -54,12 +67,12 @@ public final class ContentRegistry {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
+        if (Config.contentOff()) { return; }
         Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
             ExposureDef def = ContentParser.exposure(key, contents);
             if (def != null) { EXPOSURE_DEFS.put(key, def); }
         });
         if (!EXPOSURE_DEFS.isEmpty()) { Summary.info("exposures", "Loaded " + EXPOSURE_DEFS.size() + " exposure definition(s)"); }
-        if (Config.contentOff()) { return; }
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
             try {
@@ -87,16 +100,17 @@ public final class ContentRegistry {
         });
         Json.eachFile(PackManager.TABS, "creative tab", (key, contents) -> {
             TabDef def = ContentParser.tab(key, contents);
-            if (def != null) { TAB_DEFS.put(key, def); }
+            if (def != null) { TAB_DEFS.put(def.id(), def); }
         });
-        if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !MATERIAL_DEFS.isEmpty() || !TAB_DEFS.isEmpty()) {
-            Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid, " + MATERIAL_DEFS.size() + " material and " + TAB_DEFS.size() + " creative tab definition(s)");
+        if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !TAB_DEFS.isEmpty()) {
+            Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid and " + TAB_DEFS.size() + " creative tab definition(s)");
         }
+        if (!MATERIAL_DEFS.isEmpty()) { Summary.info("materials", "Loaded " + MATERIAL_DEFS.size() + " material definition(s)"); }
     }
 
     public static boolean reserved(ResourceLocation key) {
         if (!ResourceDataPackLoader.MOD_ID.equals(key.getNamespace())) { return false; }
-        ContentLog.LOGGER.error("Definition {} claims the namespace '{}', which belongs to this mod, so it is ignored", key, key.getNamespace());
+        if (CLAIMED.add(key.getNamespace())) { ContentLog.LOGGER.error("A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace()); }
         return true;
     }
 
@@ -134,6 +148,8 @@ public final class ContentRegistry {
 
     public static void addDef(BlockDef def) { BLOCK_DEFS.put(def.key(), def); }
 
+    public static boolean hasDef(ResourceLocation key) { return BLOCK_DEFS.containsKey(key); }
+
     public static Collection<BlockDef> blockDefs() { return Collections.unmodifiableCollection(BLOCK_DEFS.values()); }
 
     public static Collection<ItemDef> itemDefs() { return Collections.unmodifiableCollection(ITEM_DEFS.values()); }
@@ -166,12 +182,19 @@ public final class ContentRegistry {
         BlockEntry entry = new BlockEntry(id, block, def, variant, role);
         BLOCKS.put(id, entry);
         BY_BLOCK.put(block, entry);
+        if (def.flammability() > 0) { ((IFireBlock) Blocks.FIRE).rdpl$setFlammable(block, def.fireSpread(), def.flammability()); }
     }
 
     public static void addItem(ResourceLocation id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {
-        ItemEntry entry = new ItemEntry(id, item, def, variant, block, tab);
+        ItemEntry entry = new ItemEntry(id, item, def, variant, block, tabId(tab, id.getNamespace()));
         ITEMS.put(id, entry);
-        BY_ITEM.put(item, entry);
+    }
+
+    private static String tabId(String named, String namespace) {
+        String wanted = named == null ? "" : named.trim();
+        if (wanted.isEmpty() || wanted.indexOf(':') >= 0) { return wanted; }
+        String vanilla = ContentFormats.vanillaTab(wanted);
+        return vanilla != null ? vanilla : namespace + ":" + wanted.toLowerCase(Locale.ROOT);
     }
 
     public static Collection<BlockEntry> blocks() { return Collections.unmodifiableCollection(BLOCKS.values()); }
@@ -182,12 +205,19 @@ public final class ContentRegistry {
 
     @Nullable public static BlockEntry entry(Block block) { return BY_BLOCK.get(block); }
 
+    @Nullable public static Integer lightBlock(Block block) {
+        BlockEntry entry = BY_BLOCK.get(block);
+        if (entry == null || ContentBlockTypes.SLAB.equals(entry.def().type())) { return null; }
+        BlockDef def = entry.def();
+        if (ContentBlockTypes.CONTAINER.equals(def.type()) && def.container() != null && def.container().chestModel()) { return 0; }
+        if (ContentBlockTypes.BELL.equals(def.type())) { return 0; }
+        return Mth.clamp(def.lightOpacity(), 0, 15);
+    }
+
     public static boolean lacks(String behavior, Block block) {
         BlockEntry entry = BY_BLOCK.get(block);
         return entry == null || !entry.def().behavesAs().contains(behavior);
     }
-
-    @Nullable public static ItemEntry entry(Item item) { return BY_ITEM.get(item); }
 
     public static Set<Block> resolveSoil(Iterable<String> names, ResourceLocation owner) {
         Set<Block> resolved = new HashSet<>();
@@ -199,7 +229,38 @@ public final class ContentRegistry {
         return resolved;
     }
 
-    public static boolean isEmpty() { return BLOCK_DEFS.isEmpty() && ITEM_DEFS.isEmpty() && FLUID_DEFS.isEmpty(); }
+    public static void resolveStacks() {
+        for (BlockDef def : BLOCK_DEFS.values()) {
+            for (BlockVariant variant : def.variants()) {
+                for (DropDef drop : variant.drops()) { resolveDrop(def, variant, drop); }
+            }
+        }
+        for (BlockEntry entry : BLOCKS.values()) {
+            if (entry.block() instanceof ContentCropBlock crop) { crop.resolve(ContentStacks.find(entry.def().key(), entry.def().cropSeed()), ContentStacks.find(entry.def().key(), entry.def().cropProduce())); }
+        }
+        ContentGenerated.cropLoot();
+        for (ItemDef def : ITEM_DEFS.values()) {
+            if (def.container().isEmpty()) { continue; }
+            Item container = ContentStacks.find(def.key(), def.container());
+            for (ItemEntry entry : ITEMS.values()) {
+                if (entry.def() == def && entry.item() instanceof ContentDrinkItem drink) { drink.resolveContainer(container); }
+            }
+        }
+    }
+
+    private static void resolveDrop(BlockDef def, BlockVariant variant, DropDef drop) {
+        if (drop.entity() != null) {
+            if (!ForgeRegistries.ENTITY_TYPES.containsKey(drop.entity())) { ContentLog.LOGGER.error("Drop entity {} for {} '{}' is not registered, that drop is skipped", drop.entity(), def.key(), variant.name()); }
+            return;
+        }
+        if (drop.item() == null || !ContentStacks.registered(drop.item())) { ContentLog.LOGGER.error("Drop {} for {} '{}' is not registered, that drop is skipped", drop.item(), def.key(), variant.name()); }
+    }
+
+    public static boolean sustains(Set<Block> soil, BlockGetter level, BlockPos ground, IPlantable plant) {
+        BlockState state = level.getBlockState(ground);
+        if (soil.isEmpty()) { return state.canSustainPlant(level, ground, Direction.UP, plant); }
+        return soil.contains(state.getBlock());
+    }
 
     public record BlockEntry(ResourceLocation id, Block block, BlockDef def, BlockVariant variant, String role) {
         public boolean isMain() { return MAIN.equals(role); }

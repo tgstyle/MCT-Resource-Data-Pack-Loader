@@ -1,3 +1,3 @@
 package mctmods.resourcedatapackloader.network;
 
-public record MessageOpenWorn(int after) {}
+public record MessageOpenWorn() {}

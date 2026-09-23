@@ -18,16 +18,21 @@ import javax.annotation.Nullable;
 
 public final class PortalStorage extends SavedData {
     private static final String NAME = "rdpl_portals";
-    private static final String TAG = "Positions";
+    private static final String TAG = "positions";
+    private static final String EARLIER_TAG = "Positions";
     private final Map<Long, String> positions = new LinkedHashMap<>();
 
     private static PortalStorage of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(PortalStorage::read, PortalStorage::new, NAME); }
 
     private static PortalStorage read(CompoundTag tag) {
         PortalStorage held = new PortalStorage();
-        for (Tag entry : tag.getList(TAG, Tag.TAG_COMPOUND)) {
+        for (Tag entry : tag.getList(EARLIER_TAG, Tag.TAG_COMPOUND)) {
             CompoundTag stored = (CompoundTag) entry;
             held.positions.put(stored.getLong("At"), stored.getString("Owner"));
+        }
+        for (Tag entry : tag.getList(TAG, Tag.TAG_COMPOUND)) {
+            CompoundTag stored = (CompoundTag) entry;
+            held.positions.put(BlockPos.asLong(stored.getInt("x"), stored.getInt("y"), stored.getInt("z")), stored.getString("owner"));
         }
         return held;
     }
@@ -35,9 +40,12 @@ public final class PortalStorage extends SavedData {
     @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag) {
         ListTag list = new ListTag();
         for (Map.Entry<Long, String> stored : positions.entrySet()) {
+            BlockPos at = BlockPos.of(stored.getKey());
             CompoundTag entry = new CompoundTag();
-            entry.putLong("At", stored.getKey());
-            entry.putString("Owner", stored.getValue());
+            entry.putInt("x", at.getX());
+            entry.putInt("y", at.getY());
+            entry.putInt("z", at.getZ());
+            entry.putString("owner", stored.getValue());
             list.add(entry);
         }
         tag.put(TAG, list);

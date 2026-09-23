@@ -74,9 +74,10 @@ public final class PatrolGoal extends Goal {
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         if (leads()) {
             walked++;
-            if (waypoint != null && walked < LEG && mob.distanceToSqr(waypoint.getX() + 0.5D, waypoint.getY(), waypoint.getZ() + 0.5D) > 16.0D && !mob.getNavigation().isDone()) { return; }
+            if (waypoint != null && walked < LEG && mob.distanceToSqr(waypoint.getX(), waypoint.getY(), waypoint.getZ()) > 16.0D && !mob.getNavigation().isDone()) { return; }
             double angle = mob.getRandom().nextDouble() * Math.PI * 2.0D;
             double reach = LEG_LEAST + mob.getRandom().nextInt(LEG_MOST - LEG_LEAST + 1);
             int x = (int) (mob.getX() + Math.cos(angle) * reach);

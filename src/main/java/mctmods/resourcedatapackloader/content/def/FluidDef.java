@@ -12,6 +12,10 @@ public record FluidDef(ResourceLocation key, String name, int color, ResourceLoc
 
     public ResourceLocation id() { return ResourceLocation.fromNamespaceAndPath(key.getNamespace(), name); }
 
+    public boolean waterMaterial() { return "water".equals(material); }
+
+    public boolean lavaMaterial() { return "lava".equals(material); }
+
     public int tint() {
         if (!ContentParser.DEFAULT_STILL.equals(still.toString())) { return color | OPAQUE; }
         int red = (color >> 16 & 0xFF) * (LEGACY_WATER >> 16 & 0xFF) / 0xFF;

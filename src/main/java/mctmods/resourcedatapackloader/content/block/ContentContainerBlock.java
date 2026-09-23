@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentContainers;
+import mctmods.resourcedatapackloader.content.ContentDrops;
+import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
@@ -8,13 +10,19 @@ import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -27,25 +35,30 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.network.NetworkHooks;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public final class ContentContainerBlock extends BaseEntityBlock implements IContentContainer {
-    private final BlockDef def;
     private final ContainerDef container;
+    private final BlockDef def;
+    @Nullable private final VoxelShape shape;
+    private final AmountDef expDrop;
 
-    public ContentContainerBlock(BlockDef def, ContainerDef container, Properties properties) {
+    public ContentContainerBlock(BlockDef def, Properties properties) {
         super(properties);
+        this.container = def.container() == null ? ContentContainers.FALLBACK : def.container();
         this.def = def;
-        this.container = container;
-        registerDefaultState(stateDefinition.any().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        this.shape = ContentBlock.shape(def);
+        this.expDrop = ContentBlock.expRange(def);
+        registerDefaultState(stateDefinition.any().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
     }
 
     @Override public ContainerDef container() { return container; }
-
-    public BlockDef getDef() { return def; }
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(HorizontalDirectionalBlock.FACING); }
 
@@ -63,6 +76,8 @@ import javax.annotation.Nullable;
 
     @Override @Nonnull public RenderShape getRenderShape(@Nonnull BlockState state) { return container.chestModel() ? RenderShape.ENTITYBLOCK_ANIMATED : RenderShape.MODEL; }
 
+    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
+
     @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentContainerBlockEntity(pos, state); }
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
@@ -73,9 +88,13 @@ import javax.annotation.Nullable;
     @Override @Nonnull public InteractionResult use(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
         if (level.isClientSide()) { return InteractionResult.SUCCESS; }
         if (!(level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) || !(player instanceof ServerPlayer server)) { return InteractionResult.PASS; }
-        held.stock();
-        NetworkHooks.openScreen(server, held, extra -> ContentContainerMenu.write(extra, container));
+        NetworkHooks.openScreen(server, held, extra -> ContentContainerMenu.write(extra, held.shape()));
         return InteractionResult.CONSUME;
+    }
+
+    @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (placer != null && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.placed(); }
     }
 
     @Override public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
@@ -84,8 +103,15 @@ import javax.annotation.Nullable;
             Containers.dropContents(level, pos, held);
             level.updateNeighbourForOutputSignal(pos, this);
         }
+        ContentDrops.removed(level, pos, state, replaced);
         super.onRemove(state, level, pos, replaced, moving);
     }
+
+    @Override public int getExpDrop(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull RandomSource random, @Nonnull BlockPos pos, int fortune, int silkTouch) { return ContentBlock.experience(def, expDrop, random, silkTouch); }
+
+    @Override public void spawnAfterBreak(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull ItemStack stack, boolean dropExperience) { super.spawnAfterBreak(state, level, pos, stack, false); }
+
+    @Override public boolean canSustainPlant(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction facing, @Nonnull IPlantable plantable) { return ContentBlock.sustains(def, level, pos, facing, plantable) || super.canSustainPlant(state, level, pos, facing, plantable); }
 
     @Override public boolean hasAnalogOutputSignal(@Nonnull BlockState state) { return true; }
 

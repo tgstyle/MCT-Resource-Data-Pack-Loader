@@ -88,17 +88,7 @@ public final class ContentFuels {
         }
     }
 
-    private static final class Entry {
-        @Nullable private final Item item;
-        @Nullable private final TagKey<Item> tag;
-        private final int burnTime;
-
-        private Entry(@Nullable Item item, @Nullable TagKey<Item> tag, int burnTime) {
-            this.item = item;
-            this.tag = tag;
-            this.burnTime = burnTime;
-        }
-
+    private record Entry(@Nullable Item item, @Nullable TagKey<Item> tag, int burnTime) {
         private boolean matches(ItemStack fuel) { return tag != null ? fuel.is(tag) : fuel.is(item); }
     }
 }

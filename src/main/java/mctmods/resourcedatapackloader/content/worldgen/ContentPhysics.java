@@ -30,11 +30,26 @@ public final class ContentPhysics {
 
     public static void onJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof LivingEntity living)) { return; }
+        keepGravity(living);
+    }
+
+    private static void keepGravity(LivingEntity living) {
         AttributeInstance gravity = living.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
         if (gravity == null) { return; }
-        double factor = GRAVITY.factor(event.getLevel());
+        double wanted = GRAVITY.factor(living.level()) - 1.0D;
+        AttributeModifier held = gravity.getModifier(GRAVITY_ID);
+        if ((held == null ? 0.0D : held.getAmount()) == wanted) { return; }
         gravity.removeModifier(GRAVITY_ID);
-        if (factor != 1.0D) { gravity.addTransientModifier(new AttributeModifier(GRAVITY_ID, "rdpl:worldGravity", factor - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL)); }
+        if (wanted != 0.0D) { gravity.addTransientModifier(new AttributeModifier(GRAVITY_ID, "rdpl:worldGravity", wanted, AttributeModifier.Operation.MULTIPLY_TOTAL)); }
+    }
+
+    public static boolean openAir(LivingEntity living) { return !living.isInWater() && !living.isInLava() && !living.isFallFlying(); }
+
+    public static double openAirGravity(LivingEntity living, AttributeInstance gravity) {
+        double value = gravity.getValue();
+        if (openAir(living)) { return value; }
+        AttributeModifier held = gravity.getModifier(GRAVITY_ID);
+        return held == null ? value : value / (1.0D + held.getAmount());
     }
 
     public static double gravity(Level level) { return GRAVITY.factor(level); }
@@ -62,6 +77,7 @@ public final class ContentPhysics {
     }
 
     public static void tick(LivingEntity falling) {
+        if (!falling.level().isClientSide()) { keepGravity(falling); }
         double factor = TERMINAL.factor(falling.level());
         if (factor == 1.0D || falling.isFallFlying()) { return; }
         double cap = -VANILLA_TERMINAL * factor;

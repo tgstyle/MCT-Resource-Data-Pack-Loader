@@ -44,25 +44,9 @@ public final class ContentLocate extends SavedData {
         synchronized (held) { return new ArrayList<>(held.placed.getAllKeys()); }
     }
 
-    @Nullable public static BlockPos nearestBeyond(ServerLevel level, String name, BlockPos from, List<BlockPos> skip) {
-        ContentLocate held = of(level);
-        long[] known;
-        synchronized (held) { known = held.placed.getLongArray(name); }
-        BlockPos best = null;
-        double closest = Double.MAX_VALUE;
-        for (long packed : known) {
-            BlockPos at = BlockPos.of(packed);
-            if (ContentStructureSearch.beenNear(skip, at)) { continue; }
-            double away = at.distSqr(from);
-            if (away < closest) {
-                closest = away;
-                best = at;
-            }
-        }
-        return best;
-    }
+    @Nullable public static BlockPos nearest(ServerLevel level, String name, BlockPos from) { return nearest(level, name, from, 0.0D); }
 
-    @Nullable public static BlockPos nearest(ServerLevel level, String name, BlockPos from) {
+    @Nullable public static BlockPos nearest(ServerLevel level, String name, BlockPos from, double beyond) {
         ContentLocate held = of(level);
         long[] known;
         synchronized (held) { known = held.placed.getLongArray(name); }
@@ -71,6 +55,7 @@ public final class ContentLocate extends SavedData {
         for (long packed : known) {
             BlockPos at = BlockPos.of(packed);
             double away = at.distSqr(from);
+            if (away < beyond * beyond) { continue; }
             if (away < closest) {
                 closest = away;
                 best = at;

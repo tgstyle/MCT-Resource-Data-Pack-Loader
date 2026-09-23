@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
@@ -25,6 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,7 +92,7 @@ public final class ContentDimensions {
                 type.addProperty("height", def.maxHeight() - def.minHeight());
                 type.addProperty("logical_height", def.maxHeight() - def.minHeight());
             }
-            if (def.hasEffects()) { type.addProperty("effects", def.key().toString()); }
+            type.addProperty("effects", def.hasEffects() ? def.key().toString() : "minecraft:overworld");
             GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension_type/" + path + ".json", type.toString());
             JsonObject dimension = new JsonObject();
             dimension.addProperty("type", def.key().toString());
@@ -102,39 +104,51 @@ public final class ContentDimensions {
     }
 
     private static JsonObject generator(DimensionDef def) {
+        String dimension = def.key().toString();
+        boolean isVoid = ContentVoidWorld.voidApplies(dimension);
         JsonObject generator = new JsonObject();
         if (DimensionDef.VOID.equals(def.terrain()) || DimensionDef.FLAT.equals(def.terrain())) {
-            generator.addProperty("type", "minecraft:flat");
+            boolean empty = isVoid || DimensionDef.VOID.equals(def.terrain());
+            ContentTerrain.Flat asked = ContentTerrain.flat(def.flatOptions());
+            boolean single = DimensionDef.SINGLE.equals(def.biomeSource());
+            generator.addProperty("type", single ? "minecraft:flat" : ResourceDataPackLoader.MOD_ID + ":" + ContentFlatSource.ID);
+            if (!single) {
+                generator.add("biome_source", biomeSource(def, dimension));
+                generator.addProperty("noise_settings", OVERWORLD.toString());
+                generator.addProperty("decorated", !empty && asked.decorated());
+                generator.addProperty("lakes", !empty && asked.waterLakes());
+                generator.addProperty("lava_lakes", !empty && asked.lakes());
+            }
+            else { ContentTerrain.leavesWaterLakes(asked); }
             JsonObject settings = new JsonObject();
-            settings.addProperty("biome", DimensionDef.VOID.equals(def.terrain()) ? "minecraft:the_void" : DimensionDef.SINGLE.equals(def.biomeSource()) ? def.biome() : "minecraft:plains");
-            settings.addProperty("features", true);
-            settings.addProperty("lakes", false);
-            settings.add("layers", DimensionDef.VOID.equals(def.terrain()) ? new JsonArray() : layers(def));
+            settings.addProperty("biome", single ? def.biome() : asked.biome());
+            settings.addProperty("features", !empty && asked.decorated());
+            settings.addProperty("lakes", !empty && asked.lakes());
+            settings.add("layers", empty ? new JsonArray() : layers(def, asked.layers()));
+            JsonArray structures = new JsonArray();
+            if (!empty && def.structures()) {
+                for (String set : asked.structures()) { structures.add(set); }
+            }
+            for (String set : ContentStructureMaps.sets()) { structures.add(set); }
+            settings.add("structure_overrides", structures);
             generator.add("settings", settings);
             return generator;
         }
         generator.addProperty("type", "minecraft:noise");
-        JsonObject source = new JsonObject();
-        if (DimensionDef.SINGLE.equals(def.biomeSource())) {
-            source.addProperty("type", "minecraft:fixed");
-            source.addProperty("biome", def.biome());
-        }
-        else if (DimensionDef.END.equals(def.terrain())) { source.addProperty("type", "minecraft:the_end"); }
-        else {
-            source.addProperty("type", "minecraft:multi_noise");
-            String vanilla = DimensionDef.NETHER.equals(def.terrain()) ? "minecraft:the_nether" : "minecraft:overworld";
-            if (ContentBiomes.placesBiomes(vanilla)) { source.add("biomes", ContentBiomes.biomes(vanilla)); }
-            else { source.addProperty("preset", DimensionDef.NETHER.equals(def.terrain()) ? "minecraft:nether" : "minecraft:overworld"); }
-        }
-        generator.add("biome_source", source);
+        generator.add("biome_source", biomeSource(def, dimension));
         String vanillaSettings = DimensionDef.NETHER.equals(def.terrain()) ? "nether" : DimensionDef.END.equals(def.terrain()) ? "end" : "overworld";
         String settingsId = "minecraft:" + vanillaSettings;
-        String dimension = def.key().toString();
         boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
-        if (def.shapesNoise() || seamed) {
+        boolean flatBedrock = ContentBedrock.bedrockApplies(dimension);
+        boolean veinless = "overworld".equals(vanillaSettings) && ContentOreControl.veinsBlocked(dimension);
+        boolean grounded = "overworld".equals(vanillaSettings) && ContentBiomes.any();
+        if (def.shapesNoise() || seamed || flatBedrock || veinless || grounded) {
             JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
             if (settings != null) {
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
+                if (veinless) { settings.addProperty("ore_veins_enabled", false); }
+                if (grounded) { ContentBiomes.surface(settings); }
+                if (flatBedrock) { ContentBedrock.flattenBedrock(settings, dimension); }
                 if (def.shapesHeight()) {
                     JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
                     noise.addProperty("min_y", def.minHeight());
@@ -152,6 +166,7 @@ public final class ContentDimensions {
                 }
                 ResourceLocation id = ResourceLocation.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
                 GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
+                if ("overworld".equals(vanillaSettings)) { ContentWorldShape.overworldNoise(id); }
                 settingsId = id.toString();
             }
         }
@@ -159,9 +174,23 @@ public final class ContentDimensions {
         return generator;
     }
 
-    private static JsonArray layers(DimensionDef def) {
+    private static JsonObject biomeSource(DimensionDef def, String dimension) {
+        JsonObject source = new JsonObject();
+        if (DimensionDef.SINGLE.equals(def.biomeSource())) {
+            source.addProperty("type", "minecraft:fixed");
+            source.addProperty("biome", def.biome());
+        }
+        else {
+            source.addProperty("type", "minecraft:multi_noise");
+            if (ContentBiomes.placesBiomes(ContentBiomes.OVERWORLD, dimension)) { source.add("biomes", ContentBiomes.biomes(ContentBiomes.OVERWORLD, dimension)); }
+            else { source.addProperty("preset", ContentBiomes.OVERWORLD); }
+        }
+        return source;
+    }
+
+    private static JsonArray layers(DimensionDef def, List<String> asked) {
         JsonArray layers = new JsonArray();
-        for (String written : def.flatLayers()) {
+        for (String written : asked) {
             String layer = written.trim();
             int star = layer.indexOf('*');
             int height = 1;
@@ -181,15 +210,10 @@ public final class ContentDimensions {
 
     @Nullable public static Integer cloudHeight(String dimension) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        return CLOUDS.at(dimension, ContentControl.list(ContentControl.TERRAIN, "cloudHeight", Config.worldgen.cloudHeight()));
+        return CLOUDS.at(dimension, ContentControl.lines(ContentControl.TERRAIN, "cloudHeight", Config.worldgen.cloudHeight()));
     }
 
-    public static Map<String, Integer> cloudHeights() {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return Map.of(); }
-        return CLOUDS.scoped(ContentControl.list(ContentControl.TERRAIN, "cloudHeight", Config.worldgen.cloudHeight()));
-    }
-
-    @Nullable private static Integer height(String value) {
+    @Nullable static Integer height(String value) {
         try { return Integer.parseInt(value); }
         catch (NumberFormatException wrong) { return null; }
     }
@@ -232,10 +256,15 @@ public final class ContentDimensions {
     }
 
     public static BlockPos landing(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {
-        BlockPos top = level.getHeightmapPos(type, column);
+        BlockPos top = top(level, column, type);
         if (top.getY() > level.getMinBuildHeight() + 1) { return top; }
         DimensionDef def = DEFS.get(level.dimension().location());
-        if (def == null || !def.namesGround()) { return top; }
+        if (def == null) { return top; }
         return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - 2), column.getZ());
+    }
+
+    public static BlockPos top(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {
+        LevelChunk held = level.getChunkAt(column);
+        return new BlockPos(column.getX(), held.getHeight(type, column.getX() & 15, column.getZ() & 15) + 1, column.getZ());
     }
 }

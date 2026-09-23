@@ -10,7 +10,7 @@ public final class Functions {
 
     private Functions() {}
 
-    public static void run(MinecraftServer server, String named, String asking) { run(server, named, asking, server.createCommandSourceStack().withSuppressedOutput()); }
+    public static void run(MinecraftServer server, String named, String asking) { run(server, named, asking, server.createCommandSourceStack()); }
 
     public static void runAs(ServerPlayer player, String named, String asking) { run(player.server, named, asking, player.createCommandSourceStack().withPermission(LEVEL).withSuppressedOutput()); }
 

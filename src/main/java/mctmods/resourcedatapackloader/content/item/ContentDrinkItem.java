@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.item;
 
-import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -12,20 +12,25 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ContentDrinkItem extends Item {
     private final ItemDef def;
     @Nullable private final MobEffectInstance effect;
+    @Nullable private Item container;
 
     public ContentDrinkItem(ItemDef def, ItemVariant variant, Properties properties) {
         super(properties);
         this.def = def;
         this.effect = ContentEffects.parse(variant.id(), variant.potion());
     }
+
+    public void resolveContainer(@Nullable Item item) { container = item; }
 
     @Override public int getUseDuration(@Nonnull ItemStack stack) { return def.useDuration(); }
 
@@ -42,10 +47,12 @@ public class ContentDrinkItem extends Item {
         if (player != null && def.cooldown() > 0) { player.getCooldowns().addCooldown(this, def.cooldown()); }
         if (player != null && player.getAbilities().instabuild) { return stack; }
         stack.shrink(1);
-        ItemStack container = ContentStacks.parse(def.key(), def.container(), 1);
-        if (container.isEmpty()) { return stack; }
-        if (stack.isEmpty()) { return container; }
-        if (player != null && !player.getInventory().add(container)) { player.drop(container, false); }
+        if (container == null) { return stack; }
+        ItemStack left = new ItemStack(container);
+        if (stack.isEmpty()) { return left; }
+        if (player != null && !player.getInventory().add(left)) { player.drop(left, false); }
         return stack;
     }
+
+    @Override public void appendHoverText(@Nonnull ItemStack stack, @Nullable Level level, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag) { ContentEffects.tooltip(effect, tooltip); }
 }

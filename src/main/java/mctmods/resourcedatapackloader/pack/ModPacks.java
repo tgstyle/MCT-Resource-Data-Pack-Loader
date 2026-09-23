@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +38,7 @@ public final class ModPacks {
         List<Found> found = new ArrayList<>();
         for (IModFileInfo info : ModList.get().getModFiles()) { collect(info, found); }
         if (found.isEmpty()) { return Collections.emptyList(); }
+        found.sort(Comparator.comparing(Found::fileName, String.CASE_INSENSITIVE_ORDER));
         JsonObject control = readControl(packRoot);
         List<RDPLPack> packs = new ArrayList<>();
         for (Found entry : found) {

@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.block;
 
-import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 
 import net.minecraft.core.BlockPos;
@@ -31,8 +30,8 @@ import javax.annotation.Nullable;
 @SuppressWarnings("deprecation") public final class ContentWallBannerBlock extends Block implements EntityBlock, IContentBanner {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
-    private final BlockDef def;
     private final ResourceLocation texture;
+    private final boolean modeled;
 
     static {
         SHAPES.put(Direction.NORTH, Block.box(0.0D, 0.0D, 14.0D, 16.0D, 12.5D, 16.0D));
@@ -41,24 +40,24 @@ import javax.annotation.Nullable;
         SHAPES.put(Direction.EAST, Block.box(0.0D, 0.0D, 0.0D, 2.0D, 12.5D, 16.0D));
     }
 
-    public ContentWallBannerBlock(BlockDef def, ResourceLocation id, Properties properties) {
+    public ContentWallBannerBlock(ResourceLocation id, Properties properties) {
         super(properties);
-        this.def = def;
         this.texture = IContentBanner.textureOf(id);
+        this.modeled = IContentBanner.shipsBlockstate(id.getNamespace(), id.getPath() + "_wall");
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    public BlockDef getDef() { return def; }
-
     @Override public ResourceLocation texture() { return texture; }
+
+    @Override public boolean modeled() { return modeled; }
 
     @Override @Nonnull public String getDescriptionId() { return asItem().getDescriptionId(); }
 
-    @Override @Nonnull public RenderShape getRenderShape(@Nonnull BlockState state) { return RenderShape.INVISIBLE; }
+    @Override @Nonnull public RenderShape getRenderShape(@Nonnull BlockState state) { return modeled ? RenderShape.MODEL : RenderShape.INVISIBLE; }
 
     @Override public boolean isPossibleToRespawnInThis(@Nonnull BlockState state) { return true; }
 
-    @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBannerBlockEntity(pos, state); }
+    @Override @Nullable public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return modeled ? null : new ContentBannerBlockEntity(pos, state); }
 
     @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) {
         Direction facing = state.getValue(FACING);

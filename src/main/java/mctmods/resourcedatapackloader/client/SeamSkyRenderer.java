@@ -11,8 +11,14 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
@@ -32,13 +38,14 @@ public final class SeamSkyRenderer {
         if (under == null && over == null) { return; }
         double eyeY = event.getCamera().getPosition().y;
         Matrix4f pose = event.getPoseStack().last().pose();
-        if (under != null) { plane(pose, under, level.getMinBuildHeight() - 1 - eyeY); }
-        if (over != null) { plane(pose, over, level.getMaxBuildHeight() + 1 - eyeY); }
+        float partialTicks = event.getPartialTick();
+        if (under != null) { plane(pose, under, level.getMinBuildHeight() - 1 - eyeY, partialTicks); }
+        if (over != null) { plane(pose, over, ContentSeams.ceiling(level) + 1 - eyeY, partialTicks); }
     }
 
-    private static void plane(Matrix4f pose, ResourceLocation dimension, double height) {
+    private static void plane(Matrix4f pose, ResourceLocation dimension, double height, float partialTicks) {
         if (Math.abs(height) > NEAR) { return; }
-        Vec3 tint = skyOf(dimension);
+        Vec3 tint = skyOf(dimension, partialTicks);
         float extent = Math.max(64, Minecraft.getInstance().options.getEffectiveRenderDistance() * 16);
         float y = (float) height;
         int red = (int) (tint.x * 255.0D);
@@ -59,14 +66,28 @@ public final class SeamSkyRenderer {
         RenderSystem.enableCull();
     }
 
-    private static Vec3 skyOf(ResourceLocation dimension) {
+    private static Vec3 skyOf(ResourceLocation dimension, float partialTicks) {
         DimensionDef def = ContentDimensions.def(dimension);
-        if (def != null && def.fogColor() >= 0) { return new Vec3(((def.fogColor() >> 16) & 255) / 255.0D, ((def.fogColor() >> 8) & 255) / 255.0D, (def.fogColor() & 255) / 255.0D); }
         String base = def == null ? dimension.toString() : "minecraft:" + def.base();
+        if (def != null && def.fogColor() >= 0) { return new Vec3(((def.fogColor() >> 16) & 255) / 255.0D, ((def.fogColor() >> 8) & 255) / 255.0D, (def.fogColor() & 255) / 255.0D); }
+        MinecraftServer server = Minecraft.getInstance().getSingleplayerServer();
+        ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
+        if (target != null) {
+            float brightness = Mth.clamp(Mth.cos(target.getTimeOfDay(partialTicks) * ((float) Math.PI * 2.0F)) * 2.0F + 0.5F, 0.0F, 1.0F);
+            return DimensionSpecialEffects.forType(target.dimensionType()).getBrightnessDependentFogColor(Vec3.fromRGB24(fogOf(base)), brightness);
+        }
         return switch (base) {
             case "minecraft:the_nether" -> new Vec3(0.2D, 0.03D, 0.03D);
             case "minecraft:the_end" -> new Vec3(0.06D, 0.06D, 0.09D);
             default -> new Vec3(0.5D, 0.66D, 1.0D);
+        };
+    }
+
+    private static int fogOf(String base) {
+        return switch (base) {
+            case "minecraft:the_nether" -> 0x330808;
+            case "minecraft:the_end" -> 0xA080A0;
+            default -> 0xC0D8FF;
         };
     }
 }

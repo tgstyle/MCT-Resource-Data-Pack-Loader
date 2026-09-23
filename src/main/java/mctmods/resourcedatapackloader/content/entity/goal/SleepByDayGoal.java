@@ -12,11 +12,12 @@ import java.util.EnumSet;
 import javax.annotation.Nullable;
 
 public final class SleepByDayGoal extends Goal {
-    private static final int RETRY = 40;
+    private static final int RETRY = 120;
     private static final int TRIES = 3;
     private final PathfinderMob mob;
     @Nullable private BlockPos shade;
     private boolean settled;
+    private int nextTry;
 
     public SleepByDayGoal(PathfinderMob mob) {
         this.mob = mob;
@@ -34,7 +35,8 @@ public final class SleepByDayGoal extends Goal {
             shade = feet;
             return true;
         }
-        if (mob.tickCount % RETRY != 0) { return false; }
+        if (mob.tickCount < nextTry) { return false; }
+        nextTry = mob.tickCount + RETRY;
         for (int tries = 0; tries < TRIES; tries++) {
             Vec3 spot = DefaultRandomPos.getPos(mob, 8, 3);
             if (spot == null) { continue; }
@@ -56,7 +58,7 @@ public final class SleepByDayGoal extends Goal {
     @Override public void start() {
         settled = false;
         if (shade == null) { return; }
-        ContentLog.LOGGER.debug("{} at {}, {}, {} heads for shade at {}, {}, {} for the day", mob.getName().getString(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), shade.getX(), shade.getY(), shade.getZ());
+        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {}, {} heads for shade at {}, {}, {} for the day, sky over it {}", mob.getName().getString(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), shade.getX(), shade.getY(), shade.getZ(), covered(mob.blockPosition()) ? "covered" : "open"); }
         walk();
     }
 
@@ -67,6 +69,7 @@ public final class SleepByDayGoal extends Goal {
     @Override public void stop() {
         shade = null;
         settled = false;
+        mob.setShiftKeyDown(false);
         mob.getNavigation().stop();
     }
 
@@ -74,6 +77,7 @@ public final class SleepByDayGoal extends Goal {
         if (settled || shade == null) { return; }
         if (mob.distanceToSqr(shade.getX() + 0.5D, shade.getY(), shade.getZ() + 0.5D) <= 2.25D) {
             settled = true;
+            mob.setShiftKeyDown(true);
             mob.getNavigation().stop();
             return;
         }

@@ -11,12 +11,12 @@ import javax.annotation.Nullable;
 
 public final class PounceGoal extends Goal {
     private static final int CROUCH = 20;
-    private static final int REST = 60;
+    private static final int REST = 180;
     private final PathfinderMob mob;
     @Nullable private LivingEntity target;
     private int crouched;
     private boolean airborne;
-    private int resting;
+    private int restUntil;
 
     public PounceGoal(PathfinderMob mob) {
         this.mob = mob;
@@ -26,10 +26,7 @@ public final class PounceGoal extends Goal {
     @Override public boolean requiresUpdateEveryTick() { return true; }
 
     @Override public boolean canUse() {
-        if (resting > 0) {
-            resting--;
-            return false;
-        }
+        if (mob.tickCount < restUntil) { return false; }
         LivingEntity found = mob.getTarget();
         if (found == null || !found.isAlive() || !mob.onGround()) { return false; }
         double away = mob.distanceToSqr(found);
@@ -48,10 +45,11 @@ public final class PounceGoal extends Goal {
     @Override public void stop() {
         target = null;
         airborne = false;
-        resting = REST;
+        restUntil = mob.tickCount + REST;
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         if (target == null) { return; }
         mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
         if (!airborne) {

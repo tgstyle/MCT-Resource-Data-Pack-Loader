@@ -40,6 +40,7 @@ public final class ContentHardnessCheck {
     public static void watching() { ContentLog.LOGGER.info("Watching for hardness blockstate mismatches, which are reported when a world is entered"); }
 
     public static void onLevelLoad(LevelEvent.Load event) {
+        ContentLog.LOGGER.debug("A world loaded while watching for hardness blockstate mismatches: looked={} remote={} debug={}", looked, event.getLevel().isClientSide(), Config.worldgen.worldgenDebug());
         if (looked || !event.getLevel().isClientSide() || !Config.worldgen.worldgenDebug()) { return; }
         looked = true;
         look();
@@ -110,7 +111,12 @@ public final class ContentHardnessCheck {
     }
 
     private static void chain(ResourceLocation location) {
-        List<Resource> found = Minecraft.getInstance().getResourceManager().getResourceStack(location);
+        List<Resource> found;
+        try { found = Minecraft.getInstance().getResourceManager().getResourceStack(location); }
+        catch (Exception ex) {
+            ContentLog.LOGGER.debug("  the game could not list copies of {}: {}", location, ex.toString());
+            return;
+        }
         ContentLog.LOGGER.debug("  the game finds {} copy/copies of {}, in the order it merges them:", found.size(), location);
         for (Resource one : found) {
             StringBuilder says = new StringBuilder();

@@ -53,8 +53,8 @@ public final class ContentCitySewerHatchPiece extends StructurePiece {
             if (lining == null) { return; }
             int floor = this.level - ContentCity.sewerDepth();
             int height = ContentCity.sewerHeight();
-            if (floor < level.getMinBuildHeight() + ContentCitySewerPiece.FLOOR_LEAST || floor + height + ContentCitySewerPiece.CLEAR_UNDER >= this.level) { return; }
-            if (ContentCitySewerPiece.shaft(level, box, shaftX, shaftZ, floor, floor + 2 + height, this.level, lining, new BlockPos.MutableBlockPos())) { ContentLog.LOGGER.debug("A manhole is cut at {}, {} from the street at y {} down to the sewer walk", shaftX, shaftZ, this.level); }
+            if (ContentCitySewerPiece.cramped(level.getMinBuildHeight(), this.level)) { return; }
+            if (ContentCitySewerPiece.shaft(level, box, CityRails.subways(CityGround.of(level), shaftX - 1, shaftZ - 1, shaftX + 1, shaftZ + 1), shaftX, shaftZ, floor, floor + 2 + height, this.level, lining, new BlockPos.MutableBlockPos())) { ContentLog.LOGGER.debug("A manhole is cut at {}, {} from the street at y {} down to the sewer walk", shaftX, shaftZ, this.level); }
         }
         finally { CityBiome.leave(); }
     }

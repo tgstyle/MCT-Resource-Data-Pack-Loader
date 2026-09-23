@@ -32,14 +32,21 @@ import javax.annotation.Nullable;
 
 public class ContentContainerBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
     private static final String STOCKED = "RdplStocked";
+    private static final String ROWS = "RdplRows";
+    private static final String COLUMNS = "RdplColumns";
     private final ChestLidController lid = new ChestLidController();
     private NonNullList<ItemStack> items;
     private int openers;
+    private int rows;
+    private int columns;
     private boolean stocked;
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
         super(ContentContainers.type(), pos, state);
-        this.items = NonNullList.withSize(def(state).size(), ItemStack.EMPTY);
+        ContainerDef def = def(state);
+        this.rows = def.rows();
+        this.columns = def.columns();
+        this.items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
     }
 
     private static ContainerDef def(BlockState state) {
@@ -47,6 +54,8 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     }
 
     public ContainerDef def() { return def(getBlockState()); }
+
+    public ContainerDef shape() { return def().sized(rows, columns); }
 
     @Override public int getContainerSize() { return items.size(); }
 
@@ -57,7 +66,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     @Override @Nonnull protected Component getDefaultName() { return getBlockState().getBlock().getName(); }
 
     @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) {
-        return new ContentContainerMenu(id, inventory, this, def());
+        return new ContentContainerMenu(id, inventory, this, shape());
     }
 
     @Override public void startOpen(@Nonnull Player player) {
@@ -77,6 +86,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
         if (openers == 1) { sound(SoundEvents.CHEST_OPEN); }
         if (openers == 0) { sound(SoundEvents.CHEST_CLOSE); }
         level.blockEvent(getBlockPos(), getBlockState().getBlock(), 1, openers);
+        level.updateNeighborsAt(getBlockPos(), getBlockState().getBlock());
     }
 
     private void sound(SoundEvent event) {
@@ -99,7 +109,10 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
 
     @Override public void load(@Nonnull CompoundTag tag) {
         super.load(tag);
-        this.items = NonNullList.withSize(def().size(), ItemStack.EMPTY);
+        ContainerDef def = def();
+        this.rows = tag.contains(ROWS) ? Math.max(1, tag.getInt(ROWS)) : def.rows();
+        this.columns = tag.contains(COLUMNS) ? Math.max(1, tag.getInt(COLUMNS)) : def.columns();
+        this.items = NonNullList.withSize(rows * columns, ItemStack.EMPTY);
         this.stocked = tag.getBoolean(STOCKED);
         if (!tryLoadLootTable(tag)) { ContainerHelper.loadAllItems(tag, this.items); }
     }
@@ -107,24 +120,34 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     @Override protected void saveAdditional(@Nonnull CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean(STOCKED, stocked);
+        tag.putInt(ROWS, rows);
+        tag.putInt(COLUMNS, columns);
         if (!trySaveLootTable(tag)) { ContainerHelper.saveAllItems(tag, this.items); }
     }
 
-    public void stock() {
-        ContainerDef held = def();
-        if (stocked || held.lootTable().isEmpty() || this.lootTable != null || level == null) { return; }
-        ResourceLocation table = ResourceLocation.tryParse(held.lootTable());
-        if (table == null) {
-            ContentLog.LOGGER.error("The container at {} names the loot table '{}', which is not a valid id, so it starts empty", getBlockPos(), held.lootTable());
-            return;
-        }
-        setLootTable(table, level.getRandom().nextLong());
+    public void placed() {
         stocked = true;
+        setChanged();
     }
 
+    @Override public boolean canOpen(@Nonnull Player player) { return true; }
+
     @Override public void unpackLootTable(@Nullable Player player) {
-        if (this.lootTable != null) { stocked = true; }
+        if (!stocked && level != null && !level.isClientSide()) { stock(level.getRandom().nextLong()); }
         super.unpackLootTable(player);
+    }
+
+    private void stock(long seed) {
+        stocked = true;
+        setChanged();
+        String named = def().lootTable();
+        if (named.isEmpty() || this.lootTable != null) { return; }
+        ResourceLocation table = ResourceLocation.tryParse(named);
+        if (table == null) {
+            ContentLog.LOGGER.error("The container at {} names the loot table '{}', which is not a valid id, so it starts empty", getBlockPos(), named);
+            return;
+        }
+        setLootTable(table, seed);
     }
 
     public static int comparatorOutput(BlockEntity held) {

@@ -11,11 +11,12 @@ import javax.annotation.Nullable;
 public final class SniffGoal extends Goal {
     private static final int LISTEN = 20;
     private static final int GIVE_UP = 300;
+    private static final int HEAR_EVERY = 63;
     private final PathfinderMob mob;
     private final int radius;
     @Nullable private Player heard;
     @Nullable private BlockPos heardAt;
-    private int listening;
+    private int listenAt = HEAR_EVERY;
     private int walked;
 
     public SniffGoal(PathfinderMob mob, int radius) {
@@ -28,8 +29,8 @@ public final class SniffGoal extends Goal {
 
     @Override public boolean canUse() {
         if (mob.getTarget() != null) { return false; }
-        if (listening++ < LISTEN) { return false; }
-        listening = 0;
+        if (mob.tickCount < listenAt) { return false; }
+        listenAt = mob.tickCount + HEAR_EVERY;
         Player found = loudest();
         if (found == null) { return false; }
         heard = found;
@@ -62,12 +63,14 @@ public final class SniffGoal extends Goal {
     @Override public void start() { walk(); }
 
     @Override public void stop() {
+        listenAt = mob.tickCount + HEAR_EVERY;
         heard = null;
         heardAt = null;
         mob.getNavigation().stop();
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         walked++;
         if (heard != null && heard.isAlive() && mob.getSensing().hasLineOfSight(heard) && mob.distanceToSqr(heard) < 64.0D) {
             mob.setTarget(heard);

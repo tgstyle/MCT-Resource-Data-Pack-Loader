@@ -51,6 +51,7 @@ public final class SwoopGoal extends Goal {
     }
 
     @Override public void tick() {
+        if (!canContinueToUse()) { return; }
         if (target == null) { return; }
         mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
         ticks++;

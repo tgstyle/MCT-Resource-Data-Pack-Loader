@@ -1,15 +1,22 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.block.ContentBlock;
+import mctmods.resourcedatapackloader.content.block.ContentContainerBlock;
+import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
+import mctmods.resourcedatapackloader.content.def.PotionDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
+import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTreeTrunk;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.loot.LootFunctions;
 import mctmods.resourcedatapackloader.pack.FallbackIcon;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -25,7 +32,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.Mth;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,17 +42,14 @@ import javax.annotation.Nullable;
 
 public final class ContentGenerated {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String BLOCK = "minecraft:block/";
-    private static final String ITEM_GENERATED = "minecraft:item/generated";
+    static final String ITEM_GENERATED = "minecraft:item/generated";
     private static final String ITEM_HANDHELD = "minecraft:item/handheld";
     private static final String SURVIVES = "{\"condition\":\"minecraft:survives_explosion\"}";
     private static final String DECAY = "{\"function\":\"minecraft:explosion_decay\"}";
-    private static final String[] FACINGS = {"east", "south", "west", "north"};
-    private static final int[] FACING_Y = {0, 90, 180, 270};
-    private static final String[] SHAPES = {"straight", "inner_left", "inner_right", "outer_left", "outer_right"};
-    private static final int[] BOTTOM_TURN = {0, 270, 0, 270, 0};
-    private static final int[] TOP_TURN = {0, 0, 90, 0, 90};
     private static final Set<String> CURIOS_PRESETS = Set.of("back", "belt", "body", "bracelet", "charm", "curio", "hands", "head", "necklace", "ring");
+    private static final List<String> BAUBLES_SLOTS = List.of("necklace", "ring", "belt", "head", "body", "charm");
+    private static final int SHEET_COLUMNS = 8;
+    private static final String[] STATUS_SHEET = {"speed", "slowness", "haste", "mining_fatigue", "strength", "weakness", "poison", "regeneration", "invisibility", "hunger", "jump_boost", "nausea", "night_vision", "blindness", "resistance", "fire_resistance", "water_breathing", "wither", "absorption", "levitation", "glowing", "luck", "unluck", "health_boost"};
 
     private ContentGenerated() {}
 
@@ -76,14 +80,22 @@ public final class ContentGenerated {
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
 
+    static void cropLoot() {
+        for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
+            if (!(entry.block() instanceof ContentCropBlock)) { continue; }
+            String path = ContentFormats.LOOT_FOLDER + "/blocks/" + entry.id().getPath() + ".json";
+            if (!provided(PackType.SERVER_DATA, entry.id().getNamespace(), path)) { data(entry.id().getNamespace(), path, loot(entry, entry.def().type())); }
+        }
+    }
+
     private static void block(ContentRegistry.BlockEntry entry, Map<String, Set<String>> blockTags, Map<String, Set<String>> itemTags) {
         BlockDef def = entry.def();
         String namespace = entry.id().getNamespace();
         String name = entry.id().getPath();
         String type = def.type();
         boolean hasItem = ContentRegistry.items().stream().anyMatch(item -> item.block() == entry);
-        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) { models(entry, namespace, name, type); }
-        if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { itemModel(def, namespace, name, type); }
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) { ContentGeneratedModels.models(entry, namespace, name, type); }
+        if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { ContentGeneratedModels.itemModel(def, namespace, name, type); }
         if (!provided(PackType.SERVER_DATA, namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json")) { data(namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json", loot(entry, type)); }
         if (entry.isMain()) {
             tagBlock(entry, blockTags, itemTags, hasItem);
@@ -104,10 +116,10 @@ public final class ContentGenerated {
 
     private static void fluidBlock(ContentFluids.Made made) {
         if (made.block == null) { return; }
-        String namespace = made.def.id().getNamespace();
-        String name = made.def.id().getPath();
+        String namespace = made.def.key().getNamespace();
+        String name = made.def.key().getPath();
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) {
-            blockstate(namespace, name, obj("variants", obj("", obj("model", namespace + ":block/" + name))));
+            ContentGeneratedModels.blockstate(namespace, name, obj("variants", obj("", obj("model", namespace + ":block/" + name))));
         }
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/block/" + name + ".json")) {
             asset(namespace, "models/block/" + name + ".json", obj("textures", obj("particle", made.def.still().toString())));
@@ -118,13 +130,17 @@ public final class ContentGenerated {
         Set<String> slots = new LinkedHashSet<>();
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
             ItemDef def = entry.def();
-            if (entry.block() == null && def != null && def.holds() != null && def.holds().worn()) { slots.add(def.holds().curioSlot()); }
+            if (entry.block() == null && def != null && def.holds() != null && def.holds().worn()) {
+                if (ContainerDef.ANY_SLOT.equals(def.holds().curioSlot())) { slots.addAll(BAUBLES_SLOTS); }
+                else { slots.add(def.holds().curioSlot()); }
+            }
         }
         if (slots.isEmpty()) { return; }
         JsonArray named = arr();
         for (String slot : slots) {
             named.add(slot);
-            if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + ".json", obj("validators", arr("curios:tag"))); }
+            if (ContainerDef.RING_SLOT.equals(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + ".json", obj("size", 2)); }
+            else if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + ".json", obj("validators", arr("curios:tag"))); }
         }
         data(ResourceDataPackLoader.MOD_ID, "curios/entities/worn.json", obj("entities", arr("minecraft:player"), "slots", named));
     }
@@ -146,301 +162,6 @@ public final class ContentGenerated {
         }
     }
 
-    private static void models(ContentRegistry.BlockEntry entry, String namespace, String name, String type) {
-        BlockDef def = entry.def();
-        String main = namespace + ":block/" + name;
-        String texture = texture(namespace, name);
-        switch (type) {
-            case ContentBlockTypes.CONTAINER -> {
-                if (def.container() != null && def.container().chestModel()) {
-                    blockstate(namespace, name, obj("variants", obj("", obj("model", "resourcedatapackloader:block/pack_chest"))));
-                }
-                else {
-                    model(def, namespace, name, cube(def, texture, "cube_all"));
-                    blockstate(namespace, name, obj("variants", obj(
-                            "facing=north", obj("model", main),
-                            "facing=east", obj("model", main, "y", 90),
-                            "facing=south", obj("model", main, "y", 180),
-                            "facing=west", obj("model", main, "y", 270))));
-                }
-            }
-            case ContentBlockTypes.LOG -> {
-                String top = textureOr(namespace, name + "_top", texture);
-                model(def, namespace, name, column(def, texture, top, "cube_column"));
-                model(def, namespace, name + "_horizontal", column(def, texture, top, "cube_column_horizontal"));
-                blockstate(namespace, name, obj("variants", obj(
-                        "axis=x", obj("model", main + "_horizontal", "x", 90, "y", 90),
-                        "axis=y", obj("model", main),
-                        "axis=z", obj("model", main + "_horizontal", "x", 90))));
-            }
-            case ContentBlockTypes.SLAB -> {
-                model(def, namespace, name, sided(def, texture, "slab"));
-                model(def, namespace, name + "_top", sided(def, texture, "slab_top"));
-                model(def, namespace, name + "_double", cube(def, texture, "cube_all"));
-                blockstate(namespace, name, obj("variants", obj(
-                        "type=bottom", obj("model", main),
-                        "type=top", obj("model", main + "_top"),
-                        "type=double", obj("model", main + "_double"))));
-            }
-            case ContentBlockTypes.STAIRS -> {
-                model(def, namespace, name, sided(def, texture, "stairs"));
-                model(def, namespace, name + "_inner", sided(def, texture, "inner_stairs"));
-                model(def, namespace, name + "_outer", sided(def, texture, "outer_stairs"));
-                blockstate(namespace, name, obj("variants", stairs(main)));
-            }
-            case ContentBlockTypes.FENCE -> {
-                model(def, namespace, name + "_post", textured(def, texture, "fence_post", "texture"));
-                model(def, namespace, name + "_side", textured(def, texture, "fence_side", "texture"));
-                model(def, namespace, name + "_inventory", textured(def, texture, "fence_inventory", "texture"));
-                blockstate(namespace, name, obj("multipart", arr(
-                        obj("apply", obj("model", main + "_post")),
-                        obj("when", obj("north", "true"), "apply", obj("model", main + "_side", "uvlock", true)),
-                        obj("when", obj("east", "true"), "apply", obj("model", main + "_side", "y", 90, "uvlock", true)),
-                        obj("when", obj("south", "true"), "apply", obj("model", main + "_side", "y", 180, "uvlock", true)),
-                        obj("when", obj("west", "true"), "apply", obj("model", main + "_side", "y", 270, "uvlock", true)))));
-            }
-            case ContentBlockTypes.WALL -> {
-                model(def, namespace, name + "_post", textured(def, texture, "template_wall_post", "wall"));
-                model(def, namespace, name + "_side", textured(def, texture, "template_wall_side", "wall"));
-                model(def, namespace, name + "_side_tall", textured(def, texture, "template_wall_side_tall", "wall"));
-                model(def, namespace, name + "_inventory", textured(def, texture, "wall_inventory", "wall"));
-                JsonArray parts = arr(obj("when", obj("up", "true"), "apply", obj("model", main + "_post")));
-                for (int i = 0; i < 4; i++) {
-                    String side = FACINGS[(i + 3) % 4];
-                    parts.add(obj("when", obj(side, "low"), "apply", rotated(main + "_side", i * 90, true)));
-                    parts.add(obj("when", obj(side, "tall"), "apply", rotated(main + "_side_tall", i * 90, true)));
-                }
-                blockstate(namespace, name, obj("multipart", parts));
-            }
-            case ContentBlockTypes.PANE -> {
-                String edge = textureOr(namespace, name + "_top", texture);
-                for (String part : new String[] {"post", "side", "side_alt", "noside", "noside_alt"}) {
-                    JsonObject textures = part.startsWith("noside") ? obj("pane", texture) : obj("pane", texture, "edge", edge);
-                    model(def, namespace, name + "_" + part, texture == null ? obj("parent", parent(def)) : obj("parent", BLOCK + "template_glass_pane_" + part, "textures", textures));
-                }
-                blockstate(namespace, name, obj("multipart", arr(
-                        obj("apply", obj("model", main + "_post")),
-                        obj("when", obj("north", "true"), "apply", obj("model", main + "_side")),
-                        obj("when", obj("east", "true"), "apply", obj("model", main + "_side", "y", 90)),
-                        obj("when", obj("south", "true"), "apply", obj("model", main + "_side_alt")),
-                        obj("when", obj("west", "true"), "apply", obj("model", main + "_side_alt", "y", 90)),
-                        obj("when", obj("north", "false"), "apply", obj("model", main + "_noside")),
-                        obj("when", obj("east", "false"), "apply", obj("model", main + "_noside_alt")),
-                        obj("when", obj("south", "false"), "apply", obj("model", main + "_noside_alt", "y", 90)),
-                        obj("when", obj("west", "false"), "apply", obj("model", main + "_noside", "y", 270)))));
-            }
-            case ContentBlockTypes.DOOR -> {
-                String top = textureOr(namespace, name + "_top", texture);
-                String bottom = textureOr(namespace, name + "_bottom", texture);
-                JsonObject variants = new JsonObject();
-                for (String half : new String[] {"lower", "upper"}) {
-                    String part = "lower".equals(half) ? "bottom" : "top";
-                    for (String hinge : new String[] {"left", "right"}) {
-                        for (String open : new String[] {"false", "true"}) {
-                            String suffix = "_" + part + "_" + hinge + ("true".equals(open) ? "_open" : "");
-                            model(def, namespace, name + suffix, texture == null ? obj("parent", BLOCK + "door" + suffix) : obj("parent", BLOCK + "door" + suffix, "textures", obj("top", top, "bottom", bottom)));
-                            for (int i = 0; i < 4; i++) {
-                                int turn = FACING_Y[i] + ("true".equals(open) ? ("left".equals(hinge) ? 90 : 270) : 0);
-                                variants.add("facing=" + FACINGS[i] + ",half=" + half + ",hinge=" + hinge + ",open=" + open, rotated(main + suffix, turn % 360, false));
-                            }
-                        }
-                    }
-                }
-                blockstate(namespace, name, obj("variants", variants));
-            }
-            case ContentBlockTypes.TRAPDOOR -> {
-                for (String part : new String[] {"bottom", "top", "open"}) { model(def, namespace, name + "_" + part, textured(def, texture, "template_orientable_trapdoor_" + part, "texture")); }
-                JsonObject variants = new JsonObject();
-                String[] order = {"north", "east", "south", "west"};
-                for (int i = 0; i < 4; i++) {
-                    int y = i * 90;
-                    variants.add("facing=" + order[i] + ",half=bottom,open=false", rotated(main + "_bottom", y, false));
-                    variants.add("facing=" + order[i] + ",half=top,open=false", rotated(main + "_top", y, false));
-                    variants.add("facing=" + order[i] + ",half=bottom,open=true", rotated(main + "_open", y, false));
-                    JsonObject flipped = rotated(main + "_open", (y + 180) % 360, false);
-                    flipped.addProperty("x", 180);
-                    variants.add("facing=" + order[i] + ",half=top,open=true", flipped);
-                }
-                blockstate(namespace, name, obj("variants", variants));
-            }
-            case ContentBlockTypes.FENCE_GATE -> {
-                for (String part : new String[] {"", "_open", "_wall", "_wall_open"}) { model(def, namespace, name + part, textured(def, texture, "template_fence_gate" + part, "texture")); }
-                JsonObject variants = new JsonObject();
-                String[] order = {"south", "west", "north", "east"};
-                for (int i = 0; i < 4; i++) {
-                    for (String wall : new String[] {"false", "true"}) {
-                        for (String open : new String[] {"false", "true"}) {
-                            String part = ("true".equals(wall) ? "_wall" : "") + ("true".equals(open) ? "_open" : "");
-                            variants.add("facing=" + order[i] + ",in_wall=" + wall + ",open=" + open, rotated(main + part, i * 90, true));
-                        }
-                    }
-                }
-                blockstate(namespace, name, obj("variants", variants));
-            }
-            case ContentBlockTypes.LADDER -> {
-                model(def, namespace, name, texture == null ? obj("parent", BLOCK + "ladder") : obj("parent", BLOCK + "ladder", "textures", obj("texture", texture, "particle", texture)));
-                blockstate(namespace, name, obj("variants", obj(
-                        "facing=north", obj("model", main),
-                        "facing=east", obj("model", main, "y", 90),
-                        "facing=south", obj("model", main, "y", 180),
-                        "facing=west", obj("model", main, "y", 270))));
-            }
-            case ContentBlockTypes.BANNER -> {
-                model(def, namespace, name, obj("parent", BLOCK + "banner"));
-                blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
-            }
-            case ContentBlockTypes.TORCH -> {
-                if (entry.isMain()) {
-                    model(def, namespace, name, textured(def, texture, "template_torch", "torch"));
-                    blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
-                }
-                else {
-                    String torch = texture(namespace, entry.variant().name());
-                    model(def, namespace, name, textured(def, torch, "template_torch_wall", "torch"));
-                    blockstate(namespace, name, obj("variants", obj(
-                            "facing=east", obj("model", main),
-                            "facing=south", obj("model", main, "y", 90),
-                            "facing=west", obj("model", main, "y", 180),
-                            "facing=north", obj("model", main, "y", 270))));
-                }
-            }
-            case ContentBlockTypes.CROP -> {
-                JsonObject variants = new JsonObject();
-                int last = def.cropMaxAge();
-                for (int stage = 0; stage <= last; stage++) {
-                    String stageTexture = textureOr(namespace, name + "_stage" + stage, texture);
-                    model(def, namespace, name + "_stage" + stage, stageTexture == null ? obj("parent", BLOCK + "crop") : obj("parent", BLOCK + "crop", "textures", obj("crop", stageTexture)));
-                }
-                for (int age = 0; age <= 7; age++) { variants.add("age=" + age, obj("model", main + "_stage" + Math.min(age, last))); }
-                blockstate(namespace, name, obj("variants", variants));
-            }
-            case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE -> {
-                model(def, namespace, name, textured(def, texture, "cross", "cross"));
-                blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
-            }
-            case ContentBlockTypes.VINE -> {
-                model(def, namespace, name, texture == null ? obj("parent", BLOCK + "vine") : obj("parent", BLOCK + "vine", "textures", obj("vine", texture, "particle", texture)));
-                blockstate(namespace, name, obj("multipart", arr(
-                        obj("when", obj("north", "true"), "apply", obj("model", main)),
-                        obj("when", obj("east", "true"), "apply", obj("model", main, "y", 90)),
-                        obj("when", obj("south", "true"), "apply", obj("model", main, "y", 180)),
-                        obj("when", obj("west", "true"), "apply", obj("model", main, "y", 270)),
-                        obj("when", obj("up", "true"), "apply", obj("model", main, "x", 270, "y", 90)),
-                        obj("when", obj("north", "false", "east", "false", "south", "false", "west", "false", "up", "false"), "apply", obj("model", main)))));
-            }
-            case ContentBlockTypes.LEAVES -> {
-                model(def, namespace, name, cube(def, texture, "leaves"));
-                blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
-            }
-            case ContentBlockTypes.PORTAL -> {
-                String face = texture == null ? "minecraft:block/nether_portal" : texture;
-                if (def.fullCube()) {
-                    model(def, namespace, name, obj("parent", BLOCK + "cube_all", "textures", obj("all", face)));
-                    blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
-                }
-                else {
-                    model(def, namespace, name + "_x", portal(face, arr(0, 0, 6), arr(16, 16, 10), "north", "south"));
-                    model(def, namespace, name + "_z", portal(face, arr(6, 0, 0), arr(10, 16, 16), "east", "west"));
-                    model(def, namespace, name + "_flat", portal(face, arr(0, 6, 0), arr(16, 10, 16), "up", "down"));
-                    blockstate(namespace, name, obj("variants", obj("axis=x", obj("model", main + "_x"), "axis=z", obj("model", main + "_z"), "axis=y", obj("model", main + "_flat"))));
-                }
-            }
-            default -> {
-                String top = texture(namespace, name + "_top");
-                String bottom = texture(namespace, name + "_bottom");
-                model(def, namespace, name, top == null && bottom == null ? cube(def, texture, "cube_all") : bottomTop(def, texture, top, bottom));
-                blockstate(namespace, name, obj("variants", obj("", obj("model", main))));
-            }
-        }
-    }
-
-    private static JsonObject stairs(String main) {
-        JsonObject variants = new JsonObject();
-        for (int facing = 0; facing < 4; facing++) {
-            for (String half : new String[] {"bottom", "top"}) {
-                boolean top = "top".equals(half);
-                for (int shape = 0; shape < SHAPES.length; shape++) {
-                    String model = shape == 0 ? main : shape < 3 ? main + "_inner" : main + "_outer";
-                    int y = (FACING_Y[facing] + (top ? TOP_TURN[shape] : BOTTOM_TURN[shape])) % 360;
-                    JsonObject entry = rotated(model, y, true);
-                    if (top) {
-                        entry.addProperty("x", 180);
-                        entry.addProperty("uvlock", true);
-                    }
-                    variants.add("facing=" + FACINGS[facing] + ",half=" + half + ",shape=" + SHAPES[shape], entry);
-                }
-            }
-        }
-        return variants;
-    }
-
-    private static JsonObject portal(String texture, JsonArray from, JsonArray to, String first, String second) {
-        JsonObject face = obj("uv", arr(0, 0, 16, 16), "texture", "#portal", "tintindex", 0);
-        return obj("textures", obj("particle", texture, "portal", texture), "elements", arr(obj("from", from, "to", to, "faces", obj(first, face, second, face.deepCopy()))));
-    }
-
-    private static JsonObject rotated(String model, int y, boolean uvlock) {
-        JsonObject entry = obj("model", model);
-        if (y != 0) {
-            entry.addProperty("y", y);
-            if (uvlock) { entry.addProperty("uvlock", true); }
-        }
-        return entry;
-    }
-
-    private static JsonObject cube(BlockDef def, @Nullable String texture, String template) {
-        return texture == null ? obj("parent", parent(def)) : obj("parent", BLOCK + template, "textures", obj("all", texture));
-    }
-
-    private static JsonObject bottomTop(BlockDef def, @Nullable String side, @Nullable String top, @Nullable String bottom) {
-        return side == null ? obj("parent", parent(def)) : obj("parent", BLOCK + "cube_bottom_top", "textures", obj("bottom", bottom == null ? side : bottom, "top", top == null ? side : top, "side", side));
-    }
-
-    private static JsonObject column(BlockDef def, @Nullable String side, @Nullable String end, String template) {
-        return side == null ? obj("parent", parent(def)) : obj("parent", BLOCK + template, "textures", obj("end", end, "side", side));
-    }
-
-    private static JsonObject sided(BlockDef def, @Nullable String texture, String template) {
-        return texture == null ? obj("parent", parent(def)) : obj("parent", BLOCK + template, "textures", obj("bottom", texture, "top", texture, "side", texture));
-    }
-
-    private static JsonObject textured(BlockDef def, @Nullable String texture, String template, String slot) {
-        return texture == null ? obj("parent", parent(def)) : obj("parent", BLOCK + template, "textures", obj(slot, texture));
-    }
-
-    private static String parent(BlockDef def) {
-        ResourceLocation model = ContentParser.location(def.modelBlock());
-        if (model == null) { model = ResourceLocation.parse("minecraft:stone"); }
-        return model.getNamespace() + ":block/" + model.getPath();
-    }
-
-    private static JsonObject chestItem(BlockDef def, String main) {
-        ContainerDef held = def.container();
-        if (held == null || !held.chestModel()) { return obj("parent", main); }
-        if (held.chestTexture() == null) { return obj("parent", "resourcedatapackloader:block/pack_chest"); }
-        String path = held.chestTexture().getPath();
-        if (path.startsWith("textures/")) { path = path.substring("textures/".length()); }
-        if (path.endsWith(".png")) { path = path.substring(0, path.length() - ".png".length()); }
-        return obj("parent", "resourcedatapackloader:block/pack_chest", "textures", obj("texture", held.chestTexture().getNamespace() + ":" + path));
-    }
-
-    private static void itemModel(BlockDef def, String namespace, String name, String type) {
-        String main = namespace + ":block/" + name;
-        JsonObject model = switch (type) {
-            case ContentBlockTypes.FENCE, ContentBlockTypes.WALL -> obj("parent", main + "_inventory");
-            case ContentBlockTypes.TRAPDOOR -> obj("parent", main + "_bottom");
-            case ContentBlockTypes.BANNER -> obj("parent", "minecraft:item/template_banner");
-            case ContentBlockTypes.CONTAINER -> chestItem(def, main);
-            case ContentBlockTypes.PORTAL -> obj("parent", def.fullCube() ? main : main + "_x");
-            case ContentBlockTypes.DOOR, ContentBlockTypes.LADDER, ContentBlockTypes.TORCH, ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE, ContentBlockTypes.PANE -> {
-                String flat = provided(PackType.CLIENT_RESOURCES, namespace, "textures/item/" + name + ".png") ? namespace + ":item/" + name : texture(namespace, name);
-                yield flat == null ? obj("parent", main) : obj("parent", ITEM_GENERATED, "textures", obj("layer0", flat));
-            }
-            default -> obj("parent", main);
-        };
-        asset(namespace, "models/item/" + name + ".json", model);
-    }
-
     private static JsonObject loot(ContentRegistry.BlockEntry entry, String type) {
         BlockDef def = entry.def();
         BlockVariant variant = entry.variant();
@@ -449,11 +170,12 @@ public final class ContentGenerated {
         switch (type) {
             case ContentBlockTypes.CROP -> {
                 JsonObject grown = obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj("age", String.valueOf(def.cropMaxAge())));
-                String produce = def.cropProduce().isEmpty() ? self : def.cropProduce();
-                String seed = def.cropSeed().isEmpty() ? produce : def.cropSeed();
+                ContentCropBlock crop = (ContentCropBlock) entry.block();
+                String produce = ContentStacks.id(crop.produce());
+                String seed = ContentStacks.id(crop.seed());
                 pools.add(pool(arr(item(produce)), arr(grown)));
                 pools.add(pool(arr(item(seed)), arr(obj("condition", "minecraft:inverted", "term", grown))));
-                pools.add(pool(arr(entryWith(seed, arr(obj("function", "minecraft:apply_bonus", "enchantment", "minecraft:fortune", "formula", "minecraft:binomial_with_bonus_count", "parameters", obj("extra", 3, "probability", 0.5714286))))), arr(grown)));
+                pools.add(pool(arr(entryWith(seed, arr(obj("function", "minecraft:set_count", "count", 0, "add", false), obj("function", "minecraft:apply_bonus", "enchantment", "minecraft:fortune", "formula", "minecraft:binomial_with_bonus_count", "parameters", obj("extra", 3, "probability", (def.cropMaxAge() + 1) / (2.0 * def.cropMaxAge())))))), arr(grown)));
             }
             case ContentBlockTypes.LEAVES -> {
                 JsonObject silk = ContentFormats.silkTouch();
@@ -463,7 +185,7 @@ public final class ContentGenerated {
                 ResourceLocation sapling = ContentParser.location(def.leafSapling());
                 if (sapling != null && def.leafSaplingChance() > 0) {
                     double chance = def.leafSaplingChance() / 100.0;
-                    JsonObject bonus = obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", arr(chance, chance + 0.0125, chance + 0.025, chance + 0.05));
+                    JsonObject bonus = obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", arr(chance, Math.min(1.0, chance + 0.02), Math.min(1.0, chance + 0.04), Math.min(1.0, chance + 0.06)));
                     pools.add(pool(arr(entryWith(sapling.toString(), arr(json(DECAY)))), arr(inverted(silk), inverted(shears), bonus, json(SURVIVES))));
                 }
             }
@@ -472,46 +194,40 @@ public final class ContentGenerated {
                 JsonObject doubled = obj("function", "minecraft:set_count", "count", 2, "add", false, "conditions", arr(obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj("type", "double"))));
                 pools.add(pool(arr(entryWith(self, arr(doubled, json(DECAY)))), arr(json(SURVIVES))));
             }
-            case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE -> {
-                String dropped = def.growth() == null || def.growth().drop().isEmpty() ? self : def.growth().drop();
+            case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER -> pools.add(pool(arr(item(self)), arr(json(SURVIVES))));
+            case ContentBlockTypes.CANE, ContentBlockTypes.VINE -> {
+                boolean own = def.growth() == null || def.growth().drop().isEmpty();
+                String dropped = own ? self : def.growth().drop();
                 int count = def.growth() == null ? 1 : def.growth().dropCount();
                 JsonArray functions = count > 1 ? arr(obj("function", "minecraft:set_count", "count", count, "add", false)) : arr();
-                pools.add(pool(arr(entryWith(dropped, functions)), arr(json(SURVIVES))));
+                if (own || !ContentBlockTypes.VINE.equals(type)) {
+                    pools.add(pool(arr(entryWith(dropped, functions)), arr(json(SURVIVES))));
+                    break;
+                }
+                JsonObject shears = ContentFormats.shears();
+                pools.add(pool(arr(item(self)), arr(shears)));
+                pools.add(pool(arr(entryWith(dropped, functions)), arr(inverted(shears), json(SURVIVES))));
             }
             default -> {
-                if (variant.drops().stream().allMatch(DropDef::isEntity) || def.opensWith() != null) {
+                boolean rolled = entry.block() instanceof ContentBlock || entry.block() instanceof ContentContainerBlock;
+                if (!rolled || variant.drops().isEmpty() || def.opensWith() != null) {
                     pools.add(pool(arr(item(self)), arr(json(SURVIVES))));
                     break;
                 }
                 JsonObject silk = ContentFormats.silkTouch();
                 if (def.silkHarvest()) { pools.add(pool(arr(item(self)), arr(silk))); }
+                JsonArray unsilked = def.silkHarvest() ? arr(inverted(silk), json(SURVIVES)) : arr(json(SURVIVES));
                 JsonArray weighted = new JsonArray();
-                JsonArray weightedBonus = new JsonArray();
                 for (DropDef drop : variant.drops()) {
                     if (drop.isEntity() || drop.item() == null) { continue; }
                     JsonObject dropped = entryWith(drop.item().toString(), dropFunctions(drop));
                     if (drop.weighted()) {
                         dropped.addProperty("weight", drop.weight());
                         weighted.add(dropped);
-                        if (drop.hasBonus()) {
-                            JsonObject extra = entryWith(drop.item().toString(), dropFunctions(drop));
-                            extra.addProperty("weight", drop.weight());
-                            extra.add("conditions", arr(bonus(drop)));
-                            weightedBonus.add(extra);
-                        }
-                        continue;
                     }
-                    JsonArray conditions = def.silkHarvest() ? arr(inverted(silk)) : arr();
-                    if (drop.chance() < 100) { conditions.add(obj("condition", "minecraft:random_chance", "chance", drop.chance() / 100.0)); }
-                    pools.add(pool(arr(dropped), conditions));
-                    if (drop.hasBonus()) {
-                        JsonArray bonusConditions = conditions.deepCopy();
-                        bonusConditions.add(bonus(drop));
-                        pools.add(pool(arr(entryWith(drop.item().toString(), dropFunctions(drop))), bonusConditions));
-                    }
+                    else { pools.add(pool(arr(dropped), unsilked)); }
                 }
-                if (!weighted.isEmpty()) { pools.add(pool(weighted, def.silkHarvest() ? arr(inverted(silk)) : arr())); }
-                if (!weightedBonus.isEmpty()) { pools.add(pool(weightedBonus, def.silkHarvest() ? arr(inverted(silk)) : arr())); }
+                if (!weighted.isEmpty()) { pools.add(pool(weighted, unsilked)); }
             }
         }
         return obj("type", "minecraft:block", "pools", pools);
@@ -523,14 +239,8 @@ public final class ContentGenerated {
             JsonElement count = drop.amount().fixed() ? new JsonPrimitive(drop.amount().least()) : obj("type", "minecraft:uniform", "min", drop.amount().least(), "max", drop.amount().most());
             functions.add(obj("function", "minecraft:set_count", "count", count, "add", false));
         }
-        functions.add(json(DECAY));
+        if (drop.chance() < 100 || drop.hasBonus()) { functions.add(obj("function", LootFunctions.NAMESPACE + ":drop_roll", "chance", drop.chance(), "bonusChance", arr(Arrays.stream(drop.bonusChance()).boxed().toArray()))); }
         return functions;
-    }
-
-    private static JsonObject bonus(DropDef drop) {
-        JsonArray chances = new JsonArray();
-        for (int chance : drop.bonusChance()) { chances.add(Mth.clamp(chance, 0, 100) / 100.0); }
-        return obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", chances);
     }
 
     private static JsonObject pool(JsonArray entries, JsonArray conditions) {
@@ -556,7 +266,8 @@ public final class ContentGenerated {
             tag(blockTags, tag, id);
             if (hasItem) { tag(itemTags, tag, id); }
         }
-        harvestTags(blockTags, id, def.harvestTool(), entry.variant().harvestLevelOr(def.harvestToolLevel()));
+        harvestTags(blockTags, id, def.harvestTool(), ContentBlockTypes.harvestLevel(def, entry.variant()));
+        materialTags(blockTags, id, def);
         boolean wood = "wood".equals(def.material());
         switch (def.type()) {
             case ContentBlockTypes.FENCE -> {
@@ -619,11 +330,27 @@ public final class ContentGenerated {
     public static void harvestTags(Map<String, Set<String>> tags, ResourceLocation id, String tool, int level) {
         switch (tool) {
             case "pickaxe", "axe", "shovel", "hoe" -> tag(tags, "minecraft:mineable/" + tool, id);
+            case "sword" -> tag(tags, ContentFormats.MINEABLE_SWORD, id);
             default -> { }
         }
         if (level == 1) { tag(tags, "minecraft:needs_stone_tool", id); }
         else if (level == 2) { tag(tags, "minecraft:needs_iron_tool", id); }
-        else if (level >= 3) { tag(tags, "minecraft:needs_diamond_tool", id); }
+        else if (level == 3) { tag(tags, "minecraft:needs_diamond_tool", id); }
+        else if (level >= 4) { tag(tags, ContentFormats.NEEDS_NETHERITE_TOOL, id); }
+    }
+
+    private static void materialTags(Map<String, Set<String>> tags, ResourceLocation id, BlockDef def) {
+        if (ContentBlockTypes.STAIRS.equals(def.type()) || ContentBlockTypes.WALL.equals(def.type())) { return; }
+        switch (ContentTypes.materialName(def)) {
+            case "rock", "iron", "anvil" -> tag(tags, "minecraft:mineable/pickaxe", id);
+            case "wood" -> tag(tags, "minecraft:mineable/axe", id);
+            case "plants", "vine" -> {
+                tag(tags, "minecraft:mineable/axe", id);
+                tag(tags, "minecraft:sword_efficient", id);
+            }
+            case "coral", "leaves", "gourd" -> tag(tags, "minecraft:sword_efficient", id);
+            default -> { }
+        }
     }
 
     public static void tag(Map<String, Set<String>> tags, String tag, ResourceLocation id) { tags.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(id.toString()); }
@@ -652,7 +379,7 @@ public final class ContentGenerated {
         if (sapling.vines()) { decoratorList.add(obj("type", "minecraft:leave_vine", "probability", 0.25)); }
         JsonObject config = obj(
                 "trunk_provider", state(sapling.log()),
-                "trunk_placer", obj("type", "minecraft:straight_trunk_placer", "base_height", Math.max(1, sapling.height()), "height_rand_a", 2, "height_rand_b", 0),
+                "trunk_placer", obj("type", LootFunctions.NAMESPACE + ":" + ContentTreeTrunk.NAME, "base_height", Math.max(1, sapling.height()), "height_rand_a", 2, "height_rand_b", 0),
                 "foliage_provider", state(sapling.leaves()),
                 "foliage_placer", obj("type", "minecraft:blob_foliage_placer", "radius", 2, "offset", 0, "height", 3),
                 "dirt_provider", state("minecraft:dirt"),
@@ -665,33 +392,40 @@ public final class ContentGenerated {
 
     private static JsonObject state(String block) { return obj("type", "minecraft:simple_state_provider", "state", obj("Name", block)); }
 
-    @Nullable private static String texture(String namespace, String name) { return provided(PackType.CLIENT_RESOURCES, namespace, "textures/block/" + name + ".png") ? namespace + ":block/" + name : null; }
-
-    @Nullable private static String textureOr(String namespace, String name, @Nullable String fallback) {
-        String found = texture(namespace, name);
-        return found == null ? fallback : found;
-    }
-
     private static void potionIcons() {
-        byte[] icon = FallbackIcon.bytes();
-        if (icon == null) { return; }
-        for (ResourceLocation key : ContentPotions.keys()) {
+        JsonArray aliases = new JsonArray();
+        for (PotionDef def : ContentPotions.defs()) {
+            ResourceLocation key = def.key();
             String path = "textures/mob_effect/" + key.getPath() + ".png";
-            if (!provided(PackType.CLIENT_RESOURCES, key.getNamespace(), path)) { GeneratedResources.put(PackType.CLIENT_RESOURCES, key.getNamespace(), path, icon); }
+            if (provided(PackType.CLIENT_RESOURCES, key.getNamespace(), path)) { continue; }
+            String vanilla = def.iconTexture().isEmpty() ? sheetIcon(def) : null;
+            if (vanilla != null) {
+                aliases.add(obj("type", "minecraft:single", "resource", "minecraft:mob_effect/" + vanilla, "sprite", key.getNamespace() + ":mob_effect/" + key.getPath()));
+                continue;
+            }
+            byte[] icon = potionIcon(def);
+            if (icon != null) { GeneratedResources.put(PackType.CLIENT_RESOURCES, key.getNamespace(), path, icon); }
         }
+        if (!aliases.isEmpty()) { asset(ResourceLocation.DEFAULT_NAMESPACE, "atlases/mob_effects.json", obj("sources", aliases)); }
     }
 
-    private static boolean provided(PackType type, String namespace, String path) { return PackManager.get().provides(type, namespace, path); }
-
-    private static void blockstate(String namespace, String name, JsonObject json) { asset(namespace, "blockstates/" + name + ".json", json); }
-
-    private static void model(BlockDef def, String namespace, String name, JsonObject json) {
-        String layer = ContentBlockTypes.renderType(def);
-        if (layer != null && !json.has("render_type")) { json.addProperty("render_type", layer); }
-        asset(namespace, "models/block/" + name + ".json", json);
+    @Nullable private static String sheetIcon(PotionDef def) {
+        int index = def.iconX() + def.iconY() * SHEET_COLUMNS;
+        if (index >= 0 && index < STATUS_SHEET.length) { return STATUS_SHEET[index]; }
+        ContentLog.LOGGER.error("Potion {} names icon {}, {}, which is not on the vanilla status icon sheet, using the RDPL icon", def.key(), def.iconX(), def.iconY());
+        return null;
     }
 
-    private static void asset(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, GSON.toJson(json)); }
+    @Nullable private static byte[] potionIcon(PotionDef def) {
+        ResourceLocation texture = def.iconTexture().isEmpty() || FallbackIcon.TEXTURE.equals(def.iconTexture()) ? null : ResourceLocation.tryParse(def.iconTexture());
+        byte[] icon = texture == null ? null : PackManager.get().bytes(PackType.CLIENT_RESOURCES, texture.getNamespace(), texture.getPath());
+        if (texture != null && icon == null) { ContentLog.LOGGER.error("Potion {} names iconTexture {}, which no pack provides, using the RDPL icon", def.key(), def.iconTexture()); }
+        return icon == null ? FallbackIcon.bytes() : icon;
+    }
+
+    static boolean provided(PackType type, String namespace, String path) { return PackManager.get().provides(type, namespace, path); }
+
+    static void asset(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, GSON.toJson(json)); }
 
     private static void data(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.SERVER_DATA, namespace, path, GSON.toJson(json)); }
 

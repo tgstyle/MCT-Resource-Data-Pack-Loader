@@ -15,14 +15,12 @@ import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
-import net.minecraft.core.SectionPos;
-
 import net.minecraftforge.event.server.ServerStartedEvent;
-
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -33,26 +31,26 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.util.Mth;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentWorldShape {
@@ -61,6 +59,7 @@ public final class ContentWorldShape {
     public static final int LOWEST = -2032;
     public static final int HIGHEST = 2032;
     private static final int BLEND = 8;
+    static final int MAX_LAYERS = 5;
     private static final String OVERWORLD = "minecraft:overworld";
     private static final String NETHER = "minecraft:the_nether";
     private static final String END = "minecraft:the_end";
@@ -68,14 +67,20 @@ public final class ContentWorldShape {
     private static final Map<String, String[]> BASES = Map.of(
             "", new String[] { "normal", "overworld" }, "default", new String[] { "normal", "overworld" }, "normal", new String[] { "normal", "overworld" },
             "largebiomes", new String[] { "large_biomes", "large_biomes" }, "large_biomes", new String[] { "large_biomes", "large_biomes" },
-            "amplified", new String[] { "amplified", "amplified" }, "flat", new String[] { "flat", "overworld" }, "superflat", new String[] { "flat", "overworld" });
-    private static final String BEDROCK_FLOOR = "bedrock_floor";
-    private static final String BEDROCK_ROOF = "bedrock_roof";
-    private static final Set<String> WARNED = new HashSet<>();
+            "amplified", new String[] { "amplified", "amplified" }, "flat", new String[] { "flat", "overworld" }, "superflat", new String[] { "flat", "overworld" },
+            "customized", new String[] { "normal", "overworld" }, "default_1_1", new String[] { "normal", "overworld" });
+    private static final Set<String> OPTION_KEYS = Set.of("seaLevel", "useLavaOceans", "fixedBiome");
+    static final Set<String> WARNED = new HashSet<>();
     private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
+    private static final Set<ResourceKey<NoiseGeneratorSettings>> OVERWORLD_NOISE = Set.of(NoiseGeneratorSettings.OVERWORLD, NoiseGeneratorSettings.LARGE_BIOMES, NoiseGeneratorSettings.AMPLIFIED);
+    private static final Set<ResourceLocation> SHAPED_OVERWORLD_NOISE = new HashSet<>();
+    private static final Map<ResourceLocation, ResourceKey<NoiseGeneratorSettings>> VOIDED_OVERWORLD = new HashMap<>();
+    private static final Map<ResourceLocation, Unvoided> UNVOIDED = new ConcurrentHashMap<>();
+    private static final int UNREAD_SURFACE = 62;
     @Nullable private static ResourceLocation presetId;
     @Nullable private static String presetName;
     @Nullable private static ResourceLocation overrode;
+    static boolean blockedToVoid;
 
     private ContentWorldShape() {}
 
@@ -94,10 +99,12 @@ public final class ContentWorldShape {
         return presetId;
     }
 
-    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves) {
+    private record Unvoided(long seed, NoiseBasedChunkGenerator generator, RandomState random) {}
+
+    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves, @Nullable String fixedBiome) {
         boolean tall() { return minY != VANILLA_MIN || maxY != VANILLA_MAX; }
 
-        boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans; }
+        boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans || fixedBiome != null; }
 
         boolean flat() { return "flat".equals(base[0]); }
     }
@@ -106,20 +113,24 @@ public final class ContentWorldShape {
         presetId = null;
         presetName = null;
         MADE.clear();
+        SHAPED_OVERWORLD_NOISE.clear();
+        VOIDED_OVERWORLD.clear();
+        UNVOIDED.clear();
+        blockedToVoid = ContentBiomeControl.everythingBlocked();
         Shape shape = shape();
-        boolean anything = shape.shapesOverworld() || !"normal".equals(shape.base()[0]) || ContentBiomes.placesBiomes(OVERWORLD) || ContentBiomes.placesBiomes(NETHER) || ContentOreControl.veinsBlocked();
+        if (blockedToVoid && !ContentControl.off(ContentControl.VOID)) { ContentLog.LOGGER.info("No biome survived blocking and the world template is void, so the void world dimensions are generated as a void world"); }
+        boolean anything = shape.shapesOverworld() || !"normal".equals(shape.base()[0]) || ContentBiomes.placesBiomes(OVERWORLD, OVERWORLD) || ContentBiomes.placesBiomes(NETHER, NETHER) || ContentOreControl.veinsBlocked(OVERWORLD);
         JsonObject dimensions = new JsonObject();
         for (String dimension : DIMENSIONS) {
-            boolean flatBedrock = bedrockApplies(dimension);
-            boolean isVoid = voidApplies(dimension);
+            boolean flatBedrock = ContentBedrock.bedrockApplies(dimension);
+            boolean isVoid = ContentVoidWorld.voidApplies(dimension);
             anything |= flatBedrock || isVoid;
             dimensions.add(dimension, dimension(shape, dimension, flatBedrock, isVoid));
         }
+        ContentBedrock.report();
+        keepSaved(shape);
         GameData.release();
-        if (!anything) {
-            MADE.clear();
-            return;
-        }
+        if (!anything) { return; }
         JsonObject preset = new JsonObject();
         preset.add("dimensions", dimensions);
         String namespace = shape.id().getNamespace();
@@ -137,7 +148,7 @@ public final class ContentWorldShape {
         presetName = shape.name();
         Summary.info("worldshape", "Generated world preset " + shape.id() + " (" + shape.name() + ") on " + shape.base()[0] + ": overworld " + shape.minY() + ".." + shape.maxY()
                 + (shape.deepStone() == null ? "" : ", deep stone " + shape.deepStone()) + (shape.deepCaves() ? ", caves to the floor" : "") + (shape.seaLevel() >= 0 ? ", sea level " + shape.seaLevel() : "") + (shape.lavaOceans() ? ", lava oceans" : "")
-                + (bedrockAsked() ? ", flat bedrock " + layers() + " layer(s)" : "") + (voidAsked() ? ", void " + voidDimensions() : ""));
+                + (ContentBedrock.bedrockAsked() ? ", flat bedrock " + ContentBedrock.layers() + " layer(s)" : "") + (ContentVoidWorld.voidAsked() ? ", void " + ContentVoidWorld.voidDimensions() : ""));
     }
 
     private static Shape shape() {
@@ -165,16 +176,18 @@ public final class ContentWorldShape {
         }
         int seaLevel = -1;
         boolean lavaOceans = false;
-        JsonObject options = "flat".equals(base[0]) ? null : ContentTerrain.generatorOptions();
+        String fixedBiome = null;
+        JsonObject options = "flat".equals(base[0]) ? null : ContentTerrain.customizedOptions();
         if (options != null) {
             seaLevel = GsonHelper.getAsInt(options, "seaLevel", -1);
             lavaOceans = GsonHelper.getAsBoolean(options, "useLavaOceans", false);
+            fixedBiome = options.has("fixedBiome") ? ContentTerrain.shippedBiome(GsonHelper.getAsString(options, "fixedBiome", "-1").trim()) : null;
             for (String key : options.keySet()) {
-                if (!key.equals("seaLevel") && !key.equals("useLavaOceans") && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read; seaLevel and useLavaOceans are the keys read here", key); }
+                if (!OPTION_KEYS.contains(key) && !ContentPopulateControl.readsOption(key) && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read", key); }
             }
         }
         boolean deepCaves = ContentDeepCaves.carves(minY, "The overworld");
-        return new Shape(id, name, base, minY, maxY, deepStone.isEmpty() ? null : deepStone, seaLevel, lavaOceans, deepCaves);
+        return new Shape(id, name, base, minY, maxY, deepStone.isEmpty() ? null : deepStone, seaLevel, lavaOceans, deepCaves, fixedBiome);
     }
 
     private static JsonObject dimension(Shape shape, String dimension, boolean flatBedrock, boolean isVoid) {
@@ -197,60 +210,113 @@ public final class ContentWorldShape {
             out.add("generator", flat());
             return out;
         }
-        if (isVoid) {
-            generator.addProperty("type", "minecraft:flat");
-            JsonObject settings = new JsonObject();
-            settings.addProperty("biome", "minecraft:the_void");
-            settings.addProperty("features", true);
-            settings.addProperty("lakes", false);
-            settings.add("layers", new JsonArray());
-            generator.add("settings", settings);
-            MADE.add(ResourceLocation.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_" + path + "_void"));
-            out.add("generator", generator);
-            return out;
-        }
         generator.addProperty("type", "minecraft:noise");
         JsonObject source = new JsonObject();
         if (END.equals(dimension)) { source.addProperty("type", "minecraft:the_end"); }
+        else if (overworld && shape.fixedBiome() != null) {
+            source.addProperty("type", "minecraft:fixed");
+            source.addProperty("biome", shape.fixedBiome());
+        }
         else {
             source.addProperty("type", "minecraft:multi_noise");
-            if (ContentBiomes.placesBiomes(dimension)) { source.add("biomes", ContentBiomes.biomes(dimension)); }
+            if (ContentBiomes.placesBiomes(dimension, dimension)) { source.add("biomes", ContentBiomes.biomes(dimension, dimension)); }
             else { source.addProperty("preset", overworld ? OVERWORLD : "minecraft:nether"); }
         }
         generator.add("biome_source", source);
-        String vanillaSettings = overworld ? shape.base()[1] : NETHER.equals(dimension) ? "nether" : "end";
-        String settingsId = "minecraft:" + vanillaSettings;
-        boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
-        if ((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked())) || flatBedrock || seamed) {
-            JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
-            if (settings != null) {
-                if (overworld) { shapeNoise(settings, shape); }
-                if (overworld && ContentOreControl.veinsBlocked()) {
-                    settings.addProperty("ore_veins_enabled", false);
-                    ContentLog.LOGGER.debug("The overworld's iron and copper ore veins are turned off by the ores group");
-                }
-                if (overworld && ContentBiomes.any()) {
-                    ContentBiomes.surface(settings);
-                    ContentBiomes.spawnTargets(settings);
-                }
-                if (seamed) { ContentSeams.openBedrock(settings, dimension); }
-                if (flatBedrock) { flattenBedrock(settings, dimension); }
-                settingsId = made(shape, path + "_noise", "worldgen/noise_settings", settings);
-            }
+        String vanillaSettings = vanillaSettings(shape, dimension);
+        if (isVoid) {
+            ResourceLocation id = ownId(shape, path + "_void");
+            voided(id, overworld, vanillaSettings);
+            out.add("generator", voidGenerator(source, vanillaSettings, id));
+            return out;
         }
-        generator.addProperty("settings", settingsId);
+        String settingsId = noiseSettings(shape, dimension, flatBedrock, false);
+        generator.addProperty("settings", settingsId == null ? "minecraft:" + vanillaSettings : settingsId);
         out.add("generator", generator);
         return out;
+    }
+
+    private static void keepSaved(Shape shape) {
+        for (String dimension : DIMENSIONS) {
+            String path = dimension.substring(dimension.indexOf(':') + 1);
+            ResourceLocation voidId = ownId(shape, path + "_void");
+            if (!MADE.contains(voidId)) {
+                String vanillaSettings = vanillaSettings(shape, dimension);
+                voided(voidId, OVERWORLD.equals(dimension), vanillaSettings);
+                voidGenerator(new JsonObject(), vanillaSettings, voidId);
+            }
+            if (!MADE.contains(ownId(shape, path + "_noise"))) { noiseSettings(shape, dimension, ContentBedrock.bedrockApplies(dimension), true); }
+        }
+    }
+
+    private static String vanillaSettings(Shape shape, String dimension) { return OVERWORLD.equals(dimension) ? shape.base()[1] : NETHER.equals(dimension) ? "nether" : "end"; }
+
+    private static void voided(ResourceLocation id, boolean overworld, String vanillaSettings) {
+        MADE.add(id);
+        if (overworld) { VOIDED_OVERWORLD.put(id, ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath("minecraft", vanillaSettings))); }
+    }
+
+    @Nullable private static String noiseSettings(Shape shape, String dimension, boolean flatBedrock, boolean always) {
+        boolean overworld = OVERWORLD.equals(dimension);
+        boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
+        if (!always && !((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked(dimension))) || flatBedrock || seamed)) { return null; }
+        JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings(shape, dimension) + ".json"));
+        if (settings == null) { return null; }
+        if (overworld) { shapeNoise(settings, shape); }
+        if (overworld && ContentOreControl.veinsBlocked(dimension)) {
+            settings.addProperty("ore_veins_enabled", false);
+            ContentLog.LOGGER.debug("The overworld's iron and copper ore veins are turned off by the ores group");
+        }
+        if (overworld && ContentBiomes.any()) {
+            ContentBiomes.surface(settings);
+            ContentBiomes.spawnTargets(settings);
+        }
+        if (seamed) { ContentSeams.openBedrock(settings, dimension); }
+        if (flatBedrock) { ContentBedrock.flattenBedrock(settings, dimension); }
+        String settingsId = made(shape, dimension.substring(dimension.indexOf(':') + 1) + "_noise", "worldgen/noise_settings", settings);
+        if (overworld) { overworldNoise(ResourceLocation.parse(settingsId)); }
+        return settingsId;
+    }
+
+    static JsonObject voidGenerator(JsonObject source, String vanillaSettings, ResourceLocation id) {
+        JsonObject generator = new JsonObject();
+        JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
+        if (settings == null) {
+            generator.addProperty("type", "minecraft:flat");
+            JsonObject flat = new JsonObject();
+            flat.addProperty("biome", "minecraft:the_void");
+            flat.add("layers", new JsonArray());
+            generator.add("settings", flat);
+            return generator;
+        }
+        JsonObject air = new JsonObject();
+        air.addProperty("Name", "minecraft:air");
+        settings.add("default_block", air);
+        settings.add("default_fluid", air.deepCopy());
+        settings.addProperty("aquifers_enabled", false);
+        settings.addProperty("ore_veins_enabled", false);
+        settings.addProperty("disable_mob_generation", true);
+        JsonObject surface = new JsonObject();
+        surface.addProperty("type", "minecraft:sequence");
+        surface.add("sequence", new JsonArray());
+        settings.add("surface_rule", surface);
+        GsonHelper.getAsJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
+        generator.addProperty("type", "minecraft:noise");
+        generator.add("biome_source", source);
+        generator.addProperty("settings", id.toString());
+        return generator;
     }
 
     private static JsonObject flat() {
         JsonObject generator = new JsonObject();
         generator.addProperty("type", "minecraft:flat");
         JsonObject settings = new JsonObject();
-        settings.addProperty("biome", "minecraft:plains");
         ContentTerrain.Flat asked = ContentTerrain.flat();
+        ContentTerrain.leavesWaterLakes(asked);
+        settings.addProperty("biome", asked.biome());
         settings.addProperty("features", asked.decorated());
-        settings.addProperty("lakes", false);
+        settings.addProperty("lakes", asked.lakes());
         JsonArray layers = new JsonArray();
         int height = 0;
         for (String written : asked.layers()) {
@@ -273,6 +339,7 @@ public final class ContentWorldShape {
         JsonArray structures = new JsonArray();
         structures.add(ResourceDataPackLoader.MOD_ID + ":" + ContentCity.STRUCTURE);
         for (String set : asked.structures()) { structures.add(set); }
+        for (String set : ContentStructureMaps.sets()) { structures.add(set); }
         settings.add("structure_overrides", structures);
         generator.add("settings", settings);
         ContentLog.LOGGER.info("The overworld is flat: {} layer(s) {} block(s) deep, the pack's cities on it{}{}", layers.size(), height, asked.structures().isEmpty() ? "" : " with " + String.join(", ", asked.structures()), asked.decorated() ? ", decorated with the biome's features" : ", undecorated");
@@ -280,11 +347,13 @@ public final class ContentWorldShape {
     }
 
     private static String made(Shape shape, String suffix, String folder, JsonObject json) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_" + suffix);
+        ResourceLocation id = ownId(shape, suffix);
         GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), folder + "/" + id.getPath() + ".json", json.toString());
         MADE.add(id);
         return id.toString();
     }
+
+    private static ResourceLocation ownId(Shape shape, String suffix) { return ResourceLocation.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_" + suffix); }
 
     private static void shapeNoise(JsonObject settings, Shape shape) {
         JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
@@ -310,78 +379,7 @@ public final class ContentWorldShape {
         sequence.asList().add(1, WorldgenJson.condition(gradient, WorldgenJson.block(shape.deepStone())));
     }
 
-    private static void flattenBedrock(JsonObject settings, String dimension) {
-        int layers = layers();
-        JsonArray sequence = WorldgenJson.sequenceOf(settings);
-        for (int index = 0; index < sequence.size(); index++) {
-            JsonElement element = sequence.get(index);
-            if (!element.isJsonObject()) { continue; }
-            JsonObject entry = element.getAsJsonObject();
-            String gradient = gradientName(entry);
-            if (gradient == null) { continue; }
-            boolean roof = gradient.endsWith(BEDROCK_ROOF);
-            if (roof && !roofWanted()) { continue; }
-            if (!roof && !gradient.endsWith(BEDROCK_FLOOR)) { continue; }
-            JsonObject bedrock = WorldgenJson.block("minecraft:bedrock");
-            JsonObject flat;
-            if (roof) { flat = WorldgenJson.condition(WorldgenJson.yAbove(WorldgenJson.anchor("below_top", layers - 1)), bedrock); }
-            else {
-                flat = WorldgenJson.condition(WorldgenJson.not(WorldgenJson.yAbove(WorldgenJson.anchor("above_bottom", layers))), bedrock);
-            }
-            List<String> biomes = bedrockBiomes();
-            if (biomes.isEmpty()) {
-                sequence.set(index, flat);
-                continue;
-            }
-            JsonObject inBiomes = WorldgenJson.biomeIs(biomes);
-            JsonObject outside = WorldgenJson.not(inBiomes);
-            boolean blacklist = ContentControl.flag(ContentControl.BEDROCK, "flatBedrockBiomesAreBlacklist", Config.worldgen.flatBedrockBiomesAreBlacklist());
-            sequence.set(index, WorldgenJson.sequence(List.of(WorldgenJson.condition(blacklist ? outside : inBiomes, flat), WorldgenJson.condition(blacklist ? inBiomes : outside, entry))));
-        }
-        ContentLog.LOGGER.debug("Flattened the bedrock of {} to {} layer(s){}", dimension, layers, roofWanted() ? " including the roof" : "");
-    }
-
-    @Nullable private static String gradientName(JsonObject entry) {
-        if (!"minecraft:condition".equals(GsonHelper.getAsString(entry, "type", ""))) { return null; }
-        JsonObject test = GsonHelper.getAsJsonObject(entry, "if_true", new JsonObject());
-        if ("minecraft:not".equals(GsonHelper.getAsString(test, "type", ""))) { test = GsonHelper.getAsJsonObject(test, "invert", new JsonObject()); }
-        if (!"minecraft:vertical_gradient".equals(GsonHelper.getAsString(test, "type", ""))) { return null; }
-        return GsonHelper.getAsString(test, "random_name", "");
-    }
-
-    private static boolean bedrockAsked() {
-        if (ContentControl.off(ContentControl.BEDROCK)) { return false; }
-        return ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock());
-    }
-
-    private static boolean bedrockApplies(String dimension) {
-        if (!bedrockAsked()) { return false; }
-        return listed(dimension, ContentControl.list(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions()),
-                ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist()));
-    }
-
-    private static int layers() { return Mth.clamp(ContentControl.number(ContentControl.BEDROCK, "bedrockLayers", Config.worldgen.bedrockLayers()), 1, 5); }
-
-    private static boolean roofWanted() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRoof", Config.worldgen.flatBedrockRoof()); }
-
-    private static List<String> bedrockBiomes() { return ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomes", Config.worldgen.flatBedrockBiomes()); }
-
-    private static boolean voidAsked() {
-        if (ContentControl.off(ContentControl.VOID)) { return false; }
-        return ContentControl.flag(ContentControl.VOID, "voidWorld", Config.worldgen.voidWorld());
-    }
-
-    private static List<String> voidDimensions() { return ContentControl.list(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions()); }
-
-    private static boolean voidApplies(String dimension) {
-        if (!voidAsked()) { return false; }
-        List<String> wanted = voidDimensions();
-        return listed(dimension, wanted.isEmpty() ? List.of(OVERWORLD) : wanted, ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist()));
-    }
-
-    private static boolean voidApplies(ServerLevel level) { return voidApplies(level.dimension().location().toString()); }
-
-    private static boolean listed(String dimension, List<String> entries, boolean blacklist) {
+    static boolean listed(String dimension, List<String> entries, boolean blacklist) {
         if (entries.isEmpty()) { return true; }
         boolean found = false;
         for (String entry : entries) {
@@ -395,7 +393,7 @@ public final class ContentWorldShape {
         return found != blacklist;
     }
 
-    @Nullable private static Block block(String name, String key) {
+    @Nullable static Block block(String name, String key) {
         Block found = Registered.find(ForgeRegistries.BLOCKS, ResourceLocation.tryParse(name.trim()));
         if (found == null && WARNED.add(key + ":" + name)) { ContentLog.LOGGER.error("{} names block '{}', which is not registered, so it does nothing", key, name); }
         return found;
@@ -403,14 +401,13 @@ public final class ContentWorldShape {
 
     public static void onCreateSpawn(LevelEvent.CreateSpawnPosition event) {
         if (!(event.getLevel() instanceof ServerLevel level)) { return; }
-        if (voidApplies(level)) {
-            BlockPos center = platformCenter(level);
-            platform(level, center);
+        if (ContentVoidWorld.voidApplies(level)) {
+            BlockPos center = ContentVoidWorld.platformCenter(level);
+            ContentVoidWorld.platform(level, center);
             event.getSettings().setSpawn(center.above(), 0.0F);
             level.getGameRules().getRule(GameRules.RULE_SPAWN_RADIUS).set(0, level.getServer());
             event.setCanceled(true);
             Summary.info("void", "Made a void world with a platform at " + center.getX() + ", " + center.getY() + ", " + center.getZ());
-            return;
         }
         if (level.dimension() != Level.OVERWORLD) { return; }
         BlockPos spawn = spawnAsked(level);
@@ -441,8 +438,15 @@ public final class ContentWorldShape {
     }
 
     private static int ground(ServerLevel level, int x, int z) {
-        level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
-        return level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        ChunkGenerator generator = level.getChunkSource().getGenerator();
+        if (ContentFlatSource.flat(generator)) { return generator.getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, level, level.getChunkSource().randomState()); }
+        return level.getSeaLevel() + 1;
+    }
+
+    public static void onLevelLoad(LevelEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) { return; }
+        ContentVoidWorld.remember(level);
+        VanillaWindow.keep(level.getMinBuildHeight() < VANILLA_MIN && madeHere(level) ? level.getChunkSource().getGenerator() : null);
     }
 
     public static void onServerStarted(ServerStartedEvent event) {
@@ -465,34 +469,14 @@ public final class ContentWorldShape {
         ContentLog.LOGGER.info("Wrote level-type={} back to server.properties, so the file names the preset the world was made with", wanted);
     }
 
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) { return; }
-        MinecraftServer server = level.getServer();
-        int time = ContentTerrain.worldTime();
-        if (time >= 0) {
-            level.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
-            level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
-            level.setDayTime(time);
-        }
-        Difficulty difficulty = ContentTerrain.worldDifficulty();
-        if (difficulty != null) {
-            server.setDifficulty(difficulty, true);
-            server.setDifficultyLocked(true);
-        }
-    }
-
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        standOn(player);
+        ContentVoidWorld.standOn(player);
         tell(player);
     }
 
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { standOn(player); }
-    }
-
-    public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { standOn(player); }
+        if (event.getEntity() instanceof ServerPlayer player) { ContentVoidWorld.standOn(player); }
     }
 
     private static void tell(ServerPlayer player) {
@@ -502,40 +486,45 @@ public final class ContentWorldShape {
         player.sendSystemMessage(Component.literal(Lang.tr(player, "rdpl.world.type", presetName)));
     }
 
+    public static int surfaceAt(Structure.GenerationContext context, int x, int z) {
+        ChunkGenerator generator = context.chunkGenerator();
+        if (ContentFlatSource.empty(generator)) { return 0; }
+        if (overworldShaped(generator)) { return generator.getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), context.randomState()); }
+        Unvoided unvoided = unvoided(context);
+        if (unvoided != null) { return unvoided.generator().getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor(), unvoided.random()); }
+        return UNREAD_SURFACE;
+    }
+
+    @Nullable private static Unvoided unvoided(Structure.GenerationContext context) {
+        if (!(context.chunkGenerator() instanceof NoiseBasedChunkGenerator noise)) { return null; }
+        ResourceKey<NoiseGeneratorSettings> settings = noise.generatorSettings().unwrapKey().orElse(null);
+        ResourceKey<NoiseGeneratorSettings> original = settings == null ? null : VOIDED_OVERWORLD.get(settings.location());
+        if (original == null) { return null; }
+        Unvoided held = UNVOIDED.get(settings.location());
+        if (held != null && held.seed() == context.seed()) { return held; }
+        Holder<NoiseGeneratorSettings> shape = context.registryAccess().registryOrThrow(Registries.NOISE_SETTINGS).getHolderOrThrow(original);
+        Unvoided made = new Unvoided(context.seed(), new NoiseBasedChunkGenerator(noise.getBiomeSource(), shape), RandomState.create(shape.value(), context.registryAccess().lookupOrThrow(Registries.NOISE), context.seed()));
+        UNVOIDED.put(settings.location(), made);
+        return made;
+    }
+
+    private static boolean overworldShaped(ChunkGenerator generator) {
+        if (ContentFlatSource.flat(generator)) { return true; }
+        if (!(generator instanceof NoiseBasedChunkGenerator noise)) { return false; }
+        ResourceKey<NoiseGeneratorSettings> settings = noise.generatorSettings().unwrapKey().orElse(null);
+        return settings != null && (OVERWORLD_NOISE.contains(settings) || SHAPED_OVERWORLD_NOISE.contains(settings.location()));
+    }
+
+    public static void overworldNoise(ResourceLocation settings) { SHAPED_OVERWORLD_NOISE.add(settings); }
+
     private static boolean madeHere(ServerLevel level) {
         ResourceKey<?> type = level.dimensionTypeRegistration().unwrapKey().orElse(null);
         if (type != null && MADE.contains(type.location())) { return true; }
         ChunkGenerator generator = level.getChunkSource().getGenerator();
-        if (generator instanceof NoiseBasedChunkGenerator noise) {
+        if (generator instanceof NoiseBasedChunkGenerator noise && !ContentFlatSource.flat(generator)) {
             ResourceKey<?> settings = noise.generatorSettings().unwrapKey().orElse(null);
             return settings != null && MADE.contains(settings.location());
         }
-        return generator instanceof FlatLevelSource && voidApplies(level);
-    }
-
-    private static void standOn(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
-        if (!voidApplies(level)) { return; }
-        BlockPos center = platformCenter(level);
-        if (level.isEmptyBlock(center)) { platform(level, center); }
-        if (player.getY() >= center.getY() + 1 && player.getY() < center.getY() + 2 && Math.abs(player.getX() - (center.getX() + 0.5D)) <= 0.5D && Math.abs(player.getZ() - (center.getZ() + 0.5D)) <= 0.5D) { return; }
-        player.teleportTo(center.getX() + 0.5D, center.getY() + 1, center.getZ() + 0.5D);
-        player.fallDistance = 0.0F;
-        ContentPregen.anchored(player);
-    }
-
-    private static BlockPos platformCenter(ServerLevel level) {
-        int asked = ContentControl.number(ContentControl.VOID, "voidPlatformHeight", Config.worldgen.voidPlatformHeight());
-        return new BlockPos(0, Mth.clamp(asked, level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - 2), 0);
-    }
-
-    private static void platform(ServerLevel level, BlockPos center) {
-        String name = ContentControl.text(ContentControl.VOID, "voidPlatformBlock", Config.worldgen.voidPlatformBlock());
-        Block found = block(name, "voidPlatformBlock");
-        BlockState state = found == null ? Blocks.STONE.defaultBlockState() : found.defaultBlockState();
-        int reach = Math.max(0, (ContentControl.number(ContentControl.VOID, "voidPlatformSize", Config.worldgen.voidPlatformSize()) - 1) / 2);
-        for (int x = -reach; x <= reach; x++) {
-            for (int z = -reach; z <= reach; z++) { level.setBlock(center.offset(x, 0, z), state, 2); }
-        }
+        return ContentFlatSource.flat(generator) && ContentVoidWorld.voidApplies(level);
     }
 }

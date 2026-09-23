@@ -88,10 +88,20 @@ public final class ContentPathIntersects {
         }
         List<String> mouth = Json.strings(json, "mouth");
         List<String> corner = Json.strings(json, "corner");
+        roles(key, legend, mouth, "mouth");
+        roles(key, legend, corner, "corner");
         if (mouth.isEmpty() && corner.isEmpty()) {
             ContentLog.LOGGER.error("Path intersect design {} draws neither a mouth nor a corner, so it is dropped", key);
             return null;
         }
         return new PathIntersectDef(key, GsonHelper.getAsString(json, "name", key.getPath()), Math.max(1, GsonHelper.getAsInt(json, "weight", 1)), Map.copyOf(legend), mouth, corner);
+    }
+
+    private static void roles(ResourceLocation key, Map<Character, String> legend, List<String> rows, String part) {
+        for (String row : rows) {
+            for (char held : row.toCharArray()) {
+                if (!PathIntersectDef.role(held) && !legend.containsKey(held)) { ContentLog.LOGGER.error("Path intersect {} {} uses '{}', which is neither a role letter nor in the legend", key, part, held); }
+            }
+        }
     }
 }

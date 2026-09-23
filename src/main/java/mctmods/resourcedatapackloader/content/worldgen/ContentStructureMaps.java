@@ -17,9 +17,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -32,11 +35,11 @@ import javax.annotation.Nullable;
 public final class ContentStructureMaps {
     public static final String MAP_STRUCTURE = "map";
     public static final String MAP_PIECE = "map_piece";
-    private static final Map<String, String> DIMENSION_TAGS = Map.of("minecraft:overworld", "#minecraft:is_overworld", "minecraft:the_nether", "#minecraft:is_nether", "minecraft:the_end", "#minecraft:is_end");
     private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new LinkedHashSet<>();
     private static final Set<String> OVERSIZE = new LinkedHashSet<>();
+    private static final List<String> SETS = new ArrayList<>();
     private static boolean loaded;
 
     private ContentStructureMaps() {}
@@ -55,6 +58,7 @@ public final class ContentStructureMaps {
 
     public static void generate() {
         int generated = 0;
+        SETS.clear();
         for (StructureMapDef def : DEFS.values()) {
             if (def.spacing() <= 0 && def.at() == null) {
                 ContentLog.LOGGER.info("Structure map {} has neither spacing nor at, so it builds nowhere", def.key());
@@ -64,12 +68,13 @@ public final class ContentStructureMaps {
             JsonObject structure = new JsonObject();
             structure.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + MAP_STRUCTURE);
             structure.addProperty("map", def.key().toString());
-            structure.add("biomes", biomes(def));
+            structure.add("biomes", ContentFormats.anyBiomes());
             structure.addProperty("step", "surface_structures");
             structure.add("spawn_overrides", new JsonObject());
             structure.addProperty("terrain_adaptation", "none");
             GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/structure/" + def.key().getPath() + ".json", structure.toString());
             GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/structure_set/" + def.key().getPath() + ".json", set(def).toString());
+            SETS.add(def.key().toString());
             generated++;
         }
         if (generated > 0) { Summary.info("structuremaps.generated", "Generated " + generated + " structure(s) with their sets from structure maps"); }
@@ -97,6 +102,8 @@ public final class ContentStructureMaps {
         return placement;
     }
 
+    public static List<String> sets() { return List.copyOf(SETS); }
+
     @Nullable public static StructureMapDef def(ResourceLocation key) { return DEFS.get(key); }
 
     public static void missing(StructureMapDef def, String named) {
@@ -107,20 +114,15 @@ public final class ContentStructureMaps {
         if (OVERSIZE.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which is {} block(s) across, where the game carries a map's pieces at most {} block(s) from the cell they start in, so the far side of it may be left out", def.key(), named, span, StructureMapDef.CELL_MOST); }
     }
 
-    private static JsonElement biomes(StructureMapDef def) {
-        if (def.dimensions().isEmpty()) { return ContentFormats.anyBiomes(); }
-        JsonArray values = new JsonArray();
+    public static boolean refuses(LevelAccessor level, Structure structure) {
+        if (!(structure instanceof ContentMapStructure held) || !(level instanceof ServerLevel server)) { return false; }
+        StructureMapDef def = DEFS.get(held.map());
+        if (def == null || def.dimensions().isEmpty()) { return false; }
+        String here = server.dimension().location().toString();
         for (String named : def.dimensions()) {
-            String tag = DIMENSION_TAGS.get(ContentFormats.dimensionId(named));
-            if (tag == null) { ContentLog.LOGGER.error("Structure map {} names dimension '{}', which is not one of the three with a biome tag, so it is left out", def.key(), named); }
-            else { values.add(tag); }
+            if (ContentFormats.dimensionId(named).equals(here)) { return false; }
         }
-        if (values.isEmpty()) { return ContentFormats.anyBiomes(); }
-        if (values.size() == 1) { return values.get(0); }
-        JsonObject or = new JsonObject();
-        or.addProperty("type", ContentFormats.CONVENTION_HOLDER_SETS + ":or");
-        or.add("values", values);
-        return or;
+        return true;
     }
 
     @Nullable private static StructureMapDef parse(ResourceLocation key, String contents) {
@@ -191,11 +193,13 @@ public final class ContentStructureMaps {
         return def;
     }
 
-    private static PickDef weighted(String written) {
+    static PickDef weighted(String written) {
         String text = written.trim().toLowerCase(Locale.ROOT);
         int at = text.lastIndexOf('=');
         if (at < 0) { return new PickDef(text, 1); }
-        try { return new PickDef(text.substring(0, at).trim(), Math.max(1, Integer.parseInt(text.substring(at + 1).trim()))); }
-        catch (NumberFormatException notNumber) { return new PickDef(text, 1); }
+        int weight;
+        try { weight = Integer.parseInt(text.substring(at + 1).trim()); }
+        catch (NumberFormatException notNumber) { weight = 1; }
+        return new PickDef(text.substring(0, at).trim(), Math.max(1, weight));
     }
 }

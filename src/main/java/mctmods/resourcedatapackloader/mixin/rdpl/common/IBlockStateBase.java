@@ -13,6 +13,4 @@ import org.spongepowered.asm.mixin.gen.Accessor;
     @Accessor("lightEmission") int rdpl$getLightEmission();
 
     @Accessor("lightEmission") @Mutable void rdpl$setLightEmission(int light);
-
-    @Accessor("requiresCorrectToolForDrops") @Mutable void rdpl$setRequiresCorrectToolForDrops(boolean requires);
 }

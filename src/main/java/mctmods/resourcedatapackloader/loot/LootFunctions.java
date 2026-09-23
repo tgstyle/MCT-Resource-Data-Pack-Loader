@@ -9,6 +9,7 @@ public final class LootFunctions {
     public static final String NAMESPACE = "rdpl";
     public static final DeferredRegister<LootItemFunctionType> REGISTER = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, NAMESPACE);
     public static final RegistryObject<LootItemFunctionType> KILLED_NAME = REGISTER.register("killed_name", () -> new LootItemFunctionType(new KilledName.Serializer()));
+    public static final RegistryObject<LootItemFunctionType> DROP_ROLL = REGISTER.register("drop_roll", () -> new LootItemFunctionType(new DropRoll.Serializer()));
 
     private LootFunctions() {}
 }

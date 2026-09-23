@@ -13,55 +13,79 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.grower.AbstractTreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
-public class ContentSaplingBlock extends SaplingBlock {
+@SuppressWarnings("deprecation") public final class ContentSaplingBlock extends BushBlock implements BonemealableBlock {
+    private static final ThreadLocal<IntegerProperty> PENDING = new ThreadLocal<>();
     private final BlockDef def;
     private final SaplingDef sapling;
+    private final IntegerProperty stage;
+    private final Grower grower;
     private Set<Block> soil = Collections.emptySet();
 
-    public ContentSaplingBlock(BlockDef def, ResourceLocation id, Properties properties) {
-        super(new Grower(ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), properties);
-        this.def = def;
-        this.sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", List.of(), "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
+    public static ContentSaplingBlock create(BlockDef def, ResourceLocation id, Properties properties) {
+        SaplingDef sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", List.of(), "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
+        PENDING.set(IntegerProperty.create("stage", 0, Math.max(1, sapling.stages() - 1)));
+        try { return new ContentSaplingBlock(def, sapling, id, properties, PENDING.get()); }
+        finally { PENDING.remove(); }
     }
 
-    public BlockDef getDef() { return def; }
+    private ContentSaplingBlock(BlockDef def, SaplingDef sapling, ResourceLocation id, Properties properties, IntegerProperty stage) {
+        super(properties);
+        this.def = def;
+        this.sapling = sapling;
+        this.stage = stage;
+        this.grower = new Grower(ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree")));
+        registerDefaultState(stateDefinition.any().setValue(stage, 0));
+    }
+
+    @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(PENDING.get()); }
 
     public void resolveSoil() { soil = ContentRegistry.resolveSoil(sapling.soil(), def.key()); }
 
-    @Override protected boolean mayPlaceOn(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos) {
-        if (soil.isEmpty()) { return super.mayPlaceOn(state, level, pos); }
-        return soil.contains(state.getBlock());
-    }
+    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return ContentBushBlock.SHAPE; }
+
+    @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return ContentRegistry.sustains(soil, level, pos.below(), this); }
 
     @Override public void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
+        if (!level.isAreaLoaded(pos, 1)) { return; }
         if (level.getMaxLocalRawBrightness(pos.above()) < sapling.light()) { return; }
         if (random.nextInt(Math.max(1, sapling.chance())) != 0) { return; }
-        advanceTree(level, pos, state, random);
+        advance(level, pos, state, random);
     }
 
-    @Override public void advanceTree(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull RandomSource random) {
-        if (sapling.growsVanilla()) {
-            super.advanceTree(level, pos, state, random);
+    @Override public boolean isValidBonemealTarget(@Nonnull LevelReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, boolean client) { return true; }
+
+    @Override public boolean isBonemealSuccess(@Nonnull Level level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state) { return true; }
+
+    @Override public void performBonemeal(@Nonnull ServerLevel level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state) { advance(level, pos, state, random); }
+
+    private void advance(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
+        int current = state.getValue(stage);
+        if (current < Math.max(1, sapling.stages()) - 1) {
+            level.setBlock(pos, state.setValue(stage, current + 1), 4);
             return;
         }
-        if (state.getValue(STAGE) == 0) {
-            level.setBlock(pos, state.cycle(STAGE), 4);
-            return;
-        }
-        placeStructure(level, pos, random);
+        if (!sapling.growsVanilla()) { placeStructure(level, pos, random); }
+        else if (ContentRegistry.sustains(soil, level, pos.below(), this)) { grower.growTree(level, level.getChunkSource().getGenerator(), pos, state, random); }
     }
 
     private void placeStructure(ServerLevel level, BlockPos pos, RandomSource random) {

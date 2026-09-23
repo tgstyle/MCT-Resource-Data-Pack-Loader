@@ -60,7 +60,7 @@ public final class ContentPaths {
         if (!player.mayUseItemAt(pos, face, held)) { return; }
         level.playSound(player, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
         if (!level.isClientSide) {
-            level.setBlock(pos, result.defaultBlockState(), Block.UPDATE_ALL_IMMEDIATE);
+            level.setBlock(pos, Block.updateFromNeighbourShapes(result.defaultBlockState(), level, pos), Block.UPDATE_ALL_IMMEDIATE);
             held.hurtAndBreak(1, player, broken -> broken.broadcastBreakEvent(event.getHand()));
         }
         event.setCancellationResult(InteractionResult.SUCCESS);

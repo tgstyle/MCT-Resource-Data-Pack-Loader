@@ -4,9 +4,11 @@ import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,7 +34,15 @@ import javax.annotation.Nonnull;
     public FluidDef getDef() { return def; }
 
     @Override public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) {
-        if (level.isClientSide || effects.isEmpty() || !(entity instanceof LivingEntity living)) { return; }
+        if (level.isClientSide) { return; }
+        if (def.lavaMaterial()) { entity.lavaHurt(); }
+        if (effects.isEmpty() || !(entity instanceof LivingEntity living)) { return; }
         for (MobEffectInstance effect : effects) { living.addEffect(ContentEffects.copy(effect)); }
     }
+
+    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
+
+    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
+
+    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
 }

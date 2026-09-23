@@ -11,14 +11,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -52,7 +49,6 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         int cellY1 = Math.floorDiv(Math.floorDiv(ceiling - 1, 4), spanY);
         int qx0 = blockX0 >> 2;
         int qz0 = blockZ0 >> 2;
-        ResourceKey<Biome> biome = ResourceKey.create(Registries.BIOME, region.key());
         ContentPlacer placer = new ContentPlacer(level, ContentCaveRegions.palette(region.key()), center);
         boolean placed = false;
         for (int cellX = Math.floorDiv(qx0 + 3 - (spanXZ - 1), spanXZ); cellX <= Math.floorDiv(qx0 + 3, spanXZ); cellX++) {
@@ -63,11 +59,13 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
                     int wz = (int) ((cellZ * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ)) << 2);
                     if (wx < blockX0 || wx > blockX0 + 15 || wz < blockZ0 || wz > blockZ0 + 15) { continue; }
                     int centerY = (int) ((cellY * (long) spanY + Math.floorMod(cellHash >>> 20, spanY)) << 2);
-                    int lowest = Math.max(region.minHeight() == CaveRegionDef.WORLD_FLOOR ? floor + 1 : region.minHeight(), floor + 1);
+                    int least = region.minHeight() == CaveRegionDef.WORLD_FLOOR ? floor + 1 : region.minHeight();
+                    if (centerY < least || centerY > region.maxHeight()) { continue; }
+                    int lowest = Math.max(least, floor + 1);
                     int highest = Math.min(region.maxHeight(), ceiling - 1);
                     if (lowest > highest) { continue; }
                     int start = Mth.clamp(centerY, lowest, highest);
-                    if (!level.getBiome(new BlockPos(wx, start, wz)).is(biome)) { continue; }
+                    if (!ContentCaveRegions.holds(level, region, new BlockPos(wx, start, wz))) { continue; }
                     if (region.structureChance() < 1.0F && ((cellHash >>> 24) & 0xFFFFF) / (float) (1 << 20) >= region.structureChance()) { continue; }
                     int seat = caveFloor(level, wx, wz, start, lowest, highest);
                     if (seat == Integer.MIN_VALUE) { continue; }
@@ -112,7 +110,7 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         Vec3i span = loaded.getSize(rotation);
         int cornerX = x - span.getX() / 2;
         int cornerZ = z - span.getZ() / 2;
-        if (!placer.writable(cornerX, cornerZ) || !placer.writable(cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
+        if (placer.unwritable(cornerX, cornerZ) || placer.unwritable(cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
         BlockPos fitted = new BlockPos(cornerX + ContentImprint.backX(rotation, span), y, cornerZ + ContentImprint.backZ(rotation, span));
         if (!loaded.placeInWorld(level, fitted, fitted, settings, random, FLAGS)) { return false; }
         if (!region.structureLoot().isEmpty()) {

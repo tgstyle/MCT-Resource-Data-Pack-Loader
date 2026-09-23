@@ -11,7 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -39,6 +41,19 @@ public final class ConfigCore {
     public static boolean flag(String path, boolean fallback) {
         Object held = read(path);
         return held instanceof Boolean ? (Boolean) held : fallback;
+    }
+
+    public static int number(String path, int fallback) {
+        Object held = read(path);
+        return held instanceof Number number ? number.intValue() : fallback;
+    }
+
+    public static List<String> strings(String path, List<String> fallback) {
+        Object held = read(path);
+        if (!(held instanceof List<?> values)) { return fallback; }
+        List<String> out = new ArrayList<>();
+        for (Object value : values) { out.add(String.valueOf(value)); }
+        return out;
     }
 
     @Nullable private static synchronized Object read(String path) {

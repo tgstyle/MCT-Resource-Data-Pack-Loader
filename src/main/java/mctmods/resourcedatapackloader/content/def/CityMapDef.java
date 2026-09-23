@@ -1,22 +1,42 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Rotation;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
-public record CityMapDef(ResourceLocation key, int cell, Map<Character, Cell> palette, List<String> rows, int cellsWide, int cellsDeep) {
+public record CityMapDef(ResourceLocation key, int cell, Map<Character, Cell> palette, List<String> rows, int cellsWide, int cellsDeep, @Nullable JsonObject settings) {
     public static final int LIMIT = 64;
     public static final char OPEN_MARK = '.';
+    public static final int LIFT = 8;
 
-    public enum Kind { STREET, PLAZA, ALLEY, OPEN, GROW, PLOT }
+    public enum Kind { STREET, PLAZA, ALLEY, OPEN, GROW, PLOT, JUNCTION, BULB, ELEVATED }
 
-    public record Cell(Kind kind, List<PickDef> picks) {}
+    public record Cell(Kind kind, List<PickDef> picks, int height, @Nullable JsonObject settings) {}
 
-    public static CityMapDef of(ResourceLocation key, int cell, Map<Character, Cell> palette, List<String> rows) {
+    public static CityMapDef of(ResourceLocation key, int cell, Map<Character, Cell> palette, List<String> rows, @Nullable JsonObject settings) {
         int wide = 1;
         for (String row : rows) { wide = Math.max(wide, row.length()); }
-        return new CityMapDef(key, cell, Map.copyOf(palette), List.copyOf(rows), wide, rows.size());
+        return new CityMapDef(key, cell, Map.copyOf(palette), List.copyOf(rows), wide, rows.size(), settings);
+    }
+
+    public boolean bulbHinted() {
+        for (Cell held : palette.values()) {
+            if (held.kind() == Kind.BULB) { return true; }
+        }
+        return false;
+    }
+
+    @Nullable public JsonObject keysOf(char symbol) {
+        Cell held = palette.get(symbol);
+        return held == null ? null : held.settings();
+    }
+
+    public int heightOf(char symbol) {
+        Cell held = palette.get(symbol);
+        return held == null ? LIFT : held.height();
     }
 
     public int blocksWide() { return cellsWide * cell; }

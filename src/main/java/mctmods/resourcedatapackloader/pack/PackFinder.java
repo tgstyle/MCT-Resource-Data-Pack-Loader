@@ -16,12 +16,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class PackFinder implements RepositorySource {
     private static final String KUBEJS = "dev.latvian.mods.kubejs.";
     private static final PackSource SOURCE = PackSource.create(name -> Component.translatable("pack.nameAndSource", name, Component.translatable("rdpl.pack.source")).withStyle(ChatFormatting.GRAY), true);
+    private static final PackSource PLAIN = PackSource.create(UnaryOperator.identity(), true);
     private final PackType type;
 
     public PackFinder(PackType type) { this.type = type; }
@@ -64,7 +66,14 @@ public final class PackFinder implements RepositorySource {
             ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", id, type.getDirectory());
             return;
         }
-        out.accept(Pack.create(id, Component.literal(id), true, supplier, info, type, overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, true, SOURCE));
+        out.accept(Pack.create(id, Component.literal(id), true, supplier, described(info, overriding), type, overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, true, tierSource()));
+    }
+
+    private PackSource tierSource() { return type == PackType.CLIENT_RESOURCES ? PLAIN : SOURCE; }
+
+    private Pack.Info described(Pack.Info info, boolean overriding) {
+        if (type != PackType.CLIENT_RESOURCES) { return info; }
+        return new Pack.Info(Component.translatable(overriding ? "rdpl.gui.packList.override" : "rdpl.gui.packList.normal"), info.dataFormat(), info.resourceFormat(), info.requestedFeatures(), info.hidden());
     }
 
     public static List<Pack> seat(List<Pack> selected) {

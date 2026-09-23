@@ -16,9 +16,9 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
     public static final String HELD = "held";
     public static final List<String> PARTS = List.of(BODY, ARMOR, HELD);
 
-    public record Sounds(String ambient, String hurt, String death, String target, String explode, float targetVaries, float volume, float pitch) {}
+    public record Sounds(String ambient, String hurt, String death, String target, String explode, String throwSound, float targetVaries, float volume, float pitch) {}
 
-    public record Physics(float jumpMultiplier, float fallDamage, int maxFallHeight, float waterSlowdown, boolean breathesUnderwater, boolean swims, boolean amphibious, float stepHeight, @Nullable Boolean climbs, boolean teleports, int hurtResistance) {}
+    public record Physics(float jumpMultiplier, float fallDamage, int maxFallHeight, float waterSlowdown, boolean breathesUnderwater, boolean swims, boolean amphibious, float stepHeight, @Nullable Boolean climbs, boolean teleports, int hurtResistance, boolean walks) {}
 
     public record Flags(boolean noAI, boolean leftHanded, boolean fireproof, boolean invulnerable, boolean glowing, boolean invisible, boolean persistent, boolean silent, boolean picksUpLoot,
                         boolean hideArmor, boolean hideHeld, boolean leashable, boolean steerable, boolean ignoresSpawnRules, boolean bright, boolean keepsBaseBaby, boolean collectsExperience) {}
@@ -28,9 +28,11 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
     public record Tracking(int range, int frequency, boolean velocity) {}
 
     public record Combat(boolean explodes, float explosionPower, int explosionFuse, boolean explosionFire, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower,
-                         float throwArc, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, float attackReach, float knockback, boolean hitEffects, boolean hitFire, boolean digs) {
+                         float throwArc, boolean throwReturns, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, float attackReach, float knockback, boolean hitEffects, boolean hitFire, boolean digs, boolean ownBlast) {
         public boolean any() { return explodes || throwsItems || charges || pounces || sniffs > 0 || fleesWhenHurt > 0.0F || patrols || swoops || gusts; }
     }
 
     public boolean keepsSize() { return scale == 1.0F && angryScale == scale; }
+
+    public boolean neverSprints() { return keepsSize() && baby <= 0.0F && !physics.amphibious() && despawnTicks <= 0 && sounds.target().isEmpty(); }
 }

@@ -27,7 +27,7 @@ public final class ContentStacks {
 
     @Nullable public static Item find(ResourceLocation key, @Nullable String value) {
         if (value == null || value.isEmpty()) { return null; }
-        ResourceLocation name = value.indexOf(':') < 0 ? null : ResourceLocation.tryParse(value);
+        ResourceLocation name = value.indexOf(':') < 0 ? null : ContentParser.location(value);
         if (name == null) {
             ContentLog.LOGGER.error("Item '{}' in {} needs a namespace, such as minecraft:iron_ingot", value, key);
             return null;
@@ -40,6 +40,8 @@ public final class ContentStacks {
     @Nullable public static Item item(@Nullable ResourceLocation name) { return Registered.find(ForgeRegistries.ITEMS, name); }
 
     public static boolean registered(ResourceLocation name) { return ForgeRegistries.ITEMS.containsKey(name); }
+
+    public static String id(Item item) { return String.valueOf(ForgeRegistries.ITEMS.getKey(item)); }
 
     public static String namespaceOf(Item item) {
         ResourceLocation name = ForgeRegistries.ITEMS.getKey(item);

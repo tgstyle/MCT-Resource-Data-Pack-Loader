@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -90,7 +91,7 @@ public final class ContentProspect {
 
     private static boolean blacklist() { return ContentControl.flag(ContentControl.ORES, "prospectItemsAreBlacklist", Config.worldgen.prospectItemsAreBlacklist()); }
 
-    private static boolean drops() { return ContentControl.flag(ContentControl.ORES, "prospectDrops", Config.worldgen.prospectDrops()); }
+    private static boolean dropsWithheld() { return !ContentControl.flag(ContentControl.ORES, "prospectDrops", Config.worldgen.prospectDrops()); }
 
     @Nullable public static Reads describe(ItemStack stack) {
         if (stack.isEmpty() || idle()) { return null; }
@@ -122,10 +123,10 @@ public final class ContentProspect {
         read(player, level, event.getPos(), entry);
         int wear = Math.max(WEAR, ContentControl.number(ContentControl.ORES, "prospectWear", Config.worldgen.prospectWear()));
         if (held.isDamageableItem()) { held.hurtAndBreak(wear - 1, player, broken -> {}); }
-        if (drops()) { return; }
-        event.setCanceled(true);
-        level.destroyBlock(event.getPos(), false, player);
+        if (dropsWithheld()) { event.setExpToDrop(0); }
     }
+
+    public static boolean withholdsDrops(@Nullable Entity breaker) { return breaker instanceof ServerPlayer player && player.isShiftKeyDown() && dropsWithheld() && !idle() && holding(player.getMainHandItem()) != null; }
 
     private static void read(ServerPlayer player, ServerLevel level, BlockPos at, Entry entry) {
         boolean blacklist = blacklist();

@@ -43,15 +43,15 @@ public final class PackOptionsScreen extends Screen {
         }
     }
 
-    private boolean changed() { return !staged.equals(loaded); }
+    private boolean changed() { return PackOptions.differs(staged, loaded); }
 
     @Override protected void init() {
         list = new OptionList();
         addWidget(list);
-        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose()).bounds(width / 2 - 100, height - 27, 200, 20).build());
+        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> done()).bounds(width / 2 - 100, height - 27, 200, 20).build());
     }
 
-    @Override public void onClose() {
+    private void done() {
         for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) { PackOptions.save(entry.getKey(), entry.getValue()); }
         if (minecraft != null) { minecraft.setScreen(parent); }
     }
@@ -82,6 +82,8 @@ public final class PackOptionsScreen extends Screen {
         }
 
         @Override public int getRowWidth() { return LIST_WIDTH; }
+
+        @Override protected boolean isSelectedItem(int index) { return false; }
 
         @Override protected int getScrollbarPosition() { return PackOptionsScreen.this.width / 2 + LIST_WIDTH / 2 + 4; }
     }

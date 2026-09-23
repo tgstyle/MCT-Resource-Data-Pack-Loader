@@ -7,6 +7,8 @@ import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.ScreenEvent;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,22 +30,24 @@ public final class ContentWorldScreen {
         String seed = ContentTerrain.worldSeed();
         String mode = ContentTerrain.worldGameMode();
         WorldCreationUiState.WorldTypeEntry preset = presetEntry(state);
-        if (named.isEmpty() && seed.isEmpty() && mode.isEmpty() && preset == null) { return; }
+        Difficulty difficulty = ContentTerrain.difficultyFor(Level.OVERWORLD.location().toString());
+        if (named.isEmpty() && seed.isEmpty() && mode.isEmpty() && preset == null && difficulty == null) { return; }
         String fresh = I18n.get("selectWorld.newWorld");
         ContentLog.LOGGER.debug("The screen for making a world opened. A pack asks for the name '{}', the seed '{}' and the game mode '{}'. The box says '{}' and the game calls a new world '{}', so the name {} be filled in",
                 named, seed, mode, state.getName(), fresh, state.getName().equals(fresh) ? "will" : "will not");
         if (!named.isEmpty() && state.getName().equals(fresh)) { state.setName(named); }
         WorldCreationUiState.SelectedGameMode asked = selected(mode);
-        hold(state, seed, asked, preset);
-        if ((seed.isEmpty() && asked == null && preset == null) || !HOOKED.add(state)) { return; }
-        state.addListener(changed -> hold(changed, seed, asked, preset));
+        hold(state, seed, asked, preset, difficulty);
+        if ((seed.isEmpty() && asked == null && preset == null && difficulty == null) || !HOOKED.add(state)) { return; }
+        state.addListener(changed -> hold(changed, seed, asked, preset, difficulty));
     }
 
-    private static void hold(WorldCreationUiState state, String seed, @Nullable WorldCreationUiState.SelectedGameMode asked, @Nullable WorldCreationUiState.WorldTypeEntry preset) {
+    private static void hold(WorldCreationUiState state, String seed, @Nullable WorldCreationUiState.SelectedGameMode asked, @Nullable WorldCreationUiState.WorldTypeEntry preset, @Nullable Difficulty difficulty) {
         if (state.isDebug()) { return; }
         if (!seed.isEmpty() && !seed.equals(state.getSeed())) { state.setSeed(seed); }
         if (asked != null && state.getGameMode() != asked) { state.setGameMode(asked); }
         if (preset != null && state.getWorldType() != preset && !kept(state.getWorldType())) { state.setWorldType(preset); }
+        if (difficulty != null && !state.isHardcore() && state.getDifficulty() != difficulty) { state.setDifficulty(difficulty); }
     }
 
     @Nullable private static WorldCreationUiState.WorldTypeEntry presetEntry(WorldCreationUiState state) {
@@ -74,9 +78,7 @@ public final class ContentWorldScreen {
             case ContentTerrain.HARDCORE -> WorldCreationUiState.SelectedGameMode.HARDCORE;
             case "creative" -> WorldCreationUiState.SelectedGameMode.CREATIVE;
             case "adventure", "spectator" -> {
-                if (WARNED.add(lowered)) {
-                    ContentLog.LOGGER.info("A pack asks for the game mode '{}', which the world screen does not offer and this line does not apply at creation yet, so the mode is left as chosen", lowered);
-                }
+                if (WARNED.add(lowered)) { ContentLog.LOGGER.info("A pack asks for the game mode '{}', which the world screen does not offer, so the world is switched to it as it is made", lowered); }
                 yield null;
             }
             default -> {

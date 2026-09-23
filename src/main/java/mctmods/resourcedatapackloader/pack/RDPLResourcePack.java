@@ -55,9 +55,11 @@ public final class RDPLResourcePack implements PackResources {
 
     @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull ResourceLocation location) {
         trace(location);
-        if (!PackManager.get().existsRaw(asked, location.getNamespace(), location.getPath(), overriding)) { return null; }
+        if (withheld(asked, location.getPath()) || !PackManager.get().existsRaw(asked, location.getNamespace(), location.getPath(), overriding)) { return null; }
         return supplier(asked, location.getNamespace(), location.getPath());
     }
+
+    private static boolean withheld(PackType asked, String path) { return asked == PackType.SERVER_DATA && path.startsWith(PackManager.FUNCTIONS + "/") && Config.data.functionsOff(); }
 
     private IoSupplier<InputStream> supplier(PackType asked, String namespace, String path) {
         return () -> {
@@ -78,14 +80,18 @@ public final class RDPLResourcePack implements PackResources {
     @Override public void listResources(@Nonnull PackType asked, @Nonnull String namespace, @Nonnull String prefix, @Nonnull ResourceOutput out) {
         PackManager.get().list(asked, namespace, overriding, prefix, path -> {
             ResourceLocation location = ResourceLocation.tryBuild(namespace, path);
-            if (location != null) { out.accept(location, supplier(asked, namespace, path)); }
+            if (location != null && !withheld(asked, path)) { out.accept(location, supplier(asked, namespace, path)); }
         });
     }
 
     @Override @Nonnull public Set<String> getNamespaces(@Nonnull PackType asked) { return PackManager.get().getNamespaces(asked, overriding); }
 
     @Override @Nullable public <T> T getMetadataSection(@Nonnull MetadataSectionSerializer<T> serializer) throws IOException {
-        try (InputStream stream = new ByteArrayInputStream(meta().getBytes(StandardCharsets.UTF_8))) { return AbstractPackResources.getMetadataFromStream(serializer, stream); }
+        return metadata(serializer, meta());
+    }
+
+    @Nullable static <T> T metadata(MetadataSectionSerializer<T> serializer, String meta) throws IOException {
+        try (InputStream stream = new ByteArrayInputStream(meta.getBytes(StandardCharsets.UTF_8))) { return AbstractPackResources.getMetadataFromStream(serializer, stream); }
     }
 
     private String meta() {
@@ -95,6 +101,8 @@ public final class RDPLResourcePack implements PackResources {
         pack.addProperty("description", description == null ? DEFAULT_DESCRIPTION : description);
         JsonObject json = new JsonObject();
         json.add("pack", pack);
+        JsonObject language = type == PackType.CLIENT_RESOURCES ? PackManager.get().language() : null;
+        if (language != null) { json.add("language", language); }
         return json.toString();
     }
 

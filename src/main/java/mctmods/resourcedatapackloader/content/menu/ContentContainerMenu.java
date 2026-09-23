@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.content.menu;
 
 import mctmods.resourcedatapackloader.content.ContentContainers;
+import mctmods.resourcedatapackloader.content.block.ContentContainerBlock;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
+import mctmods.resourcedatapackloader.content.item.ContentContainerItem;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
@@ -11,52 +13,63 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class ContentContainerMenu extends AbstractContainerMenu {
     public static final int SLOT = 18;
     private final Container held;
     private final ContainerDef def;
     private final ItemStack open;
+    @Nullable private final Supplier<ItemStack> source;
+    private final int worn;
 
     public ContentContainerMenu(int id, Inventory inventory, FriendlyByteBuf extra) {
-        this(id, inventory, read(extra));
+        this(id, inventory, read(extra), extra.readVarInt());
     }
 
-    private ContentContainerMenu(int id, Inventory inventory, ContainerDef def) {
-        this(id, inventory, new SimpleContainer(def.size()), def);
+    private ContentContainerMenu(int id, Inventory inventory, ContainerDef def, int worn) {
+        this(id, inventory, new SimpleContainer(def.size()), def, ItemStack.EMPTY, null, worn);
     }
 
     public ContentContainerMenu(int id, Inventory inventory, Container held, ContainerDef def) {
-        this(id, inventory, held, def, ItemStack.EMPTY);
+        this(id, inventory, held, def, ItemStack.EMPTY, null, -1);
     }
 
-    public ContentContainerMenu(int id, Inventory inventory, Container held, ContainerDef def, ItemStack open) {
+    public ContentContainerMenu(int id, Inventory inventory, Container held, ContainerDef def, ItemStack open, @Nullable Supplier<ItemStack> source, int worn) {
         super(ContentContainers.menu(), id);
         this.open = open;
         this.held = held;
         this.def = def;
+        this.source = source;
+        this.worn = worn;
         held.startOpen(inventory.player);
         int left = left(def);
         int top = 18;
         for (int row = 0; row < def.rows(); row++) {
             for (int column = 0; column < def.columns(); column++) {
-                addSlot(new Slot(held, row * def.columns() + column, left + column * SLOT, top + row * SLOT));
+                addSlot(new Slot(held, row * def.columns() + column, left + column * SLOT, top + row * SLOT) {
+                    @Override public boolean mayPlace(@Nonnull ItemStack stack) { return storable(stack); }
+                });
             }
         }
         int playerLeft = (width(def) - 9 * SLOT) / 2 + 1;
-        int playerTop = top + def.rows() * SLOT + 14;
+        int playerTop = height(def) - 83;
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
                 addSlot(locking(inventory, column + row * 9 + 9, playerLeft + column * SLOT, playerTop + row * SLOT));
             }
         }
-        for (int column = 0; column < 9; column++) { addSlot(locking(inventory, column, playerLeft + column * SLOT, playerTop + 58)); }
+        for (int column = 0; column < 9; column++) { addSlot(locking(inventory, column, playerLeft + column * SLOT, height(def) - 25)); }
     }
 
-    public static void write(FriendlyByteBuf extra, ContainerDef def) {
+    public static void write(FriendlyByteBuf extra, ContainerDef def) { write(extra, def, -1); }
+
+    public static void write(FriendlyByteBuf extra, ContainerDef def, int worn) {
         extra.writeVarInt(def.rows());
         extra.writeVarInt(def.columns());
         extra.writeBoolean(def.guiTexture() != null);
@@ -65,6 +78,7 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
             extra.writeVarInt(def.guiWidth());
             extra.writeVarInt(def.guiHeight());
         }
+        extra.writeVarInt(worn);
     }
 
     private static ContainerDef read(FriendlyByteBuf extra) {
@@ -74,9 +88,17 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
         return new ContainerDef(rows, columns, "", false, null, extra.readResourceLocation(), extra.readVarInt(), extra.readVarInt(), "");
     }
 
+    public static boolean storable(ItemStack stack) {
+        if (stack.isEmpty()) { return true; }
+        if (stack.getItem() instanceof ContentContainerItem) { return false; }
+        return !(stack.getItem() instanceof BlockItem placed && placed.getBlock() instanceof ContentContainerBlock);
+    }
+
     private Slot locking(Inventory inventory, int index, int x, int y) {
         return new Slot(inventory, index, x, y) {
-            @Override public boolean mayPickup(@Nonnull Player player) { return open.isEmpty() || inventory.getItem(index) != open; }
+            @Override public boolean mayPickup(@Nonnull Player player) { return open.isEmpty() || getItem() != open; }
+
+            @Override public boolean mayPlace(@Nonnull ItemStack stack) { return open.isEmpty() || getItem() != open; }
         };
     }
 
@@ -88,9 +110,9 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
 
     public ContainerDef def() { return def; }
 
-    public Container container() { return held; }
+    public int worn() { return worn; }
 
-    @Override public boolean stillValid(@Nonnull Player player) { return held.stillValid(player); }
+    @Override public boolean stillValid(@Nonnull Player player) { return source == null ? held.stillValid(player) : source.get() == open; }
 
     @Override @Nonnull public ItemStack quickMoveStack(@Nonnull Player player, int index) {
         int size = held.getContainerSize();

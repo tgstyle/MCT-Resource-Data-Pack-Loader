@@ -2,10 +2,13 @@ package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -14,18 +17,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.ForgeHooks;
 import java.util.Collections;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 @SuppressWarnings("deprecation") public final class ContentCaneBlock extends Block {
@@ -42,8 +45,6 @@ import javax.annotation.Nonnull;
         registerDefaultState(stateDefinition.any().setValue(AGE, 0));
     }
 
-    public BlockDef getDef() { return def; }
-
     public void resolveSoil() { soil = ContentRegistry.resolveSoil(growth.soil(), def.key()); }
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(AGE); }
@@ -53,6 +54,10 @@ import javax.annotation.Nonnull;
     @Override @Nonnull public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return growth.damage() ? SHAPE : Shapes.empty(); }
 
     @Override public void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
+            return;
+        }
         if (!level.isEmptyBlock(pos.above())) { return; }
         int height = 1;
         while (level.getBlockState(pos.below(height)).is(this)) { height++; }
@@ -65,6 +70,10 @@ import javax.annotation.Nonnull;
         }
         else { level.setBlock(pos, state.setValue(AGE, age + 1), 4); }
         ForgeHooks.onCropsGrowPost(level, pos, state);
+    }
+
+    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) {
+        if (!level.isClientSide && !old.is(this) && !state.canSurvive(level, pos)) { level.destroyBlock(pos, true); }
     }
 
     @Override @Nonnull public BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction direction, @Nonnull BlockState neighbor, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos neighborPos) {
@@ -88,7 +97,7 @@ import javax.annotation.Nonnull;
             for (int step = 1; step <= growth.waterRange(); step++) {
                 BlockPos side = below.relative(facing, step);
                 BlockState held = level.getBlockState(side);
-                if (level.getFluidState(side).is(Fluids.WATER) || level.getFluidState(side).is(Fluids.FLOWING_WATER)) { return true; }
+                if (liquid(level, side, held, FluidTags.WATER, FluidDef::waterMaterial)) { return true; }
                 if (held.isAir()) { continue; }
                 break;
             }
@@ -100,9 +109,14 @@ import javax.annotation.Nonnull;
         for (Direction facing : Direction.Plane.HORIZONTAL) {
             BlockPos side = pos.relative(facing);
             BlockState held = level.getBlockState(side);
-            if (!held.getCollisionShape(level, side).isEmpty() || held.is(Blocks.LAVA)) { return true; }
+            if (held.isSolid() || liquid(level, side, held, FluidTags.LAVA, FluidDef::lavaMaterial)) { return true; }
         }
         return false;
+    }
+
+    private static boolean liquid(LevelReader level, BlockPos pos, BlockState held, TagKey<Fluid> tag, Predicate<FluidDef> material) {
+        if (level.getFluidState(pos).is(tag)) { return true; }
+        return held.getBlock() instanceof ContentLiquidBlock liquid && material.test(liquid.getDef());
     }
 
     @Override public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) {

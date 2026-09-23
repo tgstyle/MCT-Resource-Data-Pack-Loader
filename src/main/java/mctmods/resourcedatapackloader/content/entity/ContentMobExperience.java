@@ -63,8 +63,8 @@ public final class ContentMobExperience {
     }
 
     private static int mended(Mob mob, int value) {
-        Map.Entry<EquipmentSlot, ItemStack> found = EnchantmentHelper.getRandomItemWith(Enchantments.MENDING, mob, ItemStack::isDamaged);
-        if (found == null) { return value; }
+        Map.Entry<EquipmentSlot, ItemStack> found = EnchantmentHelper.getRandomItemWith(Enchantments.MENDING, mob, stack -> true);
+        if (found == null || !found.getValue().isDamaged()) { return value; }
         ItemStack mended = found.getValue();
         float ratio = mended.getXpRepairRatio();
         int repaired = Math.min(roundAverage(value * ratio), mended.getDamageValue());
@@ -97,6 +97,18 @@ public final class ContentMobExperience {
         data.putInt(TOTAL, total);
         scores(mob, level, total);
         if (level > before) { ContentLog.LOGGER.info("{} reached experience level {}, {} point(s) in all", mob.getName().getString(), level, total); }
+    }
+
+    public static void addLevels(Mob mob, int levels) {
+        CompoundTag data = mob.getPersistentData();
+        int level = data.getInt(LEVEL) + levels;
+        if (level < 0) {
+            level = 0;
+            data.putFloat(PROGRESS, 0.0F);
+            data.putInt(TOTAL, 0);
+        }
+        data.putInt(LEVEL, level);
+        scores(mob, level, data.getInt(TOTAL));
     }
 
     private static int cap(int level) {

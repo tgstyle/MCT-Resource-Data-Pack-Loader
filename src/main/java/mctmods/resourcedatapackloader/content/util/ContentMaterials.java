@@ -58,7 +58,7 @@ public final class ContentMaterials {
     }
 
     private record Armor(MaterialDef def) implements ArmorMaterial {
-        @Override public int getDurabilityForType(@Nonnull ArmorItem.Type type) { return BASE_DURABILITY.get(type) * Math.max(1, def.durability() / 10); }
+        @Override public int getDurabilityForType(@Nonnull ArmorItem.Type type) { return BASE_DURABILITY.get(type) * (def.durability() / 10); }
 
         @Override public int getDefenseForType(@Nonnull ArmorItem.Type type) { return def.reduction()[type.getSlot().getIndex()]; }
 
@@ -66,7 +66,7 @@ public final class ContentMaterials {
 
         @Override @Nonnull public SoundEvent getEquipSound() { return sound(def.equipSound()); }
 
-        @Override @Nonnull public Ingredient getRepairIngredient() { return repair(def); }
+        @Override @Nonnull public Ingredient getRepairIngredient() { return Ingredient.EMPTY; }
 
         @Override @Nonnull public String getName() { return def.armorTexture(); }
 

@@ -1,0 +1,128 @@
+{
+  "textures": {
+    "particle": "minecraft:block/bell_bottom",
+    "bell_side": "minecraft:block/bell_side",
+    "bell_top": "minecraft:block/bell_top",
+    "bell_bottom": "minecraft:block/bell_bottom"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        6,
+        5
+      ],
+      "to": [
+        11,
+        13,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5,
+            3,
+            11,
+            10
+          ],
+          "texture": "#bell_side"
+        },
+        "south": {
+          "uv": [
+            5,
+            3,
+            11,
+            10
+          ],
+          "texture": "#bell_side"
+        },
+        "east": {
+          "uv": [
+            5,
+            3,
+            11,
+            10
+          ],
+          "texture": "#bell_side"
+        },
+        "west": {
+          "uv": [
+            5,
+            3,
+            11,
+            10
+          ],
+          "texture": "#bell_side"
+        },
+        "up": {
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ],
+          "texture": "#bell_top"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        4,
+        4
+      ],
+      "to": [
+        12,
+        6,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            10,
+            12,
+            12
+          ],
+          "texture": "#bell_side"
+        },
+        "south": {
+          "uv": [
+            4,
+            10,
+            12,
+            12
+          ],
+          "texture": "#bell_side"
+        },
+        "east": {
+          "uv": [
+            4,
+            10,
+            12,
+            12
+          ],
+          "texture": "#bell_side"
+        },
+        "west": {
+          "uv": [
+            4,
+            10,
+            12,
+            12
+          ],
+          "texture": "#bell_side"
+        },
+        "down": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#bell_bottom"
+        }
+      }
+    }
+  ]
+}

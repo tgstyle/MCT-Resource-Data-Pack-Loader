@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
 
@@ -24,12 +25,24 @@ public final class ContentLog {
     @Nullable private PrintWriter writer;
     private boolean failed;
     private boolean debug;
+    private final ThreadLocal<Boolean> quiet = ThreadLocal.withInitial(() -> false);
 
     private ContentLog() {}
 
     public void setDebug(boolean enabled) { debug = enabled; }
 
-    public boolean debugEnabled() { return debug; }
+    public boolean debugEnabled() { return debug && !quiet.get(); }
+
+    public <T> T quietly(Supplier<T> work) { return hushed(true, work); }
+
+    public <T> T aloud(Supplier<T> work) { return hushed(false, work); }
+
+    private <T> T hushed(boolean hush, Supplier<T> work) {
+        boolean was = quiet.get();
+        quiet.set(hush);
+        try { return work.get(); }
+        finally { quiet.set(was); }
+    }
 
     public void info(String message, Object... args) { write("INFO", message, args); }
 
@@ -41,10 +54,8 @@ public final class ContentLog {
 
     public void fatal(String message, Object... args) { write("FATAL", message, args); }
 
-    public void catching(Throwable thrown) { write("ERROR", "Caught {}", thrown.toString(), thrown); }
-
     private synchronized void write(String level, String message, Object... args) {
-        if (DEBUG.equals(level) && !debug) { return; }
+        if ((DEBUG.equals(level) && !debug) || (quiet.get() && (DEBUG.equals(level) || "INFO".equals(level)))) { return; }
         PrintWriter out = open();
         if (out == null) {
             ResourceDataPackLoader.LOGGER.info(format(message, args, false));

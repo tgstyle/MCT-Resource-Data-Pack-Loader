@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -31,6 +32,12 @@ public final class CityBiome {
 
     public static void leave() { ContentControl.leaveSection(); }
 
+    public static void within(WorldGenLevel level, BoundingBox box, Runnable laid) {
+        enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+        try { laid.run(); }
+        finally { leave(); }
+    }
+
     public static boolean moved(WorldGenLevel level, int x, int z) {
         if (!ContentControl.hasBiomeSettings()) { return false; }
         String here = at(level, x, z);
@@ -39,10 +46,12 @@ public final class CityBiome {
         return true;
     }
 
-    @Nullable private static String at(WorldGenLevel level, int x, int z) {
+    @Nullable private static String at(WorldGenLevel level, int x, int z) { return sectionFor(surface(level, x, z)); }
+
+    static Holder<Biome> surface(WorldGenLevel level, int x, int z) {
         BlockPos.MutableBlockPos at = LOOKUP.get();
         at.set(x, level.getLevel().getChunkSource().getGenerator().getSeaLevel(), z);
-        return sectionFor(level.getBiome(at));
+        return level.getBiome(at);
     }
 
     @Nullable private static synchronized String sectionFor(Holder<Biome> biome) {

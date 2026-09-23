@@ -2,64 +2,41 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
-import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import org.joml.Matrix4f;
-import java.util.List;
-import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentDimensionEffects extends DimensionSpecialEffects {
-    private static final List<String> VANILLA = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
     @Nullable private final DimensionDef def;
     private final DimensionSpecialEffects base;
 
-    private ContentDimensionEffects(@Nullable DimensionDef def, DimensionSpecialEffects base, float cloudHeight) {
-        super(cloudHeight, base.hasGround(), base.skyType(), base.forceBrightLightmap(), base.constantAmbientLight());
+    private ContentDimensionEffects(@Nullable DimensionDef def, DimensionSpecialEffects base, float cloudHeight, SkyType skyType) {
+        super(cloudHeight, base.hasGround(), skyType, base.forceBrightLightmap(), base.constantAmbientLight());
         this.def = def;
         this.base = base;
     }
 
     public static void register(RegisterDimensionSpecialEffectsEvent event) {
-        Map<String, Integer> clouds = ContentDimensions.cloudHeights();
-        Integer everywhere = ContentDimensions.cloudHeight("");
-        for (String vanilla : VANILLA) {
-            Integer wanted = clouds.getOrDefault(vanilla, everywhere);
-            if (wanted == null) { continue; }
-            event.register(ResourceLocation.parse(vanilla), new ContentDimensionEffects(null, base(vanilla), wanted));
-            ContentLog.LOGGER.debug("Clouds in {} are drawn at y {}", vanilla, wanted);
-        }
         for (DimensionDef def : ContentDimensions.all()) {
             if (!def.hasEffects()) { continue; }
-            DimensionSpecialEffects base = base("minecraft:" + def.base());
-            Integer cloud = ContentDimensions.cloudHeight(def.key().toString());
-            float height = def.cloudHeight() >= 0 ? def.cloudHeight() : cloud != null ? cloud : base.getCloudHeight();
-            event.register(def.key(), new ContentDimensionEffects(def, base, height));
+            DimensionSpecialEffects base = new OverworldEffects();
+            if (def.surfaceWorld()) { event.register(def.key(), new ContentDimensionEffects(def, base, def.cloudHeight() >= 0 ? def.cloudHeight() : base.getCloudHeight(), SkyType.NORMAL)); }
+            else { event.register(def.key(), new ContentDimensionEffects(def, base, Float.NaN, SkyType.NONE)); }
         }
-    }
-
-    private static DimensionSpecialEffects base(String dimension) {
-        return switch (dimension) {
-            case "minecraft:the_nether" -> new NetherEffects();
-            case "minecraft:the_end" -> new EndEffects();
-            default -> new OverworldEffects();
-        };
     }
 
     @Override @Nonnull public Vec3 getBrightnessDependentFogColor(@Nonnull Vec3 color, float brightness) {
         if (def == null || def.fogColor() < 0) { return base.getBrightnessDependentFogColor(color, brightness); }
         int rgb = def.fogColor();
-        Vec3 fog = new Vec3(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D);
-        return fog.multiply(brightness * 0.94F + 0.06F, brightness * 0.94F + 0.06F, brightness * 0.91F + 0.09F);
+        return new Vec3(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D);
     }
 
     @Override public boolean isFoggyAt(int x, int z) { return (def != null && def.showFog()) || base.isFoggyAt(x, z); }

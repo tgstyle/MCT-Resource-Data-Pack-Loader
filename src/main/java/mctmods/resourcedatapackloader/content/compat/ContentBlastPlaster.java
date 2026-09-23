@@ -101,7 +101,7 @@ public final class ContentBlastPlaster {
             JsonElement held = settings.get("explosionMode");
             if (held != null && held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
                 for (mctmods.blastplaster.Config.ExplosionMode mode : mctmods.blastplaster.Config.ExplosionMode.values()) {
-                    if (mode.name().equalsIgnoreCase(held.getAsString().trim().replace(' ', '_'))) { return mode; }
+                    if (mode.name().equalsIgnoreCase(held.getAsString().trim())) { return mode; }
                 }
                 ContentLog.LOGGER.error("Blast Plaster explosionMode '{}' is not HEAL, EJECT_DROPS or VISUAL_TOSS, using EJECT_DROPS", held.getAsString());
             }

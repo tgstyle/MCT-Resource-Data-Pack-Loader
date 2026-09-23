@@ -96,7 +96,7 @@ public final class PortalShapes {
                 continue;
             }
             char before = built.isEmpty() ? PortalFrameDef.SKIP : built.charAt(built.length() - 1);
-            for (int again = 0; again < wide; again++) { built.append(before); }
+            built.append(String.valueOf(before).repeat(Math.max(0, wide)));
         }
         return built.toString();
     }

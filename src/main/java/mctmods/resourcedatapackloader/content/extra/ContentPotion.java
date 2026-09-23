@@ -9,6 +9,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import javax.annotation.Nonnull;
 
 public final class ContentPotion extends MobEffect {
     private final PotionDef def;
@@ -30,4 +31,6 @@ public final class ContentPotion extends MobEffect {
     }
 
     @Override public boolean isInstantenous() { return def.instant(); }
+
+    @Override @Nonnull public String getDescriptionId() { return def.name(); }
 }

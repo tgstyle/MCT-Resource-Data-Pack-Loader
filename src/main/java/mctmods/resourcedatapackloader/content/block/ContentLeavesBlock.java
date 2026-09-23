@@ -9,9 +9,7 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nonnull;
 
-public class ContentLeavesBlock extends LeavesBlock {
-    private static final int DEFAULT_FLAMMABILITY = 60;
-    private static final int DEFAULT_SPREAD = 30;
+@SuppressWarnings("deprecation") public class ContentLeavesBlock extends LeavesBlock {
     private final BlockDef def;
 
     public ContentLeavesBlock(BlockDef def, Properties properties) {
@@ -19,11 +17,11 @@ public class ContentLeavesBlock extends LeavesBlock {
         this.def = def;
     }
 
-    public BlockDef getDef() { return def; }
+    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
 
-    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return true; }
+    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
 
-    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0 ? def.flammability() : DEFAULT_FLAMMABILITY; }
+    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
 
-    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread() > 0 ? def.fireSpread() : DEFAULT_SPREAD; }
+    @Override public boolean skipRendering(@Nonnull BlockState state, @Nonnull BlockState adjacent, @Nonnull Direction direction) { return def.opaque() && adjacent.is(this) || super.skipRendering(state, adjacent, direction); }
 }

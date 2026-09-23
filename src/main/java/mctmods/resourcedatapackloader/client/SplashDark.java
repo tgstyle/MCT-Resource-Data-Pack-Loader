@@ -16,7 +16,7 @@ public final class SplashDark {
     private SplashDark() {}
 
     @Nullable public static IoSupplier<InputStream> logo() {
-        if (!Config.tweaks.darkSplash()) { return null; }
+        if (Config.tweaks.darkSplashOff()) { return null; }
         if (SplashDark.class.getResource(LOGO) == null) {
             ContentLog.LOGGER.warn("The pack loader's logo is not in its own jar, so the loading screen keeps the game's");
             return null;
@@ -30,8 +30,14 @@ public final class SplashDark {
     }
 
     public static void apply() {
-        if (!Config.tweaks.darkSplash()) { return; }
         Options options = Minecraft.getInstance().options;
+        if (Config.tweaks.darkSplashOff()) {
+            if (!options.darkMojangStudiosBackground().get()) { return; }
+            options.darkMojangStudiosBackground().set(false);
+            options.save();
+            ContentLog.LOGGER.info("The loading screen is back to the game's own colors and logo from the next start on: the game's Monochrome Logo option is off again");
+            return;
+        }
         if (options.darkMojangStudiosBackground().get()) {
             ContentLog.LOGGER.info("The loading screen is dark already: the game's Monochrome Logo option is on");
             return;

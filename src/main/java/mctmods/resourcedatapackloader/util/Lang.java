@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.locale.Language;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fml.ModList;
@@ -50,11 +49,6 @@ public final class Lang {
     public static String vanilla(String key) { return Language.getInstance().getOrDefault(key); }
 
     public static String tr(String key, Object... args) { return line(TABLES.get(DEFAULT), key, args); }
-
-    public static String tr(CommandSourceStack source, String key, Object... args) {
-        ServerPlayer player = source.getPlayer();
-        return player == null ? tr(key, args) : tr(player, key, args);
-    }
 
     public static String tr(ServerPlayer player, String key, Object... args) {
         Map<String, String> table = TABLES.get(player.getLanguage().toLowerCase(Locale.ROOT));

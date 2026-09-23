@@ -16,7 +16,7 @@ public final class Port {
     public static final String LANG_SUFFIX = ".lang";
     private static final String SOUNDS = "sounds";
     private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
-    private static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
+    private static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
 
     private Port() {}
 

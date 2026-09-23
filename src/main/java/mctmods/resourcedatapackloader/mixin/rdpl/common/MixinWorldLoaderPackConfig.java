@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import java.util.List;
 
-@Mixin(value = WorldLoader.PackConfig.class, priority = 900) public abstract class MixinWorldLoaderPackConfig {
-    @ModifyVariable(method = "createResourceManager", at = @At("STORE"), name = "closeableresourcemanager")
+@Mixin(value = WorldLoader.PackConfig.class, priority = 1100) public abstract class MixinWorldLoaderPackConfig {
+    @ModifyVariable(method = "createResourceManager", at = @At("STORE"))
     private CloseableResourceManager rdpl$beforeOwn(CloseableResourceManager closeableresourcemanager) {
         if (!(closeableresourcemanager instanceof MultiPackResourceManager packs)) { return closeableresourcemanager; }
         List<PackResources> opened = packs.listPacks().toList();

@@ -10,13 +10,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.server.packs.PackType;
-import net.minecraftforge.fml.loading.FMLPaths;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -81,15 +78,15 @@ public final class PackManager {
     public static final String FUELS = "fuels";
     public static final String EXPOSURES = "exposures";
     public static final String MATERIALS = "materials";
+    public static final String FUNCTIONS = "functions";
+    public static final String MCFUNCTION = "mcfunction";
     public static final String TABS = "tabs";
     public static final String TEAMS = "teams";
     public static final String SCORING = "scoring";
+    public static final String RAIDS = "raids";
     public static final String OVERRIDES = "overrides";
     public static final String HARDNESS = "hardness";
     public static final String ANVILS = "anvils";
-    private static final String README = "readme.txt";
-    private static final String README_BASE = "/assets/resourcedatapackloader/readme";
-    private static final String README_FALLBACK = README_BASE + "_en_us.txt";
     private static final String DISABLED = ".disabled";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
@@ -101,7 +98,7 @@ public final class PackManager {
     private final Set<String> served = ConcurrentHashMap.newKeySet();
     private final AtomicInteger generation = new AtomicInteger();
     @Nullable private volatile Path root;
-    @Nullable private volatile String description;
+    @Nullable private volatile JsonObject meta;
 
     private PackManager() {
         for (PackType type : PackType.values()) {
@@ -153,7 +150,7 @@ public final class PackManager {
         try (DirectoryStream<Path> entries = Files.newDirectoryStream(packRoot)) {
             for (Path entry : entries) {
                 String fileName = entry.getFileName().toString();
-                if (RDPLPack.ASSETS.equals(fileName) || RDPLPack.DATA.equals(fileName) || README.equals(fileName) || CONFIG.equals(fileName)) { continue; }
+                if (RDPLPack.ASSETS.equals(fileName) || RDPLPack.DATA.equals(fileName) || PackReadme.README.equals(fileName) || CONFIG.equals(fileName)) { continue; }
                 if (Files.isDirectory(entry)) {
                     if (ContentPixelMaps.CACHE_DIRECTORY.equals(fileName)) { continue; }
                     ContentLog.LOGGER.warn("Skipping the folder '{}': a pack is a zip file. Loose files go under {}/{}/<namespace> or {}/{}/<namespace>, and a pack in a folder is zipped up", fileName, packRoot, RDPLPack.ASSETS, packRoot, RDPLPack.DATA);
@@ -173,7 +170,7 @@ public final class PackManager {
         named.sort(Comparator.comparingInt(RDPLPack::getPriority).thenComparing(RDPLPack::getName, String.CASE_INSENSITIVE_ORDER));
         packs.addAll(named);
         buildIndex();
-        description = resolveDescription();
+        meta = resolveMeta();
         PackOptions.reload(packRoot, packs);
         ContentPixelMaps.tidy();
         generation.incrementAndGet();
@@ -210,8 +207,8 @@ public final class PackManager {
             Files.createDirectories(packRoot.resolve(RDPLPack.ASSETS));
             Files.createDirectories(packRoot.resolve(RDPLPack.DATA));
             Files.createDirectories(packRoot.resolve(CONFIG));
-            Path readme = packRoot.resolve(README);
-            String text = readmeText();
+            Path readme = packRoot.resolve(PackReadme.README);
+            String text = PackReadme.readmeText();
             if (text == null) { ContentLog.LOGGER.error("The readme is missing from the jar, so {} is left as it is", readme); }
             else {
                 boolean missing = !Files.exists(readme);
@@ -298,35 +295,9 @@ public final class PackManager {
         return dot < 0 ? fileName : fileName.substring(0, dot);
     }
 
-    public void report() {
-        if (packs.isEmpty()) {
-            ContentLog.LOGGER.info("No packs found in {}", root);
-            return;
-        }
-        int fromMods = 0;
-        for (RDPLPack pack : packs) {
-            if (pack.isFromMod()) { fromMods++; }
-        }
-        ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first{}", packs.size(), root,
-                fromMods == 0 ? "" : ", " + fromMods + " of them shipped inside a mod jar and listed in " + CONFIG + "/" + ModPacks.CONTROL_FILE);
-        if (Config.content.vanillaClients()) {
-            ContentLog.LOGGER.info("vanillaClients is on: nothing a client would have to know is registered from any pack, so clients without the mod can join. Pack blocks, items, fluids, materials, creative tabs, sounds, potion effects and types, villager professions and entity variants are skipped and named below; everything that lives on the server alone still applies");
-            for (RDPLPack pack : packs) {
-                for (String folder : List.of(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, SOUNDS, POTIONS, POTION_TYPES, VILLAGERS, ENTITIES)) {
-                    List<String> skipped = pack.files(CONTENT, folder, JSON);
-                    if (skipped.isEmpty()) { continue; }
-                    ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on: {}", pack.getName(), skipped.size(), folder, String.join(", ", skipped));
-                }
-            }
-        }
-        if (!Config.packs.logContents()) { return; }
-        for (RDPLPack pack : packs) {
-            String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";
-            String tier = (pack.isOverriding() ? " overriding" : "") + (pack.isFromMod() ? " from a mod jar" : "");
-            ContentLog.LOGGER.debug("  '{}'{}{}: files={} assets={} {} data={} {}", pack.getName(), priority, tier, pack.getFileCount(),
-                    pack.getFileCount(PackType.CLIENT_RESOURCES), pack.getNamespaces(PackType.CLIENT_RESOURCES), pack.getFileCount(PackType.SERVER_DATA), pack.getNamespaces(PackType.SERVER_DATA));
-        }
-    }
+    public void warnAboutDisabledFeatures() { PackReport.warnAboutDisabledFeatures(packs); }
+
+    public void report() { PackReport.report(packs, root); }
 
     @Nullable private Entry lookup(PackType type, String namespace, String path) {
         Entry entry = lookup(type, namespace, path, true);
@@ -382,6 +353,16 @@ public final class PackManager {
         return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
 
+    @Nullable public byte[] bytes(PackType type, String namespace, String path) {
+        for (boolean overriding : new boolean[] {false, true}) {
+            try (InputStream stream = openRaw(type, namespace, path, overriding)) {
+                if (stream != null) { return stream.readAllBytes(); }
+            }
+            catch (IOException ex) { ContentLog.LOGGER.error("Could not read {}:{} from the packs", namespace, path, ex); }
+        }
+        return null;
+    }
+
     private static boolean drawable(PackType type, String path) { return type == PackType.CLIENT_RESOURCES && ContentPixelMaps.couldBeDrawn(path); }
 
     public void list(PackType type, String namespace, boolean overriding, String prefix, Consumer<String> out) {
@@ -430,42 +411,6 @@ public final class PackManager {
         return result;
     }
 
-    private static String readmeSource() {
-        String language = readmeLanguage();
-        if (!language.isEmpty()) {
-            String scoped = README_BASE + "_" + language + ".txt";
-            if (PackManager.class.getResource(scoped) != null) { return scoped; }
-        }
-        return README_FALLBACK;
-    }
-
-    private static String readmeLanguage() {
-        Path options = FMLPaths.GAMEDIR.get().resolve("options.txt");
-        if (!Files.isRegularFile(options)) { return ""; }
-        try {
-            for (String line : Files.readAllLines(options, StandardCharsets.UTF_8)) {
-                if (line.startsWith("lang:")) { return line.substring(5).trim().toLowerCase(Locale.ROOT); }
-            }
-        }
-        catch (IOException | RuntimeException unreadable) { ContentLog.LOGGER.warn("Could not read the chosen language from {}, writing the readme in English", options); }
-        return "";
-    }
-
-    @Nullable private static String readmeText() {
-        String source = readmeSource();
-        try (InputStream stream = PackManager.class.getResourceAsStream(source)) {
-            if (stream == null) { return null; }
-            ByteArrayOutputStream held = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
-            for (int read = stream.read(buffer); read > 0; read = stream.read(buffer)) { held.write(buffer, 0, read); }
-            return held.toString(StandardCharsets.UTF_8);
-        }
-        catch (IOException ex) {
-            ContentLog.LOGGER.error("Could not read {} out of the jar", source, ex);
-            return null;
-        }
-    }
-
     @Nullable public Path packFile(String name) {
         for (int i = packs.size() - 1; i >= 0; i--) {
             Path file = packs.get(i).packFile(name);
@@ -477,9 +422,17 @@ public final class PackManager {
         return Files.isRegularFile(file) ? file : null;
     }
 
-    @Nullable public String description() { return description; }
+    @Nullable public String description() {
+        JsonObject held = meta;
+        return held == null ? null : descriptionOf(held.getAsJsonObject("pack"));
+    }
 
-    @Nullable private String resolveDescription() {
+    @Nullable public JsonObject language() {
+        JsonObject held = meta;
+        return held != null && held.has("language") && held.get("language").isJsonObject() ? held.getAsJsonObject("language") : null;
+    }
+
+    @Nullable private JsonObject resolveMeta() {
         for (int i = packs.size() - 1; i >= 0; i--) {
             RDPLPack pack = packs.get(i);
             String contents;
@@ -489,8 +442,8 @@ public final class PackManager {
                 continue;
             }
             if (contents == null) { continue; }
-            JsonObject meta = validMeta(contents);
-            if (meta != null) { return descriptionOf(meta); }
+            JsonObject found = validMeta(contents);
+            if (found != null) { return found; }
             ContentLog.LOGGER.warn("Pack '{}': {} is not valid JSON with a 'pack' section, so it is being ignored", pack.getName(), PACK_META);
         }
         Path base = root;
@@ -502,8 +455,8 @@ public final class PackManager {
             ContentLog.LOGGER.error("Could not read {}", file, ex);
             return null;
         }
-        JsonObject meta = validMeta(contents);
-        if (meta != null) { return descriptionOf(meta); }
+        JsonObject found = validMeta(contents);
+        if (found != null) { return found; }
         ContentLog.LOGGER.warn("{} is not valid JSON with a 'pack' section, so it is being ignored", file);
         return null;
     }
@@ -511,7 +464,7 @@ public final class PackManager {
     @Nullable private static JsonObject validMeta(String contents) {
         try {
             JsonObject json = GSON.fromJson(contents, JsonObject.class);
-            return json != null && json.has("pack") && json.get("pack").isJsonObject() ? json.getAsJsonObject("pack") : null;
+            return json != null && json.has("pack") && json.get("pack").isJsonObject() ? json : null;
         }
         catch (RuntimeException malformed) { return null; }
     }
@@ -549,7 +502,7 @@ public final class PackManager {
         warned.clear();
         served.clear();
         ContentPixelMaps.forget();
-        description = null;
+        meta = null;
     }
 
     private record Entry(RDPLPack pack, String actual, @Nullable Map<String, RDPLPack> variants) {}

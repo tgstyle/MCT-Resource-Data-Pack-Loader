@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.client.BlastHush;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
@@ -37,6 +38,10 @@ public final class RDPLNetwork {
         channel.messageBuilder(MessageNote.class, 5, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> buf.writeUtf(message.said())).decoder(buf -> new MessageNote(buf.readUtf())).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said()); }
         }).add();
+        channel.messageBuilder(MessageHush.class, 6, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHush::write).decoder(MessageHush::read).consumerNetworkThread((message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { BlastHush.mark(message); }
+            return true;
+        }).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
         }).add();
@@ -44,14 +49,14 @@ public final class RDPLNetwork {
             ServerPlayer player = context.get().getSender();
             if (player != null) { ContentIntroPlay.finished(player); }
         }).add();
-        channel.messageBuilder(MessageOpenWorn.class, 4, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> buf.writeVarInt(message.after())).decoder(buf -> new MessageOpenWorn(buf.readVarInt())).consumerMainThread((message, context) -> {
+        channel.messageBuilder(MessageOpenWorn.class, 4, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> {}).decoder(buf -> new MessageOpenWorn()).consumerMainThread((message, context) -> {
             ServerPlayer player = context.get().getSender();
-            if (player != null) { ContentWornContainers.open(player, message.after()); }
+            if (player != null) { ContentWornContainers.open(player); }
         }).add();
     }
 
-    public static void openWorn(int after) {
-        if (channel != null) { channel.sendToServer(new MessageOpenWorn(after)); }
+    public static void openWorn() {
+        if (channel != null) { channel.sendToServer(new MessageOpenWorn()); }
     }
 
     public static void sendHold(ServerPlayer player, boolean held, String warning, boolean fog) {
@@ -61,6 +66,12 @@ public final class RDPLNetwork {
     public static boolean sendNote(ServerPlayer player, String said) {
         if (channel == null || !reaches(player)) { return false; }
         channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageNote(said));
+        return true;
+    }
+
+    public static boolean hush(ServerPlayer player, double x, double y, double z) {
+        if (channel == null || !reaches(player)) { return false; }
+        channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHush(x, y, z));
         return true;
     }
 

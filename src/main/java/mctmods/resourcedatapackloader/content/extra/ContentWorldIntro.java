@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.IntroPageDef;
 import mctmods.resourcedatapackloader.content.def.WorldIntroDef;
@@ -34,7 +35,6 @@ public final class ContentWorldIntro {
         loaded = true;
         if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.WORLDINTRO, "world intro", (key, contents) -> {
-            if (ContentRegistry.reserved(key)) { return; }
             WorldIntroDef def = parse(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
@@ -56,7 +56,7 @@ public final class ContentWorldIntro {
             return null;
         }
         String music = GsonHelper.getAsString(json, "music", "").trim();
-        ResourceLocation track = music.isEmpty() ? null : ResourceLocation.tryParse(music);
+        ResourceLocation track = music.isEmpty() ? null : ContentParser.location(music);
         if (!music.isEmpty() && track == null) { ContentLog.LOGGER.error("World intro {} names music '{}', which is not a sound id, so it plays silently", key, music); }
         return new WorldIntroDef(key, GsonHelper.getAsBoolean(json, "once", false), track, List.copyOf(pages), Json.strings(json, "requires"));
     }
@@ -77,14 +77,14 @@ public final class ContentWorldIntro {
             direction = IntroPageDef.UP;
         }
         String text = GsonHelper.getAsString(json, "text", "").trim();
-        ResourceLocation textAt = text.isEmpty() ? null : ResourceLocation.tryParse(text);
+        ResourceLocation textAt = text.isEmpty() ? null : ContentParser.location(text);
         if (!text.isEmpty() && textAt == null) { ContentLog.LOGGER.error("World intro {} names text '{}', which is not a resource id, so the page shows none", key, text); }
         return new IntroPageDef(List.copyOf(backgrounds), GsonHelper.getAsFloat(json, "interval", 5.0F), textAt, mode, GsonHelper.getAsFloat(json, "time", IntroPageDef.DERIVE), direction,
-                Math.max(0.25F, GsonHelper.getAsFloat(json, "textScale", 1.0F)), GsonHelper.getAsBoolean(json, "settle", false));
+                GsonHelper.getAsFloat(json, "textScale", 1.0F), GsonHelper.getAsBoolean(json, "settle", false));
     }
 
     private static void location(ResourceLocation key, String name, List<ResourceLocation> out) {
-        ResourceLocation found = ResourceLocation.tryParse(name.trim());
+        ResourceLocation found = ContentParser.location(name);
         if (found == null) { ContentLog.LOGGER.error("World intro {} names background '{}', which is not a resource id, leaving it out", key, name); }
         else { out.add(found); }
     }

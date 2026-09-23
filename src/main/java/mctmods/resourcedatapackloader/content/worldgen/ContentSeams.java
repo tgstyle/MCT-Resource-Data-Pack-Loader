@@ -18,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -57,8 +56,6 @@ public final class ContentSeams {
 
     private ContentSeams() {}
 
-    public static boolean enabled() { return !BELOW.asked().isEmpty() || !ABOVE.asked().isEmpty(); }
-
     @Nullable public static ResourceLocation below(String dimension) { return BELOW.targetFor(dimension); }
 
     @Nullable public static ResourceLocation above(String dimension) { return ABOVE.targetFor(dimension); }
@@ -76,7 +73,7 @@ public final class ContentSeams {
         List<JsonElement> kept = new ArrayList<>();
         int removed = 0;
         for (JsonElement element : sequence) {
-            String gradient = element.isJsonObject() ? gradientName(element.getAsJsonObject()) : null;
+            String gradient = element.isJsonObject() ? WorldgenJson.gradientName(element.getAsJsonObject()) : null;
             if (gradient != null && ((floor && gradient.endsWith(BEDROCK_FLOOR)) || (roof && gradient.endsWith(BEDROCK_ROOF)))) {
                 removed++;
                 continue;
@@ -91,14 +88,6 @@ public final class ContentSeams {
         ContentLog.LOGGER.debug("Left the bedrock out of {} at its {} so the seam can be dug through", dimension, floor && roof ? "floor and ceiling" : floor ? "floor" : "ceiling");
     }
 
-    @Nullable private static String gradientName(JsonObject entry) {
-        if (!"minecraft:condition".equals(GsonHelper.getAsString(entry, "type", ""))) { return null; }
-        JsonObject test = GsonHelper.getAsJsonObject(entry, "if_true", new JsonObject());
-        if ("minecraft:not".equals(GsonHelper.getAsString(test, "type", ""))) { test = GsonHelper.getAsJsonObject(test, "invert", new JsonObject()); }
-        if (!"minecraft:vertical_gradient".equals(GsonHelper.getAsString(test, "type", ""))) { return null; }
-        return GsonHelper.getAsString(test, "random_name", "");
-    }
-
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) { return; }
         tick(level);
@@ -110,7 +99,7 @@ public final class ContentSeams {
         ResourceLocation above = ABOVE.targetFor(dimension);
         if (below == null && above == null) { return; }
         int floor = level.getMinBuildHeight();
-        int ceiling = level.getMaxBuildHeight();
+        int ceiling = ceiling(level);
         boolean carryEntities = ContentControl.flag(ContentControl.TERRAIN, "worldSeamEntities", Config.worldgen.worldSeamEntities());
         List<Entity> falling = null;
         List<Entity> rising = null;
@@ -148,7 +137,7 @@ public final class ContentSeams {
             return;
         }
         int floor = destination.getMinBuildHeight();
-        int ceiling = destination.getMaxBuildHeight();
+        int ceiling = ceiling(destination);
         double arriveY = down ? ceiling - INSET_DOWN : floor + INSET_UP;
         boolean walking = entity instanceof ServerPlayer;
         if (walking && down) { SeamMemory.of(level).noteEntry(entity.getBlockX(), entity.getBlockZ()); }
@@ -169,6 +158,8 @@ public final class ContentSeams {
         if (moved == null && entity instanceof ServerPlayer player) { bounce(player, down, sourceFloor, sourceCeiling); }
         else if (moved != null) { ContentLog.LOGGER.debug("The seam of {} carried {} {} into {} at {}, {}, {}", level.dimension().location(), moved.getType(), down ? "down" : "up", target, moved.getBlockX(), moved.getBlockY(), moved.getBlockZ()); }
     }
+
+    public static int ceiling(Level level) { return Math.min(level.getMaxBuildHeight(), level.getMinBuildHeight() + level.dimensionType().logicalHeight()); }
 
     private static void bounce(ServerPlayer player, boolean down, int floor, int ceiling) {
         boolean beyond = down ? player.getY() < floor + 1 : player.getY() > ceiling - 2;

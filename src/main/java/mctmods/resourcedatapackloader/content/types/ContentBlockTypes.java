@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.block.ContentContainerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlock;
+import mctmods.resourcedatapackloader.content.block.ContentBellBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBushBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCaneBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
@@ -13,6 +14,7 @@ import mctmods.resourcedatapackloader.content.block.ContentLogBlock;
 import mctmods.resourcedatapackloader.content.block.ContentPortalBlock;
 import mctmods.resourcedatapackloader.content.block.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.content.block.ContentTorchBlock;
+import mctmods.resourcedatapackloader.content.block.ContentVineBlock;
 import mctmods.resourcedatapackloader.content.block.ContentWallBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentWallTorchBlock;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
@@ -24,6 +26,7 @@ import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DoubleHighBlockItem;
 import net.minecraft.world.item.Item;
@@ -38,12 +41,10 @@ import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
-import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
-import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraftforge.registries.ForgeRegistries;
 import java.util.List;
 import java.util.Set;
@@ -73,13 +74,19 @@ public final class ContentBlockTypes {
     public static final String VINE = "vine";
     public static final String BANNER = "banner";
     public static final String PORTAL = "portal";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER);
+    public static final String BELL = "bell";
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL);
     private static final Set<String> LATER = Set.of();
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
+    private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, FALLING, SLAB, WALL);
 
     private ContentBlockTypes() {}
 
     public static boolean plant(String type) { return PLANTS.contains(type); }
+
+    public static boolean borrowsModel(String type) { return STAIRS.equals(type) || WALL.equals(type); }
+
+    public static int harvestLevel(BlockDef def, BlockVariant variant) { return VARIANT_LEVELS.contains(KNOWN.contains(def.type()) ? def.type() : BASIC) ? variant.harvestLevel() : def.harvestToolLevel(); }
 
     @Nullable public static String renderType(BlockDef def) {
         return switch (def.renderLayer()) {
@@ -88,8 +95,8 @@ public final class ContentBlockTypes {
             case "cutout_mipped" -> "minecraft:cutout_mipped";
             case "translucent" -> "minecraft:translucent";
             default -> switch (def.type()) {
-                case LEAVES -> "minecraft:cutout_mipped";
-                case CROP, SAPLING, FLOWER, CANE, VINE, LADDER, TORCH, DOOR, TRAPDOOR, PANE -> "minecraft:cutout";
+                case LEAVES -> def.opaque() ? null : "minecraft:cutout_mipped";
+                case CROP, SAPLING, FLOWER, CANE, VINE, LADDER, TORCH, DOOR, TRAPDOOR, PANE, BELL -> "minecraft:cutout";
                 default -> def.opaque() ? null : "minecraft:cutout";
             };
         };
@@ -105,7 +112,7 @@ public final class ContentBlockTypes {
             ContentLog.LOGGER.error("Unknown block type '{}' in {}, treating it as '{}'. Known types are {}", type, def.key(), BASIC, KNOWN);
             type = BASIC;
         }
-        BlockBehaviour.Properties properties = ContentTypes.properties(def, variant, plant(type));
+        BlockBehaviour.Properties properties = ContentTypes.properties(def, variant, type);
         ResourceLocation id = variant.id();
         return switch (type) {
             case FALLING -> List.of(new Created(id, new ContentFallingBlock(def, properties), ContentRegistry.MAIN));
@@ -114,35 +121,30 @@ public final class ContentBlockTypes {
             case FENCE -> List.of(new Created(id, new FenceBlock(properties), ContentRegistry.MAIN));
             case PANE -> List.of(new Created(id, new IronBarsBlock(properties.noOcclusion()), ContentRegistry.MAIN));
             case WALL -> List.of(new Created(id, new WallBlock(properties), ContentRegistry.MAIN));
-            case DOOR -> List.of(new Created(id, new DoorBlock(properties.noOcclusion(), setType(def)), ContentRegistry.MAIN));
-            case TRAPDOOR -> List.of(new Created(id, new TrapDoorBlock(properties.noOcclusion(), setType(def)), ContentRegistry.MAIN));
-            case FENCE_GATE -> List.of(new Created(id, new FenceGateBlock(properties, WoodType.OAK), ContentRegistry.MAIN));
+            case DOOR -> List.of(new Created(id, new DoorBlock(properties.noOcclusion(), setType(def, type)), ContentRegistry.MAIN));
+            case TRAPDOOR -> List.of(new Created(id, new TrapDoorBlock(properties.noOcclusion(), setType(def, type)), ContentRegistry.MAIN));
+            case FENCE_GATE -> List.of(new Created(id, new FenceGateBlock(properties, SoundEvents.FENCE_GATE_OPEN, SoundEvents.FENCE_GATE_CLOSE), ContentRegistry.MAIN));
             case LADDER -> List.of(new Created(id, new LadderBlock(properties.noOcclusion().noCollission()), ContentRegistry.MAIN));
             case BANNER -> {
-                ContentBannerBlock standing = new ContentBannerBlock(def, id, properties.noCollission().forceSolidOn());
-                ContentWallBannerBlock wall = new ContentWallBannerBlock(def, id, ContentTypes.properties(def, variant, false).noCollission().forceSolidOn());
+                ContentBannerBlock standing = new ContentBannerBlock(id, properties.noCollission().forceSolidOn());
+                ContentWallBannerBlock wall = new ContentWallBannerBlock(id, ContentTypes.properties(def, variant, type).noCollission().forceSolidOn());
                 yield List.of(new Created(id, standing, ContentRegistry.MAIN), new Created(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_wall"), wall, ContentRegistry.WALL));
             }
             case TORCH -> {
-                ContentTorchBlock torch = new ContentTorchBlock(def, properties.noCollission().instabreak().lightLevel(state -> Math.max(variant.light(), 14)));
-                ContentWallTorchBlock wall = new ContentWallTorchBlock(def, ContentTypes.properties(def, variant, false).noCollission().instabreak().lightLevel(state -> Math.max(variant.light(), 14)));
+                ContentTorchBlock torch = new ContentTorchBlock(def, properties.noCollission());
+                ContentWallTorchBlock wall = new ContentWallTorchBlock(def, ContentTypes.properties(def, variant, type).noCollission());
                 yield List.of(new Created(id, torch, ContentRegistry.MAIN), new Created(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_wall"), wall, ContentRegistry.WALL));
             }
-            case CONTAINER -> {
-                if (def.container() == null) {
-                    ContentLog.LOGGER.error("Block {} is a container but has no 'container' section, so there is no inventory for it to hold", variant.id());
-                    yield List.of();
-                }
-                yield List.of(new Created(id, new ContentContainerBlock(def, def.container(), properties), ContentRegistry.MAIN));
-            }
+            case CONTAINER -> List.of(new Created(id, new ContentContainerBlock(def, properties), ContentRegistry.MAIN));
+            case BELL -> List.of(new Created(id, new ContentBellBlock(def, properties.noOcclusion()), ContentRegistry.MAIN));
             case LOG -> List.of(new Created(id, new ContentLogBlock(def, properties), ContentRegistry.MAIN));
-            case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, properties.noOcclusion().randomTicks().isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)), ContentRegistry.MAIN));
+            case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, properties.randomTicks().isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)), ContentRegistry.MAIN));
             case SAPLING -> {
                 if (def.sapling() == null) {
                     ContentLog.LOGGER.error("Block {} is a sapling but has no 'sapling' section, so there is nothing for it to grow into", variant.id());
                     yield List.of();
                 }
-                yield List.of(new Created(id, new ContentSaplingBlock(def, variant.id(), properties), ContentRegistry.MAIN));
+                yield List.of(new Created(id, ContentSaplingBlock.create(def, variant.id(), properties), ContentRegistry.MAIN));
             }
             case CROP -> List.of(new Created(id, new ContentCropBlock(def, properties), ContentRegistry.MAIN));
             case FLOWER -> List.of(new Created(id, new ContentBushBlock(def, def.growth() == null ? GrowthDef.bush() : def.growth(), properties), ContentRegistry.MAIN));
@@ -153,13 +155,13 @@ public final class ContentBlockTypes {
                 }
                 yield List.of(new Created(id, new ContentCaneBlock(def, def.growth(), properties), ContentRegistry.MAIN));
             }
-            case VINE -> List.of(new Created(id, new VineBlock(properties.noOcclusion()), ContentRegistry.MAIN));
+            case VINE -> List.of(new Created(id, new ContentVineBlock(def.growth() == null ? GrowthDef.bush() : def.growth(), properties.noOcclusion()), ContentRegistry.MAIN));
             case PORTAL -> {
                 if (def.portal() == null) {
                     ContentLog.LOGGER.error("Block {} is a portal but has no 'portal' section, so it has nowhere to lead", variant.id());
                     yield List.of();
                 }
-                yield List.of(new Created(id, new ContentPortalBlock(def, def.portal(), properties), ContentRegistry.MAIN));
+                yield List.of(new Created(id, new ContentPortalBlock(def, variant.portal() == null ? def.portal() : variant.portal(), properties), ContentRegistry.MAIN));
             }
             default -> List.of(new Created(id, new ContentBlock(def, properties), ContentRegistry.MAIN));
         };
@@ -186,15 +188,12 @@ public final class ContentBlockTypes {
         };
     }
 
-    private static BlockSetType setType(BlockDef def) {
-        return switch (def.material()) {
-            case "wood" -> BlockSetType.OAK;
-            case "iron", "anvil" -> BlockSetType.IRON;
-            default -> BlockSetType.STONE;
-        };
+    private static BlockSetType setType(BlockDef def, String type) {
+        BlockSetType sounds = "iron".equals(def.material()) ? BlockSetType.IRON : BlockSetType.OAK;
+        return new BlockSetType(def.key().toString(), sounds.canOpenByHand(), ContentTypes.sound(def, type), sounds.doorClose(), sounds.doorOpen(), sounds.trapdoorClose(), sounds.trapdoorOpen(), sounds.pressurePlateClickOff(), sounds.pressurePlateClickOn(), sounds.buttonClickOff(), sounds.buttonClickOn());
     }
 
-    private static BlockState base(BlockDef def) {
+    static BlockState base(BlockDef def) {
         ResourceLocation named = ResourceLocation.tryParse(def.modelBlock());
         Block block = Registered.find(ForgeRegistries.BLOCKS, named);
         return block == null || block == Blocks.AIR ? Blocks.STONE.defaultBlockState() : block.defaultBlockState();

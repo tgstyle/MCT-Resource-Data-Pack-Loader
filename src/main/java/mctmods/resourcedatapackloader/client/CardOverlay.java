@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -48,7 +49,7 @@ public final class CardOverlay {
             this.title = message.title();
             this.lines = message.lines();
             this.icon = message.icon();
-            this.image = message.image().isEmpty() ? null : ResourceLocation.tryParse(message.image());
+            this.image = message.image().isEmpty() ? null : ContentParser.location(message.image());
             this.background = message.background();
             this.text = message.text();
             this.life = Math.max(SLIDE + FADE, message.ticks());

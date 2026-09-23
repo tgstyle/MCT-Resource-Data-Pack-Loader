@@ -19,8 +19,6 @@ public class ContentWallTorchBlock extends WallTorchBlock {
         this.def = def;
     }
 
-    public BlockDef getDef() { return def; }
-
     @Override public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
         Direction facing = state.getValue(FACING).getOpposite();
         double x = pos.getX() + 0.5D + 0.27D * facing.getStepX();

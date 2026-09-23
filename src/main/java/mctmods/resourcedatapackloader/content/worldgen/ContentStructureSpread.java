@@ -2,14 +2,19 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -39,7 +44,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
             int spacing, int separation, RandomSpreadType spreadType, List<List<Integer>> pins, int minDistanceFromSpawn, List<Integer> spawn) {
         super(locateOffset, reduction, frequency, salt, Optional.empty(), spacing, separation, spreadType);
         this.pins = pins;
-        for (List<Integer> pin : pins) { if (pin.size() == 2) { PINNED.add(chunkOf(pin).toLong()); } }
+        hold(pins);
         this.minDistanceFromSpawn = minDistanceFromSpawn;
         this.spawn = spawn;
     }
@@ -61,20 +66,33 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
     }
 
     @Override protected boolean isPlacementChunk(@Nonnull ChunkGeneratorStructureState state, int x, int z) {
-        if (!pins.isEmpty()) {
-            for (List<Integer> pin : pins) {
-                if (pin.size() == 2 && pin.get(0) >> 4 == x && pin.get(1) >> 4 == z) { return true; }
-            }
-            return false;
-        }
+        if (!pins.isEmpty()) { return pinnedAt(pins, x, z); }
         if (!super.isPlacementChunk(state, x, z)) { return false; }
         if (minDistanceFromSpawn <= 0) { return true; }
-        double offX = (x * 16 + 8) - (spawn.size() == 2 ? spawn.get(0) : 0);
-        double offZ = (z * 16 + 8) - (spawn.size() == 2 ? spawn.get(1) : 0);
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        ServerLevel overworld = server == null ? null : server.getLevel(Level.OVERWORLD);
+        BlockPos from = overworld != null ? overworld.getSharedSpawnPos() : new BlockPos(spawn.size() == 2 ? spawn.get(0) : 0, 0, spawn.size() == 2 ? spawn.get(1) : 0);
+        double offX = (x * 16 + 8) - from.getX();
+        double offZ = (z * 16 + 8) - from.getZ();
         return offX * offX + offZ * offZ >= (double) minDistanceFromSpawn * minDistanceFromSpawn;
     }
 
+    @Override public boolean isStructureChunk(@Nonnull ChunkGeneratorStructureState state, int x, int z) { return pins.isEmpty() ? super.isStructureChunk(state, x, z) : pinnedAt(pins, x, z); }
+
     @Override @Nonnull public StructurePlacementType<?> type() { return TYPE; }
+
+    static void hold(List<List<Integer>> pins) {
+        for (List<Integer> pin : pins) {
+            if (pin.size() == 2) { PINNED.add(chunkOf(pin).toLong()); }
+        }
+    }
+
+    static boolean pinnedAt(List<List<Integer>> pins, int x, int z) {
+        for (List<Integer> pin : pins) {
+            if (pin.size() == 2 && pin.get(0) >> 4 == x && pin.get(1) >> 4 == z) { return true; }
+        }
+        return false;
+    }
 
     public static boolean pinned(ChunkPos chunk) { return !PINNED.isEmpty() && PINNED.contains(chunk.toLong()); }
 

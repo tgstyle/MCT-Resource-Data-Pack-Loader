@@ -7,6 +7,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class ContentPlacer {
     private static final int FLAGS = 2 | 16;
@@ -53,13 +54,22 @@ public final class ContentPlacer {
 
     public int ceilingY() { return level.getMaxBuildHeight(); }
 
-    public boolean writable(int x, int z) {
-        return Math.abs(SectionPos.blockToSectionCoord(x) - centerX) <= reach && Math.abs(SectionPos.blockToSectionCoord(z) - centerZ) <= reach;
+    public boolean unwritable(int x, int z) {
+        return Math.abs(SectionPos.blockToSectionCoord(x) - centerX) > reach || Math.abs(SectionPos.blockToSectionCoord(z) - centerZ) > reach;
     }
 
     public boolean unreadable(BlockPos pos) { return !loaded(level, pos); }
 
     @SuppressWarnings("deprecation") public static boolean loaded(LevelReader level, BlockPos pos) { return level.hasChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())); }
+
+    public static boolean underCover(WorldGenLevel level, int x, int y, int z) {
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int above = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1; above >= y; above--) {
+            BlockState state = level.getBlockState(at.set(x, above, z));
+            if (state.getLightBlock(level, at) > 0 || !state.getFluidState().isEmpty()) { return true; }
+        }
+        return false;
+    }
 
     public boolean place(RandomSource random, int x, int y, int z) {
         if (occupied(x, y, z)) { return false; }
@@ -67,15 +77,18 @@ public final class ContentPlacer {
     }
 
     public boolean placeExactly(BlockState state, int x, int y, int z) {
-        if (y < floorY() || y >= ceilingY() || !writable(x, z)) { return false; }
+        if (y < floorY() || y >= ceilingY() || unwritable(x, z)) { return false; }
         return level.setBlock(scratch.set(x, y, z), state, FLAGS);
     }
 
     public boolean occupied(int x, int y, int z) {
-        if (y < floorY() || y >= ceilingY() || !writable(x, z)) { return true; }
-        BlockPos pos = scratch.set(x, y, z);
-        if (!palette.replaceable(level.getBlockState(pos))) { return true; }
+        if (!replaces(x, y, z)) { return true; }
         return palette.wantsNearby() && !beside(x, y, z);
+    }
+
+    public boolean replaces(int x, int y, int z) {
+        if (y < floorY() || y >= ceilingY() || unwritable(x, z)) { return false; }
+        return palette.replaceable(level.getBlockState(scratch.set(x, y, z)));
     }
 
     private boolean beside(int x, int y, int z) {

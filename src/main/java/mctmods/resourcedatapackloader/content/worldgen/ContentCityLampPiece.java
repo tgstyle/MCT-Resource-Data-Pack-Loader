@@ -1,31 +1,32 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class ContentCityLampPiece extends StructurePiece {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityLampPiece::new;
     private static final String FOOT = "Foot";
+    private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     private final int foot;
 
     public ContentCityLampPiece(int x, int foot, int z, int height) {
@@ -40,8 +41,19 @@ public final class ContentCityLampPiece extends StructurePiece {
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) { tag.putInt(FOOT, foot); }
 
-    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
-        BlockState post = state(ContentCity.lampBlock());
+    private static void place(WorldGenLevel level, BlockPos at, ContentStates.Spec spec, BlockState state) {
+        level.setBlock(at, state, 2);
+        if (spec.tag() == null) { return; }
+        BlockEntity entity = level.getBlockEntity(at);
+        if (entity == null) { return; }
+        CompoundTag merged = entity.saveWithoutMetadata();
+        merged.merge(spec.tag());
+        entity.load(merged);
+        entity.setChanged();
+    }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        ContentStates.Spec post = spec("villagePathLampBlock", ContentCity.lampBlock());
         if (post == null) { return; }
         BoundingBox held = getBoundingBox();
         int x = (held.minX() + held.maxX()) / 2;
@@ -50,30 +62,25 @@ public final class ContentCityLampPiece extends StructurePiece {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int y = foot; y < head; y++) {
             at.set(x, y, z);
-            if (box.isInside(at)) { level.setBlock(at, post, 2); }
+            if (box.isInside(at)) { place(level, at.immutable(), post, post.state()); }
         }
-        BlockState top = state(ContentCity.lampTopBlock());
+        ContentStates.Spec top = spec("villagePathLampTopBlock", ContentCity.lampTopBlock());
         at.set(x, head, z);
-        if (top != null && box.isInside(at)) { level.setBlock(at, top, 2); }
-        BlockState side = state(ContentCity.lampSideBlock());
+        if (top != null && box.isInside(at)) { place(level, at.immutable(), top, top.state()); }
+        ContentStates.Spec side = spec("villagePathLampSideBlock", ContentCity.lampSideBlock());
         if (side == null) { return; }
         for (Direction facing : Direction.Plane.HORIZONTAL) {
             at.set(x + facing.getStepX(), head, z + facing.getStepZ());
             if (!box.isInside(at) || !level.getBlockState(at).isAir()) { continue; }
-            BlockState hung = side.hasProperty(BlockStateProperties.HORIZONTAL_FACING) ? side.setValue(BlockStateProperties.HORIZONTAL_FACING, facing) : side;
-            if (hung.canSurvive(level, at)) { level.setBlock(at, hung, 2); }
+            BlockState hung = CityPalette.faced(side.state(), facing);
+            place(level, at.immutable(), side, hung);
         }
     }
 
-    @javax.annotation.Nullable private static BlockState state(String named) {
+    @Nullable private static ContentStates.Spec spec(String key, String named) {
         if (named.isEmpty()) { return null; }
-        Block found = Registered.find(ForgeRegistries.BLOCKS, ResourceLocation.tryParse(named));
-        return found == null || found == Blocks.AIR ? null : found.defaultBlockState();
-    }
-
-    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
-        try { laid(level, box); }
-        finally { CityBiome.leave(); }
+        ContentStates.Spec found = ContentStates.spec(named, "a street lamp");
+        if (found == null && WARNED.add(key + "|" + named)) { ContentLog.LOGGER.error("{} '{}' is not a registered block, nothing is placed", key, named); }
+        return found == null || found.state().isAir() ? null : found;
     }
 }

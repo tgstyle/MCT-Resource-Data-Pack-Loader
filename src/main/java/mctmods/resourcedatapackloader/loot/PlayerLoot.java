@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -61,12 +62,17 @@ public final class PlayerLoot {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
             return;
         }
+        ResourceLocation named = ContentParser.location(table);
+        if (named == null) {
+            ContentLog.LOGGER.error("Player loot {} names the table '{}', which is not a valid id, ignoring it", key, table);
+            return;
+        }
         String mode = GsonHelper.getAsString(json, MODE, ADD);
         if (!mode.equals(ADD) && !mode.equals(REPLACE)) {
             ContentLog.LOGGER.error("Player loot {} has mode '{}', which is neither '{}' nor '{}', ignoring it", key, mode, ADD, REPLACE);
             return;
         }
-        ENTRIES.add(new Entry(ResourceLocation.parse(table), mode.equals(REPLACE), GsonHelper.getAsBoolean(json, KEEP_INVENTORY, false), GsonHelper.getAsBoolean(json, DROP_LOOSE, false)));
+        ENTRIES.add(new Entry(named, mode.equals(REPLACE), GsonHelper.getAsBoolean(json, KEEP_INVENTORY, false), GsonHelper.getAsBoolean(json, DROP_LOOSE, false)));
     }
 
     public static void onDrops(LivingDropsEvent event) {

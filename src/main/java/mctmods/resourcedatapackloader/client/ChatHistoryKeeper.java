@@ -18,6 +18,7 @@ public final class ChatHistoryKeeper {
     private static final String FILE = "config/rdpl-chat-history.txt";
     private static final List<String> TYPED = new ArrayList<>();
     private static boolean loaded;
+    private static volatile String pending;
 
     private ChatHistoryKeeper() {}
 
@@ -35,7 +36,25 @@ public final class ChatHistoryKeeper {
     }
 
     public static void caught(String line) {
-        if (line.isEmpty() || (!TYPED.isEmpty() && TYPED.get(TYPED.size() - 1).equals(line))) { return; }
+        if (line.isEmpty()) { return; }
+        if (line.startsWith("/")) {
+            pending = line;
+            return;
+        }
+        commit(line);
+    }
+
+    public static void commandRan(String command) {
+        String held = pending;
+        if (held == null) { return; }
+        String bare = command.startsWith("/") ? command.substring(1) : command;
+        if (!held.substring(1).trim().equals(bare.trim())) { return; }
+        pending = null;
+        Minecraft.getInstance().execute(() -> commit(held));
+    }
+
+    private static void commit(String line) {
+        if (!TYPED.isEmpty() && TYPED.get(TYPED.size() - 1).equals(line)) { return; }
         TYPED.add(line);
         while (TYPED.size() > KEPT) { TYPED.remove(0); }
         save(Minecraft.getInstance());

@@ -1,19 +1,20 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
-import mctmods.resourcedatapackloader.content.ContentRoundReset;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
-import mctmods.resourcedatapackloader.content.def.GateDef;
-import mctmods.resourcedatapackloader.content.def.TeamDef;
-import mctmods.resourcedatapackloader.content.gate.ContentGates;
+import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReset;
+import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
@@ -27,26 +28,29 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.datafixers.util.Pair;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -58,10 +62,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.rcon.RconConsoleSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public final class CommandShared {
     static final int OPERATOR = 3;
+    private static final int FIND_RANGE = 6400;
 
     private CommandShared() {}
 
@@ -71,13 +80,13 @@ public final class CommandShared {
                 .then(Commands.literal("reload").requires(staff).executes(reload))
                 .then(Commands.literal("list").requires(staff).executes(context -> {
                     ran(context.getSource(), name, "list");
-                    list(context.getSource(), name);
+                    list(context.getSource(), name, server);
                     return 1;
                 }))
                 .then(Commands.literal("which").requires(staff).then(Commands.argument("file", StringArgumentType.greedyString()).executes(context -> {
                     String target = StringArgumentType.getString(context, "file");
                     ran(context.getSource(), name, "which " + target);
-                    which(context.getSource(), target);
+                    which(context.getSource(), target, server);
                     return 1;
                 })))
                 .then(Commands.literal("pixelmap").requires(staff).then(Commands.argument("map", StringArgumentType.greedyString()).executes(context -> {
@@ -86,74 +95,7 @@ public final class CommandShared {
                     pixelmap(context.getSource(), target);
                     return 1;
                 })))
-                .then(Commands.literal("oregen").requires(source -> server && staff.test(source)).executes(context -> {
-                    ran(context.getSource(), name, "oregen");
-                    blockedReport(context.getSource(), ContentOreControl.blocked());
-                    return 1;
-                }))
-                .then(Commands.literal("dimensions").requires(source -> server && staff.test(source)).executes(context -> {
-                    ran(context.getSource(), name, "dimensions");
-                    dimensions(context.getSource());
-                    return 1;
-                }))
-                .then(Commands.literal("gate").requires(source -> server && staff.test(source)).executes(context -> {
-                    ran(context.getSource(), name, "gate");
-                    gates(context.getSource());
-                    return 1;
-                })
-                .then(Commands.literal("check").then(Commands.argument("player", EntityArgument.player()).executes(context -> {
-                    ServerPlayer player = EntityArgument.getPlayer(context, "player");
-                    ran(context.getSource(), name, "gate check " + player.getGameProfile().getName());
-                    gatesFor(context.getSource(), player);
-                    return 1;
-                })))
-                .then(Commands.literal("grant").requires(source -> source.hasPermission(2))
-                        .then(Commands.argument("player", EntityArgument.player())
-                        .then(Commands.argument("gate", StringArgumentType.string()).executes(context -> gateFor(context, name, true)))))
-                .then(Commands.literal("revoke").requires(source -> source.hasPermission(2))
-                        .then(Commands.argument("player", EntityArgument.player())
-                        .then(Commands.argument("gate", StringArgumentType.string()).executes(context -> gateFor(context, name, false))))))
-                .then(Commands.literal("reset").requires(source -> server && staff.test(source)).executes(context -> {
-                    ran(context.getSource(), name, "reset");
-                    int swept = ContentReset.run(context.getSource().getServer());
-                    send(context.getSource(), ChatFormatting.GREEN, Component.literal("The map was reset, " + swept + " entity(s) swept"));
-                    return 1;
-                }))
-                .then(Commands.literal("team").requires(source -> server).executes(context -> teamList(context, name))
-                        .then(Commands.literal("list").executes(context -> teamList(context, name)))
-                        .then(Commands.literal("leave").executes(context -> teamLeave(context, name)))
-                        .then(Commands.literal("claim").executes(context -> teamClaim(context, name)))
-                        .then(Commands.literal("join").executes(context -> teamJoin(context, name, null))
-                                .then(Commands.argument("team", StringArgumentType.word()).suggests((context, suggestions) -> {
-                                    for (String known : ContentTeams.joinableNames()) { suggestions.suggest(known); }
-                                    return suggestions.buildFuture();
-                                }).executes(context -> teamJoin(context, name, StringArgumentType.getString(context, "team")))))
-                        .then(Commands.literal("vote").then(Commands.argument("player", StringArgumentType.word()).suggests((context, suggestions) -> {
-                            for (String known : context.getSource().getOnlinePlayerNames()) { suggestions.suggest(known); }
-                            return suggestions.buildFuture();
-                        }).executes(context -> teamVote(context, name, StringArgumentType.getString(context, "player"))))))
-                .then(Commands.literal("round").requires(source -> server)
-                        .then(Commands.literal("start").executes(context -> roundStart(context, name)))
-                        .then(Commands.literal("reset").executes(context -> roundReset(context, name)))
-                        .then(Commands.literal("vote")
-                                .then(Commands.literal("yes").executes(context -> roundVote(context, name, true)))
-                                .then(Commands.literal("no").executes(context -> roundVote(context, name, false)))))
-                .then(Commands.literal("biome").requires(staff)
-                        .then(Commands.literal("here").executes(context -> {
-                            ran(context.getSource(), name, "biome here");
-                            biomeHere(context.getSource());
-                            return 1;
-                        }))
-                        .then(Commands.literal("list").executes(context -> {
-                            ran(context.getSource(), name, "biome list");
-                            biomeList(context.getSource(), false);
-                            return 1;
-                        })
-                        .then(Commands.literal("all").executes(context -> {
-                            ran(context.getSource(), name, "biome list all");
-                            biomeList(context.getSource(), true);
-                            return 1;
-                        }))))
+                .then(biome(name, staff, server))
                 .then(Commands.literal("unused").requires(staff).executes(context -> {
                     ran(context.getSource(), name, "unused");
                     unused(context.getSource(), unusedNote);
@@ -170,54 +112,133 @@ public final class CommandShared {
                             config(context.getSource(), true, configNote);
                             return 1;
                         })));
+        if (!server) { return root; }
+        return root
+                .then(Commands.literal("oregen").requires(staff).executes(context -> {
+                    ran(context.getSource(), name, "oregen");
+                    CommandGates.blockedReport(context.getSource(), ContentOreControl.blocked(), "rdpl.command.orenone", "rdpl.command.oreblocked");
+                    return 1;
+                }))
+                .then(Commands.literal("generators").requires(staff).executes(context -> {
+                    ran(context.getSource(), name, "generators");
+                    CommandGates.blockedReport(context.getSource(), ContentGeneratorControl.blocked(), "rdpl.command.gennone", "rdpl.command.genblocked");
+                    return 1;
+                }))
+                .then(Commands.literal("dimensions").requires(staff).executes(context -> {
+                    ran(context.getSource(), name, "dimensions");
+                    dimensions(context.getSource());
+                    return 1;
+                }))
+                .then(Commands.literal("gate").requires(staff).executes(context -> CommandGates.gateList(context, name))
+                        .then(Commands.literal("list").executes(context -> CommandGates.gateList(context, name)))
+                        .then(Commands.literal("check").then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                            ServerPlayer player = EntityArgument.getPlayer(context, "player");
+                            ran(context.getSource(), name, "gate check " + player.getGameProfile().getName());
+                            CommandGates.gatesFor(context.getSource(), player);
+                            return 1;
+                        })))
+                        .then(Commands.literal("grant").requires(source -> source.hasPermission(2))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("gate", StringArgumentType.greedyString()).suggests((context, suggestions) -> CommandGates.suggestGates(suggestions)).executes(context -> CommandGates.gateFor(context, name, true)))))
+                        .then(Commands.literal("revoke").requires(source -> source.hasPermission(2))
+                                .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("gate", StringArgumentType.greedyString()).suggests((context, suggestions) -> CommandGates.suggestGates(suggestions)).executes(context -> CommandGates.gateFor(context, name, false))))))
+                .then(Commands.literal("reset").requires(staff).executes(context -> {
+                    ran(context.getSource(), name, "reset");
+                    int swept = ContentReset.run(context.getSource().getServer());
+                    send(context.getSource(), ChatFormatting.GREEN, Component.literal("The map was reset, " + swept + " entity(s) swept"));
+                    return 1;
+                }))
+                .then(Commands.literal("team").requires(source -> ContentTeams.any()).executes(context -> CommandTeams.teamList(context, name))
+                        .then(Commands.literal("list").executes(context -> CommandTeams.teamList(context, name)))
+                        .then(Commands.literal("leave").executes(context -> CommandTeams.teamLeave(context, name)))
+                        .then(Commands.literal("claim").executes(context -> CommandTeams.teamClaim(context, name)))
+                        .then(Commands.literal("join").executes(context -> CommandTeams.teamJoin(context, name, null))
+                                .then(Commands.argument("team", StringArgumentType.word()).suggests((context, suggestions) -> {
+                                    for (String known : ContentTeams.joinableNames()) { suggestions.suggest(known); }
+                                    return suggestions.buildFuture();
+                                }).executes(context -> CommandTeams.teamJoin(context, name, StringArgumentType.getString(context, "team")))))
+                        .then(Commands.literal("vote").then(Commands.argument("player", StringArgumentType.word()).suggests((context, suggestions) -> {
+                            for (String known : context.getSource().getOnlinePlayerNames()) { suggestions.suggest(known); }
+                            return suggestions.buildFuture();
+                        }).executes(context -> CommandTeams.teamVote(context, name, StringArgumentType.getString(context, "player"))))))
+                .then(Commands.literal("round").requires(source -> source.hasPermission(OPERATOR) || ContentScoring.any())
+                        .then(Commands.literal("start").executes(context -> CommandTeams.roundStart(context, name)))
+                        .then(Commands.literal("reset").executes(context -> CommandTeams.roundReset(context, name)))
+                        .then(Commands.literal("vote")
+                                .then(Commands.literal("yes").executes(context -> CommandTeams.roundVote(context, name, true)))
+                                .then(Commands.literal("no").executes(context -> CommandTeams.roundVote(context, name, false)))))
+                .then(Commands.literal("locate").requires(staff).then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
+                    for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
+                    return suggestions.buildFuture();
+                }).executes(context -> {
+                    String target = StringArgumentType.getString(context, "name");
+                    ran(context.getSource(), name, "locate " + target);
+                    locate(context.getSource(), target);
+                    return 1;
+                })))
+                .then(Commands.literal("goto").requires(source -> source.hasPermission(ContentStructureSearch.lowestLevel()))
+                        .then(Commands.argument("place", StringArgumentType.greedyString()).suggests((context, suggestions) -> CommandPlaces.suggestPlaces(context.getSource(), suggestions))
+                                .executes(context -> {
+                                    String typed = StringArgumentType.getString(context, "place");
+                                    ran(context.getSource(), name, "goto " + typed);
+                                    return CommandPlaces.goWhere(context.getSource(), typed);
+                                })))
+                .then(Commands.literal("vein").requires(staff).then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
+                    for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
+                    return suggestions.buildFuture();
+                }).executes(context -> {
+                    ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
+                    ran(context.getSource(), name, "vein " + asked);
+                    return vein(context.getSource(), asked, 8);
+                }).then(Commands.argument("radius", IntegerArgumentType.integer(1, 64)).executes(context -> {
+                    ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
+                    int radius = IntegerArgumentType.getInteger(context, "radius");
+                    ran(context.getSource(), name, "vein " + asked + " " + radius);
+                    return vein(context.getSource(), asked, radius);
+                }))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> biome(String name, Predicate<CommandSourceStack> staff, boolean server) {
+        LiteralArgumentBuilder<CommandSourceStack> here = Commands.literal("here").executes(context -> {
+            ran(context.getSource(), name, "biome here");
+            return biomeHere(context.getSource(), server);
+        });
         if (server) {
-            root
-                    .then(Commands.literal("locate").requires(staff).then(Commands.argument("name", StringArgumentType.greedyString()).suggests((context, suggestions) -> {
-                        for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
-                        return suggestions.buildFuture();
-                    }).executes(context -> {
-                        String target = StringArgumentType.getString(context, "name");
-                        ran(context.getSource(), name, "locate " + target);
-                        locate(context.getSource(), target);
-                        return 1;
-                    })))
-                    .then(Commands.literal("goto")
-                            .requires(source -> source.hasPermission(ContentStructureSearch.lowestLevel()))
-                            .then(Commands.argument("place", StringArgumentType.string()).suggests((context, suggestions) -> {
-                                for (String known : ContentLocate.names(context.getSource().getLevel())) { suggestions.suggest(known); }
-                                for (String known : ContentStructureSearch.aliases()) { suggestions.suggest(known); }
-                                return suggestions.buildFuture();
-                            })
-                                    .executes(context -> {
-                                        String place = StringArgumentType.getString(context, "place");
-                                        ran(context.getSource(), name, "goto " + place);
-                                        return goTo(context.getSource(), place, "gotoLevel", Config.commands.gotoLevel(), false);
-                                    })
-                                    .then(Commands.literal("next").executes(context -> {
-                                        String place = StringArgumentType.getString(context, "place");
-                                        ran(context.getSource(), name, "goto " + place + " next");
-                                        return goTo(context.getSource(), place, "gotoNextLevel", Config.commands.gotoNextLevel(), true);
-                                    }))
-                                    .then(Commands.literal("back").executes(context -> {
-                                        String place = StringArgumentType.getString(context, "place");
-                                        ran(context.getSource(), name, "goto " + place + " back");
-                                        return goBack(context.getSource(), place);
-                                    }))))
-                    .then(Commands.literal("vein").requires(staff).then(Commands.argument("entry", ResourceLocationArgument.id()).suggests((context, suggestions) -> {
-                        for (String known : ContentWorldgen.veinNames()) { suggestions.suggest(known); }
-                        return suggestions.buildFuture();
-                    }).executes(context -> {
-                        ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
-                        ran(context.getSource(), name, "vein " + asked);
-                        return vein(context.getSource(), asked, 8);
-                    }).then(Commands.argument("radius", IntegerArgumentType.integer(1, 64)).executes(context -> {
-                        ResourceLocation asked = ResourceLocationArgument.getId(context, "entry");
-                        int radius = IntegerArgumentType.getInteger(context, "radius");
-                        ran(context.getSource(), name, "vein " + asked + " " + radius);
-                        return vein(context.getSource(), asked, radius);
-                    }))));
+            here.then(Commands.argument("player", EntityArgument.player()).executes(context -> {
+                ServerPlayer player = EntityArgument.getPlayer(context, "player");
+                ran(context.getSource(), name, "biome here " + player.getGameProfile().getName());
+                biomeAt(context.getSource(), player.level(), player.blockPosition());
+                return 1;
+            }));
         }
-        return root;
+        LiteralArgumentBuilder<CommandSourceStack> find = Commands.literal("find").then(Commands.argument("name", StringArgumentType.greedyString())
+                .suggests((context, suggestions) -> SharedSuggestionProvider.suggestResource(context.getSource().registryAccess().registryOrThrow(Registries.BIOME).keySet(), suggestions))
+                .executes(context -> {
+                    String asked = StringArgumentType.getString(context, "name");
+                    ran(context.getSource(), name, "biome find " + asked);
+                    return biomeFind(context.getSource(), asked);
+                }));
+        LiteralArgumentBuilder<CommandSourceStack> tree = Commands.literal("biome").requires(staff)
+                .executes(context -> {
+                    ran(context.getSource(), name, "biome");
+                    if (server) { biomeInspect(context.getSource()); }
+                    else { biomeList(context.getSource(), false); }
+                    return 1;
+                })
+                .then(here)
+                .then(Commands.literal("list").executes(context -> {
+                    ran(context.getSource(), name, "biome list");
+                    biomeList(context.getSource(), false);
+                    return 1;
+                })
+                .then(Commands.literal("all").executes(context -> {
+                    ran(context.getSource(), name, "biome list all");
+                    biomeList(context.getSource(), true);
+                    return 1;
+                })));
+        if (server) { tree.then(find); }
+        return tree;
     }
 
     private static int vein(CommandSourceStack source, ResourceLocation asked, int radius) {
@@ -255,65 +276,6 @@ public final class CommandShared {
         return veins.size();
     }
 
-    private static boolean denied(CommandSourceStack source, String place, String key, int fallback) {
-        if (source.hasPermission(ContentStructureSearch.levelFor(place, key, fallback))) { return false; }
-        source.sendFailure(tr("rdpl.command.gotodenied", place));
-        return true;
-    }
-
-    static int goTo(CommandSourceStack source, String asked, String key, int fallback, boolean next) {
-        if (denied(source, asked, key, fallback)) { return 0; }
-        ServerPlayer player = source.getPlayer();
-        if (player == null) {
-            source.sendFailure(tr("rdpl.command.gotonoplayer"));
-            return 0;
-        }
-        ServerLevel level = source.getLevel();
-        String place = ContentStructureSearch.named(asked);
-        BlockPos from = BlockPos.containing(source.getPosition());
-        BlockPos found = ContentLocate.names(level).contains(place) ? recorded(level, place, from, next ? ContentStructureSearch.been(player, place) : List.of())
-                                                                   : ContentStructureSearch.find(level, place, from);
-        if (found == null) {
-            source.sendFailure(tr("rdpl.command.gotonothing", asked));
-            return 0;
-        }
-        return carry(source, player, level, asked, place, found);
-    }
-
-    @Nullable private static BlockPos recorded(ServerLevel level, String place, BlockPos from, List<BlockPos> skip) {
-        BlockPos found = ContentLocate.nearest(level, place, from);
-        if (found == null || skip.isEmpty() || !ContentStructureSearch.beenNear(skip, found)) { return found; }
-        return ContentLocate.nearestBeyond(level, place, from, skip);
-    }
-
-    static int goBack(CommandSourceStack source, String asked) {
-        if (denied(source, asked, "gotoBackLevel", Config.commands.gotoBackLevel())) { return 0; }
-        ServerPlayer player = source.getPlayer();
-        if (player == null) {
-            source.sendFailure(tr("rdpl.command.gotonoplayer"));
-            return 0;
-        }
-        String place = ContentStructureSearch.named(asked);
-        BlockPos previous = ContentStructureSearch.stepBack(player, place);
-        if (previous == null) {
-            source.sendFailure(tr("rdpl.command.gotonoback", asked));
-            return 0;
-        }
-        return carry(source, player, source.getLevel(), asked, place, previous);
-    }
-
-    private static int carry(CommandSourceStack source, ServerPlayer player, ServerLevel level, String asked, String place, BlockPos found) {
-        BlockPos landing = ContentStructureSearch.landing(level, found);
-        if (landing == null) {
-            source.sendFailure(tr("rdpl.command.gotonoground", asked, found.getX(), found.getZ()));
-            return 0;
-        }
-        ContentStructureSearch.remember(player, place, found);
-        player.teleportTo(level, landing.getX() + 0.5D, ContentStructureSearch.stand(level, landing), landing.getZ() + 0.5D, player.getYRot(), player.getXRot());
-        send(source, ChatFormatting.GREEN, tr("rdpl.command.gotodone", asked, landing.getX(), landing.getY(), landing.getZ()));
-        return 1;
-    }
-
     static void ran(CommandSourceStack source, String name, String rest) { ContentLog.LOGGER.debug("{} ran /{} {}", source.getTextName(), name, rest); }
 
     static MutableComponent tr(String key, Object... args) { return Component.translatable(key, args); }
@@ -342,6 +304,7 @@ public final class CommandShared {
         PackManager.get().scan(root);
         PackManager.get().report();
         ContentOverrides.reload();
+        ContentReplacements.reload();
         ContentWorldTemplates.load();
         return false;
     }
@@ -361,9 +324,12 @@ public final class CommandShared {
             ContentTeams.field(level);
             ContentScoring.keep(level);
         }
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { server.getCommands().sendCommands(player); }
     }
 
-    static void list(CommandSourceStack source, String name) {
+    private static int count(RDPLPack pack, String folder, String ext) { return pack.files(PackManager.CONTENT, folder, ext).size(); }
+
+    static void list(CommandSourceStack source, String name, boolean server) {
         List<RDPLPack> packs = PackManager.get().getPacks();
         if (packs.isEmpty()) {
             send(source, ChatFormatting.YELLOW, tr("rdpl.command.nopacks", String.valueOf(PackManager.get().getRoot())));
@@ -372,15 +338,31 @@ public final class CommandShared {
         send(source, ChatFormatting.GREEN, tr("rdpl.command.packs", packs.size()));
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " [" + pack.getPriority() + "]" : "";
-            String detail = "files=" + pack.getFileCount()
-                    + "\nassets=" + pack.getNamespaces(PackType.CLIENT_RESOURCES)
-                    + "\ndata=" + pack.getNamespaces(PackType.SERVER_DATA);
             MutableComponent line = Component.literal("  " + pack.getName() + priority);
             if (pack.isOverriding()) { line.append(tr("rdpl.command.overriding")); }
+            String logged = "  " + pack.getName() + priority + (pack.isOverriding() ? " (overriding)" : "");
+            if (server) {
+                TreeSet<String> namespaces = new TreeSet<>(pack.getNamespaces(PackType.CLIENT_RESOURCES));
+                namespaces.addAll(pack.getNamespaces(PackType.SERVER_DATA));
+                String counts = "  advancements=" + count(pack, "advancements", PackManager.JSON)
+                        + " loot_tables=" + count(pack, ContentFormats.LOOT_FOLDER, PackManager.JSON)
+                        + " functions=" + count(pack, PackManager.FUNCTIONS, PackManager.MCFUNCTION)
+                        + " namespaces=" + namespaces;
+                send(source, line.withStyle(ChatFormatting.WHITE).append(Component.literal(counts).withStyle(ChatFormatting.GRAY)), logged + counts);
+                continue;
+            }
+            String detail = "files=" + pack.getFileCount()
+                    + "\nassets=" + pack.getNamespaces(PackType.CLIENT_RESOURCES)
+                    + "\ndata=" + pack.getNamespaces(PackType.SERVER_DATA)
+                    + "\nadvancements=" + count(pack, "advancements", PackManager.JSON)
+                    + " loot_tables=" + count(pack, ContentFormats.LOOT_FOLDER, PackManager.JSON)
+                    + " recipes=" + count(pack, "recipes", PackManager.JSON)
+                    + "\nfunctions=" + count(pack, PackManager.FUNCTIONS, PackManager.MCFUNCTION)
+                    + " remaps=" + count(pack, PackManager.REGISTRY_REMAP, PackManager.JSON);
             line.withStyle(style -> style.withColor(pack.isOverriding() ? ChatFormatting.AQUA : ChatFormatting.WHITE)
                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(detail + "\n").append(tr("rdpl.command.clickhint"))))
                     .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/" + name + " which " + firstNamespace(pack) + ":")));
-            send(source, line, "  " + pack.getName() + priority + (pack.isOverriding() ? " (overriding)" : "") + " " + detail.replace('\n', ' '));
+            send(source, line, logged + " " + detail.replace('\n', ' '));
         }
     }
 
@@ -402,7 +384,7 @@ public final class CommandShared {
         source.sendSuccess(() -> tr("rdpl.command.located", target, found.getX(), found.getY(), found.getZ(), away), false);
     }
 
-    static void which(CommandSourceStack source, String target) {
+    static void which(CommandSourceStack source, String target, boolean server) {
         int colon = target.indexOf(':');
         String namespace = colon < 0 ? "minecraft" : target.substring(0, colon);
         String path = colon < 0 ? target : target.substring(colon + 1);
@@ -413,8 +395,11 @@ public final class CommandShared {
             found = true;
             String shown = type.getDirectory() + "/" + namespace + "/" + path;
             RDPLPack winner = holders.get(holders.size() - 1);
-            send(source, ChatFormatting.GREEN, tr("rdpl.command.provided", shown, winner.getName(), winner.isOverriding() ? tr("rdpl.command.overriding") : Component.empty()));
-            send(source, ChatFormatting.GRAY, tr("rdpl.command.providednote"));
+            if (server) { send(source, ChatFormatting.GREEN, tr("rdpl.command.served", shown, winner.getName())); }
+            else {
+                send(source, ChatFormatting.GREEN, tr("rdpl.command.provided", shown, winner.getName(), winner.isOverriding() ? tr("rdpl.command.overriding") : Component.empty()));
+                send(source, ChatFormatting.GRAY, tr("rdpl.command.providednote"));
+            }
             for (int i = holders.size() - 2; i >= 0; i--) { send(source, ChatFormatting.GRAY, tr("rdpl.command.shadows", holders.get(i).getName())); }
         }
         if (!found) { send(source, ChatFormatting.YELLOW, tr("rdpl.command.unprovided", namespace + ":" + path)); }
@@ -475,27 +460,86 @@ public final class CommandShared {
         send(source, ChatFormatting.GREEN, tr("rdpl.command.config.pruned", PackOptions.prune()));
     }
 
-    static void biomeHere(CommandSourceStack source) {
-        BlockPos at = BlockPos.containing(source.getPosition());
-        Holder<Biome> held = source.getUnsidedLevel().getBiome(at);
-        String named = held.unwrapKey().map(key -> key.location().toString()).orElse("?");
-        send(source, ChatFormatting.WHITE, tr("rdpl.command.here", named, at.getX(), at.getY(), at.getZ()));
+    private static Component shownName(@Nullable ResourceLocation key) { return key == null ? Component.literal("unknown") : Component.translatable(Util.makeDescriptionId("biome", key)); }
+
+    private static int biomeHere(CommandSourceStack source, boolean server) {
+        if (server && (source.source instanceof MinecraftServer || source.source instanceof RconConsoleSource)) {
+            source.sendFailure(tr("rdpl.command.hereplayer"));
+            return 0;
+        }
+        biomeAt(source, source.getUnsidedLevel(), BlockPos.containing(source.getPosition()));
+        return 1;
+    }
+
+    private static void biomeAt(CommandSourceStack source, Level level, BlockPos at) {
+        Holder<Biome> held = level.getBiome(at);
+        ResourceLocation key = held.unwrapKey().map(ResourceKey::location).orElse(null);
+        int id = source.registryAccess().registryOrThrow(Registries.BIOME).getId(held.value());
+        send(source, ChatFormatting.WHITE, tr("rdpl.command.here", shownName(key), key == null ? "?" : key.toString(), id));
+    }
+
+    private static int biomeFind(CommandSourceStack source, String asked) {
+        ResourceKey<Biome> target = findBiome(source, asked.trim());
+        if (target == null) {
+            source.sendFailure(tr("rdpl.command.nobiome", asked));
+            return 0;
+        }
+        BlockPos from = BlockPos.containing(source.getPosition());
+        Pair<BlockPos, Holder<Biome>> found = source.getLevel().findClosestBiome3d(held -> held.is(target), from, FIND_RANGE, 32, 64);
+        Component shown = shownName(target.location());
+        if (found == null) {
+            send(source, ChatFormatting.YELLOW, tr("rdpl.command.biomemissing", shown, FIND_RANGE));
+            return 1;
+        }
+        BlockPos at = found.getFirst();
+        int distance = (int) Math.sqrt(from.distSqr(new BlockPos(at.getX(), from.getY(), at.getZ())));
+        send(source, ChatFormatting.WHITE, tr("rdpl.command.biomefound", shown, at.getX(), at.getZ(), distance));
+        return 1;
+    }
+
+    @Nullable private static ResourceKey<Biome> findBiome(CommandSourceStack source, String asked) {
+        Registry<Biome> registry = source.registryAccess().registryOrThrow(Registries.BIOME);
+        ResourceLocation named = ResourceLocation.tryParse(asked);
+        if (named != null && registry.containsKey(named)) { return ResourceKey.create(Registries.BIOME, named); }
+        for (ResourceLocation key : registry.keySet()) {
+            if (Language.getInstance().getOrDefault(Util.makeDescriptionId("biome", key)).equalsIgnoreCase(asked)) { return ResourceKey.create(Registries.BIOME, key); }
+        }
+        return null;
     }
 
     static void biomeList(CommandSourceStack source, boolean all) {
         Registry<Biome> registry = source.registryAccess().registryOrThrow(Registries.BIOME);
         int vanilla = 0;
         int shown = 0;
-        for (ResourceLocation key : registry.keySet().stream().sorted(Comparator.comparing(ResourceLocation::toString)).toList()) {
+        for (Biome biome : registry) {
+            ResourceLocation key = registry.getKey(biome);
+            if (key == null) { continue; }
             if (!all && "minecraft".equals(key.getNamespace())) {
                 vanilla++;
                 continue;
             }
-            send(source, ChatFormatting.GRAY, Component.literal("  " + key));
+            send(source, ChatFormatting.GRAY, Component.literal("  " + registry.getId(biome) + "  " + key + "  '").append(shownName(key)).append("'"));
             shown++;
         }
         send(source, ChatFormatting.WHITE, tr("rdpl.command.biomes", shown, all || vanilla == 0 ? "" : Component.translatable("rdpl.command.biomesmore", vanilla).getString()));
     }
+
+    private static void biomeInspect(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        BlockPos at = BlockPos.containing(source.getPosition());
+        Holder<Biome> held = level.getBiome(at);
+        ResourceLocation key = held.unwrapKey().map(ResourceKey::location).orElse(null);
+        int id = source.registryAccess().registryOrThrow(Registries.BIOME).getId(held.value());
+        WorldTemplateDef template = ContentWorldTemplates.active();
+        BlockPos ground = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, at);
+        send(source, ChatFormatting.WHITE, Component.literal("Biome here: " + key + " (id " + id + ", ").append(shownName(key)).append(")"));
+        send(source, ChatFormatting.WHITE, Component.literal("  blockBiomes=" + ContentControl.flag(ContentControl.BIOMES, "blockBiomes", Config.worldgen.blockBiomes()) + " template=" + (template == null ? "none" : template.key())));
+        send(source, ChatFormatting.WHITE, Component.literal("  ground at " + ground.getX() + "," + (ground.getY() - 1) + "," + ground.getZ() + " is " + blockAt(level, ground.below())));
+        send(source, ChatFormatting.WHITE, Component.literal("  one below that: " + blockAt(level, ground.below(2))));
+        send(source, ChatFormatting.WHITE, Component.literal("  deep stone at y=40: " + blockAt(level, new BlockPos(at.getX(), 40, at.getZ()))));
+    }
+
+    private static ResourceLocation blockAt(ServerLevel level, BlockPos at) { return ForgeRegistries.BLOCKS.getKey(level.getBlockState(at).getBlock()); }
 
     static void dimensions(CommandSourceStack source) {
         Collection<DimensionDef> defs = ContentDimensions.all();
@@ -510,202 +554,5 @@ public final class CommandShared {
                     + "  terrain=" + def.terrain() + " biomes=" + def.biomeSource())
                     .append(Component.translatable(live ? "rdpl.command.registered" : "rdpl.command.unregistered")));
         }
-    }
-
-    static void gates(CommandSourceStack source) {
-        if (!ContentGates.enabled()) {
-            send(source, ChatFormatting.YELLOW, tr("rdpl.command.nogates"));
-            return;
-        }
-        Collection<GateDef> defs = ContentGates.all();
-        send(source, ChatFormatting.GREEN, tr("rdpl.command.gates", defs.size()));
-        for (GateDef def : defs) {
-            send(source, ChatFormatting.WHITE, Component.literal("  " + def.key()
-                    + "  dimension=" + def.dimension() + " scope=" + (def.global() ? GateDef.GLOBAL : GateDef.PLAYER)
-                    + (def.open() ? Component.translatable("rdpl.command.open").getString() : "")));
-        }
-    }
-
-    static void blockedReport(CommandSourceStack source, Map<String, Integer> blocked) {
-        if (blocked.isEmpty()) {
-            send(source, ChatFormatting.YELLOW, tr("rdpl.command.orenone"));
-            return;
-        }
-        send(source, ChatFormatting.GREEN, tr("rdpl.command.oreblocked"));
-        for (Map.Entry<String, Integer> entry : blocked.entrySet()) { send(source, ChatFormatting.GRAY, Component.literal("  " + entry.getKey() + ": " + entry.getValue())); }
-    }
-
-    static void gatesFor(CommandSourceStack source, ServerPlayer player) {
-        if (!ContentGates.enabled()) {
-            send(source, ChatFormatting.YELLOW, tr("rdpl.command.nogates"));
-            return;
-        }
-        send(source, ChatFormatting.GREEN, tr("rdpl.command.gatesfor", player.getGameProfile().getName()));
-        for (GateDef def : ContentGates.all()) {
-            boolean open = ContentGates.unlocked(player, def);
-            send(source, open ? ChatFormatting.WHITE : ChatFormatting.GRAY, Component.literal("  " + def.key())
-                    .append(Component.translatable(open ? "rdpl.command.open" : "rdpl.command.closed")));
-        }
-    }
-
-    private static int gateFor(CommandContext<CommandSourceStack> context, String name, boolean grant) throws CommandSyntaxException {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = EntityArgument.getPlayer(context, "player");
-        String asked = StringArgumentType.getString(context, "gate");
-        ran(source, name, "gate " + (grant ? "grant " : "revoke ") + player.getGameProfile().getName() + " " + asked);
-        GateDef def = ContentGates.find(asked);
-        if (def == null) {
-            send(source, ChatFormatting.RED, tr("rdpl.command.nogate", asked));
-            return 0;
-        }
-        String scope = def.global() ? GateDef.GLOBAL : GateDef.PLAYER;
-        if (grant) { ContentGates.unlock(player, def, false); }
-        else { ContentGates.lock(player, def); }
-        send(source, ChatFormatting.GREEN, tr(grant ? "rdpl.command.gateopened" : "rdpl.command.gateclosed", def.key(), player.getGameProfile().getName(), scope));
-        return 1;
-    }
-
-
-    private static int teamList(CommandContext<CommandSourceStack> context, String name) {
-        CommandSourceStack source = context.getSource();
-        ran(source, name, "team");
-        if (!ContentTeams.any()) {
-            send(source, ChatFormatting.RED, Component.literal("No pack has fielded any team"));
-            return 0;
-        }
-        ServerPlayer asking = source.getPlayer();
-        for (TeamDef def : ContentTeams.all().values()) {
-            String standing = def.joinable() ? "" : " (closed)";
-            String lead = ContentTeams.leadOf(source.getLevel(), def);
-            if (lead != null) { standing = standing + " - lead " + lead; }
-            send(source, def.color(), Component.literal(def.name() + " - " + def.displayName() + standing));
-        }
-        String on = asking == null ? null : ContentTeams.standingOf(asking);
-        send(source, ChatFormatting.GRAY, Component.literal(on == null ? "You are on no team" : "You are on " + on));
-        return 1;
-    }
-
-    @Nullable private static TeamDef mine(ServerPlayer player) {
-        String standing = ContentTeams.standingOf(player);
-        return standing == null ? null : ContentTeams.named(standing);
-    }
-
-    @Nullable private static ServerPlayer teamPlayer(CommandSourceStack source, String name, String action) {
-        ran(source, name, "team " + action);
-        if (!ContentTeams.any()) {
-            send(source, ChatFormatting.RED, Component.literal("No pack has fielded any team"));
-            return null;
-        }
-        ServerPlayer player = source.getPlayer();
-        if (player == null) { send(source, ChatFormatting.RED, Component.literal("Only a player can join or leave a team")); }
-        return player;
-    }
-
-    private static int teamVote(CommandContext<CommandSourceStack> context, String name, String choice) {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = teamPlayer(source, name, "vote " + choice);
-        if (player == null) { return 0; }
-        TeamDef mine = mine(player);
-        if (mine == null) {
-            send(source, ChatFormatting.RED, Component.literal("You are on no team, so there is nobody to vote for"));
-            return 0;
-        }
-        if (!TeamDef.VOTE.equals(mine.lead())) {
-            send(source, ChatFormatting.RED, Component.literal(mine.displayName() + " does not choose its lead by a vote"));
-            return 0;
-        }
-        boolean stood = ContentTeams.standsFor(player.serverLevel(), player.getGameProfile().getName(), choice, mine);
-        send(source, stood ? mine.color() : ChatFormatting.RED, Component.literal(stood ? "You voted for " + choice : choice + " is not on your team"));
-        if (stood) {
-            String lead = ContentTeams.leadOf(player.serverLevel(), mine);
-            send(source, ChatFormatting.GRAY, Component.literal(lead == null ? "The vote is tied, so nobody leads" : lead + " leads " + mine.displayName()));
-        }
-        return stood ? 1 : 0;
-    }
-
-    private static int teamClaim(CommandContext<CommandSourceStack> context, String name) {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = teamPlayer(source, name, "claim");
-        if (player == null) { return 0; }
-        TeamDef mine = mine(player);
-        if (mine == null) {
-            send(source, ChatFormatting.RED, Component.literal("You are on no team, so there is nothing to claim"));
-            return 0;
-        }
-        if (!TeamDef.CLAIM.equals(mine.lead())) {
-            send(source, ChatFormatting.RED, Component.literal(mine.displayName() + " does not let its lead be claimed"));
-            return 0;
-        }
-        boolean took = ContentTeams.claim(player.serverLevel(), player.getGameProfile().getName(), mine);
-        send(source, took ? mine.color() : ChatFormatting.RED, Component.literal(took ? "You lead " + mine.displayName() : ContentTeams.holding(mine) + " already leads " + mine.displayName()));
-        return took ? 1 : 0;
-    }
-
-    private static int roundStart(CommandContext<CommandSourceStack> context, String name) {
-        CommandSourceStack source = context.getSource();
-        ran(source, name, "round start");
-        String said = ContentScoring.start(source.getServer(), source.getPlayer(), source.getTextName(), source.hasPermission(2));
-        send(source, "The round starts".equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
-        return 1;
-    }
-
-    private static int roundReset(CommandContext<CommandSourceStack> context, String name) {
-        CommandSourceStack source = context.getSource();
-        ran(source, name, "round reset");
-        String said = ContentRoundReset.call(source.getServer(), source.getTextName(), source.getPlayer(), source.hasPermission(2));
-        send(source, ContentRoundReset.DONE.equals(said) || ContentRoundReset.CALLED.equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
-        return 1;
-    }
-
-    private static int roundVote(CommandContext<CommandSourceStack> context, String name, boolean yes) {
-        CommandSourceStack source = context.getSource();
-        ran(source, name, "round vote " + (yes ? "yes" : "no"));
-        ServerPlayer player = source.getPlayer();
-        if (player == null) {
-            send(source, ChatFormatting.RED, Component.literal("Only a player votes"));
-            return 0;
-        }
-        String said = ContentRoundReset.vote(source.getServer(), player, yes);
-        send(source, said.startsWith("You voted") ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
-        return 1;
-    }
-
-    private static int teamLeave(CommandContext<CommandSourceStack> context, String name) {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = teamPlayer(source, name, "leave");
-        if (player == null) { return 0; }
-        if (ContentScoring.roundRunning()) {
-            send(source, ChatFormatting.RED, Component.literal("A round is running, so you cannot leave your team until it ends"));
-            return 0;
-        }
-        send(source, ChatFormatting.GREEN, Component.literal(ContentTeams.stand(player) ? "You left your team" : "You were on no team"));
-        return 1;
-    }
-
-    private static int teamJoin(CommandContext<CommandSourceStack> context, String name, @Nullable String asked) {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = teamPlayer(source, name, "join " + (asked == null ? "" : asked));
-        if (player == null) { return 0; }
-        TeamDef wanted = asked != null ? ContentTeams.named(asked) : ContentTeams.smallest(player.serverLevel());
-        if (asked == null && wanted == null) {
-            send(source, ChatFormatting.RED, Component.literal("No team takes players by balance, so name the one you want"));
-            return 0;
-        }
-        if (wanted == null) {
-            send(source, ChatFormatting.RED, Component.literal("There is no team called " + asked));
-            return 0;
-        }
-        if (!wanted.joinable()) {
-            send(source, ChatFormatting.RED, Component.literal(wanted.name() + " is not a team you can join"));
-            return 0;
-        }
-        if (ContentScoring.roundRunning()) {
-            ContentTeams.waitFor(player, wanted);
-            send(source, ChatFormatting.GRAY, Component.literal("A round is running, so you join " + wanted.displayName() + " when it ends"));
-            return 1;
-        }
-        ContentTeams.take(player, wanted);
-        send(source, wanted.color(), Component.literal("You joined " + wanted.displayName()));
-        return 1;
     }
 }

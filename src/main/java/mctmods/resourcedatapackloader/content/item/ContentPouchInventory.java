@@ -1,12 +1,15 @@
 package mctmods.resourcedatapackloader.content.item;
 
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
+import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
+
+import javax.annotation.Nonnull;
 
 public final class ContentPouchInventory extends SimpleContainer {
     public static final String HELD = "RdplHeld";
@@ -24,6 +27,8 @@ public final class ContentPouchInventory extends SimpleContainer {
         for (int at = 0; at < items.size(); at++) { setItem(at, items.get(at)); }
         loading = false;
     }
+
+    @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return ContentContainerMenu.storable(stack); }
 
     @Override public void setChanged() {
         super.setChanged();

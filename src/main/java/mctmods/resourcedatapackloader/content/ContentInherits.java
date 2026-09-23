@@ -9,6 +9,7 @@ import com.google.gson.JsonParser;
 import net.minecraft.resources.ResourceLocation;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -29,7 +30,7 @@ public final class ContentInherits {
                 parsed.put(entry.getKey(), held);
                 if (held.has(ContentParser.VARIANTS) && held.get(ContentParser.VARIANTS).isJsonObject()) {
                     for (Map.Entry<String, JsonElement> variant : held.getAsJsonObject(ContentParser.VARIANTS).entrySet()) {
-                        ResourceLocation id = ResourceLocation.tryBuild(entry.getKey().getNamespace(), variant.getKey());
+                        ResourceLocation id = ResourceLocation.tryBuild(entry.getKey().getNamespace(), variant.getKey().toLowerCase(Locale.ROOT));
                         if (id != null) { owners.put(id, entry.getKey()); }
                     }
                 }
@@ -61,7 +62,8 @@ public final class ContentInherits {
             return held;
         }
         String asked = held.get(INHERITS).getAsString();
-        ResourceLocation parentName = asked.contains(":") ? ResourceLocation.tryParse(asked) : ResourceLocation.tryBuild(key.getNamespace(), asked);
+        String lowered = asked.toLowerCase(Locale.ROOT);
+        ResourceLocation parentName = lowered.contains(":") ? ResourceLocation.tryParse(lowered) : ResourceLocation.tryBuild(key.getNamespace(), lowered);
         if (parentName == null) {
             ContentLog.LOGGER.error("Definition {} inherits '{}', which is not a valid name, ignoring its inherits", key, asked);
             resolved.put(key, held);

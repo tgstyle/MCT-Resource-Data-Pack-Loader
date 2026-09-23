@@ -1,11 +1,9 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.util.Registered;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import net.minecraftforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.nbt.CompoundTag;
@@ -14,17 +12,17 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 
-public final class ContentCityDecorPiece extends StructurePiece {
+public final class ContentCityDecorPiece extends StructurePiece implements PieceBeardifierModifier {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityDecorPiece::new;
-    private static final int FOOTING = 3;
     private static final String ALONG_X = "AlongX";
     private static final String SPOTS = "Spots";
     private static final String LEVELS = "Levels";
@@ -59,15 +57,12 @@ public final class ContentCityDecorPiece extends StructurePiece {
 
     private static boolean paved(BlockState laid) {
         for (String named : new String[] { ContentCity.paving(), ContentCity.sidewalkBlock(), ContentCity.lineBlock(), ContentCity.centerBlock(), ContentCity.bridgeBlock() }) {
-            if (named.isEmpty()) { continue; }
-            ResourceLocation key = ResourceLocation.tryParse(named);
-            Block found = key == null ? null : Registered.find(ForgeRegistries.BLOCKS, key);
-            if (found != null && laid.is(found)) { return true; }
+            if (CityPalette.holds(named, laid)) { return true; }
         }
         return laid.is(Blocks.DIRT_PATH);
     }
 
-    private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk) {
+    @SuppressWarnings("deprecation") private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int outside = 0;
         int bare = 0;
@@ -82,9 +77,8 @@ public final class ContentCityDecorPiece extends StructurePiece {
                 outside++;
                 continue;
             }
-            int ground = levels[spot];
-            while (ground > levels[spot] - FOOTING && level.getBlockState(at.set(x, ground, z)).isAir()) { ground--; }
-            if (level.getBlockState(at.set(x, ground, z)).isAir()) {
+            int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+            if (!level.getBlockState(at.set(x, ground, z)).isSolid()) {
                 bare++;
                 continue;
             }
@@ -98,7 +92,7 @@ public final class ContentCityDecorPiece extends StructurePiece {
                 continue;
             }
             laid++;
-            RandomSource roll = RandomSource.create(ContentCityBlocks.spot(x, z));
+            RandomSource roll = RandomSource.create(ContentCityBlocks.spot(level.getSeed(), x, z));
             String named = ContentCity.decor(roll);
             if (named == null) { continue; }
             ContentWorldgen.Entry entry = ContentWorldgen.byName(named);
@@ -111,9 +105,13 @@ public final class ContentCityDecorPiece extends StructurePiece {
         ContentLog.LOGGER.debug("A verge of {} spot(s) scattered {}: {} outside the chunk, {} over air, {} over paving, {} blocked above", spots.length, laid, outside, bare, paved, blocked);
     }
 
+    @Override @Nonnull public BoundingBox getBeardifierBox() { return getBoundingBox(); }
+
+    @Override @Nonnull public TerrainAdjustment getTerrainAdjustment() { return TerrainAdjustment.NONE; }
+
+    @Override public int getGroundLevelDelta() { return 0; }
+
     @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
-        try { laid(level, box, chunk); }
-        finally { CityBiome.leave(); }
+        CityBiome.within(level, box, () -> laid(level, box, chunk));
     }
 }

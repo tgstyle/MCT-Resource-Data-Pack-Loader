@@ -49,11 +49,13 @@ public final class RecipeBlocking {
         return true;
     }
 
-    public static void report() {
-        int total = BLOCKED.total();
+    public static void report() { summarize(BLOCKED, "recipes.blocked", "crafting recipe(s)"); }
+
+    static void summarize(Blocked blocked, String key, String what) {
+        int total = blocked.total();
         if (total == 0) { return; }
-        Summary.info("recipes.blocked", "Blocked " + total + " crafting recipe(s)");
-        if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes())) { BLOCKED.report("crafting recipe(s)"); }
+        Summary.info(key, "Blocked " + total + " " + what);
+        if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes())) { blocked.report(what); }
     }
 
     @Nullable private static String reason(Set<String> owners) {

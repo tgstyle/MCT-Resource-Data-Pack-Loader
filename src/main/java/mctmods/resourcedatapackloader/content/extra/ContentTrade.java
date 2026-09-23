@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentTrade implements VillagerTrades.ItemListing {
@@ -32,7 +33,7 @@ public final class ContentTrade implements VillagerTrades.ItemListing {
 
     private static AmountDef amount(TradeStackDef def) { return def.max() <= def.min() ? AmountDef.of(def.min()) : new AmountDef(def.min(), def.max()); }
 
-    @Nullable @Override public MerchantOffer getOffer(@Nullable Entity trader, RandomSource random) {
+    @Override public MerchantOffer getOffer(@Nullable Entity trader, @Nonnull RandomSource random) {
         return new MerchantOffer(sized(buy, buyCount, random), sized(buySecondary, buySecondaryCount, random), sized(sell, sellCount, random), def.maxUses(), def.xp(), 0.05F);
     }
 

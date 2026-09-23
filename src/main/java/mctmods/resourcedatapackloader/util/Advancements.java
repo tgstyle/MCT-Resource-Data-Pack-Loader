@@ -7,13 +7,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import java.util.Locale;
 import javax.annotation.Nullable;
 
 public final class Advancements {
     private Advancements() {}
 
     @Nullable public static Advancement find(MinecraftServer server, String name) {
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        ResourceLocation id = ResourceLocation.tryParse(name.trim().toLowerCase(Locale.ROOT));
         return id == null ? null : server.getAdvancements().getAdvancement(id);
     }
 
@@ -23,7 +24,7 @@ public final class Advancements {
             Advancement advancement = find(held.server, name);
             return advancement != null && held.getAdvancements().getOrStartProgress(advancement).isDone();
         }
-        return FMLEnvironment.dist == Dist.CLIENT && ClientEarned.has(name);
+        return FMLEnvironment.dist == Dist.CLIENT && ClientEarned.has(name.trim().toLowerCase(Locale.ROOT));
     }
 
     public static boolean grant(ServerPlayer player, String name) {

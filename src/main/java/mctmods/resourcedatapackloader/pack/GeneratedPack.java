@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.pack;
 import com.google.gson.JsonObject;
 import net.minecraft.SharedConstants;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.AbstractPackResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
@@ -47,7 +46,7 @@ public final class GeneratedPack implements PackResources {
     @Override @Nonnull public Set<String> getNamespaces(@Nonnull PackType asked) { return GeneratedResources.namespaces(asked); }
 
     @Override @Nullable public <T> T getMetadataSection(@Nonnull MetadataSectionSerializer<T> serializer) throws IOException {
-        try (InputStream stream = new ByteArrayInputStream(meta().getBytes(StandardCharsets.UTF_8))) { return AbstractPackResources.getMetadataFromStream(serializer, stream); }
+        return RDPLResourcePack.metadata(serializer, meta());
     }
 
     private String meta() {

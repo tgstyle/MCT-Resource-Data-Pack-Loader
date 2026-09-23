@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
@@ -22,14 +23,15 @@ public final class Json {
         if (!json.has(member)) { return out; }
         JsonElement held = json.get(member);
         if (held.isJsonPrimitive()) {
-            out.add(held.getAsString());
+            if (!held.getAsString().isEmpty()) { out.add(held.getAsString()); }
             return out;
         }
-        if (!held.isJsonArray()) { return out; }
+        if (!held.isJsonArray()) { throw new JsonSyntaxException("Expected " + member + " to be a JsonArray, was " + GsonHelper.getType(held)); }
         for (JsonElement element : held.getAsJsonArray()) {
             if (element.isJsonPrimitive()) { out.add(element.getAsString()); }
             else if (element.isJsonObject() && element.getAsJsonObject().has("block") && element.getAsJsonObject().get("block").isJsonPrimitive()) { out.add(element.getAsJsonObject().get("block").getAsString()); }
         }
+        out.removeIf(String::isEmpty);
         return out;
     }
 

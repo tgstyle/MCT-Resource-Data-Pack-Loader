@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
@@ -33,8 +34,10 @@ public final class ContentTree implements IContentShape {
     private final int drift;
     @Nullable private final BlockState log;
     @Nullable private final BlockState leaves;
+    private final boolean templated;
+    private final ContentImprint imprint;
 
-    public ContentTree(AmountDef count, ShapeDef shape, @Nullable BlockState log, @Nullable BlockState leaves, ResourceLocation key) {
+    public ContentTree(AmountDef count, ShapeDef shape, @Nullable BlockState log, @Nullable BlockState leaves, ResourceLocation key, ContentImprint imprint) {
         this.count = count;
         this.height = shape.height();
         this.scatterX = shape.scatterX();
@@ -42,11 +45,13 @@ public final class ContentTree implements IContentShape {
         this.drift = Math.max(1, shape.scatterY());
         this.log = log;
         this.leaves = leaves;
-        if (log == null || leaves == null) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log(), shape.leaves()); }
+        this.templated = !shape.structures().isEmpty() || !shape.structure().isEmpty();
+        this.imprint = imprint;
+        if (!templated && (log == null || leaves == null)) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log(), shape.leaves()); }
     }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        if (log == null || leaves == null) { return false; }
+        if (!templated && (log == null || leaves == null)) { return false; }
         WorldGenLevel level = placer.level();
         Set<Block> surface = placer.palette().surface();
         boolean placed = false;
@@ -59,7 +64,8 @@ public final class ContentTree implements IContentShape {
             if (Math.abs(top.getY() - origin.getY()) > drift) { continue; }
             if (!surface.isEmpty() && !surface.contains(level.getBlockState(top.below()).getBlock())) { continue; }
             if (!level.isEmptyBlock(top)) { continue; }
-            placed |= grow(placer, random, top, Math.max(1, height.pick(random)), surface);
+            if (templated) { placed |= imprint.generate(placer, random, top); }
+            else { placed |= grow(placer, random, top, Math.max(1, height.pick(random)), surface); }
         }
         return placed;
     }
@@ -71,7 +77,8 @@ public final class ContentTree implements IContentShape {
         if (!rooted(level, position.below(), surface)) { return false; }
         if (!clear(placer, position, tall)) { return false; }
         BlockPos below = position.below();
-        if (level.getBlockState(below).is(Blocks.GRASS_BLOCK)) { level.setBlock(below, Blocks.DIRT.defaultBlockState(), FLAGS); }
+        BlockState soil = level.getBlockState(below);
+        if (soil.is(Blocks.GRASS_BLOCK) || soil.is(Blocks.FARMLAND)) { level.setBlock(below, Blocks.DIRT.defaultBlockState(), FLAGS); }
         Set<BlockPos> canopy = canopy(placer, random, position, tall);
         Set<BlockPos> logs = trunk(placer, position, tall);
         canopy.removeAll(logs);
@@ -79,11 +86,7 @@ public final class ContentTree implements IContentShape {
         return true;
     }
 
-    private static boolean rooted(WorldGenLevel level, BlockPos below, Set<Block> surface) {
-        BlockState state = level.getBlockState(below);
-        if (!surface.isEmpty()) { return surface.contains(state.getBlock()); }
-        return state.canSustainPlant(level, below, Direction.UP, (SaplingBlock) Blocks.OAK_SAPLING);
-    }
+    private static boolean rooted(WorldGenLevel level, BlockPos below, Set<Block> surface) { return ContentRegistry.sustains(surface, level, below, (SaplingBlock) Blocks.OAK_SAPLING); }
 
     private static boolean clear(ContentPlacer placer, BlockPos position, int tall) {
         for (int y = position.getY(); y <= position.getY() + 1 + tall; y++) {
@@ -103,7 +106,7 @@ public final class ContentTree implements IContentShape {
 
     private static boolean replaceable(WorldGenLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        return state.isAir() || state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS) || state.is(BlockTags.REPLACEABLE_BY_TREES) || state.is(Blocks.VINE);
+        return state.isAir() || state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS) || state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.PODZOL) || state.is(BlockTags.SAPLINGS) || state.is(Blocks.VINE);
     }
 
     private Set<BlockPos> canopy(ContentPlacer placer, RandomSource random, BlockPos position, int tall) {

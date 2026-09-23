@@ -159,7 +159,7 @@ public final class WorldIntroScreen extends Screen {
     private float endOffset() {
         IntroPageDef def = pages.get(page);
         if (def.settle()) {
-            float step = LINE_HEIGHT * def.textScale();
+            float step = LINE_HEIGHT * scale;
             return (height - step) / 2.0F - Math.max(lines.size() - 1, 0) * step;
         }
         return def.up() ? -totalScrollLength - 24.0F : height + 24.0F;
@@ -177,7 +177,7 @@ public final class WorldIntroScreen extends Screen {
     private void drawPageBackground(GuiGraphics graphics, float partialTick) {
         IntroPageDef def = pages.get(page);
         if (def.backgrounds().isEmpty()) {
-            graphics.fill(0, 0, width, height, 0xFF000000);
+            renderDirtBackground(graphics);
             return;
         }
         int index = def.cycles() ? (int) ((ticks + partialTick) / (def.interval() * 20.0F)) % def.backgrounds().size() : 0;
@@ -190,6 +190,7 @@ public final class WorldIntroScreen extends Screen {
         scale = def.textScale();
         read(def);
         if (!def.still()) {
+            scale = Crisp.scale(scale);
             wrap((int) Mth.clamp((width - MARGIN) / scale, 1.0F, TEXT_WIDTH));
             return;
         }

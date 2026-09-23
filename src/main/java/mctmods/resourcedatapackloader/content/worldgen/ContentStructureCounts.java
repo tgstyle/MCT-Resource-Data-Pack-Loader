@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import java.util.Collection;
 import javax.annotation.Nonnull;
 
 public final class ContentStructureCounts extends SavedData {
@@ -31,14 +32,18 @@ public final class ContentStructureCounts extends SavedData {
         synchronized (held) { return held.founded.getInt(structure.toString()); }
     }
 
-    public static int add(ServerLevel level, ResourceLocation structure) {
+    public static int total(ServerLevel level, Collection<ResourceLocation> structures) {
         ContentStructureCounts held = of(level);
-        int now;
         synchronized (held) {
-            now = held.founded.getInt(structure.toString()) + 1;
-            held.founded.putInt(structure.toString(), now);
+            int sum = 0;
+            for (ResourceLocation structure : structures) { sum += held.founded.getInt(structure.toString()); }
+            return sum;
         }
+    }
+
+    public static void add(ServerLevel level, ResourceLocation structure) {
+        ContentStructureCounts held = of(level);
+        synchronized (held) { held.founded.putInt(structure.toString(), held.founded.getInt(structure.toString()) + 1); }
         held.setDirty();
-        return now;
     }
 }

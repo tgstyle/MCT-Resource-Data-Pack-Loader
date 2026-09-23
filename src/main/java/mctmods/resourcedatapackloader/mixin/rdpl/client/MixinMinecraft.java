@@ -10,6 +10,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import java.util.List;
 
 @Mixin(Minecraft.class) public abstract class MixinMinecraft {
-    @ModifyVariable(method = {"<init>", "reloadResourcePacks(Z)Ljava/util/concurrent/CompletableFuture;"}, at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/server/packs/repository/PackRepository;openAllSelected()Ljava/util/List;"), name = "list")
+    @ModifyVariable(method = {"<init>", "reloadResourcePacks(Z)Ljava/util/concurrent/CompletableFuture;"}, at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/server/packs/repository/PackRepository;openAllSelected()Ljava/util/List;"))
     private List<PackResources> rdpl$beforeOwn(List<PackResources> list) { return PackFinder.beforeOwn(list); }
 }

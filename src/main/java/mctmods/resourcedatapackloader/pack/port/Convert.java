@@ -1,56 +1,46 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class Convert {
-    private static final Set<String> BLOCK_KEYS = Set.of("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock");
-    private static final Set<String> ITEM_KEYS = Set.of("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "ignitedBy", "saysIcon");
-    private static final Set<String> ENTITY_KEYS = Set.of("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes");
+    private static final Set<String> BLOCK_KEYS = Set.of("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "middle", "budding", "crystal", "bell", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock");
+    private static final Set<String> ITEM_KEYS = Set.of("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "ignitedBy", "saysIcon", "outputs", "with");
+    private static final Set<String> ENTITY_KEYS = Set.of("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes", "picksFrom");
     private static final Set<String> BIOME_KEYS = Set.of("biomes", "biome", "replaces", "baseBiome", "biomeNames", "roles", "biomeWhitelist");
-    private static final Set<String> DIMENSION_KEYS = Set.of("dimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "blockGeneratorDimensions", "rubicWorldDimensions");
+    private static final Set<String> DIMENSION_KEYS = Set.of("dimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockGeneratorDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "rubicWorldDimensions");
     private static final Set<String> DIMENSION_PREFIXED = Set.of("welcomeSays", "worldDifficulty", "cloudHeight", "weatherCeiling", "worldGravity", "worldFallDamage", "worldJumpStrength", "worldTerminalVelocity", "worldBelow", "worldAbove", "flatBedrockFillers", "structureBiomes", "structureBiomesAreBlacklist");
     private static final Set<String> STATE_KEYS = Set.of("replace", "adjacent", "except", "blocks");
     private static final Set<String> RAW_CONTAINERS = Set.of("palette", "legend", "rows", "map", "pattern", "key", "notes", "attributes", "pathPriorities", "gameRules", "decoration", "spawnRates", "settings");
     private static final Pattern DIM_PREFIX = Pattern.compile("^(-?\\d+)=(.*)$");
     private static final Pattern REPLACEMENT = Pattern.compile("^([^=]+)=([^=]+)$");
-    private static final Pattern VILLAGE_BLOCK = Pattern.compile("^([^=]+)=([^=,]+)(,\\s*\\d+)?$");
-    private static final Pattern LANG_TILE = Pattern.compile("^(tile|item)\\.([a-z0-9_]+)[:.]([a-z0-9_./-]+?)(?:\\.([a-z0-9_]+))?\\.(name|locked)$");
-    private static final Pattern LANG_ENTITY = Pattern.compile("^entity\\.([a-z0-9_]+)\\.([a-z0-9_]+)\\.name$");
-    private static final Pattern LANG_FLUID = Pattern.compile("^fluid\\.(?:([a-z0-9_]+)\\.)?([a-z0-9_]+)$");
-    private static final Pattern LANG_TAB = Pattern.compile("^itemGroup\\.([a-z0-9_]+)$");
-
-    private static final List<String> VANILLA_DIMENSIONS = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
-    private static final Map<String, List<String>> LEGACY_STRUCTURES = Map.of(
-            "minecraft:overworld", List.of("villages", "mineshafts", "strongholds", "temples", "monuments", "mansions"),
-            "minecraft:the_nether", List.of("netherbridges"), "minecraft:the_end", List.of("endcities"));
-    private static final Map<String, List<String>> MODERN_STRUCTURES = Map.of(
-            "minecraft:overworld", List.of("ancient_cities", "buried_treasures", "ocean_ruins", "pillager_outposts", "ruined_portals", "shipwrecks", "trail_ruins"),
-            "minecraft:the_nether", List.of("nether_fossils"), "minecraft:the_end", List.of());
-
-    private static final Map<String, String> RENAMED_MODELS = Map.ofEntries(
-            Map.entry("trapdoor_bottom", "template_trapdoor_bottom"), Map.entry("trapdoor_top", "template_trapdoor_top"), Map.entry("trapdoor_open", "template_trapdoor_open"),
-            Map.entry("fence_gate_closed", "template_fence_gate"), Map.entry("fence_gate_open", "template_fence_gate_open"), Map.entry("wall_gate_closed", "template_fence_gate_wall"),
-            Map.entry("wall_gate_open", "template_fence_gate_wall_open"), Map.entry("door_bottom", "door_bottom_left"), Map.entry("door_bottom_rh", "door_bottom_right"),
-            Map.entry("door_top", "door_top_left"), Map.entry("door_top_rh", "door_top_right"), Map.entry("half_slab", "slab"), Map.entry("upper_slab", "slab_top"),
-            Map.entry("pane_post", "template_glass_pane_post"), Map.entry("pane_side", "template_glass_pane_side"), Map.entry("pane_side_alt", "template_glass_pane_side_alt"),
-            Map.entry("pane_noside", "template_glass_pane_noside"), Map.entry("pane_noside_alt", "template_glass_pane_noside_alt"), Map.entry("wall_post", "template_wall_post"),
-            Map.entry("wall_side", "template_wall_side"), Map.entry("torch_wall", "template_torch_wall"));
+    private static final List<String> FLUID_TEXTURES = List.of("still", "flow");
+    private static final List<String> CONTAINER_TEXTURES = List.of("chestModel", "guiTexture");
+    static final String WILDCARD = ":*";
+    private static final String AT_BLOCK = "at=";
+    private static final String UNDER_BLOCK = "under=";
 
     public static final String GAME_LOOP = "gameLoopFunction";
+    public static final String FLAT = "flat";
+    public static final String OVERWORLD = "minecraft:overworld";
+    public static final int FLAT_FLOOR = ContentWorldShape.VANILLA_MIN;
+    private static final List<String> FLAT_TYPES = List.of(FLAT, "superflat");
 
     private Convert() {}
 
@@ -68,7 +58,20 @@ public final class Convert {
         if ("blocks".equals(folder) && json.has("harvestLevel") && !json.has("harvestToolLevel")) { json.add("harvestToolLevel", json.remove("harvestLevel")); }
         if (("blocks".equals(folder) || "items".equals(folder) || "fluids".equals(folder)) && json.has("creativeTab") && json.get("creativeTab").isJsonPrimitive()) {
             String tab = json.get("creativeTab").getAsString().trim();
-            if (!tab.isEmpty() && tab.indexOf(':') < 0) { json.addProperty("creativeTab", pack.mainNamespace() + ":" + tab); }
+            if (!tab.isEmpty() && tab.indexOf(':') < 0) {
+                String vanilla = ContentFormats.vanillaTab(tab);
+                json.addProperty("creativeTab", vanilla != null ? vanilla : pack.mainNamespace() + ":" + tab.toLowerCase(Locale.ROOT));
+            }
+        }
+        if ("fluids".equals(folder)) {
+            for (String named : FLUID_TEXTURES) {
+                if (!json.has(named) || !json.get(named).isJsonPrimitive()) { continue; }
+                String held = json.get(named).getAsString();
+                String mapped = ConvertAssets.texturePath(held.trim());
+                if (mapped.equals(held)) { continue; }
+                json.addProperty(named, mapped);
+                pack.rewrote();
+            }
         }
         if ("gamerules".equals(folder)) {
             for (Map.Entry<String, JsonElement> dimension : json.entrySet()) {
@@ -76,11 +79,27 @@ public final class Convert {
             }
         }
         if ("gamerules".equals(folder) || "blastplaster".equals(folder)) { renameDimensionKeys("gamerules".equals(folder) ? json : json.has("dimensions") && json.get("dimensions").isJsonObject() ? json.getAsJsonObject("dimensions") : new JsonObject(), pack); }
-        if ("worldtemplates".equals(folder) && json.has("structures") && json.get("structures").isJsonObject()) { modernStructuresOff(json, pack); }
+        if ("worldtemplates".equals(folder) && json.has("structures") && json.get("structures").isJsonObject()) { ConvertDefinitions.modernStructuresOff(json, pack); }
+        if ("worldtemplates".equals(folder) && json.has("settings") && json.get("settings").isJsonObject()) { ConvertDefinitions.templatePositions(json.getAsJsonObject("settings"), namespace + ":" + file, pack); }
+        if ("worldtemplates".equals(folder) && json.has("settings") && json.get("settings").isJsonObject()) { ConvertDefinitions.flatLayers(json.getAsJsonObject("settings"), pack); }
+        if ("worldtemplates".equals(folder) && json.has("settings") && json.get("settings").isJsonObject()) { ConvertDefinitions.villagePieces(json.getAsJsonObject("settings"), pack); }
+        if ("teams".equals(folder)) { ConvertDefinitions.teamPositions(json, namespace + ":" + file, pack); }
+        if ("scoring".equals(folder) && json.has("opens") && json.get("opens").isJsonObject()) { ConvertDefinitions.movedPoint(json.getAsJsonObject("opens"), "lobby", pack.overworldShift(), pack, "Score file " + namespace + ":" + file); }
         if ("dimensions".equals(folder)) {
+            ConvertDefinitions.groundLevel(json, namespace + ":" + file, pack);
             json.remove("id");
             json.remove("suffix");
         }
+        if ("caveregions".equals(folder)) {
+            renamed(json, "ambientSound", Commands::sound, pack);
+            renamed(json, "particle", Commands::particleId, pack);
+        }
+        if ("raids".equals(folder)) { renamed(json, "sound", Commands::sound, pack); }
+        if ("anvils".equals(folder)) { ConvertDefinitions.anvil(json, pack); }
+        if ("player_loot".equals(folder) && json.has("table") && json.get("table").isJsonPrimitive()) { ConvertLoot.lootTable(json, "table", pack); }
+        JsonArray furnaceRemovals = "furnace".equals(folder) && json.has("remove") && json.get("remove").isJsonArray() ? ConvertDefinitions.furnaceRemovals(json.remove("remove").getAsJsonArray(), pack) : null;
+        JsonArray exposureBlocks = "exposures".equals(folder) && json.has("blocks") && json.get("blocks").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("blocks").getAsJsonArray(), true, pack) : null;
+        JsonArray exposureItems = "exposures".equals(folder) && json.has("items") && json.get("items").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("items").getAsJsonArray(), false, pack) : null;
         if ("fuels".equals(folder) && json.has("fuels") && json.get("fuels").isJsonArray()) {
             for (JsonElement element : json.getAsJsonArray("fuels")) {
                 if (!element.isJsonObject()) { continue; }
@@ -95,36 +114,36 @@ public final class Convert {
             json.remove("meta");
         }
         walk(json, "", Context.NONE, pack, folder);
+        if (furnaceRemovals != null) { json.add("remove", furnaceRemovals); }
+        if (exposureBlocks != null) { json.add("blocks", exposureBlocks); }
+        if (exposureItems != null) { json.add("items", exposureItems); }
         return Ported.GSON.toJson(json);
     }
 
-    private static void modernStructuresOff(JsonObject template, Ported pack) {
-        JsonObject structures = template.getAsJsonObject("structures");
-        List<String> dimensions = new ArrayList<>();
-        if (template.has("dimensions") && template.get("dimensions").isJsonArray()) {
-            for (JsonElement named : template.getAsJsonArray("dimensions")) { dimensions.add(ContentFormats.dimensionId(named.getAsString())); }
-        }
-        if (dimensions.isEmpty()) { dimensions.addAll(VANILLA_DIMENSIONS); }
-        List<String> added = new ArrayList<>();
-        for (String dimension : dimensions) {
-            List<String> legacy = LEGACY_STRUCTURES.get(dimension);
-            if (legacy == null || !allOff(structures, legacy)) { continue; }
-            for (String set : MODERN_STRUCTURES.get(dimension)) {
-                if (structures.has(set)) { continue; }
-                structures.addProperty(set, false);
-                added.add(set);
-            }
-        }
-        if (added.isEmpty()) { return; }
+    private static void renamed(JsonObject json, String key, UnaryOperator<String> rename, Ported pack) {
+        if (!json.has(key) || !json.get(key).isJsonPrimitive()) { return; }
+        String held = json.get(key).getAsString();
+        String mapped = rename.apply(held);
+        if (mapped.equals(held)) { return; }
+        json.addProperty(key, mapped);
         pack.rewrote();
-        pack.note("A world template turns off every structure 1.12.2 had, so the structures only this version has are turned off with them: " + String.join(", ", added));
     }
 
-    private static boolean allOff(JsonObject structures, List<String> names) {
-        for (String name : names) {
-            if (!structures.has(name) || !structures.get(name).isJsonPrimitive() || structures.get(name).getAsBoolean()) { return false; }
+    static boolean flat(JsonObject settings) { return settings.has("worldType") && settings.get("worldType").isJsonPrimitive() && FLAT_TYPES.contains(settings.get("worldType").getAsString().trim().toLowerCase(Locale.ROOT)); }
+
+    public static int flatShift(JsonObject settings) {
+        if (!flat(settings)) { return 0; }
+        return settings.has("worldMinHeight") && settings.get("worldMinHeight").isJsonPrimitive() && settings.getAsJsonPrimitive("worldMinHeight").isNumber() ? settings.get("worldMinHeight").getAsInt() : FLAT_FLOOR;
+    }
+
+    static String shiftY(String written, int shift) {
+        String trimmed = written.trim();
+        if (shift == 0 || trimmed.isEmpty()) { return written; }
+        try { return String.valueOf(Integer.parseInt(trimmed) + shift); }
+        catch (NumberFormatException notWhole) {
+            try { return new BigDecimal(trimmed).add(BigDecimal.valueOf(shift)).toPlainString(); }
+            catch (NumberFormatException notNumber) { return written; }
         }
-        return true;
     }
 
     private static void renameDimensionKeys(JsonObject json, Ported pack) {
@@ -168,19 +187,17 @@ public final class Convert {
             Context context = contextOf(key, inherited);
             if (value.isJsonObject()) {
                 if ("blocks".equals(key) && "worldgen".equals(folder)) { continue; }
+                if ("kill".equals(key) && "points".equals(parentKey)) {
+                    entityKeys(value.getAsJsonObject(), pack);
+                    continue;
+                }
+                if ("container".equals(key)) {
+                    container(value.getAsJsonObject(), pack);
+                    continue;
+                }
                 walk(value.getAsJsonObject(), key, RAW_CONTAINERS.contains(key) ? Context.NONE : context, pack, folder);
             }
-            else if (value.isJsonArray()) {
-                JsonArray array = value.getAsJsonArray();
-                for (int i = 0; i < array.size(); i++) {
-                    JsonElement element = array.get(i);
-                    if (element.isJsonObject()) { walk(element.getAsJsonObject(), key, context, pack, folder); }
-                    else if (element.isJsonPrimitive()) {
-                        JsonElement replaced = primitive(key, key, element.getAsJsonPrimitive(), context, pack);
-                        if (replaced != null) { array.set(i, replaced); }
-                    }
-                }
-            }
+            else if (value.isJsonArray()) { json.add(key, array(value.getAsJsonArray(), key, context, pack, folder)); }
             else if (value.isJsonPrimitive()) {
                 JsonElement replaced = primitive(key, parentKey, value.getAsJsonPrimitive(), context, pack);
                 if (replaced != null) {
@@ -193,6 +210,28 @@ public final class Convert {
                 }
             }
         }
+    }
+
+    private static JsonArray array(JsonArray values, String key, Context context, Ported pack, String folder) {
+        JsonArray out = new JsonArray();
+        for (JsonElement element : values) {
+            if (element.isJsonObject()) { walk(element.getAsJsonObject(), key, context, pack, folder); }
+            if (element.isJsonArray()) {
+                out.add(array(element.getAsJsonArray(), key, context, pack, folder));
+                continue;
+            }
+            if (!element.isJsonPrimitive()) {
+                out.add(element);
+                continue;
+            }
+            if (context == Context.ITEM && element.getAsString().trim().endsWith(WILDCARD)) {
+                for (String name : itemNames(element.getAsString(), pack)) { out.add(name); }
+                continue;
+            }
+            JsonElement replaced = primitive(key, key, element.getAsJsonPrimitive(), context, pack);
+            out.add(replaced == null ? element : replaced);
+        }
+        return out;
     }
 
     private static Context contextOf(String key, Context inherited) {
@@ -227,10 +266,40 @@ public final class Convert {
             return null;
         }
         if ("villageBlocks".equals(key)) {
-            Matcher m = VILLAGE_BLOCK.matcher(text.trim());
-            if (!m.matches()) { return null; }
+            String[] fields = text.split(",");
+            int split = fields[0].indexOf('=');
+            if (split <= 0) { return null; }
+            StringBuilder out = new StringBuilder(stateName(fields[0].substring(0, split).trim(), pack)).append('=').append(stateName(fields[0].substring(split + 1).trim(), pack));
+            for (int field = 1; field < fields.length; field++) {
+                String said = fields[field].trim();
+                if (said.startsWith(AT_BLOCK)) { out.append(',').append(AT_BLOCK).append(stateName(said.substring(AT_BLOCK.length()).trim(), pack)); }
+                else if (said.startsWith(UNDER_BLOCK)) { out.append(',').append(UNDER_BLOCK).append(stateName(said.substring(UNDER_BLOCK.length()).trim(), pack)); }
+                else { out.append(',').append(said); }
+            }
             pack.rewrote();
-            return new JsonPrimitive(blockName(m.group(1).trim(), pack) + "=" + blockName(m.group(2).trim(), pack) + (m.group(3) == null ? "" : m.group(3)));
+            return new JsonPrimitive(out.toString());
+        }
+        if ("villagePathPierCargo".equals(key)) {
+            int split = text.indexOf('=');
+            String named = split <= 0 ? "" : text.substring(0, split).trim();
+            if (named.isEmpty() || "empty".equals(named)) { return null; }
+            String mapped = stateName(named, pack);
+            if (mapped.equals(named)) { return null; }
+            pack.rewrote();
+            return new JsonPrimitive(mapped + text.substring(split));
+        }
+        if (context == Context.BLOCK && key.startsWith("village")) {
+            String mapped = mix(text, pack, key.startsWith("villageRail") || key.startsWith("villageSubway") || key.startsWith("villageSewer"));
+            if (mapped == null) { return null; }
+            pack.rewrote();
+            return new JsonPrimitive(mapped);
+        }
+        if ("threatItems".equals(key)) {
+            int split = text.lastIndexOf('=');
+            if (split <= 0) { return null; }
+            String item = text.substring(0, split).trim();
+            String mapped = itemName(item, pack);
+            return mapped.equals(item) ? null : new JsonPrimitive(mapped + text.substring(split));
         }
         if ("blockReplacements".equals(key)) {
             Matcher m = REPLACEMENT.matcher(text.trim());
@@ -272,6 +341,18 @@ public final class Convert {
         };
     }
 
+    private static void entityKeys(JsonObject json, Ported pack) {
+        for (Map.Entry<String, JsonElement> entry : new ArrayList<>(json.entrySet())) {
+            String named = entry.getKey().trim();
+            if (named.indexOf(':') < 0) { continue; }
+            String mapped = pack.owns(named) ? named : Ids.entity(named);
+            if (mapped.equals(entry.getKey())) { continue; }
+            json.remove(entry.getKey());
+            json.add(mapped, entry.getValue());
+            pack.rewrote();
+        }
+    }
+
     private static JsonElement rewrite(Ported pack, String mapped) {
         pack.rewrote();
         return new JsonPrimitive(mapped);
@@ -303,14 +384,59 @@ public final class Convert {
         return out;
     }
 
+    @Nullable private static String mix(String text, Ported pack, boolean states) {
+        List<String> parts = new ArrayList<>();
+        boolean changed = false;
+        for (String part : Settings.entries(text)) {
+            String entry = part.trim();
+            String weight = "";
+            int gap = entry.lastIndexOf(' ');
+            if (gap > 0 && entry.substring(gap + 1).trim().matches("\\d+")) {
+                weight = " " + entry.substring(gap + 1).trim();
+                entry = entry.substring(0, gap).trim();
+            }
+            String mapped = states ? stateName(entry, pack) : blockName(entry, pack);
+            changed |= !mapped.equals(entry);
+            parts.add(mapped + weight);
+        }
+        return changed ? String.join(", ", parts) : null;
+    }
+
+    private static String stateName(String text, Ported pack) {
+        JsonElement mapped = block(text, pack, false);
+        if (mapped == null) { return text; }
+        if (!mapped.isJsonObject()) { return mapped.getAsString(); }
+        JsonObject state = mapped.getAsJsonObject();
+        StringBuilder out = new StringBuilder(state.get("block").getAsString());
+        if (state.has("properties") && state.get("properties").isJsonObject() && state.getAsJsonObject("properties").size() > 0) {
+            List<String> pairs = new ArrayList<>();
+            for (Map.Entry<String, JsonElement> entry : state.getAsJsonObject("properties").entrySet()) { pairs.add(entry.getKey() + "=" + entry.getValue().getAsString()); }
+            out.append('[').append(String.join(",", pairs)).append(']');
+        }
+        return out.toString();
+    }
+
     public static String blockName(String text, Ported pack) {
         JsonElement mapped = block(text, pack, false);
         if (mapped == null) { return text; }
         return mapped.isJsonObject() ? mapped.getAsJsonObject().get("block").getAsString() : mapped.getAsString();
     }
 
+    static List<String> itemNames(String text, Ported pack) {
+        String trimmed = text.trim();
+        if (!trimmed.endsWith(WILDCARD)) { return List.of(itemName(text, pack)); }
+        String name = trimmed.substring(0, trimmed.length() - WILDCARD.length());
+        pack.rewrote();
+        if (pack.owns(name)) { return pack.ownItems(name); }
+        return Ids.isModded(name) ? List.of(name) : Ids.items(name);
+    }
+
     public static String itemName(String text, Ported pack) {
         String trimmed = text.trim();
+        if (trimmed.endsWith(WILDCARD)) {
+            pack.rewrote();
+            return itemName(trimmed.substring(0, trimmed.length() - WILDCARD.length()), pack);
+        }
         if (trimmed.isEmpty() || trimmed.contains("=") || trimmed.indexOf(':') < 0) { return text; }
         String[] split = Ids.splitMeta(trimmed);
         String name = split == null ? trimmed : split[0];
@@ -328,258 +454,16 @@ public final class Convert {
         return mapped;
     }
 
-    public static String lang(String contents, Ported pack) {
-        Map<String, String> out = new LinkedHashMap<>();
-        for (String line : contents.split("\r?\n")) {
-            String trimmed = line.trim();
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) { continue; }
-            int eq = trimmed.indexOf('=');
-            if (eq <= 0) { continue; }
-            String key = trimmed.substring(0, eq).trim();
-            String value = trimmed.substring(eq + 1);
-            for (String mapped : langKeys(key, pack)) { out.put(mapped, value); }
-        }
-        JsonObject json = new JsonObject();
-        for (Map.Entry<String, String> entry : out.entrySet()) { json.addProperty(entry.getKey(), entry.getValue()); }
-        return Ported.GSON.toJson(json);
-    }
-
-    private static List<String> langKeys(String key, Ported pack) {
-        Matcher m = LANG_TILE.matcher(key);
-        if (m.matches()) {
-            String namespace = m.group(2);
-            String file = m.group(3);
-            String variant = m.group(4);
-            String suffix = "locked".equals(m.group(5)) ? ".locked" : "";
-            boolean tile = "tile".equals(m.group(1));
-            String name = variant != null ? pack.renamedIn(namespace, tile ? "blocks" : "items", file).getOrDefault(variant, variant) : tile ? pack.mainVariantOfBlockFile(namespace, file) : pack.mainVariantOfItemFile(namespace, file);
-            if (name == null) { name = file.substring(file.lastIndexOf('/') + 1); }
-            List<String> keys = new ArrayList<>();
-            keys.add((tile ? "block." : "item.") + namespace + "." + name + suffix);
-            if (!tile && pack.ownBlock(namespace + ":" + name, 0) != null) { keys.add("block." + namespace + "." + name + suffix); }
-            pack.rewrote();
-            return keys;
-        }
-        m = LANG_ENTITY.matcher(key);
-        if (m.matches() && pack.ownsNamespace(m.group(1))) {
-            pack.rewrote();
-            return List.of("entity." + m.group(1) + "." + m.group(2));
-        }
-        m = LANG_FLUID.matcher(key);
-        if (m.matches()) {
-            String namespace = m.group(1) != null ? m.group(1) : pack.mainNamespace();
-            pack.rewrote();
-            return List.of("fluid." + namespace + "." + m.group(2), "fluid_type." + namespace + "." + m.group(2));
-        }
-        m = LANG_TAB.matcher(key);
-        if (m.matches()) {
-            pack.rewrote();
-            return List.of("itemGroup." + pack.mainNamespace() + "." + m.group(1));
-        }
-        return List.of(key);
-    }
-
-    public static String texturePath(String path) {
-        String namespace = path.indexOf(':') < 0 ? "minecraft" : path.substring(0, path.indexOf(':'));
-        String rest = path.indexOf(':') < 0 ? path : path.substring(path.indexOf(':') + 1);
-        if (rest.startsWith("blocks/")) { rest = "block/" + rest.substring("blocks/".length()); }
-        else if (rest.startsWith("items/")) { rest = "item/" + rest.substring("items/".length()); }
-        else if (rest.startsWith("textures/blocks/")) { rest = "textures/block/" + rest.substring("textures/blocks/".length()); }
-        else if (rest.startsWith("textures/items/")) { rest = "textures/item/" + rest.substring("textures/items/".length()); }
-        else { return path; }
-        return namespace + ":" + rest;
-    }
-
-    public static String model(JsonObject json, Ported pack) {
-        if (json.has("textures") && json.get("textures").isJsonObject()) {
-            JsonObject textures = json.getAsJsonObject("textures");
-            for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
-                if (!texture.getValue().isJsonPrimitive()) { continue; }
-                String held = texture.getValue().getAsString();
-                if (held.startsWith("#")) { continue; }
-                String mapped = texturePath(held);
-                if (!mapped.equals(held)) {
-                    textures.addProperty(texture.getKey(), mapped);
-                    pack.rewrote();
-                }
-            }
-        }
-        if (json.has("parent") && json.get("parent").isJsonPrimitive()) {
-            String parent = json.get("parent").getAsString();
-            String bare = parent.startsWith("minecraft:") ? parent.substring("minecraft:".length()) : parent;
-            String renamed = RENAMED_MODELS.get(bare.startsWith("block/") ? bare.substring("block/".length()) : bare);
-            if (renamed != null && (bare.startsWith("block/") || bare.indexOf('/') < 0)) {
-                json.addProperty("parent", "minecraft:block/" + renamed);
-                pack.rewrote();
-            }
-            else if (parent.indexOf(':') < 0 && !parent.startsWith("block/") && !parent.startsWith("item/") && !parent.startsWith("builtin/")) {
-                json.addProperty("parent", "minecraft:block/" + parent);
-                pack.rewrote();
-            }
-        }
-        return Ported.GSON.toJson(json);
-    }
-
-    public static String pixelMap(JsonObject json, Ported pack) {
-        if (json.has("extends") && json.get("extends").isJsonPrimitive()) {
-            String held = json.get("extends").getAsString();
-            String mapped = texturePath(held);
-            if (!mapped.equals(held)) {
-                json.addProperty("extends", mapped);
-                pack.rewrote();
-            }
-        }
-        return Ported.GSON.toJson(json);
-    }
-
-    public static String recipe(JsonObject json, Ported pack) {
-        if (json.has("type") && json.get("type").isJsonPrimitive()) {
-            String type = json.get("type").getAsString();
-            String mapped = switch (type) {
-                case "forge:ore_shaped", "crafting_shaped" -> "minecraft:crafting_shaped";
-                case "forge:ore_shapeless", "crafting_shapeless" -> "minecraft:crafting_shapeless";
-                default -> type;
-            };
-            if (!mapped.equals(type)) {
-                json.addProperty("type", mapped);
-                pack.rewrote();
-            }
-        }
-        if (json.has("key") && json.get("key").isJsonObject()) {
-            for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { ingredient(entry.getValue(), pack); }
-        }
-        if (json.has("ingredients") && json.get("ingredients").isJsonArray()) {
-            for (JsonElement entry : json.getAsJsonArray("ingredients")) { ingredient(entry, pack); }
-        }
-        if (json.has("result") && json.get("result").isJsonObject()) {
-            JsonObject result = json.getAsJsonObject("result");
-            stack(result, pack);
-        }
-        return Ported.GSON.toJson(json);
-    }
-
-    private static void ingredient(JsonElement element, Ported pack) {
-        if (element.isJsonArray()) {
-            for (JsonElement inner : element.getAsJsonArray()) { ingredient(inner, pack); }
-            return;
-        }
-        if (!element.isJsonObject()) { return; }
-        JsonObject held = element.getAsJsonObject();
-        if (held.has("ore")) {
-            held.addProperty("tag", Ids.oreDictTag(held.get("ore").getAsString()));
-            held.remove("ore");
+    private static void container(JsonObject held, Ported pack) {
+        if (held.has("lootTable") && held.get("lootTable").isJsonPrimitive()) { ConvertLoot.lootTable(held, "lootTable", pack); }
+        for (String key : CONTAINER_TEXTURES) {
+            if (!held.has(key) || !held.get(key).isJsonPrimitive() || !held.getAsJsonPrimitive(key).isString()) { continue; }
+            String named = held.get(key).getAsString();
+            String mapped = ConvertAssets.texturePath(named.trim());
+            if (mapped.equals(named)) { continue; }
+            held.addProperty(key, mapped);
             pack.rewrote();
         }
-        stack(held, pack);
     }
 
-    private static void stack(JsonObject held, Ported pack) {
-        if (!held.has("item") || !held.get("item").isJsonPrimitive()) { return; }
-        String item = held.get("item").getAsString();
-        int data = held.has("data") && held.get("data").isJsonPrimitive() && held.get("data").getAsJsonPrimitive().isNumber() ? held.get("data").getAsInt() : 0;
-        if (data == 32767) { data = 0; }
-        held.remove("data");
-        held.addProperty("item", itemName(item + (data > 0 ? ":" + data : ""), pack));
-    }
-
-    public static String loot(JsonObject json, Ported pack) {
-        lootWalk(json, pack);
-        return Ported.GSON.toJson(json);
-    }
-
-    private static void lootWalk(JsonElement element, Ported pack) {
-        if (element.isJsonArray()) {
-            for (JsonElement inner : element.getAsJsonArray()) { lootWalk(inner, pack); }
-            return;
-        }
-        if (!element.isJsonObject()) { return; }
-        JsonObject held = element.getAsJsonObject();
-        for (String key : new String[] {"type", "function", "condition"}) {
-            if (held.has(key) && held.get(key).isJsonPrimitive() && held.get(key).getAsString().indexOf(':') < 0) {
-                held.addProperty(key, "minecraft:" + held.get(key).getAsString());
-                pack.rewrote();
-            }
-        }
-        if (held.has("name") && held.has("type") && "minecraft:item".equals(held.get("type").getAsString())) {
-            int data = 0;
-            if (held.has("functions") && held.get("functions").isJsonArray()) {
-                JsonArray functions = held.getAsJsonArray("functions");
-                for (int i = functions.size() - 1; i >= 0; i--) {
-                    JsonElement function = functions.get(i);
-                    if (!function.isJsonObject()) { continue; }
-                    JsonObject held2 = function.getAsJsonObject();
-                    String name = held2.has("function") ? held2.get("function").getAsString() : "";
-                    if ("minecraft:set_data".equals(name) || "set_data".equals(name)) {
-                        if (held2.has("data") && held2.get("data").isJsonPrimitive() && held2.get("data").getAsJsonPrimitive().isNumber()) { data = held2.get("data").getAsInt(); }
-                        functions.remove(i);
-                        pack.rewrote();
-                    }
-                }
-            }
-            held.addProperty("name", itemName(held.get("name").getAsString() + (data > 0 ? ":" + data : ""), pack));
-        }
-        for (Map.Entry<String, JsonElement> entry : new ArrayList<>(held.entrySet())) {
-            if (!"name".equals(entry.getKey())) { lootWalk(entry.getValue(), pack); }
-        }
-    }
-
-    public static String advancement(JsonObject json, Ported pack) {
-        if (json.has("display") && json.get("display").isJsonObject()) {
-            JsonObject display = json.getAsJsonObject("display");
-            if (display.has("icon") && display.get("icon").isJsonObject()) { stack(display.getAsJsonObject("icon"), pack); }
-            if (display.has("background") && display.get("background").isJsonPrimitive()) {
-                String background = display.get("background").getAsString();
-                String moved = background.replace("textures/blocks/", "textures/block/").replace("textures/items/", "textures/item/");
-                if (!moved.equals(background)) {
-                    display.addProperty("background", moved);
-                    pack.rewrote();
-                }
-            }
-        }
-        if (json.has("criteria") && json.get("criteria").isJsonObject()) { predicates(json.get("criteria"), pack); }
-        return Ported.GSON.toJson(json);
-    }
-
-    private static void predicates(JsonElement element, Ported pack) {
-        if (element.isJsonArray()) {
-            for (JsonElement inner : element.getAsJsonArray()) { predicates(inner, pack); }
-            return;
-        }
-        if (!element.isJsonObject()) { return; }
-        JsonObject held = element.getAsJsonObject();
-        if (held.has("item") && held.get("item").isJsonPrimitive() && !held.has("items")) {
-            stack(held, pack);
-            JsonArray items = new JsonArray();
-            items.add(held.get("item").getAsString());
-            held.remove("item");
-            held.add("items", items);
-            pack.rewrote();
-        }
-        for (Map.Entry<String, JsonElement> entry : new ArrayList<>(held.entrySet())) { predicates(entry.getValue(), pack); }
-    }
-
-    public static Map<String, JsonObject> oreDict(JsonObject json, Ported pack) {
-        Map<String, JsonObject> tags = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-            String ore = entry.getKey();
-            if (ore.startsWith("_") || ore.startsWith("-") || !entry.getValue().isJsonArray()) {
-                if (ore.startsWith("-")) { pack.note("The ore dictionary removal '" + ore + "' has no twin here: a tag is rewritten whole with a data pack tag file carrying \"replace\": true"); }
-                continue;
-            }
-            String tag = Ids.oreDictTag(ore);
-            JsonArray values = new JsonArray();
-            for (JsonElement item : entry.getValue().getAsJsonArray()) {
-                if (!item.isJsonPrimitive()) { continue; }
-                String named = item.getAsString();
-                if (named.endsWith(":*")) { named = named.substring(0, named.length() - 2); }
-                values.add(itemName(named, pack));
-            }
-            JsonObject file = new JsonObject();
-            file.addProperty("replace", false);
-            file.add("values", values);
-            tags.put(tag, file);
-            pack.rewrote();
-        }
-        return tags;
-    }
 }

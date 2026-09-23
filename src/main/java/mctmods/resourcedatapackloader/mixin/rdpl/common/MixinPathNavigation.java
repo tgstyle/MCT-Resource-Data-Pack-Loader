@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "followThePath", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/navigation/PathNavigation;doStuckDetection(Lnet/minecraft/world/phys/Vec3;)V"))
     private void rdpl$straightAhead(CallbackInfo ci) {
-        if (path != null && mob.getNavigation() instanceof GroundPathNavigation && ContentEntities.def(mob) != null) { PathShortcut.ahead(mob, level, path); }
+        if (path != null && mob.getNavigation() instanceof GroundPathNavigation) { PathShortcut.ahead(mob, level, path); }
     }
 
     @Redirect(method = "doStuckDetection", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getSpeed()F", ordinal = 0))

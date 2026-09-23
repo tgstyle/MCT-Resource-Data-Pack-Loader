@@ -2,10 +2,20 @@ package mctmods.resourcedatapackloader.util;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.minecraft.util.GsonHelper;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class WorldgenJson {
     private WorldgenJson() {}
+
+    @Nullable public static String gradientName(JsonObject entry) {
+        if (!"minecraft:condition".equals(GsonHelper.getAsString(entry, "type", ""))) { return null; }
+        JsonObject test = GsonHelper.getAsJsonObject(entry, "if_true", new JsonObject());
+        if ("minecraft:not".equals(GsonHelper.getAsString(test, "type", ""))) { test = GsonHelper.getAsJsonObject(test, "invert", new JsonObject()); }
+        if (!"minecraft:vertical_gradient".equals(GsonHelper.getAsString(test, "type", ""))) { return null; }
+        return GsonHelper.getAsString(test, "random_name", "");
+    }
 
     public static JsonObject anchor(String kind, int value) {
         JsonObject anchor = new JsonObject();

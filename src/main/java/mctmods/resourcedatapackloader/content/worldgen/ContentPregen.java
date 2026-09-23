@@ -1,113 +1,90 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentFormats;
-import mctmods.resourcedatapackloader.content.ContentWelcome;
-import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
-import mctmods.resourcedatapackloader.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkMap;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.ILevel;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
 
-import com.mojang.datafixers.util.Either;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
-import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityTeleportEvent;
-import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
-import java.util.IllegalFormatException;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
 
 public final class ContentPregen {
-    public static final int VANILLA_SPAWN_REACH = 12;
+    private static final int NEIGHBORS = 8;
     private static final long STILL_AFTER_MS = 3000L;
+    private static final long SWEEP_AFTER_MS = 60000L;
+    private static final long SETTLE_MS = 30000L;
     private static final long STALL_MS = 60000L;
-    private static final double NO_BORDER = 5.9E7D;
-    private static final String HELD_MODE = "rdplPregenHeldMode";
-    private static final String OVERWORLD = "minecraft:overworld";
-    private static final Deque<ResourceLocation> PENDING = new ArrayDeque<>();
-    private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
-    @Nullable private static ScheduledExecutorService flasher;
-    @Nullable private static ContentPregen running;
+    private static final TicketType<ChunkPos> TICKET = TicketType.create("rdpl_pregen", Comparator.comparingLong(ChunkPos::toLong));
+    @Nullable static ContentPregen running;
     private static long stillUntil;
+    private static long sweepUntil;
     private static long chainBegun;
-    private static int wantedRadius;
-    private static boolean chaining;
-    private static volatile String progress = "";
-    private static volatile String lastSaid = "";
-    private static final AtomicLong BEATS = new AtomicLong();
-    private static long heldDayTime = -1L;
-    @Nullable private static Runnable pendingStart;
-    private static int startTick = -1;
-    @Nullable private final ServerPlayer asked;
+    private static volatile long worldgenAt;
+    @Nullable static Runnable pendingStart;
+    static int startTick = -1;
+    @Nullable private final CommandSourceStack asked;
     private final MinecraftServer server;
-    private final ResourceKey<Level> dimension;
+    final ResourceKey<Level> dimension;
     private final int reach;
     private final int middleX;
     private final int middleZ;
-    private final ContentChunkOrder order;
-    private final int inFlight;
-    private final long started;
-    private long done;
-    private long made;
-    private long failed;
-    private int flying;
+    final ContentChunkOrder order;
+    final int inFlight;
+    private final Deque<ChunkPos> unfollowed = new ArrayDeque<>();
+    private final LongSet ticketed = new LongOpenHashSet();
+    final LongSet flying = new LongOpenHashSet();
+    private final LongSet existing = new LongOpenHashSet();
+    final long started;
+    long done;
+    long made;
+    long fresh;
+    long failed;
+    private long tileFlying = -1L;
+    private long safeTile;
+    private long safeWithin;
     private long spoke;
-    private long resumedFrom;
-    private long etaFigured;
-    private long etaSeconds;
-    private long etaAt;
-    private long etaMade;
-    private double etaRate;
+    private long checkpointed;
+    private long checkpointCost;
+    long resumedFrom;
+    long etaFigured;
+    long etaSeconds;
+    long etaAt;
+    long etaMade;
+    double etaRate;
     private int loggedAt;
-    private long begun;
+    long begun;
     private long watchedDone = -1L;
     private long watchedAt;
     private boolean stopping;
 
-    private ContentPregen(@Nullable ServerPlayer asked, MinecraftServer server, ResourceKey<Level> dimension, int middleX, int middleZ, int reach) {
+    private ContentPregen(@Nullable CommandSourceStack asked, MinecraftServer server, ResourceKey<Level> dimension, int middleX, int middleZ, int reach) {
         this.asked = asked;
         this.server = server;
         this.dimension = dimension;
@@ -119,42 +96,16 @@ public final class ContentPregen {
         this.started = System.currentTimeMillis();
     }
 
-    private static final class Held {
-        private final ServerPlayer player;
-        private final GameType before;
-        private final String warning;
-        private ResourceKey<Level> dimension;
-        private double x;
-        private double y;
-        private double z;
-        private float yaw;
-        private float pitch;
-
-        private Held(ServerPlayer player, GameType before) {
-            this.player = player;
-            this.before = before;
-            this.warning = defaulted("pregenSpectatingSays", Config.chunks.pregenSpectatingSays(), Config.PREGEN_SPECTATING, "rdpl.pregen.spectating", player);
-            rebase(player);
-        }
-
-        private void rebase(ServerPlayer player) {
-            this.dimension = player.level().dimension();
-            this.x = player.getX();
-            this.y = player.getY();
-            this.z = player.getZ();
-            this.yaw = player.getYRot();
-            this.pitch = player.getXRot();
-        }
-
-        private boolean strayed(ServerPlayer player) {
-            double dx = player.getX() - x;
-            double dy = player.getY() - y;
-            double dz = player.getZ() - z;
-            return dx * dx + dy * dy + dz * dz > 1.0E-4D;
-        }
-    }
-
     public static boolean busy() { return running != null; }
+
+    public static void worldgenMoved() { worldgenAt = System.currentTimeMillis(); }
+
+    public static boolean landBeingMade() { return running != null || pendingStart != null; }
+
+    public static boolean busyIn(Level level) {
+        ContentPregen worker = running;
+        return worker != null && level.dimension().equals(worker.dimension);
+    }
 
     public static boolean holdsStill(Level level) {
         if (level.isClientSide()) { return false; }
@@ -163,83 +114,7 @@ public final class ContentPregen {
         return System.currentTimeMillis() < stillUntil;
     }
 
-    public static boolean reachesTheBorder() { return ContentControl.flag(ContentControl.CHUNKS, "pregenToBorder", Config.chunks.pregenToBorder()); }
-
-    public static boolean picksUpAgain() { return ContentControl.flag(ContentControl.CHUNKS, "pregenResume", Config.chunks.pregenResume()); }
-
-    public static int wantedOnNewWorld() {
-        int asked = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenOnNewWorld", Config.chunks.pregenOnNewWorld()));
-        return Math.max(asked, VANILLA_SPAWN_REACH);
-    }
-
-    private static List<ResourceLocation> ids(String key, List<String> fallback) {
-        List<ResourceLocation> out = new ArrayList<>();
-        for (String entry : ContentControl.list(ContentControl.CHUNKS, key, fallback)) {
-            ResourceLocation id = ResourceLocation.tryParse(ContentFormats.dimensionId(entry));
-            if (id == null) { ContentLog.LOGGER.error("{} names '{}', which is not a dimension id, ignoring it", key, entry); }
-            else { out.add(id); }
-        }
-        return out;
-    }
-
-    private static List<ResourceLocation> chosenDimensions(MinecraftServer server) {
-        if (!ContentControl.flag(ContentControl.CHUNKS, "pregenAllDimensions", Config.chunks.pregenAllDimensions())) { return ids("pregenDimensions", Config.chunks.pregenDimensions()); }
-        List<ResourceLocation> picked = new ArrayList<>();
-        for (ServerLevel level : server.getAllLevels()) {
-            if (madeUpFront(level.dimension().location())) { picked.add(level.dimension().location()); }
-        }
-        picked.sort(null);
-        ResourceLocation overworld = ResourceLocation.parse(OVERWORLD);
-        if (picked.remove(overworld)) { picked.add(0, overworld); }
-        return picked;
-    }
-
-    private static boolean madeUpFront(ResourceLocation dimension) { return !ids("pregenDimensionsWhenEntered", Config.chunks.pregenDimensionsWhenEntered()).contains(dimension); }
-
-    public static int spawnRadius() {
-        if (ContentControl.off(ContentControl.CHUNKS)) { return -1; }
-        return ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius());
-    }
-
-    public static void onServerStarted(ServerStartedEvent event) {
-        MinecraftServer server = event.getServer();
-        if (ContentControl.off(ContentControl.CHUNKS) || busy()) { return; }
-        int spawnChunks = ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius());
-        if (spawnChunks >= 0) { ContentLog.LOGGER.info("Holding {} chunk(s) around the spawn point through the spawn ticket the server took as the world started", spawnChunks); }
-        int radius = wantedOnNewWorld();
-        PregenMemory memory = PregenMemory.of(server);
-        CompoundTag run = memory.run();
-        if (run != null) {
-            ResourceLocation dimension = ResourceLocation.parse(run.getString("dimension"));
-            if (!picksUpAgain()) {
-                memory.setRun(null);
-                memory.setMadeAt(dimension.toString(), 0);
-                if (run.getInt("reach") > memory.madeTo(dimension.toString())) { memory.setMadeTo(dimension.toString(), run.getInt("reach")); }
-                ContentLog.LOGGER.info("Land was still being made in {} when the last session ended, and picking up again is off, so the world stands as far as it was made", dimension);
-                return;
-            }
-            if (PENDING.isEmpty() && (radius > 0 || reachesTheBorder())) {
-                for (ResourceLocation held : chosenDimensions(server)) {
-                    if (!held.equals(dimension) && (reachesTheBorder() || memory.madeTo(held.toString()) < radius)) { PENDING.addLast(held); }
-                }
-                wantedRadius = radius;
-                chaining = !PENDING.isEmpty();
-            }
-            ContentLog.LOGGER.info("Land was still being made in {} when the last session ended, so it is picked up again", dimension);
-            later(server, () -> start(null, server, ResourceKey.create(Registries.DIMENSION, dimension), run.getInt("middleX"), run.getInt("middleZ"), run.getInt("reach")));
-            return;
-        }
-        if ((radius <= 0 && !reachesTheBorder()) || !PENDING.isEmpty()) { return; }
-        for (ResourceLocation dimension : chosenDimensions(server)) {
-            if (reachesTheBorder() || memory.madeTo(dimension.toString()) < radius) { PENDING.addLast(dimension); }
-        }
-        if (PENDING.isEmpty()) { return; }
-        wantedRadius = radius;
-        chaining = true;
-        later(server, () -> nextDimension(server, radius));
-    }
-
-    private static void later(MinecraftServer server, Runnable starter) {
+    static void later(MinecraftServer server, Runnable starter) {
         if (server.isDedicatedServer()) {
             starter.run();
             return;
@@ -248,108 +123,30 @@ public final class ContentPregen {
         startTick = -1;
     }
 
-    private static void startWhenEntered(MinecraftServer server, ResourceKey<Level> entered) {
-        if (ContentControl.off(ContentControl.CHUNKS)) { return; }
-        int radius = wantedOnNewWorld();
-        ResourceLocation id = entered.location();
-        if ((radius <= 0 && !reachesTheBorder()) || madeUpFront(id)) { return; }
-        if (running != null && running.dimension.equals(entered)) { return; }
-        if (PENDING.contains(id)) { return; }
-        ServerLevel level = server.getLevel(entered);
-        if (!reachesTheBorder() && level != null) {
-            BlockPos spawn = level.getSharedSpawnPos();
-            if (alreadyMade(PregenMemory.of(server), level, radius, spawn.getX() >> 4, spawn.getZ() >> 4)) { return; }
-        }
-        PENDING.addLast(id);
-        wantedRadius = radius;
-        chaining = true;
-        if (!busy()) { nextDimension(server, radius); }
-    }
-
-    private static void nextDimension(MinecraftServer server, int radius) {
-        while (!PENDING.isEmpty()) {
-            ResourceLocation id = PENDING.removeFirst();
-            ServerLevel level = server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
-            if (level == null) {
-                ContentLog.LOGGER.error("A pack asks for land to be made in {}, which nothing here provides, so it is passed over", id);
-                continue;
-            }
-            int middleX;
-            int middleZ;
-            int reach;
-            if (reachesTheBorder()) {
-                WorldBorder border = level.getWorldBorder();
-                if (border.getSize() >= NO_BORDER) {
-                    ContentLog.LOGGER.error("A pack asks for the land of {} to be made out to its border, but no border has been set there, so there is nothing to reach and none is made", id);
-                    continue;
-                }
-                reach = (int) Math.ceil(border.getSize() / 2.0D / 16.0D);
-                int limit = Config.chunks.pregenBorderLimit();
-                if (reach > limit) {
-                    ContentLog.LOGGER.error("The border of {} stands {} block(s) across, which is {} chunk(s) either way and past the {} allowed by pregenBorderLimit, so no land is made out to it", id, (long) border.getSize(), reach, limit);
-                    continue;
-                }
-                middleX = (int) Math.floor(border.getCenterX()) >> 4;
-                middleZ = (int) Math.floor(border.getCenterZ()) >> 4;
-            }
-            else {
-                BlockPos spawn = level.getSharedSpawnPos();
-                reach = radius;
-                middleX = spawn.getX() >> 4;
-                middleZ = spawn.getZ() >> 4;
-            }
-            if (alreadyMade(PregenMemory.of(server), level, reach, middleX, middleZ)) { continue; }
-            long total = start(null, server, level.dimension(), middleX, middleZ, reach);
-            ContentLog.LOGGER.info("Making {} chunk(s) of land in {}, reaching {} chunk(s) either way from {}, {}, before anybody sets foot in it", total, id, reach, middleX, middleZ);
-            return;
-        }
-    }
-
-    private static boolean alreadyMade(PregenMemory memory, ServerLevel level, int reach, int middleX, int middleZ) {
-        String dimension = level.dimension().location().toString();
-        if (memory.madeTo(dimension) < reach) { return false; }
-        File region = DimensionType.getStorageFolder(level.dimension(), level.getServer().getWorldPath(LevelResource.ROOT)).resolve("region").toFile();
-        if (!region.isDirectory()) { return true; }
-        int expected = 0;
-        int missing = 0;
-        for (int rx = (middleX - reach) >> 5; rx <= (middleX + reach) >> 5; rx++) {
-            for (int rz = (middleZ - reach) >> 5; rz <= (middleZ + reach) >> 5; rz++) {
-                expected++;
-                if (!new File(region, "r." + rx + "." + rz + ".mca").isFile()) { missing++; }
-            }
-        }
-        if (missing == 0) { return true; }
-        ContentLog.LOGGER.info("{} was made before, but {} of the {} region file(s) its land lives in are missing from the disk, so it is being made again", dimension, missing, expected);
-        memory.setMadeTo(dimension, 0);
-        memory.setMadeAt(dimension, 0);
-        return false;
-    }
-
-    private static CompoundTag runRecord(ResourceKey<Level> dimension, int middleX, int middleZ, int reach) {
-        CompoundTag run = new CompoundTag();
-        run.putString("dimension", dimension.location().toString());
-        run.putInt("middleX", middleX);
-        run.putInt("middleZ", middleZ);
-        run.putInt("reach", reach);
-        return run;
-    }
-
-    public static long start(@Nullable ServerPlayer asked, MinecraftServer server, ResourceKey<Level> dimension, int middleX, int middleZ, int reach) {
+    public static long start(@Nullable CommandSourceStack asked, MinecraftServer server, ResourceKey<Level> dimension, int middleX, int middleZ, int reach) {
         ContentPregen worker = new ContentPregen(asked, server, dimension, middleX, middleZ, reach);
         PregenMemory memory = PregenMemory.of(server);
-        memory.setRun(runRecord(dimension, middleX, middleZ, reach));
-        if (picksUpAgain()) {
-            int reached = memory.madeAt(dimension.location().toString());
-            if (reached > 0) {
-                worker.done = worker.order.skip(reached);
-                worker.resumedFrom = worker.done;
-                ContentLog.LOGGER.info("Picking the making of land in {} up again where it left off, {} chunk(s) in", dimension.location(), worker.done);
+        memory.setRun(ContentPregenDimensions.runRecord(dimension, middleX, middleZ, reach));
+        if (ContentPregenDimensions.picksUpAgain()) {
+            String id = dimension.location().toString();
+            CompoundTag spot = memory.madeIn(id);
+            long from;
+            if (spot == null) { from = worker.order.skipMadeBefore(memory.madeAt(id)); }
+            else if (spot.getInt("size") == worker.order.tileSize()) { from = worker.order.skipTo(spot.getLong("tile"), spot.getLong("within")); }
+            else {
+                from = 0L;
+                ContentLog.LOGGER.info("The land of {} was left half made in tiles of {} chunk(s), which is not the {} chunk(s) tiles are made in now, so it is made again from the middle out", dimension.location(), spot.getInt("size"), worker.order.tileSize());
+            }
+            if (from > 0L) {
+                worker.done = from;
+                worker.resumedFrom = from;
+                ContentLog.LOGGER.info("Picking the making of land in {} up again where it left off, {} chunk(s) in, tile {} of {}", dimension.location(), from, worker.order.tile(), worker.order.tiles());
             }
         }
         running = worker;
         if (chainBegun == 0L) { chainBegun = System.currentTimeMillis(); }
-        heldDayTime = server.overworld().getDayTime();
-        holdEveryone(server, true);
+        ContentPregenHold.heldDayTime = server.overworld().getDayTime();
+        ContentPregenHold.holdEveryone(server, true);
         return worker.order.total();
     }
 
@@ -361,7 +158,7 @@ public final class ContentPregen {
 
     public static String state() {
         ContentPregen worker = running;
-        return worker == null ? Lang.tr("rdpl.pregen.idle") : worker.report();
+        return worker == null ? Lang.tr("rdpl.pregen.idle") : ContentPregenProgress.report(worker);
     }
 
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -375,114 +172,239 @@ public final class ContentPregen {
         ContentPregen worker = running;
         if (worker != null) {
             worker.work();
-            event.getServer().overworld().setDayTime(heldDayTime);
-            if (event.getServer().getTickCount() % 20 == 0) { freezeSky(event.getServer()); }
+            if (worker.dimension.equals(Level.OVERWORLD)) { event.getServer().overworld().setDayTime(ContentPregenHold.heldDayTime); }
+            if (event.getServer().getTickCount() % 20 == 0) { ContentPregenHold.freezeSky(event.getServer()); }
         }
-        holdTick(event.getServer());
+        if (event.getServer().getTickCount() % 20 == 0 && (worker != null || System.currentTimeMillis() < sweepUntil)) { sweepEmpty(event.getServer()); }
+        ContentPregenHold.holdTick(event.getServer());
+    }
+
+    private static void sweepEmpty(MinecraftServer server) {
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.players().isEmpty()) { ((ILevel) level).rdpl$blockEntityTickers().removeIf(TickingBlockEntity::isRemoved); }
+        }
     }
 
     private void work() {
-        if (begun == 0L) { begun = System.currentTimeMillis(); }
+        if (begun == 0L) {
+            begun = System.currentTimeMillis();
+            pin();
+        }
         ServerLevel level = server.getLevel(dimension);
         if (level == null || stopping) {
-            if (flying == 0) { finish(level); }
+            if (level != null) { follow(level.getChunkSource()); }
+            if (flying.isEmpty()) { finish(level); }
             return;
         }
-        watch();
+        if (stalled()) {
+            giveUp(level);
+            return;
+        }
         ServerChunkCache chunks = level.getChunkSource();
+        follow(chunks);
+        checkpoint(level);
         for (ServerPlayer player : level.players()) {
             if (!level.hasChunk(player.chunkPosition().x, player.chunkPosition().z)) { return; }
         }
         int burst = Math.max(1, inFlight / 4);
         int issued = 0;
-        while (flying < inFlight && order.hasNext() && issued < burst) {
+        while (flying.size() < inFlight && order.hasNext() && issued < burst) {
+            long tile = order.tile();
+            if (tile != tileFlying) {
+                if (!flying.isEmpty()) { break; }
+                letGoFar(level);
+                tileFlying = tile;
+            }
             ChunkPos next = order.next();
-            flying++;
             issued++;
-            CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> future = chunks.getChunkFuture(next.x, next.z, ChunkStatus.FULL, true);
-            future.whenCompleteAsync((result, thrown) -> landed(result != null && result.left().isPresent(), thrown), server);
+            flying.add(next.toLong());
+            if (((IChunkMap) chunks.chunkMap).rdpl$isExistingChunkFull(next)) { existing.add(next.toLong()); }
+            chunks.addRegionTicket(TICKET, next, 0, next);
+            ticketed.add(next.toLong());
+            unfollowed.addLast(next);
         }
         speak();
-        if (!order.hasNext() && flying == 0) { finish(level); }
+        if (!order.hasNext() && flying.isEmpty()) { finish(level); }
     }
 
-    private void landed(boolean success, @Nullable Throwable thrown) {
-        flying--;
+    private void follow(ServerChunkCache chunks) {
+        for (int waiting = unfollowed.size(); waiting > 0; waiting--) {
+            ChunkPos pos = unfollowed.removeFirst();
+            ChunkHolder holder = ((IChunkMap) chunks.chunkMap).rdpl$getVisibleChunkIfPresent(pos.toLong());
+            if (holder == null) {
+                unfollowed.addLast(pos);
+                continue;
+            }
+            holder.getOrScheduleFuture(ChunkStatus.FULL, chunks.chunkMap).whenCompleteAsync((result, thrown) -> landed(pos, result != null && result.left().isPresent(), thrown), server);
+        }
+    }
+
+    private void settle(ServerChunkCache chunks) {
+        long until = System.currentTimeMillis() + SETTLE_MS;
+        server.managedBlock(() -> {
+            follow(chunks);
+            chunks.tick(() -> false, false);
+            chunks.pollTask();
+            return flying.isEmpty() || System.currentTimeMillis() >= until;
+        });
+        if (!flying.isEmpty()) { ContentLog.LOGGER.warn("{} chunk(s) of land had not come back {} seconds after the server began stopping, so they are left for the game to close and their tile is made again on the next load", flying.size(), SETTLE_MS / 1000L); }
+    }
+
+    private void letGoFar(ServerLevel level) {
+        LongIterator held = ticketed.iterator();
+        while (held.hasNext()) {
+            ChunkPos pos = new ChunkPos(held.nextLong());
+            if (order.nearTile(pos.x, pos.z, NEIGHBORS)) { continue; }
+            level.getChunkSource().removeRegionTicket(TICKET, pos, 0, pos);
+            held.remove();
+        }
+    }
+
+    private void letGo(@Nullable ServerLevel level) {
+        unfollowed.clear();
+        flying.clear();
+        existing.clear();
+        if (level != null) {
+            for (long key : ticketed) {
+                ChunkPos pos = new ChunkPos(key);
+                level.getChunkSource().removeRegionTicket(TICKET, pos, 0, pos);
+            }
+        }
+        ticketed.clear();
+    }
+
+    private void landed(ChunkPos pos, boolean success, @Nullable Throwable thrown) {
+        if (!flying.remove(pos.toLong())) { return; }
         done++;
-        if (success) { made++; }
+        if (flying.isEmpty()) { pin(); }
+        boolean known = existing.remove(pos.toLong());
+        if (success) {
+            made++;
+            if (!known) { fresh++; }
+        }
         else {
             failed++;
-            if (thrown != null && failed <= 3) { ContentLog.LOGGER.error("A chunk asked for while making land could not be made", thrown); }
+            if (thrown != null && failed <= 3) { ContentLog.LOGGER.error("The chunk at {}, {}, asked for while making land, could not be made", pos.x, pos.z, thrown); }
         }
-        progress = sofar();
+        ContentPregenHold.progress = ContentPregenProgress.sofar(this);
+        if ((done & 255L) == 0L) { telemetry(); }
         int tenth = (int) (done * 10L / Math.max(1L, order.total()));
         if (tenth > loggedAt) {
             loggedAt = tenth;
-            if (!progress.isEmpty()) { ContentLog.LOGGER.info(progress); }
+            if (!ContentPregenHold.progress.isEmpty()) { ContentLog.LOGGER.info(ContentPregenHold.progress); }
         }
     }
 
-    private void watch() {
+    private void telemetry() {
+        ServerLevel level = server.getLevel(dimension);
+        if (level == null) { return; }
+        Runtime memory = Runtime.getRuntime();
+        long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
+        ContentLog.LOGGER.debug("Pregen telemetry: chunks={}/{} tile={}/{} loadedChunks={} heap={}/{}MB", done, order.total(), order.tile(), order.tiles(), level.getChunkSource().getLoadedChunksCount(), used, memory.maxMemory() >> 20);
+    }
+
+    private void pin() {
+        safeTile = order.tile();
+        safeWithin = order.within();
+    }
+
+    private void remember() {
+        if (!ContentPregenDimensions.picksUpAgain()) { return; }
+        CompoundTag spot = new CompoundTag();
+        spot.putInt("size", order.tileSize());
+        spot.putLong("tile", safeTile);
+        spot.putLong("within", safeWithin);
+        PregenMemory.of(server).setMadeIn(dimension.location().toString(), spot);
+    }
+
+    private boolean stalled() {
         long now = System.currentTimeMillis();
         if (done != watchedDone) {
             watchedDone = done;
             watchedAt = now;
-            return;
+            return false;
         }
-        if (now - watchedAt < STALL_MS) { return; }
-        ContentLog.LOGGER.error("Making land in {} has not moved past {} of {} chunk(s) for a minute, so it is being stopped rather than left hanging. What went wrong should be written above this line", dimension.location(), done, order.total());
+        return now - Math.max(watchedAt, worldgenAt) >= STALL_MS;
+    }
+
+    private void giveUp(ServerLevel level) {
+        List<String> stuck = new ArrayList<>();
+        LongIterator out = flying.iterator();
+        while (out.hasNext() && stuck.size() < 8) {
+            long key = out.nextLong();
+            ChunkHolder holder = ((IChunkMap) level.getChunkSource().chunkMap).rdpl$getVisibleChunkIfPresent(key);
+            ChunkStatus reached = holder == null ? null : holder.getLastAvailableStatus();
+            stuck.add(ChunkPos.getX(key) + ", " + ChunkPos.getZ(key) + (holder == null ? " not taken up by the game" : reached == null ? " not begun" : " stuck at " + reached));
+        }
+        ContentLog.LOGGER.error("Making land in {} has not moved past {} of {} chunk(s) for a minute, with no land generated anywhere in that time, so it is being stopped rather than left hanging. {} chunk(s) asked for never came back and {} were refused before this: {}", dimension.location(), done, order.total(), flying.size(), failed, stuck.isEmpty() ? "none is out, the run was waiting on a player's chunk" : String.join("; ", stuck));
         stopping = true;
-        flying = 0;
+        finish(level);
+    }
+
+    private void checkpoint(ServerLevel level) {
+        long now = System.currentTimeMillis();
+        if (checkpointed == 0L) { checkpointed = now; }
+        if (now - checkpointed < Math.max(120000L, checkpointCost * 100L)) { return; }
+        checkpointed = now;
+        long writing = System.nanoTime();
+        try {
+            PregenMemory.of(server).setDirty();
+            server.overworld().getDataStorage().save();
+            if (level != server.overworld()) { level.getDataStorage().save(); }
+        }
+        catch (RuntimeException oops) { ContentLog.LOGGER.error("The safeguard save of the world records failed, so a crash from here would lose progress made since the last one that worked", oops); }
+        long spent = (System.nanoTime() - writing) / 1000000L;
+        checkpointCost = spent;
+        ContentLog.LOGGER.debug("Safeguard save of the world records took {} ms at {} chunk(s)", spent, done);
+        if (spent > 500L) { ContentLog.LOGGER.info("The safeguard save of the world records took {} ms and grows with the land already made; this is the checkpoint cost, not generation", spent); }
     }
 
     private void speak() {
         long now = System.currentTimeMillis();
         if (now - spoke < 10000L) { return; }
         spoke = now;
-        ContentLog.LOGGER.info(report());
-        if (!picksUpAgain()) { return; }
-        PregenMemory.of(server).setMadeAt(dimension.location().toString(), (int) Math.min(Integer.MAX_VALUE, done - flying));
+        ContentLog.LOGGER.info(ContentPregenProgress.report(this));
+        remember();
     }
 
     private void finish(@Nullable ServerLevel level) {
         if (running != this) { return; }
         running = null;
-        progress = "";
-        stillUntil = System.currentTimeMillis() + STILL_AFTER_MS;
+        letGo(level);
         boolean whole = level != null && !stopping && !order.hasNext();
+        if (whole) { ContentPregenHold.tellBar(server, ContentPregenHold.progress); }
+        ContentPregenHold.progress = "";
+        stillUntil = System.currentTimeMillis() + STILL_AFTER_MS;
+        sweepUntil = System.currentTimeMillis() + SWEEP_AFTER_MS;
         String id = dimension.location().toString();
         PregenMemory memory = PregenMemory.of(server);
         if (level != null) {
-            if ((whole || (stopping && !picksUpAgain())) && reach > memory.madeTo(id)) { memory.setMadeTo(id, reach); }
-            memory.setMadeAt(id, whole || !picksUpAgain() ? 0 : (int) Math.min(Integer.MAX_VALUE, done - flying));
+            if ((whole || (stopping && !ContentPregenDimensions.picksUpAgain())) && reach > memory.madeTo(id)) { memory.setMadeTo(id, reach); }
+            if (whole || !ContentPregenDimensions.picksUpAgain()) { memory.setMadeIn(id, null); }
+            else { remember(); }
             memory.setRun(null);
         }
-        ContentLog.LOGGER.info("Finished. {}", report());
-        if (stopping) { PENDING.clear(); }
-        if (chaining && !PENDING.isEmpty()) { nextDimension(server, wantedRadius); }
-        else { chaining = false; }
+        ContentLog.LOGGER.info("Finished. {}", ContentPregenProgress.report(this));
+        if (stopping) { ContentPregenDimensions.PENDING.clear(); }
+        if (ContentPregenDimensions.chaining && !ContentPregenDimensions.PENDING.isEmpty()) { ContentPregenDimensions.nextDimension(server, ContentPregenDimensions.wantedRadius); }
+        else { ContentPregenDimensions.chaining = false; }
         if (running == null) {
-            String ending = stopping ? defaulted("pregenStoppedSays", Config.chunks.pregenStoppedSays(), Config.PREGEN_STOPPED, "rdpl.pregen.stopped", null) : defaulted("pregenFinishedSays", Config.chunks.pregenFinishedSays(), Config.PREGEN_FINISHED, "rdpl.pregen.done", null);
+            String ending = stopping ? ContentPregenProgress.defaulted("pregenStoppedSays", Config.chunks.pregenStoppedSays(), Config.PREGEN_STOPPED, "rdpl.pregen.stopped", null) : ContentPregenProgress.defaulted("pregenFinishedSays", Config.chunks.pregenFinishedSays(), Config.PREGEN_FINISHED, "rdpl.pregen.done", null);
             if (!ending.isEmpty() && chainBegun != 0L) {
                 long took = (System.currentTimeMillis() - chainBegun) / 1000L;
                 ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);
             }
             chainBegun = 0L;
-            if (!stopping) { keepPristine(server); }
             Says.tellAll(server, ending, ChatFormatting.GREEN);
-            releaseEveryone(server, !stopping);
+            if (!stopping) { keepPristine(server); }
+            ContentPregenHold.releaseEveryone(server, !stopping);
         }
-        if (asked != null) { asked.sendSystemMessage(Component.literal(Lang.tr(asked, "rdpl.pregen.finished", report())).withStyle(ChatFormatting.GREEN)); }
-    }
-
-    public static void tellBar(MinecraftServer server, String said) {
-        ClientboundSetActionBarTextPacket packet = new ClientboundSetActionBarTextPacket(Component.literal(said));
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { player.connection.send(packet); }
+        if (asked != null && !asked.isPlayer()) { asked.sendSystemMessage(Component.literal(Lang.tr("rdpl.pregen.finished", ContentPregenProgress.report(this))).withStyle(ChatFormatting.GREEN)); }
     }
 
     private static void keepPristine(MinecraftServer server) {
         if (!ContentControl.flag(ContentControl.CHUNKS, "pregenBackup", Config.chunks.pregenBackup()) || ContentPristine.already(server)) { return; }
-        String said = says("pregenBackupSays", Config.chunks.pregenBackupSays());
+        String said = ContentPregenProgress.says("pregenBackupSays", Config.chunks.pregenBackupSays());
         try { server.saveAllChunks(true, true, true); }
         catch (RuntimeException notSaved) { ContentLog.LOGGER.warn("The worlds could not be flushed before the pristine copy, copying what is on disk", notSaved); }
         long begun = System.currentTimeMillis();
@@ -490,55 +412,11 @@ public final class ContentPregen {
         int files = ContentPristine.take(server, along -> {
             if (said.isEmpty() || along == last[0]) { return; }
             last[0] = along;
-            tellBar(server, said + " " + along + "%");
+            ContentPregenHold.tellBar(server, said + " " + along + "%");
         });
         if (files > 0) { ContentPristine.mark(server); }
-        if (files > 0 && !said.isEmpty()) { tellBar(server, said + " " + Lang.tr("rdpl.pregen.done")); }
+        if (files > 0 && !said.isEmpty()) { ContentPregenHold.tellBar(server, said + " " + Lang.tr("rdpl.pregen.done")); }
         ContentLog.LOGGER.info("The pristine copy took {} ms", System.currentTimeMillis() - begun);
-    }
-
-    public static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
-
-    private static String defaulted(String key, String fallback, String shipped, String langKey, @Nullable ServerPlayer player) {
-        String said = says(key, fallback);
-        if (!said.equals(shipped.trim())) { return said; }
-        return player == null ? Lang.tr(langKey) : Lang.tr(player, langKey);
-    }
-
-    private String sofar() {
-        String wording = defaulted("pregenRunningSays", Config.chunks.pregenRunningSays(), Config.PREGEN_RUNNING, "rdpl.pregen.running", null);
-        if (wording.isEmpty()) { return ""; }
-        long stepped = Math.min(100L, done * 100L / Math.max(1L, order.total()));
-        try { return String.format(wording, order.hasNext() || flying > 0 ? stepped : 100L, dimension.location()) + eta(); }
-        catch (IllegalFormatException wrong) {
-            ContentLog.LOGGER.error("A pack words the message about land being made as '{}', which is not something a number can be put into, so it is said as it stands", wording, wrong);
-            return wording + eta();
-        }
-    }
-
-    private String eta() {
-        long total = order.total();
-        if (begun == 0L || done <= resumedFrom || done >= total) { return ""; }
-        long now = System.currentTimeMillis();
-        if (etaFigured == 0L || now - etaFigured >= 5000L) {
-            if (etaAt != 0L && now > etaAt && done > etaMade) {
-                double lately = (done - etaMade) * 1000.0D / (now - etaAt);
-                etaRate = etaRate == 0.0D ? lately : etaRate * 0.9D + lately * 0.1D;
-            }
-            etaAt = now;
-            etaMade = done;
-            etaFigured = now;
-            if (etaRate > 0.0D) { etaSeconds = (long) ((total - done) / etaRate); }
-        }
-        if (etaRate <= 0.0D) { return ""; }
-        long left = Math.max(0L, etaSeconds - (now - etaFigured) / 1000L);
-        return Lang.tr("rdpl.pregen.eta", left / 3600L, left / 60L % 60L, left % 60L);
-    }
-
-    private String report() {
-        long seconds = Math.max(1L, (System.currentTimeMillis() - started) / 1000L);
-        long rate = (done - resumedFrom) / seconds;
-        return String.format("Made %d of %d chunk(s) in %s, %d of them new or loaded, %d refused, at %d a second with %d asked for at once", done, order.total(), dimension.location(), made, failed, rate, inFlight);
     }
 
     private static boolean playersLoaded(MinecraftServer server) {
@@ -550,186 +428,25 @@ public final class ContentPregen {
         return true;
     }
 
-    private static void freezeSky(MinecraftServer server) {
-        ClientboundSetTimePacket still = new ClientboundSetTimePacket(server.overworld().getGameTime(), heldDayTime, false);
-        for (Held held : HELD.values()) { held.player.connection.send(still); }
-    }
-
-    public static void anchored(ServerPlayer player) {
-        Held held = HELD.get(player.getUUID());
-        if (held != null) { held.rebase(player); }
-    }
-
-    public static void holdEveryone(MinecraftServer server, boolean fog) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { hold(player, fog); }
-    }
-
-    private static void hold(ServerPlayer player, boolean fog) {
-        if (HELD.containsKey(player.getUUID())) { return; }
-        CompoundTag data = player.getPersistentData();
-        GameType before = data.contains(HELD_MODE) ? GameType.byId(data.getInt(HELD_MODE)) : player.gameMode.getGameModeForPlayer();
-        data.putInt(HELD_MODE, before.getId());
-        Held held = new Held(player, before);
-        HELD.put(player.getUUID(), held);
-        player.setGameMode(GameType.SPECTATOR);
-        RDPLNetwork.sendHold(player, true, held.warning, fog);
-        if (!RDPLNetwork.reaches(player)) { flash(player, held); }
-        player.connection.send(new ClientboundSetTimePacket(player.serverLevel().getGameTime(), heldDayTime, false));
-        startFlashing();
-    }
-
-    private static synchronized void startFlashing() {
-        if (flasher != null) { return; }
-        BEATS.set(0L);
-        lastSaid = "";
-        flasher = Executors.newSingleThreadScheduledExecutor(run -> {
-            Thread beat = new Thread(run, "RDPL pregen spectator titles");
-            beat.setDaemon(true);
-            return beat;
-        });
-        flasher.scheduleAtFixedRate(ContentPregen::flashHeld, 250L, 250L, TimeUnit.MILLISECONDS);
-    }
-
-    private static synchronized void stopFlashing() {
-        if (flasher == null) { return; }
-        flasher.shutdown();
-        flasher = null;
-    }
-
-    private static void flashHeld() {
-        ContentPregen live = running;
-        String said = live == null ? progress : live.sofar();
-        if (!said.isEmpty()) { progress = said; }
-        long beat = BEATS.getAndIncrement();
-        boolean titles = beat % 6L == 0L;
-        boolean keepAlive = beat % 8L == 0L;
-        boolean changed = !said.isEmpty() && !said.equals(lastSaid);
-        if (changed) { lastSaid = said; }
-        for (Held held : HELD.values()) {
-            if (titles && !RDPLNetwork.reaches(held.player)) { flash(held.player, held); }
-            if (changed || (keepAlive && !said.isEmpty())) { held.player.displayClientMessage(Component.literal(said).withStyle(ChatFormatting.YELLOW), true); }
-        }
-    }
-
-    private static void holdTick(MinecraftServer server) {
-        if (HELD.isEmpty()) { return; }
-        if (!busy()) {
-            int stranded = 0;
-            for (UUID id : HELD.keySet()) {
-                if (!ContentIntroPlay.reading(id) && server.getPlayerList().getPlayer(id) != null) { stranded++; }
-            }
-            if (stranded > 0) {
-                ContentLog.LOGGER.warn("{} player(s) were still held as spectators with no land being made, so they are released now; the release at the end of the run was missed", stranded);
-                releaseEveryone(server, true);
-                return;
-            }
-        }
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            Held held = HELD.get(player.getUUID());
-            if (held == null) { continue; }
-            if (!player.level().dimension().equals(held.dimension)) { held.rebase(player); }
-            else if (held.strayed(player)) { player.connection.teleport(held.x, held.y, held.z, held.yaw, held.pitch); }
-        }
-    }
-
-    private static void flash(ServerPlayer player, Held held) {
-        if (held.warning.isEmpty()) { return; }
-        player.connection.send(new ClientboundSetTitlesAnimationPacket(0, 15, 10));
-        player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(held.warning).withStyle(ChatFormatting.RED)));
-        player.connection.send(new ClientboundSetTitleTextPacket(Component.empty()));
-    }
-
-    public static void releaseEveryone(MinecraftServer server, boolean welcomed) {
-        if (HELD.isEmpty()) { return; }
-        stopFlashing();
-        int released = 0;
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            Held held = HELD.get(player.getUUID());
-            if (held == null || ContentIntroPlay.reading(player.getUUID())) { continue; }
-            HELD.remove(player.getUUID());
-            release(player, held);
-            if (welcomed) { ContentWelcome.welcome(player); }
-            released++;
-        }
-        HELD.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
-        if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentTerrain.worldGameMode().isEmpty() ? "the mode they had" : ContentTerrain.worldGameMode()); }
-    }
-
-    public static boolean releaseAfterIntro(ServerPlayer player) {
-        if (busy()) { return false; }
-        Held held = HELD.remove(player.getUUID());
-        if (held == null) { return false; }
-        release(player, held);
-        ContentWelcome.welcome(player);
-        return true;
-    }
-
-    private static void release(ServerPlayer player, Held held) {
-        String mode = ContentTerrain.worldGameMode().trim();
-        GameType asked = mode.isEmpty() ? null : GameType.byName(mode.toLowerCase(java.util.Locale.ROOT), null);
-        player.setGameMode(asked == null ? held.before : asked);
-        player.getPersistentData().remove(HELD_MODE);
-        player.setPortalCooldown();
-        ServerLevel level = player.serverLevel();
-        player.connection.send(new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)));
-        RDPLNetwork.sendHold(player, false, "", false);
-        player.connection.send(new ClientboundClearTitlesPacket(true));
-    }
-
-    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        startWhenEntered(player.server, player.level().dimension());
-        if (pendingStart != null) {
-            if (startTick < 0) { startTick = player.server.getTickCount() + 60; }
-            heldDayTime = player.server.overworld().getDayTime();
-            hold(player, true);
-            return;
-        }
-        ContentPregen worker = running;
-        if (worker == null) { return; }
-        hold(player, true);
-        String said = worker.sofar();
-        if (!said.isEmpty()) { Says.tell(player, said, ChatFormatting.YELLOW); }
-    }
-
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        Held held = HELD.remove(player.getUUID());
-        if (HELD.isEmpty()) { stopFlashing(); }
-        if (held != null) { release(player, held); }
-    }
-
-    public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { startWhenEntered(player.server, event.getTo()); }
-    }
-
-    public static void onTravel(EntityTravelToDimensionEvent event) {
-        if (busy()) { event.setCanceled(true); }
-    }
-
-    public static void onTeleport(EntityTeleportEvent event) {
-        if (busy() && (event instanceof EntityTeleportEvent.EnderPearl || event instanceof EntityTeleportEvent.EnderEntity || event instanceof EntityTeleportEvent.ChorusFruit)) { event.setCanceled(true); }
-    }
-
     public static void onServerStopping(ServerStoppingEvent event) {
         ContentPregen worker = running;
         if (worker != null) {
             ContentLog.LOGGER.info("The server is stopping while land is still being made in {}, so the run is wound down at {} chunk(s) to be picked up on the next load", worker.dimension.location(), worker.done);
             worker.stopping = true;
-            worker.flying = 0;
-            worker.finish(event.getServer().getLevel(worker.dimension));
-            PregenMemory.of(event.getServer()).setRun(runRecord(worker.dimension, worker.middleX, worker.middleZ, worker.reach));
+            ServerLevel level = event.getServer().getLevel(worker.dimension);
+            if (level != null) { worker.settle(level.getChunkSource()); }
+            if (!worker.flying.isEmpty()) { worker.ticketed.clear(); }
+            worker.flying.clear();
+            worker.finish(level);
+            PregenMemory.of(event.getServer()).setRun(ContentPregenDimensions.runRecord(worker.dimension, worker.middleX, worker.middleZ, worker.reach));
         }
-        releaseEveryone(event.getServer(), false);
+        ContentPregenHold.releaseEveryone(event.getServer(), false);
         pendingStart = null;
         startTick = -1;
-        PENDING.clear();
-        chaining = false;
+        ContentPregenDimensions.PENDING.clear();
+        ContentPregenDimensions.chaining = false;
         chainBegun = 0L;
-        wantedRadius = 0;
-        HELD.clear();
-        stopFlashing();
+        ContentPregenDimensions.wantedRadius = 0;
+        ContentPregenHold.forgetHeld();
     }
-
-    public static boolean welcomesLater(ServerPlayer player) { return busy() || HELD.containsKey(player.getUUID()); }
 }

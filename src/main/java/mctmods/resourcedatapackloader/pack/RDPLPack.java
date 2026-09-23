@@ -49,7 +49,7 @@ public final class RDPLPack {
         this.root = root;
         this.owned = owned;
         this.ownedNamespaces = ownedNamespaces;
-        this.ported = Port.legacy(root) ? new Ported(name, root) : null;
+        this.ported = ownedNamespaces == null && Port.legacy(root) ? new Ported(name, root) : null;
         buildIndex();
         if (ported != null) { ported.report(); }
     }
