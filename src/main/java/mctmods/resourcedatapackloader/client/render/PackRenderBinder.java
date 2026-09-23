@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.render;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.entity.EntityReturningThrow;
+import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -16,6 +17,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
     @SubscribeEvent public static void bind(ModelRegistryEvent event) {
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityPackContainer.class, new PackContainerRenderer());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEntityPackBell.class, new PackBellRenderer());
         RenderingRegistry.registerEntityRenderingHandler(EntityReturningThrow.class, RenderReturningThrow::new);
     }
 }

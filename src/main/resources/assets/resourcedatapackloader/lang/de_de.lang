@@ -124,3 +124,7 @@ rdpl.world.packOptions=Pack-Optionen haben diese Welt verändert, von der vorher
 rdpl.world.type=Das ist eine %s-Welt
 key.categories.resourcedatapackloader=Resource Data Pack Loader
 key.resourcedatapackloader.pouch=Getragenen Behälter öffnen
+rdpl.debug.gamemodes.error=Spielmodusauswahl kann wegen fehlender Berechtigung nicht geöffnet werden
+rdpl.debug.gamemodes.help=F3 + F4 = Spielmodusauswahl öffnen
+rdpl.debug.gamemodes.press_f4=[ F4 ]
+rdpl.debug.gamemodes.select_next=%s Nächster

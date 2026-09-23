@@ -54,7 +54,5 @@ public class EntryLocation3D implements IKey {
 
 	public static class Provider implements IKeyProvider {
 		@Override public int getKeyCount(RegionKey key) { return ENTRIES_PER_REGION; }
-
-		@Override public boolean isValid(RegionKey key) { return key.getName().matches("-?\\d+\\.-?\\d+\\.-?\\d+\\.3dr"); }
 	}
 }

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.village;
 
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsPaving;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -57,7 +57,7 @@ public class MergePiece extends StructureVillagePieces.Road {
     }
 
     @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox clip) {
-        BeardRoads.paveMerge(this, world, clip);
+        BeardRoadsPaving.paveMerge(this, world, clip);
         return true;
     }
 }

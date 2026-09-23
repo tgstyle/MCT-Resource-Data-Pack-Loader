@@ -5,6 +5,4 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key.Reg
 
 public interface IKeyProvider {
     int getKeyCount(RegionKey key);
-
-    boolean isValid(RegionKey key);
 }

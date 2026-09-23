@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.portal;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.block.ContentBlockPortal;
 import mctmods.resourcedatapackloader.content.def.PortalFrameDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -30,7 +30,7 @@ public final class ContentPortalFrames {
         if (!GENERATION.stale()) { return; }
         DEFS.clear();
         Json.eachFile(PackManager.PORTALFRAMES, "portal frame", (key, contents) -> {
-            PortalFrameDef def = ContentParser.portalFrame(key, contents);
+            PortalFrameDef def = ContentParserWorlds.portalFrame(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
         if (!DEFS.isEmpty()) { ContentLog.LOGGER.info("Loaded {} portal frame(s): {}", DEFS.size(), DEFS.keySet()); }

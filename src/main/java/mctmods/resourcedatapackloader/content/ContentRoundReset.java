@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
-import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 
@@ -78,7 +78,7 @@ public final class ContentRoundReset {
         decide(server);
         if (voting == null || voting.reset.tallySays.isEmpty()) { return; }
         int[] counted = counted(server);
-        ContentPregen.tellBar(server, voting.reset.tallySays.replace("{yes}", Integer.toString(counted[0]))
+        ContentPregenHold.tellBar(server, voting.reset.tallySays.replace("{yes}", Integer.toString(counted[0]))
                 .replace("{no}", Integer.toString(counted[1])).replace("{seconds}", Integer.toString(left)));
     }
 

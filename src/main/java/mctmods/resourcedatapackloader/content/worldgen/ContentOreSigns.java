@@ -18,8 +18,8 @@ import java.util.Random;
 public final class ContentOreSigns {
     private ContentOreSigns() {}
 
-    public static int place(World world, WorldgenDef def, BlockPos origin, int lowX, int lowZ, int highX, int highZ) {
-        if (def.indicators.isEmpty()) { return 0; }
+    public static void place(World world, WorldgenDef def, BlockPos origin, int lowX, int lowZ, int highX, int highZ) {
+        if (def.indicators.isEmpty()) { return; }
         Random random = SeededRandom.at(world, origin.getX(), origin.getZ());
         int count = def.indicatorCount.pick(random);
         int reach = footprint(def) + def.indicatorSpread;
@@ -43,7 +43,6 @@ public final class ContentOreSigns {
             laid++;
         }
         if (laid > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Left {} indicator block(s) on the surface over the {} at {}, {}, {}", laid, def.registryName, origin.getX(), origin.getY(), origin.getZ()); }
-        return laid;
     }
 
     private static int footprint(WorldgenDef def) { return def.getShape() instanceof ContentOreVein ? ContentOreVein.REACH : Math.max(1, def.shape.radius.most); }

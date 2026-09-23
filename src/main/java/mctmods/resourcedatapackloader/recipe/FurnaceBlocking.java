@@ -45,14 +45,9 @@ public final class FurnaceBlocking {
         }
         String owner = Stacks.namespace(result);
         if (owner == null) { return false; }
-        if (blockedMods().contains(owner)) { return count(owner); }
-        if (ContentControl.flag(ContentControl.RECIPES, "blockFurnaceRecipes", Config.recipes.blockFurnaceRecipes) && !allowedMods().contains(owner)) { return count(owner); }
-        return false;
-    }
-
-    private static boolean count(String owner) {
-        BLOCKED.count(owner);
-        return true;
+        boolean blocked = blockedMods().contains(owner) || (ContentControl.flag(ContentControl.RECIPES, "blockFurnaceRecipes", Config.recipes.blockFurnaceRecipes) && !allowedMods().contains(owner));
+        if (blocked) { BLOCKED.count(owner); }
+        return blocked;
     }
 
     private static Set<String> allowedMods() { return WHITELIST.get(() -> Settings.lower(ContentControl.list(ContentControl.RECIPES, "furnaceWhitelist", Config.recipes.furnaceWhitelist))); }

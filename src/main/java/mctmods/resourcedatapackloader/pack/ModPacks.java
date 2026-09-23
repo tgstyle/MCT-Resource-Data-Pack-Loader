@@ -33,7 +33,8 @@ public final class ModPacks {
     static final String IN_JAR = PackManager.ROOT_DIRECTORY;
     private static final String ASSETS_PREFIX = IN_JAR + "/" + RDPLPack.ASSETS + "/";
     private static final String MCMOD_INFO = "mcmod.info";
-    private static final String CONTROL_FILE = "mods.json";
+    static final String CONTROL_STEM = "mods";
+    private static final String CONTROL_FILE = CONTROL_STEM + "." + PackManager.JSON;
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
     static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -105,9 +106,10 @@ public final class ModPacks {
     @Nullable private static RDPLPack open(Found entry, int priority) {
         FileSystem jar = null;
         try {
-            jar = FileSystems.newFileSystem(entry.jar.toPath(), null);
+            Path archive = entry.jar.toPath();
+            jar = FileSystems.newFileSystem(archive, null);
             Path root = jar.getPath("/" + IN_JAR);
-            RDPLPack pack = new RDPLPack(entry.modId, priority, false, root, jar, entry.namespaces);
+            RDPLPack pack = new RDPLPack(entry.modId, priority, false, root, jar, archive, entry.namespaces);
             if (pack.getNamespaces().isEmpty()) {
                 ContentLog.LOGGER.warn("Mod pack '{}' has a '{}' folder but nothing usable under '{}/{}'", entry.modId, IN_JAR, IN_JAR, RDPLPack.ASSETS);
                 jar.close();

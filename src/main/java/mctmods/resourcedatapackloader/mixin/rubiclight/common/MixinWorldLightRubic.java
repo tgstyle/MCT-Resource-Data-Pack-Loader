@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(World.class) public abstract class MixinWorldLightRubic implements IRubicWorldInternal {
-    @Shadow protected int skylightSubtracted;
+    @Shadow private int skylightSubtracted;
 
     @Shadow public abstract Chunk getChunk(BlockPos pos);
 

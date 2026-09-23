@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
@@ -38,7 +38,7 @@ public class ContentStructureMaps {
         if (loaded) { return; }
         loaded = true;
         Json.eachFile(PackManager.STRUCTUREMAPS, "structure map", (key, contents) -> {
-            StructureMapDef def = ContentParser.structureMap(key, contents);
+            StructureMapDef def = ContentParserWorlds.structureMap(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
         if (!DEFS.isEmpty()) { ContentLog.LOGGER.debug("Loaded {} structure map(s): {}", DEFS.size(), DEFS.keySet()); }

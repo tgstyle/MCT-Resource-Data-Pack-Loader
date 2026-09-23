@@ -37,7 +37,7 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
     private int getNextIndex(int index) { return (index + 1) & this.mask; }
 
 
-    @SuppressWarnings("unchecked") @Nullable public T put(T value) {
+    public void put(T value) {
         int x = value.getX();
         int z = value.getZ();
         int index = getIndex(x, z);
@@ -45,7 +45,7 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         while (bucket != null) {
             if (bucket.getX() == x && bucket.getZ() == z) {
                 this.buckets[index] = value;
-                return (T) bucket;
+                return;
             }
             index = getNextIndex(index);
             bucket = this.buckets[index];
@@ -53,7 +53,6 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         this.buckets[index] = value;
         ++this.size;
         if (this.size > this.loadThreshold) { grow(); }
-        return null;
     }
 
     @SuppressWarnings("unchecked") @Nullable public T remove(int x, int z) {
@@ -70,7 +69,7 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         return null;
     }
 
-    @Nullable public T remove(T value) { return this.remove(value.getX(), value.getZ()); }
+    public void remove(T value) { this.remove(value.getX(), value.getZ()); }
 
     @SuppressWarnings("unchecked") @Nullable public T get(int x, int z) {
         IXZAddressable[] slots = this.buckets;

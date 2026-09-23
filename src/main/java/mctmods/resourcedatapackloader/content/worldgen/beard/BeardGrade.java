@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import java.util.Arrays;
 import javax.annotation.Nullable;
@@ -220,44 +221,97 @@ public final class BeardGrade {
                 least = Math.min(least, profile[k]);
             }
             int[] before = profile.clone();
-            boolean laidOut = false;
-            for (int spacing = run; spacing >= 1 && !laidOut; spacing = spacing == 1 ? 0 : 1) {
-                for (int deck = most; deck >= least; deck--) {
-                    int laid = layDeck(profile, keep, i, end, deck, run);
-                    if (!stepped(profile, before, spacing, run)) {
-                        leveled += laid;
-                        laidOut = true;
-                        break;
-                    }
-                    System.arraycopy(before, 0, profile, 0, rows);
+            for (int deck = most; deck >= least; deck--) {
+                int laid = layDeck(profile, before, keep, i, end, deck, run);
+                if (!stepped(profile, before, run)) {
+                    leveled += laid;
+                    break;
                 }
+                System.arraycopy(before, 0, profile, 0, rows);
             }
             i = end + 1;
         }
         return leveled;
     }
 
-    private static int layDeck(int[] profile, boolean[] keep, int first, int last, int deck, int run) {
+    public static int groundDeckEnds(World world, boolean alongX, int rowLeast, int acrossLeast, int acrossMost, int[] profile, boolean[] bridged) {
+        if (BeardSurface.unreadable(world)) { return 0; }
+        int rows = profile.length;
+        int width = acrossMost - acrossLeast + 1;
+        boolean[] landed = new boolean[rows];
+        for (int i = 0; i < rows; i++) {
+            if (!bridged[i] || profile[i] == Integer.MIN_VALUE) { continue; }
+            int standing = 0;
+            for (int at = acrossLeast; at <= acrossMost; at++) {
+                int top = BeardSurface.surfaceAt(world, alongX ? rowLeast + i : at, alongX ? at : rowLeast + i);
+                if (top >= profile[i] - 1 || (top == profile[i] - 2 && profile[i] - 1 < world.getSeaLevel())) { standing++; }
+            }
+            landed[i] = standing * 2 > width;
+        }
+        int trimmed = 0;
+        int i = 0;
+        while (i < rows) {
+            if (!bridged[i]) {
+                i++;
+                continue;
+            }
+            int end = i;
+            while (end + 1 < rows && bridged[end + 1]) { end++; }
+            int first = i;
+            for (; first <= end && landed[first]; first++) {
+                bridged[first] = false;
+                trimmed++;
+            }
+            for (int last = end; last >= first && landed[last]; last--) {
+                bridged[last] = false;
+                trimmed++;
+            }
+            i = end + 1;
+        }
+        return trimmed;
+    }
+
+    static void walk(int[] profile, int[] target, boolean[] fixed, boolean[] claimed, int from, int dir, int level, int climb) {
+        int last = from - dir * climb;
+        for (int row = from; row >= 0 && row < profile.length && !fixed[row] && !claimed[row]; row += dir) {
+            boolean spaced = (row - last) * dir >= climb;
+            if (target[row] == level && spaced) { return; }
+            if (spaced && target[row] != level) {
+                level += target[row] > level ? 1 : -1;
+                last = row;
+            }
+            profile[row] = level;
+            claimed[row] = true;
+        }
+    }
+
+    private static int layDeck(int[] profile, int[] before, boolean[] keep, int first, int last, int deck, int run) {
         int laid = 0;
         for (int k = first; k <= last; k++) {
             if (profile[k] == deck) { continue; }
             profile[k] = deck;
             laid++;
         }
+        if (run > 1) {
+            boolean[] claimed = new boolean[profile.length];
+            walk(profile, before, keep, claimed, first - 1, -1, deck, run);
+            walk(profile, before, keep, claimed, last + 1, 1, deck, run);
+            return laid;
+        }
         for (int k = first - 1, away = 1; k >= 0 && !keep[k] && profile[k] != Integer.MIN_VALUE; k--, away++) {
-            int want = deck - (away + run - 1) / run;
-            if (profile[k] >= want) { break; }
+            int want = MathHelper.clamp(profile[k], deck - away, deck + away);
+            if (profile[k] == want) { break; }
             profile[k] = want;
         }
         for (int k = last + 1, away = 1; k < profile.length && !keep[k] && profile[k] != Integer.MIN_VALUE; k++, away++) {
-            int want = deck - (away + run - 1) / run;
-            if (profile[k] >= want) { break; }
+            int want = MathHelper.clamp(profile[k], deck - away, deck + away);
+            if (profile[k] == want) { break; }
             profile[k] = want;
         }
         return laid;
     }
 
-    private static boolean stepped(int[] profile, int[] before, int spacing, int run) {
+    private static boolean stepped(int[] profile, int[] before, int run) {
         int lo = -1;
         int hi = -1;
         for (int k = 0; k < profile.length; k++) {
@@ -273,7 +327,7 @@ public final class BeardGrade {
             if (profile[k] == Integer.MIN_VALUE || profile[k - 1] == Integer.MIN_VALUE) { continue; }
             if (Math.abs(profile[k] - profile[k - 1]) > 1) { return true; }
             if (profile[k] == profile[k - 1]) { continue; }
-            if (last != Integer.MIN_VALUE && k - last < spacing) { return true; }
+            if (last != Integer.MIN_VALUE && k - last < run) { return true; }
             last = k;
         }
         return false;
@@ -502,10 +556,19 @@ public final class BeardGrade {
 
     public static boolean walkable(int[] profile, boolean[] bridged) {
         int held = Integer.MIN_VALUE;
+        int boarded = Integer.MIN_VALUE;
+        int left = Integer.MIN_VALUE;
         for (int i = 0; i < profile.length; i++) {
-            if (profile[i] == Integer.MIN_VALUE || bridged[i]) { continue; }
-            if (held != Integer.MIN_VALUE && Math.abs(profile[i] - held) > 1) { return false; }
+            if (profile[i] == Integer.MIN_VALUE) { continue; }
+            if (bridged[i]) {
+                if (boarded == Integer.MIN_VALUE) { boarded = profile[i]; }
+                left = profile[i];
+                continue;
+            }
+            boolean crossed = boarded != Integer.MIN_VALUE && Math.abs(boarded - held) <= 1 && Math.abs(profile[i] - left) <= 1;
+            if (held != Integer.MIN_VALUE && Math.abs(profile[i] - held) > 1 && !crossed) { return false; }
             held = profile[i];
+            boarded = Integer.MIN_VALUE;
         }
         return true;
     }

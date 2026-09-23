@@ -5,10 +5,14 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardJoins;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsPaving;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IDrawnRoad;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
@@ -46,7 +50,7 @@ import javax.annotation.Nullable;
     @Inject(method = "findPieceBox", at = @At("RETURN"), cancellable = true) private static void rdpl$backOff(StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing, CallbackInfoReturnable<StructureBoundingBox> cir) {
         StructureBoundingBox box = cir.getReturnValue();
         if (box == null || facing == null || !ContentBeard.wanted()) { return; }
-        if (BeardRoads.crossesHill(p_175848_1_, box)) {
+        if (BeardRoadsTunnels.crossesHill(p_175848_1_, box)) {
             ContentLog.LOGGER.debug("A road from {}, {} facing {} would start against or run beside a tunnel through a hill, so it is not laid", p_175848_3_, p_175848_5_, facing);
             cir.setReturnValue(null);
             return;
@@ -56,16 +60,16 @@ import javax.annotation.Nullable;
         List<StructureComponent> held = ContentBeard.laid();
         int kept;
         ContentBeard.laying(p_175848_1_);
-        try { kept = BeardRoads.roadReach(box, facing, BeardRoads.throughRoom(p_175848_1_, box, facing)); }
+        try { kept = BeardRoadsGrade.roadReach(box, facing, BeardRoadsTunnels.throughRoom(p_175848_1_, box, facing)); }
         finally { ContentBeard.laying(held); }
         if (kept == Integer.MAX_VALUE) {
-            if (!BeardRails.settle(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
+            if (BeardRails.blocks(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
             return;
         }
         if (kept > rows) {
             BeardLayout.trim(box, alongX, facing, kept);
             ContentLog.LOGGER.debug("A road from {}, {} facing {} is lengthened from {} to {} block(s) to bore through the hill in its way and come out the other side", p_175848_3_, p_175848_5_, facing, rows, kept);
-            if (!BeardRails.settle(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
+            if (BeardRails.blocks(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
             return;
         }
         int room = ContentBeard.roomFor(p_175848_1_, box, facing);
@@ -74,7 +78,7 @@ import javax.annotation.Nullable;
             kept = room;
         }
         if (kept >= rows) {
-            if (!BeardRails.settle(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
+            if (BeardRails.blocks(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
             return;
         }
         if (kept < 7) {
@@ -84,7 +88,7 @@ import javax.annotation.Nullable;
         }
         BeardLayout.trim(box, alongX, facing, kept);
         ContentLog.LOGGER.debug("A road from {}, {} facing {} backs off from {} to {} block(s) to keep a walkable slope", p_175848_3_, p_175848_5_, facing, rows, kept);
-        if (!BeardRails.settle(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
+        if (BeardRails.blocks(p_175848_1_, box, facing)) { cir.setReturnValue(null); }
     }
 
     @Unique private BeardRoads.Grade rdpl$stored;
@@ -129,7 +133,7 @@ import javax.annotation.Nullable;
             if (rows < 7) { continue; }
             StructureBoundingBox tried = new StructureBoundingBox(found);
             BeardLayout.trim(tried, alongX, facing, rows);
-            if (!BeardRails.fits(p_175848_1_, tried, facing)) { continue; }
+            if (BeardRails.cramped(p_175848_1_, tried, facing)) { continue; }
             StructureBoundingBox placed = rdpl$place(start, p_175848_1_, rand, tried, facing, alongX);
             if (placed != null) {
                 ContentLog.LOGGER.debug("A road attempt {} facing {} is laid {} block(s) long {} the railway line in its way", placed, facing, rows, rows == lengths[0] ? "to cross" : "to stop short of");
@@ -165,17 +169,17 @@ import javax.annotation.Nullable;
                 if (BeardRails.blocked(pieces, found)) { return null; }
             }
             if (!BeardLayout.tooNear(start, pieces, wide, facing) && BeardLayout.widensPast(pieces, wide, facing) && !ContentBeard.taken(pieces, wide) && !BeardRails.blocked(pieces, wide)) {
-                if (ContentBeard.claimCorners(pieces, wide, alongX)) { return wide; }
+                if (ContentBeardJoins.claimCorners(pieces, wide, alongX)) { return wide; }
                 ContentLog.LOGGER.debug("A road attempt {} facing {} needs a junction corner that is already taken, so it may only be an alley", wide, facing);
             }
-            if (!rolled || BeardLayout.joinsRoads(pieces, found, facing) || BeardLayout.roadWithinReach(pieces, found, facing)) {
+            if (!rolled || BeardLayout.joinsRoads(pieces, found, facing) || BeardLayout.roadWithinReach(pieces, found, facing) || ContentBeard.hugsStreet(pieces, found, alongX)) {
                 ContentLog.LOGGER.debug("A road attempt {} facing {} could not widen and {} an alley here, so it is refused", found, facing, rolled ? "may not be" : "did not roll");
                 return null;
             }
             ContentLog.LOGGER.debug("A road attempt {} facing {} rolls an alley rather than being refused", found, facing);
         }
         if (3 < BeardRoads.pathMinimumWidth()) { return null; }
-        if (!ContentBeard.claimCorners(pieces, found, alongX)) {
+        if (!ContentBeardJoins.claimCorners(pieces, found, alongX)) {
             ContentLog.LOGGER.debug("A road attempt {} facing {} needs a junction corner that is already taken, so it is refused", found, facing);
             return null;
         }
@@ -221,7 +225,7 @@ import javax.annotation.Nullable;
     @Unique private void rdpl$paved(World world, StructureBoundingBox clip) {
         IBlockState deck = getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.PLANKS).getDefaultState());
         if (deck.getMaterial() != Material.WOOD) { deck = Objects.requireNonNull(Blocks.PLANKS).getDefaultState(); }
-        BeardRoads.pave(this, world, clip,
+        BeardRoadsPaving.pave(this, world, clip,
                 BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRASS_PATH).getDefaultState())),
                 BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, getBiomeSpecificBlockState(Objects.requireNonNull(Blocks.GRAVEL).getDefaultState())),
                 BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, deck),

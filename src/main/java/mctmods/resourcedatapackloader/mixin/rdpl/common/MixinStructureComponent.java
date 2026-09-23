@@ -24,6 +24,7 @@ import java.util.List;
 
 @Mixin(StructureComponent.class) public abstract class MixinStructureComponent {
     @Inject(method = "findIntersecting", at = @At("HEAD"), cancellable = true) private static void rdpl$betweenBuildings(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn, CallbackInfoReturnable<StructureComponent> cir) {
+        if (listIn.isEmpty() || !(listIn.get(0) instanceof StructureVillagePieces.Village)) { return; }
         if (!ContentBeard.spacedLayout()) {
             if (!CityGrowth.laying()) {
                 for (StructureComponent piece : listIn) {
@@ -86,11 +87,27 @@ import java.util.List;
 
     @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z"))
     private boolean rdpl$ruledBlocks(World world, BlockPos pos, IBlockState newState, int flags) {
+        if (rdpl$plotPiece()) {
+            StructureComponent self = StructureComponent.class.cast(this);
+            if (newState.getBlock() instanceof BlockStairs && ContentBeard.wanted() && !self.getBoundingBox().isVecInside(pos)) { return true; }
+            if (BeardRails.insideBore(world, pos.getX(), pos.getY(), pos.getZ())) { return true; }
+            IBlockState wanted = ContentVillages.ruled(world, pos, newState);
+            return world.setBlockState(pos, wanted == null ? newState : wanted, flags);
+        }
+        return world.setBlockState(pos, newState, flags);
+    }
+
+    @Redirect(method = {
+            "replaceAirAndLiquidDownwards(Lnet/minecraft/world/World;Lnet/minecraft/block/state/IBlockState;IIILnet/minecraft/world/gen/structure/StructureBoundingBox;)V",
+            "generateChest(Lnet/minecraft/world/World;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/block/state/IBlockState;)Z"
+    }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z"))
+    private boolean rdpl$boredBlocks(World world, BlockPos pos, IBlockState newState, int flags) {
+        if (rdpl$plotPiece() && BeardRails.insideBore(world, pos.getX(), pos.getY(), pos.getZ())) { return true; }
+        return world.setBlockState(pos, newState, flags);
+    }
+
+    @Unique private boolean rdpl$plotPiece() {
         StructureComponent self = StructureComponent.class.cast(this);
-        if (!(self instanceof StructureVillagePieces.Village) || self instanceof StructureVillagePieces.Road) { return world.setBlockState(pos, newState, flags); }
-        if (newState.getBlock() instanceof BlockStairs && ContentBeard.wanted() && !self.getBoundingBox().isVecInside(pos)) { return true; }
-        if (BeardRails.insideBore(world, pos.getX(), pos.getY(), pos.getZ())) { return true; }
-        IBlockState wanted = ContentVillages.ruled(world, pos, newState);
-        return world.setBlockState(pos, wanted == null ? newState : wanted, flags);
+        return self instanceof StructureVillagePieces.Village && !(self instanceof StructureVillagePieces.Road);
     }
 }

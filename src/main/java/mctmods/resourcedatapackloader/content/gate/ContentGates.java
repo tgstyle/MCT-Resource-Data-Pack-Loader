@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.gate;
 
 import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.util.Says;
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
@@ -44,7 +44,7 @@ public final class ContentGates {
         STACKS.clear();
         if (!Config.content.load) { return; }
         Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
-            GateDef def = ContentParser.gate(key, contents);
+            GateDef def = ContentParserWorlds.gate(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
         for (Map.Entry<ResourceLocation, GateDef> entry : DEFS.entrySet()) {

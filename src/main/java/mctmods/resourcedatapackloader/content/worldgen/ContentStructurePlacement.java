@@ -199,14 +199,16 @@ public final class ContentStructurePlacement {
         }
     }
 
-    public static boolean pinned(String key, int chunkX, int chunkZ) {
+    public static boolean pinned(String key, int chunkX, int chunkZ) { return pinIn(key, chunkX, chunkZ) != null; }
+
+    @Nullable public static long[] pinIn(String key, int chunkX, int chunkZ) {
         load();
         List<long[]> pinned = AT.get(key);
-        if (pinned == null) { return false; }
+        if (pinned == null) { return null; }
         for (long[] at : pinned) {
-            if ((int) at[0] >> 4 == chunkX && (int) at[1] >> 4 == chunkZ) { return true; }
+            if ((int) at[0] >> 4 == chunkX && (int) at[1] >> 4 == chunkZ) { return at; }
         }
-        return false;
+        return null;
     }
 
     private static void pins(String[] fallback) {
@@ -313,7 +315,7 @@ public final class ContentStructurePlacement {
         String[] parts = Settings.pair(entry, setting, "structure=value");
         if (parts == null) { return null; }
         String key = ContentStructures.normalize(parts[0]);
-        if (!ContentStructures.known(key)) {
+        if (ContentStructures.unknown(key)) {
             ContentLog.LOGGER.error("{} entry '{}' names '{}', which is not one of {}, ignoring it", setting, entry, key, ContentStructures.describe());
             return null;
         }

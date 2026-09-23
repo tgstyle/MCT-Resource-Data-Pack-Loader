@@ -40,7 +40,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Locale;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -78,8 +77,7 @@ import javax.annotation.Nullable;
     @Override public BlockDef getDef() { return def; }
 
     @Override public boolean canSustainPlant(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing direction, @Nonnull IPlantable plantable) {
-        if (def.plantTypes.isEmpty()) { return super.canSustainPlant(state, world, pos, direction, plantable); }
-        if (def.plantTypes.contains(plantable.getPlantType(world, pos.offset(direction)).name().toLowerCase(Locale.ROOT))) { return true; }
+        if (def.sustains(plantable.getPlantType(world, pos.offset(direction)))) { return true; }
         return super.canSustainPlant(state, world, pos, direction, plantable);
     }
 

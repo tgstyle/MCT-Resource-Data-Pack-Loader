@@ -14,8 +14,11 @@ import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.monster.IMob;
+import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
@@ -39,7 +42,7 @@ public final class ContentSpawning {
     private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
     private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
     public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(java.util.Arrays.asList(
-            "path", "till")));
+            "animals", "bush", "path", "till")));
     private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
 
     private ContentSpawning() {}
@@ -93,11 +96,13 @@ public final class ContentSpawning {
             event.setResult(Event.Result.DENY);
             return;
         }
+        BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
         if (!(event.getEntity() instanceof IMob)) {
-            if (event.getSpawner() == null && deniedAboveWindow(world, event.getY())) { event.setResult(Event.Result.DENY); }
+            if (event.getSpawner() != null) { return; }
+            if (deniedAboveWindow(world, event.getY())) { event.setResult(Event.Result.DENY); }
+            else if (animalGround(world, event.getEntityLiving(), pos)) { event.setResult(Event.Result.ALLOW); }
             return;
         }
-        BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
         if (event.getSpawner() == null) {
             int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight));
             if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, pos) > lightCap) {
@@ -116,6 +121,13 @@ public final class ContentSpawning {
             return;
         }
         if (world.rand.nextFloat() < rate - 1.0F) { event.setResult(Event.Result.ALLOW); }
+    }
+
+    private static boolean animalGround(World world, EntityLivingBase entity, BlockPos pos) {
+        if (!(entity instanceof EntityAnimal)) { return false; }
+        IBlockState below = world.getBlockState(pos.down());
+        if (lacks("animals", below.getBlock())) { return false; }
+        return world.getLight(pos) > 8 && below.canEntitySpawn(entity);
     }
 
     private static boolean deniedAboveWindow(World world, float y) {
@@ -142,9 +154,9 @@ public final class ContentSpawning {
 
     public static boolean rateControlled() { return !ContentControl.off(ContentControl.SPAWNING); }
 
-    public static boolean does(String behavior, Block block) {
+    public static boolean lacks(String behavior, Block block) {
         Set<Block> blocks = BY_BEHAVIOR.get(behavior);
-        return blocks != null && blocks.contains(block);
+        return blocks == null || !blocks.contains(block);
     }
 
     public static boolean known(String behavior) { return BEHAVIORS.contains(behavior); }

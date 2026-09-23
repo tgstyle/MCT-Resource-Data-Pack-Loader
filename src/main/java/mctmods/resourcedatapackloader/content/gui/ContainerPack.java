@@ -56,10 +56,6 @@ public class ContainerPack extends Container {
 
     public static int height(int rows) { return 114 + rows * SLOT; }
 
-    public int rows() { return rows; }
-
-    public int columns() { return columns; }
-
     @Override public boolean canInteractWith(@Nonnull EntityPlayer player) { return held.isUsableByPlayer(player); }
 
     @Override public void onContainerClosed(@Nonnull EntityPlayer player) {

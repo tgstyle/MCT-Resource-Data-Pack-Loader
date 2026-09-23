@@ -11,7 +11,7 @@ import java.util.Map;
 import net.minecraft.util.math.MathHelper;
 
 public final class ContentSpawnChunks {
-    public static final int VANILLA = 128;
+    private static final int VANILLA = 128;
     private static final Map<Integer, Integer> BY_DIMENSION = new HashMap<>();
     private static int everywhere = VANILLA;
     private static boolean loaded;
@@ -23,6 +23,8 @@ public final class ContentSpawnChunks {
         Integer own = BY_DIMENSION.get(dimension);
         return own == null ? everywhere : own;
     }
+
+    public static int chunks(int dimension) { return (radius(dimension) + 8) / 16; }
 
     private static void load() {
         if (loaded) { return; }

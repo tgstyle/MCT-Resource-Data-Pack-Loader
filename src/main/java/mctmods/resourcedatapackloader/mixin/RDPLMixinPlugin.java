@@ -115,6 +115,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if ((mixinClassName.startsWith(RUBIC_PACKAGE) || mixinClassName.startsWith(RUBIC_LIGHT_PACKAGE)) && cubicChunksPresent()) { return false; }
         if (RUBIC_CONDITIONS.containsKey(mixinClassName)) { return RUBIC_CONDITIONS.getBoolean(mixinClassName); }
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
+        if (simple.equals("MixinChunkWriteBox")) { return mctmods.resourcedatapackloader.util.WriteBoxWatch.watching(); }
         switch (simple) {
             case "MixinBlockCactus":
             case "MixinBlockReed":

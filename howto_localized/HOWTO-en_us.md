@@ -32,6 +32,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [Server-side packs](#server-side-packs)
 - [Registry renames](#registry-renames)
 - [Mod API](#mod-api)
+- [Packs written for 1.20.1 and 1.21.1](#packs-written-for-1201-and-1211)
 
 **Blocks and items**
 - [Blocks](#blocks)
@@ -352,7 +353,7 @@ Every key an option file accepts:
 | --- | --- | --- | --- | --- |
 | an option name | yes | boolean, or an object | | `true` or `false` is the option's default. An object carries the three keys below |
 | `hide` at the top level | no | boolean | `false` | Keeps this pack's options out of the options screen and out of the generated file entirely, while they still gate content at their defaults |
-| `default` | no | boolean | `false` | The option's value until the user changes it |
+| `default` | yes | boolean | | The option's value until the user changes it. An object without a boolean `default` is ignored, with a warning |
 | `hide` inside an option | no | boolean | `false` | Hides that one option, so it cannot be flipped and stays at its default |
 | `description` | no | string | none | Shown under the option's name in the options screen |
 
@@ -523,6 +524,48 @@ Every mod that ships one gets an entry in `rdploader/config/mods.json` the first
 
 A mod pack never joins the resource pack override tier whatever `overrideResourcePacks` says, since only a pack author can ask for that with the `O` letter. The log marks mod packs and lists packs lowest first, so nothing loads unseen.
 
+## Packs written for 1.20.1 and 1.21.1
+
+*how packs work*
+
+A pack made for the 1.20.1 or 1.21.1 line of this mod loads here too. The loader recognizes one by a `pack.mcmeta` format above 3, by a `data/` folder beside `assets/`, or by `.json` lang files and `textures/block/` with no 1.12.2 twin, and carries it back: a zip is written out as a 1.12.2 pack under its own name, and the modern zip it came from is kept beside it as `<name>_converted.zip.disabled`, so nothing is lost and the new pack is yours to finish. Loose files under `rdploader/assets` and `rdploader/data` are not rewritten; they are read through the same port every time the folder is scanned.
+
+A modern block file comes back with a `meta` for each variant, in the order the variants are written, and its tags as ore dictionary names:
+
+```json
+{
+  "type": "ore",
+  "creativeTab": "rdpltest",
+  "variants": {
+    "cluster": { "meta": 0, "hardness": 3.0 },
+    "worm": { "meta": 1, "hardness": 3.0, "oreDict": ["oreTestium"] }
+  }
+}
+```
+
+| Modern file | 1.12.2 file |
+| --- | --- |
+| `data/<ns>/<folder>/` for every definition folder | `assets/<ns>/<folder>/` |
+| `recipe/`, `loot_table/`, `advancement/`, `function/`, `structure/` (1.21.1) | `recipes/`, `loot_tables/`, `advancements/`, `functions/`, `structures/` |
+| `data/*/tags/items/` (1.21.1: `tags/item/`) | `assets/<ns>/oredict/converted_tags.json` |
+| `data/minecraft/tags/functions/tick.json` | `assets/<ns>/gamerules/converted_tick.json`, the overworld `gameLoopFunction` |
+| `minecraft:smelting` recipes | `assets/<ns>/furnace/converted_smelting.json` |
+| `assets/<ns>/lang/<lang>.json` | `assets/<ns>/lang/<lang>.lang` |
+| `textures/block/`, `textures/item/` | `textures/blocks/`, `textures/items/` |
+| `models/item/<variant>.json` | `models/item/<file>/<variant>.json` |
+| no blockstate (generated on the modern line) | a generated Forge blockstate per block file, with the models its type needs |
+
+- Every modern vanilla id is carried back through a flattening table shipped in the jar, built from the game's own data fixers, so it comes out as the 1.12.2 block or item with its metadata: `minecraft:red_wool` becomes `minecraft:wool:14`, `minecraft:oak_log` with `axis=x` becomes `minecraft:log:4`. Where a key holds a block and a meta apart, such as `block` in worldgen and `modelBlock`, the meta goes into `meta` or `modelMeta`; a `soil` keeps the whole block. The pack's own ids resolve through its own files: `mypack:worm` becomes `mypack:test_ore:1`. Entity, biome, loot table, sound, particle and attribute names are carried back the same way, and a named dimension becomes a number: the pack's own take their `id` or, without one, a stable number from 1000 up that the log names.
+- Tags become ore dictionary names through the reverse of the convention mapping: `forge:gems/testium` and `c:gems/testium` become `gemTestium`, `minecraft:logs` becomes `logWood`. A recipe ingredient's `tag` becomes a `forge:ore_dict` ingredient and the recipe `forge:ore_shaped` or `forge:ore_shapeless`; a fuel's `tag` becomes `oreDict`. Every recipe item gets a `data`, since 1.12.2 refuses an item with subtypes without one.
+- A lang file's `block.mypack.worm` becomes `tile.mypack:test_ore.worm.name`, `item.` the same way under `item.`, `itemGroup.mypack.tab` becomes `itemGroup.tab` and `fluid.mypack.x` becomes both 1.12.2 fluid keys.
+- Loot tables lose what 1.12.2 cannot read: an item's variant becomes `set_data`, number providers become `min` and `max`, pools get a `name`, `alternatives` and `group` entries are flattened, and a function, condition or entry type 1.12.2 does not have is left out with a line in the log. An advancement's `items` becomes `item` and `data`, and a `tag` becomes `forge:ore_dict`.
+- Functions are rewritten line by line into 1.12.2 syntax: `execute as ... at @s run` becomes `execute <entity> ~ ~ ~`, `execute if block` becomes `detect`, `tag` and `team` become `scoreboard players tag` and `scoreboard teams`, `data merge` becomes `blockdata` and `entitydata`, and selectors trade `distance`, `scores`, `limit` and `gamemode` for `r`, `score_X_min`, `c` and `m`. A spawner's `SpawnData` loses its `entity` wrapper. A line the port cannot carry, such as `bossbar` or a macro line, is turned into a comment and the log names the file, the line and why, so the function still loads.
+- A structure `.nbt` above data version 1343 has its palette, its spawners, its item stacks and its entity ids carried back; a block with no 1.12.2 twin is left as written and places air.
+- A modern flat world's floor sits at the bottom of the world, and 1.12.2 lays a flat world from y 0, so the port moves heights up by 64 (by the template's `worldMinHeight` when it names one): a flat template's `worldSpawn` and `resetSendsTo`, a team's spawn heights, a flat dimension's `groundLevel`, and every absolute y in the functions when the pack's overworld is flat.
+- Left out, each with a line in the log: vanilla's data driven worldgen, dimension types, damage types, enchantments and other registries 1.12.2 does not have; block, entity and fluid tags; function tags other than `tick`; stonecutting, smithing and other recipe types 1.12.2 does not have; item components; the structure keys only modern worlds generate; a `behavesAs` name other than `till`, `path`, `bush` and `animals`; `jobSite`, and a profession with no `careers` gets one named after its file.
+
+The log carries one summary line per converted pack and a line for each file it moved, converted, left out or could not carry, and every key 1.12.2 does not read is still named by the parser that meets it. The port is a best effort, not a finished pack: open the written zip, read those lines, and finish by hand what they name, starting with any generated blockstate whose textures it could not find.
+
 ---
 
 # Blocks and items
@@ -622,8 +665,9 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `banner` | A banner on a post or against a wall, sixteen standing rotations, carrying your own design. Registers a second block named `<name>_wall` for the hanging one |
 | `ladder` | Climbable, placed against a wall |
 | `torch` | Wall and floor placement, with a particle |
-| `log` | Rotates to the face you place it against |
-| `leaves` | Decays, shears, tints and drops a sapling |
+| `bell` | A bell like the one villages have from 1.14 on: rings when used on its side, by redstone or when a projectile strikes it, swings in its frame, and makes nearby raiders glow. One variant, the metadata carries the facing and how it hangs |
+| `log` | Rotates to the face you place it against, and is registered as `logWood` in the ore dictionary so tree felling and Blast Plaster treat it as a trunk |
+| `leaves` | Decays, shears, tints and drops a sapling, and is registered as `treeLeaves` in the ore dictionary |
 | `sapling` | Grows into a tree or into one of your structures |
 | `crop` | Grows through stages, drops a seed and a produce item |
 | `flower` | A one-block plant standing on soil |
@@ -641,7 +685,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `variants` | yes | object of variant name to variant | | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
 | `type` | no | one of the types above | `basic` | Which shape the block takes |
 | `material` | no | one of the [block materials](#value-lists) | `rock` | Mining behavior, pistons, fire and liquids |
-| `soundType` | no | one of the [sound types](#value-lists) | from the material | Footsteps, breaking and placing |
+| `soundType` | no | one of the [sound types](#value-lists) | `stone`; `wood` for a `log`, `plant` for `leaves` and a `crop`, the `modelBlock`'s for `stairs` and a `wall` | Footsteps, breaking and placing |
 | `mapColor` | no | one of the [map colors](#value-lists) | from the material | How it looks on a map |
 | `harvestTool` | no | `pickaxe`, `axe`, `shovel` | `pickaxe` | Which tool harvests it |
 | `harvestToolLevel` | no | 0 to 3 | `0` | 0 wood, 1 stone, 2 iron, 3 diamond |
@@ -663,7 +707,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `itemModel` | no | `state`, `item` | `state` | `state` follows the blockstate, `item` looks for its own file |
 | `tint` | no | `biome`, `none`, or a hex color | none | Needs a `tintindex` in the model to show |
 | `plantTypes` | no | list of [plant types](#value-lists) | none | What can be planted on it |
-| `behavesAs` | no | list of `till`, `path` | none | Vanilla behaviors to take on |
+| `behavesAs` | no | list of `till`, `path`, `bush`, `animals` | none | Vanilla behaviors to take on |
 | `bounds` | no | list of six numbers, 0 to 1 | full block | The collision box, as `[x1, y1, z1, x2, y2, z2]` |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
 | `particle` | torch only | `none`, `flame`, `colored` | `flame` | The particle above a torch |
@@ -671,13 +715,14 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `smoke` | torch only | boolean | `true` | Whether it smokes |
 | `leafSapling` | leaves only | block name | none | The sapling they drop |
 | `leafSaplingChance` | leaves only | int | `5` | One in N leaves drops one |
-| `seed` | crop only | item name | none | The item that plants it |
-| `produce` | crop only | item name | none | What harvesting yields |
+| `seed` | crop only | item name | `minecraft:wheat_seeds` | The item that plants it, and what an unripe crop drops |
+| `produce` | crop only | item name | `minecraft:wheat` | What harvesting yields |
 | `maxAge` | crop only | int | `7` | How many growth stages |
 | `growth` | plants only | object | none | See [Growth](#growth) |
 | `sapling` | sapling only | object | none | See [Saplings](#saplings) |
 | `portal` | portal only | object | none | See [Portals and gates](#portals-and-gates) |
 | `container` | container only | object | none | See [Containers](#containers) |
+| `bell` | bell only | object | none | See [Bells](#bells) |
 
 ### Variant keys
 
@@ -689,7 +734,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `hardness` | no | float | `1.0` | How long it takes to break. Obsidian is `50`, `-1` is unbreakable |
 | `resistance` | no | float | `5.0` | Blast resistance |
 | `light` | no | 0 to 15 | `0` | Light emitted |
-| `harvestLevel` | no | 0 to 3 | the file's value | Overrides the tool tier for this variant |
+| `harvestLevel` | no | 0 to 3 | `0` | Overrides the tool tier for this variant |
 | `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip |
 | `maxSize` | no | 1 to 64 | `64` | Stack size |
 | `oreDict` | no | list of ore dictionary names | none | Ore dictionary names this variant is registered under |
@@ -871,6 +916,64 @@ The placed block and the item in your hand read that one name, so they match. Na
 
 **The loot table fills on first open**, not when the block is placed, which is what makes it useful in a structure: whoever opens it first gets the roll. The same table can be used by `lootTable` on an imprint shape or a village plot, so a pack can place these through worldgen and stock them the same way.
 
+## Bells
+
+*blocks*
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "bell",
+  "material": "iron",
+  "soundType": "metal",
+  "renderLayer": "cutout",
+  "creativeTab": "decorations",
+  "bell": {
+    "swing": true,
+    "sound": "minecraft:block.note.bell",
+    "resonateSound": "minecraft:block.note.chime"
+  },
+  "variants": { "village_bell": { "meta": 0, "hardness": 5.0, "resistance": 30 } }
+}
+```
+
+And its blockstate, `assets/mypack/blockstates/village_bell.json`:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": { "model": "mypack:bell_floor" },
+  "variants": {
+    "inventory": [{ "model": "mypack:bell_item" }],
+    "body": [{ "model": "mypack:bell_body" }],
+    "facing": { "north": { "y": 0 }, "east": { "y": 90 }, "south": { "y": 180 }, "west": { "y": 270 } },
+    "attachment": {
+      "floor": { "model": "mypack:bell_floor" },
+      "ceiling": { "model": "mypack:bell_ceiling" },
+      "single_wall": { "model": "mypack:bell_wall" },
+      "double_wall": { "model": "mypack:bell_between_walls" }
+    }
+  }
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `swing` | boolean | `true` | Draws the body from its own model and swings it when the bell rings. `false` draws the whole bell as one still block, with nothing animated |
+| `sound` | sound name | `minecraft:block.note.bell` | Played when the bell rings. Empty rings silently |
+| `resonateSound` | sound name | `minecraft:block.note.chime` | Played when the bell resonates because raiders are near. Empty resonates silently |
+
+**It hangs the way the game's own bell does from 1.14 on.** Placed on top of a block it stands on the floor, turned the way you face; under a block it hangs from the ceiling; against a wall it hangs from that wall, and between two walls when the far side is solid too. It drops when whatever holds it is gone, and a bell between two walls becomes a single-wall bell when one of them goes. Its hit box follows vanilla's for each of the four, so `bounds` is not read.
+
+**What rings it.** Using the side of the body, below the beam: a floor bell on the two faces its beam runs across, a wall bell on the two faces beside the wall, a ceiling bell on any side. The top, the bottom and anything above the body do nothing. A redstone signal rings it once as it switches on, and an arrow, a snowball or any other projectile rings it when it strikes a side that a hand could. The body swings away from the side it was struck on for two and a half seconds; redstone swings it along the way the bell faces.
+
+**What a ring does.** Villagers within 32 blocks hear it and go indoors for fifteen seconds, to the nearest door their village knows. When a raider is within 32 blocks, the bell resonates a quarter second after the ring, and two seconds later every raider within 48 blocks glows for three seconds, with colored particles beside the bell on the side each one stands. A raider is anything a [raid](#raids) sent, and the game's own illagers and witches. A bell of this type is a village bell to every raid: it rings as each wave arrives without being named in the raid's `bell`.
+
+**The models.** A bell has no `blocks` property, so its blockstate is keyed by `facing` and `attachment`. With `swing` on, those models draw the frame only, and the swinging part is one more entry named `body`, modeled in block space where it rests; it tilts around the point half a block in and three quarters of a block up, as vanilla's does. The `inventory` entry is the item, frame and body together. With `swing` off there is no `body` entry, and the four frame models draw the bell too.
+
+**The swing is drawn by the client.** A ring reaches players as a block event, so a dedicated server swings the bell for everyone who has this mod, and a player without it only hears the bell. Sounds, resonance and glowing all happen on the server.
+
 ## Models, blockstates and textures
 
 *blocks and items*
@@ -900,7 +1003,7 @@ Every block with more than one variant gets a property called `blocks`, and its 
 }
 ```
 
-A block with a single variant keeps the `blocks` property too, so its key is still `blocks=<name>`, but only on the types that have that property at all. Eleven types spend their whole metadata on their shape, hold one variant and carry no `blocks` property, so they key on their own properties alone. [Blockstates by type](#blockstates-by-type) says which is which.
+A block with a single variant keeps the `blocks` property too, so its key is still `blocks=<name>`, but only on the types that have that property at all. Twelve types spend their whole metadata on their shape, hold one variant and carry no `blocks` property, so they key on their own properties alone. [Blockstates by type](#blockstates-by-type) says which is which.
 
 Where the block has properties of its own, they are joined with commas in the order the state lists them, `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_wall,up=true,north=true`. A stairs block has no `blocks` property, so it is keyed by `facing=east,half=bottom,shape=straight` and nothing else. Two properties are left out on purpose: a wall's own variant property, and a leaf block's `check_decay` and `decayable`, so leaves need only `blocks=ruby_leaves`. A banner has no variant property at all, and is keyed by `rotation=0` through `15` standing or `facing=north` on a wall, which [Banners](#banners) covers.
 
@@ -926,6 +1029,7 @@ Two things decide what a blockstate file has to hold: whether the type carries t
 | `fence_gate` | one block | `facing`, `in_wall`, `open` | 1 |
 | `banner` | two, `<name>` and `<name>_wall` | standing `rotation`, `0` to `15`; the wall one `facing` | 1 |
 | `ladder`, `torch` | one block | `facing`, and a torch adds `up` to the four walls | 1 |
+| `bell` | one block | `facing` and `attachment`, which is `floor`, `ceiling`, `single_wall` or `double_wall`, plus a `body` entry for the swinging part | 1 |
 | `crop` | one block | `age`, always `0` to `7`, whatever `maxAge` says | 1 |
 | `cane` | one block | `age`, `0` to `15` | 1 |
 | `sapling` | one block | `stage`, `0` to one less than `stages` | 1 |
@@ -1257,6 +1361,8 @@ Vanilla checks for its own blocks by identity in a dozen places, so a pack block
 | --- | --- |
 | `till` | A hoe turns it into farmland |
 | `path` | A shovel turns it into a grass path |
+| `bush` | Flowers, grass and saplings can be planted on it and stay on it, as on dirt. The same as `plains` in `plantTypes` |
+| `animals` | Animals spawn on it in the light, as they do on grass |
 
 ## Items
 
@@ -2750,7 +2856,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | --- | --- | --- | --- | --- |
 | `name` | no | string | the file name | Name shown to the player |
 | `id` | no | int | assigned for you | Fixed biome id. Only set this if you need it stable |
-| `types` | no | list of dictionary types | none | Registers the biome under these, such as `FOREST`, `COLD`, `WET` or `NETHER`, so other mods find it |
+| `types` | no | list of dictionary types | guessed | Registers the biome under these, such as `FOREST`, `COLD`, `WET` or `NETHER`, so other mods find it. Left out, Forge best-guesses them from the biome's tree count, height, temperature, rainfall and ground block |
 | `baseBiome` | no | biome name | none | An existing biome to copy settings from |
 | `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
 
@@ -3458,7 +3564,7 @@ Only `block` is required; everything else may be left out and takes its default.
 | `meta` | no | int | `0` | Which variant of that block |
 | `blocks` | no | list of objects | none | A weighted list, used instead of one block. See below |
 | `size` | no | int or range | `8` | How many blocks one attempt places, or how large a shape with a radius is |
-| `attempts` | no | int or range | `1` | How many times per chunk it tries |
+| `attempts` | no | int or range | `8` | How many times per chunk it tries |
 | `sparse` | no | boolean | `false` | Scatters the blocks instead of packing them together |
 | `shape` | no | object | `{ "type": "cluster" }` | The form it takes. See [Shapes](#shapes) |
 | `spread` | no | object | `{ "type": "even" }` | Where it is put. See [Spreads](#spreads) |
@@ -3757,7 +3863,7 @@ For a shape no built-in type covers, `imprint` is the way: build it as an `.nbt`
 
 *shapes*
 
-Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. **The x and z are block coordinates, not chunk coordinates**, and the structure generates in the chunk that holds that block. One entry per wanted instance. Its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility, and two pins closer than a chunk apart put two structures in the same chunk. The structure seats to the ground at its chunk by the usual rules once founded.
+Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. **The x and z are block coordinates, not chunk coordinates**, and the structure generates in the chunk that holds that block; a village's well stands on that block itself, while other structures start where the game would start them in that chunk. One entry per wanted instance. Its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility, and two pins closer than a chunk apart put two structures in the same chunk. The structure seats to the ground at its chunk by the usual rules once founded.
 
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
@@ -4628,7 +4734,7 @@ A raid is the one the game has from 1.14 on, built on the villages 1.12.2 alread
 
 A raid in progress is saved with the world, and its raiders take up their march again after a reload. It stops without an ending in peaceful, after `timeout` ticks, or when no spot around the village can take a wave. A village only counts once a villager has found its doors, so a raid needs a village the game has noticed.
 
-While a wave is on the village, its villagers run indoors to the nearest door the village knows and stay there. Raiders break down the wooden doors in their way to get at them, twelve seconds a door, on normal and hard difficulty while `mobGriefing` is on; iron doors hold. A `bell` block rings when a player uses it, and every bell in the village rings when a wave arrives: villagers within 48 blocks hide for fifteen seconds and raiders within 48 blocks glow for three. Nothing generates a bell. A pack that wants one defines the block, puts it into an NBT structure, and places that structure in the village, as a plot or as the well replacement, so the bell stands where the villagers live.
+While a wave is on the village, its villagers run indoors to the nearest door the village knows and stay there. Raiders break down the wooden doors in their way to get at them, twelve seconds a door, on normal and hard difficulty while `mobGriefing` is on; iron doors hold. A block of type `bell` is a village bell wherever it stands, and rings as [Bells](#bells) describes; the raid's `bell` names any other block to ring as one. Every bell in the village rings when a wave arrives, and a named block also rings when a player uses it: villagers within 48 blocks hide for fifteen seconds and raiders within 48 blocks glow for three. Nothing generates a bell. A pack that wants one defines the block, puts it into an NBT structure, and places that structure in the village, as a plot or as the well replacement, so the bell stands where the villagers live.
 
 ```json
 {
@@ -4665,7 +4771,7 @@ While a wave is on the village, its villagers run indoors to the nearest door th
 | `sound` | sound name | none | Played to every player in reach, from the side the wave comes from, as each wave arrives |
 | `wins` | function | none | Runs as every player in reach when the raid is won |
 | `loses` | function | none | Runs as every player in reach when the raid is lost |
-| `bell` | block name or list | none | The block that rings as a bell, when a player uses it and whenever a wave arrives. Place it in the village through an NBT structure, since nothing generates it |
+| `bell` | block name or list | none | Other blocks that ring as a bell, when a player uses them and whenever a wave arrives. A block of type `bell` rings without being named. Place it in the village through an NBT structure, since nothing generates it |
 
 ### A group
 
@@ -4743,9 +4849,9 @@ With a group's control at `default` these win, at `global` they are ignored, and
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `blockOres` | boolean | `false` | Stops every mod and Minecraft generating ore, except the mods named in `oreWhitelist`. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all |
-| `oreWhitelist` | list of mod ids | none | The mods still allowed to generate ore while `blockOres` is on |
+| `oreWhitelist` | list of mod ids | `["minecraft"]` | The mods still allowed to generate ore while `blockOres` is on |
 | `oreTypes` | list of ore types | none | Which ore types the blocking applies to, written as Forge names, `COAL`, `IRON`. Empty means every type |
-| `oreTypesAreBlacklist` | boolean | `false` | On, the types in `oreTypes` are the ones blocked. Off, only those types generate |
+| `oreTypesAreBlacklist` | boolean | `true` | On, the types in `oreTypes` are the ones blocked. Off, only those types generate |
 | `blockOreDimensions` | list of ints | none | The dimensions ore blocking applies to, empty meaning every one. A dimension outside the scope is not touched at all, so another mod's ores generate there while the overworld stays blocked |
 | `blockOreDimensionsAreBlacklist` | boolean | `false` | On, the dimensions listed are the ones left alone |
 | `prospectItems` | list of `item=entries` | none | Items that prospect for `vein` shaped worldgen entries when a sneaking player breaks a block with one in hand. The form is in the paragraph below |
@@ -4908,7 +5014,7 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 | `villagePlotsLeast` | int | `0` | The fewest built plots a village settles for, counting houses, farms and pack plots but never roads, torches or the well. A village that lays out smaller is regrown a few times and the largest layout wins. `0` keeps vanilla |
 | `villagePlotsBackRow` | boolean | `true` | Once the village has grown, a second pass seats a plot directly behind every plot that fronts a street, turned to face it, with the same roll and the same room test, so the inside of a block between two streets is built rather than left bare |
 | `villagePlotsMost` | int | `0` | The most it may have; at the maximum it stops growing outright, no more buildings and no more roads. `0` keeps vanilla |
-| `villageTieStreets` | boolean | `false` | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down |
+| `villageTieStreets` | boolean | `true` | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down |
 | `villageBlockSizes` | list of `size=weight` | none | How deep the blocks between a city's parallel streets are, rolled once per district from its plaza position. Empty sizes every block to the largest plot the pack ships |
 | `villageLayout` | string | empty | Names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it |
 
@@ -4932,7 +5038,7 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
 
 `villagePlotsLeast` and `villagePlotsMost` bound how many plots a village is built with, counting houses, farms and pack plots, never roads, torches or the well. A village that lays out under the minimum is regrown at a larger size, a few tries, and the largest layout wins, so cramped terrain can still fall short of the ask. At the maximum the village stops growing outright: no more buildings and no more roads. `0` on either end keeps vanilla behavior there.
 
-`villageTieStreets`, off unless set, lays a tie street for a district that cannot grow its streets to the standing village: a straight street of full width from one of the district's street ends to the nearest standing street it lines up with, when that line is longer than a road is wide, no longer than 112 rows, free of every piece, not beside a parallel street, not through a tunnel, and level enough to walk. Without it such a district is taken back down, which is what keeps a city on broken ground to its plaza and four streets; with it the district joins and grows on. A city on flat ground rarely needs it, but it can change where a district that would otherwise have been torn down now stands, so it is off by default.
+`villageTieStreets`, on unless set, lays a tie street for a district that cannot grow its streets to the standing village: a straight street of full width from one of the district's street ends to the nearest standing street it lines up with, when that line is longer than a road is wide, no longer than 112 rows, free of every piece, not beside a parallel street, not through a tunnel, and level enough to walk. Without it such a district is taken back down, which is what keeps a city on broken ground to its plaza and four streets; with it the district joins and grows on. A city on flat ground rarely needs it, and it is on by default so a pack that asks for a large city gets one; turn it off to keep a city on broken ground small.
 
 `villageBlockSizes` sets how deep the blocks between a city's parallel streets are, as weighted `size=weight` entries: `32=3` and `64=1` lay three districts in four with 32 deep blocks and the rest with 64. Each district rolls its size once from its plaza position, so the same world always gets the same mix. Its streets branch side streets along their length at every two blocks plus a road width, so a 16 district is a fine grid and a 64 district a coarse one, and two parallel streets keep that many blocks plus the neighboring district's between them, so a 32 district beside a 64 district leaves 96 between them. Only plots that fit the depth are built along a district's streets, and among those that fit, a plot's chance is its weight times its width, so deep blocks favor the buildings that fill them and a 64 wide plot never fronts a 32 deep block. Street length and plaza spacing still follow the largest plot the pack ships, which is what lets every district reach the city. Empty sizes every block to that largest plot and branches streets only at their ends, as before.
 
@@ -5007,6 +5113,8 @@ Roads are never ruled, so the grades, bridges and junction designs still read th
 
 Everything below only does anything while `terrainAdaptation` is on. Every one of them is empty or zero by default, which leaves vanilla's roads exactly as they were.
 
+**Mixing blocks.** Some block settings take a mix instead of one block: blocks separated by commas, each followed by a space and a weight, as in `"minecraft:stonebrick 3, minecraft:cobblestone 1"`. A block with no weight counts once. Each block placed rolls the mix from the world seed and its spot, so the same world always builds the same pattern. The settings that take a mix are `villagePathVergeBlock`, `villagePathVergeWaterBlock`, `villagePathTunnelBlock`, `villagePathBridgeFrameBlock`, `villagePathBridgeFrameTopBlock`, `villageRailTunnelBlock`, `villageRailDeckBlock`, `villageRailSupportBlock`, `villageRailBarrierBlock`, `villageRailBridgeFrameBlock`, `villageRailBridgeFrameTopBlock`, `villageSubwayTunnelBlock`, `villageSubwayPlatformBlock`, `villageSubwayRailingBlock`, `villageSubwayBenchEndBlock` and `villageSewerMossBlock`. Every other block setting uses the first block of a mix throughout.
+
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `villagePathBlock` | block | empty | The road surface. Empty keeps the block the biome would use, sandstone over sand, hardened clay over mesa, grass path over earth |
@@ -5078,7 +5186,7 @@ Which design a junction gets is worked out from the world seed and the junction'
 
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `villagePathSupportBlock` | block | empty | The block under the surface, and the surface itself where the ground is bare rock. Empty keeps vanilla gravel |
+| `villagePathSupportBlock` | block | empty | The surface itself where the ground is bare rock, and the piers and legs under a road over water. Empty keeps vanilla gravel, sandstone in desert villages |
 | `villagePathBridgeBlock` | block | empty | What a road crosses water with. Empty keeps vanilla planks |
 | `villagePathBridgeBarrierBlock` | block | empty | Barriers stacked along both edges of a bridge deck. Empty builds none |
 | `villagePathBridgeBarrierHeight` | number | `1` | How many blocks tall those barriers stand |
@@ -5147,7 +5255,7 @@ A block that carries a loot inventory, a chest among them, is filled from `villa
 | `villageSewerLadderBlock` | block name | none | The block a manhole shaft is climbed by, set down the shaft from the street to the sewer walkway. Empty leaves the shaft open |
 | `villageSewerCoverBlock` | block name | none | The block covering a manhole, set flush in an east-west street wherever a street or alley meets it, and on the plaza where that street crosses the sewer loop. A wooden trapdoor is the usual choice: an iron one takes a redstone signal and no player can open it by hand, which shuts the sewer to them. Empty leaves the shaft mouth open |
 | `villageSewerMossBlock` | block name | none | A second block mixed into the lining here and there, mossy stone among plain for instance. Empty lines the sewer with one block throughout |
-| `villageSewerMossChance` | 0 to 100 | `30` | What percentage of lining blocks come out as that second block. Rolled per block position from the world seed, so the same sewer always comes out the same |
+| `villageSewerMossChance` | 0 to 100 | `25` | What percentage of lining blocks come out as that second block. Rolled per block position from the world seed, so the same sewer always comes out the same |
 | `villageSewerVineBlock` | block name | none | A block hung on the inside of the sewer walls here and there, vines for instance. It is clung to whichever wall it stands against. Empty hangs nothing |
 | `villageSewerVineChance` | 0 to 100 | `20` | What percentage of the cells beside a wall carry it. Rolled per block position from the world seed, so the same sewer always hangs the same |
 | `villageSewerWellEntrance` | boolean | `true` | A loop of sewer under the plaza ring around the well, every street's sewer running through it, and a manhole on the plaza down onto the loop on each side where an east-west street crosses it, so the sewers are one connected system with a way in at the town center. Off, each street's sewer ends at the well and the plaza has no way down |
@@ -5219,9 +5327,7 @@ A block that carries a loot inventory, a chest among them, is filled from `villa
     "villageSubwayStationRun": 0,
     "villageSubwayPlatformWidth": 3,
     "villageSubwayPlatformBlock": "minecraft:stonebrick:1",
-    "villageSubwayStairBlock": "minecraft:stonebrick",
     "villageSubwayStation": "mypack:subway_station",
-    "villageSubwayEntrance": "mypack:subway_entrance",
     "villageSubwayStationFoot": 4,
     "villageSubwayStationRepeat": 12,
     "villageSubwayRailingBlock": "minecraft:iron_bars",
@@ -5287,7 +5393,7 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageSubwayLines` | number | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
 | `villageSubwayDepth` | number | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
 | `villageSubwaySpacing` | number | `64` | How far apart a village's subway lines are kept from one another |
-| `villageSubwayDirection` | string | `any` | Which way the lines run: `x`, `z`, or `any` to roll per village |
+| `villageSubwayDirection` | string | `any` | Which way subway lines run: `ew` east to west, `ns` north to south, or `any` to roll per village |
 | `villageSubwayWidth` | number | `3` | How wide the bed is, before shoulders |
 | `villageSubwayTracks` | number | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
 | `villageSubwayTrackGap` | number | `2` | How far apart parallel tracks sit |
@@ -5301,7 +5407,7 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageSubwayPowerBlock` | block | empty | The powered track block. Empty uses vanilla powered rail |
 | `villageSubwayPowerBase` | block | empty | The block set under a powered track to drive it. Empty uses a redstone block |
 | `villageSubwayPowerRun` | number | `0` | How many blocks apart the powered tracks sit. 0 lays none |
-| `villageSubwayTunnelBlock` | block | empty | The block the bore is lined with: the walls either side and the roof over it. Empty digs no subway at all, a subway being a bore |
+| `villageSubwayTunnelBlock` | block | empty | The block the bore is lined with: the walls either side and the roof over it. Empty digs the bore and its stations unlined |
 | `villageSubwayTunnelLightBlock` | block | empty | The block set into the tunnel roof as a light. Empty lights none |
 | `villageSubwayTunnelLightRun` | number | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
 | `villageSubwayClimb` | number | `8` | How many blocks a line runs before it may step one block up or down |
@@ -5322,17 +5428,85 @@ A railway line is a straight run of track that crosses the whole village on one 
 | `villageSubwayStationFoot` | number | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
 | `villageSubwayPlatformWidth` | number | `3` | How far the chamber is opened out either side of the bed to make a platform |
 | `villageSubwayPlatformBlock` | block | empty | The block the platform is floored with. Empty floors it with the tunnel lining |
-| `villageSubwayStairBlock` | block | empty | The block the steps up to the road side are made of. Empty uses the tunnel lining |
-| `villageSubwayStation` | text | empty | A structure file used as the station itself, in place of the carved stairwell, named `mypack:subway_station` and read from that pack's `structures` folder. Its solid cells are laid in `villageSubwayStairBlock` and its air cells are carved, so what stands underground is the build rather than a description of it. Empty carves the stairwell instead |
-| `villageSubwayEntrance` | text | empty | A structure file set at the head of a station's stairs, so the way in is marked on the street. Empty leaves the stairs coming up bare, and it is left off entirely where `villageSubwayStation` names a build, which carries its own way in |
+| `villageSubwayStation` | text | empty | The structure file every station is built from, named `mypack:subway_station` and read from that pack's `structures` folder. Its blocks are laid as built, with sponge standing for the tunnel lining, and its air cells are carved, so what stands underground is the build rather than a description of it. A line gets stations only when this names a build that loads: empty, or a name that cannot be loaded, builds no station at all |
 | `villageSubwayRailingBlock` | block | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
 | `villageSubwayBenchBlock` | block | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
 | `villageSubwayBenchEndBlock` | block | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
 | `villageSubwayBenchLength` | number | `5` | How long a station bench is, arms included. `0` leaves the benches out |
 
-**Stations.** A subway line gets a station where it passes nearest the well once `villageSubwayStationLength` is set, and further ones every `villageSubwayStationRun` blocks along it. Each of those slides a few blocks either way to find a spot the ground will take, keeps clear of the stations already claimed, and is simply left out where nothing viable is near, so a line never carries a chamber with no way into it. The chamber is the bed opened out `villageSubwayPlatformWidth` either side, floored with `villageSubwayPlatformBlock`, walled and roofed in the tunnel lining, and lit from the tunnel's own `villageSubwayTunnelLightBlock` and `villageSubwayTunnelLightRun`. From the platform a corridor runs to a stairwell that climbs to the street beside the road, never under it, and never through the well plaza or a house; where the climb is too long to go straight the corridor turns back along the chamber first. A railing of `villageSubwayRailingBlock` rings the stair head at street level with the near end left open as the way in, and a bench of `villageSubwayBenchBlock` with `villageSubwayBenchEndBlock` arms, `villageSubwayBenchLength` long, stands on the platform and again beside the stair head.
+**Stations.** A subway line gets a station where it passes nearest the well once `villageSubwayStationLength` is set and `villageSubwayStation` names a build that loads, and further ones every `villageSubwayStationRun` blocks along it. Each of those slides a few blocks either way to find a spot the ground will take, keeps clear of the stations already claimed, and is simply left out where nothing viable is near, so a line never carries a chamber with no way into it. The chamber is the bed opened out `villageSubwayPlatformWidth` either side, floored with `villageSubwayPlatformBlock`, walled and roofed in the tunnel lining, and lit from the tunnel's own `villageSubwayTunnelLightBlock` and `villageSubwayTunnelLightRun`. From the platform a corridor runs to a stairwell that climbs to the street beside the road, never under it, and never through the well plaza or a house; where the climb is too long to go straight the corridor turns back along the chamber first. A railing of `villageSubwayRailingBlock` rings the stair head at street level with the near end left open as the way in, and a bench of `villageSubwayBenchBlock` with `villageSubwayBenchEndBlock` arms, `villageSubwayBenchLength` long, stands on the platform and again beside the stair head.
 
-**Building the station by hand.** `villageSubwayStation` names a structure file used as the station in place of the carved stairwell, which is how a pack ships a shape somebody built rather than one described in settings. Build it in a world, mark the structure in any block, export it, and place it with the pack: its solid cells become `villageSubwayStairBlock` and its air cells are carved out. One build serves any depth because the middle of it repeats — `villageSubwayStationFoot` layers are laid once at the bottom, carrying the floor and the doorway to the platform, then whole copies of the next `villageSubwayStationRepeat` layers stack up until the build reaches the street. That band must be a whole turn of the stairs or the flights will not meet where two copies join. `villageSubwayEntrance` sets a second structure at the head of the stairs so the way down is marked on the street, and it applies to the carved stairwell only: a build already carries its own opening, so the entrance is left off rather than stood beside it as a shut box.
+**Building the station by hand.** `villageSubwayStation` names the structure file every station is built from, and without it no station is built. It is how a pack ships a shape somebody built rather than one described in settings. Build it in a world, mark the structure in any block, export it, and place it with the pack: its blocks are laid as built, with sponge standing for the tunnel lining, and its air cells are carved out. One build serves any depth because the middle of it repeats — `villageSubwayStationFoot` layers are laid once at the bottom, carrying the floor and the doorway to the platform, then whole copies of the next `villageSubwayStationRepeat` layers stack up until the build reaches the street. That band must be a whole turn of the stairs or the flights will not meet where two copies join. The build carries its own opening onto the street.
+
+#### Railway links
+
+*villages*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageRailLines": 1,
+    "villageRailLinks": true,
+    "villageRailLinkLeast": 128,
+    "villageRailLinkMost": 1024,
+    "villageRailLinkBridgeMost": 96,
+    "villageRailLinkTunnelMost": 192,
+    "villageRailLinkStation": "both",
+    "villageRailLinkStationLength": 16,
+    "villageRailLinkPlatformWidth": 3,
+    "villageRailLinkPlatformBlock": "minecraft:stonebrick"
+  }
+}
+```
+
+Railway links join neighboring villages into one network. Villages are founded one to a cell of the village grid (`structureSpacing`), and a link runs along the seam between two cells: each village's first line carries on past its tail as a spur, straight out to the seam, and meets a trunk laid along the seam at right angles. The trunk runs from one spur to the other and never past either. It needs `villageRailLines`, or `villageSubwayLines` on a pack with no surface lines, and it is off by default.
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `villageRailLinks` | true/false | `false` | Links neighboring villages whose first lines face each other across a seam |
+| `villageRailLinkLeast` | number | `128` | The shortest link laid, spur plus trunk plus spur, in blocks |
+| `villageRailLinkMost` | number | `1024` | The longest link laid, spur plus trunk plus spur, in blocks |
+| `villageRailLinkBridgeMost` | number | `96` | The longest bridge a link may need. A link over wider water or a deeper drop is not laid |
+| `villageRailLinkTunnelMost` | number | `192` | The longest tunnel a link may need where `villageRailTunnelBlock` bores tunnels. A link that would bore further is not laid |
+| `villageRailLinkStation` | text | `both` | The station on each spur just before the trunk: `both` lays a platform either side of the line, `one` a single platform on the left of a train arriving at the trunk, `none` builds none |
+| `villageRailLinkStationLength` | number | `16` | How many rows long the station platforms are. `0` builds no stations |
+| `villageRailLinkPlatformWidth` | number | `3` | How many blocks wide each platform is |
+| `villageRailLinkPlatformBlock` | block | empty | The block the platforms are built of. Empty uses stone bricks |
+
+**Which villages link.** Two villages link only when they stand in neighboring cells, their first lines run on the axis that crosses the seam between them, and the whole link, measured from well to well along the track, is between `villageRailLinkLeast` and `villageRailLinkMost` blocks. Every part of the decision is worked out from the seed and the two village sites, so it comes out the same whichever village or chunk is made first. A link that cannot be built whole is not laid at all, never half built: one that would need a longer bridge or tunnel than the settings allow, reach past the world border, run into a woodland mansion, stand two villages closer than `structureSeparation` allows, or bring a join too close to a corner of the cells. A trunk is only laid toward a village that was actually founded: when a cap such as `structureMost` stops the neighbor, or it grows too small to keep, neither half of the trunk nor the spur past the village's own tail is built. Pinned villages link the same way, one per cell; a cell holding two pins links neither. Other villages keep clear of a link's spur and trunk as they grow, the way they keep clear of each other.
+
+**Grade.** Spurs and trunks are railway lines and are graded, bridged, tunneled and crossed exactly like a village line, with the `villageRailClimb` and the trestle and tunnel settings above. Where a spur meets the trunk both lie level, and so does the station beside it.
+
+**The junction.** A spur joins only the trunk's near track. That track is broken where the spur's middle meets it, the spur's left track curves left into it and its right track curves right, and the far track runs straight through. With two tracks, the trunk along the top and the spur coming up from below:
+
+```
+xxxxxxx
+ooooooo
+xxxxxxx
+oooxooo
+xxoxoxx
+ xoxox
+```
+
+`x` is railbed and `o` is track. Where the two spurs would arrive within a few blocks of each other, the second village's first line moves over to line up with the first, and the two meet in a crossroad instead: each spur merges only into its own near track exactly as above, both trunk tracks are broken at the spur center, and no rail crosses another:
+
+```
+ xoxox
+xxoxoxx
+oooxooo
+xxxxxxx
+oooxooo
+xxoxoxx
+ xoxox
+```
+
+A single-track trunk has no second track to give the other spur, so a link whose spurs would meet head on over a single track is not laid. With a single track the spur's track curves into the trunk track toward the left, and the trunk track beyond that curve ends against it. The curves are set with their shapes fixed, so vanilla rail turns where the junction is drawn and nowhere else.
+
+**Stations.** The last rows of a spur before the junction are a station: platforms of `villageRailLinkPlatformBlock` level with the rail, railed along the outer edge with `villageSubwayRailingBlock`, with a bench of `villageSubwayBenchBlock` halfway along each platform.
+
+**Subways.** On a pack with subway lines only, the link carries a village's first subway line. The line climbs out of the ground toward the trunk, with the ramp `villageSubwayDepth` times `villageSubwayClimb` rows long, and reaches the station and the junction at the surface; a village of this kind links on one side only, the one with the shorter link, and the trunk is a surface railway built from the `villageRail` settings. Where a spur has no room for that ramp and its station, the trunk goes down to the subway instead: the whole link, spurs and trunk, stays underground at `villageSubwayDepth`, is built from the `villageSubway` settings, and meets in the same junction with no station.
 
 #### Village decoration
 
@@ -5532,9 +5706,9 @@ The threat level scores what each player carries and lets the world answer. `thr
 
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `structureAdaptation` | list of `structure=mode` | villages `beard_thin`, the rest `none` | Which structures the terrain adapts to and how, over villages, strongholds, mineshafts, monuments and mansions. The modes are `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate` |
+| `structureAdaptation` | list of `structure=mode` | villages and mansions `beard_thin`, the rest `none` | Which structures the terrain adapts to and how, over villages, strongholds, mineshafts, monuments and mansions. The modes are `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate` |
 
-`structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages are `beard_thin` unless overridden and everything else is `none` unless named, matching what modern versions choose for themselves. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
+`structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages and mansions are `beard_thin` unless overridden and everything else is `none` unless named. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
 
 ### Seating villages
 
@@ -5717,7 +5891,7 @@ A last line says how much working scrap was thrown away since the last look, how
 
 | Setting | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `spawnChunkRadius` | int, blocks | `128` | How far from a world's spawn point chunks are held loaded whether or not anyone is there. `128` is what the game does, and `0` holds none at all |
+| `spawnChunkRadius` | int, blocks | `128` | How far from a world's spawn point, in blocks, chunks are held loaded whether or not anyone is there. B blocks hold `r = (B + 8) / 16` chunks each way from the spawn chunk, `(2r+1)²` in all, and the world prepares `(2r+9)²` chunks around it as it starts. `128` is what the game does, with 289 held and 625 prepared, and `0` holds and prepares none |
 | `spawnChunkRadii` | list of `dimension=blocks` | none | A radius for one dimension at a time, which overrides `spawnChunkRadius` for the dimensions named |
 
 The game holds the chunks around a world's spawn point loaded whether or not anyone is there, so mods have somewhere that always ticks. It is 128 blocks in every direction, about 289 chunks, and it is not adjustable in the game. `spawnChunkRadius` sets that distance. `128` is what the game does and is the default, a smaller number keeps a smaller anchor, and `0` holds none at all, so the spawn area unloads like anywhere else. `spawnChunkRadii` sets a radius for one dimension at a time, written as `dimension=blocks`, one per line, and overrides `spawnChunkRadius` for the dimensions named.
@@ -6065,7 +6239,7 @@ These are the names the parser accepts wherever the tables above say "one of the
 
 **Tints.** `biome`, `none`, or a six digit hex color. Colors anywhere in a definition are hex, with or without a leading `#`.
 
-**Behaviors** for `behavesAs`. `till`, `path`.
+**Behaviors** for `behavesAs`. `till`, `path`, `bush`, `animals`.
 
 **Structures** for a world template, and for the `structures` group's own lists. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines`, and `reccomplex`, which switches off everything Recurrent Complex generates on its own — its natural structures and its decoration stand-ins — leaving what already stands in the world untouched. Eight more name what the populate step places rather than a structure generator: `dungeons`, `waterlakes`, `lavalakes`, `netherlava`, `fire`, `glowstone`, `ice` and `animals`.
 
@@ -6391,6 +6565,7 @@ Small changes to how vanilla behaves, each switched in the `tweaks` config categ
 | `promptLeafDecay` | on | Leaves that lose their tree decay within a second instead of waiting on random ticks |
 | `lenientPaths` | on | Grass paths can be made under a block and stay there when one is placed above |
 | `unbreakableSpawners` | off | Mob spawners cannot be mined or blown up |
+| `modernChestPlacement` | on | Chests pair up as they do from 1.13 on |
 
 Three more sit in the `content` category rather than `tweaks`:
 
@@ -6413,6 +6588,18 @@ Three more sit in the `content` category rather than `tweaks`:
 **It is the block, not the spawner.** There is no per-spawner switch. The option changes `minecraft:mob_spawner` itself, so it reaches every spawner in the world at once: the four vanilla structures that place one, any a mod places, and any your own packs place.
 
 That last one is the answer for a custom structure. A spawner inside one of your `.nbt` templates, placed by an `imprint` entry, is an ordinary mob spawner block carrying its own tile entity, so it is covered the moment the option is on. Build the structure with a spawner in it the usual way, set what it spawns in the template's tile entity data, turn `unbreakableSpawners` on, and the one in your dungeon is as unbreakable as the one in vanilla's. Nothing goes in the pack for this, and there is no way to protect only yours while leaving the rest of the world's breakable.
+
+### Chest placement
+
+*bonus: vanilla tweaks*
+
+`modernChestPlacement` places chests and trapped chests the way 1.13 and later do.
+
+- A chest joins a single chest directly to its left or right, and only when both face the same way. A chest in front of or behind another never joins it.
+- Sneaking keeps the new chest single, unless the side of a single chest is clicked: then it joins that chest and turns to face the same way.
+- A chest may stand beside a double chest, where it stays single, so a row of chests along a wall is possible.
+
+Each chest remembers its partner, so what was placed stays paired or single after a reload, a hopper or pipe fills only the chest it touches, and breaking one half leaves the other single. Chests placed before the option was on, or by worldgen and structures, pair up as 1.12 always did. A client without RDPL still draws two single chests that touch as one double chest, though it opens them separately.
 
 ## Bonus: JEI plugin conflict fix
 

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeGC;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
+import mctmods.resourcedatapackloader.content.rubic.server.TickableChunkContainer;
 import mctmods.resourcedatapackloader.content.rubic.server.SpawnCubes;
 import mctmods.resourcedatapackloader.content.rubic.world.CubeWorldEntitySpawner;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -293,7 +294,7 @@ import java.util.Set;
         boolean raining = this.isRaining();
         boolean thundering = this.isThundering();
         this.profiler.startSection("pollingChunks");
-        PlayerCubeMap.TickableChunkContainer chunks = ((PlayerCubeMap) this.playerChunkMap).getTickableChunks();
+        TickableChunkContainer chunks = ((PlayerCubeMap) this.playerChunkMap).getTickableChunks();
         for (Chunk chunk : chunks.columns()) { rdpl$tickColumn(raining, thundering, chunk); }
         this.profiler.endStartSection("pollingCubes");
         if (tickSpeed > 0) {

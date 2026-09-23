@@ -22,6 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
@@ -53,6 +54,11 @@ import javax.annotation.Nullable;
     }
 
     @Override public BlockDef getDef() { return def; }
+
+    @Override public boolean canSustainPlant(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing direction, @Nonnull IPlantable plantable) {
+        if (def.sustains(plantable.getPlantType(world, pos.offset(direction)))) { return true; }
+        return super.canSustainPlant(state, world, pos, direction, plantable);
+    }
 
     private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 

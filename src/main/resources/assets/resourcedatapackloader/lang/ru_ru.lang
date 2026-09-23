@@ -124,3 +124,7 @@ rdpl.world.packOptions=Настройки паков изменили этот �
 rdpl.world.type=Это мир типа %s
 key.categories.resourcedatapackloader=Resource Data Pack Loader
 key.resourcedatapackloader.pouch=Открыть носимое хранилище
+rdpl.debug.gamemodes.error=Не удалось открыть переключатель режима игры, недостаточно полномочий
+rdpl.debug.gamemodes.help=F3 + F4 = Открыть меню смены режима игры
+rdpl.debug.gamemodes.press_f4=[ F4 ]
+rdpl.debug.gamemodes.select_next=%s — дальше

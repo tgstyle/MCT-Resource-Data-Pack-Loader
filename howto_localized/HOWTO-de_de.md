@@ -32,6 +32,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Packs nur auf dem Server](#packs-nur-auf-dem-server)
 - [Registry-Umbenennungen](#registry-umbenennungen)
 - [Mod-API](#mod-api)
+- [Packs für 1.20.1 und 1.21.1](#packs-für-1201-und-1211)
 
 **Blöcke und Items**
 - [Blöcke](#blöcke)
@@ -352,7 +353,7 @@ Alle Schlüssel, die eine Optionsdatei annimmt:
 | --- | --- | --- | --- | --- |
 | ein Optionsname | ja | boolean oder ein Objekt | | `true` oder `false` ist der Standard der Option. Ein Objekt trägt die drei Schlüssel darunter |
 | `hide` auf oberster Ebene | nein | boolean | `false` | Hält die Optionen dieses Packs komplett aus dem Optionsbildschirm und aus der erzeugten Datei heraus, während sie den Inhalt weiterhin mit ihren Standardwerten steuern |
-| `default` | nein | boolean | `false` | Der Wert der Option, bis der Nutzer ihn ändert |
+| `default` | ja | boolean | | Der Wert der Option, bis der Nutzer ihn ändert. Ein Objekt ohne booleschen `default` wird mit einer Warnung übergangen |
 | `hide` innerhalb einer Option | nein | boolean | `false` | Versteckt nur diese eine Option, sie kann also nicht umgelegt werden und bleibt auf ihrem Standard |
 | `description` | nein | String | keine | Wird im Optionsbildschirm unter dem Namen der Option angezeigt |
 
@@ -523,6 +524,48 @@ Jede Mod, die so etwas mitbringt, bekommt beim ersten Erkennen einen Eintrag in 
 
 Ein Mod-Pack kommt nie in die Überschreibungsstufe der Ressourcenpakete, egal was `overrideResourcePacks` sagt, denn darum kann nur ein Pack-Autor mit dem Buchstaben `O` bitten. Das Log kennzeichnet Mod-Packs und listet Packs mit dem niedrigsten zuerst, es lädt also nichts ungesehen.
 
+## Packs für 1.20.1 und 1.21.1
+
+*wie Packs funktionieren*
+
+Ein Pack für die 1.20.1- oder 1.21.1-Linie dieser Mod lädt auch hier. Der Loader erkennt es an einem `pack.mcmeta`-Format über 3, an einem `data/`-Ordner neben `assets/` oder an `.json`-Sprachdateien und `textures/block/` ohne 1.12.2-Gegenstück und trägt es zurück: Ein Zip wird unter seinem eigenen Namen als 1.12.2-Pack neu geschrieben, und das moderne Zip, aus dem es kam, bleibt daneben als `<name>_converted.zip.disabled` liegen. Es geht also nichts verloren, und das neue Pack gehört dir zum Fertigstellen. Lose Dateien unter `rdploader/assets` und `rdploader/data` werden nicht umgeschrieben; sie laufen bei jedem Scan des Ordners durch dieselbe Portierung.
+
+Eine moderne Blockdatei kommt mit einem `meta` für jede Variante zurück, in der Reihenfolge, in der die Varianten stehen, und ihre Tags werden zu Namen im Ore Dictionary:
+
+```json
+{
+  "type": "ore",
+  "creativeTab": "rdpltest",
+  "variants": {
+    "cluster": { "meta": 0, "hardness": 3.0 },
+    "worm": { "meta": 1, "hardness": 3.0, "oreDict": ["oreTestium"] }
+  }
+}
+```
+
+| Moderne Datei | 1.12.2-Datei |
+| --- | --- |
+| `data/<ns>/<ordner>/` für jeden Definitionsordner | `assets/<ns>/<ordner>/` |
+| `recipe/`, `loot_table/`, `advancement/`, `function/`, `structure/` (1.21.1) | `recipes/`, `loot_tables/`, `advancements/`, `functions/`, `structures/` |
+| `data/*/tags/items/` (1.21.1: `tags/item/`) | `assets/<ns>/oredict/converted_tags.json` |
+| `data/minecraft/tags/functions/tick.json` | `assets/<ns>/gamerules/converted_tick.json`, die `gameLoopFunction` der Oberwelt |
+| `minecraft:smelting`-Rezepte | `assets/<ns>/furnace/converted_smelting.json` |
+| `assets/<ns>/lang/<sprache>.json` | `assets/<ns>/lang/<sprache>.lang` |
+| `textures/block/`, `textures/item/` | `textures/blocks/`, `textures/items/` |
+| `models/item/<variante>.json` | `models/item/<datei>/<variante>.json` |
+| kein Blockstate (auf der modernen Linie erzeugt) | ein erzeugter Forge-Blockstate je Blockdatei, mit den Modellen, die ihr Typ braucht |
+
+- Jede moderne Vanilla-ID wird über eine Flattening-Tabelle im Jar zurückgetragen, gebaut aus den Datenfixern des Spiels, und kommt als der 1.12.2-Block oder das Item mit seinen Metadaten heraus: `minecraft:red_wool` wird `minecraft:wool:14`, `minecraft:oak_log` mit `axis=x` wird `minecraft:log:4`. Wo ein Schlüssel Block und Meta getrennt hält, etwa `block` in Worldgen und `modelBlock`, landet das Meta in `meta` oder `modelMeta`; ein `soil` behält den ganzen Block. Die eigenen IDs des Packs lösen sich über seine eigenen Dateien auf: `mypack:worm` wird `mypack:test_ore:1`. Namen von Entities, Biomen, Beutetabellen, Sounds, Partikeln und Attributen werden genauso zurückgetragen, und eine benannte Dimension wird zur Zahl: Die eigenen des Packs nehmen ihre `id` oder, ohne eine, eine feste Zahl ab 1000, die das Log nennt.
+- Tags werden über die Umkehrung der Konventions-Zuordnung zu Ore-Dictionary-Namen: `forge:gems/testium` und `c:gems/testium` werden `gemTestium`, `minecraft:logs` wird `logWood`. Ein `tag` als Rezeptzutat wird zur Zutat `forge:ore_dict` und das Rezept zu `forge:ore_shaped` oder `forge:ore_shapeless`; der `tag` eines Brennstoffs wird `oreDict`. Jedes Item in einem Rezept bekommt ein `data`, denn 1.12.2 weist ein Item mit Untertypen ohne eines ab.
+- In einer Sprachdatei wird `block.mypack.worm` zu `tile.mypack:test_ore.worm.name`, `item.` genauso unter `item.`, `itemGroup.mypack.tab` wird `itemGroup.tab` und `fluid.mypack.x` wird zu beiden Flüssigkeitsschlüsseln von 1.12.2.
+- Beutetabellen verlieren, was 1.12.2 nicht lesen kann: Die Variante eines Items wird `set_data`, Zahlenquellen werden `min` und `max`, Pools bekommen einen `name`, Einträge `alternatives` und `group` werden aufgelöst, und eine Funktion, Bedingung oder Eintragsart, die 1.12.2 nicht hat, fällt mit einer Zeile im Log weg. In einem Fortschritt wird `items` zu `item` und `data`, und ein `tag` wird `forge:ore_dict`.
+- Funktionen werden Zeile für Zeile in die Syntax von 1.12.2 umgeschrieben: `execute as ... at @s run` wird `execute <entity> ~ ~ ~`, `execute if block` wird `detect`, `tag` und `team` werden `scoreboard players tag` und `scoreboard teams`, `data merge` wird `blockdata` und `entitydata`, und Selektoren tauschen `distance`, `scores`, `limit` und `gamemode` gegen `r`, `score_X_min`, `c` und `m`. `SpawnData` eines Spawners verliert seine `entity`-Hülle. Eine Zeile, die die Portierung nicht tragen kann, etwa `bossbar` oder eine Makrozeile, wird zum Kommentar, und das Log nennt Datei, Zeile und Grund, damit die Funktion trotzdem lädt.
+- Eine Struktur-`.nbt` über Datenversion 1343 bekommt ihre Palette, ihre Spawner, ihre Item-Stapel und ihre Entity-IDs zurückgetragen; ein Block ohne 1.12.2-Gegenstück bleibt wie geschrieben und setzt Luft.
+- Der Boden einer modernen flachen Welt liegt am unteren Rand der Welt, 1.12.2 legt eine flache Welt ab y 0 an, also schiebt die Portierung Höhen um 64 nach oben (um das `worldMinHeight` der Vorlage, wenn sie eines nennt): `worldSpawn` und `resetSendsTo` einer flachen Vorlage, die Spawnhöhen eines Teams, das `groundLevel` einer flachen Dimension und jedes absolute y in den Funktionen, wenn die Oberwelt des Packs flach ist.
+- Weggelassen, jeweils mit einer Zeile im Log: datengetriebene Worldgen von Vanilla, Dimensionstypen, Schadensarten, Verzauberungen und andere Registries, die 1.12.2 nicht hat; Block-, Entity- und Flüssigkeits-Tags; Funktions-Tags außer `tick`; Steinmetz-, Schmiede- und andere Rezeptarten, die 1.12.2 nicht hat; Item-Komponenten; die Strukturschlüssel, die nur moderne Welten erzeugen; ein `behavesAs`-Name außer `till`, `path`, `bush` und `animals`; `jobSite`, und ein Beruf ohne `careers` bekommt einen nach seiner Datei benannten.
+
+Das Log trägt eine Zusammenfassung je umgewandeltem Pack und eine Zeile für jede Datei, die verschoben, umgewandelt, weggelassen oder nicht getragen wurde, und jeden Schlüssel, den 1.12.2 nicht liest, nennt weiterhin der Parser, der auf ihn trifft. Die Portierung ist ein bester Versuch, kein fertiges Pack: Öffne das geschriebene Zip, lies diese Zeilen und stelle von Hand fertig, was sie nennen, zuerst jeden erzeugten Blockstate, dessen Texturen sie nicht finden konnte.
+
 ---
 
 # Blöcke und Items
@@ -622,8 +665,9 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `banner` | Ein Banner auf einem Pfosten oder an einer Wand, sechzehn stehende Drehungen, mit deinem eigenen Muster. Registriert für das hängende einen zweiten Block namens `<name>_wall` |
 | `ladder` | Kletterbar, an eine Wand gesetzt |
 | `torch` | Wand- und Bodenplatzierung, mit Partikel |
-| `log` | Dreht sich zu der Fläche, gegen die du ihn setzt |
-| `leaves` | Verwelkt, lässt sich scheren, wird eingefärbt und droppt einen Setzling |
+| `bell` | Eine Glocke, wie Dörfer sie ab 1.14 haben: läutet, wenn man sie an der Seite benutzt, bei Redstone oder wenn ein Geschoss sie trifft, schwingt in ihrem Gestell und lässt Angreifer in der Nähe leuchten. Eine Variante, die Metadaten tragen Ausrichtung und Aufhängung |
+| `log` | Dreht sich zu der Fläche, gegen die du ihn setzt, und steht als `logWood` im Ore-Dictionary, damit Baumfällen und Blast Plaster ihn als Stamm behandeln |
+| `leaves` | Verwelkt, lässt sich scheren, wird eingefärbt und droppt einen Setzling, und steht als `treeLeaves` im Ore-Dictionary |
 | `sapling` | Wächst zu einem Baum oder zu einer deiner Strukturen |
 | `crop` | Wächst durch Stufen, droppt Saatgut und ein Ernte-Item |
 | `flower` | Eine einblockige Pflanze auf Erde |
@@ -641,7 +685,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `variants` | ja | Objekt aus Variantenname zu Variante | | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst |
 | `type` | nein | einer der Typen oben | `basic` | Welche Form der Block annimmt |
 | `material` | nein | eines der [Blockmaterialien](#wertelisten) | `rock` | Abbauverhalten, Kolben, Feuer und Flüssigkeiten |
-| `soundType` | nein | einer der [Sound-Typen](#wertelisten) | vom Material | Schritte, Abbauen und Setzen |
+| `soundType` | nein | einer der [Sound-Typen](#wertelisten) | `stone`; `wood` bei `log`, `plant` bei `leaves` und `crop`, der des `modelBlock` bei `stairs` und `wall` | Schritte, Abbauen und Setzen |
 | `mapColor` | nein | eine der [Kartenfarben](#wertelisten) | vom Material | Wie er auf einer Karte aussieht |
 | `harvestTool` | nein | `pickaxe`, `axe`, `shovel` | `pickaxe` | Welches Werkzeug ihn abbaut |
 | `harvestToolLevel` | nein | 0 bis 3 | `0` | 0 Holz, 1 Stein, 2 Eisen, 3 Diamant |
@@ -663,7 +707,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `itemModel` | nein | `state`, `item` | `state` | `state` folgt dem Blockstate, `item` sucht eine eigene Datei |
 | `tint` | nein | `biome`, `none` oder eine Hex-Farbe | keine | Braucht einen `tintindex` im Modell, um zu wirken |
 | `plantTypes` | nein | Liste von [Pflanzentypen](#wertelisten) | keine | Was darauf gepflanzt werden kann |
-| `behavesAs` | nein | Liste aus `till`, `path` | keine | Vanilla-Verhalten, das er übernimmt |
+| `behavesAs` | nein | Liste aus `till`, `path`, `bush`, `animals` | keine | Vanilla-Verhalten, das er übernimmt |
 | `bounds` | nein | Liste aus sechs Zahlen, 0 bis 1 | ganzer Block | Die Kollisionsbox, als `[x1, y1, z1, x2, y2, z2]` |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 | `particle` | nur `torch` | `none`, `flame`, `colored` | `flame` | Der Partikel über einer Fackel |
@@ -671,13 +715,14 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `smoke` | nur `torch` | boolean | `true` | Ob sie raucht |
 | `leafSapling` | nur `leaves` | Blockname | keiner | Der Setzling, den sie droppen |
 | `leafSaplingChance` | nur `leaves` | int | `5` | Eines von N Blättern droppt einen |
-| `seed` | nur `crop` | Itemname | keiner | Das Item, das sie pflanzt |
-| `produce` | nur `crop` | Itemname | keiner | Was die Ernte bringt |
+| `seed` | nur `crop` | Itemname | `minecraft:wheat_seeds` | Das Item, das sie pflanzt, und was eine unreife Pflanze droppt |
+| `produce` | nur `crop` | Itemname | `minecraft:wheat` | Was die Ernte bringt |
 | `maxAge` | nur `crop` | int | `7` | Wie viele Wachstumsstufen |
 | `growth` | nur Pflanzen | Objekt | keines | Siehe [Wachstum](#wachstum) |
 | `sapling` | nur `sapling` | Objekt | keines | Siehe [Setzlinge](#setzlinge) |
 | `portal` | nur `portal` | Objekt | keines | Siehe [Portale und Tore](#portale-und-tore) |
 | `container` | nur `container` | Objekt | keines | Siehe [Behälter](#behälter) |
+| `bell` | nur `bell` | Objekt | keines | Siehe [Glocken](#glocken) |
 
 ### Variantenschlüssel
 
@@ -689,7 +734,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `hardness` | nein | float | `1.0` | Wie lange das Abbauen dauert. Obsidian ist `50`, `-1` ist unzerstörbar |
 | `resistance` | nein | float | `5.0` | Explosionswiderstand |
 | `light` | nein | 0 bis 15 | `0` | Abgegebenes Licht |
-| `harvestLevel` | nein | 0 bis 3 | der Wert der Datei | Überschreibt die Werkzeugstufe für diese Variante |
+| `harvestLevel` | nein | 0 bis 3 | `0` | Überschreibt die Werkzeugstufe für diese Variante |
 | `rarity` | nein | `common`, `uncommon`, `rare`, `epic` | `common` | Farbe des Namens im Tooltip |
 | `maxSize` | nein | 1 bis 64 | `64` | Stapelgröße |
 | `oreDict` | nein | Liste von Ore-Dictionary-Namen | keine | Ore-Dictionary-Namen, unter denen diese Variante eingetragen wird |
@@ -871,6 +916,64 @@ Der gesetzte Block und der Gegenstand in der Hand lesen denselben Namen, also pa
 
 **Die Beutetabelle füllt beim ersten Öffnen**, nicht beim Setzen, und genau das macht sie in einem Bauwerk nützlich: wer zuerst öffnet, bekommt den Wurf. Dieselbe Tabelle kann `lootTable` an einer Prägeform oder an einem Dorfgrundstück verwenden, sodass ein Paket diese Blöcke über die Weltgenerierung setzen und gleich bestücken kann.
 
+## Glocken
+
+*blöcke*
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "bell",
+  "material": "iron",
+  "soundType": "metal",
+  "renderLayer": "cutout",
+  "creativeTab": "decorations",
+  "bell": {
+    "swing": true,
+    "sound": "minecraft:block.note.bell",
+    "resonateSound": "minecraft:block.note.chime"
+  },
+  "variants": { "village_bell": { "meta": 0, "hardness": 5.0, "resistance": 30 } }
+}
+```
+
+Dazu ihr Blockstate, `assets/mypack/blockstates/village_bell.json`:
+
+```json
+{
+  "forge_marker": 1,
+  "defaults": { "model": "mypack:bell_floor" },
+  "variants": {
+    "inventory": [{ "model": "mypack:bell_item" }],
+    "body": [{ "model": "mypack:bell_body" }],
+    "facing": { "north": { "y": 0 }, "east": { "y": 90 }, "south": { "y": 180 }, "west": { "y": 270 } },
+    "attachment": {
+      "floor": { "model": "mypack:bell_floor" },
+      "ceiling": { "model": "mypack:bell_ceiling" },
+      "single_wall": { "model": "mypack:bell_wall" },
+      "double_wall": { "model": "mypack:bell_between_walls" }
+    }
+  }
+}
+```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `swing` | Boolean | `true` | Zeichnet den Glockenkörper aus seinem eigenen Modell und lässt ihn beim Läuten schwingen. `false` zeichnet die ganze Glocke als einen ruhenden Block, ohne Animation |
+| `sound` | Soundname | `minecraft:block.note.bell` | Wird beim Läuten gespielt. Leer läutet lautlos |
+| `resonateSound` | Soundname | `minecraft:block.note.chime` | Wird gespielt, wenn die Glocke nachklingt, weil Angreifer in der Nähe sind. Leer klingt lautlos nach |
+
+**Sie hängt so, wie die Glocke des Spiels ab 1.14.** Auf einen Block gesetzt steht sie am Boden, in deine Blickrichtung gedreht; unter einem Block hängt sie von der Decke; an einer Wand hängt sie an dieser Wand, und zwischen zwei Wänden, wenn auch die Gegenseite fest ist. Sie fällt ab, sobald verschwindet, was sie hält, und eine Glocke zwischen zwei Wänden wird zur Glocke an einer Wand, wenn eine davon fehlt. Ihre Trefferbox folgt für jede der vier Arten der Vanilla-Glocke, `bounds` wird also nicht gelesen.
+
+**Was sie läutet.** Die Seite des Glockenkörpers unterhalb des Balkens benutzen: bei einer Bodenglocke die beiden Flächen, über die ihr Balken läuft, bei einer Wandglocke die beiden Flächen neben der Wand, bei einer Deckenglocke jede Seite. Oben, unten und alles oberhalb des Körpers bewirkt nichts. Ein Redstone-Signal läutet sie einmal beim Einschalten, und ein Pfeil, ein Schneeball oder jedes andere Geschoss läutet sie, wenn es eine Seite trifft, an der es auch eine Hand könnte. Der Körper schwingt zweieinhalb Sekunden lang von der getroffenen Seite weg; bei Redstone schwingt er entlang ihrer Ausrichtung.
+
+**Was ein Läuten bewirkt.** Dorfbewohner im Umkreis von 32 Blöcken hören sie und gehen fünfzehn Sekunden lang nach drinnen, zur nächsten Tür, die ihr Dorf kennt. Ist ein Angreifer im Umkreis von 32 Blöcken, klingt die Glocke eine Viertelsekunde nach dem Läuten nach, und zwei Sekunden später leuchtet jeder Angreifer im Umkreis von 48 Blöcken drei Sekunden lang, mit farbigen Partikeln neben der Glocke auf der Seite, auf der er steht. Ein Angreifer ist alles, was ein [Raid](#raids) geschickt hat, dazu die Illager und Hexen des Spiels. Eine Glocke dieses Typs ist für jeden Raid eine Dorfglocke: Sie läutet bei jeder eintreffenden Welle, ohne im `bell` des Raids genannt zu sein.
+
+**Die Modelle.** Eine Glocke hat keine `blocks`-Eigenschaft, ihr Blockstate schlüsselt also über `facing` und `attachment`. Mit `swing` zeichnen diese Modelle nur das Gestell, und der schwingende Teil ist ein weiterer Eintrag namens `body`, im Blockraum dort modelliert, wo er ruht; er kippt um den Punkt einen halben Block nach innen und drei Viertel Block nach oben, wie bei Vanilla. Der Eintrag `inventory` ist das Item, Gestell und Körper zusammen. Ohne `swing` gibt es keinen Eintrag `body`, und die vier Gestellmodelle zeichnen die Glocke mit.
+
+**Das Schwingen zeichnet der Client.** Ein Läuten erreicht die Spieler als Blockereignis, ein dedizierter Server lässt die Glocke also für alle schwingen, die diese Mod haben, und ein Spieler ohne sie hört die Glocke nur. Sounds, Nachklingen und Leuchten laufen alle auf dem Server.
+
 ## Modelle, Blockstates und Texturen
 
 *blöcke und items*
@@ -900,7 +1003,7 @@ Jeder Block mit mehr als einer Variante bekommt eine Eigenschaft namens `blocks`
 }
 ```
 
-Auch ein Block mit nur einer Variante behält die `blocks`-Eigenschaft, sein Schlüssel bleibt also `blocks=<name>`, aber nur bei den Typen, die diese Eigenschaft überhaupt haben. Elf Typen verbrauchen ihre gesamten Metadaten für ihre Form, halten eine Variante und tragen keine `blocks`-Eigenschaft, sie schlüsseln also allein über ihre eigenen Eigenschaften. [Blockstates nach Typ](#blockstates-nach-typ) sagt, welche welche sind.
+Auch ein Block mit nur einer Variante behält die `blocks`-Eigenschaft, sein Schlüssel bleibt also `blocks=<name>`, aber nur bei den Typen, die diese Eigenschaft überhaupt haben. Zwölf Typen verbrauchen ihre gesamten Metadaten für ihre Form, halten eine Variante und tragen keine `blocks`-Eigenschaft, sie schlüsseln also allein über ihre eigenen Eigenschaften. [Blockstates nach Typ](#blockstates-nach-typ) sagt, welche welche sind.
 
 Hat der Block eigene Eigenschaften, werden sie mit Kommas verbunden, in der Reihenfolge, in der der Zustand sie auflistet: `blocks=ruby_log,axis=y`, `blocks=ruby_slab,half=bottom`, `blocks=ruby_wall,up=true,north=true`. Eine Treppe hat keine `blocks`-Eigenschaft, sie wird also allein über `facing=east,half=bottom,shape=straight` angesprochen. Zwei Eigenschaften bleiben mit Absicht weg: die eigene Varianteneigenschaft einer Mauer sowie `check_decay` und `decayable` eines Blätterblocks – Blätter brauchen also nur `blocks=ruby_leaves`. Ein Banner hat gar keine Varianteneigenschaft und wird stehend über `rotation=0` bis `15` und an der Wand über `facing=north` angesprochen, siehe [Banner](#banner).
 
@@ -926,6 +1029,7 @@ Zwei Dinge entscheiden, was in einer Blockstate-Datei stehen muss: ob der Typ di
 | `fence_gate` | einen Block | `facing`, `in_wall`, `open` | 1 |
 | `banner` | zwei, `<name>` und `<name>_wall` | stehend `rotation`, `0` bis `15`, an der Wand `facing` | 1 |
 | `ladder`, `torch` | einen Block | `facing`, eine Fackel ergänzt `up` zu den vier Wänden | 1 |
+| `bell` | einen Block | `facing` und `attachment`, also `floor`, `ceiling`, `single_wall` oder `double_wall`, dazu ein Eintrag `body` für den schwingenden Teil | 1 |
 | `crop` | einen Block | `age`, immer `0` bis `7`, egal was `maxAge` sagt | 1 |
 | `cane` | einen Block | `age`, `0` bis `15` | 1 |
 | `sapling` | einen Block | `stage`, `0` bis eins weniger als `stages` | 1 |
@@ -1257,6 +1361,8 @@ Vanilla erkennt seine eigenen Blöcke an einem Dutzend Stellen an ihrer Identit�
 | --- | --- |
 | `till` | Eine Hacke macht Ackerboden daraus |
 | `path` | Eine Schaufel macht einen Trampelpfad daraus |
+| `bush` | Blumen, Gras und Setzlinge lassen sich darauf pflanzen und bleiben stehen, wie auf Erde. Dasselbe wie `plains` in `plantTypes` |
+| `animals` | Tiere spawnen darauf im Hellen, wie auf Gras |
 
 ## Items
 
@@ -2750,7 +2856,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | --- | --- | --- | --- | --- |
 | `name` | nein | string | der Dateiname | Name, den der Spieler sieht |
 | `id` | nein | int | wird vergeben | Feste Biom-ID. Setz sie nur, wenn du sie stabil brauchst |
-| `types` | nein | Liste von Dictionary-Typen | keine | Registriert das Biom unter diesen, etwa `FOREST`, `COLD`, `WET` oder `NETHER`, damit andere Mods es finden |
+| `types` | nein | Liste von Dictionary-Typen | geraten | Registriert das Biom unter diesen, etwa `FOREST`, `COLD`, `WET` oder `NETHER`, damit andere Mods es finden. Fehlen sie, errät Forge sie aus Baumdichte, Höhe, Temperatur, Niederschlag und Bodenblock des Bioms |
 | `baseBiome` | nein | Biomname | keiner | Ein vorhandenes Biom, von dem Einstellungen kopiert werden |
 | `requires` | nein | Liste von Mod-IDs oder Pack-Namespaces | keine | Die Datei wird übersprungen, wenn nicht alle da sind |
 
@@ -3458,7 +3564,7 @@ Pflicht ist nur `block`, alles andere darf wegbleiben und nimmt seinen Standardw
 | `meta` | nein | int | `0` | Welche Variante dieses Blocks |
 | `blocks` | nein | Liste von Objekten | keine | Eine gewichtete Liste, genutzt statt eines einzelnen Blocks. Siehe unten |
 | `size` | nein | int oder Bereich | `8` | Wie viele Blöcke ein Versuch setzt, oder wie groß eine Form mit Radius ausfällt |
-| `attempts` | nein | int oder Bereich | `1` | Wie oft es pro Chunk versucht wird |
+| `attempts` | nein | int oder Bereich | `8` | Wie oft es pro Chunk versucht wird |
 | `sparse` | nein | boolean | `false` | Streut die Blöcke, statt sie zusammenzupacken |
 | `shape` | nein | Objekt | `{ "type": "cluster" }` | Die Form, die es annimmt. Siehe [Formen](#formen) |
 | `spread` | nein | Objekt | `{ "type": "even" }` | Wo es hingesetzt wird. Siehe [Verteilung](#verteilung) |
@@ -3757,7 +3863,7 @@ Für eine Form, die kein eingebauter Typ abdeckt, ist `imprint` der Weg: Bau sie
 
 *formen*
 
-Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. **x und z sind Blockkoordinaten, keine Chunkkoordinaten**, und die Struktur generiert in dem Chunk, in dem dieser Block liegt. Ein Eintrag pro gewünschtem Exemplar. Ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs, und zwei Pins näher als einen Chunk beieinander setzen zwei Strukturen in denselben Chunk. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden.
+Vanilla-Strukturen nagelst du mit `structureAt` in den `terrain`-Einstellungen an genaue Punkte, als `structure=x,z`-Einträge, einer pro Zeile: `"structureAt": ["villages=1000,-500"]`. **x und z sind Blockkoordinaten, keine Chunkkoordinaten**, und die Struktur generiert in dem Chunk, in dem dieser Block liegt; der Brunnen eines Dorfs steht genau auf diesem Block, andere Strukturen beginnen dort, wo das Spiel sie in diesem Chunk beginnen würde. Ein Eintrag pro gewünschtem Exemplar. Ihr Abstand, ihre Trennung, ihr Mindestspawnabstand und die Prüfungen auf flachen Boden treten alle beiseite – die Stelle ist damit Sache des Packs, und zwei Pins näher als einen Chunk beieinander setzen zwei Strukturen in denselben Chunk. Einmal gesetzt, setzt sich die Struktur in ihrem Chunk nach den üblichen Regeln auf den Boden.
 
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
@@ -4628,7 +4734,7 @@ Ein Raid ist der, den das Spiel ab 1.14 hat, aufgebaut auf den Dörfern, die 1.1
 
 Ein laufender Raid wird mit der Welt gespeichert, und seine Angreifer nehmen ihren Marsch nach dem Neuladen wieder auf. Er endet ohne Ausgang auf friedlich, nach `timeout` Ticks oder wenn keine Stelle um das Dorf eine Welle aufnehmen kann. Ein Dorf zählt erst, wenn ein Dorfbewohner seine Türen gefunden hat, also braucht ein Raid ein Dorf, das das Spiel bemerkt hat.
 
-Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner zur nächsten Tür, die das Dorf kennt, nach drinnen und bleiben dort. Angreifer brechen die Holztüren auf ihrem Weg auf, um an sie heranzukommen, zwölf Sekunden pro Tür, auf normal und schwer, solange `mobGriefing` an ist; Eisentüren halten. Ein `bell`-Block läutet, wenn ein Spieler ihn benutzt, und jede Glocke im Dorf läutet, wenn eine Welle eintrifft: Dorfbewohner im Umkreis von 48 Blöcken verstecken sich fünfzehn Sekunden lang, und Angreifer im Umkreis von 48 Blöcken leuchten drei Sekunden lang. Nichts erzeugt eine Glocke. Ein Pack, das eine will, definiert den Block, setzt ihn in eine NBT-Struktur und platziert diese Struktur im Dorf, als Grundstück oder als Brunnenersatz, damit die Glocke dort steht, wo die Dorfbewohner leben.
+Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner zur nächsten Tür, die das Dorf kennt, nach drinnen und bleiben dort. Angreifer brechen die Holztüren auf ihrem Weg auf, um an sie heranzukommen, zwölf Sekunden pro Tür, auf normal und schwer, solange `mobGriefing` an ist; Eisentüren halten. Ein Block vom Typ `bell` ist überall, wo er steht, eine Dorfglocke und läutet, wie [Glocken](#glocken) es beschreibt; das `bell` des Raids nennt jeden anderen Block, der als Glocke läuten soll. Jede Glocke im Dorf läutet, wenn eine Welle eintrifft, und ein genannter Block läutet auch, wenn ein Spieler ihn benutzt: Dorfbewohner im Umkreis von 48 Blöcken verstecken sich fünfzehn Sekunden lang, und Angreifer im Umkreis von 48 Blöcken leuchten drei Sekunden lang. Nichts erzeugt eine Glocke. Ein Pack, das eine will, definiert den Block, setzt ihn in eine NBT-Struktur und platziert diese Struktur im Dorf, als Grundstück oder als Brunnenersatz, damit die Glocke dort steht, wo die Dorfbewohner leben.
 
 ```json
 {
@@ -4665,7 +4771,7 @@ Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner zur nächsten T
 | `sound` | Geräuschname | keiner | Wird jedem Spieler in Reichweite von der Seite vorgespielt, aus der die Welle kommt, sobald sie eintrifft |
 | `wins` | Funktion | keine | Läuft als jeder Spieler in Reichweite, wenn der Raid gewonnen ist |
 | `loses` | Funktion | keine | Läuft als jeder Spieler in Reichweite, wenn der Raid verloren ist |
-| `bell` | Blockname oder Liste | keiner | Der Block, der als Glocke läutet, wenn ein Spieler ihn benutzt und immer wenn eine Welle eintrifft. Setze ihn über eine NBT-Struktur ins Dorf, denn nichts erzeugt ihn |
+| `bell` | Blockname oder Liste | keiner | Weitere Blöcke, die als Glocke läuten, wenn ein Spieler sie benutzt und immer wenn eine Welle eintrifft. Ein Block vom Typ `bell` läutet, ohne genannt zu sein. Setze ihn über eine NBT-Struktur ins Dorf, denn nichts erzeugt ihn |
 
 ### Eine Gruppe
 
@@ -4743,9 +4849,9 @@ Steht die Steuerung einer Gruppe auf `default`, gewinnen diese Werte, auf `globa
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
 | `blockOres` | boolean | `false` | Hindert jeden Mod und Minecraft daran, Erz zu generieren, außer den Mods in `oreWhitelist`. Erreichbar ist nur Generierung, die über Forges Ore-Generation-Event läuft, also Minecraft und die meisten, aber nicht alle Mods |
-| `oreWhitelist` | Liste von Mod-Ids | keine | Die Mods, die trotz `blockOres` weiter Erz generieren dürfen |
+| `oreWhitelist` | Liste von Mod-Ids | `["minecraft"]` | Die Mods, die trotz `blockOres` weiter Erz generieren dürfen |
 | `oreTypes` | Liste von Erztypen | keine | Für welche Erztypen das gilt, in Forges Schreibweise `COAL`, `IRON`. Leer heißt jeder Typ |
-| `oreTypesAreBlacklist` | boolean | `false` | An werden die in `oreTypes` genannten Typen blockiert, aus generieren nur diese Typen |
+| `oreTypesAreBlacklist` | boolean | `true` | An werden die in `oreTypes` genannten Typen blockiert, aus generieren nur diese Typen |
 | `blockOreDimensions` | Liste von Zahlen | keine | Die Dimensionen, in denen Erz blockiert wird, leer heißt jede. Eine Dimension außerhalb wird gar nicht angefasst, die Erze eines anderen Mods generieren dort also unbehelligt, während die Oberwelt blockiert bleibt |
 | `blockOreDimensionsAreBlacklist` | boolean | `false` | An sind die genannten Dimensionen die, die in Ruhe gelassen werden |
 | `prospectItems` | Liste von `item=Einträgen` | keine | Gegenstände, die nach Worldgen-Einträgen der Form `vein` schürfen, wenn ein schleichender Spieler mit einem davon in der Hand einen Block abbaut. Die Schreibweise steht im Absatz darunter |
@@ -4908,7 +5014,7 @@ Jeder Chunk wird einmal bearbeitet, beim Laden von der Platte, und in seinen eig
 | `villagePlotsLeast` | Zahl | `0` | Die wenigsten gebauten Grundstücke, mit denen sich ein Dorf zufriedengibt — Häuser, Felder und Pack-Grundstücke, nie Wege, Fackeln oder der Brunnen. Ein kleiner ausgelegtes Dorf wird ein paar Mal neu gezogen, und die größte Auslegung gewinnt. `0` behält Vanilla |
 | `villagePlotsBackRow` | Wahrheitswert | `true` | Ist das Dorf gewachsen, setzt ein zweiter Durchgang hinter jedes Grundstück an einer Straße ein weiteres, ihm zugewandt, mit demselben Wurf und derselben Platzprüfung, damit das Innere eines Blocks zwischen zwei Straßen bebaut wird statt leer zu bleiben |
 | `villagePlotsMost` | Zahl | `0` | Die meisten, die es haben darf; beim Höchstwert hört es rundweg auf zu wachsen, keine Gebäude und keine Wege mehr. `0` behält Vanilla |
-| `villageTieStreets` | boolean | `false` | An bekommt ein Viertel, das seine Straßen nicht bis zum stehenden Dorf wachsen lassen kann, eine gerade Verbindungsstraße zur nächsten Straße, mit der es fluchtet. Aus wird ein solches Viertel wieder abgeräumt |
+| `villageTieStreets` | boolean | `true` | An bekommt ein Viertel, das seine Straßen nicht bis zum stehenden Dorf wachsen lassen kann, eine gerade Verbindungsstraße zur nächsten Straße, mit der es fluchtet. Aus wird ein solches Viertel wieder abgeräumt |
 | `villageBlockSizes` | Liste von `größe=gewicht` | keine | Wie tief die Blocks zwischen den parallelen Straßen einer Stadt sind, je Viertel einmal aus seiner Platzlage gewürfelt. Leer bemisst jeden Block nach dem größten Grundstück, das das Pack mitbringt |
 | `villageLayout` | Text | leer | Nennt eine [Stadtplan](#stadtpläne), nach der das Dorf ausgelegt wird, statt es wachsen zu lassen |
 
@@ -4932,7 +5038,7 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
 
 `villagePlotsLeast` und `villagePlotsMost` begrenzen, mit wie vielen Grundstücken ein Dorf gebaut wird. Gezählt werden Häuser, Felder und Pack-Grundstücke, nie Straßen, Fackeln oder der Brunnen. Ein Dorf, das unter dem Minimum bleibt, wird in größerem Zuschnitt neu angelegt, einige Versuche lang, und der größte Entwurf gewinnt, auf engem Gelände kann es also trotzdem darunter bleiben. Beim Maximum hört das Dorf ganz auf zu wachsen: keine weiteren Gebäude und keine weiteren Straßen. `0` lässt das jeweilige Ende bei Vanilla.
 
-`villageTieStreets`, aus, solange es nicht gesetzt ist, legt für ein Viertel, das seine Straßen nicht bis zum bestehenden Dorf wachsen lassen kann, eine Verbindungsstraße an: eine gerade Straße voller Breite von einem Straßenende des Viertels zur nächsten bestehenden Straße, mit der es in einer Linie liegt, wenn diese Linie länger ist als eine Straße breit, höchstens 112 Reihen lang, frei von jedem Teil, nicht neben einer parallelen Straße, nicht durch einen Tunnel und eben genug zum Gehen. Ohne sie wird so ein Viertel wieder abgetragen, was eine Stadt auf zerklüftetem Boden auf ihren Platz und vier Straßen beschränkt; mit ihr schließt das Viertel an und wächst weiter. Eine Stadt auf flachem Boden braucht sie selten, aber sie kann ändern, wo ein Viertel steht, das sonst abgetragen worden wäre, deshalb ist sie standardmäßig aus.
+`villageTieStreets`, an, solange es nicht gesetzt ist, legt für ein Viertel, das seine Straßen nicht bis zum bestehenden Dorf wachsen lassen kann, eine Verbindungsstraße an: eine gerade Straße voller Breite von einem Straßenende des Viertels zur nächsten bestehenden Straße, mit der es in einer Linie liegt, wenn diese Linie länger ist als eine Straße breit, höchstens 112 Reihen lang, frei von jedem Teil, nicht neben einer parallelen Straße, nicht durch einen Tunnel und eben genug zum Gehen. Ohne sie wird so ein Viertel wieder abgetragen, was eine Stadt auf zerklüftetem Boden auf ihren Platz und vier Straßen beschränkt; mit ihr schließt das Viertel an und wächst weiter. Eine Stadt auf flachem Boden braucht sie selten, und sie ist standardmäßig an, damit ein Pack, das eine große Stadt verlangt, auch eine bekommt; schalte sie aus, um eine Stadt auf zerklüftetem Boden klein zu halten.
 
 `villageBlockSizes` legt fest, wie tief die Blöcke zwischen den parallelen Straßen einer Stadt sind, als gewichtete `größe=gewicht`-Einträge: `32=3` und `64=1` legen drei von vier Vierteln mit 32 tiefen Blöcken an und den Rest mit 64. Jedes Viertel würfelt seine Größe einmal aus der Lage seines Platzes, dieselbe Welt bekommt also immer dieselbe Mischung. Seine Straßen zweigen entlang ihrer Länge alle zwei Blöcke plus eine Straßenbreite Seitenstraßen ab, ein 16er Viertel ist also ein feines Raster und ein 64er ein grobes, und zwei parallele Straßen halten so viele Blöcke plus die des Nachbarviertels zueinander Abstand, ein 32er Viertel neben einem 64er lässt also 96 dazwischen. An den Straßen eines Viertels werden nur Grundstücke gebaut, die in die Tiefe passen, und unter denen, die passen, ist die Chance eines Grundstücks sein Gewicht mal seine Breite, tiefe Blöcke bevorzugen also die Gebäude, die sie ausfüllen, und ein 64 breites Grundstück steht nie an einem 32 tiefen Block. Straßenlänge und Platzabstand richten sich weiterhin nach dem größten Grundstück des Packs, denn das lässt jedes Viertel die Stadt erreichen. Leer bemisst jeden Block nach diesem größten Grundstück und zweigt Straßen wie bisher nur an ihren Enden ab.
 
@@ -5007,6 +5113,8 @@ Wege werden nie geregelt, damit Steigungen, Brücken und Kreuzungsmuster weiterh
 
 Alles Folgende greift nur, solange `terrainAdaptation` an ist. Jede dieser Einstellungen ist standardmäßig leer oder null, was Vanillas Wege genau so lässt, wie sie waren.
 
+**Blöcke mischen.** Einige Block-Einstellungen nehmen statt eines Blocks eine Mischung: Blöcke durch Kommas getrennt, jeder mit einem Leerzeichen und einem Gewicht dahinter, etwa `"minecraft:stonebrick 3, minecraft:cobblestone 1"`. Ein Block ohne Gewicht zählt einfach. Jeder gesetzte Block würfelt die Mischung aus dem Welt-Seed und seiner Position aus, dieselbe Welt baut also immer dasselbe Muster. Eine Mischung nehmen `villagePathVergeBlock`, `villagePathVergeWaterBlock`, `villagePathTunnelBlock`, `villagePathBridgeFrameBlock`, `villagePathBridgeFrameTopBlock`, `villageRailTunnelBlock`, `villageRailDeckBlock`, `villageRailSupportBlock`, `villageRailBarrierBlock`, `villageRailBridgeFrameBlock`, `villageRailBridgeFrameTopBlock`, `villageSubwayTunnelBlock`, `villageSubwayPlatformBlock`, `villageSubwayRailingBlock`, `villageSubwayBenchEndBlock` und `villageSewerMossBlock`. Alle anderen Block-Einstellungen nehmen durchgehend den ersten Block einer Mischung.
+
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
 | `villagePathBlock` | Block | leer | Die Wegoberfläche. Leer behält den Block, den das Biom nehmen würde: Sandstein über Sand, gebrannter Ton in der Mesa, Trampelpfad über Erde |
@@ -5078,7 +5186,7 @@ Welches Muster eine Kreuzung bekommt, wird aus dem Weltseed und der Lage der Kre
 
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
-| `villagePathSupportBlock` | Block | leer | Der Block unter der Oberfläche, und die Oberfläche selbst dort, wo der Boden blanker Fels ist. Leer behält Vanilla-Kies |
+| `villagePathSupportBlock` | Block | leer | Die Oberfläche selbst dort, wo der Boden blanker Fels ist, und die Pfeiler und Beine unter einem Weg über Wasser. Leer behält Vanilla-Kies, in Wüstendörfern Sandstein |
 | `villagePathBridgeBlock` | Block | leer | Womit ein Weg Wasser überquert. Leer behält Vanilla-Bretter |
 | `villagePathBridgeBarrierBlock` | Block | leer | Geländer, an beiden Kanten eines Brückendecks aufgestapelt. Leer baut keine |
 | `villagePathBridgeBarrierHeight` | Zahl | `1` | Wie viele Blöcke hoch diese Geländer stehen |
@@ -5147,7 +5255,7 @@ Ein Block mit Beuteinventar, eine Truhe zum Beispiel, wird aus `villagePathPierL
 | `villageSewerLadderBlock` | Blockname | keiner | Der Block, an dem ein Einstiegsschacht erklommen wird, von der Straße bis zum Gehweg im Kanal gesetzt. Leer lässt den Schacht offen |
 | `villageSewerCoverBlock` | Blockname | keiner | Der Block, der einen Einstieg abdeckt, bündig in eine Ost-West-Straße gesetzt, wo eine Straße oder Gasse auf sie trifft, und auf dem Platz, wo diese Straße den Kanalring kreuzt. Eine hölzerne Falltür ist die übliche Wahl: eine eiserne braucht ein Redstone-Signal und lässt sich von Hand nicht öffnen, was den Kanal verschließt. Leer lässt die Schachtmündung offen |
 | `villageSewerMossBlock` | Blockname | keiner | Ein zweiter Block, der hier und da in die Auskleidung gemischt wird, bemooster Stein unter glattem etwa. Leer kleidet den Kanal durchgehend mit einem Block aus |
-| `villageSewerMossChance` | 0 bis 100 | `30` | Wie viel Prozent der Auskleidungsblöcke als dieser zweite Block herauskommen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal sieht also immer gleich aus |
+| `villageSewerMossChance` | 0 bis 100 | `25` | Wie viel Prozent der Auskleidungsblöcke als dieser zweite Block herauskommen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal sieht also immer gleich aus |
 | `villageSewerVineBlock` | Blockname | keiner | Ein Block, der hier und da innen an den Kanalwänden hängt, Ranken etwa. Er hängt sich an die Wand, an der er steht. Leer hängt nichts |
 | `villageSewerVineChance` | 0 bis 100 | `20` | Wie viel Prozent der Zellen neben einer Wand ihn tragen. Pro Blockposition aus dem Weltseed gewürfelt, derselbe Kanal hängt also immer gleich |
 | `villageSewerWellEntrance` | Wahrheitswert | `true` | Ein Kanalring unter dem Platzring um den Brunnen, durch den der Kanal jeder Straße läuft, und je ein Gullydeckel auf dem Platz hinab auf den Ring, wo eine Ost-West-Straße ihn kreuzt, sodass die Kanalisation ein zusammenhängendes System mit Einstieg in der Stadtmitte ist. Aus endet der Kanal jeder Straße am Brunnen, und der Platz hat keinen Weg hinab |
@@ -5219,9 +5327,7 @@ Ein Block mit Beuteinventar, eine Truhe zum Beispiel, wird aus `villagePathPierL
     "villageSubwayStationRun": 0,
     "villageSubwayPlatformWidth": 3,
     "villageSubwayPlatformBlock": "minecraft:stonebrick:1",
-    "villageSubwayStairBlock": "minecraft:stonebrick",
     "villageSubwayStation": "mypack:subway_station",
-    "villageSubwayEntrance": "mypack:subway_entrance",
     "villageSubwayStationFoot": 4,
     "villageSubwayStationRepeat": 12,
     "villageSubwayRailingBlock": "minecraft:iron_bars",
@@ -5276,7 +5382,7 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 
 **Gleis.** Mit leerem `villageRailBlock` ist das Gleis eine entlang der Linie gedrehte Vanilla-Schiene, und `villageRailPowerRun` setzt alle so viele Reihen eine Antriebsschiene über einem Redstone-Block, damit eine Lore die ganze Linie fährt. Ein Paket, das Eisenblöcke, Gitter oder etwas anderes will, nennt sie stattdessen, und die Linie wird mit diesem Block so ausgestattet, wie er ist.
 
-**Stationen.** Eine U-Bahn-Linie bekommt dort eine Station, wo sie dem Brunnen am nächsten kommt, sobald `villageSubwayStationLength` gesetzt ist, und weitere alle `villageSubwayStationRun` Blöcke entlang der Linie. Jede davon verschiebt sich ein paar Blöcke in die eine oder andere Richtung, bis sie Boden findet, der sie trägt, hält Abstand zu den schon vergebenen Stationen und entfällt schlicht, wo nichts Passendes in der Nähe liegt — so trägt eine Linie nie eine Halle ohne Zugang. Die Halle ist das um `villageSubwayPlatformWidth` zu beiden Seiten geweitete Bett, mit `villageSubwayPlatformBlock` gepflastert, in der Tunnelverkleidung gemauert und überdeckt und aus den eigenen Tunnelschlüsseln `villageSubwayTunnelLightBlock` und `villageSubwayTunnelLightRun` beleuchtet. Vom Bahnsteig führt ein Gang zu einem Treppenschacht, der neben der Straße ans Tageslicht steigt, nie unter ihr, und nie durch den Brunnenplatz oder ein Haus; wo der Aufstieg für den geraden Weg zu lang ist, führt der Gang zuerst an der Halle zurück. Ein Geländer aus `villageSubwayRailingBlock` umschließt den Treppenkopf auf Straßenhöhe und lässt die nahe Seite als Zugang offen, und eine Bank aus `villageSubwayBenchBlock` mit Armlehnen aus `villageSubwayBenchEndBlock`, `villageSubwayBenchLength` lang, steht auf dem Bahnsteig und noch einmal neben dem Treppenkopf.
+**Stationen.** Eine U-Bahn-Linie bekommt dort eine Station, wo sie dem Brunnen am nächsten kommt, sobald `villageSubwayStationLength` gesetzt ist und `villageSubwayStation` ein Bauwerk nennt, das sich laden lässt, und weitere alle `villageSubwayStationRun` Blöcke entlang der Linie. Jede davon verschiebt sich ein paar Blöcke in die eine oder andere Richtung, bis sie Boden findet, der sie trägt, hält Abstand zu den schon vergebenen Stationen und entfällt schlicht, wo nichts Passendes in der Nähe liegt — so trägt eine Linie nie eine Halle ohne Zugang. Die Halle ist das um `villageSubwayPlatformWidth` zu beiden Seiten geweitete Bett, mit `villageSubwayPlatformBlock` gepflastert, in der Tunnelverkleidung gemauert und überdeckt und aus den eigenen Tunnelschlüsseln `villageSubwayTunnelLightBlock` und `villageSubwayTunnelLightRun` beleuchtet. Vom Bahnsteig führt ein Gang zu einem Treppenschacht, der neben der Straße ans Tageslicht steigt, nie unter ihr, und nie durch den Brunnenplatz oder ein Haus; wo der Aufstieg für den geraden Weg zu lang ist, führt der Gang zuerst an der Halle zurück. Ein Geländer aus `villageSubwayRailingBlock` umschließt den Treppenkopf auf Straßenhöhe und lässt die nahe Seite als Zugang offen, und eine Bank aus `villageSubwayBenchBlock` mit Armlehnen aus `villageSubwayBenchEndBlock`, `villageSubwayBenchLength` lang, steht auf dem Bahnsteig und noch einmal neben dem Treppenkopf.
 
 #### Dorf-U-Bahnen
 
@@ -5287,7 +5393,7 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageSubwayLines` | Zahl | `0` | Wie viele unterirdische Bahnlinien ein Dorf gräbt. 0 gräbt keine und würfelt nichts, das Dorf wird also genau so angelegt, wie es ohne sie wäre |
 | `villageSubwayDepth` | Zahl | `24` | Wie tief unter der Oberfläche das Bett liegt. Die Linie wird nach dem Boden über ihr abgestuft, folgt dem Gelände also in dieser Tiefe, statt eben zu verlaufen |
 | `villageSubwaySpacing` | Zahl | `64` | Wie weit die U-Bahn-Linien eines Dorfes voneinander entfernt gehalten werden |
-| `villageSubwayDirection` | Zeichenkette | `any` | In welche Richtung die Linien verlaufen: `x`, `z` oder `any`, um je Dorf zu würfeln |
+| `villageSubwayDirection` | Zeichenkette | `any` | In welche Richtung U-Bahn-Linien verlaufen: `ew` von Ost nach West, `ns` von Nord nach Süd, oder `any`, um je Dorf zu würfeln |
 | `villageSubwayWidth` | Zahl | `3` | Wie breit das Bett ist, ohne Schultern |
 | `villageSubwayTracks` | Zahl | `0` | Wie viele parallele Gleise das Bett trägt. 0 nimmt so viele, wie die Breite zulässt |
 | `villageSubwayTrackGap` | Zahl | `2` | Wie weit parallele Gleise auseinanderliegen |
@@ -5301,7 +5407,7 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageSubwayPowerBlock` | Block | leer | Der Block für das angetriebene Gleis. Leer nimmt Vanilla-Antriebsschienen |
 | `villageSubwayPowerBase` | Block | leer | Der Block, der unter ein angetriebenes Gleis gesetzt wird, um es zu treiben. Leer nimmt einen Redstone-Block |
 | `villageSubwayPowerRun` | Zahl | `0` | Wie viele Blöcke Abstand die Antriebsschienen haben. 0 legt keine |
-| `villageSubwayTunnelBlock` | Block | leer | Der Block, mit dem die Röhre ausgekleidet wird: die Wände zu beiden Seiten und die Decke darüber. Leer gräbt überhaupt keine U-Bahn, denn eine U-Bahn ist eine Röhre |
+| `villageSubwayTunnelBlock` | Block | leer | Der Block, mit dem die Röhre ausgekleidet wird: die Wände zu beiden Seiten und die Decke darüber. Leer gräbt die Röhre und ihre Stationen unausgekleidet |
 | `villageSubwayTunnelLightBlock` | Block | leer | Der Block, der als Licht in die Tunneldecke gesetzt wird. Leer beleuchtet nichts |
 | `villageSubwayTunnelLightRun` | Zahl | `8` | Wie viele Blöcke Abstand diese Lichter haben, an Weltkoordinaten verankert, damit die Teilstücke übereinstimmen |
 | `villageSubwayClimb` | Zahl | `8` | Wie viele Blöcke eine Linie läuft, bevor sie einen Block steigen oder fallen darf |
@@ -5322,17 +5428,85 @@ Eine Eisenbahnlinie ist ein gerader Gleisstrang, der das ganze Dorf auf einer Ac
 | `villageSubwayStationFoot` | Zahl | `4` | Wie viele Lagen am Fuß eines Stationsbauwerks einmalig gelegt werden, vor dem Teil, der sich wiederholt. Der Boden und der Durchgang hinaus zum Bahnsteig liegen hier |
 | `villageSubwayPlatformWidth` | Zahl | `3` | Wie weit die Kammer zu beiden Seiten des Bettes aufgeweitet wird, um einen Bahnsteig zu bilden |
 | `villageSubwayPlatformBlock` | Block | leer | Der Block, mit dem der Bahnsteig ausgelegt wird. Leer legt ihn mit der Tunnelauskleidung aus |
-| `villageSubwayStairBlock` | Block | leer | Der Block, aus dem die Stufen hinauf zur Straßenseite bestehen. Leer nimmt die Tunnelauskleidung |
-| `villageSubwayStation` | Text | leer | Eine Bauwerksdatei, die als Station selbst dient, anstelle des gehauenen Treppenschachts, benannt `mypack:subway_station` und aus dem `structures`-Ordner jenes Pakets gelesen. Ihre festen Zellen werden in `villageSubwayStairBlock` gelegt und ihre Luftzellen ausgehauen, sodass unter der Erde das Bauwerk steht und nicht eine Beschreibung davon. Leer haut stattdessen den Treppenschacht |
-| `villageSubwayEntrance` | Text | leer | Eine Bauwerksdatei, die an den Kopf der Stationstreppe gesetzt wird, damit der Weg hinein auf der Straße kenntlich ist. Leer lässt die heraufkommende Treppe kahl, und sie entfällt ganz, wo `villageSubwayStation` ein Bauwerk nennt, das seinen eigenen Weg hinein mitbringt |
+| `villageSubwayStation` | Text | leer | Die Bauwerksdatei, aus der jede Station gebaut wird, benannt `mypack:subway_station` und aus dem `structures`-Ordner jenes Pakets gelesen. Ihre Blöcke werden gelegt, wie sie gebaut sind, wobei Schwamm für die Tunnelauskleidung steht, und ihre Luftzellen werden ausgehauen, sodass unter der Erde das Bauwerk steht und nicht eine Beschreibung davon. Eine Linie bekommt nur dann Stationen, wenn hier ein Bauwerk genannt ist, das sich laden lässt: Leer oder ein Name, der sich nicht laden lässt, baut gar keine Station |
 | `villageSubwayRailingBlock` | Block | `minecraft:iron_bars` | Der Block, der um den Kopf der Stationstreppe geländert wird, wo sie auf die Straße mündet, damit niemand in den Schacht läuft. Leer lässt den Kopf ohne Geländer |
 | `villageSubwayBenchBlock` | Block | `minecraft:oak_stairs` | Der Sitz der Bänke, die auf dem Bahnsteig einer Station und neben ihrem Treppenkopf stehen. Ein Treppenblock wird von der Linie weggedreht und liest sich als Bank; jeder Block geht. Leer lässt die Bänke weg |
 | `villageSubwayBenchEndBlock` | Block | `minecraft:log` | Die Lehnen an beiden Enden einer Stationsbank. Leer lässt den Sitz an beiden Enden kahl |
 | `villageSubwayBenchLength` | Zahl | `5` | Wie lang eine Stationsbank ist, Lehnen eingerechnet. `0` lässt die Bänke weg |
 
-**Die Station von Hand bauen.** `villageSubwayStation` nennt eine Strukturdatei, die statt des ausgehauenen Treppenschachts als Station dient — so liefert ein Paket eine Form aus, die jemand gebaut hat, statt einer, die in Einstellungen beschrieben ist. Baue sie in einer Welt, markiere sie in einem beliebigen Block, exportiere sie und lass sie vom Paket setzen: Ihre festen Zellen werden zu `villageSubwayStairBlock`, ihre Luftzellen werden ausgehauen. Ein Bau dient jeder Tiefe, weil sich seine Mitte wiederholt — `villageSubwayStationFoot` Lagen werden unten einmal gelegt und tragen den Boden und die Tür zum Bahnsteig, dann stapeln sich ganze Kopien der nächsten `villageSubwayStationRepeat` Lagen, bis der Bau die Straße erreicht. Dieses Band muss eine ganze Wendung der Treppe sein, sonst treffen sich die Läufe an der Fuge zweier Kopien nicht. `villageSubwayEntrance` setzt eine zweite Struktur an den Treppenkopf, damit der Weg nach unten auf der Straße kenntlich ist, und gilt nur für den ausgehauenen Treppenschacht: ein Bauwerk bringt seinen Zugang schon mit, also entfällt der Eingang, statt als geschlossener Kasten daneben zu stehen.
+**Die Station von Hand bauen.** `villageSubwayStation` nennt die Strukturdatei, aus der jede Station gebaut wird; ohne sie entsteht keine Station. So liefert ein Paket eine Form aus, die jemand gebaut hat, statt einer, die in Einstellungen beschrieben ist. Baue sie in einer Welt, markiere sie in einem beliebigen Block, exportiere sie und lass sie vom Paket setzen: Ihre Blöcke werden gelegt, wie sie gebaut sind, wobei Schwamm für die Tunnelauskleidung steht, und ihre Luftzellen werden ausgehauen. Ein Bau dient jeder Tiefe, weil sich seine Mitte wiederholt — `villageSubwayStationFoot` Lagen werden unten einmal gelegt und tragen den Boden und die Tür zum Bahnsteig, dann stapeln sich ganze Kopien der nächsten `villageSubwayStationRepeat` Lagen, bis der Bau die Straße erreicht. Dieses Band muss eine ganze Wendung der Treppe sein, sonst treffen sich die Läufe an der Fuge zweier Kopien nicht. Das Bauwerk bringt seinen Zugang zur Straße selbst mit.
 
 **Auftauchen.** `villageSubwaySurfaces` ist die Chance in Hundert, dass eine Linie nicht auf ganzer Länge vergraben bleibt, sondern an einem Ende ans Tageslicht steigt und von dort als gewöhnliche Eisenbahn weiterläuft — Tunnel hinter sich, offenes Gleis vor sich. Der Aufstieg folgt `villageSubwayClimb`, ein Block auf so viele Reihen, eine `villageSubwayDepth` tiefe Linie verbringt also Tiefe mal Steigung Reihen allein auf der Rampe und braucht danach ein gutes Stück, damit der Name sich lohnt; eine Linie ohne Platz für beides bleibt schlicht unter der Erde. Auf einer kurzen Linie mit Station schafft ein höheres `villageSubwayClimb` den Platz für beides.
+
+#### Bahnverbindungen zwischen Dörfern
+
+*dörfer*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageRailLines": 1,
+    "villageRailLinks": true,
+    "villageRailLinkLeast": 128,
+    "villageRailLinkMost": 1024,
+    "villageRailLinkBridgeMost": 96,
+    "villageRailLinkTunnelMost": 192,
+    "villageRailLinkStation": "both",
+    "villageRailLinkStationLength": 16,
+    "villageRailLinkPlatformWidth": 3,
+    "villageRailLinkPlatformBlock": "minecraft:stonebrick"
+  }
+}
+```
+
+Bahnverbindungen verknüpfen benachbarte Dörfer zu einem Netz. Dörfer werden je eines pro Zelle des Dorfrasters gegründet (`structureSpacing`), und eine Verbindung verläuft entlang der Naht zwischen zwei Zellen: Die erste Linie jedes Dorfes führt über ihr Ende hinaus als Stichstrecke geradeaus bis zur Naht und trifft dort im rechten Winkel auf eine Stammstrecke, die entlang der Naht liegt. Die Stammstrecke reicht von einer Stichstrecke zur anderen und nie darüber hinaus. Sie braucht `villageRailLines`, oder `villageSubwayLines` in einem Pack ohne oberirdische Linien, und ist standardmäßig aus.
+
+| Einstellung | Typ | Standard | Was sie bewirkt |
+| --- | --- | --- | --- |
+| `villageRailLinks` | `true` oder `false` | `false` | Verbindet benachbarte Dörfer, deren erste Linien sich über eine Naht hinweg gegenüberliegen |
+| `villageRailLinkLeast` | Zahl | `128` | Die kürzeste Verbindung, die gelegt wird, Stichstrecke plus Stammstrecke plus Stichstrecke, in Blöcken |
+| `villageRailLinkMost` | Zahl | `1024` | Die längste Verbindung, die gelegt wird, Stichstrecke plus Stammstrecke plus Stichstrecke, in Blöcken |
+| `villageRailLinkBridgeMost` | Zahl | `96` | Die längste Brücke, die eine Verbindung brauchen darf. Eine Verbindung über breiteres Wasser oder eine tiefere Senke wird nicht gelegt |
+| `villageRailLinkTunnelMost` | Zahl | `192` | Der längste Tunnel, den eine Verbindung brauchen darf, wo `villageRailTunnelBlock` Tunnel bohrt. Eine Verbindung, die weiter bohren müsste, wird nicht gelegt |
+| `villageRailLinkStation` | Text | `both` | Der Bahnhof auf jeder Stichstrecke kurz vor der Stammstrecke: `both` legt zu beiden Seiten der Linie einen Bahnsteig, `one` einen einzigen links eines Zuges, der auf die Stammstrecke zufährt, `none` baut keinen |
+| `villageRailLinkStationLength` | Zahl | `16` | Wie viele Reihen lang die Bahnsteige sind. `0` baut keine Bahnhöfe |
+| `villageRailLinkPlatformWidth` | Zahl | `3` | Wie viele Blöcke breit jeder Bahnsteig ist |
+| `villageRailLinkPlatformBlock` | Block | leer | Der Block, aus dem die Bahnsteige gebaut sind. Leer nimmt Steinziegel |
+
+**Welche Dörfer verbunden werden.** Zwei Dörfer werden nur verbunden, wenn sie in benachbarten Zellen stehen, ihre ersten Linien auf der Achse laufen, die die Naht zwischen ihnen kreuzt, und die ganze Verbindung, von Brunnen zu Brunnen entlang des Gleises gemessen, zwischen `villageRailLinkLeast` und `villageRailLinkMost` Blöcken lang ist. Jeder Teil dieser Entscheidung ergibt sich aus dem Seed und den beiden Dorfstandorten, sie fällt also gleich aus, egal welches Dorf oder welcher Chunk zuerst entsteht. Eine Verbindung, die sich nicht ganz bauen lässt, wird gar nicht gelegt, nie halb: eine, die eine längere Brücke oder einen längeren Tunnel bräuchte, als die Einstellungen erlauben, über die Weltgrenze reichen, auf ein Waldanwesen treffen, zwei Dörfer näher zusammenbringen, als `structureSeparation` erlaubt, oder einen Abzweig zu nah an eine Ecke der Zellen setzen würde. Eine Stammstrecke wird nur zu einem Dorf hin gelegt, das tatsächlich gegründet wurde: Hält eine Obergrenze wie `structureMost` den Nachbarn auf oder bleibt er zu klein, um zu bestehen, wird weder eine Hälfte der Stammstrecke noch die Stichstrecke jenseits des eigenen Dorfendes gebaut. Festgelegte Dörfer werden genauso verbunden, eines pro Zelle; eine Zelle mit zwei festgelegten Dörfern verbindet keines. Andere Dörfer halten beim Wachsen Abstand zu den Stich- und Stammstrecken einer Verbindung, so wie sie Abstand zueinander halten.
+
+**Gefälle.** Stich- und Stammstrecken sind Bahnlinien und werden genau wie eine Dorflinie trassiert, überbrückt, untertunnelt und gekreuzt, mit `villageRailClimb` und den Trestle- und Tunneleinstellungen oben. Wo eine Stichstrecke auf die Stammstrecke trifft, liegen beide eben, und der Bahnhof daneben ebenso.
+
+**Der Abzweig.** Eine Stichstrecke mündet nur in das nahe Gleis der Stammstrecke. Dieses Gleis ist dort unterbrochen, wo die Mitte der Stichstrecke darauf trifft, das linke Gleis der Stichstrecke biegt nach links hinein und das rechte nach rechts, und das ferne Gleis läuft gerade durch. Mit zwei Gleisen, die Stammstrecke oben und die Stichstrecke von unten kommend:
+
+```
+xxxxxxx
+ooooooo
+xxxxxxx
+oooxooo
+xxoxoxx
+ xoxox
+```
+
+`x` ist Gleisbett und `o` Gleis. Wo die beiden Stichstrecken nur wenige Blöcke auseinander ankämen, rückt die erste Linie des zweiten Dorfes auf die Höhe der ersten, und beide treffen sich stattdessen in einer Kreuzung: Jede Stichstrecke mündet genau wie oben nur in ihr eigenes nahes Gleis, beide Stammgleise sind an der Mitte der Stichstrecke unterbrochen, und keine Schiene kreuzt eine andere:
+
+```
+ xoxox
+xxoxoxx
+oooxooo
+xxxxxxx
+oooxooo
+xxoxoxx
+ xoxox
+```
+
+Eine eingleisige Stammstrecke hat kein zweites Gleis für die andere Stichstrecke, deshalb wird eine Verbindung, deren Stichstrecken sich auf einem einzigen Gleis frontal treffen würden, nicht gelegt. Mit nur einem Gleis biegt das Gleis der Stichstrecke nach links in das Gleis der Stammstrecke ein, und das Stammgleis jenseits dieser Kurve endet an ihr. Die Kurven werden mit festgelegter Form gesetzt, sodass Vanilla-Schienen genau dort abbiegen, wo der Abzweig gezeichnet ist, und nirgends sonst.
+
+**Bahnhöfe.** Die letzten Reihen einer Stichstrecke vor dem Abzweig sind ein Bahnhof: Bahnsteige aus `villageRailLinkPlatformBlock` auf Höhe der Schiene, an der Außenkante mit `villageSubwayRailingBlock` eingefasst, mit einer Bank aus `villageSubwayBenchBlock` auf halber Länge jedes Bahnsteigs.
+
+**U-Bahnen.** In einem Pack nur mit U-Bahn-Linien trägt die Verbindung die erste U-Bahn-Linie eines Dorfes. Die Linie steigt zur Stammstrecke hin aus dem Boden, über eine Rampe von `villageSubwayDepth` mal `villageSubwayClimb` Reihen, und erreicht Bahnhof und Abzweig an der Oberfläche; ein solches Dorf wird nur auf einer Seite verbunden, auf der mit der kürzeren Verbindung, und die Stammstrecke ist eine oberirdische Bahn aus den `villageRail`-Einstellungen. Wo eine Stichstrecke keinen Platz für diese Rampe und ihren Bahnhof hat, steigt stattdessen die Stammstrecke zur U-Bahn hinab: Die ganze Verbindung, Stich- und Stammstrecken, bleibt in `villageSubwayDepth` unter der Erde, wird aus den `villageSubway`-Einstellungen gebaut und trifft sich im selben Abzweig, ohne Bahnhof.
 
 #### Dorfschmuck
 
@@ -5532,9 +5706,9 @@ Die Bedrohungsstufe bewertet, was jeder Spieler bei sich trägt, und lässt die 
 
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
-| `structureAdaptation` | Liste von `structure=modus` | Dörfer `beard_thin`, der Rest `none` | An welche Strukturen sich das Gelände anpasst und wie, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser. Die Modi sind `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate` |
+| `structureAdaptation` | Liste von `structure=modus` | Dörfer und Herrenhäuser `beard_thin`, der Rest `none` | An welche Strukturen sich das Gelände anpasst und wie, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser. Die Modi sind `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate` |
 
-`structureAdaptation` entscheidet, an welche Strukturen sich das Gelände anpasst und wie, als `structure=modus`-Einträge, `"mansions=bury"`, `"monuments=none"`, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser, mit den fünf Modi, die moderne Versionen nutzen: `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate`. Dörfer sind `beard_thin`, wenn nichts anderes gesetzt ist, und alles andere ist `none`, solange es nicht genannt wird – genau das, was moderne Versionen für sich selbst wählen. Tempel lassen sich noch nicht nennen, weil sie sich erst beim Bauen selbst platzieren, es gibt also rechtzeitig nichts, woran das Gelände sich anpassen könnte.
+`structureAdaptation` entscheidet, an welche Strukturen sich das Gelände anpasst und wie, als `structure=modus`-Einträge, `"mansions=bury"`, `"monuments=none"`, für Dörfer, Festungen, Minen, Monumente und Herrenhäuser, mit den fünf Modi, die moderne Versionen nutzen: `none`, `bury`, `beard_thin`, `beard_box` und `encapsulate`. Dörfer und Herrenhäuser sind `beard_thin`, wenn nichts anderes gesetzt ist, und alles andere ist `none`, solange es nicht genannt wird. Tempel lassen sich noch nicht nennen, weil sie sich erst beim Bauen selbst platzieren, es gibt also rechtzeitig nichts, woran das Gelände sich anpassen könnte.
 
 ### Dörfer aufsetzen
 
@@ -5717,7 +5891,7 @@ Eine letzte Zeile sagt, wie viel Arbeitsabfall seit dem letzten Blick weggeworfe
 
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
-| `spawnChunkRadius` | Zahl, Blöcke | `128` | Wie weit vom Spawnpunkt einer Welt Chunks geladen gehalten werden, ob jemand da ist oder nicht. `128` ist, was das Spiel tut, und `0` hält gar keine |
+| `spawnChunkRadius` | Zahl, Blöcke | `128` | Wie weit vom Spawnpunkt einer Welt, in Blöcken, Chunks geladen gehalten werden, ob jemand da ist oder nicht. B Blöcke halten `r = (B + 8) / 16` Chunks in jede Richtung um den Spawn-Chunk, insgesamt `(2r+1)²`, und beim Start bereitet die Welt `(2r+9)²` Chunks darum herum vor. `128` ist, was das Spiel tut, mit 289 gehaltenen und 625 vorbereiteten Chunks, und `0` hält und bereitet gar keine vor |
 | `spawnChunkRadii` | Liste von `dimension=blöcke` | keine | Ein Radius für einzelne Dimensionen, der `spawnChunkRadius` für die genannten Dimensionen überschreibt |
 
 Das Spiel hält die Chunks um den Spawnpunkt einer Welt geladen, ob jemand da ist oder nicht, damit Mods irgendwo etwas haben, das immer tickt. Das sind 128 Blöcke in jede Richtung, etwa 289 Chunks, und im Spiel lässt sich das nicht einstellen. `spawnChunkRadius` setzt diese Entfernung. `128` ist das, was das Spiel macht, und der Standard, eine kleinere Zahl hält einen kleineren Anker, und `0` hält gar keine, der Spawnbereich entlädt also wie überall sonst. `spawnChunkRadii` setzt einen Radius für einzelne Dimensionen, geschrieben als `dimension=blöcke`, einer pro Zeile, und überschreibt `spawnChunkRadius` für die genannten Dimensionen.
@@ -6065,7 +6239,7 @@ Das sind die Namen, die der Parser überall dort annimmt, wo die Tabellen oben �
 
 **Färbungen.** `biome`, `none` oder eine sechsstellige Hex-Farbe. Farben sind überall in einer Definition Hex-Werte, mit oder ohne führendes `#`.
 
-**Verhalten** für `behavesAs`. `till`, `path`.
+**Verhalten** für `behavesAs`. `till`, `path`, `bush`, `animals`.
 
 **Strukturen** für eine Weltvorlage und für die Listen der Gruppe `structures` selbst. `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges`, `endcities`, `caves`, `ravines` und `reccomplex`, das alles abschaltet, was Recurrent Complex von sich aus erzeugt – seine natürlichen Strukturen und seine Dekorations-Stellvertreter –, während das, was schon in der Welt steht, unangetastet bleibt. Acht weitere benennen, was der Populate-Schritt setzt, statt eines Strukturgenerators: `dungeons`, `waterlakes`, `lavalakes`, `netherlava`, `fire`, `glowstone`, `ice` und `animals`.
 
@@ -6391,6 +6565,7 @@ Kleine Änderungen daran, wie Vanilla sich verhält, jede über die Config-Kateg
 | `promptLeafDecay` | an | Blätter, die ihren Baum verlieren, verwelken binnen einer Sekunde, statt auf Random-Ticks zu warten |
 | `lenientPaths` | an | Trampelpfade lassen sich unter einem Block anlegen und bleiben liegen, wenn einer darübergesetzt wird |
 | `unbreakableSpawners` | aus | Mobspawner lassen sich weder abbauen noch sprengen |
+| `modernChestPlacement` | an | Truhen verbinden sich wie ab 1.13 |
 
 Drei weitere sitzen in der Kategorie `content` statt in `tweaks`:
 
@@ -6413,6 +6588,18 @@ Drei weitere sitzen in der Kategorie `content` statt in `tweaks`:
 **Es geht um den Block, nicht um den einzelnen Spawner.** Es gibt keinen Schalter pro Spawner. Die Option ändert `minecraft:mob_spawner` selbst, sie erreicht also jeden Spawner der Welt auf einmal: die vier Vanilla-Strukturen, die einen setzen, jeden, den ein Mod setzt, und jeden, den deine eigenen Packs setzen.
 
 Genau das ist die Antwort für eine eigene Struktur. Ein Spawner in einer deiner `.nbt`-Vorlagen, gesetzt von einem `imprint`-Eintrag, ist ein gewöhnlicher Mobspawner-Block mit seiner eigenen Tile Entity, er ist also abgedeckt, sobald die Option an ist. Bau die Struktur wie üblich mit einem Spawner darin, leg in den Tile-Entity-Daten der Vorlage fest, was er spawnt, schalte `unbreakableSpawners` an, und der in deinem Verlies ist genauso unzerstörbar wie der in Vanillas. Dafür kommt nichts ins Pack, und es gibt keine Möglichkeit, nur deine zu schützen und den Rest der Welt abbaubar zu lassen.
+
+### Truhen setzen
+
+*bonus: vanilla-tweaks*
+
+`modernChestPlacement` setzt Truhen und Redstone-Truhen so, wie es 1.13 und neuer tun.
+
+- Eine Truhe verbindet sich mit einer einzelnen Truhe direkt links oder rechts von ihr, und nur wenn beide in dieselbe Richtung zeigen. Eine Truhe vor oder hinter einer anderen verbindet sich nie mit ihr.
+- Schleichen hält die neue Truhe einzeln, außer man klickt die Seite einer einzelnen Truhe an: Dann verbindet sie sich mit dieser Truhe und dreht sich in dieselbe Richtung.
+- Neben einer Doppeltruhe darf eine Truhe stehen und bleibt dort einzeln, so ist eine Reihe Truhen an einer Wand möglich.
+
+Jede Truhe merkt sich ihre Partnerin, daher bleibt nach dem Neuladen verbunden oder einzeln, was so gesetzt wurde, ein Trichter oder eine Röhre füllt nur die Truhe, die er berührt, und wird eine Hälfte abgebaut, bleibt die andere einzeln. Truhen, die gesetzt wurden, bevor die Option an war, oder die die Weltgenerierung und Strukturen setzen, verbinden sich wie in 1.12. Ein Client ohne RDPL zeichnet zwei sich berührende einzelne Truhen weiterhin als eine Doppeltruhe, öffnet sie aber getrennt.
 
 ## Bonus: JEI-Plugin-Konflikt beheben
 

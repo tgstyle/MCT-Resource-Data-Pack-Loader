@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingBase;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -12,12 +13,15 @@ import com.google.gson.JsonObject;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootTable;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -65,14 +69,26 @@ public final class PlayerLoot {
         ENTRIES.add(new Entry(new ResourceLocation(table), mode.equals(REPLACE), JsonUtils.getBoolean(json, KEEP_INVENTORY, false), JsonUtils.getBoolean(json, DROP_LOOSE, false)));
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onPlayerDrops(PlayerDropsEvent event) {
+    @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onPlayerDrops(PlayerDropsEvent event) { roll(event.getEntityPlayer(), event.getSource(), event.isRecentlyHit(), event.getDrops()); }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onKeptDeath(LivingDeathEvent event) {
+        if (!(event.getEntityLiving() instanceof EntityPlayerMP)) { return; }
+        EntityPlayerMP player = (EntityPlayerMP) event.getEntityLiving();
+        if (!keeping(player)) { return; }
+        List<EntityItem> drops = new ArrayList<>();
+        roll(player, event.getSource(), ((IEntityLivingBase) player).rdpl$getRecentlyHit() > 0, drops);
+        for (EntityItem drop : drops) { player.world.spawnEntity(drop); }
+    }
+
+    private static boolean keeping(EntityPlayer player) { return player.world.getGameRules().getBoolean(KEEP_INVENTORY_RULE) || player.isSpectator(); }
+
+    private static void roll(EntityPlayer player, DamageSource source, boolean recentlyHit, List<EntityItem> drops) {
         if (!Config.data.playerLoot) { return; }
         if (GENERATION.stale()) { reload(); }
         if (ENTRIES.isEmpty()) { return; }
-        EntityPlayer player = event.getEntityPlayer();
         if (player == null || !(player.world instanceof WorldServer)) { return; }
         WorldServer world = (WorldServer) player.world;
-        boolean keeping = world.getGameRules().getBoolean(KEEP_INVENTORY_RULE) || player.isSpectator();
+        boolean keeping = keeping(player);
         List<Entry> rolling = new ArrayList<>();
         boolean replacing = false;
         for (Entry entry : ENTRIES) {
@@ -81,12 +97,11 @@ public final class PlayerLoot {
             replacing |= entry.replace;
         }
         if (rolling.isEmpty()) { return; }
-        List<EntityItem> drops = event.getDrops();
         if (replacing) { drops.clear(); }
-        EntityPlayer killer = killer(event);
+        EntityPlayer killer = killer(source, recentlyHit);
         for (Entry entry : rolling) {
             LootTable table = world.getLootTableManager().getLootTableFromLocation(entry.table);
-            LootContext.Builder builder = new LootContext.Builder(world).withLootedEntity(player).withDamageSource(event.getSource());
+            LootContext.Builder builder = new LootContext.Builder(world).withLootedEntity(player).withDamageSource(source);
             if (killer != null) { builder.withPlayer(killer).withLuck(killer.getLuck()); }
             for (ItemStack stack : table.generateLootForPools(world.rand, builder.build())) {
                 if (stack.isEmpty()) { continue; }
@@ -98,10 +113,10 @@ public final class PlayerLoot {
         }
     }
 
-    private static EntityPlayer killer(PlayerDropsEvent event) {
-        if (!event.isRecentlyHit()) { return null; }
-        Entity source = event.getSource().getTrueSource();
-        return source instanceof EntityPlayer ? (EntityPlayer) source : null;
+    private static EntityPlayer killer(DamageSource source, boolean recentlyHit) {
+        if (!recentlyHit) { return null; }
+        Entity by = source.getTrueSource();
+        return by instanceof EntityPlayer ? (EntityPlayer) by : null;
     }
 
     private static final class Entry {

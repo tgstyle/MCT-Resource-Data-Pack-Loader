@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.content.village;
 
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLinks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRailsGrade;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRailsLay;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -25,8 +28,16 @@ public class RailPiece extends StructureVillagePieces.Road {
     @Nullable private BeardRoads.Grade grade;
     @Nullable private int[] rising;
     private boolean risingKnown = false;
+    @Nullable private int[] trunk;
+    private int[] ends = new int[0];
 
     @SuppressWarnings("unused") public RailPiece() {}
+
+    public RailPiece(StructureBoundingBox box, boolean alongX, boolean subway) {
+        setCoordBaseMode(alongX ? EnumFacing.EAST : EnumFacing.SOUTH);
+        this.boundingBox = box;
+        this.subway = subway;
+    }
 
     public RailPiece(StructureVillagePieces.Start start, StructureBoundingBox box, boolean alongX, int line, boolean subway) {
         super(start, 0);
@@ -36,11 +47,27 @@ public class RailPiece extends StructureVillagePieces.Road {
         this.subway = subway;
     }
 
-    public boolean alongX() { return boundingBox.maxX - boundingBox.minX >= boundingBox.maxZ - boundingBox.minZ; }
+    public boolean alongX() { return trunk != null ? BeardLinks.Trunk.of(trunk).alongX() : boundingBox.maxX - boundingBox.minX >= boundingBox.maxZ - boundingBox.minZ; }
 
     public int line() { return line; }
 
     public boolean subway() { return subway; }
+
+    @Nullable public int[] trunk() { return trunk; }
+
+    public void trunk(int[] packed) { trunk = packed; }
+
+    public int[] ends() { return ends; }
+
+    public void end(int[] packed) {
+        int[] grown = Arrays.copyOf(ends, ends.length + packed.length);
+        System.arraycopy(packed, 0, grown, ends.length, packed.length);
+        ends = grown;
+    }
+
+    private int gradeLeast() { return trunk != null ? BeardLinks.Trunk.of(trunk).least() : rowLeast(); }
+
+    private int gradeRows() { return trunk != null ? BeardLinks.Trunk.of(trunk).most() - gradeLeast() + 1 : rowMost() - rowLeast() + 1; }
 
     public List<StructureBoundingBox> stations() { return stations; }
 
@@ -50,6 +77,14 @@ public class RailPiece extends StructureVillagePieces.Road {
         stations.add(box);
         stationTops = Arrays.copyOf(stationTops, stations.size());
         stationTops[stations.size() - 1] = Integer.MIN_VALUE;
+    }
+
+    public void dropStation(int which) {
+        stations.remove(which);
+        int[] kept = new int[stations.size()];
+        System.arraycopy(stationTops, 0, kept, 0, which);
+        System.arraycopy(stationTops, which + 1, kept, which, kept.length - which);
+        stationTops = kept;
     }
 
     public int stationTop(int which) { return which >= 0 && which < stationTops.length ? stationTops[which] : Integer.MIN_VALUE; }
@@ -67,8 +102,8 @@ public class RailPiece extends StructureVillagePieces.Road {
     public int acrossMost() { return alongX() ? boundingBox.maxZ : boundingBox.maxX; }
 
     @Nullable public BeardRoads.Grade grade(World world) {
-        if (grade != null && (grade.start() != rowLeast() || grade.rows() != rowMost() - rowLeast() + 1)) { regrade(); }
-        if (grade == null) { grade = BeardRails.profile(world, this); }
+        if (grade != null && (grade.start() != gradeLeast() || grade.rows() != gradeRows())) { regrade(); }
+        if (grade == null) { grade = BeardRailsGrade.profile(world, this); }
         return grade;
     }
 
@@ -103,6 +138,8 @@ public class RailPiece extends StructureVillagePieces.Road {
             tag.setIntArray("RdplStationTops", stationTops);
         }
         if (risingKnown) { tag.setIntArray("RdplRising", rising == null ? new int[0] : rising); }
+        if (trunk != null) { tag.setIntArray("RdplTrunk", trunk); }
+        if (ends.length > 0) { tag.setIntArray("RdplLinkEnds", ends); }
         if (grade != null) { grade.write(tag); }
     }
 
@@ -121,11 +158,13 @@ public class RailPiece extends StructureVillagePieces.Road {
         risingKnown = tag.hasKey("RdplRising");
         int[] rose = tag.getIntArray("RdplRising");
         rising = rose.length == 2 ? rose : null;
+        trunk = tag.hasKey("RdplTrunk") ? tag.getIntArray("RdplTrunk") : null;
+        ends = tag.getIntArray("RdplLinkEnds");
         grade = BeardRoads.Grade.read(tag);
     }
 
     @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox clip) {
-        BeardRails.lay(this, world, clip);
+        BeardRailsLay.lay(this, world, clip);
         return true;
     }
 }

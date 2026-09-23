@@ -48,7 +48,5 @@ public class EntryLocation2D implements IKey {
 
 	public static class Provider implements IKeyProvider {
 		@Override public int getKeyCount(RegionKey key) { return EntryLocation2D.ENTRIES_PER_REGION; }
-
-		@Override public boolean isValid(RegionKey key) { return key.getName().matches("-?\\d+\\.-?\\d+\\.2dr"); }
 	}
 }

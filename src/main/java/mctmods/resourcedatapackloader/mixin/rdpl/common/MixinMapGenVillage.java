@@ -2,15 +2,21 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 import mctmods.resourcedatapackloader.content.interfaces.IMapGenVillageHold;
+import mctmods.resourcedatapackloader.content.village.CityAlleys;
+import mctmods.resourcedatapackloader.content.village.CityCulDeSacs;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLinks;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardEnds;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRailsFit;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsDecks;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardStations;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.BlockPos;
@@ -43,14 +49,19 @@ import java.util.List;
         if (world == null) { return; }
         if (CityLayout.lay(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand())) { CityGrowth.backRows(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand()); }
         else { CityGrowth.grow(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand(), size); }
-        BeardRoads.pierOut(world, cir.getReturnValue());
-        ContentBeard.attachAll(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
+        BeardRoadsDecks.pierOut(world, cir.getReturnValue());
+        ContentBeardEnds.attachAll(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
         CitySeams.tie(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
-        CityGrowth.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
-        CityGrowth.alleyFill(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand());
+        CityCulDeSacs.culDeSacs(cir.getReturnValue(), world, ((IMapGenBase) this).rdpl$rand());
+        CityAlleys.alleyFill(cir.getReturnValue(), ((IMapGenBase) this).rdpl$rand());
         CityGrowth.roadsFirst(cir.getReturnValue());
-        BeardRails.fit(world, cir.getReturnValue());
+        BeardRailsFit.fit(world, cir.getReturnValue());
         BeardSite.gradeRoads(world, cir.getReturnValue(), "once every road of the village is laid");
+        BeardSite.pullBackDecks(world, cir.getReturnValue());
+        BeardStations.prune(world, cir.getReturnValue());
+        BeardRailsFit.standOff(world, cir.getReturnValue());
+        BeardRoadsTunnels.standOff(world, cir.getReturnValue());
+        BeardSite.standOff(world, cir.getReturnValue());
         ((IStructureStartGrow) cir.getReturnValue()).rdpl$updateBoundingBox();
         rdpl$sizeUp(cir.getReturnValue());
     }
@@ -72,7 +83,9 @@ import java.util.List;
         distance = rdpl$asked;
         if (rdpl$vanillaBiomes == null) { rdpl$vanillaBiomes = MapGenVillage.VILLAGE_SPAWN_BIOMES; }
         MapGenVillage.VILLAGE_SPAWN_BIOMES = ContentStructurePlacement.filtered(ContentStructurePlacement.VILLAGES, rdpl$vanillaBiomes);
-        if (ContentVillages.plotsLeast() > 0) { ((IMapGenBase) this).rdpl$setRange(CityGrowth.chunkRange()); }
+        int range = ContentVillages.plotsLeast() > 0 ? CityGrowth.chunkRange() : 0;
+        if (BeardLinks.on()) { range = Math.max(Math.max(range, 8), BeardLinks.chunkRange(distance)); }
+        if (range > 0) { ((IMapGenBase) this).rdpl$setRange(range); }
     }
 
     @Override public void rdpl$holdDistance() { rdpl$hold(); }
@@ -118,13 +131,7 @@ import java.util.List;
         if (!ContentBeard.wanted()) { return; }
         World world = ((IMapGenBase) this).rdpl$getWorld();
         if (world == null) { return; }
-        Boolean flat = ContentBeard.flatSite(world, chunkX, chunkZ, distance);
-        if (flat == null) { return; }
-        if (!flat) {
-            cir.setReturnValue(false);
-            return;
-        }
-        cir.setReturnValue(ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) && !ContentBeard.mansionCandidateNear(world, chunkX, chunkZ));
+        cir.setReturnValue(ContentBeard.flatSite(world, chunkX, chunkZ, distance) && ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) && !ContentBeard.mansionCandidateNear(world, chunkX, chunkZ));
     }
 
     @Inject(method = "getNearestStructurePos", at = @At("HEAD"), cancellable = true) private void rdpl$nearestSite(World worldIn, BlockPos pos, boolean findUnexplored, CallbackInfoReturnable<BlockPos> cir) {

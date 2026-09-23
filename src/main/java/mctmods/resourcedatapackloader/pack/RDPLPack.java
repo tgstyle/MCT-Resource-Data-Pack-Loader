@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
+import mctmods.resourcedatapackloader.pack.port.Port;
+import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import java.io.ByteArrayOutputStream;
@@ -8,17 +10,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -31,25 +34,32 @@ public final class RDPLPack {
     private final boolean overriding;
     private final Path root;
     @Nullable private final FileSystem owned;
+    @Nullable private final Path archiveFile;
     @Nullable private final Set<String> ownedNamespaces;
+    @Nullable private final Ported ported;
     private final Map<String, Set<String>> index = new HashMap<>();
     private int fileCount;
     @Nullable private ZipFile archive;
     private boolean archiveTried;
 
-    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
-        this(name, priority, overriding, root, owned, null);
+    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Path archiveFile) {
+        this(name, priority, overriding, root, owned, archiveFile, null);
     }
 
-    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Set<String> ownedNamespaces) {
+    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Path archiveFile, @Nullable Set<String> ownedNamespaces) {
         this.name = name;
         this.priority = priority;
         this.overriding = overriding;
         this.root = root;
         this.owned = owned;
+        this.archiveFile = archiveFile;
         this.ownedNamespaces = ownedNamespaces;
-        buildIndex();
+        this.ported = ownedNamespaces == null && Port.modern(root) ? new Ported(name, root) : null;
+        if (ported == null) { buildIndex(); }
+        else { buildPortedIndex(ported); }
     }
+
+    @Nullable public Ported ported() { return ported; }
 
     public boolean isFromMod() { return ownedNamespaces != null; }
 
@@ -72,6 +82,34 @@ public final class RDPLPack {
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
         }
+    }
+
+    private void buildPortedIndex(Ported port) {
+        Map<String, List<String>> assets = realPaths(root.resolve(ASSETS));
+        Map<String, List<String>> data = realPaths(root.resolve(Port.DATA));
+        for (Map.Entry<String, Set<String>> namespace : port.build(assets, data).entrySet()) {
+            if (namespace.getValue().isEmpty()) { continue; }
+            index.put(namespace.getKey(), namespace.getValue());
+            fileCount += namespace.getValue().size();
+        }
+        port.report();
+    }
+
+    private Map<String, List<String>> realPaths(Path home) {
+        Map<String, List<String>> out = new TreeMap<>();
+        if (!Files.isDirectory(home)) { return out; }
+        try (Stream<Path> stream = Files.list(home)) {
+            for (Path dir : (Iterable<Path>) stream.filter(Files::isDirectory)::iterator) {
+                List<String> paths = new ArrayList<>();
+                try (Stream<Path> files = Files.walk(dir)) {
+                    for (String path : (Iterable<String>) files.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) { paths.add(path); }
+                }
+                Collections.sort(paths);
+                out.put(trimSeparator(dir.getFileName().toString()), paths);
+            }
+        }
+        catch (IOException | UncheckedIOException ex) { ContentLog.LOGGER.error("Pack '{}': could not index {}", name, home, ex); }
+        return out;
     }
 
     private boolean ownsNamespace(Path dir) {
@@ -123,7 +161,12 @@ public final class RDPLPack {
 
     private Path locate(String namespace, String path) { return root.resolve(ASSETS).resolve(namespace).resolve(path); }
 
-    public InputStream open(String namespace, String path) throws IOException {
+    @SuppressWarnings("resource") public InputStream open(String namespace, String path) throws IOException {
+        if (ported != null) {
+            InputStream converted = ported.open(namespace, path);
+            if (converted == null) { throw new FileNotFoundException(namespace + ":" + path); }
+            return converted;
+        }
         Path located = locate(namespace, path);
         ZipFile zip = archive();
         if (zip == null) { return Files.newInputStream(located); }
@@ -142,13 +185,10 @@ public final class RDPLPack {
         }
     }
 
-    @SuppressWarnings("resource") @Nullable private synchronized ZipFile archive() {
-        if (owned == null || archiveTried) { return archive; }
+    @Nullable private synchronized ZipFile archive() {
+        if (owned == null || archiveFile == null || archiveTried) { return archive; }
         archiveTried = true;
-        String spec = owned.getPath("/").toUri().toString();
-        int bang = spec.indexOf("!/");
-        if (!spec.startsWith("jar:") || bang < 0) { return null; }
-        try { archive = new ZipFile(Paths.get(URI.create(spec.substring(4, bang))).toFile()); }
+        try { archive = new ZipFile(archiveFile.toFile()); }
         catch (IOException | RuntimeException unopened) { ContentLog.LOGGER.warn("Pack '{}' could not be reopened as a plain zip, so its files are read through the interruptible channel", name, unopened); }
         return archive;
     }
@@ -207,6 +247,7 @@ public final class RDPLPack {
     }
 
     public synchronized void close() throws IOException {
+        if (ported != null) { ported.closing(); }
         if (archive != null) {
             archive.close();
             archive = null;

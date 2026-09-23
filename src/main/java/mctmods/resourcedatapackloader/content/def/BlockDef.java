@@ -6,7 +6,9 @@ import net.minecraft.block.material.Material;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraftforge.common.EnumPlantType;
 import java.util.List;
+import java.util.Locale;
 import javax.annotation.Nullable;
 
 public final class BlockDef {
@@ -57,8 +59,9 @@ public final class BlockDef {
     @Nullable public final ResourceLocation opensWith;
     public final String openSound;
     @Nullable public final ContainerDef container;
+    @Nullable public final BellDef bell;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -102,7 +105,13 @@ public final class BlockDef {
         this.opensWith = opensWith;
         this.openSound = openSound;
         this.container = container;
+        this.bell = bell;
     }
 
     public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }
+
+    public boolean sustains(EnumPlantType plant) {
+        if (plant == EnumPlantType.Plains && behavesAs.contains("bush")) { return true; }
+        return plantTypes.contains(plant.name().toLowerCase(Locale.ROOT));
+    }
 }

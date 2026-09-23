@@ -47,7 +47,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
     private int getNextPointerIndex(int pointerIndex) { return ++pointerIndex & this.mask; }
 
 
-    @SuppressWarnings("unchecked") @Nullable public T put(T value) {
+    public void put(T value) {
         checkThreadedWrite();
         int x = value.getX();
         int y = value.getY();
@@ -59,7 +59,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
             if (bucket.getX() == x && bucket.getY() == y && bucket.getZ() == z) {
                 this.bucketsByPointer[index] = value;
                 this.bucketsByHash[pointerIndex] = value;
-                return (T) bucket;
+                return;
             }
             pointerIndex = this.getNextPointerIndex(pointerIndex);
             index = pointers[pointerIndex];
@@ -69,7 +69,6 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
         this.pointers[pointerIndex] = size;
         if (this.size > this.loadThreshold)
             grow();
-        return null;
     }
 
     @SuppressWarnings("unchecked") @Nullable public T remove(int x, int y, int z) {
@@ -88,7 +87,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
         return null;
     }
 
-    @Nullable public T remove(T value) { return this.remove(value.getX(), value.getY(), value.getZ()); }
+    public void remove(T value) { this.remove(value.getX(), value.getY(), value.getZ()); }
 
     @SuppressWarnings("unchecked") @Nullable public T get(int x, int y, int z) {
         IXYZAddressable[] buckets = this.bucketsByHash;

@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IVillageBlock;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -78,7 +78,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         StructureComponent placed = cir.getReturnValue();
         if (placed == null || placed instanceof StructureVillagePieces.Path || !ContentBeard.wanted()) { return; }
         StructureBoundingBox box = placed.getBoundingBox();
-        if (!BeardRoads.crossesHill(structureComponents, box)) { return; }
+        if (!BeardRoadsTunnels.crossesHill(structureComponents, box)) { return; }
         ContentLog.LOGGER.debug("{} at {}, {} would front a tunnel through a hill, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
         structureComponents.remove(placed);
         cir.setReturnValue(null);

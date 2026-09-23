@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -23,7 +23,7 @@ public final class ContentCityMaps {
         if (loaded) { return; }
         loaded = true;
         Json.eachFile(PackManager.CITYMAPS, "city map", (key, contents) -> {
-            CityMapDef def = ContentParser.cityMap(key, contents);
+            CityMapDef def = ContentParserWorlds.cityMap(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
         if (!DEFS.isEmpty()) { ContentLog.LOGGER.debug("Loaded {} city map(s): {}", DEFS.size(), DEFS.keySet()); }

@@ -169,8 +169,6 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     public void face(@Nonnull EnumFacing turned) { facing = turned.getAxis().isHorizontal() ? turned : EnumFacing.SOUTH; }
 
-    public int watchers() { return watchers; }
-
     @Override public boolean isUsableByPlayer(@Nonnull EntityPlayer player) {
         if (world == null || world.getTileEntity(pos) != this) { return false; }
         return player.getDistanceSq((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) <= 64.0D;

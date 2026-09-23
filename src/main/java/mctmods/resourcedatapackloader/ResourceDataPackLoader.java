@@ -50,6 +50,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregenDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
@@ -80,6 +82,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fluids.FluidRegistry;
 import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
+import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
@@ -130,6 +133,7 @@ public class ResourceDataPackLoader {
         MapGenStructureIO.registerStructureComponent(RailPiece.class, RailPiece.ID);
         MapGenStructureIO.registerStructureComponent(MergePiece.class, MergePiece.ID);
         GameRegistry.registerTileEntity(TileEntityPackContainer.class, new ResourceLocation(MOD_ID, "container"));
+        GameRegistry.registerTileEntity(TileEntityPackBell.class, new ResourceLocation(MOD_ID, "bell"));
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new PackGuiHandler());
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
@@ -205,7 +209,8 @@ public class ResourceDataPackLoader {
         ContentReplacements.reload();
         if (ContentRetrogen.wanted() || ContentHardness.anySwaps()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
         MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
-        MinecraftForge.EVENT_BUS.register(ContentPregen.class);
+        MinecraftForge.EVENT_BUS.register(ContentPregenDimensions.class);
+        MinecraftForge.EVENT_BUS.register(ContentPregenHold.class);
         if (Config.worldgen.worldgenDebug) {
             MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
             MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);

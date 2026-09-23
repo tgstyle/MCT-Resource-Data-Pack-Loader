@@ -15,10 +15,15 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.NonNullList;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import java.util.ArrayList;
@@ -121,6 +126,12 @@ public final class ContentSetup {
             else { ContentLog.LOGGER.error("{} names soil {}, which is not registered, leaving it out", owner, name); }
         }
         return resolved;
+    }
+
+    public static boolean sustains(Set<Block> soil, World world, BlockPos ground, IPlantable plant) {
+        IBlockState state = world.getBlockState(ground);
+        if (soil.isEmpty()) { return state.getBlock().canSustainPlant(state, world, ground, EnumFacing.UP, plant); }
+        return soil.contains(state.getBlock());
     }
 
     public static void growthDrops(Block block, BlockDef def, GrowthDef growth, NonNullList<ItemStack> drops) {

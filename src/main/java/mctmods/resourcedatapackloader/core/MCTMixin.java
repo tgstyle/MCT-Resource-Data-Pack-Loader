@@ -20,6 +20,7 @@ import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.ModJars;
 
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.config.Config.Type;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.MinecraftForge;
@@ -130,11 +131,13 @@ import java.util.Map;
 
     @Override public List<String> getMixinConfigs() {
         return Arrays.asList("mixins.resourcedatapackloader.rdpl.json", "mixins.resourcedatapackloader.rubiclight.json", "mixins.resourcedatapackloader.fml.json",
-                "mixins.resourcedatapackloader.groovyscript.json", "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json");
+                "mixins.resourcedatapackloader.groovyscript.json", "mixins.resourcedatapackloader.vanillagrowth.json", "mixins.resourcedatapackloader.vanillatweaks.json",
+                "mixins.resourcedatapackloader.vintagefix.json");
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (mixinConfig.endsWith(".fml.json")) { return !cleanroom(); }
+        if (mixinConfig.endsWith(".vintagefix.json")) { return Launch.classLoader.getResource("org/embeddedt/vintagefix/dynamicresources/ResourcePackHelper.class") != null; }
         return true;
     }
 

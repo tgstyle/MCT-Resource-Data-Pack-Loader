@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.IntroPageDef;
 import mctmods.resourcedatapackloader.content.def.WorldIntroDef;
@@ -29,7 +29,7 @@ public final class ContentWorldIntro {
         DEFS.clear();
         if (!Config.content.load) { return; }
         Json.eachFile(PackManager.WORLDINTRO, "world intro", (key, contents) -> {
-            WorldIntroDef def = ContentParser.worldIntro(key, contents);
+            WorldIntroDef def = ContentParserWorlds.worldIntro(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
         int pages = pages().size();

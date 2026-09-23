@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -24,7 +24,7 @@ public class ContentPathIntersects {
         if (loaded) { return; }
         loaded = true;
         Json.eachFile(PackManager.PATHINTERSECTS, "path intersect design", (key, contents) -> {
-            PathIntersectDef def = ContentParser.pathIntersect(key, contents);
+            PathIntersectDef def = ContentParserWorlds.pathIntersect(key, contents);
             if (def != null) { DEFS.put(key.toString(), def); }
         });
         if (!DEFS.isEmpty()) { ContentLog.LOGGER.debug("Loaded {} path intersect design(s): {}", DEFS.size(), DEFS.keySet()); }

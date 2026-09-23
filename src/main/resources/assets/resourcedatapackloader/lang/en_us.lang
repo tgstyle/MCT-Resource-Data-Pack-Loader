@@ -124,3 +124,7 @@ rdpl.world.packOptions=Pack options have changed this world, a backup of the pre
 rdpl.world.type=This is a %s world
 key.categories.resourcedatapackloader=Resource Data Pack Loader
 key.resourcedatapackloader.pouch=Open worn container
+rdpl.debug.gamemodes.error=Unable to open game mode switcher; no permission
+rdpl.debug.gamemodes.help=F3 + F4 = Open game mode switcher
+rdpl.debug.gamemodes.press_f4=[ F4 ]
+rdpl.debug.gamemodes.select_next=%s Next

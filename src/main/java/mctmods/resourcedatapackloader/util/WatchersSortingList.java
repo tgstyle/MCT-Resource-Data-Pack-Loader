@@ -90,11 +90,11 @@ import javax.annotation.Nonnull;
         }
     }
 
-    public boolean isEmpty() {
+    public boolean occupied() {
         for (int size : bucketSizes) {
-            if (size > 0) { return false; }
+            if (size > 0) { return true; }
         }
-        return true;
+        return false;
     }
 
     @Override @Nonnull public Iterator<T> iterator() { return iteratorUpToDistance(bucketCount - 1); }

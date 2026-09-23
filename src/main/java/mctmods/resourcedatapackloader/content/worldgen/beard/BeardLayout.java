@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
+import mctmods.resourcedatapackloader.content.village.ContentVillagePiece;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePieces;
@@ -16,7 +17,16 @@ import java.util.List;
 import java.util.Random;
 
 public final class BeardLayout {
+    private static final int LEAN = 3;
+
     private BeardLayout() {}
+
+    public static int predictedFloor(StructureComponent piece, World world) {
+        StructureBoundingBox box = piece.getBoundingBox();
+        int average = ContentBeard.noiseAverage(world, box);
+        if (average == Integer.MIN_VALUE) { return Integer.MIN_VALUE; }
+        return leanLow(piece, world, box, average);
+    }
 
     public static void trim(StructureBoundingBox box, boolean alongX, EnumFacing facing, int rows) {
         int step = (alongX ? facing.getXOffset() : facing.getZOffset()) >= 0 ? 1 : -1;
@@ -207,7 +217,7 @@ public final class BeardLayout {
             found = average;
         }
         if (!(piece instanceof StructureVillagePieces.Well)) {
-            int grade = BeardRoads.roadGradeBeside(worldIn, box);
+            int grade = BeardRoadsGrade.roadGradeBeside(worldIn, box);
             if (grade != Integer.MIN_VALUE) {
                 int seat = BeardPlots.waystone(piece) ? grade : grade - 1;
                 if (wet && seat < worldIn.getSeaLevel()) {
@@ -221,10 +231,11 @@ public final class BeardLayout {
                 return found;
             }
         }
+        if (piece instanceof ContentVillagePiece) { found--; }
         if (piece instanceof StructureVillagePieces.Well || piece instanceof StructureVillagePieces.Field1 || piece instanceof StructureVillagePieces.Field2) { return found; }
         int lowest = ContentBeard.lowestIn(worldIn, box.minX, box.minZ, box.maxX, box.maxZ, structurebb);
-        if (lowest == Integer.MAX_VALUE || found <= lowest + 3) { return found; }
-        int leaned = roadClamped(piece, lowest + 3, box);
+        if (lowest == Integer.MAX_VALUE || found <= lowest + LEAN) { return found; }
+        int leaned = roadClamped(piece, lowest + LEAN, box);
         if (found <= leaned) { return found; }
         ContentLog.LOGGER.debug("{} at {}, {} leaned from y {} down to y {} over its low side", piece.getClass().getSimpleName(), box.minX, box.minZ, found, leaned);
         return leaned;

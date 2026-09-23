@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -24,7 +24,7 @@ public final class ContentGameRules {
         Map<Integer, Map<String, String>> wanted = new LinkedHashMap<>();
         PackManager.get().forEach(PackManager.GAMERULES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
-            for (Map.Entry<Integer, Map<String, String>> entry : ContentParser.gameRuleFile(key, contents).entrySet()) {
+            for (Map.Entry<Integer, Map<String, String>> entry : ContentParserWorlds.gameRuleFile(key, contents).entrySet()) {
                 wanted.computeIfAbsent(entry.getKey(), id -> new LinkedHashMap<>()).putAll(entry.getValue());
             }
         });

@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.client.render.PackBellRenderer;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
+import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
 import mctmods.resourcedatapackloader.content.block.ContentBlockDoor;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFalling;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFence;
@@ -32,6 +34,7 @@ import net.minecraft.item.Item;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.statemap.StateMap;
 import net.minecraft.client.renderer.block.statemap.StateMapperBase;
 import net.minecraft.block.state.IBlockState;
@@ -87,6 +90,7 @@ import javax.annotation.Nullable;
             }
             if (property == null) {
                 if (item != Items.AIR) { ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(entry.getKey(), INVENTORY)); }
+                if (item != Items.AIR && block instanceof ContentBlockBell && ((ContentBlockBell) block).swings()) { ModelBakery.registerItemVariants(item, PackBellRenderer.body(entry.getKey())); }
                 continue;
             }
             ContentStateMapper mapper = new ContentStateMapper(def, property, entry.getKey(), hidden(block));

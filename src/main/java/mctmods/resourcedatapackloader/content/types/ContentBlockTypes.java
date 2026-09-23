@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBanner;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBannerWall;
+import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockContainer;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
@@ -150,6 +151,10 @@ public final class ContentBlockTypes {
         register("fence_gate", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockFenceGate(def)); }
             @Override public int maxVariants() { return ContentBlockFenceGate.MAX_VARIANTS; }
+        });
+        register("bell", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockBell(def)); }
+            @Override public int maxVariants() { return ContentBlockBell.MAX_VARIANTS; }
         });
         register("stairs", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockStairs.create(def)); }

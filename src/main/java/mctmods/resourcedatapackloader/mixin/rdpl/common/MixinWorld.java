@@ -140,16 +140,14 @@ import net.minecraft.util.math.AxisAlignedBB;
 
     @Inject(method = "isSpawnChunk", at = @At("HEAD"), cancellable = true) private void rdpl$spawnChunkRadius(int x, int z, CallbackInfoReturnable<Boolean> cir) {
         World world = (World) (Object) this;
-        int radius = ContentSpawnChunks.radius(world.provider.getDimension());
-        if (radius == ContentSpawnChunks.VANILLA) { return; }
-        if (radius <= 0) {
+        int dimension = world.provider.getDimension();
+        if (ContentSpawnChunks.radius(dimension) <= 0) {
             cir.setReturnValue(false);
             return;
         }
+        int reach = ContentSpawnChunks.chunks(dimension);
         BlockPos spawn = world.getSpawnPoint();
-        int offsetX = x * 16 + 8 - spawn.getX();
-        int offsetZ = z * 16 + 8 - spawn.getZ();
-        cir.setReturnValue(offsetX >= -radius && offsetX <= radius && offsetZ >= -radius && offsetZ <= radius);
+        cir.setReturnValue(Math.abs(x - (spawn.getX() >> 4)) <= reach && Math.abs(z - (spawn.getZ() >> 4)) <= reach);
     }
 
     @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true) private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {

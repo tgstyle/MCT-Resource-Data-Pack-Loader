@@ -18,6 +18,7 @@ public class StagingHeightMap implements IHeightMap {
     private static final int DIRTY = 1;
     private final AtomicIntegerArray heightmap = new AtomicIntegerArray(COLUMNS);
     private final AtomicIntegerArray dirtyFlag = new AtomicIntegerArray(COLUMNS);
+    private final AtomicIntegerArray raises = new AtomicIntegerArray(COLUMNS);
 
     public StagingHeightMap() {
         for (int i = 0; i < COLUMNS; i++) { heightmap.set(i, Coords.NO_HEIGHT); }
@@ -46,7 +47,11 @@ public class StagingHeightMap implements IHeightMap {
 
     @Override public void onOpacityChange(int localX, int blockY, int localZ, int opacity) {
         if (opacity > 0) {
-            if (blockY > getTopBlockY(localX, localZ)) { heightmap.set(index(localX, localZ), blockY); }
+            if (blockY > getTopBlockY(localX, localZ)) {
+                int idx = index(localX, localZ);
+                raises.incrementAndGet(idx);
+                heightmap.set(idx, blockY);
+            }
         }
         else if (blockY == getTopBlockY(localX, localZ)) { dirtyFlag.set(index(localX, localZ), DIRTY); }
     }
@@ -57,8 +62,10 @@ public class StagingHeightMap implements IHeightMap {
         int idx = index(localX, localZ);
         if (dirtyFlag.get(idx) == CLEAN) { return heightmap.get(idx); }
         dirtyFlag.set(idx, CLEAN);
+        int raised = raises.get(idx);
         int found = stagedCubes.isEmpty() ? Coords.NO_HEIGHT : computeHeightMap(localX, localZ);
         heightmap.set(idx, found);
+        if (raises.get(idx) != raised) { dirtyFlag.set(idx, DIRTY); }
         return found;
     }
 

@@ -29,7 +29,6 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSetMultimap;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -49,9 +48,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
@@ -178,7 +175,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
         this.columnsToSendToClients.tick();
         this.watchersToAddPlayersTo.tick();
         getWorldServer().profiler.endStartSection("generate");
-        if (!this.columnsToGenerate.isEmpty()) {
+        if (this.columnsToGenerate.occupied()) {
             getWorldServer().profiler.startSection("columns");
             Iterator<ColumnWatcher> iter = this.columnsToGenerate.iterator();
             while (iter.hasNext()) {
@@ -197,7 +194,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             }
             getWorldServer().profiler.endSection();
         }
-        if (!this.cubesToGenerate.isEmpty()) {
+        if (this.cubesToGenerate.occupied()) {
             getWorldServer().profiler.startSection("cubes");
             long stopTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(ContentControl.number(ContentControl.CHUNKS, "cubeGenMillisPerRound", 50));
             Iterator<CubeWatcher> iterator = this.cubesToGenerate.iterator();
@@ -223,7 +220,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             getWorldServer().profiler.endSection();
         }
         getWorldServer().profiler.endStartSection("send");
-        if (!this.columnsToSendToClients.isEmpty()) {
+        if (this.columnsToSendToClients.occupied()) {
             getWorldServer().profiler.startSection("columns");
             Iterator<ColumnWatcher> it = this.columnsToSendToClients.iterator();
             while (it.hasNext()) {
@@ -233,7 +230,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             }
             getWorldServer().profiler.endSection();
         }
-        if (!this.cubesToSendToClients.isEmpty()) {
+        if (this.cubesToSendToClients.occupied()) {
             getWorldServer().profiler.startSection("cubes");
             int toSend = ContentControl.number(ContentControl.CHUNKS, "cubesSentPerTick", 649);
             Iterator<CubeWatcher> it = this.cubesToSendToClients.iterator();
@@ -247,7 +244,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             }
             getWorldServer().profiler.endSection();
         }
-        if (!watchersToAddPlayersTo.isEmpty()) {
+        if (watchersToAddPlayersTo.occupied()) {
             int toSend = ContentControl.number(ContentControl.CHUNKS, "cubesSentPerTick", 649);
             for (Iterator<CubeWatcher> iter = watchersToAddPlayersTo.iterator(); toSend > 0 && iter.hasNext(); ) {
                 CubeWatcher watcher = iter.next();
@@ -545,33 +542,6 @@ public class PlayerCubeMap extends PlayerChunkMap {
 
     @Nullable public ColumnWatcher getColumnWatcher(int cubeX, int cubeZ) { return this.columnWatchers.get(cubeX, cubeZ); }
 
-    private static final class PlayerWrapper {
-        final EntityPlayerMP playerEntity;
-        private double managedPosY;
-
-        PlayerWrapper(EntityPlayerMP player) { this.playerEntity = player; }
-
-        void updateManagedPos() {
-            this.playerEntity.managedPosX = playerEntity.posX;
-            this.managedPosY = playerEntity.posY;
-            this.playerEntity.managedPosZ = playerEntity.posZ;
-        }
-
-        int getManagedCubePosX() { return blockToCube(this.playerEntity.managedPosX); }
-
-        int getManagedCubePosY() { return blockToCube(this.managedPosY); }
-
-        int getManagedCubePosZ() { return blockToCube(this.playerEntity.managedPosZ); }
-
-        CubePos getManagedCubePos() { return new CubePos(getManagedCubePosX(), getManagedCubePosY(), getManagedCubePosZ()); }
-
-        boolean cubePosChanged() {
-            return blockToCube(playerEntity.posX) != this.getManagedCubePosX()
-                    || blockToCube(playerEntity.posY) != this.getManagedCubePosY()
-                    || blockToCube(playerEntity.posZ) != this.getManagedCubePosZ();
-        }
-    }
-
     public Iterator<Cube> getCubeIterator() {
         WorldServer world = this.getWorldServer();
         final Iterator<CubeWatcher> iterator = this.tickableCubeTracker.iterator();
@@ -610,26 +580,5 @@ public class PlayerCubeMap extends PlayerChunkMap {
                 return this.endOfData();
             }
         };
-    }
-
-    public static class TickableChunkContainer {
-        private final ObjectArrayList<ICube> cubes = ObjectArrayList.wrap(new ICube[64*1024]);
-        private XYZMap<ICube> forcedCubes;
-        private final Set<Chunk> columns = Collections.newSetFromMap(new IdentityHashMap<>());
-
-        private void clear() {
-            this.cubes.clear();
-            this.columns.clear();
-        }
-
-        private void addCube(ICube cube) { cubes.add(cube); }
-
-        public void addColumn(Chunk column) { columns.add(column); }
-
-        public Iterable<ICube> forcedCubes() { return forcedCubes; }
-
-        public ICube[] playerTickableCubes() { return cubes.elements(); }
-
-        public Iterable<Chunk> columns() { return columns; }
     }
 }

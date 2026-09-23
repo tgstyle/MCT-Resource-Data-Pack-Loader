@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -17,6 +18,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import java.util.List;
 
 public final class BeardOpen {
     private BeardOpen() {}
@@ -44,12 +46,15 @@ public final class BeardOpen {
         int eaves = scanned[2];
         boolean traced = ContentLog.LOGGER.debugEnabled();
         if (traced) { ContentLog.LOGGER.debug("Hook for {} box {},{},{} known {} lowest {}", piece.getClass().getSimpleName(), box.minX, box.minY, box.minZ, known, lowestFooting == Integer.MAX_VALUE ? "none" : String.valueOf(lowestFooting - box.minY)); }
-        if (lowestFooting == Integer.MAX_VALUE) { return; }
+        if (lowestFooting == Integer.MAX_VALUE) {
+            if (!box.intersectsWith(clip)) { BeardGround.bankRing(start, piece, world, box, clip, at); }
+            return;
+        }
         StringBuilder trace = traced ? new StringBuilder() : null;
         int grounded = seat(start, piece, world, box, clip, at, footings, depth, traced, trace);
         int overhead = BeardGround.liftOffRoof(start, piece, world, box, clip, at);
         int banked = BeardGround.bankRing(start, piece, world, box, clip, at);
-        int[] ring = BeardGround.openOver(start, piece, world, box, clip, at);
+        int[] ring = BeardClearing.openOver(start, piece, world, box, clip, at);
         int opened = ring[0];
         int spared = ring[1];
         int notGround = ring[2];
@@ -102,6 +107,7 @@ public final class BeardOpen {
     private static int seat(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at, int[] footings, int depth, boolean traced, StringBuilder trace) {
         int width = box.maxX - box.minX + 1;
         int grounded = 0;
+        List<RailPiece> bores = BeardRails.subways(world, box);
         int[] froms = new int[width * depth];
         int[] tops = new int[width * depth];
         for (int x = box.minX; x <= box.maxX; x++) {
@@ -140,6 +146,7 @@ public final class BeardOpen {
                         if (resting.isFullBlock()) { ground = resting; }
                     }
                     int floor = BeardPlots.restingFloor(tops, depth, spot, from);
+                    if (!bores.isEmpty()) { floor = Math.max(floor, BeardRails.boreFloor(world, bores, x, z)); }
                     for (int y = from; y >= floor; y--) {
                         at.setPos(x, y, z);
                         if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
@@ -229,10 +236,10 @@ public final class BeardOpen {
         for (StructureComponent other : start.getComponents()) {
             if (other == piece || !(other instanceof StructureVillagePieces.Village)) { continue; }
             if (other instanceof StructureVillagePieces.Path) {
-                bridged += BeardRoads.deckToPlot(world, start, piece, box, other, clip, at);
+                bridged += BeardRoadsDecks.deckToPlot(world, start, piece, box, other, clip, at);
                 continue;
             }
-            bridged += BeardRoads.bridge(world, start, piece, box, ((IStructureComponentBox) other).rdpl$box(), clip, at);
+            bridged += BeardRoadsDecks.bridge(world, start, piece, box, ((IStructureComponentBox) other).rdpl$box(), clip, at);
         }
         return bridged;
     }

@@ -3,9 +3,14 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRailsFit;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.gen.structure.MapGenVillage;
 import net.minecraft.world.gen.structure.StructureStart;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,11 +36,18 @@ import java.util.List;
         if (ContentBeard.wanted()) { ContentBeard.foundAtBirth(worldIn, (StructureStart) (Object) this); }
     }
 
+    @WrapOperation(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At(value = "NEW", target = "(Lnet/minecraft/world/biome/BiomeProvider;ILjava/util/Random;IILjava/util/List;I)Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;"))
+    private StructureVillagePieces.Start rdpl$wellOnPin(BiomeProvider biomeProviderIn, int p_i2104_2_, Random rand, int p_i2104_4_, int p_i2104_5_, List<StructureVillagePieces.PieceWeight> p_i2104_6_, int p_i2104_7_, Operation<StructureVillagePieces.Start> original, @Local(argsOnly = true, ordinal = 0) int x, @Local(argsOnly = true, ordinal = 1) int z) {
+        long[] pin = ContentStructurePlacement.pinIn(ContentStructurePlacement.VILLAGES, x, z);
+        if (pin != null) { return original.call(biomeProviderIn, p_i2104_2_, rand, (int) pin[0] - 2, (int) pin[1] - 2, p_i2104_6_, p_i2104_7_); }
+        return original.call(biomeProviderIn, p_i2104_2_, rand, p_i2104_4_, p_i2104_5_, p_i2104_6_, p_i2104_7_);
+    }
+
     @Redirect(method = "<init>(Lnet/minecraft/world/World;Ljava/util/Random;III)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;buildComponent(Lnet/minecraft/world/gen/structure/StructureComponent;Ljava/util/List;Ljava/util/Random;)V"))
     private void rdpl$sizeThenBuild(StructureVillagePieces.Start start, StructureComponent componentIn, List<StructureComponent> listIn, Random building, World worldIn, Random rand, int x, int z, int size) {
         if (ContentBeard.wanted()) {
             ContentVillages.sizeBlock(worldIn, start);
-            BeardRails.found(worldIn, StructureStart.class.cast(this), start, rand);
+            BeardRailsFit.found(worldIn, StructureStart.class.cast(this), start, rand);
         }
         start.buildComponent(componentIn, listIn, building);
     }

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.extra;
 
-import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -38,7 +38,7 @@ public final class ContentIntroPlay {
     public static void finished(EntityPlayerMP player) {
         if (!PLAYING.remove(player.getUniqueID())) { return; }
         if (ContentWorldIntro.once()) { persisted(player).setBoolean(SEEN, true); }
-        ContentPregen.releaseAfterIntro(player);
+        ContentPregenHold.releaseAfterIntro(player);
     }
 
     public static void replay(EntityPlayerMP player) { persisted(player).removeTag(SEEN); }

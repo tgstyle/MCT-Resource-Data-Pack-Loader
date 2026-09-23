@@ -43,12 +43,12 @@ public final class ContentPaths {
                 apply(event, world, pos, face, player, held, named(Config.content.shovelPathReverts, Blocks.DIRT), SoundEvents.ITEM_SHOVEL_FLATTEN);
                 return;
             }
-            if (!ContentSpawning.does("path", block) || blocked(world, pos)) { return; }
+            if (ContentSpawning.lacks("path", block) || blocked(world, pos)) { return; }
             apply(event, world, pos, face, player, held, named(Config.content.shovelPathBecomes, Blocks.GRASS_PATH), SoundEvents.ITEM_SHOVEL_FLATTEN);
             return;
         }
         if (!hoe(held) || !Config.content.hoeTilling) { return; }
-        if (!ContentSpawning.does("till", block) || blocked(world, pos)) { return; }
+        if (ContentSpawning.lacks("till", block) || blocked(world, pos)) { return; }
         apply(event, world, pos, face, player, held, named(Config.content.hoeTillsInto, Blocks.FARMLAND), SoundEvents.ITEM_HOE_TILL);
     }
 

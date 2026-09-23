@@ -57,9 +57,9 @@ public final class ContentReplacements {
         return dimensions.contains(dimension) != blacklist;
     }
 
-    public static int replace(World world, int chunkX, int chunkZ) {
+    public static void replace(World world, int chunkX, int chunkZ) {
         if (dimensions == null) { load(); }
-        if (!wanted) { return 0; }
+        if (!wanted) { return; }
         Chunk chunk = world.getChunk(chunkX, chunkZ);
         int baseX = chunkX << 4;
         int baseZ = chunkZ << 4;
@@ -86,7 +86,6 @@ public final class ContentReplacements {
             }
         }
         if (replaced > 0) { chunks++; }
-        return replaced;
     }
 
     public static void report() {

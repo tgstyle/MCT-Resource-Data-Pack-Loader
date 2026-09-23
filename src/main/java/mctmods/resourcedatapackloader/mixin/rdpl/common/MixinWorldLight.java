@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDressLight;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLightArea;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -86,6 +87,10 @@ import java.util.List;
         if (world.isRemote) { return; }
         if (ContentPregen.quenches(world, pos.getX() >> 4, pos.getZ() >> 4)) {
             if (world.isBlockLoaded(pos)) { world.getChunk(pos).setLightPopulated(false); }
+            cir.setReturnValue(true);
+        }
+        else if (IChunk.rdpl$getPopulating() != null && ContentDressLight.quenches(world)) {
+            if (world.isBlockLoaded(pos)) { ContentDressLight.darken(world.getChunk(pos)); }
             cir.setReturnValue(true);
         }
     }

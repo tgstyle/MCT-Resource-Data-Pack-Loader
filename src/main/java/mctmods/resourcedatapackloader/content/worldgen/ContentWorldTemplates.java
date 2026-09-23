@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -43,7 +43,7 @@ ContentWorldTemplates {
         if (!Config.content.load) { return; }
         for (WorldTemplateDef def : builtins()) { DEFS.put(def.registryName, def); }
         Json.eachFile(PackManager.WORLDTEMPLATES, "world template", (key, contents) -> {
-            WorldTemplateDef def = ContentParser.worldTemplate(key, contents);
+            WorldTemplateDef def = ContentParserWorlds.worldTemplate(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
         active = select();

@@ -92,7 +92,7 @@ public final class PackOptions {
                     .map(one -> one.getFileName().toString())
                     .filter(one -> one.endsWith(".json"))
                     .map(one -> one.substring(0, one.length() - 5))
-                    .filter(one -> !VALUES.containsKey(one))
+                    .filter(one -> !VALUES.containsKey(one) && !ModPacks.CONTROL_STEM.equals(one))
                     .sorted()
                     .forEach(stale::add);
         }

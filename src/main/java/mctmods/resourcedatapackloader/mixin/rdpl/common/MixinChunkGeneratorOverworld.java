@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.DeepGeneration;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardSeat;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentFreezeCheck;
@@ -77,6 +78,6 @@ import net.minecraft.world.gen.structure.WoodlandMansion;
         if (!mapFeaturesEnabled || !ContentBeard.wanted()) { return; }
         MapGenStructure[] generators = { villageGenerator, strongholdGenerator, mineshaftGenerator, oceanMonumentGenerator, woodlandMansionGenerator };
         String[] names = { "villages", "strongholds", "mineshafts", "monuments", "mansions" };
-        ContentBeard.apply(world, generators, names, heightMap, x / 4, z / 4);
+        ContentBeardSeat.apply(world, generators, names, heightMap, x / 4, z / 4);
     }
 }

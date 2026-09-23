@@ -65,7 +65,7 @@ public final class BeardCross {
         return role * 1000 + width;
     }
 
-    public boolean middle(int x, int z) { return role(x, z) == CORE && offset(x, z) == 0; }
+    public boolean offMiddle(int x, int z) { return role(x, z) != CORE || offset(x, z) != 0; }
 
     public int row(int x, int z) { return alongX ? x : z; }
 

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.IRubicFeatureStart;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.llamalad7.mixinextras.sugar.Local;
@@ -25,6 +26,15 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(StructureStart.class) @Implements(@Interface(iface = IRubicFeatureStart.class, prefix = "start$")) public abstract class MixinStructureStart {
+    @Redirect(method = "generateStructure(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;getBoundingBox()Lnet/minecraft/world/gen/structure/StructureBoundingBox;"))
+    private StructureBoundingBox rdpl$dressedBox(StructureComponent piece) { return BeardRails.dressed(piece); }
+
+    @Inject(method = "updateBoundingBox", at = @At("RETURN")) private void rdpl$dressedStart(CallbackInfo ci) { BeardRails.dress(StructureStart.class.cast(this)); }
+
+    @Inject(method = "readStructureComponentsFromNBT", at = @At("RETURN")) private void rdpl$dressedOnLoad(World worldIn, NBTTagCompound tagCompound, CallbackInfo ci) {
+        if (tagCompound.hasKey("BB")) { BeardRails.dress(StructureStart.class.cast(this)); }
+    }
+
     @Redirect(method = "generateStructure", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;addComponentParts(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Z"))
     private boolean rdpl$openFrontage(StructureComponent piece, World world, Random rand, StructureBoundingBox clip) {
         StructureStart self = StructureStart.class.cast(this);

@@ -20,7 +20,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentOreVein implements IContentShape {
-    public static final String DEFAULT = "default";
     public static final String BANDED = "banded";
     public static final String TUBE = "tube";
     private static final int OFFSET = 8;

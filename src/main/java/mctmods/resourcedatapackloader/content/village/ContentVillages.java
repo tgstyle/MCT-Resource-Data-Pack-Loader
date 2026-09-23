@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.village;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorldgen;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
@@ -73,7 +73,7 @@ public final class ContentVillages {
         loaded = true;
         if (!Config.content.villages) { return false; }
         Json.eachFile(PackManager.VILLAGES, "village file", (key, contents) -> {
-            VillageDef def = ContentParser.village(key, contents);
+            VillageDef def = ContentParserWorldgen.village(key, contents);
             if (def == null) { return; }
             if (missing(def)) {
                 ContentLog.LOGGER.debug("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);

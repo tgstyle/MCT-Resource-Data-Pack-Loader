@@ -18,7 +18,8 @@ public class BlankEntityContainer extends EntityContainer {
     @Override public void addEntity(@Nonnull Entity entity) {
     }
 
-    @Override public boolean remove(@Nonnull Entity entity) { return false; }
+    @Override public void remove(@Nonnull Entity entity) {
+    }
 
     @Override @Nonnull public Collection<Entity> getEntities() { return Collections.emptyList(); }
 

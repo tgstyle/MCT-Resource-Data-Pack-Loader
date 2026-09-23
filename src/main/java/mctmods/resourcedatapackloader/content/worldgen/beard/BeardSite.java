@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardJoins;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSites;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
@@ -28,6 +29,7 @@ import java.util.List;
 
 public final class BeardSite {
     private static final int GRADE_PASSES = 4;
+    private static final int RING = 4;
 
     private BeardSite() {}
 
@@ -113,7 +115,7 @@ public final class BeardSite {
                 long away = awayX * awayX + awayZ * awayZ;
                 if (away >= bestAway) { continue; }
                 bestAway = away;
-                best = new BlockPos((int) pin[0], 64, (int) pin[1]);
+                best = new BlockPos((int) pin[0] + ContentBeard.BESIDE_WELL, 64, (int) pin[1] + ContentBeard.BESIDE_WELL);
             }
             return best;
         }
@@ -148,8 +150,8 @@ public final class BeardSite {
         }
         return best;
     }
-    public static Boolean flatSite(World world, int chunkX, int chunkZ, int spacing) {
-        if (BeardSurface.unreadable(world)) { return null; }
+    public static boolean flatSite(World world, int chunkX, int chunkZ, int spacing) {
+        if (BeardSurface.unreadable(world)) { return false; }
         ContentSites known = ContentSites.of(world, spacing);
         int grid = known.spacing();
         long chosen = siteFor(world, known, Math.floorDiv(chunkX, grid), Math.floorDiv(chunkZ, grid), grid);
@@ -170,6 +172,8 @@ public final class BeardSite {
     }
     public static int lowestIn(World worldIn, int minX, int minZ, int maxX, int maxZ, StructureBoundingBox clip) {
         int floor = worldIn.provider.getAverageGroundLevel() - 1;
+        Integer flat = BeardSurface.flatTop(worldIn);
+        if (flat != null) { return Math.max(flat + 1, floor); }
         if (BeardSurface.samplerFor(worldIn) != null) {
             int lowest = Integer.MAX_VALUE;
             for (int z = minZ; z <= maxZ; z++) {
@@ -218,7 +222,7 @@ public final class BeardSite {
             int gapX = Math.max(road.minX - box.maxX, box.minX - road.maxX);
             int gapZ = Math.max(road.minZ - box.maxZ, box.minZ - road.maxZ);
             if (Math.max(gapX, gapZ) > 2 || Math.min(gapX, gapZ) > 0) { continue; }
-            int stand = BeardRoads.roadGradeBeside(world, box);
+            int stand = BeardRoadsGrade.roadGradeBeside(world, box);
             if (stand == Integer.MIN_VALUE) { return Integer.MAX_VALUE; }
             int total = 0;
             for (int x = box.minX; x <= box.maxX + 3; x += 4) {
@@ -226,7 +230,7 @@ public final class BeardSite {
                     int ground = BeardSurface.surfaceAt(world, Math.min(x, box.maxX), Math.min(z, box.maxZ));
                     if (ground < 0) { return Integer.MAX_VALUE; }
                     int gap = stand - ground;
-                    if (gap > allow + sink + give || -gap > allow + give || spread > allow + give) { return Integer.MAX_VALUE; }
+                    if (gap > allow + sink + give || -gap > allow || spread > allow + give) { return Integer.MAX_VALUE; }
                     total += Math.abs(gap);
                 }
             }
@@ -234,6 +238,55 @@ public final class BeardSite {
         }
         return Integer.MAX_VALUE;
     }
+    public static void standOff(World world, StructureStart start) {
+        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        List<StructureComponent> pieces = start.getComponents();
+        List<StructureComponent> held = ContentBeard.laid();
+        ContentBeard.laying(pieces);
+        try {
+            List<StructureComponent> around = ContentBeard.everyone(world, pieces);
+            for (StructureComponent plot : pieces.toArray(new StructureComponent[0])) {
+                if (plot instanceof StructureVillagePieces.Road || plot instanceof StructureVillagePieces.Well || BeardRails.isRail(plot)) { continue; }
+                StructureBoundingBox box = plot.getBoundingBox();
+                int floor = BeardLayout.predictedFloor(plot, world);
+                if (floor == Integer.MIN_VALUE) { continue; }
+                int hill = groundAround(world, around, box);
+                int allow = ContentBeard.footingAllow(plot);
+                if (hill == Integer.MIN_VALUE || hill - floor <= allow) { continue; }
+                pieces.remove(plot);
+                ContentLog.LOGGER.debug("{} at {}, {}, {} to {}, {}, {} makes way for the hill around it: it would stand at y {}, {} block(s) under the ground of y {} around its clearing, deeper than the {} block(s) of apron it may dig", plot.getClass().getSimpleName(), box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, floor, hill - floor, hill, allow);
+            }
+        }
+        finally { ContentBeard.laying(held); }
+    }
+
+    private static int groundAround(World world, List<StructureComponent> around, StructureBoundingBox box) {
+        int[] ring = new int[2 * (box.maxX - box.minX + box.maxZ - box.minZ) + 8 * RING + 4];
+        int count = 0;
+        for (int x = box.minX - RING; x <= box.maxX + RING; x++) {
+            count = ringGround(world, around, ring, count, x, box.minZ - RING);
+            count = ringGround(world, around, ring, count, x, box.maxZ + RING);
+        }
+        for (int z = box.minZ - RING + 1; z <= box.maxZ + RING - 1; z++) {
+            count = ringGround(world, around, ring, count, box.minX - RING, z);
+            count = ringGround(world, around, ring, count, box.maxX + RING, z);
+        }
+        if (count == 0) { return Integer.MIN_VALUE; }
+        Arrays.sort(ring, 0, count);
+        return ring[count / 2];
+    }
+
+    private static int ringGround(World world, List<StructureComponent> around, int[] ring, int count, int x, int z) {
+        for (StructureComponent piece : around) {
+            StructureBoundingBox taken = piece.getBoundingBox();
+            if (x >= taken.minX && x <= taken.maxX && z >= taken.minZ && z <= taken.maxZ) { return count; }
+        }
+        int sampled = BeardSurface.surfaceAt(world, x, z);
+        if (sampled < 0) { return count; }
+        ring[count] = sampled;
+        return count + 1;
+    }
+
     public static void settleRoads(StructureStart start) {
         List<StructureComponent> pieces = start.getComponents();
         if (ContentBeard.samplerWorld == null || pieces.isEmpty()) { return; }
@@ -255,7 +308,7 @@ public final class BeardSite {
                 int middle = alongX ? (well.minX + well.maxX) / 2 : (well.minZ + well.maxZ) / 2;
                 boolean growsUp = Math.abs(least - middle) <= Math.abs(most - middle);
                 EnumFacing facing = alongX ? (growsUp ? EnumFacing.EAST : EnumFacing.WEST) : (growsUp ? EnumFacing.SOUTH : EnumFacing.NORTH);
-                int kept = BeardRoads.roadReach(box, facing);
+                int kept = BeardRoadsGrade.roadReach(box, facing);
                 if (kept >= rows) { continue; }
                 int attached = attachedRows(pieces, piece, box, alongX, growsUp);
                 int trimmed = Math.max(kept, attached);
@@ -281,7 +334,7 @@ public final class BeardSite {
         ContentBeard.laying(pieces);
         try {
             for (StructureComponent piece : pieces) { frontRoad(pieces, piece); }
-            for (StructureComponent piece : pieces) { ContentBeard.attach(start, piece); }
+            for (StructureComponent piece : pieces) { ContentBeardJoins.attach(start, piece); }
         }
         finally { ContentBeard.laying(held); }
         gradeRoads(world, start, "at layout time");
@@ -305,7 +358,7 @@ public final class BeardSite {
                     if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout)) { continue; }
                     StructureBoundingBox box = piece.getBoundingBox();
                     boolean alongX = BeardPlots.roadAlongX(piece);
-                    BeardRoads.Grade grade = BeardRoads.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
+                    BeardRoads.Grade grade = BeardRoadsGrade.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true);
                     if (grade == null) { continue; }
                     BeardRoads.Grade before = ((IRoadLayout) piece).rdpl$layout();
                     if (before == null || !before.sameAs(grade)) { settled = false; }
@@ -316,6 +369,65 @@ public final class BeardSite {
         }
         finally { ContentBeard.laying(held); }
         if (stored > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Stored the graded profile of {} road(s) of the village at {}, {} {}, settled after {} pass(es)", stored, start.getBoundingBox().minX, start.getBoundingBox().minZ, when, passes); }
+    }
+
+    public static void pullBackDecks(World world, StructureStart start) {
+        if (!ContentBeard.wanted() || BeardSurface.unreadable(world)) { return; }
+        List<StructureComponent> pieces = start.getComponents();
+        if (pieces.isEmpty()) { return; }
+        StructureBoundingBox well = pieces.get(0).getBoundingBox();
+        int pulled = 0;
+        for (StructureComponent piece : pieces) {
+            if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout)) { continue; }
+            BeardRoads.Grade grade = ((IRoadLayout) piece).rdpl$layout();
+            if (grade == null) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            boolean alongX = BeardPlots.roadAlongX(piece);
+            int least = alongX ? box.minX : box.minZ;
+            int most = alongX ? box.maxX : box.maxZ;
+            int rows = most - least + 1;
+            if (grade.start() != least || grade.rows() != rows) { continue; }
+            int middle = alongX ? (well.minX + well.maxX) / 2 : (well.minZ + well.maxZ) / 2;
+            boolean growsUp = Math.abs(least - middle) <= Math.abs(most - middle);
+            int kept = shoreBeforeSlopedDeck(grade, growsUp);
+            if (kept < 0) { continue; }
+            int trimmed = Math.max(kept, attachedRows(pieces, piece, box, alongX, growsUp));
+            if (trimmed >= rows || trimmed < 7) {
+                ContentLog.LOGGER.debug("The road at {}, {} crosses water on a deck that cannot lie at one height, but pieces attach along it or too little of it stands on the shore, so it stands", box.minX, box.minZ);
+                continue;
+            }
+            if (growsUp && alongX) { box.maxX = box.minX + trimmed - 1; }
+            else if (growsUp) { box.maxZ = box.minZ + trimmed - 1; }
+            else if (alongX) { box.minX = box.maxX - trimmed + 1; }
+            else { box.minZ = box.maxZ - trimmed + 1; }
+            pulled++;
+            ContentLog.LOGGER.debug("The road at {}, {} is pulled back from {} to {} row(s) to the shore, since its deck cannot lie at one height between the junction it leaves and the land it reaches", box.minX, box.minZ, rows, trimmed);
+        }
+        if (pulled > 0) { gradeRoads(world, start, "once the roads whose decks cannot lie level are pulled back"); }
+    }
+
+    private static int shoreBeforeSlopedDeck(BeardRoads.Grade grade, boolean growsUp) {
+        int rows = grade.rows();
+        for (int n = 0; n < rows; n++) {
+            if (!grade.bridged[growsUp ? n : rows - 1 - n]) { continue; }
+            int end = n;
+            while (end + 1 < rows && grade.bridged[growsUp ? end + 1 : rows - 2 - end]) { end++; }
+            int low = Integer.MAX_VALUE;
+            int high = Integer.MIN_VALUE;
+            for (int k = n; k <= end; k++) {
+                int level = grade.profile[growsUp ? k : rows - 1 - k];
+                if (level == Integer.MIN_VALUE) { continue; }
+                low = Math.min(low, level);
+                high = Math.max(high, level);
+            }
+            if (high > low) {
+                int cut = n;
+                while (cut > 0 && grade.ground[growsUp ? cut - 1 : rows - cut] == Integer.MIN_VALUE) { cut--; }
+                return cut;
+            }
+            n = end;
+        }
+        return -1;
     }
 
     private static void frontRoad(List<StructureComponent> pieces, StructureComponent piece) {

@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(ContainerRepair.class) public abstract class MixinContainerRepair {
-    @Inject(method = "transferStackInSlot", at = @At("HEAD"), cancellable = true) private void rdpl$onlyWorkPaidFor(EntityPlayer player, int index, CallbackInfoReturnable<ItemStack> cir) {
-        if (index == 2 && !((Container) (Object) this).getSlot(2).canTakeStack(player)) { cir.setReturnValue(ItemStack.EMPTY); }
+@Mixin(ContainerRepair.class) public abstract class MixinContainerRepair extends Container {
+    @Inject(method = "transferStackInSlot", at = @At("HEAD"), cancellable = true) private void rdpl$onlyWorkPaidFor(EntityPlayer playerIn, int index, CallbackInfoReturnable<ItemStack> cir) {
+        if (index == 2 && !getSlot(2).canTakeStack(playerIn)) { cir.setReturnValue(ItemStack.EMPTY); }
     }
 }

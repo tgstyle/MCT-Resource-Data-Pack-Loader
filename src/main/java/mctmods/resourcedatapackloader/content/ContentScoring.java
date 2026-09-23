@@ -19,7 +19,6 @@ import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import mctmods.resourcedatapackloader.util.world.Travel;
 
 import net.minecraft.world.GameType;
 import net.minecraft.world.World;
@@ -64,29 +63,19 @@ public final class ContentScoring {
     private static int waiting;
     @Nullable private static ScoreDef resetting;
     private static boolean closed;
-    private static final Map<String, GameType> OUT = new LinkedHashMap<>();
+    static final Map<String, GameType> OUT = new LinkedHashMap<>();
     private static final Set<String> IN_PLAY = new LinkedHashSet<>();
-    private static final Map<String, double[]> STILL = new LinkedHashMap<>();
-    private static final Map<String, Long> TOLD = new LinkedHashMap<>();
-    private static final long NOTE_TICKS = 120L;
-    private static final Map<String, Long> DUE = new LinkedHashMap<>();
-    private static final Map<String, String> SHOWN = new LinkedHashMap<>();
-    private static final Map<java.util.UUID, double[]> ORIGINS = new LinkedHashMap<>();
-    private static final List<java.util.UUID> GATHERED = new ArrayList<>();
-    private static final double GAP = 2.0D;
-    private static final double NARROWEST = 3.0D;
-    private static final int REACH = 3;
     private static boolean lobbied;
     private static final String RESET = "reset";
 
     private ContentScoring() {}
 
-    public static boolean load() {
+    public static void load() {
         BY_NAME.clear();
         ContentRoundReset.clear();
         PackManager.get().forEach(PackManager.SCORING, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
-            ScoreDef def = ContentParser.scoreFile(key, contents);
+            ScoreDef def = ContentParserGames.scoreFile(key, contents);
             if (def == null) { return; }
             if (BY_NAME.containsKey(def.name)) {
                 ContentLog.LOGGER.error("Score file {} names the objective '{}', which another pack already named, so the later one is left out", key, def.name);
@@ -100,7 +89,6 @@ public final class ContentScoring {
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(ContentScoring.class);
             armed = true;
         }
-        return !BY_NAME.isEmpty();
     }
 
     public static Map<String, ScoreDef> all() { return BY_NAME; }
@@ -114,8 +102,6 @@ public final class ContentScoring {
     }
 
     public static boolean any() { return !BY_NAME.isEmpty(); }
-
-    @Nullable public static ScoreDef named(String name) { return BY_NAME.get(name); }
 
     @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) { keep(event.getWorld()); }
 
@@ -161,7 +147,7 @@ public final class ContentScoring {
         watch(def, board.getOrCreateScore(side, objective).getScorePoints());
     }
 
-    @Nullable private static String sideOf(World world, Entity who, String member) {
+    @Nullable static String sideOf(World world, Entity who, String member) {
         ScorePlayerTeam team = world.getScoreboard().getPlayersTeam(member);
         if (team != null) { return team.getName(); }
         if (who instanceof EntityPlayer) { return null; }
@@ -179,14 +165,14 @@ public final class ContentScoring {
 
     @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || BY_NAME.isEmpty() || !live) { return; }
-        keepStill(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentScoringLobby.keepStill(FMLCommonHandler.instance().getMinecraftServerInstance());
         if (!closed && starting == 0 && waiting == 0 && !mctmods.resourcedatapackloader.content.worldgen.ContentPregen.busy()) { ticks++; }
         if (++beat % 20 != 0) { return; }
         settling(FMLCommonHandler.instance().getMinecraftServerInstance());
         ContentRoundReset.second(FMLCommonHandler.instance().getMinecraftServerInstance());
         if (closed && lobbied) {
-            gather(FMLCommonHandler.instance().getMinecraftServerInstance());
-            lobbyNotes(FMLCommonHandler.instance().getMinecraftServerInstance());
+            ContentScoringLobby.gather(FMLCommonHandler.instance().getMinecraftServerInstance());
+            ContentScoringLobby.lobbyNotes(FMLCommonHandler.instance().getMinecraftServerInstance());
         }
         if (starting > 0) {
             if (--starting > 0) { count(FMLCommonHandler.instance().getMinecraftServerInstance()); }
@@ -201,7 +187,7 @@ public final class ContentScoring {
                 return;
             }
             if (!resetting.intermissionSays.isEmpty()) {
-                mctmods.resourcedatapackloader.content.worldgen.ContentPregen.tellBar(FMLCommonHandler.instance().getMinecraftServerInstance(),
+                mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.tellBar(FMLCommonHandler.instance().getMinecraftServerInstance(),
                         resetting.intermissionSays.replace("{seconds}", Integer.toString(waiting)));
             }
         }
@@ -295,7 +281,7 @@ public final class ContentScoring {
         if (lobby != null) {
             closed = true;
             opening = lobby;
-            waitingSaid(server);
+            ContentScoringLobby.waitingSaid(server);
             return;
         }
         starting = OPENS_IN;
@@ -320,7 +306,7 @@ public final class ContentScoring {
         ContentLog.LOGGER.info("The round was reset, so the map is reset in {} second(s)", waiting);
     }
 
-    @Nullable private static ScoreDef lobbyDef() {
+    @Nullable static ScoreDef lobbyDef() {
         for (ScoreDef def : BY_NAME.values()) {
             if ("leader".equals(def.opensBy)) { return def; }
         }
@@ -409,25 +395,9 @@ public final class ContentScoring {
             }
             SETTLING.remove(player.getUniqueID());
             mctmods.resourcedatapackloader.content.worldgen.ContentReset.arrived(player);
-            waitsInLobby(player);
+            ContentScoringLobby.waitsInLobby(player);
         }
         SETTLING.keySet().retainAll(online);
-    }
-
-    private static void waitsInLobby(EntityPlayerMP player) {
-        ScoreDef lobby = lobbyDef();
-        if (lobby == null || lobby.opensLobby == null || !lobby.opensLobbyJoins) { return; }
-        if (holding() || OUT.containsKey(player.getName())) { return; }
-        if (player.world.getScoreboard().getPlayersTeam(player.getName()) != null) { return; }
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        if (server == null) { return; }
-        WorldServer world = server.getWorld(lobby.opensLobby[0]);
-        double x = lobby.opensLobby[1] + 0.5D;
-        double z = lobby.opensLobby[3] + 0.5D;
-        Travel.to(player, lobby.opensLobby[0], x, standing(world, x, lobby.opensLobby[2], z), z, player.rotationYaw, 0.0F);
-        OUT.put(player.getName(), player.interactionManager.getGameType());
-        player.setGameType(GameType.SPECTATOR);
-        if (!lobby.opensJoinsSays.isEmpty()) { Says.tell(player, lobby.opensJoinsSays, TextFormatting.GRAY); }
     }
 
     private static void backIn(MinecraftServer server) {
@@ -451,124 +421,6 @@ public final class ContentScoring {
 
     public static boolean standInWaits() { return lobbied ? !holding() : eliminating(); }
 
-    private static void keepStill(@Nullable MinecraftServer server) {
-        if (server == null || !holding()) {
-            STILL.clear();
-            return;
-        }
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            if (player.isSpectator()) { continue; }
-            double[] at = STILL.get(player.getName());
-            if (at == null || at[0] != player.dimension) {
-                STILL.put(player.getName(), new double[] { player.dimension, player.posX, player.posY, player.posZ });
-                continue;
-            }
-            double dx = player.posX - at[1];
-            double dy = player.posY - at[2];
-            double dz = player.posZ - at[3];
-            if (dx * dx + dy * dy + dz * dz > 1.0E-4D) { player.connection.setPlayerLocation(at[1], at[2], at[3], player.rotationYaw, player.rotationPitch); }
-        }
-    }
-
-    private static boolean refused(EntityPlayer player) {
-        if (player.world.isRemote || !holding()) { return false; }
-        ScoreDef lobby = lobbyDef();
-        MinecraftServer server = player.getServer();
-        long now = player.world.getTotalWorldTime();
-        Long last = TOLD.get(player.getName());
-        if (lobby != null && server != null && player instanceof EntityPlayerMP && (last == null || now - last >= NOTE_TICKS)) { note(server, (EntityPlayerMP) player, lobby); }
-        return true;
-    }
-
-    private static void gather(@Nullable MinecraftServer server) {
-        ScoreDef lobby = lobbyDef();
-        if (server == null || lobby == null || lobby.opensLobby == null) { return; }
-        int dimension = lobby.opensLobby[0];
-        WorldServer world = server.getWorld(dimension);
-        List<Entity> waiting = new ArrayList<>();
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            if (!player.isSpectator()) { waiting.add(player); }
-        }
-        for (WorldServer each : server.worlds) {
-            for (Entity one : each.loadedEntityList) {
-                if (one instanceof EntityPlayer || one.isDead || !(one instanceof net.minecraft.entity.EntityLiving)) { continue; }
-                if (sideOf(each, one, one.getCachedUniqueIdString()) != null) { waiting.add(one); }
-            }
-        }
-        waiting.sort((a, b) -> a instanceof EntityPlayer != b instanceof EntityPlayer ? (a instanceof EntityPlayer ? -1 : 1) : a.getCachedUniqueIdString().compareTo(b.getCachedUniqueIdString()));
-        List<java.util.UUID> ids = new ArrayList<>();
-        for (Entity one : waiting) { ids.add(one.getUniqueID()); }
-        if (ids.equals(GATHERED)) { return; }
-        GATHERED.clear();
-        GATHERED.addAll(ids);
-        double around = 0.0D;
-        for (Entity one : waiting) { around += one.width + GAP; }
-        double radius = Math.max(NARROWEST, around / (2.0D * Math.PI));
-        double cx = lobby.opensLobby[1] + 0.5D;
-        double cz = lobby.opensLobby[3] + 0.5D;
-        double along = 0.0D;
-        for (Entity one : waiting) {
-            double share = one.width + GAP;
-            double angle = (along + share / 2.0D) / around * 2.0D * Math.PI;
-            along += share;
-            double x = cx + radius * Math.cos(angle);
-            double z = cz + radius * Math.sin(angle);
-            double y = standing(world, x, lobby.opensLobby[2], z);
-            float yaw = (float) (Math.toDegrees(Math.atan2(cz - z, cx - x)) - 90.0D);
-            if (!(one instanceof EntityPlayerMP)) { ORIGINS.putIfAbsent(one.getUniqueID(), new double[] { one.dimension, one.posX, one.posY, one.posZ, one.rotationYaw }); }
-            Travel.to(one, dimension, x, y, z, yaw, 0.0F);
-            if (one instanceof EntityPlayerMP) { STILL.put(one.getName(), new double[] { dimension, x, y, z }); }
-        }
-        ContentLog.LOGGER.info("{} stand around the lobby at {}, {}, {} in dimension {}, {} block(s) out", waiting.size(), lobby.opensLobby[1], lobby.opensLobby[2], lobby.opensLobby[3], dimension, Math.round(radius * 10.0D) / 10.0D);
-    }
-
-    private static double standing(World world, double x, int y, double z) {
-        int bx = net.minecraft.util.math.MathHelper.floor(x);
-        int bz = net.minecraft.util.math.MathHelper.floor(z);
-        for (int step = 0; step <= REACH * 2; step++) {
-            int at = y + (step % 2 == 0 ? step / 2 : -(step + 1) / 2);
-            net.minecraft.util.math.BlockPos feet = new net.minecraft.util.math.BlockPos(bx, at, bz);
-            if (world.getBlockState(feet.down()).getMaterial().blocksMovement() && !world.getBlockState(feet).getMaterial().blocksMovement() && !world.getBlockState(feet.up()).getMaterial().blocksMovement()) { return at; }
-        }
-        return y;
-    }
-
-    private static void sendBack(MinecraftServer server) {
-        for (Map.Entry<java.util.UUID, double[]> one : ORIGINS.entrySet()) {
-            Entity held = server.getEntityFromUuid(one.getKey());
-            if (held == null || held.isDead) { continue; }
-            double[] at = one.getValue();
-            Travel.to(held, (int) at[0], at[1], at[2], at[3], (float) at[4], 0.0F);
-        }
-        ORIGINS.clear();
-        GATHERED.clear();
-    }
-
-    private static void lobbyNotes(@Nullable MinecraftServer server) {
-        ScoreDef lobby = lobbyDef();
-        if (server == null || lobby == null) { return; }
-        long now = server.getWorld(0).getTotalWorldTime();
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            if (!mctmods.resourcedatapackloader.content.worldgen.ContentPregen.arrived(player)) { continue; }
-            Long due = DUE.get(player.getName());
-            String shown = SHOWN.get(player.getName());
-            boolean changed = shown != null && !shown.equals(noteFor(server, player, lobby));
-            if ((due != null && now >= due) || changed) { note(server, player, lobby); }
-        }
-    }
-
-    private static String noteFor(MinecraftServer server, EntityPlayerMP player, ScoreDef lobby) {
-        return mctmods.resourcedatapackloader.content.ContentTeams.leadsNoSide(player) ? waitingLine(server, lobby) : lobby.opensLeaderSays;
-    }
-
-    private static void note(MinecraftServer server, EntityPlayerMP player, ScoreDef lobby) {
-        String said = noteFor(server, player, lobby);
-        DUE.remove(player.getName());
-        SHOWN.put(player.getName(), said);
-        TOLD.put(player.getName(), server.getWorld(0).getTotalWorldTime());
-        mctmods.resourcedatapackloader.content.worldgen.ContentPregen.show(player, said, TextFormatting.GOLD);
-    }
-
     @SubscribeEvent public static void onStill(LivingEvent.LivingUpdateEvent event) {
         if (event.getEntityLiving() instanceof EntityPlayer || event.getEntityLiving().world.isRemote || !holding()) { return; }
         event.setCanceled(true);
@@ -579,52 +431,42 @@ public final class ContentScoring {
     }
 
     @SubscribeEvent public static void onHeldHit(AttackEntityEvent event) {
-        if (refused(event.getEntityPlayer())) { event.setCanceled(true); }
+        if (ContentScoringLobby.refused(event.getEntityPlayer())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldDig(PlayerInteractEvent.LeftClickBlock event) {
-        if (refused(event.getEntityPlayer())) { event.setCanceled(true); }
+        if (ContentScoringLobby.refused(event.getEntityPlayer())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldUse(PlayerInteractEvent.RightClickBlock event) {
-        if (refused(event.getEntityPlayer())) { event.setCanceled(true); }
+        if (ContentScoringLobby.refused(event.getEntityPlayer())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldItem(PlayerInteractEvent.RightClickItem event) {
-        if (refused(event.getEntityPlayer())) { event.setCanceled(true); }
+        if (ContentScoringLobby.refused(event.getEntityPlayer())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldTouch(PlayerInteractEvent.EntityInteract event) {
-        if (refused(event.getEntityPlayer())) { event.setCanceled(true); }
+        if (ContentScoringLobby.refused(event.getEntityPlayer())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldBreak(BlockEvent.BreakEvent event) {
-        if (refused(event.getPlayer())) { event.setCanceled(true); }
+        if (ContentScoringLobby.refused(event.getPlayer())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof EntityPlayer && refused((EntityPlayer) event.getEntity())) { event.setCanceled(true); }
+        if (event.getEntity() instanceof EntityPlayer && ContentScoringLobby.refused((EntityPlayer) event.getEntity())) { event.setCanceled(true); }
     }
 
     @SubscribeEvent public static void onHeldToss(ItemTossEvent event) {
-        if (!refused(event.getPlayer())) { return; }
+        if (!ContentScoringLobby.refused(event.getPlayer())) { return; }
         event.setCanceled(true);
         event.getPlayer().inventory.addItemStackToInventory(event.getEntityItem().getItem());
         event.getPlayer().inventoryContainer.detectAndSendChanges();
     }
 
-    private static String waitingLine(MinecraftServer server, ScoreDef lobby) {
-        List<String> leaders = mctmods.resourcedatapackloader.content.ContentTeams.leaders(server.getWorld(0));
-        return lobby.opensSays.replace("{leader}", leaders.isEmpty() ? "a leader" : String.join(", ", leaders));
-    }
-
-    private static void waitingSaid(MinecraftServer server) {
-        long now = server.getWorld(0).getTotalWorldTime();
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { DUE.put(player.getName(), now); }
-    }
-
     public static void greet(EntityPlayerMP player) {
-        if (closed && lobbied) { DUE.put(player.getName(), player.world.getTotalWorldTime() + NOTE_TICKS); }
+        if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getName(), player.world.getTotalWorldTime() + ContentScoringLobby.NOTE_TICKS); }
     }
 
     public static String start(MinecraftServer server, EntityPlayer who, boolean operator) {
@@ -646,18 +488,18 @@ public final class ContentScoring {
 
     private static void count(MinecraftServer server) {
         if (opening == null || opening.startsSays.isEmpty()) { return; }
-        mctmods.resourcedatapackloader.content.worldgen.ContentPregen.tellBar(server, opening.startsSays.replace("{seconds}", Integer.toString(starting)));
+        mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.tellBar(server, opening.startsSays.replace("{seconds}", Integer.toString(starting)));
     }
 
     private static void open(MinecraftServer server) {
         opening = null;
-        sendBack(server);
+        ContentScoringLobby.sendBack(server);
         if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities)) { mctmods.resourcedatapackloader.content.worldgen.ContentReset.sweep(server); }
         roundOver();
         mctmods.resourcedatapackloader.content.ContentTeams.placeAtSpawns(server);
         mctmods.resourcedatapackloader.content.ContentTeams.standInsNow(server);
-        DUE.clear();
-        SHOWN.clear();
+        ContentScoringLobby.DUE.clear();
+        ContentScoringLobby.SHOWN.clear();
     }
 
     public static void roundOver() {
@@ -680,7 +522,7 @@ public final class ContentScoring {
         DEATHS.clear();
         OWN.clear();
         mctmods.resourcedatapackloader.content.ContentTeams.seatWaiting();
-        mctmods.resourcedatapackloader.content.ContentTeams.draw();
+        mctmods.resourcedatapackloader.content.ContentTeamsPicks.draw();
     }
 
     private static List<String> standings(MinecraftServer server, ScoreDef def) {

@@ -43,7 +43,7 @@ public final class ContentTeleporter implements ITeleporter {
 
     @Override public void placeEntity(World world, Entity entity, float rotationYaw) {
         int dimension = world.provider.getDimension();
-        BlockPos mapped = scale(world, new BlockPos(entity.posX, entity.posY, entity.posZ));
+        BlockPos mapped = new BlockPos(entity.posX, entity.posY, entity.posZ);
         BlockPos linked = remembered(entity, dimension);
         if (linked != null && !(world.getBlockState(linked).getBlock() instanceof ContentBlockPortal)) {
             forget(entity, dimension);
@@ -54,8 +54,9 @@ public final class ContentTeleporter implements ITeleporter {
         if (linked != null && world.getBlockState(linked).getBlock() instanceof ContentBlockPortal) { portalPos = linked; }
         else {
             portalPos = landing(world, mapped);
-            if (!rebuild(world, portalPos)) {
-                if (def.platform) { support(world, portalPos); }
+            boolean adrift = def.platform && !occupied(world, portalPos.down());
+            if (!rebuild(world, portalPos, adrift)) {
+                if (adrift) { support(world, portalPos); }
                 world.setBlockState(portalPos, arriving(), 2);
                 clearAbove(world, portalPos);
             }
@@ -110,12 +111,6 @@ public final class ContentTeleporter implements ITeleporter {
         return BlockPos.fromLong(portals.getLong(key));
     }
 
-    private BlockPos scale(World world, BlockPos from) {
-        double factor = world.provider.getMovementFactor();
-        if (factor == 1.0D) { return from; }
-        return new BlockPos(from.getX() * factor, from.getY(), from.getZ() * factor);
-    }
-
     private BlockPos landing(World world, BlockPos from) {
         BlockPos ground = world.getTopSolidOrLiquidBlock(new BlockPos(from.getX(), 0, from.getZ()));
         if (ground.getY() > 0) {
@@ -129,20 +124,18 @@ public final class ContentTeleporter implements ITeleporter {
 
     private IBlockState arriving() { return portalState; }
 
-    private boolean rebuild(World world, BlockPos landing) {
+    private static void hold(World world, BlockPos at) { world.getChunk(at); }
+
+    private boolean rebuild(World world, BlockPos landing, boolean adrift) {
         if (fit == null || fit.holes.isEmpty()) { return false; }
         BlockPos anchor = lowest(fit.holes);
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, IBlockState> edges = new LinkedHashMap<>();
         for (BlockPos hole : fit.holes) { holes.add(shift(hole, anchor, landing)); }
         for (Map.Entry<BlockPos, IBlockState> edge : fit.edge.entrySet()) { edges.put(shift(edge.getKey(), anchor, landing), edge.getValue()); }
-        for (BlockPos at : holes) {
-            if (!world.isBlockLoaded(at)) { return false; }
-        }
-        for (BlockPos at : edges.keySet()) {
-            if (!world.isBlockLoaded(at)) { return false; }
-        }
-        if (def.platform) { footing(world, edges.keySet(), holes); }
+        for (BlockPos at : holes) { hold(world, at); }
+        for (BlockPos at : edges.keySet()) { hold(world, at); }
+        if (adrift) { footing(world, edges.keySet(), holes); }
         for (BlockPos at : holes) { world.setBlockToAir(at); }
         for (Map.Entry<BlockPos, IBlockState> edge : edges.entrySet()) { world.setBlockState(edge.getKey(), edge.getValue(), 2); }
         for (BlockPos at : holes) { world.setBlockState(at, arriving(), 2); }
@@ -175,19 +168,17 @@ public final class ContentTeleporter implements ITeleporter {
             columns.add(new BlockPos(at.getX(), 0, at.getZ()));
         }
         if (bed == Integer.MAX_VALUE) { return; }
-        for (BlockPos column : columns) {
-            BlockPos at = new BlockPos(column.getX(), bed - 1, column.getZ());
-            if (!world.isBlockLoaded(at) || world.getBlockState(at).getMaterial().isSolid()) { continue; }
-            world.setBlockState(at, floor.getDefaultState(), 2);
-        }
+        for (BlockPos column : columns) { pad(world, new BlockPos(column.getX(), bed + 1, column.getZ()), floor); }
     }
 
-    private void support(World world, BlockPos portalPos) {
-        Block floor = block(def.platformBlock);
+    private void support(World world, BlockPos portalPos) { pad(world, portalPos, block(def.platformBlock)); }
+
+    private static void pad(World world, BlockPos above, Block floor) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                BlockPos at = portalPos.add(dx, -1, dz);
-                if (!world.isBlockLoaded(at) || occupied(world, at)) { continue; }
+                BlockPos at = above.add(dx, -1, dz);
+                hold(world, at);
+                if (occupied(world, at)) { continue; }
                 world.setBlockState(at, floor.getDefaultState(), 2);
             }
         }

@@ -107,7 +107,7 @@ public final class ContentStructures {
         return keys;
     }
 
-    public static boolean known(String key) { return MAP_GENS.contains(key) || POPULATES.containsKey(key); }
+    public static boolean unknown(String key) { return !MAP_GENS.contains(key) && !POPULATES.containsKey(key); }
 
     public static String describe() {
         StringBuilder text = new StringBuilder();

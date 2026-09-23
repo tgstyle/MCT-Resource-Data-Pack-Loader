@@ -5,7 +5,6 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
 import javax.annotation.Nonnull;
 
 public class ContainerPouch extends Container {
@@ -16,10 +15,6 @@ public class ContainerPouch extends Container {
     private final int rows;
     private final int columns;
     private int worn = -1;
-
-    public ContainerPouch(InventoryPlayer player, PouchInventory held, EnumHand hand, int rows, int columns) {
-        this(player, held, holder -> holder.getHeldItem(hand), rows, columns);
-    }
 
     public int worn() { return worn; }
 

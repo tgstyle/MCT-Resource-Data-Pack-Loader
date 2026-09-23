@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -33,7 +33,7 @@ public final class ContentDimensions {
         parsed = true;
         if (!Config.registersToClients() || !Config.content.dimensions) { return; }
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
-            DimensionDef def = ContentParser.dimension(key, contents);
+            DimensionDef def = ContentParserWorlds.dimension(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
     }

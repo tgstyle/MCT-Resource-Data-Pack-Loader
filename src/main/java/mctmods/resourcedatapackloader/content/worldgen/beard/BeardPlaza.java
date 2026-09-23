@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
 import mctmods.resourcedatapackloader.util.Config;
@@ -16,12 +17,14 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
+import java.util.List;
 
 public final class BeardPlaza {
     private BeardPlaza() {}
 
     public static void bankWell(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, StructureBoundingBox box, BlockPos.MutableBlockPos at) {
         int rim = BeardSite.wellNominal(box);
+        List<RailPiece> bores = BeardRails.subways(world, new StructureBoundingBox(box.minX - 2, 0, box.minZ - 2, box.maxX + 2, 0, box.maxZ + 2));
         int banked = 0;
         int opened = 0;
         for (int x = box.minX - 2; x <= box.maxX + 2; x++) {
@@ -40,7 +43,7 @@ public final class BeardPlaza {
                 for (int y = rim; y >= rim - ContentBeard.BAND + 1; y--) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-                    if (world.getBlockState(at).getMaterial().isSolid()) { break; }
+                    if (world.getBlockState(at).getMaterial().isSolid() || BeardRails.insideBore(world, bores, x, y, z)) { break; }
                     IBlockState laidAs = ground;
                     if (y == rim && ground.getBlock() == Blocks.DIRT) { laidAs = Blocks.GRASS.getDefaultState(); }
                     else if (y != rim && ground.getBlock() == Blocks.GRASS) { laidAs = Blocks.DIRT.getDefaultState(); }
@@ -68,7 +71,7 @@ public final class BeardPlaza {
                 for (int y = rim - 1; y >= rim - ContentBeard.BAND; y--) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
-                    if (world.getBlockState(at).getMaterial().isSolid()) { break; }
+                    if (world.getBlockState(at).getMaterial().isSolid() || BeardRails.insideBore(world, bores, x, y, z)) { break; }
                     world.setBlockState(at, ground.getBlock() == Blocks.GRASS ? Blocks.DIRT.getDefaultState() : ground, 2);
                     shored++;
                 }
@@ -113,6 +116,7 @@ public final class BeardPlaza {
         int builtOn = 0;
         int spared = 0;
         int wet = 0;
+        List<RailPiece> bores = BeardRails.subways(world, new StructureBoundingBox(box.minX - reach, 0, box.minZ - reach, box.maxX + reach, 0, box.maxZ + reach));
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
                 if (BeardBiome.moved(world, x, z)) {
@@ -126,10 +130,12 @@ public final class BeardPlaza {
                 if (!clip.isVecInside(at)) { offClip++; continue; }
                 if (BeardPlots.underBuilding(start, piece, x, z)) { builtOn++; continue; }
                 if (BeardKeep.holds(x, ground, z)) { spared++; continue; }
+                int roof = bores.isEmpty() ? Integer.MIN_VALUE : BeardRails.boreRoof(world, bores, x, z);
+                if (roof != Integer.MIN_VALUE && BeardRails.insideBore(world, bores, x, ground, z)) { spared++; continue; }
                 BlockPos top = GroundLevel.inWindow(world, at).down();
                 if (world.getBlockState(top).getMaterial().isLiquid()) { wet++; continue; }
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, Math.max(ground + 4, top.getY() + 2));
-                BeardBlocks.fillUnder(world, at, x, z, ground - 1, ground - 8);
+                BeardBlocks.fillUnder(world, at, x, z, ground - 1, Math.max(ground - 8, roof + 1));
                 at.setPos(x, ground, z);
                 IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()), true);
                 IBlockState held = band > reach - walk ? sidewalk : lines > 0 && band == reach - walk ? line : natural;

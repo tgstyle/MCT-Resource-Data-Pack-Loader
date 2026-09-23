@@ -78,10 +78,9 @@ import javax.annotation.Nullable;
 
     public void resolveSoil() { this.soil = ContentSetup.resolveSoil(sapling.soil, def.registryName); }
 
-    @Override protected boolean canSustainBush(@Nonnull IBlockState state) {
-        if (soil.isEmpty()) { return super.canSustainBush(state); }
-        return soil.contains(state.getBlock());
-    }
+    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return world.getBlockState(pos).getBlock().isReplaceable(world, pos) && canBlockStay(world, pos, getDefaultState()); }
+
+    @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return ContentSetup.sustains(soil, world, pos.down(), this); }
 
     @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random rand) {
         if (world.isRemote) { return; }

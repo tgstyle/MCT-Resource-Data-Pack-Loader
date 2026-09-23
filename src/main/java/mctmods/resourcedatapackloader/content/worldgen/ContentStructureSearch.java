@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorStructure
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
+import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Longs;
@@ -30,6 +31,7 @@ import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.MapGenStructure;
+import net.minecraft.world.gen.structure.MapGenStructureData;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -106,7 +108,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         if (key != null) {
             List<long[]> pinned = ContentStructurePlacement.pins(key);
             if (pinned != null) {
-                settleOnPins(player, name, pinned, findUnexplored, skipHere);
+                settleOnPins(player, name, pinned, ContentStructurePlacement.VILLAGES.equals(key) ? ContentBeard.BESIDE_WELL : 0, findUnexplored, skipHere);
                 return;
             }
         }
@@ -205,7 +207,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         if (foundOn == Integer.MAX_VALUE) { foundOn = ring; }
     }
 
-    private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, boolean findUnexplored, boolean skipHere) {
+    private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, int beside, boolean findUnexplored, boolean skipHere) {
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
         List<BlockPos> visited = skipHere ? been(player, name) : Collections.emptyList();
@@ -220,7 +222,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             if (skipHere && beenNear(visited, (int) pin[0], (int) pin[1])) { continue; }
             if (away >= bestAway) { continue; }
             bestAway = away;
-            best = new BlockPos((int) pin[0], 64, (int) pin[1]);
+            best = new BlockPos((int) pin[0] + beside, 64, (int) pin[1] + beside);
         }
         arrive(player, name, best);
     }
@@ -366,18 +368,36 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     public static Collection<StructureStart> villageStarts(World world) {
+        MapGenStructure found = villages(world);
+        if (found == null) { return Collections.emptyList(); }
+        return ((IMapGenStructure) found).rdpl$getStructureMap().values();
+    }
+
+    public static void store(World world, StructureStart village) {
+        MapGenStructure found = villages(world);
+        if (found == null || ((IMapGenStructure) found).rdpl$getStructureData() == null) { return; }
+        ((IMapGenStructure) found).rdpl$setStructureStart(village.getChunkPosX(), village.getChunkPosZ(), village);
+    }
+
+    public static boolean villageFoundedAt(World world, int chunkX, int chunkZ) {
+        MapGenStructure found = villages(world);
+        if (found == null) { return false; }
+        MapGenStructureData data = ((IMapGenStructure) found).rdpl$getStructureData();
+        return data != null && ((IPackingStructureData) data).rdpl$startWithin(chunkX, chunkZ, 1);
+    }
+
+    @Nullable private static MapGenStructure villages(World world) {
         IChunkGenerator maker = makerOf(world);
-        if (maker == null) { return Collections.emptyList(); }
+        if (maker == null) { return null; }
         MapGenVillage shell = null;
         if (maker instanceof ChunkGeneratorOverworld) { shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages(); }
         else if (maker instanceof ChunkGeneratorFlat) {
             MapGenStructure flat = ((IChunkGeneratorFlatFields) maker).rdpl$structures().get("Village");
             if (flat instanceof MapGenVillage) { shell = (MapGenVillage) flat; }
         }
-        if (shell == null) { return Collections.emptyList(); }
+        if (shell == null) { return null; }
         MapGenStructure found = theRealOne(shell);
-        if (!(found instanceof MapGenVillage)) { return Collections.emptyList(); }
-        return ((IMapGenStructure) found).rdpl$getStructureMap().values();
+        return found instanceof MapGenVillage ? found : null;
     }
 
     public static MapGenStructure theRealOne(MapGenStructure wrapper) {

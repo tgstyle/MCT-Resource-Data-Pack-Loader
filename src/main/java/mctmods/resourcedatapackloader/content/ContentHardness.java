@@ -338,6 +338,7 @@ public final class ContentHardness {
         ItemStack held = player.getHeldItemMainhand();
         if (event.isCanceled() && player.interactionManager.getGameType() == GameType.ADVENTURE && mayBreak(player, state, held)) { event.setCanceled(false); }
         if (event.isCanceled() || player.interactionManager.isCreative() || breaksAway(state, player)) { return; }
+        int earned = event.getExpToDrop();
         event.setCanceled(true);
         World world = event.getWorld();
         BlockPos pos = event.getPos();
@@ -349,7 +350,7 @@ public final class ContentHardness {
         }
         if (harvests) {
             state.getBlock().harvestBlock(world, player, pos, state, world.getTileEntity(pos), before);
-            if (event.getExpToDrop() > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, event.getExpToDrop()); }
+            if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
         }
         world.playEvent(player, 2001, pos, Block.getStateId(state));
     }

@@ -214,7 +214,7 @@ public final class BeardPlots {
                     int across = alongX ? z : x;
                     if (row < (alongX ? box.minX : box.minZ) || row > (alongX ? box.maxX : box.maxZ) || Math.floorMod(row, step) != 0) { continue; }
                     if (across != (alongX ? box.minZ : box.minX) - 1 && across != (alongX ? box.maxZ : box.maxX) + 1) { continue; }
-                    if (BeardRoads.tunnelAt(other instanceof IRoadLayout ? ((IRoadLayout) other).rdpl$layout() : null, row)) { continue; }
+                    if (BeardRoadsTunnels.tunnelAt(other instanceof IRoadLayout ? ((IRoadLayout) other).rdpl$layout() : null, row)) { continue; }
                     return true;
                 }
             }

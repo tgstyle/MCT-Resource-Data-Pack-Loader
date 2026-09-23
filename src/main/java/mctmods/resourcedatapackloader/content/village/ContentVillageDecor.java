@@ -3,11 +3,13 @@ package mctmods.resourcedatapackloader.content.village;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardLamps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -79,7 +81,7 @@ public final class ContentVillageDecor {
         int far = (alongX ? box.maxZ : box.maxX) + 1;
         BeardRoads.Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
         for (int row = from; row <= to; row++) {
-            if (Math.floorMod(row, STEP) != 0 || BeardRoads.tunnelAt(grade, row)) { continue; }
+            if (Math.floorMod(row, STEP) != 0 || BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
             tally[place(world, villages, wanted, clip, at, alongX ? row : near, alongX ? near : row)]++;
             tally[place(world, villages, wanted, clip, at, alongX ? row : far, alongX ? far : row)]++;
         }
@@ -96,7 +98,7 @@ public final class ContentVillageDecor {
         if (bed <= 1 || BeardKeep.holds(x, bed, z)) { return 2; }
         if (!world.isAirBlock(origin) || !world.getBlockState(origin.down()).getMaterial().isSolid()) { return 3; }
         if (!world.isAreaLoaded(origin, SPREAD + 1)) { return 4; }
-        if (ContentBeard.beforeADoor(world, new StructureBoundingBox(x - 2, 0, z - 2, x + 2, 255, z + 2), at, x, bed, z)) { return 5; }
+        if (ContentBeardLamps.beforeADoor(world, new StructureBoundingBox(x - 2, 0, z - 2, x + 2, 255, z + 2), at, x, bed, z)) { return 5; }
         Random random = SeededRandom.at(world, x, z);
         WeightedPicks.Pick chosen = CHOICES.pick(random);
         if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return 6; }

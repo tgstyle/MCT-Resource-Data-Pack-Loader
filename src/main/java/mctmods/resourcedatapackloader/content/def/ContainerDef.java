@@ -29,6 +29,4 @@ public final class ContainerDef {
     }
 
     public int size() { return rows * columns; }
-
-    public boolean drawn() { return guiTexture == null; }
 }

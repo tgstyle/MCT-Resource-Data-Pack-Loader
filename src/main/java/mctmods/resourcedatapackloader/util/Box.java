@@ -14,6 +14,8 @@ public class Box {
         this.z2 = Math.max(z1, z2);
     }
 
+    public boolean contains(int x, int y, int z) { return x >= x1 && x <= x2 && y >= y1 && y <= y2 && z >= z1 && z <= z2; }
+
     public boolean allMatch(IXYZPredicate predicate) {
         for (int x = x1; x <= x2; x++) {
             for (int y = y1; y <= y2; y++) {

@@ -154,8 +154,11 @@ public final class ContentRetrogen {
         }
     }
 
-    private static void run(World world, Pending pending) {
-        if (!world.isChunkGeneratedAt(pending.pos.x, pending.pos.z)) { return; }
+    private static void run(World world, Pending queued) {
+        if (!world.isChunkGeneratedAt(queued.pos.x, queued.pos.z)) { return; }
+        world.getChunk(queued.pos.x, queued.pos.z);
+        Pending pending = queued.remaining(done(world.provider.getDimension()).computeIfAbsent(queued.pos, k -> new HashSet<>()));
+        if (pending == null) { return; }
         boolean falling = BlockFalling.fallInstantly;
         BlockFalling.fallInstantly = true;
         try {
@@ -224,6 +227,21 @@ public final class ContentRetrogen {
             this.bedrock = bedrock;
             this.replace = replace;
             this.swaps = swaps;
+        }
+
+        @Nullable private Pending remaining(Set<String> already) {
+            List<WorldgenDef> left = new ArrayList<>();
+            for (WorldgenDef def : defs) {
+                if (!already.contains(def.getToken())) { left.add(def); }
+            }
+            List<HardnessDef> swapsLeft = new ArrayList<>();
+            for (HardnessDef def : swaps) {
+                if (!already.contains(ContentHardness.swapToken(def))) { swapsLeft.add(def); }
+            }
+            boolean flatten = bedrock && !already.contains(bedrockToken());
+            boolean replacing = replace && !already.contains(ContentReplacements.token());
+            if (left.isEmpty() && swapsLeft.isEmpty() && !flatten && !replacing) { return null; }
+            return new Pending(pos, left, flatten, replacing, swapsLeft);
         }
     }
 }

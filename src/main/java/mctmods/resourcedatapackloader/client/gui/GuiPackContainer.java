@@ -18,6 +18,9 @@ public class GuiPackContainer extends GuiContainer {
     private static final int SLOT = 18;
     private static final int FOOT = 96;
     private static final int FOOT_SOURCE = 126;
+    private static final int RIGHT_SOURCE = 169;
+    private static final int SILL = 3;
+    private static final int SILL_SOURCE = FOOT_SOURCE + FOOT - SILL;
     private static final int PLAYER_WIDE = 162;
     private static final int PLAIN_X = 8;
     private static final int PLAIN_Y = 5;
@@ -69,33 +72,50 @@ public class GuiPackContainer extends GuiContainer {
             return;
         }
         mc.getTextureManager().bindTexture(VANILLA);
-        if (columns <= 9 && rows <= 6) {
-            drawTexturedModalRect(x, y, 0, 0, xSize, rows * SLOT + HEADER);
-            drawTexturedModalRect(x, y + rows * SLOT + HEADER, 0, FOOT_SOURCE, xSize, FOOT);
-            return;
-        }
-        band(x, y, 0, HEADER);
-        for (int row = 0; row < rows; row++) { band(x, y + HEADER + row * SLOT, HEADER, SLOT); }
+        head(x, y);
+        for (int row = 0; row < rows; row++) { band(x, y + HEADER + row * SLOT); }
         foot(x, y + HEADER + rows * SLOT);
     }
 
-    private void band(int x, int y, int source, int tall) {
-        drawTexturedModalRect(x, y, 0, source, EDGE, tall);
-        for (int column = 0; column < columns; column++) { drawTexturedModalRect(x + EDGE + column * SLOT, y, EDGE, source, SLOT, tall); }
-        drawTexturedModalRect(x + xSize - EDGE, y, 169, source, EDGE, tall);
+    private void head(int x, int y) {
+        drawTexturedModalRect(x, y, 0, 0, EDGE, HEADER);
+        for (int across = EDGE; across < xSize - EDGE; across += SLOT) {
+            drawTexturedModalRect(x + across, y, EDGE, 0, Math.min(SLOT, xSize - EDGE - across), HEADER);
+        }
+        drawTexturedModalRect(x + xSize - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
+    }
+
+    private void band(int x, int y) {
+        int cells = columns * SLOT;
+        int start = (xSize - cells) / 2;
+        drawTexturedModalRect(x, y, 0, HEADER, EDGE, SLOT);
+        plain(x + EDGE, y, start - EDGE, SLOT);
+        for (int column = 0; column < columns; column++) { drawTexturedModalRect(x + start + column * SLOT, y, EDGE, HEADER, SLOT, SLOT); }
+        plain(x + start + cells, y, xSize - EDGE - start - cells, SLOT);
+        drawTexturedModalRect(x + xSize - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, SLOT);
     }
 
     private void foot(int x, int y) {
-        for (int down = 0; down < FOOT; down += PLAIN_H) {
-            int tall = Math.min(PLAIN_H, FOOT - down);
-            for (int across = EDGE; across < xSize - EDGE; across += PLAIN_W) {
-                int wide = Math.min(PLAIN_W, xSize - EDGE - across);
-                drawTexturedModalRect(x + across, y + down, PLAIN_X, PLAIN_Y, wide, tall);
+        plain(x + EDGE, y, xSize - EDGE - EDGE, FOOT);
+        sill(x, y + FOOT - SILL);
+        drawTexturedModalRect(x, y, 0, FOOT_SOURCE, EDGE, FOOT);
+        drawTexturedModalRect(x + xSize - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT);
+        drawTexturedModalRect(x + (xSize - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
+    }
+
+    private void sill(int x, int y) {
+        for (int across = EDGE; across < xSize - EDGE; across += SLOT) {
+            drawTexturedModalRect(x + across, y, EDGE, SILL_SOURCE, Math.min(SLOT, xSize - EDGE - across), SILL);
+        }
+    }
+
+    private void plain(int x, int y, int wide, int tall) {
+        for (int down = 0; down < tall; down += PLAIN_H) {
+            int high = Math.min(PLAIN_H, tall - down);
+            for (int across = 0; across < wide; across += PLAIN_W) {
+                drawTexturedModalRect(x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_W, wide - across), high);
             }
         }
-        drawTexturedModalRect(x, y, 0, FOOT_SOURCE, EDGE, FOOT);
-        drawTexturedModalRect(x + xSize - EDGE, y, 169, FOOT_SOURCE, EDGE, FOOT);
-        drawTexturedModalRect(x + (xSize - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
     }
 
     @Override public void drawScreen(int mouseX, int mouseY, float partial) {

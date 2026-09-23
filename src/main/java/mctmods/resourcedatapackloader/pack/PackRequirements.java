@@ -50,7 +50,8 @@ public final class PackRequirements {
             for (JsonElement each : element.getAsJsonArray()) {
                 if (!each.isJsonPrimitive()) { continue; }
                 String modid = each.getAsString().trim().toLowerCase(java.util.Locale.ROOT);
-                if (!modid.isEmpty()) { found.add(modid); }
+                if (modid.isEmpty() || modid.startsWith("config:") || modid.startsWith("file:")) { continue; }
+                found.add(modid);
             }
         }
         catch (RuntimeException malformed) { ContentLog.LOGGER.debug("Could not read requirements from a pack file: {}", malformed.getMessage()); }

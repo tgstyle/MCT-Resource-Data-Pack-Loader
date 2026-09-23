@@ -6,9 +6,12 @@ import net.minecraft.world.gen.structure.MapGenStructureData;
 import net.minecraft.world.gen.structure.StructureStart;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(MapGenStructure.class) public interface IMapGenStructure {
     @Accessor("structureMap") Long2ObjectMap<StructureStart> rdpl$getStructureMap();
 
     @Accessor("structureData") MapGenStructureData rdpl$getStructureData();
+
+    @Invoker("setStructureStart") void rdpl$setStructureStart(int chunkX, int chunkZ, StructureStart start);
 }

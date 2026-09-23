@@ -77,13 +77,10 @@ import javax.annotation.Nullable;
 
     @Override public int getLightValue(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).light; }
 
-    @Override protected boolean canSustainBush(@Nonnull IBlockState state) {
-        if (soil.isEmpty()) { return super.canSustainBush(state); }
-        return soil.contains(state.getBlock());
-    }
+    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return world.getBlockState(pos).getBlock().isReplaceable(world, pos) && canBlockStay(world, pos, getDefaultState()); }
 
     @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }
-        return canSustainBush(world.getBlockState(pos.down()));
+        return ContentSetup.sustains(soil, world, pos.down(), this);
     }
 }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDressLight;
 import mctmods.resourcedatapackloader.content.worldgen.ContentFirstLight;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLightArea;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
@@ -11,6 +12,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.IChunkGenerator;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -56,6 +58,11 @@ import net.minecraft.util.math.ChunkPos;
         if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - rdpl$litStart.get()[0], isLightPopulated); }
     }
 
+    @Inject(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("RETURN"))
+    private void rdpl$relightDressed(IChunkGenerator generator, CallbackInfo ci) {
+        if (IChunk.rdpl$getPopulating() == null) { ContentDressLight.relight(); }
+    }
+
     @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;recheckGaps(Z)V"))
     private void rdpl$gapsAfterwards(Chunk chunk, boolean onlyOne) {
         if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }
@@ -95,11 +102,16 @@ import net.minecraft.util.math.ChunkPos;
 
     @Shadow protected abstract void updateSkylightNeighborHeight(int x, int z, int startY, int endY);
 
-    @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V"))
+    @SuppressWarnings("ConstantValue") @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V"))
     private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
         if (rdpl$dressingThis(x, z)) { return; }
         World world = chunk.getWorld();
-        if (ContentPregen.quenches(world, chunk.x, chunk.z) || !world.isAreaLoaded(rdpl$column.setPos(x, 0, z), 16)) {
+        boolean pregen = ContentPregen.quenches(world, chunk.x, chunk.z);
+        if (!pregen && IChunk.rdpl$getPopulating() != null && ContentDressLight.quenches(world)) {
+            ContentDressLight.darken(chunk);
+            return;
+        }
+        if (pregen || !world.isAreaLoaded(rdpl$column.setPos(x, 0, z), 16)) {
             isLightPopulated = false;
             return;
         }

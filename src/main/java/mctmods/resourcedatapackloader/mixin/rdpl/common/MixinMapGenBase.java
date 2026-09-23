@@ -31,13 +31,21 @@ import java.util.Random;
 
     @Inject(method = "generate", at = @At("HEAD"), cancellable = true) private void rdpl$scanSitesOnly(World worldIn, int x, int z, ChunkPrimer primer, CallbackInfo ci) {
         if (!(this instanceof IMapGenVillageHold) || IMapGenVillageHold.class.isAssignableFrom(((Object) this).getClass().getSuperclass())) { return; }
-        if (!ContentBeard.wanted() || BeardSurface.unreadable(worldIn)) { return; }
+        if (!ContentBeard.wanted()) { return; }
         ci.cancel();
         world = worldIn;
         ((IMapGenVillageHold) this).rdpl$holdDistance();
         rand.setSeed(worldIn.getSeed());
         long saltX = rand.nextLong();
         long saltZ = rand.nextLong();
+        rdpl$visitSites(worldIn, x, z, primer, saltX, saltZ);
+        List<long[]> pinned = ContentStructurePlacement.pins(ContentStructurePlacement.VILLAGES);
+        if (pinned == null) { return; }
+        for (long[] at : pinned) { rdpl$visit(worldIn, (int) at[0] >> 4, (int) at[1] >> 4, x, z, primer, saltX, saltZ); }
+    }
+
+    @Unique private void rdpl$visitSites(World worldIn, int x, int z, ChunkPrimer primer, long saltX, long saltZ) {
+        if (BeardSurface.unreadable(worldIn)) { return; }
         ContentSites known = ContentSites.of(worldIn, ((IMapGenVillage) this).rdpl$distance());
         int grid = known.spacing();
         for (int cellX = Math.floorDiv(x - range, grid); cellX <= Math.floorDiv(x + range, grid); cellX++) {
@@ -47,9 +55,6 @@ import java.util.Random;
                 rdpl$visit(worldIn, (int) (chosen >> 32), (int) chosen, x, z, primer, saltX, saltZ);
             }
         }
-        List<long[]> pinned = ContentStructurePlacement.pins(ContentStructurePlacement.VILLAGES);
-        if (pinned == null) { return; }
-        for (long[] at : pinned) { rdpl$visit(worldIn, (int) at[0] >> 4, (int) at[1] >> 4, x, z, primer, saltX, saltZ); }
     }
 
     @Unique private void rdpl$visit(World worldIn, int chunkX, int chunkZ, int x, int z, ChunkPrimer primer, long saltX, long saltZ) {

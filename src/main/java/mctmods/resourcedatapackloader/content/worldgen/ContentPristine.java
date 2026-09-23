@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.WorldServer;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -25,9 +24,9 @@ public final class ContentPristine {
 
     public static void beforeWorldsLoad(MinecraftServer server) {
         if (server == null) { return; }
-        Path save = server.getDataDirectory().toPath().resolve(server.getFolderName());
-        Path kept = server.getDataDirectory().toPath().resolve(FOLDER).resolve(server.getFolderName());
-        Path stamp = kept.getParent().resolve(kept.getFileName().toString() + ".stamp");
+        Path save = save(server);
+        Path kept = holdingFor(server);
+        Path stamp = stampFor(server);
         if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || !empty(save)) { return; }
         if (!stamped(stamp)) {
             ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is thrown away and the world is generated, then copied afresh", server.getFolderName());
@@ -65,16 +64,17 @@ public final class ContentPristine {
         }
     }
 
-    public static Path holdingFor(MinecraftServer server, WorldServer world) {
-        Path save = world.getSaveHandler().getWorldDirectory().toPath();
-        Path root = server.getDataDirectory().toPath().resolve(FOLDER);
-        return root.resolve(save.getFileName().toString());
+    private static Path save(MinecraftServer server) { return server.getActiveAnvilConverter().getFile(server.getFolderName(), ".").toPath().toAbsolutePath().normalize(); }
+
+    public static Path holdingFor(MinecraftServer server) {
+        Path save = save(server);
+        return save.getParent().resolve(FOLDER).resolve(save.getFileName().toString());
     }
 
-    public static boolean already(MinecraftServer server, WorldServer world) {
-        Path kept = holdingFor(server, world);
+    public static boolean already(MinecraftServer server) {
+        Path kept = holdingFor(server);
         if (!Files.isDirectory(kept)) { return false; }
-        Path stamp = stampFor(server, world);
+        Path stamp = stampFor(server);
         if (stamped(stamp)) { return true; }
         ContentLog.LOGGER.info("The pristine copy in {} was made by different packs, so it is thrown away and kept again from this world", kept);
         clear(kept, stamp);
@@ -105,8 +105,8 @@ public final class ContentPristine {
         catch (IOException broken) { ContentLog.LOGGER.warn("The stale pristine copy in {} could not be thrown away, so delete it by hand", kept, broken); }
     }
 
-    private static Path stampFor(MinecraftServer server, WorldServer world) {
-        Path kept = holdingFor(server, world);
+    private static Path stampFor(MinecraftServer server) {
+        Path kept = holdingFor(server);
         return kept.getParent().resolve(kept.getFileName().toString() + ".stamp");
     }
 
@@ -121,15 +121,15 @@ public final class ContentPristine {
         return made.toString();
     }
 
-    public static void mark(MinecraftServer server, WorldServer world) {
-        Path stamp = stampFor(server, world);
+    public static void mark(MinecraftServer server) {
+        Path stamp = stampFor(server);
         try { Files.write(stamp, fingerprint().getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
         catch (IOException broken) { ContentLog.LOGGER.warn("The pristine copy could not be stamped, so it will not be trusted later", broken); }
     }
 
-    public static int take(MinecraftServer server, WorldServer world, IntConsumer along) {
-        Path save = world.getSaveHandler().getWorldDirectory().toPath();
-        Path kept = holdingFor(server, world);
+    public static int take(MinecraftServer server, IntConsumer along) {
+        Path save = save(server);
+        Path kept = holdingFor(server);
         try {
             List<Path> wanted = worth(save);
             if (wanted.isEmpty()) { return 0; }

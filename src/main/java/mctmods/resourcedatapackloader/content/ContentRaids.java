@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIHideIndoors;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIRaidBreakDoor;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIRaidMarch;
@@ -17,7 +18,9 @@ import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.monster.AbstractIllager;
 import net.minecraft.entity.monster.EntityIronGolem;
+import net.minecraft.entity.monster.EntityWitch;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -56,6 +59,7 @@ public final class ContentRaids {
     private static final Set<Block> BELLS = new HashSet<>();
     private static final Map<ResourceLocation, RaidDef> DEFS = new LinkedHashMap<>();
     private static boolean armed;
+    private static boolean belled;
 
     private ContentRaids() {}
 
@@ -64,18 +68,19 @@ public final class ContentRaids {
         BELLS.clear();
         PackManager.get().forEach(PackManager.RAIDS, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation key = new ResourceLocation(namespace, path);
-            RaidDef def = ContentParser.raidFile(key, contents);
+            RaidDef def = ContentParserGames.raidFile(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
-        if (DEFS.isEmpty()) { return; }
+        belled = ContentRegistry.registeredBlocks().stream().anyMatch(entry -> entry.getValue() instanceof ContentBlockBell);
+        if (DEFS.isEmpty() && !belled) { return; }
         for (RaidDef def : DEFS.values()) {
             for (String name : def.bells) {
                 Block bell = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(name));
                 if (bell == null || bell == Blocks.AIR) { ContentLog.LOGGER.error("Raid {} names the bell {}, which nothing registers, so no block rings for it", def.registryName, name); }
-                else { BELLS.add(bell); }
+                else if (!(bell instanceof ContentBlockBell)) { BELLS.add(bell); }
             }
         }
-        Summary.info("raids", "Loaded " + DEFS.size() + " raid(s): " + DEFS.keySet());
+        if (!DEFS.isEmpty()) { Summary.info("raids", "Loaded " + DEFS.size() + " raid(s): " + DEFS.keySet()); }
         if (!armed) {
             MinecraftForge.EVENT_BUS.register(ContentRaids.class);
             armed = true;
@@ -84,7 +89,13 @@ public final class ContentRaids {
 
     @Nullable public static RaidDef def(ResourceLocation key) { return DEFS.get(key); }
 
-    public static boolean isBell(IBlockState state) { return BELLS.contains(state.getBlock()); }
+    public static boolean isBell(IBlockState state) { return state.getBlock() instanceof ContentBlockBell || BELLS.contains(state.getBlock()); }
+
+    public static boolean answersBell(EntityLivingBase living) { return living.getEntityData().hasKey(ActiveRaid.RAIDER) || living instanceof AbstractIllager || living instanceof EntityWitch; }
+
+    public static void glow(EntityLivingBase raider) { raider.addPotionEffect(new PotionEffect(MobEffects.GLOWING, GLOW_TICKS)); }
+
+    public static void hear(EntityVillager villager, long now) { villager.getEntityData().setLong(HEARD_BELL, now); }
 
     public static boolean hiding(EntityCreature mob) {
         if (!(mob.world instanceof WorldServer)) { return false; }
@@ -94,17 +105,22 @@ public final class ContentRaids {
     }
 
     public static void ring(WorldServer world, BlockPos bell) {
+        Block block = world.getBlockState(bell).getBlock();
+        if (block instanceof ContentBlockBell) {
+            ((ContentBlockBell) block).ring(world, bell, null);
+            return;
+        }
         world.playSound(null, bell, SoundEvents.BLOCK_NOTE_BELL, SoundCategory.BLOCKS, 2.0F, 1.0F);
         AxisAlignedBB around = new AxisAlignedBB(bell).grow(BELL_REACH);
         long now = world.getTotalWorldTime();
-        for (EntityVillager villager : world.getEntitiesWithinAABB(EntityVillager.class, around)) { villager.getEntityData().setLong(HEARD_BELL, now); }
+        for (EntityVillager villager : world.getEntitiesWithinAABB(EntityVillager.class, around)) { hear(villager, now); }
         for (EntityLivingBase raider : world.getEntitiesWithinAABB(EntityLivingBase.class, around)) {
-            if (raider.getEntityData().hasKey(ActiveRaid.RAIDER)) { raider.addPotionEffect(new PotionEffect(MobEffects.GLOWING, GLOW_TICKS)); }
+            if (answersBell(raider)) { glow(raider); }
         }
     }
 
     @SubscribeEvent public static void onRing(PlayerInteractEvent.RightClickBlock event) {
-        if (BELLS.isEmpty() || !(event.getWorld() instanceof WorldServer) || !isBell(event.getWorld().getBlockState(event.getPos()))) { return; }
+        if (BELLS.isEmpty() || !(event.getWorld() instanceof WorldServer) || !BELLS.contains(event.getWorld().getBlockState(event.getPos()).getBlock())) { return; }
         ring((WorldServer) event.getWorld(), event.getPos());
     }
 
@@ -146,13 +162,13 @@ public final class ContentRaids {
     private static boolean raider(@Nullable Entity entity) { return entity != null && !entity.world.isRemote && entity.getEntityData().hasKey(ActiveRaid.RAIDER); }
 
     @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
-        if (event.getWorld().isRemote || DEFS.isEmpty()) { return; }
+        if (event.getWorld().isRemote || DEFS.isEmpty() && !belled) { return; }
         Entity entity = event.getEntity();
         if (entity instanceof EntityVillager) {
             ((EntityVillager) entity).tasks.addTask(1, new EntityAIHideIndoors((EntityVillager) entity));
             return;
         }
-        if (!(entity instanceof EntityCreature) || !entity.getEntityData().hasKey(ActiveRaid.RAIDER)) { return; }
+        if (DEFS.isEmpty() || !(entity instanceof EntityCreature) || !entity.getEntityData().hasKey(ActiveRaid.RAIDER)) { return; }
         EntityCreature raider = (EntityCreature) entity;
         raider.tasks.addTask(1, new EntityAIRaidBreakDoor(raider));
         raider.tasks.addTask(4, new EntityAIRaidMarch(raider));

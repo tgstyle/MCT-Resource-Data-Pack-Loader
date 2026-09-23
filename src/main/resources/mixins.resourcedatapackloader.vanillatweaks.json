@@ -6,8 +6,12 @@
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinBlockChest",
     "MixinBlockGrassPath",
-    "MixinBlockLeaves"
+    "MixinBlockLeaves",
+    "MixinItemBlock",
+    "MixinTileEntityChest",
+    "MixinVanillaDoubleChestItemHandler"
   ],
   "client": [],
   "server": []

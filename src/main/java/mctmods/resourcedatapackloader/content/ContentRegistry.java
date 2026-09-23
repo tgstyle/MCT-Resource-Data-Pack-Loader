@@ -4,10 +4,12 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFluid;
+import mctmods.resourcedatapackloader.content.block.ContentBlockLeaves;
+import mctmods.resourcedatapackloader.content.block.ContentBlockLog;
 import mctmods.resourcedatapackloader.content.block.ContentBlockSapling;
 import mctmods.resourcedatapackloader.content.block.ContentFluid;
 import mctmods.resourcedatapackloader.content.def.*;
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.types.*;
@@ -116,7 +118,7 @@ public final class ContentRegistry {
         });
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
-            WorldgenDef def = ContentParser.worldgen(key, contents);
+            WorldgenDef def = ContentParserWorldgen.worldgen(key, contents);
             if (def != null) { WORLDGEN_DEFS.put(key, def); }
         });
         Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
@@ -124,14 +126,14 @@ public final class ContentRegistry {
             if (def != null) { EXPOSURE_DEFS.put(key, def); }
         });
         Json.eachFile(PackManager.CAVEREGIONS, "cave region definition", (key, contents) -> {
-            CaveRegionDef def = ContentParser.caveRegion(key, contents);
+            CaveRegionDef def = ContentParserWorldgen.caveRegion(key, contents);
             if (def != null) { CAVEREGION_DEFS.put(key, def); }
         });
         if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
                 if (WORLDGEN_DEFS.containsKey(entry.getKey())) { continue; }
                 try {
-                    WorldgenDef def = ContentParser.worldgen(entry.getKey(), entry.getValue());
+                    WorldgenDef def = ContentParserWorldgen.worldgen(entry.getKey(), entry.getValue());
                     if (def != null) { WORLDGEN_DEFS.put(entry.getKey(), def); }
                 }
                 catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in CoFH World entry {}, ignoring it: {}", entry.getKey(), ex.getMessage()); }
@@ -250,7 +252,7 @@ public final class ContentRegistry {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerEntities(RegistryEvent.Register<EntityEntry> event) { ContentEntities.register(event.getRegistry()); }
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerEntities(RegistryEvent.Register<EntityEntry> event) { ContentEntityTypes.register(event.getRegistry()); }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerItems(RegistryEvent.Register<Item> event) {
         ContentMaterials.register();
@@ -473,9 +475,14 @@ public final class ContentRegistry {
             BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
             if (def == null) { continue; }
             if (Item.getItemFromBlock(entry.getValue()) == Items.AIR) { continue; }
+            String tree = entry.getValue() instanceof ContentBlockLog ? "logWood" : entry.getValue() instanceof ContentBlockLeaves ? "treeLeaves" : null;
             for (BlockVariant variant : def.visible) {
                 for (String name : variant.oreDict) {
                     OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));
+                    count++;
+                }
+                if (tree != null && !variant.oreDict.contains(tree)) {
+                    OreDictionary.registerOre(tree, new ItemStack(entry.getValue(), 1, variant.meta));
                     count++;
                 }
             }

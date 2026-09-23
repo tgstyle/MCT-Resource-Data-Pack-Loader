@@ -34,7 +34,7 @@ public class EntityContainer {
         this.hasActiveEntities = true;
     }
 
-    public boolean remove(Entity entity) { return this.entities.remove(entity); }
+    public void remove(Entity entity) { this.entities.remove(entity); }
 
     public ClassInheritanceMultiMap<Entity> getEntitySet() { return this.entities; }
 
