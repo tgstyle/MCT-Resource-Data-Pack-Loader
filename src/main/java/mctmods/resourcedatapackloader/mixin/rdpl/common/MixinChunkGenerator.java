@@ -38,7 +38,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (ContentPopulateControl.refusesStructure(ChunkGenerator.class.cast(this), structureSelectionEntry.structure().value()) || ContentStructureMost.refuses(structureSelectionEntry.structure().value(), structureManager, registryAccess, chunkPos) || ContentVoidWorld.voidRefuses(((IStructureManager) structureManager).rdpl$level(), structureSelectionEntry.structure().value()) || ContentStructureMaps.refuses(((IStructureManager) structureManager).rdpl$level(), structureSelectionEntry.structure().value())) { cir.setReturnValue(false); }
     }
 
-    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE"), name = "structurestart")
+    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE"))
     private StructureStart rdpl$cityGround(StructureStart structurestart, StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed) {
         return ContentCityClaim.overrides(structurestart, seed, ChunkGenerator.class.cast(this), random, registryAccess) || ContentRoughGround.refuses(structurestart, seed, ChunkGenerator.class.cast(this), random, registryAccess) ? StructureStart.INVALID_START : structurestart;
     }

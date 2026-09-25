@@ -17,5 +17,5 @@ import java.util.concurrent.Executor;
 @Mixin(FontManager.class) public abstract class MixinFontManager {
     @Inject(method = "prepare", at = @At("HEAD")) private void rdpl$pickGameFont(ResourceManager resourceManager, Executor executor, CallbackInfoReturnable<CompletableFuture<?>> cir) { GameFont.pick(resourceManager); }
 
-    @ModifyVariable(method = "loadResourceStack", at = @At("STORE"), name = "list1") private static List<GlyphProviderDefinition> rdpl$yieldToPackFont(List<GlyphProviderDefinition> list1) { return GameFont.providers(list1); }
+    @ModifyVariable(method = "loadResourceStack", at = @At("STORE"), ordinal = 2) private static List<GlyphProviderDefinition> rdpl$yieldToPackFont(List<GlyphProviderDefinition> list1) { return GameFont.providers(list1); }
 }
