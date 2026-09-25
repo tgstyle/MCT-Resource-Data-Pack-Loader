@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -70,12 +72,12 @@ public final class ContentThreat {
     private static boolean read() {
         ENTRIES.clear();
         SAYS.clear();
-        List<Integer> bands = new ArrayList<>();
+        IntList bands = new IntArrayList();
         for (String entry : ContentControl.list(ContentControl.SPAWNING, "threatLevels", Config.worldgen.threatLevels())) {
             try { bands.add(Integer.parseInt(entry.trim())); }
             catch (NumberFormatException wrong) { ContentLog.LOGGER.error("threatLevels names '{}', which is not a number, skipping it", entry); }
         }
-        levels = bands.stream().mapToInt(Integer::intValue).toArray();
+        levels = bands.toIntArray();
         most = ContentControl.number(ContentControl.SPAWNING, "threatMost", Config.worldgen.threatMost());
         spawnRate = Math.max(0.0F, ContentControl.decimal(ContentControl.SPAWNING, "threatSpawnRate", Config.worldgen.threatSpawnRate()));
         notice = Math.max(0.0F, ContentControl.decimal(ContentControl.SPAWNING, "threatNotice", Config.worldgen.threatNotice()));
@@ -191,7 +193,7 @@ public final class ContentThreat {
         ContentLog.LOGGER.debug("Player {} carries a threat score of {} and stands in band {} of {}", player.getName().getString(), score, band, levels.length);
         if (before == null) { return; }
         String said = SAYS.get(band);
-        if (said != null && !said.isEmpty()) { Says.tell(player, said, ChatFormatting.YELLOW); }
+        if (said != null && !said.isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.THREAT, said, ChatFormatting.YELLOW); }
     }
 
     private static int score(Entity entity) {

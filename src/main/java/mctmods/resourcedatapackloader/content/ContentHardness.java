@@ -28,6 +28,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -198,7 +199,7 @@ public final class ContentHardness {
         if (y < def.minHeight() || y > def.maxHeight()) { return 0; }
         float strength = def.field().strength(salt, x, y, z);
         int bucket = Math.round(strength * (def.buckets() - 1));
-        return Math.clamp(bucket, 0, def.buckets() - 1);
+        return Mth.clamp(bucket, 0, def.buckets() - 1);
     }
 
     public static boolean breaksAway(@Nullable BlockState state, @Nullable LivingEntity who) {
@@ -450,7 +451,7 @@ public final class ContentHardness {
         }
         float[] mining = range(json, "miningTime");
         float[] blast = range(json, "blastResistance");
-        int buckets = Math.clamp(GsonHelper.getAsInt(json, "buckets", 10), 1, 256);
+        int buckets = Mth.clamp(GsonHelper.getAsInt(json, "buckets", 10), 1, 256);
         int minHeight = GsonHelper.getAsInt(json, "minHeight", Integer.MIN_VALUE);
         int maxHeight = GsonHelper.getAsInt(json, "maxHeight", Integer.MAX_VALUE);
         if (maxHeight < minHeight) {

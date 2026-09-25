@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.DropDef;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.storage.loot.LootContext;
@@ -28,7 +29,7 @@ public final class DropRoll extends LootItemConditionalFunction {
     private DropRoll(List<LootItemCondition> conditions, int chance, List<Integer> bonusChance) {
         super(conditions);
         this.chance = chance;
-        this.bonusChance = bonusChance.stream().mapToInt(Integer::intValue).toArray();
+        this.bonusChance = new IntArrayList(bonusChance).toIntArray();
     }
 
     @Override @Nonnull public LootItemFunctionType<DropRoll> getType() { return LootFunctions.DROP_ROLL.get(); }

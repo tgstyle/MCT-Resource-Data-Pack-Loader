@@ -90,8 +90,8 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
         int height = ContentCity.sewerHeight();
         if (ContentCitySewerPiece.cramped(level.getMinBuildHeight(), this.level)) { return; }
         BlockState air = Blocks.AIR.defaultBlockState();
-        BlockState water = ContentCitySewerPiece.stateOr(ContentCity.sewerWaterBlock(), air);
-        BlockState walk = ContentCitySewerPiece.stateOr(ContentCity.sewerWalkBlock(), lining);
+        BlockState water = CityPalette.stateOr(ContentCity.sewerWaterBlock(), air);
+        BlockState walk = CityPalette.stateOr(ContentCity.sewerWalkBlock(), lining);
         BlockState light = ContentCitySewerPiece.block(ContentCity.sewerLightBlock());
         CityPalette moss = CityPalette.mixed(ContentCity.sewerMossBlock());
         int mossChance = moss == null ? 0 : ContentCity.sewerMossChance();

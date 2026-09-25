@@ -2,11 +2,14 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
@@ -18,7 +21,6 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.neoforged.neoforge.common.Tags;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class CityPlotGround {
@@ -85,12 +87,12 @@ public final class CityPlotGround {
     public static BoundingBox layer(BoundingBox held, int y) { return new BoundingBox(held.minX(), y, held.minZ(), held.maxX(), y, held.maxZ()); }
 
     public static int[] within(BoundingBox held, int[] boxes) {
-        List<Integer> found = new ArrayList<>();
+        IntList found = new IntArrayList();
         for (int at = 0; at + 3 < boxes.length; at += 4) {
             if (boxes[at + 2] < held.minX() || boxes[at] > held.maxX() || boxes[at + 3] < held.minZ() || boxes[at + 1] > held.maxZ()) { continue; }
             for (int part = 0; part < 4; part++) { found.add(boxes[at + part]); }
         }
-        return found.stream().mapToInt(Integer::intValue).toArray();
+        return found.toIntArray();
     }
 
     static boolean inside(BoundingBox held, int x, int z) { return x >= held.minX() && x <= held.maxX() && z >= held.minZ() && z <= held.maxZ(); }
@@ -452,8 +454,8 @@ public final class CityPlotGround {
             for (int z = held.minZ() - RING - 1; z <= held.maxZ() + RING + 1; z++) {
                 if (x > held.minX() - RING - 1 && x < held.maxX() + RING + 1 && z > held.minZ() - RING - 1 && z < held.maxZ() + RING + 1) { continue; }
                 if (kept(keep, x, z) || nearRoad(roads, x, z, ROAD_BESIDE)) { continue; }
-                int inX = Math.clamp(x, held.minX() - RING, held.maxX() + RING);
-                int inZ = Math.clamp(z, held.minZ() - RING, held.maxZ() + RING);
+                int inX = Mth.clamp(x, held.minX() - RING, held.maxX() + RING);
+                int inZ = Mth.clamp(z, held.minZ() - RING, held.maxZ() + RING);
                 int index = (inX - held.minX() + RING) * deep + (inZ - held.minZ() + RING);
                 if (shorn[index] >= 2) {
                     at.set(x, bank + 1, z);

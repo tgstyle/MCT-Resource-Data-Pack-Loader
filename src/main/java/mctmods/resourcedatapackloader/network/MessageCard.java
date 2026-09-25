@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-public record MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks) implements CustomPacketPayload {
+public record MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks, boolean center, boolean panel, String font) implements CustomPacketPayload {
     public static final Type<MessageCard> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "card"));
     public static final StreamCodec<RegistryFriendlyByteBuf, MessageCard> CODEC = StreamCodec.of(MessageCard::write, MessageCard::read);
     private static final int MOST_LINES = 16;
@@ -26,6 +26,9 @@ public record MessageCard(String title, List<String> lines, ItemStack icon, Stri
         buf.writeInt(message.background);
         buf.writeInt(message.text);
         buf.writeInt(message.ticks);
+        buf.writeBoolean(message.center);
+        buf.writeBoolean(message.panel);
+        buf.writeUtf(message.font);
     }
 
     private static MessageCard read(RegistryFriendlyByteBuf buf) {
@@ -33,7 +36,7 @@ public record MessageCard(String title, List<String> lines, ItemStack icon, Stri
         int count = buf.readByte();
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < count; i++) { lines.add(buf.readUtf()); }
-        return new MessageCard(title, lines, ItemStack.OPTIONAL_STREAM_CODEC.decode(buf), buf.readUtf(), buf.readInt(), buf.readInt(), buf.readInt());
+        return new MessageCard(title, lines, ItemStack.OPTIONAL_STREAM_CODEC.decode(buf), buf.readUtf(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean(), buf.readBoolean(), buf.readUtf());
     }
 
     @Override @Nonnull public Type<? extends CustomPacketPayload> type() { return TYPE; }

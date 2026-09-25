@@ -17,9 +17,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentStates {
+    private static final Map<String, Optional<BlockState>> KNOWN = new ConcurrentHashMap<>();
+
     private ContentStates() {}
 
     public record Spec(BlockState state, @Nullable CompoundTag tag, boolean exact) {}
@@ -45,7 +48,11 @@ public final class ContentStates {
         return spec == null ? null : spec.state();
     }
 
-    @Nullable public static BlockState known(String written, Object context) {
+    @Nullable public static BlockState known(String written, Object context) { return KNOWN.computeIfAbsent(written, key -> Optional.ofNullable(lookUp(key, context))).orElse(null); }
+
+    public static void forget() { KNOWN.clear(); }
+
+    @Nullable private static BlockState lookUp(String written, Object context) {
         BlockState found = parse(written, context);
         String name = written.split("[\\[{]", 2)[0].trim();
         if (found == null && !name.isEmpty()) { ContentLog.LOGGER.error("Unknown block {} in {}, the entry is skipped", name, context); }

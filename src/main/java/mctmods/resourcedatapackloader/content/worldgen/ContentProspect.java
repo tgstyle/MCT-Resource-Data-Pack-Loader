@@ -76,7 +76,7 @@ public final class ContentProspect {
         String[] parts = sides[1].split(",");
         int radius = RADIUS;
         if (parts.length > 1) {
-            try { radius = Math.clamp(Integer.parseInt(parts[1].trim()), 1, 64); }
+            try { radius = Mth.clamp(Integer.parseInt(parts[1].trim()), 1, 64); }
             catch (NumberFormatException bad) { ContentLog.LOGGER.error("{} entry '{}' has a radius that is not a number, using {}", KEY, entry, RADIUS); }
         }
         Set<String> names = new HashSet<>();
@@ -178,10 +178,10 @@ public final class ContentProspect {
             String line = dx * dx + dz * dz <= ContentOreVein.REACH * ContentOreVein.REACH
                     ? Lang.tr(player, "rdpl.prospect.here", ore, height)
                     : Lang.tr(player, "rdpl.prospect.hit", ore, Lang.tr(player, "rdpl.dir." + point(dx, dz)), height);
-            Says.tell(player, line, ChatFormatting.YELLOW);
+            Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT, line, ChatFormatting.YELLOW);
             said++;
         }
-        if (said == 0) { Says.tell(player, Lang.tr(player, "rdpl.prospect.none"), ChatFormatting.GRAY); }
+        if (said == 0) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT_NONE, Lang.tr(player, "rdpl.prospect.none"), ChatFormatting.GRAY); }
     }
 
     private static String point(int dx, int dz) {

@@ -8,6 +8,9 @@ public final class ConfigChunks {
     private final ModConfigSpec.ConfigValue<String> saysIcon;
     private final ModConfigSpec.ConfigValue<String> saysColor;
     private final ModConfigSpec.ConfigValue<String> saysImage;
+    private final ModConfigSpec.BooleanValue saysBackground;
+    private final ModConfigSpec.ConfigValue<String> saysFont;
+    private final ModConfigSpec.BooleanValue toasts;
     private final ModConfigSpec.ConfigValue<List<? extends String>> welcomeSays;
     private final ModConfigSpec.IntValue pregenOnNewWorld;
     private final ModConfigSpec.BooleanValue pregenToBorder;
@@ -40,6 +43,9 @@ public final class ConfigChunks {
         saysIcon = builder.comment("An item drawn on the card, e.g. minecraft:compass. Empty draws none [Default=]").define("saysIcon", "");
         saysColor = builder.comment("The card's background color as hex, e.g. 1E2630. Empty uses a dark slate [Default=]").define("saysColor", "");
         saysImage = builder.comment("A PNG from the pack's client assets stretched over the card as its background, e.g. rubyworld:textures/gui/card.png, drawn over the color. Empty draws none [Default=]").define("saysImage", "");
+        saysBackground = builder.comment("Draw the card's panel, border and color stripe, and the dark backdrop behind the welcome and the hold notes. Off leaves only the text, which keeps its shadow, and saysImage if one is set [Default=true]").define("saysBackground", true);
+        saysFont = builder.comment("A font for the card's text, named as namespace:name, e.g. rubyworld:runes for the pack's assets/rubyworld/font/runes.json. Empty uses the game's font [Default=]").define("saysFont", "");
+        toasts = builder.comment("Show the game's toasts, the pop-ups in the upper right corner for advancements, unlocked recipes, tutorial hints and system notices, other mods' toasts included. Off shows none. Takes effect on the next world or server joined [Default=false]").define("toasts", false);
         welcomeSays = builder.comment("Welcome lines, shown in green on every login and after pregeneration. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. minecraft:the_nether=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]").defineListAllowEmpty("welcomeSays", List.of(Config.WELCOME), () -> "", each -> each instanceof String);
         pregenOnNewWorld = builder.comment("How far around the spawn, in chunks, a world has its land made before anybody plays it. The game makes 12 chunks around the spawn on its own, so 12 is the floor and 0 means that floor rather than nothing: the ground the game was going to make anyway is adopted and lit in one organized pass instead of trickling in. Raise it to reach further than the game does [Default=0]").defineInRange("pregenOnNewWorld", 0, 0, 8192);
         pregenToBorder = builder.comment("Whether a new world has its land made out to its world border instead of a set number of chunks, centered on the border rather than the spawn. A world whose border was never moved in has no border to reach and is passed over [Default=false]").define("pregenToBorder", false);
@@ -123,6 +129,12 @@ public final class ConfigChunks {
     public String saysColor() { return Config.loaded() ? saysColor.get() : ConfigCore.text("chunks.saysColor", ""); }
 
     public String saysImage() { return Config.loaded() ? saysImage.get() : ConfigCore.text("chunks.saysImage", ""); }
+
+    public boolean saysBackground() { return Config.loaded() ? saysBackground.get() : ConfigCore.flag("chunks.saysBackground", true); }
+
+    public String saysFont() { return Config.loaded() ? saysFont.get() : ConfigCore.text("chunks.saysFont", ""); }
+
+    public boolean toasts() { return Config.loaded() ? toasts.get() : ConfigCore.flag("chunks.toasts", false); }
 
     public List<String> welcomeSays() { return Config.loaded() ? List.copyOf(welcomeSays.get()) : List.of(Config.WELCOME); }
 }

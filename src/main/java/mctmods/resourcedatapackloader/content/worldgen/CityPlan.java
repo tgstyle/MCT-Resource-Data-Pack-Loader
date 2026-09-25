@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonObject;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -459,7 +460,7 @@ public final class CityPlan {
     }
 
     private static int apronLevel(CityGround ground, Line setter, Line met, int[] profile) {
-        int center = Math.clamp((met.at() + met.last()) / 2, setter.from(), setter.to()) - setter.from();
+        int center = Mth.clamp((met.at() + met.last()) / 2, setter.from(), setter.to()) - setter.from();
         int level = profile[center] != Integer.MIN_VALUE ? profile[center] : CityGrade.carried(profile, center);
         for (int row = Math.max(setter.from(), met.at()); row <= Math.min(setter.to(), met.last()); row++) {
             if (underwater(ground, setter, row)) { return Math.max(level, ground.sea()); }

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import net.minecraft.util.Mth;
+
 public final class ContentField {
     public static final int[] CHANCES = { 30, 30, 20, 20, 10, 10, 10, 10, 50 };
     public static final float SPREAD = 0.15F;
@@ -25,7 +27,7 @@ public final class ContentField {
     public ContentField(int[] chances, float spread) {
         this.speckled = true;
         this.chances = chances.length == 0 ? CHANCES : chances;
-        this.spread = Math.clamp(spread, 0.0F, 1.0F);
+        this.spread = Mth.clamp(spread, 0.0F, 1.0F);
         this.steps = this.chances.length;
         this.cell = 1;
         this.seeds = 1;
@@ -43,9 +45,9 @@ public final class ContentField {
         this.spread = SPREAD;
         this.steps = CHANCES.length;
         this.cell = Math.max(1, cell);
-        this.seeds = Math.clamp(seeds, 1, 4);
+        this.seeds = Mth.clamp(seeds, 1, 4);
         this.reach = Math.max(0.5F, reach);
-        this.arms = Math.clamp(arms, 0, 6);
+        this.arms = Mth.clamp(arms, 0, 6);
         this.armReach = Math.max(0.0F, armReach);
         this.reachSq = this.reach * this.reach;
         this.armReachSq = this.armReach * this.armReach;

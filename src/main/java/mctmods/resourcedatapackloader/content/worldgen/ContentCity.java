@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
@@ -17,6 +18,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -253,7 +255,7 @@ public final class ContentCity {
 
     public static int benchLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayBenchLength", Config.worldgen.villageSubwayBenchLength())); }
 
-    public static int subwaySurfaces() { return Math.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSubwaySurfaces", Config.worldgen.villageSubwaySurfaces()), 0, 100); }
+    public static int subwaySurfaces() { return Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSubwaySurfaces", Config.worldgen.villageSubwaySurfaces()), 0, 100); }
 
     public static String stationStructure() { return ContentControl.text(ContentControl.VILLAGES, "villageSubwayStation", Config.worldgen.villageSubwayStation()).trim(); }
 
@@ -301,11 +303,11 @@ public final class ContentCity {
 
     public static String sewerMossBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerMossBlock", Config.worldgen.villageSewerMossBlock()).trim(); }
 
-    public static int sewerMossChance() { return Math.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerMossChance", Config.worldgen.villageSewerMossChance()), 0, 100); }
+    public static int sewerMossChance() { return Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerMossChance", Config.worldgen.villageSewerMossChance()), 0, 100); }
 
     public static String sewerVineBlock() { return ContentControl.text(ContentControl.VILLAGES, "villageSewerVineBlock", Config.worldgen.villageSewerVineBlock()).trim(); }
 
-    public static int sewerVineChance() { return Math.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerVineChance", Config.worldgen.villageSewerVineChance()), 0, 100); }
+    public static int sewerVineChance() { return Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerVineChance", Config.worldgen.villageSewerVineChance()), 0, 100); }
 
 
     public static String railTunnelLightBlock(boolean sub) { return ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTunnelLightBlock" : "villageRailTunnelLightBlock", sub ? Config.worldgen.villageSubwayTunnelLightBlock() : Config.worldgen.villageRailTunnelLightBlock()).trim(); }
@@ -470,6 +472,7 @@ public final class ContentCity {
     public static void begin() {
         ContentCityBlocks.forget();
         CityPalette.forget();
+        ContentStates.forget();
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null) { ContentVillages.joinVillages(server.registryAccess()); }
         stationSpan = null;

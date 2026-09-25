@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import com.google.gson.JsonArray;
@@ -100,7 +101,8 @@ public final class ContentSeams {
         boolean carryEntities = ContentControl.flag(ContentControl.TERRAIN, "worldSeamEntities", Config.worldgen.worldSeamEntities());
         List<Entity> falling = null;
         List<Entity> rising = null;
-        for (Entity entity : level.getAllEntities()) {
+        Iterable<? extends Entity> scanned = carryEntities ? level.getAllEntities() : level.players();
+        for (Entity entity : scanned) {
             if (entity.isRemoved() || entity.isPassenger()) { continue; }
             boolean player = entity instanceof ServerPlayer;
             if (!player && !carryEntities) { continue; }
@@ -315,6 +317,7 @@ public final class ContentSeams {
     private static final class Target {
         private final String key;
         private final DimensionValues<ResourceLocation> values;
+        private final TemplateMemo<List<String>> asked = new TemplateMemo<>();
 
         Target(String key) {
             this.key = key;
@@ -323,7 +326,7 @@ public final class ContentSeams {
 
         List<String> asked() {
             if (ContentControl.off(ContentControl.TERRAIN)) { return List.of(); }
-            return ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow() : Config.worldgen.worldAbove());
+            return asked.get(() -> ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow() : Config.worldgen.worldAbove()));
         }
 
         @Nullable ResourceLocation targetFor(String dimension) { return values.at(dimension, asked()); }

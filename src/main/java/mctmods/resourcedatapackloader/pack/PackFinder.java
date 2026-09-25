@@ -39,6 +39,7 @@ public final class PackFinder implements RepositorySource {
         if (manager.getRoot() != null) { return; }
         Path root = root();
         ContentLog.LOGGER.info("Pack root: {}", root);
+        StrayPacks.collect(FMLPaths.GAMEDIR.get(), root);
         manager.scan(root);
         manager.report();
     }

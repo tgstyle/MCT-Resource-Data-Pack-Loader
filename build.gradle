@@ -164,6 +164,7 @@ repositories {
     maven { name = 'ParchmentMC' ; url = 'https://ldtteam.jfrog.io/artifactory/parchmentmc-public/' }
     maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
     maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
+    maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
 }
 
 configurations {
@@ -174,6 +175,8 @@ dependencies {
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
     runtimeOnly 'maven.modrinth:betterf3:maXNB1dn'
     runtimeOnly 'maven.modrinth:cloth-config:izKINKFg'
+    compileOnly "mezz.jei:jei-${version_minecraft}-common-api:19.27.0.343"
+    compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:19.27.0.343"
     if (bpJar != null) {
         implementation files(bpJar)
     }

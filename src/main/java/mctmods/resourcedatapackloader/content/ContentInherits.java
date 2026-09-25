@@ -82,7 +82,7 @@ public final class ContentInherits {
             resolved.put(key, held);
             return held;
         }
-        JsonObject made = copy(parent);
+        JsonObject made = parent.deepCopy();
         made.remove(ContentParser.VARIANTS);
         made.remove(INHERITS);
         for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
@@ -93,7 +93,7 @@ public final class ContentInherits {
         JsonObject variants = new JsonObject();
         if (held.has(ContentParser.VARIANTS) && held.get(ContentParser.VARIANTS).isJsonObject()) {
             for (Map.Entry<String, JsonElement> entry : held.getAsJsonObject(ContentParser.VARIANTS).entrySet()) {
-                JsonObject base = copy(parentVariant);
+                JsonObject base = parentVariant.deepCopy();
                 if (entry.getValue().isJsonObject()) {
                     for (Map.Entry<String, JsonElement> field : entry.getValue().getAsJsonObject().entrySet()) { base.add(field.getKey(), field.getValue()); }
                 }
@@ -118,6 +118,4 @@ public final class ContentInherits {
         String path = name.getPath();
         return path.substring(path.lastIndexOf('/') + 1);
     }
-
-    private static JsonObject copy(JsonObject held) { return JsonParser.parseString(held.toString()).getAsJsonObject(); }
 }

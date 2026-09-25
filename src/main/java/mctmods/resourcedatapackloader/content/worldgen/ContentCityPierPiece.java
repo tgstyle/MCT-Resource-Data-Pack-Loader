@@ -89,9 +89,9 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
     private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
         CityCross cross = CityCross.of(width, false);
         CityPlan plan = CityPlan.of(CityGround.of(level), CityPlan.districtOf(alongX ? getBoundingBox().minX() : middle, true), CityPlan.districtOf(alongX ? middle : getBoundingBox().minZ(), false));
-        BlockState deck = stateOr(ContentCity.bridgeBlock(), ContentCity.planks(plan));
+        BlockState deck = CityPalette.stateOr(ContentCity.bridgeBlock(), ContentCity.planks(plan));
         BlockState rail = block(ContentCity.bridgeBarrierBlock());
-        BlockState piling = stateOr(ContentCity.supportBlock(), Blocks.OAK_LOG.defaultBlockState());
+        BlockState piling = CityPalette.stateOr(ContentCity.supportBlock(), Blocks.OAK_LOG.defaultBlockState());
         BlockState air = Blocks.AIR.defaultBlockState();
         int half = BOARDWALK.equals(style) ? Math.min(CityPlan.extraWidth() + 2, cross.curb()) : cross.curb();
         int rise = ContentCity.bridgeBarrierHeight();
@@ -184,8 +184,6 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
     }
 
     @Nullable private static BlockState block(String named) { return CityPalette.state(named); }
-
-    private static BlockState stateOr(String named, BlockState fallback) { return CityPalette.stateOr(named, fallback); }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(getBoundingBox(), level); }
 

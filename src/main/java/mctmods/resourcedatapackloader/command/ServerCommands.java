@@ -62,7 +62,8 @@ public final class ServerCommands {
                     ContentIntroPlay.replay(player);
                     CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.introreplay"));
                     return 1;
-                })));
+                }))
+                .then(CommandCards.card(NAME)));
     }
 
     private static int reload(CommandContext<CommandSourceStack> context) {

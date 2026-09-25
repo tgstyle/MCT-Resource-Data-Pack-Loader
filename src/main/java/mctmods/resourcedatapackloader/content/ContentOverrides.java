@@ -25,6 +25,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
@@ -184,9 +185,9 @@ public final class ContentOverrides {
         for (BlockState state : block.getStateDefinition().getPossibleStates()) {
             IBlockStateBase held = (IBlockStateBase) state;
             if (def.hardness() != null) { held.rdpl$setDestroySpeed(def.hardness()); }
-            if (def.light() != null) { held.rdpl$setLightEmission(Math.clamp(def.light(), 0, 15)); }
+            if (def.light() != null) { held.rdpl$setLightEmission(Mth.clamp(def.light(), 0, 15)); }
         }
-        if (def.lightOpacity() != null) { lights.put(block, Math.clamp(def.lightOpacity(), 0, 15)); }
+        if (def.lightOpacity() != null) { lights.put(block, Mth.clamp(def.lightOpacity(), 0, 15)); }
         if (def.flammability() != null) {
             FIRE.computeIfAbsent(block, FireSnapshot::of);
             fire().setFlammable(block, def.fireSpread(), Math.max(0, def.flammability()));
@@ -200,7 +201,7 @@ public final class ContentOverrides {
         ITEMS.computeIfAbsent(item, ItemSnapshot::of);
         IItem inside = (IItem) item;
         DataComponentMap.Builder builder = DataComponentMap.builder().addAll(item.components());
-        if (def.maxStackSize() != null) { builder.set(DataComponents.MAX_STACK_SIZE, Math.clamp(def.maxStackSize(), 1, 64)); }
+        if (def.maxStackSize() != null) { builder.set(DataComponents.MAX_STACK_SIZE, Mth.clamp(def.maxStackSize(), 1, 64)); }
         if (def.maxDamage() != null) {
             builder.set(DataComponents.MAX_DAMAGE, Math.max(0, def.maxDamage()));
             builder.set(DataComponents.DAMAGE, 0);

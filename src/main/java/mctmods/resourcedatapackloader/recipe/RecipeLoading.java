@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.util.ContentDisabled;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
 import mctmods.resourcedatapackloader.recipe.interfaces.IRecipeFilter;
 import mctmods.resourcedatapackloader.util.Config;
@@ -137,7 +138,7 @@ public final class RecipeLoading {
         return RecipeBlocking.blocks(id, result);
     }
 
-    public static boolean late(ResourceLocation id, Recipe<?> recipe, ItemStack result) { return recipe instanceof AbstractCookingRecipe && FurnaceRecipes.removesLate(id, recipe.getIngredients(), result, spared(id)); }
+    public static boolean late(ResourceLocation id, Recipe<?> recipe, ItemStack result) { return RecipeDisabled.uses(recipe, result) || !FurnaceRecipes.resolvedAtLoad() && recipe instanceof AbstractCookingRecipe && FurnaceRecipes.removesLate(id, recipe.getIngredients(), result, spared(id)); }
 
     public static void attach(IRecipeFilter filter) {
         attached = filter;
@@ -154,8 +155,9 @@ public final class RecipeLoading {
 
     public static void onTagsBound() {
         IRecipeFilter filter = attached;
-        if (filter == null || FurnaceRecipes.resolvedAtLoad()) { return; }
+        if (filter == null || FurnaceRecipes.resolvedAtLoad() && !ContentDisabled.any()) { return; }
         filter.rdpl$filterLate();
+        if (FurnaceRecipes.resolvedAtLoad()) { return; }
         FurnaceBlocking.report();
         FurnaceRecipes.report();
     }

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.util.ContentDisabled;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -168,6 +169,12 @@ public final class BlockDrops extends LootModifier {
     }
 
     @Override @Nonnull protected ObjectArrayList<ItemStack> doApply(@Nonnull ObjectArrayList<ItemStack> generatedLoot, @Nonnull LootContext context) {
+        ObjectArrayList<ItemStack> loot = rolled(generatedLoot, context);
+        loot.removeIf(ContentDisabled::disabled);
+        return loot;
+    }
+
+    private static ObjectArrayList<ItemStack> rolled(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
         if (Config.data.blockDropsOff()) { return generatedLoot; }
         BlockState state = context.getParamOrNull(LootContextParams.BLOCK_STATE);
         Vec3 origin = context.getParamOrNull(LootContextParams.ORIGIN);

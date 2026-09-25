@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nullable;
@@ -29,7 +30,7 @@ public final class ContentGeode implements IContentShape {
     }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int width = Math.clamp(shape.width().pick(random), 3, ShapeDef.MOST_REACH * 2);
+        int width = Mth.clamp(shape.width().pick(random), 3, ShapeDef.MOST_REACH * 2);
         int height = Math.max(3, shape.height().pick(random));
         int baseY = origin.getY() - height / 2;
         if (baseY <= placer.floorY()) { return false; }

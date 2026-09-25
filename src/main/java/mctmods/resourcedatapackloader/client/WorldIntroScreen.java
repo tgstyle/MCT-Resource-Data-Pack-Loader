@@ -18,7 +18,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,20 +32,18 @@ import javax.annotation.Nullable;
 public final class WorldIntroScreen extends Screen {
     private static final ResourceLocation DIRT = ResourceLocation.withDefaultNamespace("textures/block/dirt.png");
     private static final int TEXT_WIDTH = 274;
-    private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
     private static final int FOOTER = 36;
     private static final int FITS = 4;
     private static final float SMALLEST = 0.5F;
     private static final float DERIVED_SPEED = 0.25F;
     private final List<IntroPageDef> pages;
-    private final List<FormattedCharSequence> lines = new ArrayList<>();
+    private MarkPage layout;
     private final List<String> written = new ArrayList<>();
     @Nullable private final SoundInstance music;
     private final boolean landBeingMade;
     private int page;
     private boolean sounding;
-    private int wrapWidth = TEXT_WIDTH;
     private float scale = 1.0F;
     private float totalScrollLength;
     private float ticks;
@@ -78,6 +75,8 @@ public final class WorldIntroScreen extends Screen {
     }
 
     @Override protected void init() {
+        width = Crisp.fit(Minecraft.getInstance().getWindow().getGuiScaledWidth());
+        height = Crisp.fit(Minecraft.getInstance().getWindow().getGuiScaledHeight());
         clearWidgets();
         if (page >= pages.size() - 1) { addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.continue"), button -> advance()).bounds(width / 2 - 100, height - 28, 200, 20).build()); }
         else {
@@ -100,25 +99,18 @@ public final class WorldIntroScreen extends Screen {
     }
 
     @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        Crisp.raise(graphics);
         drawPageBackground(graphics, partialTick);
-        IntroPageDef def = pages.get(page);
-        float drawn = Crisp.scale(scale);
-        float step = LINE_HEIGHT * drawn;
-        float y = offset(partialTick);
-        graphics.enableScissor(0, 0, width, height - FOOTER);
-        graphics.pose().pushPose();
-        graphics.pose().scale(drawn, drawn, 1.0F);
-        for (FormattedCharSequence line : lines) {
-            if (y > -step && y < height) {
-                float x = def.still() ? (width - font.width(line) * drawn) / 2.0F : (width - wrapWidth * drawn) / 2.0F;
-                graphics.drawString(font, line, Crisp.snap(x) / drawn, Crisp.snap(y) / drawn, 0xFFFFFF, true);
-            }
-            y += step;
-        }
-        graphics.pose().popPose();
+        graphics.enableScissor(0, 0, Crisp.real(width), Crisp.real(height - FOOTER));
+        layout.draw(graphics, width, height, offset(partialTick), scale, pages.get(page).still());
         graphics.disableScissor();
-        for (Renderable widget : renderables) { widget.render(graphics, mouseX, mouseY, partialTick); }
+        for (Renderable widget : renderables) { widget.render(graphics, Crisp.fit(mouseX), Crisp.fit(mouseY), partialTick); }
+        Crisp.lower(graphics);
     }
+
+    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) { return super.mouseClicked(Crisp.fit(mouseX), Crisp.fit(mouseY), button); }
+
+    @Override public boolean mouseReleased(double mouseX, double mouseY, int button) { return super.mouseReleased(Crisp.fit(mouseX), Crisp.fit(mouseY), button); }
 
     @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == InputConstants.KEY_ESCAPE) {
@@ -160,8 +152,8 @@ public final class WorldIntroScreen extends Screen {
     private float endOffset() {
         IntroPageDef def = pages.get(page);
         if (def.settle()) {
-            float step = LINE_HEIGHT * scale;
-            return (height - step) / 2.0F - Math.max(lines.size() - 1, 0) * step;
+            float step = layout.last() * scale;
+            return (height - step) / 2.0F - Math.max(layout.height() * scale - step, 0.0F);
         }
         return def.up() ? -totalScrollLength - 24.0F : height + 24.0F;
     }
@@ -198,10 +190,11 @@ public final class WorldIntroScreen extends Screen {
             return;
         }
         float room = height - FOOTER;
+        scale = Crisp.scale(scale);
         for (int tries = 0; tries < FITS; tries++) {
             wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
             if (totalScrollLength <= room || scale <= SMALLEST) { return; }
-            scale = Math.max(SMALLEST, scale * room / totalScrollLength);
+            scale = Crisp.below(scale * room / totalScrollLength, SMALLEST);
         }
         wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
     }
@@ -222,12 +215,7 @@ public final class WorldIntroScreen extends Screen {
     }
 
     private void wrap(int widest) {
-        wrapWidth = widest;
-        lines.clear();
-        for (String text : written) {
-            if (text.isEmpty()) { lines.add(FormattedCharSequence.EMPTY); }
-            else { lines.addAll(font.split(Component.literal(text), wrapWidth)); }
-        }
-        totalScrollLength = lines.size() * LINE_HEIGHT * scale;
+        layout = new MarkPage(font, written, widest);
+        totalScrollLength = layout.height() * scale;
     }
 }

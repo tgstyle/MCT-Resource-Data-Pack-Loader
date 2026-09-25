@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.ContentWelcome;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
@@ -13,10 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -175,9 +173,7 @@ public final class ContentPregenHold {
 
     private static void flash(ServerPlayer player, Held held) {
         if (held.warning.isEmpty()) { return; }
-        player.connection.send(new ClientboundSetTitlesAnimationPacket(0, 15, 10));
-        player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(held.warning).withStyle(ChatFormatting.RED)));
-        player.connection.send(new ClientboundSetTitleTextPacket(Component.empty()));
+        Says.title(player, 0, 15, 10, "", held.warning, ChatFormatting.RED);
     }
 
     public static void releaseEveryone(MinecraftServer server, boolean welcomed) {
@@ -193,7 +189,7 @@ public final class ContentPregenHold {
             released++;
         }
         HELD.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
-        if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentTerrain.worldGameMode().isEmpty() ? "the mode they had" : ContentTerrain.worldGameMode()); }
+        if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentServer.worldGameMode().isEmpty() ? "the mode they had" : ContentServer.worldGameMode()); }
     }
 
     public static boolean releaseAfterIntro(ServerPlayer player) {
@@ -206,7 +202,7 @@ public final class ContentPregenHold {
     }
 
     private static void release(ServerPlayer player, Held held) {
-        String mode = ContentTerrain.worldGameMode().trim().toLowerCase(java.util.Locale.ROOT);
+        String mode = ContentServer.worldGameMode().trim().toLowerCase(java.util.Locale.ROOT);
         GameType asked = ContentTerrain.HARDCORE.equals(mode) ? GameType.SURVIVAL : GameType.byName(mode, null);
         player.setGameMode(asked == null ? held.before : asked);
         player.getPersistentData().remove(HELD_MODE);
@@ -235,7 +231,7 @@ public final class ContentPregenHold {
         if (worker == null) { return; }
         hold(player, true);
         String said = ContentPregenProgress.sofar(worker);
-        if (!said.isEmpty()) { Says.tell(player, said, ChatFormatting.YELLOW); }
+        if (!said.isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_RUNNING, said, ChatFormatting.YELLOW); }
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {

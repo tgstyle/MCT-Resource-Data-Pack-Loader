@@ -80,6 +80,7 @@ public final class ContentWorldShape {
     @Nullable private static ResourceLocation presetId;
     @Nullable private static String presetName;
     @Nullable private static ResourceLocation overrode;
+    @Nullable private static JsonObject flatSettings;
     static boolean blockedToVoid;
 
     private ContentWorldShape() {}
@@ -89,15 +90,29 @@ public final class ContentWorldShape {
     @Nullable public static ResourceLocation serverPreset(String levelType) {
         if (presetId == null) { return null; }
         String named = levelType.trim();
-        if (named.equals(presetId.toString())) { return null; }
-        for (String exception : ContentTerrain.worldTypeExceptions()) {
-            String kept = exception.trim();
-            if (kept.equalsIgnoreCase(named) || ("minecraft:" + kept).equalsIgnoreCase(named)) { return null; }
-        }
+        if (named.equals(presetId.toString()) || kept(named)) { return null; }
         ContentLog.LOGGER.info("The server's level-type is '{}', but the packs ship the world preset {} ({}), so the world is made with that; name flat or debug_all_block_states as level-type to keep the game's own", named, presetId, presetName);
         overrode = presetId;
         return presetId;
     }
+
+    static boolean kept(String levelType) {
+        String named = levelType.trim();
+        for (String exception : ContentTerrain.worldTypeExceptions()) {
+            String kept = exception.trim();
+            if (kept.equalsIgnoreCase(named) || ("minecraft:" + kept).equalsIgnoreCase(named)) { return true; }
+        }
+        return false;
+    }
+
+    @Nullable static String levelType() {
+        String type = ContentTerrain.worldType().toLowerCase(Locale.ROOT);
+        String[] base = BASES.get(type);
+        if (type.isEmpty() || base == null) { return null; }
+        return presetId != null ? presetId.toString() : "minecraft:" + base[0];
+    }
+
+    @Nullable static JsonObject flatSettings() { return flatSettings; }
 
     private record Unvoided(long seed, NoiseBasedChunkGenerator generator, RandomState random) {}
 
@@ -112,6 +127,7 @@ public final class ContentWorldShape {
     public static void generate() {
         presetId = null;
         presetName = null;
+        flatSettings = null;
         MADE.clear();
         SHAPED_OVERWORLD_NOISE.clear();
         VOIDED_OVERWORLD.clear();
@@ -342,6 +358,7 @@ public final class ContentWorldShape {
         for (String set : ContentStructureMaps.sets()) { structures.add(set); }
         settings.add("structure_overrides", structures);
         generator.add("settings", settings);
+        flatSettings = settings;
         ContentLog.LOGGER.info("The overworld is flat: {} layer(s) {} block(s) deep, the pack's cities on it{}{}", layers.size(), height, asked.structures().isEmpty() ? "" : " with " + String.join(", ", asked.structures()), asked.decorated() ? ", decorated with the biome's features" : ", undecorated");
         return generator;
     }

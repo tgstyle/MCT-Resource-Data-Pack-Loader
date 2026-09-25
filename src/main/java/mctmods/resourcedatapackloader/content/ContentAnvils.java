@@ -368,6 +368,6 @@ public final class ContentAnvils {
         Long last = TOLD.get(name);
         if (last != null && now - last < TOLD_EVERY) { return; }
         TOLD.put(name, now);
-        Says.tell(player, "That waits on " + Advancements.title(player.server, def.grants()), ChatFormatting.RED);
+        Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.ANVIL_WAITS, "That waits on " + Advancements.title(player.server, def.grants()), ChatFormatting.RED);
     }
 }

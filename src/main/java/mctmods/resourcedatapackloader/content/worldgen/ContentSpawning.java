@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMobCategory;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -21,6 +22,8 @@ import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import java.util.Locale;
 
 public final class ContentSpawning {
+    private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
+    private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
     public static final String ANIMALS = "animals";
 
     private ContentSpawning() {}
@@ -68,7 +71,7 @@ public final class ContentSpawning {
             return;
         }
         if (!spawner) {
-            int lightCap = ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight());
+            int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight()));
             if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
                 event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
                 return;
@@ -107,7 +110,12 @@ public final class ContentSpawning {
             float wanted = biome.rate(sky, day);
             if (wanted >= 0.0F) { return wanted; }
         }
-        if (sky) { return day ? ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate()) : ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate()); }
-        return day ? ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate()) : ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate());
+        float[] rates = RATES.get(() -> new float[] {
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate()) });
+        if (sky) { return day ? rates[0] : rates[1]; }
+        return day ? rates[2] : rates[3];
     }
 }

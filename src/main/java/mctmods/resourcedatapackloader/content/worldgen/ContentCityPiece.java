@@ -156,15 +156,15 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         List<CityPlan.Line> crossing = street == null ? List.of() : plan.crossing(street);
         Map<CityPlan.Line, Square> squares = new HashMap<>();
         BlockState planks = ContentCity.planks(plan);
-        BlockState road = stateOr(paving, Blocks.DIRT_PATH.defaultBlockState());
-        BlockState deck = stateOr(ContentCity.bridgeBlock(), planks);
+        BlockState road = CityPalette.stateOr(paving, Blocks.DIRT_PATH.defaultBlockState());
+        BlockState deck = CityPalette.stateOr(ContentCity.bridgeBlock(), planks);
         BlockState support = ContentCity.support(plan);
         boolean chosen = bridged || ContentCity.pavingChosen(alley);
         if (bridged) { road = deck; }
-        BlockState edge = CityPalette.axised(stateOr(ContentCity.lineBlock(), road), alongX);
-        BlockState walk = stateOr(ContentCity.sidewalkBlock(), road);
-        if (bridged) { walk = stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
-        BlockState center = CityPalette.axised(stateOr(ContentCity.centerBlock(), road), alongX);
+        BlockState edge = CityPalette.axised(CityPalette.stateOr(ContentCity.lineBlock(), road), alongX);
+        BlockState walk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
+        if (bridged) { walk = CityPalette.stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
+        BlockState center = CityPalette.axised(CityPalette.stateOr(ContentCity.centerBlock(), road), alongX);
         BlockState air = Blocks.AIR.defaultBlockState();
         CityCross cross = CityCross.of(width, alley);
         int dash = ContentCity.centerDash();
@@ -181,15 +181,15 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
             for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
                 if (CityBiome.moved(level, x, z)) {
-                    road = stateOr(ContentCity.paving(alley), Blocks.DIRT_PATH.defaultBlockState());
-                    deck = stateOr(ContentCity.bridgeBlock(), planks);
+                    road = CityPalette.stateOr(ContentCity.paving(alley), Blocks.DIRT_PATH.defaultBlockState());
+                    deck = CityPalette.stateOr(ContentCity.bridgeBlock(), planks);
                     support = ContentCity.support(plan);
                     chosen = bridged || ContentCity.pavingChosen(alley);
                     if (bridged) { road = deck; }
-                    edge = CityPalette.axised(stateOr(ContentCity.lineBlock(), road), alongX);
-                    walk = stateOr(ContentCity.sidewalkBlock(), road);
-                    if (bridged) { walk = stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
-                    center = CityPalette.axised(stateOr(ContentCity.centerBlock(), road), alongX);
+                    edge = CityPalette.axised(CityPalette.stateOr(ContentCity.lineBlock(), road), alongX);
+                    walk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
+                    if (bridged) { walk = CityPalette.stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
+                    center = CityPalette.axised(CityPalette.stateOr(ContentCity.centerBlock(), road), alongX);
                 }
                 int across = alongX ? z : x;
                 if (across < pavedLeast() || across > pavedMost()) { continue; }
@@ -456,7 +456,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 upright = bandX;
             }
             if (!lined) { return walk == road ? surface : walk; }
-            BlockState line = stateOr(ContentCity.lineBlock(), road);
+            BlockState line = CityPalette.stateOr(ContentCity.lineBlock(), road);
             return line == road ? surface : CityPalette.axised(line, !upright);
         }
     }
@@ -551,8 +551,6 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
  return dash <= 0 || Math.floorMod(along, dash + 1) != dash; }
 
     @javax.annotation.Nullable private static BlockState block(String named) { return CityPalette.state(named); }
-
-    private static BlockState stateOr(String named, BlockState fallback) { return CityPalette.stateOr(named, fallback); }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(paved(), level); }
 

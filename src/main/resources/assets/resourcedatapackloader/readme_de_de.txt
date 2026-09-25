@@ -194,7 +194,7 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     fuels            brewing          potions          potion_types
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
-    tags             registry_remap
+    tags             registry_remap   cards
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 

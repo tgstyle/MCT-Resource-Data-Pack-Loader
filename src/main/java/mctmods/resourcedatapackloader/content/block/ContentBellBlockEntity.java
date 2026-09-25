@@ -9,6 +9,7 @@ import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.FastColor;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.Level;
@@ -117,7 +118,7 @@ public class ContentBellBlockEntity extends BlockEntity {
         for (LivingEntity living : around) {
             if (worldPosition.distToCenterSqr(living.position()) < (double) GLOW_RADIUS * GLOW_RADIUS) { heard++; }
         }
-        int per = Math.clamp((heard - CROWD_OFFSET) / -2, LEAST_PARTICLES, MOST_PARTICLES);
+        int per = Mth.clamp((heard - CROWD_OFFSET) / -2, LEAST_PARTICLES, MOST_PARTICLES);
         int color = PARTICLE_COLOR;
         for (LivingEntity living : around) {
             if (!raiderWithin(living, GLOW_RADIUS)) { continue; }

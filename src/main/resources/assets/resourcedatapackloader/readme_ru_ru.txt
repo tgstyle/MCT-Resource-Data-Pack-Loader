@@ -190,7 +190,7 @@ priority равным -1, чтобы он оставался под всем о�
     fuels            brewing          potions          potion_types
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
-    tags             registry_remap
+    tags             registry_remap   cards
 
 Блоки бывают таких форм, их задаёт поле "type":
 

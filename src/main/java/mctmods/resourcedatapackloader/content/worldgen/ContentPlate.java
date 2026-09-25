@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
 public final class ContentPlate implements IContentShape {
@@ -12,7 +13,7 @@ public final class ContentPlate implements IContentShape {
     public ContentPlate(ShapeDef shape) { this.shape = shape; }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
-        int radius = Math.clamp(shape.radius().pick(random), 0, ShapeDef.MOST_REACH);
+        int radius = Mth.clamp(shape.radius().pick(random), 0, ShapeDef.MOST_REACH);
         int thickness = Math.max(0, shape.height().pick(random));
         int centerY = origin.getY() + 1;
         boolean round = shape.isRound();

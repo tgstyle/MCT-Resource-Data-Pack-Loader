@@ -42,7 +42,7 @@ public final class ContentRoundReset {
         String way = operator ? RoundResetDef.NOW : who == null ? RoundResetDef.NONE : wayFor(who, reset);
         if (RoundResetDef.NOW.equals(way)) {
             drop();
-            if (!reset.leadSays().isEmpty()) { Says.tellAll(server, reset.leadSays().replace("{player}", name), ChatFormatting.GOLD); }
+            if (!reset.leadSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_LEAD, reset.leadSays().replace("{player}", name), ChatFormatting.GOLD); }
             ContentLog.LOGGER.info("{} reset the round", name);
             ContentScoring.resetRound(server, def);
             return DONE;
@@ -56,7 +56,7 @@ public final class ContentRoundReset {
         BALLOTS.clear();
         BALLOTS.put(name, true);
         ContentLog.LOGGER.info("{} called a vote to reset the round", name);
-        if (!reset.voteSays().isEmpty()) { Says.tellAll(server, reset.voteSays().replace("{player}", name).replace("{seconds}", Integer.toString(left)), ChatFormatting.GOLD); }
+        if (!reset.voteSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_VOTE, reset.voteSays().replace("{player}", name).replace("{seconds}", Integer.toString(left)), ChatFormatting.GOLD); }
         decide(server);
         return CALLED;
     }
@@ -126,7 +126,7 @@ public final class ContentRoundReset {
         if (counted[2] > 0 && counted[0] * 100 >= needed) {
             ContentLog.LOGGER.info("The vote to reset the round passed, {} yes and {} no of {} voter(s)", counted[0], counted[1], counted[2]);
             drop();
-            if (!reset.passSays().isEmpty()) { Says.tellAll(server, reset.passSays(), ChatFormatting.GOLD); }
+            if (!reset.passSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_PASS, reset.passSays(), ChatFormatting.GOLD); }
             ContentScoring.resetRound(server, def);
             return;
         }
@@ -134,7 +134,7 @@ public final class ContentRoundReset {
         ContentLog.LOGGER.info("The vote to reset the round failed, {} yes and {} no of {} voter(s)", counted[0], counted[1], counted[2]);
         drop();
         quietUntil = System.currentTimeMillis() + reset.cooldownSeconds() * 1000L;
-        if (!reset.failSays().isEmpty()) { Says.tellAll(server, reset.failSays(), ChatFormatting.GRAY); }
+        if (!reset.failSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_FAIL, reset.failSays(), ChatFormatting.GRAY); }
     }
 
     private static void drop() {

@@ -320,6 +320,7 @@ public final class CommandShared {
     static void refield(MinecraftServer server) {
         ContentTeams.load();
         ContentScoring.load();
+        mctmods.resourcedatapackloader.content.card.CardRules.load();
         for (ServerLevel level : server.getAllLevels()) {
             ContentTeams.field(level);
             ContentScoring.keep(level);

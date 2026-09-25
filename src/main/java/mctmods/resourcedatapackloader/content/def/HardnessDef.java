@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import mctmods.resourcedatapackloader.content.worldgen.ContentField;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import java.util.List;
 
 public record HardnessDef(ResourceLocation key, List<BlockMatchDef> blocks, List<BlockMatchDef> except, float leastMining, float mostMining, float leastBlast, float mostBlast, int buckets, int minHeight, int maxHeight, List<String> requires, ContentField field,
@@ -17,7 +18,7 @@ public record HardnessDef(ResourceLocation key, List<BlockMatchDef> blocks, List
 
     private float at(float least, float most, int bucket) {
         if (buckets <= 1 || least == most) { return most; }
-        float along = Math.clamp(bucket, 0, buckets - 1) / (float) (buckets - 1);
+        float along = Mth.clamp(bucket, 0, buckets - 1) / (float) (buckets - 1);
         return most - along * (most - least);
     }
 }

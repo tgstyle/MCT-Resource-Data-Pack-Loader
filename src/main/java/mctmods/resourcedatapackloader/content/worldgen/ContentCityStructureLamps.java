@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
@@ -175,9 +177,9 @@ public final class ContentCityStructureLamps {
         int verge = cross.curb() + 1;
         int start = plan.spanStart(line);
         int reach = CityPlan.plazaReach();
-        List<Integer> spots = new ArrayList<>();
-        List<Integer> levels = new ArrayList<>();
-        List<Integer> across = new ArrayList<>();
+        IntList spots = new IntArrayList();
+        IntList levels = new IntArrayList();
+        IntList across = new IntArrayList();
         for (int at = 0; at < profile.length; at++) {
             int along = start + at;
             if (Math.floorMod(along, ContentCityStructure.VERGE_RUN) != 0 || !line.covers(along) || !plan.emitsAlong(line, along)) { continue; }
@@ -193,9 +195,9 @@ public final class ContentCityStructureLamps {
             }
         }
         if (spots.isEmpty()) { return; }
-        int[] alongs = spots.stream().mapToInt(Integer::intValue).toArray();
-        int[] heights = levels.stream().mapToInt(Integer::intValue).toArray();
-        int[] sides = across.stream().mapToInt(Integer::intValue).toArray();
+        int[] alongs = spots.toIntArray();
+        int[] heights = levels.toIntArray();
+        int[] sides = across.toIntArray();
         int lowAlong = alongs[0];
         int highAlong = alongs[alongs.length - 1];
         int lowAcross = line.middle() - verge;

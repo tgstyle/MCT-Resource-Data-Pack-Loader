@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import java.util.LinkedHashMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.Mth;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import net.minecraft.world.scores.Team;
@@ -115,7 +116,7 @@ public final class ContentParserGames {
             players = RoundResetDef.NONE;
         }
         return new RoundResetDef(lead, RoundResetDef.VOTE.equals(players), Json.strings(reset, "teams"),
-                Math.clamp(GsonHelper.getAsInt(reset, "passPercent", 51), 1, 100),
+                Mth.clamp(GsonHelper.getAsInt(reset, "passPercent", 51), 1, 100),
                 Math.max(5, GsonHelper.getAsInt(reset, "voteSeconds", 30)),
                 Math.max(0, GsonHelper.getAsInt(reset, "cooldownSeconds", 60)),
                 GsonHelper.getAsString(reset, "leadSays", "{player} reset the round"),

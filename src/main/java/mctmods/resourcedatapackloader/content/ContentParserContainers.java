@@ -8,6 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
 import java.util.Locale;
 import java.util.Set;
 import java.util.Map;
@@ -41,8 +42,8 @@ public final class ContentParserContainers {
         JsonObject held = GsonHelper.getAsJsonObject(json, "container");
         int askedRows = GsonHelper.getAsInt(held, "rows", 3);
         int askedColumns = GsonHelper.getAsInt(held, "columns", 9);
-        int rows = Math.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
-        int columns = Math.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
+        int rows = Mth.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
+        int columns = Mth.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
         if (askedRows != rows || askedColumns != columns) {
             ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows);
         }

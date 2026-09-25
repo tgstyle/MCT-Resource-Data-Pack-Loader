@@ -10,6 +10,22 @@ public abstract class ConfigWorldgenWorld {
     private final ModConfigSpec.ConfigValue<String> worldSeed;
     private final ModConfigSpec.ConfigValue<String> worldName;
     private final ModConfigSpec.ConfigValue<String> worldGameMode;
+    private final ModConfigSpec.BooleanValue worldLanCommands;
+    private final ModConfigSpec.ConfigValue<String> worldForceGameMode;
+    private final ModConfigSpec.ConfigValue<String> worldPvp;
+    private final ModConfigSpec.ConfigValue<String> worldFlight;
+    private final ModConfigSpec.IntValue worldSpawnProtection;
+    private final ModConfigSpec.ConfigValue<String> worldNether;
+    private final ModConfigSpec.ConfigValue<String> worldCommandBlocks;
+    private final ModConfigSpec.IntValue worldIdleTimeout;
+    private final ModConfigSpec.ConfigValue<String> worldMotd;
+    private final ModConfigSpec.IntValue worldMaxSize;
+    private final ModConfigSpec.ConfigValue<String> worldStructures;
+    private final ModConfigSpec.ConfigValue<String> worldSpawnMonsters;
+    private final ModConfigSpec.ConfigValue<String> worldSpawnAnimals;
+    private final ModConfigSpec.ConfigValue<String> worldSpawnNpcs;
+    private final ModConfigSpec.IntValue worldViewDistance;
+    private final ModConfigSpec.IntValue worldSimulationDistance;
     private final ModConfigSpec.ConfigValue<String> worldType;
     private final ModConfigSpec.ConfigValue<List<? extends String>> worldTypeExceptions;
     private final ModConfigSpec.BooleanValue tellWorldType;
@@ -95,6 +111,22 @@ public abstract class ConfigWorldgenWorld {
         worldTemplate = builder.comment("Which world template's settings apply. A pack adds one in worldtemplates/*.json and you name it here as namespace:name. 'auto' picks the template from the highest priority pack. Empty uses none [Default=auto]").define("worldTemplate", "auto");
         worldSeed = builder.comment("The seed every new world is made with, whatever was typed when it was made, written the same way it would be typed. Empty leaves the choice alone [Default=empty]").define("worldSeed", "");
         worldGameMode = builder.comment("Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose. A dedicated server sets every world to its server.properties mode at each start, so there the pack's mode is written into server.properties (gamemode and hardcore) before the world loads [Default=empty]").define("worldGameMode", "");
+        worldLanCommands = builder.comment("Let a player opening a single player world to LAN turn commands on for everyone who joins. Off, the Allow Commands button on the Open to LAN screen is grayed out and stays off, and the world is opened to LAN without commands however it is asked for [Default=true]").define("worldLanCommands", true);
+        worldForceGameMode = builder.comment("Whether a player who joins is put back in the server's game mode every time, the force-gamemode line of server.properties: true or false. A dedicated server writes it into server.properties. Empty leaves it as the server has it [Default=empty]").define("worldForceGameMode", "");
+        worldPvp = builder.comment("Whether players can hurt each other, the pvp line of server.properties: true or false. A dedicated server writes it into server.properties, and a single player world takes it too. Empty leaves it as the server has it [Default=empty]").define("worldPvp", "");
+        worldFlight = builder.comment("Whether a player flying in survival is left alone instead of kicked, the allow-flight line of server.properties: true or false. A dedicated server writes it into server.properties, and a single player world takes it too. Empty leaves it as the server has it [Default=empty]").define("worldFlight", "");
+        worldSpawnProtection = builder.comment("How many blocks around the spawn point only operators may build in, the spawn-protection line of server.properties, 0 for none. Only a dedicated server protects its spawn. -1 leaves it as the server has it [Default=-1]").defineInRange("worldSpawnProtection", -1, -1, 29999984);
+        worldNether = builder.comment("Whether the Nether can be entered, the allow-nether line of server.properties: true or false. A dedicated server writes it into server.properties, and a single player world takes it too. Empty leaves it as the server has it [Default=empty]").define("worldNether", "");
+        worldCommandBlocks = builder.comment("Whether command blocks run, the enable-command-block line of server.properties: true or false. A dedicated server writes it into server.properties, and false turns them off in a single player world too. Empty leaves it as the server has it [Default=empty]").define("worldCommandBlocks", "");
+        worldIdleTimeout = builder.comment("How many minutes a player may stand idle before being kicked, the player-idle-timeout line of server.properties, 0 for never. A dedicated server writes it into server.properties, and a single player world opened to LAN takes it too. -1 leaves it as the server has it [Default=-1]").defineInRange("worldIdleTimeout", -1, -1, 1000000);
+        worldMotd = builder.comment("The line shown under the server's name in the server list, the motd line of server.properties. A dedicated server writes it into server.properties, and a single player world opened to LAN shows it too. Empty leaves it as the server has it [Default=empty]").define("worldMotd", "");
+        worldMaxSize = builder.comment("The farthest out, in blocks from the middle, a world border may ever reach, the max-world-size line of server.properties. -1 leaves it as the server has it [Default=-1]").defineInRange("worldMaxSize", -1, -1, 29999984);
+        worldStructures = builder.comment("Whether a new world generates structures, the generate-structures line of server.properties and the Generate Structures button on the world screen: true or false. Only applied to a world as it is created. Empty leaves it as chosen [Default=empty]").define("worldStructures", "");
+        worldSpawnMonsters = builder.comment("Whether hostile mobs spawn, the spawn-monsters line of server.properties: true or false. A dedicated server writes it into server.properties, and false stops them in a single player world too. Empty leaves it as the server has it [Default=empty]").define("worldSpawnMonsters", "");
+        worldSpawnAnimals = builder.comment("Whether animals spawn, the spawn-animals line of server.properties: true or false. A dedicated server writes it into server.properties, and a single player world takes it too. Empty leaves it as the server has it [Default=empty]").define("worldSpawnAnimals", "");
+        worldSpawnNpcs = builder.comment("Whether villagers spawn, the spawn-npcs line of server.properties: true or false. A dedicated server writes it into server.properties, and a single player world takes it too. Empty leaves it as the server has it [Default=empty]").define("worldSpawnNpcs", "");
+        worldViewDistance = builder.comment("How many chunks out a dedicated server sends the world to each player, the view-distance line of server.properties. A single player world follows the render distance instead. -1 leaves it as the server has it [Default=-1]").defineInRange("worldViewDistance", -1, -1, 32);
+        worldSimulationDistance = builder.comment("How many chunks out a dedicated server keeps the world ticking around each player, the simulation-distance line of server.properties. A single player world follows its own setting instead. -1 leaves it as the server has it [Default=-1]").defineInRange("worldSimulationDistance", -1, -1, 32);
         worldName = builder.comment("What a new world is called when the screen for making one opens. Empty leaves it as the game names it [Default=empty]").define("worldName", "");
         worldType = builder.comment("The world type the shaped world is built on, one of default, largebiomes, amplified or flat, with the 1.12.2 names customized and default_1_1 read as default; flat is a superflat overworld built from the generatorOptions layers, with the pack's cities on it. The shape below (heights, deep stone, sea level, bedrock, void) is generated as a world preset of its own, listed under World Type on the world screen and chosen there whatever was picked. Empty builds on default [Default=empty]").define("worldType", "");
         worldTypeExceptions = builder.comment("World types a player picks that the generated preset leaves alone, such as flat or debug_all_block_states. Empty means every choice is replaced [Default=[flat, debug_all_block_states]]").defineListAllowEmpty("worldTypeExceptions", List.of("flat", "debug_all_block_states"), () -> "", each -> each instanceof String);
@@ -186,6 +218,38 @@ public abstract class ConfigWorldgenWorld {
     public String worldName() { return Config.loaded() ? worldName.get() : ConfigCore.text("worldgen.worldName", ""); }
 
     public String worldGameMode() { return Config.loaded() ? worldGameMode.get() : ConfigCore.text("worldgen.worldGameMode", ""); }
+
+    public boolean worldLanCommands() { return Config.loaded() ? worldLanCommands.get() : ConfigCore.flag("worldgen.worldLanCommands", true); }
+
+    public String worldForceGameMode() { return Config.loaded() ? worldForceGameMode.get() : ""; }
+
+    public String worldPvp() { return Config.loaded() ? worldPvp.get() : ""; }
+
+    public String worldFlight() { return Config.loaded() ? worldFlight.get() : ""; }
+
+    public int worldSpawnProtection() { return Config.loaded() ? worldSpawnProtection.get() : -1; }
+
+    public String worldNether() { return Config.loaded() ? worldNether.get() : ""; }
+
+    public String worldCommandBlocks() { return Config.loaded() ? worldCommandBlocks.get() : ""; }
+
+    public int worldIdleTimeout() { return Config.loaded() ? worldIdleTimeout.get() : -1; }
+
+    public String worldMotd() { return Config.loaded() ? worldMotd.get() : ""; }
+
+    public int worldMaxSize() { return Config.loaded() ? worldMaxSize.get() : -1; }
+
+    public String worldStructures() { return Config.loaded() ? worldStructures.get() : ""; }
+
+    public String worldSpawnMonsters() { return Config.loaded() ? worldSpawnMonsters.get() : ""; }
+
+    public String worldSpawnAnimals() { return Config.loaded() ? worldSpawnAnimals.get() : ""; }
+
+    public String worldSpawnNpcs() { return Config.loaded() ? worldSpawnNpcs.get() : ""; }
+
+    public int worldViewDistance() { return Config.loaded() ? worldViewDistance.get() : -1; }
+
+    public int worldSimulationDistance() { return Config.loaded() ? worldSimulationDistance.get() : -1; }
 
     public String worldType() { return Config.loaded() ? worldType.get() : ConfigCore.text("worldgen.worldType", ""); }
 

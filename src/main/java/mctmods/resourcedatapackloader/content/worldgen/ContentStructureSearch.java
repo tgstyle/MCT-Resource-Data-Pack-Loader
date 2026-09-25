@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.StructureTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -82,7 +83,7 @@ public final class ContentStructureSearch {
 
     public static List<String> aliases() { return List.copyOf(ALIASES.keySet()); }
 
-    private static int level(String key, int fallback) { return Math.clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback), 0, OPERATOR + 1); }
+    private static int level(String key, int fallback) { return Mth.clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback), 0, OPERATOR + 1); }
 
     public static int levelFor(String place, String key, int fallback) {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels())) {
@@ -92,7 +93,7 @@ public final class ContentStructureSearch {
                 continue;
             }
             if (!entry.substring(0, split).trim().equalsIgnoreCase(place)) { continue; }
-            try { return Math.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1); }
+            try { return Mth.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1); }
             catch (NumberFormatException ignored) {
                 if (WARNED.add(entry)) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' has no number after the =, so it is left out", entry); }
             }
@@ -107,7 +108,7 @@ public final class ContentStructureSearch {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels())) {
             int split = entry.lastIndexOf('=');
             if (split <= 0) { continue; }
-            try { lowest = Math.min(lowest, Math.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1)); }
+            try { lowest = Math.min(lowest, Mth.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1)); }
             catch (NumberFormatException ignored) { }
         }
         return lowest;

@@ -110,6 +110,8 @@
   "rdpl.command.gateopened": "Ворота %s открыты для %s (область: %s)",
   "rdpl.command.gateclosed": "Ворота %s закрыты для %s (область: %s)",
   "rdpl.command.nogate": "Ворот с именем %s нет",
+  "rdpl.command.nocard": "Правила карточки с именем %s нет",
+  "rdpl.command.cardshown": "Карточка %s показана, игроков: %s",
   "rdpl.command.orenone": "Генерация руды не блокировалась. Настройки могут быть выключены или недоступны",
   "rdpl.command.oreblocked": "Генерация руды, заблокированная к этому моменту:",
   "rdpl.command.genblocked": "Генерация мира, заблокированная к этому моменту, по модам и типам:",

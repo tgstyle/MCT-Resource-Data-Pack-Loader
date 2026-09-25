@@ -21,13 +21,13 @@ public final class BiomeNames {
 
     public static boolean named(ResourceLocation biome, Collection<String> names) {
         if (names.isEmpty()) { return false; }
-        Set<String> wanted = lower(names);
+        Set<String> wanted = Settings.lower(names);
         return wanted.contains(biome.toString().toLowerCase(Locale.ROOT)) || wanted.contains(shownName(biome).toLowerCase(Locale.ROOT));
     }
 
     public static List<String> ids(Collection<String> names) {
         Set<String> out = new LinkedHashSet<>();
-        Set<String> wanted = lower(names);
+        Set<String> wanted = Settings.lower(names);
         for (String name : wanted) {
             if (name.indexOf(':') >= 0) { out.add(name); }
         }
@@ -35,11 +35,5 @@ public final class BiomeNames {
             if (wanted.contains(shownName(biome).toLowerCase(Locale.ROOT))) { out.add(biome.toString()); }
         }
         return new ArrayList<>(out);
-    }
-
-    private static Set<String> lower(Collection<String> names) {
-        Set<String> out = new LinkedHashSet<>();
-        for (String name : names) { out.add(name.trim().toLowerCase(Locale.ROOT)); }
-        return out;
     }
 }

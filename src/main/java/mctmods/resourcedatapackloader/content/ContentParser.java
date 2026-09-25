@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgenParser;
 
 import java.util.LinkedHashMap;
@@ -30,6 +31,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -103,14 +105,14 @@ public final class ContentParser {
                 color(GsonHelper.getAsString(json, "particleColor", "FFFFFF"), key),
                 GsonHelper.getAsString(json, "seed", "").trim(),
                 GsonHelper.getAsString(json, "produce", "").trim(),
-                Math.clamp(GsonHelper.getAsInt(json, "maxAge", 7), 1, 7),
+                Mth.clamp(GsonHelper.getAsInt(json, "maxAge", 7), 1, 7),
                 sapling(json),
                 growth(json),
                 plantTypes(key, json),
                 behaviors(key, json),
                 GsonHelper.getAsString(json, "tint", "").trim(),
                 GsonHelper.getAsString(json, "leafSapling", "").trim(),
-                Math.clamp(GsonHelper.getAsInt(json, "leafSaplingChance", 5), 0, 100),
+                Mth.clamp(GsonHelper.getAsInt(json, "leafSaplingChance", 5), 0, 100),
                 location(GsonHelper.getAsString(json, "opensWith", "")),
                 GsonHelper.getAsString(json, "openSound", "").trim(),
                 portal(key, json, null, true, false),
@@ -167,18 +169,18 @@ public final class ContentParser {
         }
         return new BlockVariant(id, id.getPath(),
                 GsonHelper.getAsString(json, "rarity", "common").trim().toLowerCase(Locale.ROOT),
-                Math.clamp(GsonHelper.getAsInt(json, "maxSize", 64), 1, 64),
+                Mth.clamp(GsonHelper.getAsInt(json, "maxSize", 64), 1, 64),
                 tags(key, id.getPath(), json),
                 GsonHelper.getAsFloat(json, "hardness", 1.0F),
                 GsonHelper.getAsFloat(json, "resistance", 5.0F),
                 GsonHelper.getAsInt(json, "harvestLevel", 0),
-                Math.clamp(GsonHelper.getAsInt(json, "light", 0), 0, 15),
+                Mth.clamp(GsonHelper.getAsInt(json, "light", 0), 0, 15),
                 Collections.unmodifiableList(drops),
                 portal(key, json, null, true, false));
     }
 
     private static List<String> plantTypes(ResourceLocation key, JsonObject json) {
-        List<String> types = lowered(Json.strings(json, PLANT_TYPES));
+        List<String> types = Settings.lowered(Json.strings(json, PLANT_TYPES));
         if (!types.isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Use 'bush' under 'behavesAs' for what 'plains' did, and let any other plant name this block in its own soil list", key, PLANT_TYPES); }
         return types;
     }
@@ -264,7 +266,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("A drop for '{}' in {} names '{}', which is not a valid id, skipping it", name, key, entity.isEmpty() ? block : entity);
             return null;
         }
-        return new DropDef(item, spawned, amount(json, "amount", 1, 0), Math.clamp(GsonHelper.getAsInt(json, "chance", guaranteed ? 100 : 0), 0, 100), Math.max(0, GsonHelper.getAsInt(json, "weight", 0)), chances);
+        return new DropDef(item, spawned, amount(json, "amount", 1, 0), Mth.clamp(GsonHelper.getAsInt(json, "chance", guaranteed ? 100 : 0), 0, 100), Math.max(0, GsonHelper.getAsInt(json, "weight", 0)), chances);
     }
 
     @Nullable public static ItemDef item(ResourceLocation key, String contents) {
@@ -283,7 +285,7 @@ public final class ContentParser {
             JsonObject variant = entry.getValue().getAsJsonObject();
             variants.add(new ItemVariant(id, id.getPath(),
                     GsonHelper.getAsString(variant, "rarity", "common").trim().toLowerCase(Locale.ROOT),
-                    Math.clamp(GsonHelper.getAsInt(variant, "maxSize", 64), 1, 64),
+                    Mth.clamp(GsonHelper.getAsInt(variant, "maxSize", 64), 1, 64),
                     tags(key, id.getPath(), variant),
                     GsonHelper.getAsInt(variant, "healAmount", 0),
                     GsonHelper.getAsFloat(variant, "saturation", 0.0F),
@@ -332,7 +334,7 @@ public final class ContentParser {
                 GsonHelper.getAsInt(json, "temperature", 300),
                 GsonHelper.getAsInt(json, "density", 1000),
                 GsonHelper.getAsInt(json, "viscosity", 1000),
-                Math.clamp(GsonHelper.getAsInt(json, "luminosity", 0), 0, 15),
+                Mth.clamp(GsonHelper.getAsInt(json, "luminosity", 0), 0, 15),
                 GsonHelper.getAsBoolean(json, "gaseous", false),
                 GsonHelper.getAsBoolean(json, "bucket", true),
                 json.has("block"),
@@ -456,7 +458,7 @@ public final class ContentParser {
         if (!json.has("growth")) { return null; }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "growth");
         return new GrowthDef(Math.max(1, GsonHelper.getAsInt(entry, "maxHeight", 3)),
-                Math.clamp(GsonHelper.getAsInt(entry, "stages", 16), 1, 16),
+                Mth.clamp(GsonHelper.getAsInt(entry, "stages", 16), 1, 16),
                 Json.strings(entry, "soil"),
                 GsonHelper.getAsBoolean(entry, "needsWater", false),
                 Math.max(1, GsonHelper.getAsInt(entry, "waterRange", 1)),
@@ -526,12 +528,6 @@ public final class ContentParser {
     @Nullable public static ResourceLocation location(String value) {
         String named = value == null ? "" : value.trim();
         return named.isEmpty() ? null : ResourceLocation.tryParse(named.toLowerCase(Locale.ROOT));
-    }
-
-    private static List<String> lowered(List<String> values) {
-        List<String> out = new ArrayList<>(values.size());
-        for (String value : values) { out.add(value.trim().toLowerCase(Locale.ROOT)); }
-        return Collections.unmodifiableList(out);
     }
 
     private static List<String> behaviors(ResourceLocation key, JsonObject json) {

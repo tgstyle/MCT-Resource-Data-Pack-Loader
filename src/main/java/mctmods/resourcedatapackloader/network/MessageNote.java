@@ -10,9 +10,9 @@ import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nonnull;
 
-public record MessageNote(String said) implements CustomPacketPayload {
+public record MessageNote(String said, boolean backdrop, String font) implements CustomPacketPayload {
     public static final Type<MessageNote> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "note"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, MessageNote> CODEC = StreamCodec.composite(ByteBufCodecs.STRING_UTF8, MessageNote::said, MessageNote::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, MessageNote> CODEC = StreamCodec.composite(ByteBufCodecs.STRING_UTF8, MessageNote::said, ByteBufCodecs.BOOL, MessageNote::backdrop, ByteBufCodecs.STRING_UTF8, MessageNote::font, MessageNote::new);
 
     @Override @Nonnull public Type<? extends CustomPacketPayload> type() { return TYPE; }
 }

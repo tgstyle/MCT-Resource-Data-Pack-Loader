@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class ContentFormats {
@@ -34,6 +35,7 @@ public final class ContentFormats {
     private static final String SILK_TOUCH = "{\"condition\":\"minecraft:match_tool\",\"predicate\":{\"predicates\":{\"minecraft:enchantments\":[{\"enchantments\":\"minecraft:silk_touch\",\"levels\":{\"min\":1}}]}}}";
     private static final String SHEARS = "{\"condition\":\"minecraft:match_tool\",\"predicate\":{\"items\":\"minecraft:shears\"}}";
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
+    private static final Pattern DIMENSION_NUMBER = Pattern.compile("-?\\d+");
 
     private ContentFormats() {}
 
@@ -117,7 +119,7 @@ public final class ContentFormats {
             case "-1" -> "minecraft:the_nether";
             case "1" -> "minecraft:the_end";
             default -> {
-                if (!wanted.isEmpty() && (wanted.charAt(0) == '-' || Character.isDigit(wanted.charAt(0))) && wanted.matches("-?\\d+") && WARNED.add(wanted)) { ContentLog.LOGGER.warn("Dimension {} is a 1.12.2 dimension number, and only 0, -1 and 1 still stand for a dimension, so it names none. Name the dimension by its id, such as mypack:verdant", wanted); }
+                if (!wanted.isEmpty() && (wanted.charAt(0) == '-' || Character.isDigit(wanted.charAt(0))) && DIMENSION_NUMBER.matcher(wanted).matches() && WARNED.add(wanted)) { ContentLog.LOGGER.warn("Dimension {} is a 1.12.2 dimension number, and only 0, -1 and 1 still stand for a dimension, so it names none. Name the dimension by its id, such as mypack:verdant", wanted); }
                 yield wanted;
             }
         };

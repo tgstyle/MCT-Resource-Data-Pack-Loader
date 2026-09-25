@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.PieceLaid;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -33,13 +35,13 @@ public final class CityPlotSeams {
         BoundingBox chunkBox = CityCrown.clip(level, chunk);
         BoundingBox clip = new BoundingBox(chunkBox.minX() - PIT_EDGE, chunkBox.minY(), chunkBox.minZ() - PIT_EDGE, chunkBox.maxX() + PIT_EDGE, chunkBox.maxY(), chunkBox.maxZ() + PIT_EDGE);
         for (StructureStart start : CityCrown.cities(manager, chunk)) {
-            List<Integer> streets = new ArrayList<>();
+            IntList streets = new IntArrayList();
             for (StructurePiece piece : start.getPieces()) {
                 if (!CityCrown.street(piece)) { continue; }
                 BoundingBox box = piece.getBoundingBox();
-                streets.addAll(List.of(box.minX(), box.minZ(), box.maxX(), box.maxZ()));
+                streets.addAll(IntList.of(box.minX(), box.minZ(), box.maxX(), box.maxZ()));
             }
-            int[] roadways = streets.stream().mapToInt(Integer::intValue).toArray();
+            int[] roadways = streets.toIntArray();
             int[] filled = {0};
             CityBiome.within(level, clip, () -> {
                 for (StructurePiece piece : start.getPieces()) {

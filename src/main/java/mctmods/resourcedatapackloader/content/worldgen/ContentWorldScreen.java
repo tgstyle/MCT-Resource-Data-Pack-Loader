@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
@@ -28,9 +29,9 @@ public final class ContentWorldScreen {
         WorldCreationUiState state = screen.getUiState();
         String named = ContentTerrain.worldName();
         String seed = ContentTerrain.worldSeed();
-        String mode = ContentTerrain.worldGameMode();
+        String mode = ContentServer.worldGameMode();
         WorldCreationUiState.WorldTypeEntry preset = presetEntry(state);
-        Difficulty difficulty = ContentTerrain.difficultyFor(Level.OVERWORLD.location().toString());
+        Difficulty difficulty = ContentServer.difficultyFor(Level.OVERWORLD.location().toString());
         if (named.isEmpty() && seed.isEmpty() && mode.isEmpty() && preset == null && difficulty == null) { return; }
         String fresh = I18n.get("selectWorld.newWorld");
         ContentLog.LOGGER.debug("The screen for making a world opened. A pack asks for the name '{}', the seed '{}' and the game mode '{}'. The box says '{}' and the game calls a new world '{}', so the name {} be filled in",

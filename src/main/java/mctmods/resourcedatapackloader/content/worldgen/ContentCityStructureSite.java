@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure.GenerationContext;
@@ -299,13 +301,13 @@ public final class ContentCityStructureSite {
         if (held != null) { return held; }
         int[] made = ContentLog.LOGGER.quietly(() -> {
             ContentCityStructure.District district = district(context, ground, own);
-            List<Integer> boxes = new ArrayList<>();
+            IntList boxes = new IntArrayList();
             for (CityPlan.Plot plot : own.plots()) {
                 if (ContentCityStructureStations.claimed(district.claims(), plot)) { continue; }
                 CityPlan.Plot placed = ContentCityStructureSeat.placed(context, ground, own, district, plot);
-                if (placed != null) { boxes.addAll(List.of(placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ())); }
+                if (placed != null) { boxes.addAll(IntList.of(placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ())); }
             }
-            return boxes.stream().mapToInt(Integer::intValue).toArray();
+            return boxes.toIntArray();
         });
         int[] raced = KEPT.putIfAbsent(own, made);
         return raced == null ? made : raced;
@@ -323,10 +325,10 @@ public final class ContentCityStructureSite {
 
     private static int[] ringKeep(GenerationContext context, CityGround ground, CityPlan plan, ContentCityStructure.Seated found, List<ContentCityStructure.Seated> offered, List<ContentCityStructure.Well> wells, List<ContentCityStructure.Bulb> bulbs) {
         CityPlan.Plot placed = found.plot();
-        List<Integer> boxes = new ArrayList<>();
+        IntList boxes = new IntArrayList();
         for (ContentCityStructure.Seated other : offered) {
             CityPlan.Plot plot = other.plot();
-            if (other != found && near(placed, plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())) { boxes.addAll(List.of(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())); }
+            if (other != found && near(placed, plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())) { boxes.addAll(IntList.of(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())); }
         }
         List<CityPlan> plans = around(ground, plan, placed);
         List<ContentCityStructure.Well> plazas = new ArrayList<>(wells);
@@ -339,14 +341,14 @@ public final class ContentCityStructureSite {
             if (other == plan) { continue; }
             int[] kept = kept(context, ground, other);
             for (int at = 0; at + 3 < kept.length; at += 4) {
-                if (near(placed, kept[at], kept[at + 1], kept[at + 2], kept[at + 3])) { boxes.addAll(List.of(kept[at], kept[at + 1], kept[at + 2], kept[at + 3])); }
+                if (near(placed, kept[at], kept[at + 1], kept[at + 2], kept[at + 3])) { boxes.addAll(IntList.of(kept[at], kept[at + 1], kept[at + 2], kept[at + 3])); }
             }
             plazas.addAll(district(context, ground, other).wells());
         }
         int reach = CityPlan.plazaReach();
         for (ContentCityStructure.Well well : plazas) {
             BoundingBox box = well.box();
-            if (near(placed, box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { boxes.addAll(List.of(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)); }
+            if (near(placed, box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { boxes.addAll(IntList.of(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)); }
         }
         for (ContentCityStructure.Bulb bulb : bulbs) {
             ContentCityBulbPiece.Court court = bulb.court();
@@ -354,10 +356,10 @@ public final class ContentCityStructureSite {
             int fromZ = court.centerZ() - court.reach();
             int toX = court.centerX() + court.reach();
             int toZ = court.centerZ() + court.reach();
-            if (near(placed, fromX, fromZ, toX, toZ)) { boxes.addAll(List.of(fromX, fromZ, toX, toZ)); }
+            if (near(placed, fromX, fromZ, toX, toZ)) { boxes.addAll(IntList.of(fromX, fromZ, toX, toZ)); }
         }
         for (int value : roadsAround(plans, placed)) { boxes.add(value); }
-        return boxes.stream().mapToInt(Integer::intValue).toArray();
+        return boxes.toIntArray();
     }
 
     private static int groundAround(CityGround ground, CityPlan.Plot placed, int[] keep) {
@@ -399,21 +401,21 @@ public final class ContentCityStructureSite {
     }
 
     static int[] keepAround(List<CityPlan> plans, CityPlan.Plot placed, List<ContentCityStructure.Well> wells) {
-        List<Integer> boxes = new ArrayList<>();
+        IntList boxes = new IntArrayList();
         for (CityPlan plan : plans) { keepFrom(plan, placed, boxes); }
         for (ContentCityStructure.Well well : wells) {
             int reach = CityPlan.plazaReach();
             BoundingBox box = well.box();
-            if (near(placed, box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { boxes.addAll(List.of(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)); }
+            if (near(placed, box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { boxes.addAll(IntList.of(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)); }
         }
         for (int value : roadsAround(plans, placed)) { boxes.add(value); }
-        return boxes.stream().mapToInt(Integer::intValue).toArray();
+        return boxes.toIntArray();
     }
 
-    private static void keepFrom(CityPlan plan, CityPlan.Plot placed, List<Integer> boxes) {
+    private static void keepFrom(CityPlan plan, CityPlan.Plot placed, IntList boxes) {
         for (CityPlan.Plot other : plan.plots()) {
             if (other.fromX() == placed.fromX() && other.fromZ() == placed.fromZ() && other.def() == placed.def()) { continue; }
-            if (near(placed, other.fromX(), other.fromZ(), other.toX(), other.toZ())) { boxes.addAll(List.of(other.fromX(), other.fromZ(), other.toX(), other.toZ())); }
+            if (near(placed, other.fromX(), other.fromZ(), other.toX(), other.toZ())) { boxes.addAll(IntList.of(other.fromX(), other.fromZ(), other.toX(), other.toZ())); }
         }
         for (CityPlan.Rail rail : plan.rails()) {
             if (rail.subway()) { continue; }
@@ -425,7 +427,7 @@ public final class ContentCityStructureSite {
     }
 
     static int[] roadsAround(List<CityPlan> plans, CityPlan.Plot placed) {
-        List<Integer> boxes = new ArrayList<>();
+        IntList boxes = new IntArrayList();
         for (CityPlan plan : plans) {
             for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
                 for (CityPlan.Line line : lines) {
@@ -440,7 +442,7 @@ public final class ContentCityStructureSite {
                 if (near(placed, box[0], box[1], box[2], box[3])) { for (int value : box) { boxes.add(value); } }
             }
         }
-        return boxes.stream().mapToInt(Integer::intValue).toArray();
+        return boxes.toIntArray();
     }
 
     private static boolean near(CityPlan.Plot placed, int fromX, int fromZ, int toX, int toZ) { return toX >= placed.fromX() - KEEP_REACH && fromX <= placed.toX() + KEEP_REACH && toZ >= placed.fromZ() - KEEP_REACH && fromZ <= placed.toZ() + KEEP_REACH; }

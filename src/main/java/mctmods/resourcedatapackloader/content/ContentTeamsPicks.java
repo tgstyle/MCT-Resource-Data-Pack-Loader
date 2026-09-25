@@ -89,7 +89,7 @@ public final class ContentTeamsPicks {
                 ContentTeams.seated(member, def);
                 if (drawnBefore.contains(member)) { ContentLog.LOGGER.debug("{} was drawn for {} again", member, def.displayName()); }
                 else {
-                    if (ContentWelcome.arrived(player)) { Says.tell(player, "You were picked for " + def.displayName(), def.color()); }
+                    if (ContentWelcome.arrived(player)) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_PICKED, "You were picked for " + def.displayName(), def.color()); }
                     ContentTeams.give(player, def);
                     newlySeated.add(member);
                 }

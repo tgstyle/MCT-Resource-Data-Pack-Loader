@@ -111,8 +111,8 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
     @Nullable static BlockState mouthAt(List<ContentCityPlazaPiece> plazas, int x, int z) {
         for (ContentCityPlazaPiece plaza : plazas) {
             PathIntersectDef def = plaza.design.isEmpty() ? null : ContentPathIntersects.byName(plaza.design);
-            BlockState road = stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
-            BlockState marked = plaza.mouth(def, x, z, road, stateOr(ContentCity.lineBlock(), road), stateOr(ContentCity.sidewalkBlock(), road));
+            BlockState road = CityPalette.stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
+            BlockState marked = plaza.mouth(def, x, z, road, CityPalette.stateOr(ContentCity.lineBlock(), road), CityPalette.stateOr(ContentCity.sidewalkBlock(), road));
             if (marked != null) { return marked; }
         }
         return null;
@@ -146,9 +146,9 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
     }
 
     @SuppressWarnings("deprecation") private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
-        BlockState road = stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
-        BlockState edge = stateOr(ContentCity.lineBlock(), road);
-        BlockState sidewalk = stateOr(ContentCity.sidewalkBlock(), road);
+        BlockState road = CityPalette.stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
+        BlockState edge = CityPalette.stateOr(ContentCity.lineBlock(), road);
+        BlockState sidewalk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
         BlockState air = Blocks.AIR.defaultBlockState();
         PathIntersectDef mouth = design.isEmpty() ? null : ContentPathIntersects.byName(design);
         List<String> rows = mouth == null ? List.of() : mouth.mouth();
@@ -287,10 +287,8 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         if (mark == PathIntersectDef.LINE) { return edge; }
         if (mark == PathIntersectDef.WALK) { return sidewalk; }
         String named = def.legend().get(mark);
-        return named == null ? road : stateOr(named, road);
+        return named == null ? road : CityPalette.stateOr(named, road);
     }
-
-    private static BlockState stateOr(String named, BlockState fallback) { return CityPalette.stateOr(named, fallback); }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(getBoundingBox(), level); }
 

@@ -223,7 +223,7 @@ public final class ContentTeams {
     }
 
     private static void leadTold(ServerPlayer player, TeamDef def, String how) {
-        if (!def.leadSays().isEmpty()) { Says.tell(player, def.leadSays().replace("{side}", def.displayName()) + how, def.color()); }
+        if (!def.leadSays().isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_LEAD, def.leadSays().replace("{side}", def.displayName()) + how, def.color()); }
         ContentLog.LOGGER.info("{} leads {}{}", player.getGameProfile().getName(), def.displayName(), how);
     }
 
@@ -231,7 +231,7 @@ public final class ContentTeams {
         PlayerTeam held = Scores.teamOf(Scores.board(player.server), player.getGameProfile().getName());
         TeamDef def = held == null ? null : BY_NAME.get(held.getName());
         if (def == null) { return; }
-        Says.tell(player, "You are on " + def.displayName(), def.color());
+        Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_JOINED, "You are on " + def.displayName(), def.color());
         if (player.getGameProfile().getName().equals(leadOf(player.serverLevel(), def))) { leadTold(player, def, ""); }
     }
 
@@ -383,7 +383,7 @@ public final class ContentTeams {
             ServerPlayer player = server.getPlayerList().getPlayerByName(one.getKey());
             if (def == null || player == null) { continue; }
             join(player.serverLevel(), player.getGameProfile().getName(), def);
-            Says.tell(player, "The round ended, so you are on " + def.displayName(), def.color());
+            Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_ROUND_ENDED, "The round ended, so you are on " + def.displayName(), def.color());
         }
         WAITING.clear();
     }

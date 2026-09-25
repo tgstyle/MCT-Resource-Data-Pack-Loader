@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.item.ContentContainerItem;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -81,8 +82,8 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
     }
 
     private static ContainerDef read(RegistryFriendlyByteBuf extra) {
-        int rows = Math.clamp(extra.readVarInt(), 1, ContainerDef.MOST_ROWS);
-        int columns = Math.clamp(extra.readVarInt(), 1, ContainerDef.MOST_COLUMNS);
+        int rows = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_ROWS);
+        int columns = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_COLUMNS);
         if (!extra.readBoolean()) { return new ContainerDef(rows, columns, "", false, null, null, 0, 0, ""); }
         return new ContainerDef(rows, columns, "", false, null, extra.readResourceLocation(), extra.readVarInt(), extra.readVarInt(), "");
     }

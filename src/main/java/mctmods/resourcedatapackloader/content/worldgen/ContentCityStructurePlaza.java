@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
@@ -78,16 +80,16 @@ public final class ContentCityStructurePlaza {
     }
 
     static int[] footprints(List<BoundingBox> claims, List<ContentCityStructure.Seated> seated) {
-        List<Integer> boxes = new ArrayList<>();
-        for (BoundingBox claim : claims) { boxes.addAll(List.of(claim.minX(), claim.minZ(), claim.maxX(), claim.maxZ())); }
-        for (ContentCityStructure.Seated held : seated) { boxes.addAll(List.of(held.box().minX(), held.box().minZ(), held.box().maxX(), held.box().maxZ())); }
-        return boxes.stream().mapToInt(Integer::intValue).toArray();
+        IntList boxes = new IntArrayList();
+        for (BoundingBox claim : claims) { boxes.addAll(IntList.of(claim.minX(), claim.minZ(), claim.maxX(), claim.maxZ())); }
+        for (ContentCityStructure.Seated held : seated) { boxes.addAll(IntList.of(held.box().minX(), held.box().minZ(), held.box().maxX(), held.box().maxZ())); }
+        return boxes.toIntArray();
     }
 
     static int[] streetsOver(ContentCityStructure.Well well, Map<CityPlan.Line, ContentCityStructure.Laid> laid) {
         int reach = ContentCitySewerLoopPiece.LOOP + ContentCity.sewerWidth() / 2;
         BoundingBox box = well.box();
-        List<Integer> found = new ArrayList<>();
+        IntList found = new IntArrayList();
         for (CityPlan.Line line : List.of(well.middle().alongX(), well.middle().alongZ())) {
             ContentCityStructure.Laid street = laid.get(line);
             if (street == null) { continue; }
@@ -103,7 +105,7 @@ public final class ContentCityStructurePlaza {
                 }
             }
         }
-        return found.stream().mapToInt(Integer::intValue).toArray();
+        return found.toIntArray();
     }
 
     static List<ContentCityStructure.Well> near(GenerationContext context, CityGround ground, CityPlan plan) {

@@ -28,6 +28,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -214,7 +215,7 @@ public final class ContentRegistry {
         BlockDef def = entry.def();
         if (ContentBlockTypes.CONTAINER.equals(def.type()) && def.container() != null && def.container().chestModel()) { return 0; }
         if (ContentBlockTypes.BELL.equals(def.type())) { return 0; }
-        return Math.clamp(def.lightOpacity(), 0, 15);
+        return Mth.clamp(def.lightOpacity(), 0, 15);
     }
 
     public static boolean lacks(String behavior, Block block) {

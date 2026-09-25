@@ -11,7 +11,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,12 +26,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
-public final class Ported {
+public final class Ported implements PackPort {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final List<String> PRIMARY_TEXTURES = List.of("all", "cross", "texture", "side", "pane", "torch", "crop", "particle", "layer0", "wall", "top", "end");
     private static final String WALL = "_wall";
@@ -71,6 +69,10 @@ public final class Ported {
     private record Source(Path real, Port.Kind kind, @Nullable String extra) {}
 
     private record Banner(String name, String property, List<String> values, String layer) {}
+
+    @Override public String origin() { return "1.12.2"; }
+
+    @Override public PackType reads() { return PackType.CLIENT_RESOURCES; }
 
     public String mainNamespace() { return namespaces.isEmpty() ? "minecraft" : namespaces.iterator().next(); }
 
@@ -125,7 +127,7 @@ public final class Ported {
 
     public Map<String, String> renamedIn(String namespace, String folder, String file) { return renamed.getOrDefault(namespace + ":" + folder + "/" + file, Map.of()); }
 
-    public void index(String namespace, List<String> realPaths) {
+    @Override public void index(String namespace, List<String> realPaths) {
         namespaces.add(namespace);
         Path home = root.resolve("assets").resolve(namespace);
         for (String path : realPaths) {
@@ -471,7 +473,7 @@ public final class Ported {
         return false;
     }
 
-    public Map<PackType, Map<String, Set<String>>> exposed() {
+    @Override public Map<PackType, Map<String, Set<String>>> exposed() {
         Map<PackType, Map<String, Set<String>>> out = new EnumMap<>(PackType.class);
         for (Map.Entry<PackType, Map<String, Map<String, Source>>> type : exposed.entrySet()) {
             Map<String, Set<String>> namespacesOut = new LinkedHashMap<>();
@@ -481,7 +483,7 @@ public final class Ported {
         return out;
     }
 
-    @Nullable public InputStream open(PackType type, String namespace, String path) throws IOException {
+    @Override @Nullable public InputStream open(PackType type, String namespace, String path) throws IOException {
         Source source = exposed.getOrDefault(type, Map.of()).getOrDefault(namespace, Map.of()).get(path);
         if (source == null) { return null; }
         if (source.kind() == Port.Kind.RAW) { return Files.newInputStream(source.real()); }
@@ -526,66 +528,48 @@ public final class Ported {
         catch (IOException | RuntimeException failed) { return null; }
     }
 
-    public void report() {
+    @Override public void report() {
         reported = true;
-        ContentLog.LOGGER.info("Pack '{}' is written for 1.12.2 and is read through the forward port: {} file(s) moved under data, {} left out, ids and keys rewritten as they are read. The pack is not changed on disk", name, moved, dropped);
+        ContentLog.LOGGER.info("Pack '{}' is written for 1.12.2 and is read through the forward port: {} file(s) moved under data, {} left out, ids and keys rewritten as they are read", name, moved, dropped);
         List<String> said = new ArrayList<>(notes);
         for (int i = 0; i < Math.min(said.size(), 40); i++) { ContentLog.LOGGER.info("  {}", said.get(i)); }
         if (said.size() > 40) { ContentLog.LOGGER.info("  ... and {} more", said.size() - 40); }
     }
 
-    public void writeZip(Path target, Path root) throws IOException {
-        try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(target)))) {
-            Set<String> written = new LinkedHashSet<>();
-            for (Map.Entry<PackType, Map<String, Map<String, Source>>> type : exposed.entrySet()) {
-                for (Map.Entry<String, Map<String, Source>> namespace : type.getValue().entrySet()) {
-                    for (String path : namespace.getValue().keySet()) {
-                        String entry = type.getKey().getDirectory() + "/" + namespace.getKey() + "/" + path;
-                        if (!written.add(entry)) { continue; }
-                        try (InputStream in = open(type.getKey(), namespace.getKey(), path)) {
-                            if (in == null) { continue; }
-                            out.putNextEntry(new ZipEntry(entry));
-                            in.transferTo(out);
-                            out.closeEntry();
-                        }
-                    }
-                }
-            }
-            for (String rootFile : new String[] {"pack.png", "readme.txt", "readme.md", "README.md", "README.txt"}) {
-                Path held = root.resolve(rootFile);
-                if (Files.isRegularFile(held) && written.add(rootFile)) {
-                    out.putNextEntry(new ZipEntry(rootFile));
-                    Files.copy(held, out);
-                    out.closeEntry();
-                }
-            }
-            Path config = root.resolve("config");
-            if (Files.isDirectory(config)) {
-                try (Stream<Path> files = Files.walk(config)) {
-                    for (Path held : (Iterable<Path>) files.filter(Files::isRegularFile)::iterator) {
-                        String entry = root.relativize(held).toString().replace('\\', '/');
-                        if (!written.add(entry)) { continue; }
-                        out.putNextEntry(new ZipEntry(entry));
-                        Files.copy(held, out);
+    @Override public void writeVersion(ZipOutputStream out, String prefix) throws IOException {
+        int written = 0;
+        for (Map.Entry<PackType, Map<String, Map<String, Source>>> type : exposed.entrySet()) {
+            for (Map.Entry<String, Map<String, Source>> namespace : type.getValue().entrySet()) {
+                for (Map.Entry<String, Source> path : namespace.getValue().entrySet()) {
+                    if (carried(type.getKey(), namespace.getKey(), path.getKey(), path.getValue())) { continue; }
+                    try (InputStream in = open(type.getKey(), namespace.getKey(), path.getKey())) {
+                        if (in == null) { continue; }
+                        out.putNextEntry(new ZipEntry(prefix + type.getKey().getDirectory() + "/" + namespace.getKey() + "/" + path.getKey()));
+                        in.transferTo(out);
                         out.closeEntry();
+                        written++;
                     }
                 }
             }
-            JsonObject meta = new JsonObject();
-            Path metaFile = root.resolve("pack.mcmeta");
-            JsonObject old = Files.isRegularFile(metaFile) ? readJson(metaFile) : null;
-            JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
-            pack.addProperty("pack_format", SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA));
-            if (!pack.has("description")) { pack.addProperty("description", name); }
-            meta.add("pack", pack);
-            out.putNextEntry(new ZipEntry("pack.mcmeta"));
-            out.write(GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
-            out.closeEntry();
-            note("written out as a pack of this version, " + written.size() + " file(s)");
         }
+        JsonObject meta = new JsonObject();
+        Path metaFile = root.resolve("pack.mcmeta");
+        JsonObject old = Files.isRegularFile(metaFile) ? readJson(metaFile) : null;
+        JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
+        pack.addProperty("pack_format", SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA));
+        if (!pack.has("description")) { pack.addProperty("description", name); }
+        meta.add("pack", pack);
+        out.putNextEntry(new ZipEntry(prefix + "pack.mcmeta"));
+        out.write(GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
+        out.closeEntry();
+        note("written into " + prefix + ", " + written + " file(s) this version reads differently; the rest is read from the root as it is");
     }
 
-    public void closing() {
+    private boolean carried(PackType type, String namespace, String path, Source source) {
+        return type == PackType.CLIENT_RESOURCES && source.kind() == Port.Kind.RAW && Port.unchanged(path) && source.real().equals(root.resolve("assets").resolve(namespace).resolve(path));
+    }
+
+    @Override public void closing() {
         if (rewritten > 0) { ContentLog.LOGGER.info("Pack '{}': the forward port rewrote {} id(s) and key(s) while the pack was read", name, rewritten); }
     }
 }

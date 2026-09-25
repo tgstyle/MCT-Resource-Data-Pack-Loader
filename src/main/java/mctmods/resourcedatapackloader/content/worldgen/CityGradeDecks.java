@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import net.minecraft.util.Mth;
+
 final class CityGradeDecks {
     private CityGradeDecks() {}
 
@@ -27,12 +29,12 @@ final class CityGradeDecks {
             return;
         }
         for (int k = first - 1, away = 1; k >= 0 && !keep[k]; k--, away++) {
-            int want = Math.clamp(profile[k], deck - away, deck + away);
+            int want = Mth.clamp(profile[k], deck - away, deck + away);
             if (profile[k] == want) { break; }
             profile[k] = want;
         }
         for (int k = last + 1, away = 1; k < profile.length && !keep[k]; k++, away++) {
-            int want = Math.clamp(profile[k], deck - away, deck + away);
+            int want = Mth.clamp(profile[k], deck - away, deck + away);
             if (profile[k] == want) { break; }
             profile[k] = want;
         }

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import net.minecraft.util.Mth;
+
 final class CityGradeRails {
     private CityGradeRails() {}
 
@@ -75,11 +77,11 @@ final class CityGradeRails {
     static void rein(int[] profile, boolean[] fixed) {
         for (int at = 1; at < profile.length; at++) {
             if (fixed[at]) { continue; }
-            profile[at] = Math.clamp(profile[at], profile[at - 1] - 1, profile[at - 1] + 1);
+            profile[at] = Mth.clamp(profile[at], profile[at - 1] - 1, profile[at - 1] + 1);
         }
         for (int at = profile.length - 2; at >= 0; at--) {
             if (fixed[at]) { continue; }
-            profile[at] = Math.clamp(profile[at], profile[at + 1] - 1, profile[at + 1] + 1);
+            profile[at] = Mth.clamp(profile[at], profile[at + 1] - 1, profile[at + 1] + 1);
         }
     }
 }

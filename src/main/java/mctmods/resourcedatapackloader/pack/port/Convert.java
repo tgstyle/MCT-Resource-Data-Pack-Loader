@@ -30,6 +30,7 @@ public final class Convert {
     private static final Set<String> RAW_CONTAINERS = Set.of("palette", "legend", "rows", "map", "pattern", "key", "notes", "attributes", "pathPriorities", "gameRules", "decoration", "spawnRates", "settings");
     private static final Pattern DIM_PREFIX = Pattern.compile("^(-?\\d+)=(.*)$");
     private static final Pattern REPLACEMENT = Pattern.compile("^([^=]+)=([^=]+)$");
+    private static final Pattern WEIGHT = Pattern.compile("\\d+");
     private static final List<String> FLUID_TEXTURES = List.of("still", "flow");
     private static final List<String> CONTAINER_TEXTURES = List.of("chestModel", "guiTexture");
     static final String WILDCARD = ":*";
@@ -391,7 +392,7 @@ public final class Convert {
             String entry = part.trim();
             String weight = "";
             int gap = entry.lastIndexOf(' ');
-            if (gap > 0 && entry.substring(gap + 1).trim().matches("\\d+")) {
+            if (gap > 0 && WEIGHT.matcher(entry.substring(gap + 1).trim()).matches()) {
                 weight = " " + entry.substring(gap + 1).trim();
                 entry = entry.substring(0, gap).trim();
             }

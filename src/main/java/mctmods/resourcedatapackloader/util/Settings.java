@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +15,12 @@ public final class Settings {
         Set<String> set = new LinkedHashSet<>();
         for (String value : values) { set.add(value.trim().toLowerCase(Locale.ROOT)); }
         return set;
+    }
+
+    public static List<String> lowered(List<String> values) {
+        List<String> out = new ArrayList<>(values.size());
+        for (String value : values) { out.add(value.trim().toLowerCase(Locale.ROOT)); }
+        return Collections.unmodifiableList(out);
     }
 
     public static List<String> entries(String text) {

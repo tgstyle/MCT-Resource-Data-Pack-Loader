@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Toasts;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
@@ -24,11 +26,12 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         });
         registrar.playToClient(MessageHold.TYPE, MessageHold.CODEC, (message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog(), message.backdrop(), message.font()); }
         });
         registrar.playToClient(MessageNote.TYPE, MessageNote.CODEC, (message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said(), message.backdrop(), message.font()); }
         });
+        registrar.playToClient(MessageToasts.TYPE, MessageToasts.CODEC, (message, context) -> Toasts.show(message.kinds()));
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
         });
@@ -45,17 +48,21 @@ public final class RDPLNetwork {
     }
 
     public static void sendHold(ServerPlayer player, boolean held, String warning, boolean fog) {
-        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held, warning, fog)); }
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageHold(held, warning, fog, Says.panel(), Says.font())); }
     }
 
     public static boolean sendNote(ServerPlayer player, String said) {
         if (!reaches(player)) { return false; }
-        PacketDistributor.sendToPlayer(player, new MessageNote(said));
+        PacketDistributor.sendToPlayer(player, new MessageNote(said, Says.panel(), Says.font()));
         return true;
     }
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {
         if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageIntroPlay(landBeingMade)); }
+    }
+
+    public static void sendToasts(ServerPlayer player, int kinds) {
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageToasts(kinds)); }
     }
 
     public static void introDone() { PacketDistributor.sendToServer(new MessageIntroDone()); }
