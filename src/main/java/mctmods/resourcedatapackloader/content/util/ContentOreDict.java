@@ -22,6 +22,8 @@ import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 public final class ContentOreDict {
     private static final Gson GSON = new GsonBuilder().create();
@@ -103,6 +105,32 @@ public final class ContentOreDict {
             }
             if (!found) { ContentLog.LOGGER.error("Ore dictionary name '{}' in {} does not carry {}, so there is nothing to remove", name, key, wanted); }
         }
+    }
+
+    public static int strip(Predicate<ItemStack> doomed, Set<String> emptied) {
+        List<List<ItemStack>> table;
+        Map<Integer, List<Integer>> stackToId;
+        try {
+            table = idToStack();
+            stackToId = stackToId();
+        }
+        catch (ReflectiveOperationException | RuntimeException ex) {
+            ContentLog.LOGGER.error("The ore dictionary's tables could not be reached, so disabled items keep their ore dictionary names", ex);
+            return 0;
+        }
+        int count = 0;
+        for (String name : OreDictionary.getOreNames()) {
+            int id = OreDictionary.getOreID(name);
+            boolean all = emptied.contains(name);
+            for (Iterator<ItemStack> each = table.get(id).iterator(); each.hasNext();) {
+                ItemStack held = each.next();
+                if (!all && !doomed.test(held)) { continue; }
+                unlink(stackToId, held, id);
+                each.remove();
+                count++;
+            }
+        }
+        return count;
     }
 
     private static void unlink(Map<Integer, List<Integer>> stackToId, ItemStack held, int id) {

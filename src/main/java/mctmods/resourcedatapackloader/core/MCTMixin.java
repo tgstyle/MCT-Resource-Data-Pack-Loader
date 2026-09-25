@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.StrayPacks;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -122,6 +123,7 @@ import java.util.Map;
         if (FMLLaunchHandler.side().isClient()) { SplashDark.apply(mcDir, EarlyConfig.flag(mcDir, "mct_resourcedatapackloader_mixin.cfg", "B:darkSplash=", true), LOGGER); }
         Path root = mcDir.toPath().resolve(rootDirectory());
         LOGGER.info("Pack root: {}", root);
+        StrayPacks.collect(mcDir.toPath(), root);
         PackManager.get().scan(root);
     }
 

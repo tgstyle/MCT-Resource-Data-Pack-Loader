@@ -1,5 +1,9 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardFire;
+import mctmods.resourcedatapackloader.content.card.CardIds;
+import mctmods.resourcedatapackloader.content.card.CardLook;
+import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -225,15 +229,19 @@ public final class ContentScoring {
             waiting = Math.max(1, def.endsIntermission);
             ContentLog.LOGGER.info("The map is reset in {} second(s), so the scores can be read first", def.endsIntermission);
         }
+        ItemStack icon = def.resultsIcon.isEmpty() ? ItemStack.EMPTY
+                : ContentStacks.parse(new ResourceLocation("resourcedatapackloader", "results"), def.resultsIcon, 1);
+        if (!CardRules.unset(CardIds.SCORING_RESULTS)) {
+            for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { CardFire.builtin(CardIds.SCORING_RESULTS, player, CardLook.card(def.resultsTitle, lines, icon, def.resultsImage, def.resultsBackground, def.resultsTicks)); }
+            return;
+        }
         if (!def.resultsCard) {
             Says.tellAll(def.displayName + " is over", TextFormatting.GOLD);
             for (String line : lines) { Says.tellAll(line, TextFormatting.YELLOW); }
             return;
         }
-        ItemStack icon = def.resultsIcon.isEmpty() ? ItemStack.EMPTY
-                : ContentStacks.parse(new ResourceLocation("resourcedatapackloader", "results"), def.resultsIcon, 1);
         MessageCard card = new MessageCard(def.resultsTitle, lines, icon, def.resultsImage,
-                def.resultsBackground, 0xFFFFFF, def.resultsTicks);
+                def.resultsBackground, 0xFFFFFF, def.resultsTicks, false, Says.panel(), Says.font());
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             if (RDPLNetwork.vanilla(player)) {
                 Says.tell(player, def.resultsTitle, TextFormatting.GOLD);
@@ -372,7 +380,7 @@ public final class ContentScoring {
         }
         player.setGameType(GameType.SPECTATOR);
         String said = outSays();
-        if (!said.isEmpty()) { Says.tell(player, said, TextFormatting.GRAY); }
+        if (!said.isEmpty()) { Says.tell(player, CardIds.SCORING_OUT, said, TextFormatting.GRAY); }
     }
 
     @SubscribeEvent public static void onBack(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {

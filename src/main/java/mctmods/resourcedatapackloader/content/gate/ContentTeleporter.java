@@ -5,12 +5,12 @@ import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Registries;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
@@ -88,24 +88,12 @@ public final class ContentTeleporter implements ITeleporter {
         return portalPos;
     }
 
-    public static void remember(Entity entity, int dimension, BlockPos pos) {
-        NBTTagCompound persisted = entity.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
-        NBTTagCompound portals = persisted.getCompoundTag(PORTALS);
-        portals.setLong(String.valueOf(dimension), pos.toLong());
-        persisted.setTag(PORTALS, portals);
-        entity.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-    }
+    public static void remember(Entity entity, int dimension, BlockPos pos) { PlayerPersisted.section(entity, PORTALS).setLong(String.valueOf(dimension), pos.toLong()); }
 
-    private static void forget(Entity entity, int dimension) {
-        NBTTagCompound persisted = entity.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
-        NBTTagCompound portals = persisted.getCompoundTag(PORTALS);
-        portals.removeTag(String.valueOf(dimension));
-        persisted.setTag(PORTALS, portals);
-        entity.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-    }
+    private static void forget(Entity entity, int dimension) { PlayerPersisted.section(entity, PORTALS).removeTag(String.valueOf(dimension)); }
 
     @Nullable private BlockPos remembered(Entity entity, int dimension) {
-        NBTTagCompound portals = entity.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG).getCompoundTag(PORTALS);
+        NBTTagCompound portals = PlayerPersisted.read(entity, PORTALS);
         String key = String.valueOf(dimension);
         if (!portals.hasKey(key)) { return null; }
         return BlockPos.fromLong(portals.getLong(key));

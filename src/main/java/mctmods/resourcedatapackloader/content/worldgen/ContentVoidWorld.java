@@ -12,6 +12,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProviderEnd;
 import net.minecraft.world.WorldServer;
@@ -92,7 +93,7 @@ public final class ContentVoidWorld {
         }
     }
 
-    private static BlockPos center() { return new BlockPos(0, Math.max(1, Math.min(250, ContentControl.number(ContentControl.VOID, "voidPlatformHeight", Config.worldgen.voidPlatformHeight))), 0); }
+    private static BlockPos center() { return new BlockPos(0, MathHelper.clamp(ContentControl.number(ContentControl.VOID, "voidPlatformHeight", Config.worldgen.voidPlatformHeight), 1, 250), 0); }
 
     @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) {
         World world = event.getWorld();

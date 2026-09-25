@@ -126,6 +126,11 @@ public final class Port {
         return new Mapped(path, Kind.RAW, "");
     }
 
+    public static boolean unchanged(String path) {
+        Mapped mapped = assets(path);
+        return mapped.kind == Kind.RAW && mapped.path.equals(path);
+    }
+
     static String texturePath(String path) {
         if (path.startsWith("textures/block/")) { return "textures/blocks/" + path.substring("textures/block/".length()); }
         if (path.startsWith("textures/item/")) { return "textures/items/" + path.substring("textures/item/".length()); }

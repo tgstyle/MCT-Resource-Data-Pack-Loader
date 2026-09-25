@@ -7,6 +7,7 @@ import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RecipeTolerance {
     private static final Set<ResourceLocation> MISSING = ConcurrentHashMap.newKeySet();
     private static final Set<ResourceLocation> REPORTED = ConcurrentHashMap.newKeySet();
+    private static final Set<ResourceLocation> ON_PURPOSE = ConcurrentHashMap.newKeySet();
 
     private RecipeTolerance() {}
 
     public static boolean disabled() { return !Config.recipes.tolerateMissingInAdvancements; }
+
+    public static void removedOnPurpose(Collection<ResourceLocation> names) { ON_PURPOSE.addAll(names); }
 
     public static IRecipe resolve(ResourceLocation name) {
         IRecipe recipe = CraftingManager.getRecipe(name);
@@ -71,7 +75,7 @@ public final class RecipeTolerance {
     }
 
     private static void report(ResourceLocation name) {
-        if (!MISSING.add(name)) { return; }
+        if (ON_PURPOSE.contains(name) || !MISSING.add(name)) { return; }
         ContentLog.LOGGER.debug("Recipe {} no longer exists, advancements referring to it will load but never unlock it", name);
     }
 }

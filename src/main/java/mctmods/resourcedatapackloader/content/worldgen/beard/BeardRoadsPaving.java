@@ -15,6 +15,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
@@ -94,9 +95,9 @@ public final class BeardRoadsPaving {
             profile[i] = found;
         }
         int before = roadAnchor(world, alongX, least - 1, acrossLeast, acrossMost, path, gravel);
-        if (before != Integer.MIN_VALUE && profile[0] != Integer.MIN_VALUE) { profile[0] = Math.max(before - 1, Math.min(before + 1, profile[0])); }
+        if (before != Integer.MIN_VALUE && profile[0] != Integer.MIN_VALUE) { profile[0] = MathHelper.clamp(profile[0], before - 1, before + 1); }
         int after = roadAnchor(world, alongX, most + 1, acrossLeast, acrossMost, path, gravel);
-        if (after != Integer.MIN_VALUE && profile[rows - 1] != Integer.MIN_VALUE) { profile[rows - 1] = Math.max(after - 1, Math.min(after + 1, profile[rows - 1])); }
+        if (after != Integer.MIN_VALUE && profile[rows - 1] != Integer.MIN_VALUE) { profile[rows - 1] = MathHelper.clamp(profile[rows - 1], after - 1, after + 1); }
         int[] ground = profile.clone();
         boolean[] bridged = BeardGrade.smooth(profile);
         int capped = BeardGrade.capEmbankment(profile, ground, bridged, new boolean[profile.length]);

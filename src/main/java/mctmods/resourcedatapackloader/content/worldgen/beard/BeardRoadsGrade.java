@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -295,7 +296,7 @@ public final class BeardRoadsGrade {
             if (grade == null) { grade = roadProfile(world, other, alongX, start, alongX ? road.maxX : road.maxZ, alongX ? road.minZ : road.minX, alongX ? road.maxZ : road.maxX, true); }
             if (grade == null) { return Integer.MIN_VALUE; }
             int center = alongX ? (box.minX + box.maxX) / 2 : (box.minZ + box.maxZ) / 2;
-            int row = Math.max(start, Math.min(start + grade.profile.length - 1, center));
+            int row = MathHelper.clamp(center, start, start + grade.profile.length - 1);
             if (grade.profile[row - start] == Integer.MIN_VALUE) { continue; }
             return grade.profile[row - start] + 1;
         }

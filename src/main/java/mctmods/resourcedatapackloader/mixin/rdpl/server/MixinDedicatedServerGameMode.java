@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.server;
 
-import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -15,10 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow private GameType gameType;
 
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/dedicated/DedicatedServer;loadAllWorlds(Ljava/lang/String;Ljava/lang/String;JLnet/minecraft/world/WorldType;Ljava/lang/String;)V")) private void rdpl$writeThePackMode(CallbackInfoReturnable<Boolean> cir) {
-        GameType asked = ContentTerrain.gameModeFrom(ContentTerrain.worldGameMode());
+        GameType asked = ContentServer.gameModeFrom(ContentServer.worldGameMode());
         if (asked == GameType.NOT_SET) { return; }
         DedicatedServer server = (DedicatedServer) (Object) this;
-        boolean hardcore = ContentTerrain.hardcoreAsked();
+        boolean hardcore = ContentServer.hardcoreAsked();
         if (gameType == asked && server.isHardcore() == hardcore) { return; }
         ContentLog.LOGGER.info("server.properties plays {} and a pack asks for {}, so the pack's mode is written to server.properties and every world plays it", server.isHardcore() ? "hardcore" : gameType.getName(), hardcore ? "hardcore" : asked.getName());
         gameType = asked;

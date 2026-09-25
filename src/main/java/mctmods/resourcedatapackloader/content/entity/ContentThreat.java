@@ -195,7 +195,7 @@ public final class ContentThreat {
         ContentLog.LOGGER.debug("Player {} carries a threat score of {} and stands in band {} of {}", player.getName(), score, band, levels.length);
         if (before == null) { return; }
         String said = SAYS.get(band);
-        if (said != null && !said.isEmpty() && player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) player, said, TextFormatting.YELLOW); }
+        if (said != null && !said.isEmpty() && player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) player, mctmods.resourcedatapackloader.content.card.CardIds.THREAT, said, TextFormatting.YELLOW); }
     }
 
     private static int score(Entity entity) {

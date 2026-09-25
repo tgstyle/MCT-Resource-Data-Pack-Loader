@@ -71,9 +71,11 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.recipe.FurnaceBlocking;
 import mctmods.resourcedatapackloader.recipe.FurnaceRecipes;
+import mctmods.resourcedatapackloader.recipe.RecipeDisabled;
 import mctmods.resourcedatapackloader.registry.RegistryRemaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Toasts;
 
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.storage.loot.LootTableList;
@@ -101,7 +103,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);after:baubles;")
+@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);after:baubles;before:jei;")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
     public static final String ICON = "textures/gui/icon.png";
@@ -147,6 +149,7 @@ public class ResourceDataPackLoader {
         ContentPortalFrames.load();
         ContentWorldIntro.load();
         RDPLNetwork.register();
+        MinecraftForge.EVENT_BUS.register(Toasts.class);
         if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
         ContentBiomeControl.apply();
         ContentSetup.applyFire();
@@ -178,6 +181,9 @@ public class ResourceDataPackLoader {
         ContentBlastPlaster.install();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
+        mctmods.resourcedatapackloader.content.card.CardRules.load();
+        MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.card.CardEvents.class);
+        MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.card.CardScan.class);
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
         CmsRubicSpawns.register();
         CbmpRubicParts.register();
@@ -223,6 +229,7 @@ public class ResourceDataPackLoader {
             }
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CardOverlay.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CenterCard.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.HoldView.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.ProspectTooltip.class);
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
@@ -231,6 +238,7 @@ public class ResourceDataPackLoader {
     }
 
     @Mod.EventHandler public void loadComplete(FMLLoadCompleteEvent event) {
+        RecipeDisabled.apply();
         FurnaceBlocking.apply();
         ContentSpawners.apply();
     }
@@ -244,11 +252,13 @@ public class ResourceDataPackLoader {
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         FurnaceBlocking.apply();
+        RecipeDisabled.furnace();
         ContentOverrides.reload();
         ContentReplacements.reload();
         ContentStructurePlacement.reload();
         ContentEntityTicks.reload();
         ContentVillages.reload();
+        mctmods.resourcedatapackloader.content.card.CardRules.load();
         if (ContentVillages.load()) { ContentVillages.register(); }
     }
 

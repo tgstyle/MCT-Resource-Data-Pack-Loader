@@ -126,6 +126,7 @@ public final class ContentVillages {
         BARRED_READ.forget();
         LARGEST.forget();
         NAMED.forget();
+        ContentStates.forget();
         loaded = false;
     }
 

@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
-import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -79,7 +79,7 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Inject(method = "getDifficulty", at = @At("HEAD"), cancellable = true) private void rdpl$difficultyAsAsked(CallbackInfoReturnable<EnumDifficulty> cir) {
         World self = (World) (Object) this;
         if (self.provider == null) { return; }
-        EnumDifficulty asked = ContentTerrain.difficultyFor(self.provider.getDimension());
+        EnumDifficulty asked = ContentServer.difficultyFor(self.provider.getDimension());
         if (asked != null) { cir.setReturnValue(asked); }
     }
 

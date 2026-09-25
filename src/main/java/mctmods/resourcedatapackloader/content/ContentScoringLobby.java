@@ -47,7 +47,7 @@ public final class ContentScoringLobby {
         Travel.to(player, lobby.opensLobby[0], x, standing(world, x, lobby.opensLobby[2], z), z, player.rotationYaw, 0.0F);
         ContentScoring.OUT.put(player.getName(), player.interactionManager.getGameType());
         player.setGameType(GameType.SPECTATOR);
-        if (!lobby.opensJoinsSays.isEmpty()) { Says.tell(player, lobby.opensJoinsSays, TextFormatting.GRAY); }
+        if (!lobby.opensJoinsSays.isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.LOBBY_JOINS, lobby.opensJoinsSays, TextFormatting.GRAY); }
     }
 
     static void keepStill(@Nullable MinecraftServer server) {
@@ -165,7 +165,8 @@ public final class ContentScoringLobby {
         DUE.remove(player.getName());
         SHOWN.put(player.getName(), said);
         TOLD.put(player.getName(), server.getWorld(0).getTotalWorldTime());
-        mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.show(player, said, TextFormatting.GOLD);
+        if (mctmods.resourcedatapackloader.content.card.CardRules.unset(mctmods.resourcedatapackloader.content.card.CardIds.LOBBY_NOTE)) { mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.show(player, said, TextFormatting.GOLD); }
+        else { mctmods.resourcedatapackloader.content.card.CardFire.builtin(mctmods.resourcedatapackloader.content.card.CardIds.LOBBY_NOTE, player, mctmods.resourcedatapackloader.content.card.CardLook.says(said, TextFormatting.GOLD, mctmods.resourcedatapackloader.content.card.CardLook.CENTER)); }
     }
 
     private static String waitingLine(MinecraftServer server, ScoreDef lobby) {

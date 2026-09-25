@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings;
@@ -98,6 +99,7 @@ import java.util.Map;
     @Shadow private GameType gameType;
     @Shadow private boolean allowCommands;
     @Shadow private boolean hardcore;
+    @Shadow private boolean mapFeaturesEnabled;
 
     @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
     private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
@@ -108,16 +110,21 @@ import java.util.Map;
             randomSeed = ContentTerrain.seedFrom(seed);
             Summary.info("terrain.seed", "Making every new world with the seed " + seed + ", which is what a pack asks for");
         }
-        String mode = ContentTerrain.worldGameMode();
+        String mode = ContentServer.worldGameMode();
         if (!mode.isEmpty()) {
-            GameType asked = ContentTerrain.gameModeFrom(mode);
+            GameType asked = ContentServer.gameModeFrom(mode);
             if (asked == GameType.NOT_SET) { ContentLog.LOGGER.error("A pack asks for the game mode '{}', which is not one of survival, hardcore, creative, adventure or spectator, so '{}' is played the way it was chosen", mode, name); }
             else {
                 gameType = asked;
                 if (asked == GameType.CREATIVE) { allowCommands = true; }
-                if (ContentTerrain.hardcoreAsked()) { hardcore = true; }
-                Summary.info("terrain.gamemode", "Starting every new world in " + (ContentTerrain.hardcoreAsked() ? "hardcore" : asked.getName()) + ", which is what a pack asks for");
+                if (ContentServer.hardcoreAsked()) { hardcore = true; }
+                Summary.info("terrain.gamemode", "Starting every new world in " + (ContentServer.hardcoreAsked() ? "hardcore" : asked.getName()) + ", which is what a pack asks for");
             }
+        }
+        Boolean structures = ContentServer.structures();
+        if (structures != null) {
+            mapFeaturesEnabled = structures;
+            Summary.info("server.structures", "Making every new world " + (structures ? "with" : "without") + " structures, which is what a pack asks for");
         }
         String wanted = ContentTerrain.worldType();
         boolean asked = !wanted.isEmpty() && (terrainType == null || !wanted.equalsIgnoreCase(terrainType.getName()));

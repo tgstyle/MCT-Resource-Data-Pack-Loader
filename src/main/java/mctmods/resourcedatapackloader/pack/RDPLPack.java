@@ -15,8 +15,10 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +35,14 @@ public final class RDPLPack {
     private final int priority;
     private final boolean overriding;
     private final Path root;
+    @Nullable private final Path own;
+    private final boolean modernRoot;
     @Nullable private final FileSystem owned;
     @Nullable private final Path archiveFile;
     @Nullable private final Set<String> ownedNamespaces;
     @Nullable private final Ported ported;
     private final Map<String, Set<String>> index = new HashMap<>();
+    private final Set<String> fromOwn = new HashSet<>();
     private int fileCount;
     @Nullable private ZipFile archive;
     private boolean archiveTried;
@@ -54,7 +59,10 @@ public final class RDPLPack {
         this.owned = owned;
         this.archiveFile = archiveFile;
         this.ownedNamespaces = ownedNamespaces;
-        this.ported = ownedNamespaces == null && Port.modern(root) ? new Ported(name, root) : null;
+        this.own = ownedNamespaces == null && owned != null ? PackVersions.home(root) : null;
+        boolean modern = ownedNamespaces == null && Port.modern(root);
+        this.modernRoot = own != null && modern;
+        this.ported = own == null && modern ? new Ported(name, root) : null;
         if (ported == null) { buildIndex(); }
         else { buildPortedIndex(ported); }
     }
@@ -76,9 +84,14 @@ public final class RDPLPack {
     public int getFileCount() { return fileCount; }
 
     private void buildIndex() {
-        Path assets = root.resolve(ASSETS);
+        if (own != null) { indexHome(own, true); }
+        indexHome(root, false);
+    }
+
+    private void indexHome(Path base, boolean versioned) {
+        Path assets = base.resolve(ASSETS);
         if (!Files.isDirectory(assets)) { return; }
-        try (Stream<Path> stream = Files.list(assets)) { stream.filter(Files::isDirectory).filter(this::ownsNamespace).forEach(this::indexNamespace); }
+        try (Stream<Path> stream = Files.list(assets)) { stream.filter(Files::isDirectory).filter(this::ownsNamespace).forEach(dir -> indexNamespace(dir, versioned)); }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
         }
@@ -120,14 +133,15 @@ public final class RDPLPack {
         return false;
     }
 
-    private void indexNamespace(Path dir) {
+    private void indexNamespace(Path dir, boolean versioned) {
         String namespace = trimSeparator(dir.getFileName().toString());
         Set<String> paths = new LinkedHashSet<>();
+        boolean carriedOnly = modernRoot && !versioned;
         int nested = 0;
         try (Stream<Path> stream = Files.walk(dir)) {
             for (String path : (Iterable<String>) stream.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
                 if (path.startsWith(PackManager.ROOT_DIRECTORY + "/")) { nested++; }
-                else { paths.add(path); }
+                else if (!carriedOnly || Port.unchanged(path)) { paths.add(path); }
             }
         }
         catch (IOException | UncheckedIOException ex) {
@@ -136,8 +150,12 @@ public final class RDPLPack {
         }
         if (nested > 0) { ContentLog.LOGGER.warn("Pack '{}': {} file(s) under '{}/{}/' are ignored. Nothing reads a '{}' folder inside a namespace; content folders sit directly under the namespace", name, nested, namespace, PackManager.ROOT_DIRECTORY, PackManager.ROOT_DIRECTORY); }
         if (paths.isEmpty()) { return; }
-        index.put(namespace, paths);
-        fileCount += paths.size();
+        Set<String> held = index.computeIfAbsent(namespace, k -> new LinkedHashSet<>());
+        for (String path : paths) {
+            if (!held.add(path)) { continue; }
+            fileCount++;
+            if (versioned) { fromOwn.add(namespace + "/" + path); }
+        }
     }
 
     private static String relative(Path dir, Path file) {
@@ -159,7 +177,7 @@ public final class RDPLPack {
         return raw;
     }
 
-    private Path locate(String namespace, String path) { return root.resolve(ASSETS).resolve(namespace).resolve(path); }
+    private Path locate(String namespace, String path) { return (own != null && fromOwn.contains(namespace + "/" + path) ? own : root).resolve(ASSETS).resolve(namespace).resolve(path); }
 
     @SuppressWarnings("resource") public InputStream open(String namespace, String path) throws IOException {
         if (ported != null) {
@@ -194,30 +212,37 @@ public final class RDPLPack {
     }
 
     public java.util.List<String> packFiles(String folder, String ext) {
-        java.util.List<String> out = new java.util.ArrayList<>();
-        Path home = root.resolve(folder);
-        if (!Files.isDirectory(home)) { return out; }
-        try (java.nio.file.DirectoryStream<Path> entries = Files.newDirectoryStream(home)) {
-            for (Path entry : entries) {
-                String name = entry.getFileName().toString();
-                if (name.endsWith("/")) { name = name.substring(0, name.length() - 1); }
-                if (Files.isRegularFile(entry) && name.endsWith("." + ext)) { out.add(name); }
+        Set<String> out = new LinkedHashSet<>();
+        for (Path base : own == null ? Collections.singletonList(root) : Arrays.asList(own, root)) {
+            Path home = base.resolve(folder);
+            if (!Files.isDirectory(home)) { continue; }
+            try (java.nio.file.DirectoryStream<Path> entries = Files.newDirectoryStream(home)) {
+                for (Path entry : entries) {
+                    String name = entry.getFileName().toString();
+                    if (name.endsWith("/")) { name = name.substring(0, name.length() - 1); }
+                    if (Files.isRegularFile(entry) && name.endsWith("." + ext)) { out.add(name); }
+                }
             }
+            catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not list {}", this.name, folder, ex); }
         }
-        catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not list {}", this.name, folder, ex); }
-        return out;
+        return new ArrayList<>(out);
+    }
+
+    @Nullable private Path packFile(String fileName) {
+        Path versioned = own == null ? null : own.resolve(fileName);
+        if (versioned != null && Files.isRegularFile(versioned)) { return versioned; }
+        Path file = root.resolve(fileName);
+        return Files.isRegularFile(file) ? file : null;
     }
 
     @Nullable public String readPackFile(String fileName) throws IOException {
-        Path file = root.resolve(fileName);
-        if (!Files.isRegularFile(file)) { return null; }
-        return new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+        Path file = packFile(fileName);
+        return file == null ? null : new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
     }
 
     @Nullable public InputStream openPackFile(String fileName) throws IOException {
-        Path file = root.resolve(fileName);
-        if (!Files.isRegularFile(file)) { return null; }
-        return Files.newInputStream(file);
+        Path file = packFile(fileName);
+        return file == null ? null : Files.newInputStream(file);
     }
 
     public void forEach(String type, String ext, IPackConsumer consumer) {

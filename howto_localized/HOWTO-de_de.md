@@ -47,6 +47,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Härtegruppen](#härtegruppen)
 
 **Herstellung, Beute und Handel**
+- [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
@@ -83,6 +84,7 @@ Acht fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, 
 - [Teams](#teams)
 - [Wertung](#wertung)
 - [Raids](#raids)
+- [Karten](#karten)
 
 **Steuerung**
 - [Die Steuerungsebene](#die-steuerungsebene)
@@ -159,6 +161,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/structures/*.nbt` | Vorlagen, für Setzlinge, `imprint` und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/recipes/*.json` | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/recipe_removals/*.json` | Rezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
+| `<namespace>/disabled/*.json` | Blöcke und Items, aus dem Spiel genommen. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items) |
 | `<namespace>/furnace/*.json` | Ofenrezepte, hinzugefügt und entfernt. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe) |
 | `<namespace>/fuels/*.json` | Brenndauern. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe) |
 | `<namespace>/brewing/*.json` | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen) |
@@ -170,6 +173,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/loot_injections/*.json` | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/block_drops/*.json` | Zusätzliche oder ersetzende Drops für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops) |
 | `<namespace>/anvils/*.json` | Verzauberungen, die ein Amboss auf einen genannten Gegenstand legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk) |
+| `<namespace>/cards/*.json` | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die diese Mod selbst ausgibt. [Karten](#karten) |
 | `<namespace>/player_loot/*.json` | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute) |
 | `<namespace>/advancements/*.json` | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
 | `<namespace>/functions/*.mcfunction` | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst) |
@@ -249,6 +253,8 @@ rdploader/assets/minecraft/textures/blocks/iron_ore.png
 rdploader/MyTextures.zip
 ```
 
+**Packs im falschen Ordner.** Beim Start, bevor RDPL `rdploader` liest, durchsucht es den Ordner `resourcepacks` des Spiels und verschiebt jedes RDPL-Pack-Zip, das es dort findet, nach `rdploader`. Ein Zip ist ein RDPL-Pack, wenn es RDPL-Definitionsdateien enthält, etwa `assets/<namespace>/blocks/` oder, bei einem modernen Pack, `data/<namespace>/blocks/`. Ein gewöhnliches Ressourcenpaket bleibt, wo es ist. Ein Zip, dessen Name es in `rdploader` schon gibt, bleibt liegen, ebenso ein RDPL-Pack in einem Ordner; für beide gibt es eine Warnung. Jede Verschiebung steht in `logs/rdpl.log`. Ein verschobenes Pack taucht in der Ressourcenpaketliste nicht mehr auf, und RDPL lädt es ab dann aus `rdploader`.
+
 **Priorität.** Enthalten zwei Packs dieselbe Datei, stell den Namen `RDPL` und eine Zahl voran – höhere Zahlen laden später und gewinnen:
 
 ```
@@ -260,6 +266,8 @@ rdploader/RDPL9 ModFixes.zip
 Groß-/Kleinschreibung ist egal; ein Leerzeichen, Bindestrich oder Unterstrich nach der Zahl ist optional; das Präfix wird im Anzeigenamen ausgeblendet. Ein Pack ohne Präfix lädt zuerst und verliert gegen jedes nummerierte. Die Priorität bestimmt auch die Reihenfolge der Worldgen-Einträge – wichtig, wenn ein Pack Blöcke setzt, die ein anderes ersetzt.
 
 **Ein Pack deaktivieren:** `.disabled` an den Namen anhängen.
+
+**Ein Zip für jede Version.** Ein Zip darf für jede Minecraft-Version, die es bedient, einen Ordner `versions/<version>/` mitbringen, also `versions/1.12.2/`, `versions/1.20.1/` und `versions/1.21.1/`, jeder aufgebaut wie die Wurzel eines Packs für diese Version, samt `pack.mcmeta`. Eine Datei im Ordner der laufenden Version wird anstelle desselben Pfads in der Wurzel gelesen; die Wurzel teilen sich alle Versionen, und der Ordner einer anderen Version wird nie gelesen. Was jede Version gleich liest, gehört in die Wurzel, nur was sich unterscheidet, in einen Versionsordner, und ein einziges Zip lädt auf allen dreien.
 
 ## Ressourcenpakete: wer gewinnt
 
@@ -431,6 +439,7 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 - **Funktionen**: die `.mcfunction`-Dateien unter `<namespace>/functions/`
 - **Registry-Umbenennungen**: alte Welten am Leben halten, wenn ein Mod einen Block oder ein Item umbenennt
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
+- **Deaktivierte Blöcke und Items**: jeden Block und jedes Item aus dem Spiel nehmen, siehe [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
 - **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
 - **Blockdrops**: dem Drop eines beliebigen Blocks beim Abbau durch einen Spieler etwas hinzufügen oder ihn ersetzen
@@ -449,9 +458,9 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | --- | --- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions` | `blocks`, `items`, `fluids`, `materials` |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict` | `biomes`, `dimensions`, `portalframes` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled` | `biomes`, `dimensions`, `portalframes` |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers` |
-| `gates`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder einer beidseitigen Mod) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder einer beidseitigen Mod) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
 | `teams`, `scoring` | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung | |
 
@@ -472,6 +481,7 @@ Einrichtung:
    - Was diese Mod als Karte zeigt, etwa Ergebnisse, den Hinweis an die Führung oder `saysCard`-Zeilen, kommt als Chatzeilen an, und Einblendungen mitten im Bild, etwa die der Lobby, als Titel.
    - Eine Härtegruppe legt fest, wie lange der Server zum Abbauen eines Blocks braucht, die Riss-Animation des Clients läuft aber im gewohnten Tempo des Blocks. Ein Override einer Zahl, die auch der Client liest, etwa Stapelgröße, Haltbarkeit, Härte oder Licht, zeigt dort weiter den alten Wert.
    - Das `adventure`-Abbauen einer Härtegruppe funktioniert nicht: Ein Vanilla-Client im Abenteuermodus beginnt nie zu graben, solange der gehaltene Gegenstand den Block nicht in seinem eigenen `CanDestroy`-Tag nennt.
+   - Ein deaktivierter Block oder ein deaktiviertes Item erscheint weiter in den Kreativ-Tabs eines Vanilla-Clients, weil der Client sie selbst aufbaut; alles andere am Deaktivieren wirkt vom Server aus.
 
 ## Registry-Umbenennungen
 
@@ -528,7 +538,7 @@ Ein Mod-Pack kommt nie in die Überschreibungsstufe der Ressourcenpakete, egal w
 
 *wie Packs funktionieren*
 
-Ein Pack für die 1.20.1- oder 1.21.1-Linie dieser Mod lädt auch hier. Der Loader erkennt es an einem `pack.mcmeta`-Format über 3, an einem `data/`-Ordner neben `assets/` oder an `.json`-Sprachdateien und `textures/block/` ohne 1.12.2-Gegenstück und trägt es zurück: Ein Zip wird unter seinem eigenen Namen als 1.12.2-Pack neu geschrieben, und das moderne Zip, aus dem es kam, bleibt daneben als `<name>_converted.zip.disabled` liegen. Es geht also nichts verloren, und das neue Pack gehört dir zum Fertigstellen. Lose Dateien unter `rdploader/assets` und `rdploader/data` werden nicht umgeschrieben; sie laufen bei jedem Scan des Ordners durch dieselbe Portierung.
+Ein Pack für die 1.20.1- oder 1.21.1-Linie dieser Mod lädt auch hier. Der Loader erkennt es an einem `pack.mcmeta`-Format über 3, an einem `data/`-Ordner neben `assets/` oder an `.json`-Sprachdateien und `textures/block/` ohne 1.12.2-Gegenstück und trägt es zurück. Ein Zip wird einmal umgewandelt, und zwar in sich selbst: Jede Datei, die 1.12.2 anders liest, landet im Ordner `versions/1.12.2/` des Zips, und die modernen Dateien in der Wurzel bleiben, wie sie waren. So lädt dasselbe Zip weiterhin unter 1.20.1 und 1.21.1, wie unter [ein Zip für jede Version](#packs-organisieren) beschrieben. Ein Zip, das schon einen Ordner `versions/1.12.2/` hat, wird darüber gelesen und nie ein zweites Mal umgewandelt, und von den Dateien in der Wurzel werden nur die weiter gelesen, die die Portierung unverändert durchreicht, etwa Sounds und Texturen außerhalb von `textures/block/` und `textures/item/`. Das Zip wird zuerst in eine temporäre Datei geschrieben und ersetzt das Original erst, wenn es vollständig ist. Lose Dateien unter `rdploader/assets` und `rdploader/data` werden nicht umgeschrieben; sie laufen bei jedem Scan des Ordners durch dieselbe Portierung.
 
 Eine moderne Blockdatei kommt mit einem `meta` für jede Variante zurück, in der Reihenfolge, in der die Varianten stehen, und ihre Tags werden zu Namen im Ore Dictionary:
 
@@ -564,7 +574,7 @@ Eine moderne Blockdatei kommt mit einem `meta` für jede Variante zurück, in de
 - Der Boden einer modernen flachen Welt liegt am unteren Rand der Welt, 1.12.2 legt eine flache Welt ab y 0 an, also schiebt die Portierung Höhen um 64 nach oben (um das `worldMinHeight` der Vorlage, wenn sie eines nennt): `worldSpawn` und `resetSendsTo` einer flachen Vorlage, die Spawnhöhen eines Teams, das `groundLevel` einer flachen Dimension und jedes absolute y in den Funktionen, wenn die Oberwelt des Packs flach ist.
 - Weggelassen, jeweils mit einer Zeile im Log: datengetriebene Worldgen von Vanilla, Dimensionstypen, Schadensarten, Verzauberungen und andere Registries, die 1.12.2 nicht hat; Block-, Entity- und Flüssigkeits-Tags; Funktions-Tags außer `tick`; Steinmetz-, Schmiede- und andere Rezeptarten, die 1.12.2 nicht hat; Item-Komponenten; die Strukturschlüssel, die nur moderne Welten erzeugen; ein `behavesAs`-Name außer `till`, `path`, `bush` und `animals`; `jobSite`, und ein Beruf ohne `careers` bekommt einen nach seiner Datei benannten.
 
-Das Log trägt eine Zusammenfassung je umgewandeltem Pack und eine Zeile für jede Datei, die verschoben, umgewandelt, weggelassen oder nicht getragen wurde, und jeden Schlüssel, den 1.12.2 nicht liest, nennt weiterhin der Parser, der auf ihn trifft. Die Portierung ist ein bester Versuch, kein fertiges Pack: Öffne das geschriebene Zip, lies diese Zeilen und stelle von Hand fertig, was sie nennen, zuerst jeden erzeugten Blockstate, dessen Texturen sie nicht finden konnte.
+Das Log trägt eine Zusammenfassung je umgewandeltem Pack und eine Zeile für jede Datei, die verschoben, umgewandelt, weggelassen oder nicht getragen wurde, und jeden Schlüssel, den 1.12.2 nicht liest, nennt weiterhin der Parser, der auf ihn trifft. Die Portierung ist ein bester Versuch, kein fertiges Pack: Öffne den Ordner `versions/1.12.2/` im Zip, lies diese Zeilen und stelle von Hand fertig, was sie nennen, zuerst jeden erzeugten Blockstate, dessen Texturen sie nicht finden konnte.
 
 ---
 
@@ -1884,6 +1894,46 @@ Nur das Abbauen durch einen Spieler wird verändert. Maschinen, die Blöcke abba
 ---
 
 # Herstellung, Beute und Handel
+
+## Deaktivierte Blöcke und Items
+
+*herstellung, beute und handel*
+
+`<namespace>/disabled/*.json`
+
+Den Dateinamen wählst du selbst, gelesen wird nur der Ordner, und mehrere Dateien addieren sich.
+
+Nimmt Blöcke und Items aus dem Spiel, ohne ihre Registrierung aufzuheben. Welten behalten also ihre IDs, und wer die Datei löscht, bekommt alles zurück. Vanilla-, Mod- und Pack-Inhalte werden gleich behandelt, auch die eigenen Blöcke und Items des Packs, und ein deaktivierter Block deaktiviert sein Item genauso wie ein deaktiviertes Item seinen Block.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "names": ["thermalfoundation:ore", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["bigreactors"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er macht |
+| --- | --- | --- | --- | --- |
+| `names` | nein | Liste von Block- und Item-Namen | keine | Was deaktiviert wird. Metadaten als dritter Teil, `"thermalfoundation:material:128"`, deaktivieren genau dieses Item, `:*` alle Metadaten. Ein Name, der auf `*` endet, trifft jeden Namen, der mit dem Rest beginnt |
+| `namespaces` | nein | Liste von Mod-IDs | keine | Jeden Block und jedes Item der Mod |
+| `oreDict` | nein | Liste von Ore-Dictionary-Namen | keine | Jedes Item, das unter dem Namen eingetragen ist; der Name bleibt danach leer |
+| `requires` | nein | Liste von Mod-IDs | keine | Die Datei wird übersprungen, solange nicht jede davon geladen ist. Einträge mit `config:` und `file:` funktionieren wie überall sonst |
+
+Ein deaktivierter Block oder ein deaktiviertes Item:
+
+- verschwindet aus jedem Kreativ-Tab und dem Such-Tab und wird in JEI und HEI ausgeblendet
+- hat kein Rezept mehr, das es herstellt oder verwendet: Jedes Handwerksrezept mit ihm als Ergebnis fällt weg, ebenso jedes Handwerksrezept mit einem Feld, das nur es füllen kann, und jedes Ofenrezept, das es schmilzt oder zu ihm schmilzt. Ein Feld, das auch etwas anderes annimmt, behält sein Rezept, und ein Ore-Dictionary-Feld verliert es einfach mit dem Namen
+- wird aus jedem Ore-Dictionary-Namen ausgetragen
+- wird aus jedem Beutewurf entfernt, ob Truhe, Mob oder Angeln, aus Blockdrops und aus Dorfbewohner-Handeln, und ein fallengelassener Stapel verschwindet
+- lässt sich nicht platzieren, benutzen, schwingen oder aufheben, und der Stapel in der Hand wird gelöscht, sobald ein Spieler es versucht
+- wird überall gelöscht, wo ein Stapel davon auftaucht: aus dem Inventar und der Endertruhe eines Spielers beim Einloggen und danach jede Sekunde, aus jedem Behälter, sobald ein Spieler ihn öffnet, und aus Truhen und anderen Inventaren, sobald ihr Chunk lädt
+- wird aus der Welt entfernt, wo er platziert ist: Jeder Block davon wird samt Blockentity zu Luft, sobald sein Chunk lädt
+
+Um platzierte Blöcke gegen etwas anderes zu tauschen, statt sie zu entfernen, gib ihnen in der Weltvorlage eine `blockReplacements`-Zeile wie `thermalfoundation:ore=minecraft:stone`, siehe [Ersetzungen](#ersetzungen). Einen Block, den die Ersetzung tauscht, überlässt die Deaktivierung ihr. Rezepte, die eine andere Mod in ihren eigenen Maschinen führt, gehören dieser Mod und werden nicht erreicht. Die Dateien werden einmal beim Start gelesen, und `content.disabled` in der Config schaltet den Ordner ab, was einen Neustart braucht.
+
+Um einen Ore-Dictionary-Namen zu leeren, während seine Items im Spiel bleiben, nimm stattdessen `"-name": ["*"]` in einer [Ore-Dictionary](#ore-dictionary)-Datei.
 
 ## Ofenrezepte und Brennstoffe
 
@@ -4324,7 +4374,10 @@ In einem Pack stehen diese im `settings`-Block einer [Weltvorlage](#weltvorlagen
     "saysCard": true,
     "saysIcon": "minecraft:compass",
     "saysColor": "1E2630",
-    "saysImage": "rubyworld:textures/gui/card.png"
+    "saysImage": "rubyworld:textures/gui/card.png",
+    "saysBackground": true,
+    "saysFont": "rubyworld:runes",
+    "toasts": ["advancements"]
   }
 }
 ```
@@ -4371,6 +4424,9 @@ Lass ihn vor der Auslieferung einmal selbst durchlaufen, mit dem Radius, den du 
 | `saysIcon` | Ein Item, das auf der Karte gezeichnet wird, z. B. `minecraft:compass`. Leer zeichnet keines | Gib der Karte das Wappen deines Packs |
 | `saysColor` | Die Hintergrundfarbe der Karte als Hex, z. B. `1E2630`. Leer nimmt ein dunkles Schiefergrau | Passe sie an die Palette deines Packs an |
 | `saysImage` | Ein PNG aus den Client-Assets des Packs, z. B. `rubyworld:textures/gui/card.png`, über die Karte gestreckt als ihr Hintergrund und über die Farbe gezeichnet. Leer zeichnet keines | Gib der Karte eine gemalte Tafel; halte das Bild breit und flach, es wird auf das gestreckt, was der Text braucht |
+| `saysBackground` | Zeichnet die Tafel der Karte, ihren Rahmen und den Farbstreifen sowie den dunklen Hintergrund hinter der Begrüßung und den Hinweisen in der Bildschirmmitte, solange ein Spieler wartet. Aus bleibt nur der Text mit seinem Schatten, dazu `saysImage`, falls gesetzt | Lass die Zeilen frei über der Welt stehen oder ein gemaltes `saysImage` für sich wirken |
+| `saysFont` | Die Schrift, in der der Text der Karte gezeichnet wird, angegeben als `namespace:name`, z. B. `rubyworld:runes`. Leer nimmt die RDPL-Schrift, `resourcedatapackloader:rdpl`. Welche Datei damit gemeint ist, steht unter Karten | Gib der Karte die eigene Schrift deines Packs |
+| `toasts` | Welche Toasts des Spiels, also die Einblendungen oben rechts, erscheinen. `true` zeigt alle, `false` keine; eine Liste zeigt nur die genannten Arten: `advancements` für Fortschritte, `recipes` für freigeschaltete Rezepte, `tutorial` für die Anleitungshinweise, `system` für die Meldungen des Spiels selbst und `other` für jeden Toast, den keine der anderen abdeckt, etwa die anderer Mods. Standard ist keiner. Der Client eines Spielers übernimmt den Wert beim Beitreten | Behalte `["advancements"]`, wenn dein Pack Spieler über Fortschritte führt und der Rest stört |
 
 ### Sicherung und Kartenreset
 
@@ -4460,9 +4516,49 @@ Jeder Eintrag in `pages`:
 
 *welt-intro*
 
-Textdateien liegen unter `<namespace>/texts/*.txt`. Reiner Text, ein Absatz pro Zeile, und Leerzeilen bleiben Leerzeilen. `PLAYERNAME` wird durch den Namen des Spielers ersetzt, dieselbe Ersetzung, die auch das Vanilla-Endgedicht nutzt.
+Textdateien liegen unter `<namespace>/texts/*.txt`. Reiner Text, ein Absatz pro Zeile, und Leerzeilen bleiben Leerzeilen. Eine `.md`-Datei wird genauso gelesen, und beide Arten verstehen die Formatierung unten. `PLAYERNAME` wird durch den Namen des Spielers ersetzt, dieselbe Ersetzung, die auch das Vanilla-Endgedicht nutzt.
 
 `time` legt fest, wie lange die Seite dauert, dieselbe Seite braucht also gleich lang, ob eine Zeile darauf steht oder zwanzig. Die Lesegeschwindigkeit stellst du darüber ein, wie viel du auf die Seite packst. Lässt du `time` weg, läuft die Seite so schnell wie der Vanilla-Abspann, wo mehr Text einfach länger dauert.
+
+### Textformatierung
+
+*welt-intro*
+
+Intro-Texte verstehen Markdown. Eine Datei ohne Auszeichnungen sieht genauso aus wie reiner Text.
+
+```markdown
+# The Long Night
+## Chapter one
+Welcome, **PLAYERNAME**. The *old roads* are ~~open~~ closed; type `/spawn` to go back.
+- Find the **lighthouse**
+- Keep the fire lit; a long item wraps under its own text, not under the bullet
+  - A nested item
+1. Gather wood
+2. Build the gate
+> The keeper wrote this before the storm.
+---
+![The lighthouse](mypack:textures/gui/lighthouse.png)
+See [the map](https://example.com/map) for the way, and \*this\* stays plain.
+```
+
+| Auszeichnung | Schreibweise | Ergebnis |
+| --- | --- | --- |
+| Überschrift | `# `, `## `, `### ` am Zeilenanfang | Fett und größer: doppelt, anderthalbfach und eineinviertelfach so groß wie der Text, ausgerichtet wie der Fließtext |
+| Fett | `**Text**` | Der fette Schnitt der Schrift |
+| Kursiv | `*Text*` | Der kursive Schnitt der Schrift |
+| Fett kursiv | `***Text***` | Der fette Schnitt, schräg gestellt |
+| Durchgestrichen | `~~Text~~` | Durchgestrichen |
+| Code | `` `Text` `` | Aqua getönt |
+| Link | `[Text](URL)` | Nur der Text, unterstrichen; nicht anklickbar |
+| Runen | `{runic}Text{/runic}` | Der Text in der Runen-Geheimschrift `resourcedatapackloader:rdpl_runic`, der Rest der Zeile behält seine Schrift; fett und kursiv darin nehmen die fetten und kursiven Schnitte der Geheimschrift. Das geht auch in Überschriften, Listenpunkten und Zitaten; ein nicht geschlossenes `{runic}` erscheint so, wie es geschrieben ist |
+| Aufzählung | `- ` oder `* ` am Zeilenanfang | Ein Aufzählungspunkt; umbrochene Zeilen rücken unter den Text ein, zwei Leerzeichen vor dem Zeichen rücken eine Ebene tiefer |
+| Nummeriert | `1. ` am Zeilenanfang | Die Zahl wie geschrieben, genauso eingerückt |
+| Zitat | `> ` am Zeilenanfang | Eingerückt und gedämpft |
+| Linie | `---` in einer eigenen Zeile | Eine waagerechte Linie über die Textbreite |
+| Bild | `![Alt](namespace:textures/....png)` in einer eigenen Zeile | Das Bild, auf die Textbreite verkleinert und im eigenen Seitenverhältnis; lässt es sich nicht lesen, steht dort der Alt-Text |
+| Maskierung | `\` vor einem Zeichen, z. B. `\*` | Das Zeichen als gewöhnliches Zeichen |
+
+Tabellen und Codeblöcke zwischen ```-Zeilen werden als reiner Text gezeichnet, samt ihrer Zeichen. Die ausgerechnete Zeit einer Laufseite und das Verkleinern einer stillen Seite zählen beide die gesetzte Höhe, Bilder eingeschlossen. Titel und Zeilen von Karten, Says-Meldungen und die Willkommens- und Warte-Hinweise verstehen die Inline-Auszeichnungen von Fett bis Runen, jeweils in einer Zeile.
 
 ### Wie es abläuft
 
@@ -4784,6 +4880,188 @@ Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner zur nächsten T
 
 ---
 
+## Karten
+
+*spielmodi*
+
+`<namespace>/cards/*.json`
+
+Der Dateiname ist deine Sache, gelesen wird nur der Ordner, und mehrere Dateien stapeln sich. Jede Datei ist eine Regel, und ihre ID ist `<namespace>:<Dateiname>`. Eine Regel wartet auf einen Auslöser, prüft ihr `when` und zeigt ihrem Publikum eine Karte; dazu kann sie eine Funktion ausführen. Auf dem Client muss nichts liegen: Ein Spieler ohne die Mod bekommt eine Eckkarte als Chatzeilen und eine Mittelkarte als Titel.
+
+Jede Meldung, die diese Mod selbst ausgibt, ist eine eingebaute Regel, unten aufgelistet. Ein Pack ändert eine davon, indem es eine Datei mit dieser ID schreibt, `rdpl/cards/<name>.json`, die keinen Auslöser braucht: Was sie weglässt, bleibt wie heute, und `{text}` steht für die Meldung, die die Mod ausgegeben hätte. Ein Pack, das keine davon schreibt, sieht jede Meldung wie bisher.
+
+```json
+{
+  "trigger": "biome_enter",
+  "biomes": ["minecraft:desert", "#SANDY"],
+  "title": "The Dry Lands",
+  "lines": ["Day {day}, {player}.", "Water is scarce from here on."],
+  "style": "center",
+  "image": "mypack:textures/gui/desert_card.png",
+  "color": "3A2A10",
+  "ticks": 120,
+  "when": { "timeFrom": 0, "timeTo": 12000 },
+  "repeat": "once_per_player"
+}
+```
+
+```json
+{
+  "lines": ["{text}", "Speak to the gatekeeper for more."],
+  "icon": "minecraft:ender_eye",
+  "cooldown": 30
+}
+```
+
+Die zweite Datei, gespeichert als `rdpl/cards/gate_blocked.json`, macht aus der roten Zeile in der Aktionsleiste, die ein geschlossenes Tor zeigt, eine Karte mit Symbol und zweiter Zeile und zeigt sie höchstens alle dreißig Sekunden.
+
+```json
+{
+  "trigger": "first_join",
+  "title": "Ruby World",
+  "lines": ["Welcome, {player}."],
+  "style": "center",
+  "background": false,
+  "font": "mypack:runes"
+}
+```
+
+Die dritte begrüßt einen Spieler beim ersten Betreten mit einer Karte in der Bildschirmmitte ohne Tafel dahinter, nur mit dem Text und seinem Schatten, in der eigenen Schrift des Packs.
+
+### Auslöser
+
+*karten*
+
+| Auslöser | Braucht | Löst aus, wenn |
+| --- | --- | --- |
+| `command` | nichts | `/rdplserver card <Regel> [Spieler]` ausgeführt wird. Der Befehl übergeht `when`, `repeat` und `cooldown` und führt `runs` trotzdem aus. So lässt sich jede Regel zeigen, egal mit welchem Auslöser |
+| `first_join` | nichts | Ein Spieler die Welt zum ersten Mal betritt |
+| `dimension_enter` | `dimension` | Ein Spieler in dieser Dimension ankommt |
+| `biome_enter` | `biomes` | Ein Spieler von anderswo in eines dieser Biome geht |
+| `structure_enter` | `structures` | Ein Spieler von draußen in eine dieser Strukturen geht |
+| `advancement` | `advancement` | Ein Spieler diesen Fortschritt erreicht |
+| `time_of_day` | `time` | Die Tagesuhr diesen Tick passiert, `0` bis `23999`, während Spieler in der Dimension sind. Eine per Befehl oder Bett verstellte Uhr zählt nicht |
+| `day` | nichts oder `day` | In der Dimension ein neuer Tag beginnt; mit `day` nur an diesem Tag |
+| `craft` | `item` | Ein Spieler diesen Gegenstand herstellt |
+| `pickup` | `item` | Ein Spieler diesen Gegenstand aufhebt |
+| `kill` | `entity` | Ein Spieler dieses Wesen tötet, oder das `count`-te davon |
+| `respawn` | nichts | Ein Spieler nach dem Tod wieder erscheint |
+| `death` | nichts | Ein Spieler stirbt |
+| `y_level` | `below` oder `above` | Ein Spieler unter oder über diese Höhe kommt |
+| `play_time` | `minutes` | Die Spielzeit eines Spielers in der Welt so viele Minuten erreicht, gezählt ab dem Schließen des Welt-Intros, oder ab dem Beitritt, wenn ihm kein Intro gezeigt wird |
+| `score` | `objective` | Der Punktestand eines Spielers in diesem Ziel `score` erreicht |
+
+Biom, Struktur, Höhe, Spielzeit und Punktestand werden einmal pro Sekunde für jeden Spieler geprüft und lösen beim Wechsel von draußen nach drinnen aus, nie bei der ersten Prüfung nach dem Beitritt. Eine `time_of_day`- oder `day`-Regel, deren Publikum nicht `player` ist, löst einmal für die Dimension aus statt einmal für jeden Spieler darin.
+
+Eine Karte, die auslöst, während ein Spieler das Welt-Intro noch offen hat, wartet und erscheint, sobald das Intro geschlossen wird, gleich welcher Auslöser, auch `command`. Verlässt der Spieler die Welt vorher, verfällt sie.
+
+### Auslöser-Einstellungen
+
+*karten*
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `trigger` | Text | keiner, Pflicht | Einer der Auslöser oben. Eine eingebaute Regel nimmt keinen |
+| `dimension` | Text | keine | Eine Dimensions-ID wie `-1` oder ihr Name wie `the_nether`. Bei `dimension_enter` ist es die betretene; bei jedem anderen Auslöser beschränkt sie die Regel auf Spieler in dieser Dimension |
+| `biomes` | Liste | keine | Biomnamen wie `minecraft:desert`, oder `#TYP` für einen Forge-Biomtyp wie `#SNOWY` |
+| `structures` | Liste | keine | `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` oder `EndCity`, oder der Name einer Struktur, die ein Pack über `structures` setzt; sie zählt im Umkreis von `radius` um den Ort, an dem sie gesetzt wurde |
+| `radius` | int | `32` | Wie nah als drinnen in einer eigenen Struktur eines Packs zählt |
+| `advancement` | Text | keiner | Die ID des Fortschritts |
+| `item` | Text | keiner | Der Gegenstand, geschrieben wie sonst im Pack, etwa `minecraft:diamond_sword` |
+| `entity` | Text | keines | Die ID des Wesens, etwa `minecraft:zombie` |
+| `count` | int | `1` | Für `kill`: wie viele Tötungen es braucht. Die Zählung beginnt neu, sobald die Regel auslöst |
+| `below`, `above` | int | keine | Für `y_level`: die Höhe, unter oder über die es geht |
+| `time` | int | `0` | Für `time_of_day`: der Tick des Tages |
+| `day` | int | keiner | Für `day`: der eine Tag, an dem sie auslöst. Ohne ihn jeden Tag |
+| `minutes` | int | keine | Für `play_time` |
+| `objective`, `score` | Text, int | keines, `1` | Für `score`: das Ziel und der Wert, der erreicht werden muss |
+| `requires` | Liste von Mod-IDs oder Pack-Namensräumen | keine | Die Datei wird übersprungen, solange nicht alle vorhanden sind |
+
+### When
+
+*karten*
+
+`when` enthält Bedingungen, die alle in dem Moment erfüllt sein müssen, in dem der Auslöser feuert.
+
+| Einstellung | Typ | Was sie prüft |
+| --- | --- | --- |
+| `biomes` | Liste | Der Spieler steht in einem dieser Biome, geschrieben wie beim Auslöser |
+| `timeFrom`, `timeTo` | int | Die Tagesuhr liegt in diesem Fenster, das über Mitternacht reichen darf, etwa `13000` bis `1000` |
+| `dayAtLeast` | int | Die Tagesnummer ist mindestens so hoch |
+| `advancement` | Text | Der Spieler hat diesen Fortschritt |
+| `gameMode` | Text | Der Spieler ist in diesem Spielmodus: `survival`, `creative`, `adventure` oder `spectator` |
+| `team` | Text | Der Spieler ist in diesem Scoreboard-Team |
+| `objective`, `scoreAtLeast` | Text, int | Der Punktestand des Spielers im Ziel ist mindestens so hoch |
+
+### Die Karte
+
+*karten*
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `title` | Text | keiner | Die erste Zeile, auf einer Mittelkarte größer gezeichnet |
+| `lines` | Liste | keine | Bis zu sechzehn Zeilen. Eine Regel braucht einen Titel oder Zeilen, außer einer eingebauten. `{player}`, `{dim}`, `{biome}` und `{day}` werden eingesetzt; `{text}` ist die eingebaute Meldung und ergibt, allein auf einer Zeile, jede ihrer Zeilen |
+| `style` | Text | `corner` | `corner` ist die Karte unten rechts, die `saysCard` zeigt; `center` ist eine Karte in der Bildschirmmitte; `chat` sind Chatzeilen; `bar` ist die Aktionsleiste |
+| `icon` | Text | `saysIcon` | Ein Gegenstand, der auf einer Eckkarte gezeichnet wird. Leer zeichnet keinen |
+| `color` | Text | `saysColor` | Die Hintergrundfarbe der Karte als Hex |
+| `image` | Text | `saysImage` | Ein PNG aus den Client-Assets des Packs, als Hintergrund über die Karte gestreckt |
+| `background` | Wahrheitswert | `saysBackground` | `false` lässt Tafel, Rahmen und Farbstreifen weg; der Text behält seinen Schatten, und ein `image` wird weiterhin gezeichnet |
+| `font` | Text | `saysFont` | Die Schrift für den Text der Karte, als `namespace:name`. Leer nimmt die RDPL-Schrift |
+| `ticks` | int | `160` | Wie lange die Karte bleibt, Ausblenden eingerechnet |
+| `audience` | Text | `player` | Wer sie sieht: `player`, `everyone`, `dimension` (alle in der Dimension des Spielers) oder `team` (das Scoreboard-Team des Spielers) |
+| `repeat` | Text | `always` | `always`, `once_per_player`, `once_per_world` oder `once_per_session` (wieder, nachdem sich der Spieler neu eingeloggt hat) |
+| `cooldown` | int | `0` | Sekunden, bevor die Regel für denselben Spieler wieder auslöst |
+| `runs` | Text | keine | Eine Funktion, die als der Spieler läuft, wenn die Regel auslöst |
+
+Eine Eckkarte geht in den Chat, wenn `saysCard` aus ist. Was ein Spieler schon gezeigt bekam, wird beim Spieler gespeichert und übersteht so Tod und Dimensionswechsel; `once_per_world` wird mit der Welt gespeichert.
+
+Die RDPL-Schrift, `resourcedatapackloader:rdpl`, ist die Standardschrift für allen Text: Karten, Says-Meldungen, die Willkommens- und Warte-Hinweise, das Welt-Intro und die eigenen Menüs, den Chat, das HUD und die Tooltips des Spiels. Ihre fetten und kursiven Schnitte heißen `resourcedatapackloader:rdpl_bold` und `resourcedatapackloader:rdpl_italic`. Die Schrift des Zaubertischs bleibt die des Spiels.
+
+RDPL bringt diese Schriften und Zeichen mit. Die Option `font` einer Karte, eines Hinweises oder eines Intros kann eine RDPL-Schrift mit ihrem Kurznamen oder mit der vollen ID nennen:
+
+| Name | Was sie zeichnet |
+| --- | --- |
+| `rdpl` (oder `resourcedatapackloader:rdpl`) | Die RDPL-Schrift, mit Kyrillisch (U+0400 bis U+04FF) und dem Runenalphabet (U+16A0 bis U+16F8) |
+| `rdpl_runic` (oder `resourcedatapackloader:rdpl_runic`) | Eine Runen-Geheimschrift: Die Buchstaben A bis Z und a bis z erscheinen als Runen, alle anderen Zeichen in der RDPL-Schrift. Fetter Text kommt aus `rdpl_runic_bold`, kursiver aus `rdpl_runic_italic` |
+| Runen, U+16A0 bis U+16F8 | Als die Runenzeichen selbst geschrieben (ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ), in jedem Text, den die RDPL-Schrift zeichnet, auch im Chat; fett und kursiv behalten ihren Schnitt |
+
+Eine Kartenschrift ist ein PNG unter `assets/<namespace>/textures/font/<name>.png`, ein Raster aus 16 mal 16 Zeichen im Aufbau der spieleigenen `ascii.png`; die Karte richtet ihre Größe nach den Zeichenbreiten, die daraus gelesen werden. Eine `<name>_cyrillic.png` daneben, dasselbe Raster mit Unicode U+0400 bis U+04FF, zeichnet Kyrillisch; fehlt sie, kommt Kyrillisch aus den Seiten des Spiels. Eine `<name>_runes.png`, dasselbe Raster mit U+1600 bis U+16FF, zeichnet auf die gleiche Weise Runen. Die Builds für 1.20.1 und 1.21.1 lesen stattdessen eine Schriftdefinition unter `assets/<namespace>/font/<name>.json`, deren `bitmap`-Provider auf dasselbe PNG zeigen kann; ein Pack mit beiden Dateien zeichnet also auf allen drei Versionen dieselbe Schrift. `minecraft:default` bezeichnet die Schrift des Spiels. Eine Schrift, die kein Pack enthält, fällt auf die Schrift des Spiels zurück, mit einer einzigen Warnung in `rdpl.log`.
+
+Ein Pack ändert die RDPL-Schrift mit einer eigenen `assets/resourcedatapackloader/textures/font/rdpl.png` (dazu `rdpl_bold.png`, `rdpl_italic.png` und deren `_cyrillic.png` und `_runes.png`); sie ersetzt die Schrift überall, auch im Text des Spiels. Ein Pack mit einer `assets/minecraft/textures/font/ascii.png`, etwa einer Kopie der Vanilla-Datei, gibt dem Text des Spiels stattdessen diese Schrift, Kyrillisch und Runen dann aus den Seiten des Spiels; der Text von RDPL behält die RDPL-Schrift, solange `saysFont` nicht `minecraft:default` ist.
+
+Titel und Zeilen von Karten, Says-Meldungen sowie die Willkommens- und Warte-Hinweise verstehen die Inline-Auszeichnungen aus der Tabelle unter Welt-Intro, Textformatierung: fett, kursiv, fett-kursiv, durchgestrichen, Code, Links und Runen-Abschnitte. Ein fetter Abschnitt wird im `_bold`-Schnitt der Schrift gezeichnet, ein kursiver im `_italic`-Schnitt; fehlt einer Schrift dieser Schnitt, bekommt der Abschnitt den fetten oder kursiven Stil des Spiels, und die Karte richtet ihre Größe nach dem, was gezeichnet wird. Spieler ohne die Mod sehen dieselben Auszeichnungen als Chat-Formatierung und einen Runen-Abschnitt als seine gewöhnlichen Buchstaben.
+
+### Eingebaute Regeln
+
+*karten*
+
+| ID | Die Meldung | Ihr Text kommt aus |
+| --- | --- | --- |
+| `rdpl:gate_unlocked` | Ein Tor öffnet sich | `unlockedMessage` in [Tore](#tore) |
+| `rdpl:gate_blocked` | Ein geschlossenes Tor weist einen Spieler ab, in der Aktionsleiste | `blockedMessage` in [Tore](#tore) |
+| `rdpl:team_joined` | Ein Spieler tritt einer Seite bei | `displayName` der Seite |
+| `rdpl:team_lead` | Die Führung einer Seite kommt an einen Spieler | `leadSays` in [Teams](#teams) |
+| `rdpl:team_picked` | Ein Spieler wird für eine Seite ausgewählt | `displayName` der Seite |
+| `rdpl:team_round_ended` | Die Runde ist vorbei, also kommt ein Spieler auf eine Seite | `displayName` der Seite |
+| `rdpl:lobby_joins` | Ein Spieler, der mitten in der Runde einloggt, kommt in die Lobby | `opens.joinsSays` in [Die Lobby](#die-lobby) |
+| `rdpl:lobby_note` | Die Lobby-Zeile in der Bildschirmmitte | `opens.says`, `opens.leaderSays` in [Die Lobby](#die-lobby) |
+| `rdpl:scoring_results` | Der Stand am Ende einer Runde, an jeden Spieler | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Ergebnisse](#ergebnisse) |
+| `rdpl:scoring_out` | Ein ausgeschiedener Spieler | `ends.outSays` in [Wie eine Runde endet](#wie-eine-runde-endet) |
+| `rdpl:reset_lead` | Die Führung setzt die Runde zurück | `reset.leadSays` in [Eine Runde zurücksetzen](#eine-runde-zurücksetzen) |
+| `rdpl:reset_vote` | Eine Abstimmung zum Zurücksetzen wird ausgerufen | `reset.voteSays` |
+| `rdpl:reset_pass` | Die Abstimmung geht durch | `reset.passSays` |
+| `rdpl:reset_fail` | Die Abstimmung scheitert | `reset.failSays` |
+| `rdpl:anvil_waits` | Die Arbeit eines Ambosses wartet auf einen Fortschritt | [Ambosswerk](#ambosswerk) |
+| `rdpl:threat` | Die Bedrohungsstufe eines Spielers ändert sich | `threatSays` |
+| `rdpl:prospect` | Jede Zeile, die ein Schürffund meldet | der Fund |
+| `rdpl:prospect_none` | Das Schürfen hat nichts gefunden | die Sprachdatei |
+| `rdpl:pregen_ended` | Die Vorgenerierung endet oder wird angehalten | `pregenFinishedSays`, `pregenStoppedSays` in [Vorgenerierung](#vorgenerierung) |
+| `rdpl:pregen_running` | Die Fortschrittszeile, die ein Spieler beim Beitritt während der Vorgenerierung sieht | `pregenRunningSays` |
+
+`welcomeSays` ist keine Regel und behält sein Logo; eine `first_join`- oder `dimension_enter`-Regel kommt dazu. Die Countdowns und Zwischenstände einer Runde in der Aktionsleiste bleiben so, wie ihre Einstellungen sie machen.
+
+---
+
 # Steuerung
 
 ## Die Steuerungsebene
@@ -4798,7 +5076,7 @@ Alles, was Generierung unterbindet oder verändert, ist in Gruppen zusammengefas
 | `global` | Die Config gewinnt. Pack-Abschnitte werden ignoriert |
 | `off` | Die Gruppe ist ganz abgeschaltet, und kein Pack kann sie einschalten |
 
-Die Gruppen sind `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks` und `commands`.
+Die Gruppen sind `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks`, `commands` und `server`.
 
 Einstellungen lösen sich in der Reihenfolge **Biom → Weltvorlage → Config** auf. Der `settings`-Block einer Weltvorlage nutzt dieselben Schlüsselnamen wie die Config, ein Pack setzt sie also genauso, wie du es tun würdest:
 
@@ -5969,9 +6247,9 @@ Nur eine Dimension, die dafür registriert wurde, ihren Spawn zu halten, hält e
 
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
-| `worldType` | Text | leer | Der Welttyp, mit dem jede neue Welt gemacht wird, was auf dem Erstellungsbildschirm auch gewählt wurde: `default`, `largebiomes`, `amplified`, `customized` oder einer, den ein Mod hinzufügt. Leer überlässt die Wahl dem, der die Welt macht |
+| `worldType` | Text | leer | Der Welttyp, mit dem jede neue Welt gemacht wird, was auf dem Erstellungsbildschirm auch gewählt wurde: `default`, `largebiomes`, `amplified`, `customized` oder einer, den ein Mod hinzufügt. Ein dedizierter Server schreibt ihn vor dem Laden der Welten als `level-type` in die `server.properties`, außer `level-type` nennt schon einen der `worldTypeExceptions`. Leer überlässt die Wahl dem, der die Welt macht |
 | `worldTypeExceptions` | Liste von Welttypen | `flat`, `debug_all_block_states` | Die Wahlen, die `worldType` stehen lässt |
-| `worldSeed` | Text | leer | Der Seed, mit dem jede neue Welt gemacht wird, so geschrieben, wie er getippt würde: eine Zahl wird genommen, wie sie ist, alles andere wird in eine verwandelt, wie das Spiel es tut |
+| `worldSeed` | Text | leer | Der Seed, mit dem jede neue Welt gemacht wird, so geschrieben, wie er getippt würde: eine Zahl wird genommen, wie sie ist, alles andere wird in eine verwandelt, wie das Spiel es tut. Ein dedizierter Server schreibt ihn vor dem Laden der Welten als `level-seed` in die `server.properties` |
 | `terrainWorldTypes` | Liste von Welttypen | keine | Welchen Welttypen die Geländeeinstellungen überhaupt gegeben werden. Leer heißt jedem |
 | `terrainWorldTypesAreBlacklist` | boolean | `false` | An sind die genannten Welttypen die, die in Ruhe gelassen werden |
 
@@ -5979,7 +6257,7 @@ Nur eine Dimension, die dafür registriert wurde, ihren Spawn zu halten, hält e
 
 `worldSeed` entscheidet, mit welchem Seed jede neue Welt gebaut wird, ganz gleich, was im Erstellungsbildschirm eingetippt wurde. Er wird genauso geschrieben, wie er dort getippt würde: Eine Zahl wird genommen, wie sie ist, alles andere wird so in eine Zahl verwandelt, wie das Spiel ein Wort in eine verwandelt – `Hollow Ridge` und `-4172144997902289642` sind also beide erlaubt und ergeben beide immer dieselbe Welt. Leer, der Standard, überlässt die Wahl dem, der die Welt erstellt. Eine Welt, die es schon gibt, behält den Seed, mit dem sie gebaut wurde, das hier entscheidet also immer nur, was eine neue bekommt. Ein Pack, das um eine Karte herum gebaut ist, nennt hier ihren Seed, und jede Welt, die mit diesem Pack erstellt wird, ist diese Karte.
 
-`generatorOptions` formt die Oberwelt selbst – Meereshöhe, Lavaozeane und jedes Geländerauschen –, im selben Format, das der Welttyp `customized` schreibt. Es wird auf eine Welt beim Erstellen angewendet und nie danach, eine Welt, die es schon gibt, bleibt also genau, wie sie war. Eine Welt, die schon eigene Optionen trägt, behält sie, und das Log nennt den String, der genutzt wurde.
+`generatorOptions` formt die Oberwelt selbst – Meereshöhe, Lavaozeane und jedes Geländerauschen –, im selben Format, das der Welttyp `customized` schreibt. Es wird auf eine Welt beim Erstellen angewendet und nie danach, eine Welt, die es schon gibt, bleibt also genau, wie sie war. Eine Welt, die schon eigene Optionen trägt, behält sie, und das Log nennt den String, der genutzt wurde. Ein dedizierter Server schreibt sie vor dem Laden der Welten als `generator-settings` in die `server.properties`.
 
 Ein Welttyp, der eigene Einstellungen trägt und nie in die der Welt sieht, wie es Quarks realistischer tut, bekommt die Einstellungen des Packs in seine eigenen eingemischt, die Form, für die er gebaut wurde, bleibt also erhalten, solange ein Pack nicht um etwas anderes bittet.
 
@@ -5992,6 +6270,66 @@ Auf einer Biomes-O'-Plenty-Welt werden dieselben Einstellungen in die Wörter ü
 Zwei Dinge entscheidet er selbst. Flüsse kommen aus seinen eigenen Schichten und haben keine Einstellung, `riverSize` bedeutet dort also nichts. Und wo Ozeane, Gebirge und Regionen tatsächlich liegen, sind ebenfalls seine Schichten, erreichbar nur über `landScheme`, `tempScheme`, `rainScheme` und `biomeSize` – ein Pack formt diese Welt also in den Begriffen dieses Mods statt in denen des Welttyps `customized`. Eine Welt aus einem einzigen Biom kann ein Pack trotzdem bauen: Blockier jedes Biom und nenne das gewünschte als `default` der Vorlage, was auf seinem Welttyp genauso funktioniert wie auf jedem anderen.
 
 Alles andere, was ein Pack tut – Biome und Erze blockieren, Blöcke ersetzen, flaches Grundgestein, Strukturplatzierung, die eigene Weltgenerierung –, lief nie über diesen String und funktioniert auf jedem Welttyp gleich.
+
+### Server
+
+*was jede gruppe macht*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldGameMode": "creative",
+    "worldDifficulty": ["normal", "-1=hard"],
+    "worldLanCommands": false,
+    "worldForceGameMode": true,
+    "worldPvp": false,
+    "worldFlight": true,
+    "worldSpawnProtection": 0,
+    "worldNether": false,
+    "worldCommandBlocks": true,
+    "worldIdleTimeout": 30,
+    "worldMotd": "Ruby World",
+    "worldMaxSize": 10000,
+    "worldStructures": true,
+    "worldSpawnMonsters": true,
+    "worldSpawnAnimals": true,
+    "worldSpawnNpcs": false,
+    "worldViewDistance": 12,
+    "worldBuildHeight": 256
+  }
+}
+```
+
+`control.server` entscheidet diese Gruppe: die Zeilen der `server.properties`, die ein Pack setzen darf, dazu Spielmodus, Schwierigkeitsgrad und Befehle in einer im LAN geöffneten Welt. Auf einem dedizierten Server wird jeder Wert, den ein Pack hier setzt, beim Start in die `server.properties` geschrieben, sodass die Datei zeigt, was gilt, und was der Server schon gelesen hat, wird ihm zusätzlich direkt gesetzt. Eine Einzelspielerwelt übernimmt, was es auf einem integrierten Server gibt, wie es in jeder Zeile steht. Leer, bei Zahlen `-1`, lässt den Wert des Servers stehen, und mit `control.server` auf `off` bleibt jede Zeile, wie der Server sie hat.
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` oder `spectator` | leer | Der Modus, in dem jede neue Welt startet, im Einzelspieler nur bei der Erstellung angewandt. Ein dedizierter Server setzt bei jedem Start jede Welt auf den Modus aus seiner `server.properties`, dort wird der Modus des Packs deshalb vor dem Laden der Welten in die `server.properties` geschrieben (`gamemode` und `hardcore`). `hardcore` ist Survival plus dem weltweiten Hardcore-Flag, und `creative` schaltet zusätzlich Cheats ein |
+| `worldLanCommands` | boolean | `true` | Ob ein Spieler, der eine Einzelspielerwelt im LAN öffnet, Befehle für alle freischalten darf, die beitreten. `false` graut die Cheats-Schaltfläche im Bildschirm „Im LAN öffnen“ aus und hält sie auf Aus; die Welt wird dann ohne Befehle geöffnet, egal auf welchem Weg, `/publish` eingeschlossen |
+| `worldDifficulty` | Liste | keine | Legt den Schwierigkeitsgrad auf `peaceful`, `easy`, `normal` oder `hard` fest. Ein bloßer Grad gilt für jede Dimension, eine Zeile `dimension=grad` überschreibt ihn für diese. Ein dedizierter Server schreibt den Schwierigkeitsgrad der Oberwelt als `difficulty` in die `server.properties` |
+| `worldForceGameMode` | boolean | leer | Ob ein beitretender Spieler jedes Mal in den Spielmodus des Servers zurückgesetzt wird, die Zeile `force-gamemode`. Eine im LAN geöffnete Einzelspielerwelt übernimmt es auch |
+| `worldPvp` | boolean | leer | Ob Spieler einander schaden können, die Zeile `pvp`. Eine Einzelspielerwelt übernimmt es auch |
+| `worldFlight` | boolean | leer | Ob ein Spieler, der im Überlebensmodus fliegt, in Ruhe gelassen statt gekickt wird, die Zeile `allow-flight`. Eine Einzelspielerwelt übernimmt es auch |
+| `worldSpawnProtection` | Zahl, -1 oder mehr | `-1` | Wie viele Blöcke um den Spawnpunkt nur Operatoren bebauen dürfen, die Zeile `spawn-protection`, 0 für keinen Schutz. Nur ein dedizierter Server schützt seinen Spawn |
+| `worldNether` | boolean | leer | Ob der Nether betreten werden kann, die Zeile `allow-nether`. `false` schließt ihn auch in einer Einzelspielerwelt |
+| `worldCommandBlocks` | boolean | leer | Ob Befehlsblöcke laufen, die Zeile `enable-command-block`. In einer Einzelspielerwelt laufen sie ohnehin, und `false` schaltet sie auch dort ab |
+| `worldIdleTimeout` | Zahl, -1 oder mehr | `-1` | Wie viele Minuten ein Spieler untätig herumstehen darf, bevor er gekickt wird, die Zeile `player-idle-timeout`, 0 für nie. Eine Einzelspielerwelt übernimmt es auch |
+| `worldMotd` | Text | leer | Die Zeile unter dem Namen des Servers in der Serverliste, die Zeile `motd`. Eine im LAN geöffnete Einzelspielerwelt zeigt sie anstelle von Besitzer und Weltname |
+| `worldMaxSize` | Zahl, -1 bis 29999984 | `-1` | Wie weit, in Blöcken von der Mitte aus, eine Weltgrenze höchstens reichen darf, die Zeile `max-world-size`. Eine Einzelspielerwelt übernimmt es auch |
+| `worldStructures` | boolean | leer | Ob eine neue Welt Bauwerke erzeugt, die Zeile `generate-structures` und die Wahl „Bauwerke generieren“ auf dem Weltbildschirm. Gilt nur für eine Welt, während sie erstellt wird |
+| `worldSpawnMonsters` | boolean | leer | Ob feindliche Mobs spawnen, die Zeile `spawn-monsters`. `false` stoppt sie auch in einer Einzelspielerwelt |
+| `worldSpawnAnimals` | boolean | leer | Ob Tiere spawnen, die Zeile `spawn-animals`. Eine Einzelspielerwelt übernimmt es auch |
+| `worldSpawnNpcs` | boolean | leer | Ob Dorfbewohner spawnen, die Zeile `spawn-npcs`. Eine Einzelspielerwelt übernimmt es auch |
+| `worldViewDistance` | Zahl, -1 bis 32 | `-1` | Wie viele Chunks weit ein dedizierter Server jedem Spieler die Welt schickt, die Zeile `view-distance`. Eine Einzelspielerwelt folgt stattdessen der Sichtweite |
+| `worldBuildHeight` | Zahl, -1 bis 256 | `-1` | Das höchste y, auf dem ein Block gesetzt werden darf, die Zeile `max-build-height`, gerundet auf ein Vielfaches von 16 zwischen 64 und 256. Eine Einzelspielerwelt übernimmt es auch |
+
+**`worldGameMode`** (Gruppe `server`): `survival`, `hardcore`, `creative`, `adventure` oder `spectator`. Gilt nur beim Erstellen der Welt; bestehende Welten bleiben unberührt, spätere Moduswechsel ebenso. `hardcore` ist Überleben plus das Vanilla-Hardcore-Flag für den ganzen Spielstand; `creative` schaltet zusätzlich Befehle frei, wie das Häkchen des Erstellungsbildschirms. Der Bildschirm öffnet mit dem Modus (und dem Seed des Packs) vorausgewählt; der Spieler darf dort ändern, das Pack setzt es beim Erstellen zurück. `adventure` und `spectator` werden dort nicht angeboten und beim Erstellen der Welt angewendet.
+
+**`worldLanCommands`** (Gruppe `server`): `true` (Vorgabe) lässt den Bildschirm „Im LAN öffnen“ so, wie Vanilla ihn hat. `false` graut dort die Cheats-Schaltfläche aus und hält sie auf Aus, sodass ein Spieler, der seine Welt im LAN öffnet, nicht allen, die beitreten, Befehle freigeben kann. Auch serverseitig wird die Welt dann ohne Befehle geöffnet, egal wer danach fragt, `/publish` eingeschlossen. Die Einstellung gilt nur für das Öffnen im LAN; ein dedizierter Server ist davon nicht betroffen.
+
+**`worldDifficulty`** (Gruppe `server`): `peaceful`, `easy`, `normal` oder `hard`. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=Schwierigkeitsgrad` (`-1=hard`) überschreiben pro Dimension. Die Sperre hält dem Pausenmenü stand. Leer (Standard) überlässt den Schwierigkeitsgrad dem Spieler.
 
 ### Protokollierung
 
@@ -6261,11 +6599,9 @@ Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
 {
   "settings": {
     "worldName": "Ruby World",
-    "worldGameMode": "creative",
     "worldSpawn": "0,72,0",
     "worldBorder": 4096,
     "worldTime": 6000,
-    "worldDifficulty": ["normal", "-1=hard"],
     "weatherCeiling": ["0=128"],
     "cloudHeight": ["0=384"]
   }
@@ -6275,25 +6611,19 @@ Die `terrain`-Schlüssel unten, zusammen im `settings`-Block einer Weltvorlage:
 | Einstellung | Typ | Standard | Was sie tut |
 | --- | --- | --- | --- |
 | `worldName` | Text | leer | Füllt das Namensfeld des Erstellungsbildschirms vor; der Speicherordner folgt daraus. Es füllt das Feld nur, solange dort noch die Vorgabe des Spiels steht, und wird anders als Seed und Spielmodus danach nicht erneut gesetzt |
-| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` oder `spectator` | leer | Der Modus, in dem jede neue Welt startet, im Einzelspieler nur bei der Erstellung angewandt. Ein dedizierter Server setzt bei jedem Start jede Welt auf den Modus aus seiner `server.properties`, dort wird der Modus des Packs deshalb vor dem Laden der Welten in die `server.properties` geschrieben (`gamemode` und `hardcore`). `hardcore` ist Survival plus dem weltweiten Hardcore-Flag, und `creative` schaltet zusätzlich Cheats ein |
 | `worldSpawn` | `x,z` oder `x,y,z` | leer | Wo jede neue Welt spawnt, nur bei der Erstellung angewandt. Ohne y wird die Oberfläche auf Bodenhöhe des Welttyps genommen |
 | `worldBorder` | Zahl, Blöcke | `0` | Der Durchmesser der Weltgrenze jeder neuen Welt, die Zahl, die `/worldborder set` nimmt. `0` lässt die Grenze in Ruhe |
 | `worldTime` | Zahl, Ticks | `-1` | Die Tageszeit, mit der jede neue Welt beginnt. `-1` lässt sie in Ruhe |
-| `worldDifficulty` | Liste | keine | Legt den Schwierigkeitsgrad auf `peaceful`, `easy`, `normal` oder `hard` fest. Ein bloßer Grad gilt für jede Dimension, eine Zeile `dimension=grad` überschreibt ihn für diese |
 | `weatherCeiling` | Liste von `dimension=y` | keine | Das höchste y, das Regen und Schnee erreichen. Eine bloße Zahl gilt für jede Dimension |
 | `cloudHeight` | Liste von `dimension=y` | keine | Das y, auf dem Wolken gezeichnet werden. Eine bloße Zahl gilt für jede Dimension, leer behält die Höhe des Spiels |
 
 **`worldName`** (Gruppe `terrain`) füllt das Namensfeld des Erstellungsbildschirms vor; der Speicherordner folgt daraus wie üblich. Es füllt das Feld nur, solange dort noch der Spielstandard steht – ein vom Spieler getippter Name wird nie überschrieben –, und wird anders als Seed und Spielmodus hinterher nicht erneut gesetzt: Was beim Erstellen im Feld steht, ist der Name.
-
-**`worldGameMode`** (Gruppe `terrain`): `survival`, `hardcore`, `creative`, `adventure` oder `spectator`. Gilt nur beim Erstellen der Welt; bestehende Welten bleiben unberührt, spätere Moduswechsel ebenso. `hardcore` ist Überleben plus das Vanilla-Hardcore-Flag für den ganzen Spielstand; `creative` schaltet zusätzlich Befehle frei, wie das Häkchen des Erstellungsbildschirms. Der Bildschirm öffnet mit dem Modus (und dem Seed des Packs) vorausgewählt; der Spieler darf dort ändern, das Pack setzt es beim Erstellen zurück. `adventure` und `spectator` werden dort nicht angeboten und beim Erstellen der Welt angewendet.
 
 **`worldSpawn`** (Gruppe `terrain`): `x,z` oder `x,y,z`. Gilt nur beim Erstellen. Ohne y wird die Oberfläche auf der Bodenhöhe des Welttyps genommen. Nicht-ganzzahlige Einträge werden gemeldet und ignoriert. Besonders relevant auf Superflach: Vanillas Spawnsuche sucht Gras auf Meereshöhe, findet auf einem Schichtstapel nie welches und kann Hunderte Blöcke abwandern – `worldSpawn` nagelt den Spawn fest.
 
 **`worldBorder`** (Gruppe `terrain`): Durchmesser der Weltgrenze in Blöcken, dieselbe Zahl wie bei `/worldborder set`. Gilt beim Erstellen; `0` (Standard) lässt die Grenze in Ruhe; verschieben per Befehl geht weiterhin. `worldBorderLimit` in der Config deckelt, was ein Pack verlangen darf – ein Pack, das mehr will, wird abgelehnt und protokolliert, nicht gekürzt, ein Pack kann einem Server also keine Grenze verpassen, der der Betreiber nicht zugestimmt hat.
 
 **`worldTime`** (Gruppe `terrain`): ein Tick-Wert wie bei `/time set` (`18000` Mitternacht, `6000` Mittag). Hält die Uhr der Oberwelt an; alles, was die Tageszeit liest (Mobspawn, Schlafen), sieht den festgehaltenen Wert. `-1` (Standard) lässt die Zeit laufen. Das Oberwelt-Gegenstück zum `fixedTime` einer eigenen Dimension, unabhängig von `doDaylightCycle`.
-
-**`worldDifficulty`** (Gruppe `terrain`): `peaceful`, `easy`, `normal` oder `hard`. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=Schwierigkeitsgrad` (`-1=hard`) überschreiben pro Dimension. Die Sperre hält dem Pausenmenü stand. Leer (Standard) überlässt den Schwierigkeitsgrad dem Spieler.
 
 **`cloudHeight`** (Gruppe `terrain`): die y, auf der die Wolken gezeichnet werden. Ein bloßer Wert gilt für jede Dimension; Zeilen der Form `Dimension=y` (`0=384`) überschreiben pro Dimension. Ein Pack mit hohen Gebäuden setzt das, damit die Skyline unter den Wolken steht statt durch sie hindurch, und in einer Rubic-Welt ist es eine absolute y, eine angehobene Decke ist also der Platz, die Wolken darüber zu legen. Leer (Standard) behält die Höhe des Spiels, 128 in der Oberwelt, in einer Rubic-Welt um `terrainOffset` angehoben.
 
@@ -6414,7 +6744,7 @@ Jeder Ordner, mit vollem Pfad und einem Link zum Abschnitt, der ihn beschreibt, 
 
 *befehle*
 
-Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ordners auf dem Server. Die Spalte Stufe ist die Berechtigungsstufe, die ein Absender braucht: `3` ist ein Operator, `2` lässt auch Befehlsblöcke zu, `0` ist jeder Spieler, und `4` liegt über Operator und erreicht niemanden. Nur `intro`, `team` und die drei `goto`-Formen liegen unter Operator, und bewegen kann ein Pack davon `goto`.
+Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ordners auf dem Server. Die Spalte Stufe ist die Berechtigungsstufe, die ein Absender braucht: `3` ist ein Operator, `2` lässt auch Befehlsblöcke zu, `0` ist jeder Spieler, und `4` liegt über Operator und erreicht niemanden. Nur `intro`, `team`, `card` und die drei `goto`-Formen liegen unter Operator, und bewegen kann ein Pack davon `goto`.
 
 #### Packs und Dateien
 
@@ -6477,6 +6807,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <Spieler>`, `team claim` | 0 | Dasselbe wie die `/rdpl team`-Formen oben, die an diese weitergereicht werden |
 | `/rdplserver round start` | 0 | Dasselbe wie `/rdpl round start`, das daran weitergereicht wird |
 | `/rdplserver round reset`, `round vote yes`, `round vote no` | 0 | Dasselbe wie die `/rdpl round`-Formen oben, die an diese weitergereicht werden |
+| `/rdplserver card <Regel> [Spieler]` | 2 | Eine [Kartenregel](#karten) den genannten Spielern oder dir selbst zeigen, nach ihrer ID oder ihrem Dateinamen. `when`, `repeat` und `cooldown` werden übergangen |
 | `/rdplserver reset` | 3 | Setzt die Karte zurück, wie es ein Rundenende tut: Alle werden festgehalten, die Entities weggefegt, die Punkte gelöscht, `resetRuns` ausgeführt, die Spieler nach `resetSendsTo` gesetzt und freigegeben, und eine Runde öffnet mit dem Startzähler, wie die Reset-Einstellungen unter [Vorgenerierung](#vorgenerierung) beschreiben. Wird nicht von `/rdpl` weitergereicht |
 
 #### Orte anspringen
@@ -6493,7 +6824,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 
 *befehle*
 
-**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, außer `intro` und `team`, die die eigenen Befehle eines Spielers sind und immer auf Stufe 0 liegen. Die drei `goto`-Formen sind das eine, worüber ein Pack entscheidet: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf – getrennt von den beiden anderen und vom Rest des Befehls.
+**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, außer `intro` und `team`, die die eigenen Befehle eines Spielers sind und immer auf Stufe 0 liegen, und `card`, das auf Stufe 2 liegt, damit ein Befehlsblock eine Karte zeigen kann. Die drei `goto`-Formen sind das eine, worüber ein Pack entscheidet: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf – getrennt von den beiden anderen und vom Rest des Befehls.
 
 `<namespace>/worldtemplates/*.json`
 

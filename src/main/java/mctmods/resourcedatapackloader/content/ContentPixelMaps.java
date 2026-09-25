@@ -50,6 +50,7 @@ public final class ContentPixelMaps {
     private static final char OVERRIDING = 'o';
     private static final Map<String, byte[]> MADE = new ConcurrentHashMap<>();
     private static final Set<String> FAILED = ConcurrentHashMap.newKeySet();
+    private static final Gson GSON = new Gson();
 
     private ContentPixelMaps() {}
 
@@ -115,7 +116,7 @@ public final class ContentPixelMaps {
             sources.append(where).append(':').append(at).append('\n').append(contents).append('\n');
             chain.add(where + ":" + at);
             JsonObject json;
-            try { json = new Gson().fromJson(contents, JsonObject.class); }
+            try { json = GSON.fromJson(contents, JsonObject.class); }
             catch (JsonParseException ex) {
                 ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", where, at, ex);
                 return null;

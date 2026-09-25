@@ -14,6 +14,7 @@ import net.minecraft.block.BlockFalling;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
@@ -99,7 +100,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         this.order = new ContentChunkOrder(centreX, centreZ, radius + 1);
         this.keep = Math.max(64, ContentControl.number(ContentControl.CHUNKS, "pregenKeepLoaded", Config.chunks.pregenKeepLoaded));
         this.backlog = Math.max(0, ContentControl.number(ContentControl.CHUNKS, "pregenPauseAbove", Config.chunks.pregenPauseAbove));
-        this.slice = Math.min(1000, Math.max(1, ContentControl.number(ContentControl.CHUNKS, "pregenMillisPerRound", Config.chunks.pregenMillisPerRound)));
+        this.slice = MathHelper.clamp(ContentControl.number(ContentControl.CHUNKS, "pregenMillisPerRound", Config.chunks.pregenMillisPerRound), 1, 1000);
         this.started = System.currentTimeMillis();
     }
 

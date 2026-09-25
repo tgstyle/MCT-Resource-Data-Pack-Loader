@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.content.extra;
 
+import mctmods.resourcedatapackloader.content.card.CardFire;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import java.util.HashSet;
@@ -31,21 +31,16 @@ public final class ContentIntroPlay {
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { PLAYING.remove(event.player.getUniqueID()); }
 
-    public static boolean willPlay(EntityPlayerMP player) { return enabled() && !RDPLNetwork.vanilla(player) && !(ContentWorldIntro.once() && persisted(player).getBoolean(SEEN)); }
+    public static boolean willPlay(EntityPlayerMP player) { return enabled() && !RDPLNetwork.vanilla(player) && !(ContentWorldIntro.once() && PlayerPersisted.of(player).getBoolean(SEEN)); }
 
     public static boolean reading(UUID player) { return PLAYING.contains(player); }
 
     public static void finished(EntityPlayerMP player) {
         if (!PLAYING.remove(player.getUniqueID())) { return; }
-        if (ContentWorldIntro.once()) { persisted(player).setBoolean(SEEN, true); }
+        if (ContentWorldIntro.once()) { PlayerPersisted.of(player).setBoolean(SEEN, true); }
         ContentPregenHold.releaseAfterIntro(player);
+        CardFire.afterIntro(player);
     }
 
-    public static void replay(EntityPlayerMP player) { persisted(player).removeTag(SEEN); }
-
-    private static NBTTagCompound persisted(EntityPlayerMP player) {
-        NBTTagCompound data = player.getEntityData();
-        if (!data.hasKey(EntityPlayer.PERSISTED_NBT_TAG)) { data.setTag(EntityPlayer.PERSISTED_NBT_TAG, new NBTTagCompound()); }
-        return data.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
-    }
+    public static void replay(EntityPlayerMP player) { PlayerPersisted.of(player).removeTag(SEEN); }
 }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -296,11 +297,11 @@ public final class BeardRailsGrade {
     private static void rein(int[] profile, boolean[] fixed) {
         for (int at = 1; at < profile.length; at++) {
             if (fixed[at]) { continue; }
-            profile[at] = Math.max(profile[at - 1] - 1, Math.min(profile[at - 1] + 1, profile[at]));
+            profile[at] = MathHelper.clamp(profile[at], profile[at - 1] - 1, profile[at - 1] + 1);
         }
         for (int at = profile.length - 2; at >= 0; at--) {
             if (fixed[at]) { continue; }
-            profile[at] = Math.max(profile[at + 1] - 1, Math.min(profile[at + 1] + 1, profile[at]));
+            profile[at] = MathHelper.clamp(profile[at], profile[at + 1] - 1, profile[at + 1] + 1);
         }
     }
 
@@ -317,7 +318,7 @@ public final class BeardRailsGrade {
             int from = Math.max(0, (alongX ? road.minX : road.minZ) - 1 - rowLeast);
             int to = Math.min(rows - 1, (alongX ? road.maxX : road.maxZ) + 1 - rowLeast);
             if (from > to) { continue; }
-            int center = Math.max(0, Math.min(rows - 1, (alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2) - rowLeast));
+            int center = MathHelper.clamp((alongX ? (road.minX + road.maxX) / 2 : (road.minZ + road.maxZ) / 2) - rowLeast, 0, rows - 1);
             int level = profile[center];
             if (rail.subway() && (ground[center] == Integer.MIN_VALUE || ground[center] - level > BeardRails.FILL)) {
                 ContentLog.LOGGER.debug("Subway line {} runs {} block(s) under the street crossing it at row {}, so its grade is not held level there and climbs on at its own pace", rail.line(), ground[center] == Integer.MIN_VALUE ? "an unread number of" : String.valueOf(ground[center] - level), rowLeast + center);

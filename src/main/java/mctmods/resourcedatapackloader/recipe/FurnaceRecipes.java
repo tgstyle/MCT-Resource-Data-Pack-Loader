@@ -20,6 +20,7 @@ import net.minecraft.util.ResourceLocation;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiPredicate;
 
 public final class FurnaceRecipes {
     private static final Gson GSON = new GsonBuilder().create();
@@ -71,19 +72,23 @@ public final class FurnaceRecipes {
             ContentLog.LOGGER.error("A removal in {} names neither an input nor a result, skipping it", key);
             return 0;
         }
+        int removed = removeWhere((in, out) -> (resultStack.isEmpty() || Stacks.matches(resultStack, out)) && (inputStack.isEmpty() || Stacks.matches(inputStack, in)));
+        if (removed == 0) { ContentLog.LOGGER.debug("No furnace recipe matched the removal {} in {}", result.isEmpty() ? input : result, key); }
+        return removed;
+    }
+
+    public static int removeWhere(BiPredicate<ItemStack, ItemStack> doomed) {
         int removed = 0;
         Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
         Map<ItemStack, Float> experience = ((IFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
         Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<ItemStack, ItemStack> recipe = iterator.next();
-            if (!resultStack.isEmpty() && differs(resultStack, recipe.getValue())) { continue; }
-            if (!inputStack.isEmpty() && differs(inputStack, recipe.getKey())) { continue; }
+            if (!doomed.test(recipe.getKey(), recipe.getValue())) { continue; }
             experience.remove(recipe.getValue());
             iterator.remove();
             removed++;
         }
-        if (removed == 0) { ContentLog.LOGGER.debug("No furnace recipe matched the removal {} in {}", result.isEmpty() ? input : result, key); }
         return removed;
     }
 
@@ -110,6 +115,4 @@ public final class FurnaceRecipes {
         net.minecraft.item.crafting.FurnaceRecipes.instance().addSmeltingRecipe(input, output, JsonUtils.getFloat(json, "experience", 0.0F));
         return true;
     }
-
-    private static boolean differs(ItemStack wanted, ItemStack found) { return !Stacks.matches(wanted, found); }
 }

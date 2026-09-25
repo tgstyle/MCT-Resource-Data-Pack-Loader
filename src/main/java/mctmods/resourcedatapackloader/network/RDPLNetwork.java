@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
+import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -42,6 +43,7 @@ public final class RDPLNetwork {
         registerMessage(MessageRubicWorldData.Handler.class, MessageRubicWorldData.class);
         registerMessage(MessageHeightMapUpdate.Handler.class, MessageHeightMapUpdate.class);
         registerMessage(MessageCubeSkyLightUpdates.Handler.class, MessageCubeSkyLightUpdates.class);
+        channel.registerMessage(MessageToasts.Handler.class, MessageToasts.class, packetId++, Side.CLIENT);
     }
 
     private static <REQ extends IMessage, REPLY extends IMessage> void registerMessage(Class<? extends IMessageHandler<REQ, REPLY>> handlerClass, Class<REQ> messageClass) {
@@ -69,18 +71,23 @@ public final class RDPLNetwork {
 
     public static boolean sendNote(EntityPlayerMP player, String said) {
         if (channel == null || vanilla(player)) { return false; }
-        channel.sendTo(new MessageNote(said), player);
+        channel.sendTo(new MessageNote(said, Says.panel(), Says.font()), player);
         return true;
     }
 
     public static void sendHold(EntityPlayerMP player, boolean held, String warning, boolean fog) {
         if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageHold(held, warning, fog), player);
+        channel.sendTo(new MessageHold(held, warning, fog, Says.panel(), Says.font()), player);
     }
 
     public static void sendHardnessSalt(EntityPlayerMP player, long salt) {
         if (channel == null || vanilla(player)) { return; }
         channel.sendTo(new MessageHardnessSalt(salt), player);
+    }
+
+    public static void sendToasts(EntityPlayerMP player, int kinds) {
+        if (channel == null || vanilla(player)) { return; }
+        channel.sendTo(new MessageToasts(kinds), player);
     }
 
     public static void introDone() {

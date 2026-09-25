@@ -325,7 +325,7 @@ public final class ContentAnvils {
         Long last = TOLD.get(player.getName());
         if (last != null && now - last < TOLD_EVERY) { return; }
         TOLD.put(player.getName(), now);
-        Says.tell(player, "That waits on " + title(player, def.grants), TextFormatting.RED);
+        Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.ANVIL_WAITS, "That waits on " + title(player, def.grants), TextFormatting.RED);
     }
 
     private static String title(EntityPlayerMP player, String name) {

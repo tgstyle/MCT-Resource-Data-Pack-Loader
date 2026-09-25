@@ -92,7 +92,7 @@ public final class ContentTeamsPicks {
                 ContentTeams.seated(member, def);
                 if (drawnBefore.contains(member)) { ContentLog.LOGGER.debug("{} was drawn for {} again", one.getName(), def.displayName); }
                 else {
-                    if (mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.arrived((EntityPlayerMP) one)) { mctmods.resourcedatapackloader.util.Says.tell((EntityPlayerMP) one, "You were picked for " + def.displayName, def.color); }
+                    if (mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.arrived((EntityPlayerMP) one)) { mctmods.resourcedatapackloader.util.Says.tell((EntityPlayerMP) one, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_PICKED, "You were picked for " + def.displayName, def.color); }
                     ContentTeams.give((EntityPlayerMP) one, def);
                     newlySeated.add(member);
                 }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.compat.GcRubicSunlight;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
@@ -103,7 +104,7 @@ public final class ContentFirstLight {
                     if (storage != null) {
                         IBlockState state = storage.get(x, y & 15, z);
                         raw = state.getLightOpacity(world, at.setPos(worldX + x, y, worldZ + z));
-                        opacity[key(x + 16, y, z + 16)] = (byte) Math.min(MAX, Math.max(1, raw));
+                        opacity[key(x + 16, y, z + 16)] = (byte) MathHelper.clamp(raw, 1, MAX);
                     }
                     if (raw == 0 && light != MAX) { raw = 1; }
                     light = Math.max(0, light - raw);
@@ -276,7 +277,7 @@ public final class ContentFirstLight {
         int raw = 1;
         if (storage != null) {
             IBlockState state = storage.get(lx & 15, y & 15, lz & 15);
-            raw = Math.min(MAX, Math.max(1, state.getLightOpacity(world, at.setPos(originX + lx, y, originZ + lz))));
+            raw = MathHelper.clamp(state.getLightOpacity(world, at.setPos(originX + lx, y, originZ + lz)), 1, MAX);
         }
         opacity[key] = (byte) raw;
         return raw;

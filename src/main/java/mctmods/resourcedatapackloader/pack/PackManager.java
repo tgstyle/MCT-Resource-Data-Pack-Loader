@@ -19,7 +19,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +42,7 @@ public final class PackManager {
     public static final String PACK_ICON = "pack.png";
     public static final String ROOT_PACK = "<loose files>";
     private static final Set<String> EXTRA_DATA = ConcurrentHashMap.newKeySet();
-    private static final String DISABLED = ".disabled";
+    private static final String DISABLED_SUFFIX = ".disabled";
     public static final String ADVANCEMENTS = "advancements";
     public static final String LOOT_TABLES = "loot_tables";
     public static final String RECIPES = "recipes";
@@ -56,6 +55,7 @@ public final class PackManager {
     public static final String EXPOSURES = "exposures";
     public static final String CAVEREGIONS = "caveregions";
     public static final String GATES = "gates";
+    public static final String CARDS = "cards";
     public static final String WORLDTEMPLATES = "worldtemplates";
     public static final String PATHINTERSECTS = "pathintersects";
     public static final String STRUCTUREMAPS = "structuremaps";
@@ -72,6 +72,7 @@ public final class PackManager {
     public static final String OREDICT = "oredict";
     public static final String SOUNDS = "sounds";
     public static final String RECIPE_REMOVALS = "recipe_removals";
+    public static final String DISABLED = "disabled";
     public static final String MATERIALS = "materials";
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String BLOCK_DROPS = "block_drops";
@@ -155,7 +156,7 @@ public final class PackManager {
                     if (!ContentPixelMaps.CACHE_DIRECTORY.equals(fileName)) { ContentLog.LOGGER.warn("Skipping the folder '{}': a pack is a zip file. Loose files go under {}/{}/<namespace>, and a pack in a folder is zipped up", fileName, packRoot, RDPLPack.ASSETS); }
                     continue;
                 }
-                if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED)) {
+                if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED_SUFFIX)) {
                     ContentLog.LOGGER.info("Skipping disabled pack '{}'", fileName);
                     continue;
                 }
@@ -238,17 +239,13 @@ public final class PackManager {
                 zip.close();
                 return null;
             }
-            if (pack.ported() != null) {
-                Path written = entry.resolveSibling(fileName + ".converting");
-                Path kept = entry.resolveSibling(stripExtension(fileName) + "_converted.zip" + DISABLED);
-                pack.ported().writeZip(written);
-                pack.close();
-                Files.move(entry, kept, StandardCopyOption.REPLACE_EXISTING);
-                Files.move(written, entry, StandardCopyOption.REPLACE_EXISTING);
-                ContentLog.LOGGER.info("Pack '{}' was written out as a 1.12.2 pack under its own name, and the modern pack it came from is kept beside it as '{}'. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, kept.getFileName());
-                return load(entry);
-            }
-            return pack;
+            if (pack.ported() == null) { return pack; }
+            Path written = PackVersions.write(entry, pack.ported());
+            if (written == null) { return pack; }
+            IOUtils.closeQuietly(pack::close);
+            if (!PackVersions.swap(written, entry)) { return null; }
+            ContentLog.LOGGER.info("Pack '{}': what 1.12.2 reads differently was written into its '{}' folder, and the modern files at the root are left as they were, so the same zip still loads on 1.20.1 and 1.21.1. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, PackVersions.PREFIX);
+            return load(entry);
         }
         catch (IOException ex) {
             ContentLog.LOGGER.error("Could not open zip pack '{}'", fileName, ex);
@@ -391,9 +388,9 @@ public final class PackManager {
     private static boolean isData(String path) {
         return extraData(path) || path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
-                || path.startsWith(GATES + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
+                || path.startsWith(GATES + "/") || path.startsWith(CARDS + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
                 || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(GAMERULES + "/")
-                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(BLOCK_DROPS + "/") || path.startsWith(ANVILS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
+                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(DISABLED + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(BLOCK_DROPS + "/") || path.startsWith(ANVILS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
     }
 
     @Nullable public String getPackName(String namespace, String path) {

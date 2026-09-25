@@ -10,7 +10,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
@@ -42,7 +40,6 @@ public final class Ported {
     static final String ITEMS = "items";
     static final int MODERN_FLAT_FLOOR = -64;
     private static final String CONVERTED = "converted";
-    private static final String[] ROOT_FILES = {"pack.png", "readme.txt", "readme.md", "README.md", "README.txt"};
     private static final List<String> VANILLA_DIMENSIONS = Collections.unmodifiableList(Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"));
     private static final Set<String> SINGLE_STATE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("ladder", "torch", "cane", "crop", "sapling", "door", "banner", "trapdoor", "fence_gate", "stairs", "vine")));
     private static final int FIRST_DIMENSION = 1000;
@@ -540,55 +537,35 @@ public final class Ported {
         if (failed > 0 || converted > 0) { ContentLog.LOGGER.info("Pack '{}': the port converted {} file(s) and could not carry {} while the pack was read", name, converted, failed); }
     }
 
-    public void writeZip(Path target) throws IOException {
+    public void writeVersion(ZipOutputStream out, String prefix) throws IOException {
         int written = 0;
-        try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(target)))) {
-            Set<String> names = new LinkedHashSet<>();
-            for (Map.Entry<String, Map<String, Source>> namespace : exposed.entrySet()) {
-                for (String path : new TreeMap<>(namespace.getValue()).keySet()) {
-                    String entry = RDPLPack.ASSETS + "/" + namespace.getKey() + "/" + path;
-                    if (!names.add(entry)) { continue; }
-                    try (InputStream in = open(namespace.getKey(), path)) {
-                        if (in == null) { continue; }
-                        out.putNextEntry(new ZipEntry(entry));
-                        copy(in, out);
-                        out.closeEntry();
-                        written++;
-                    }
-                }
-            }
-            for (String rootFile : ROOT_FILES) {
-                Path held = root.resolve(rootFile);
-                if (Files.isRegularFile(held) && names.add(rootFile)) {
-                    out.putNextEntry(new ZipEntry(rootFile));
-                    Files.copy(held, out);
+        for (Map.Entry<String, Map<String, Source>> namespace : exposed.entrySet()) {
+            for (Map.Entry<String, Source> path : new TreeMap<>(namespace.getValue()).entrySet()) {
+                if (carried(namespace.getKey(), path.getKey(), path.getValue())) { continue; }
+                try (InputStream in = open(namespace.getKey(), path.getKey())) {
+                    if (in == null) { continue; }
+                    out.putNextEntry(new ZipEntry(prefix + RDPLPack.ASSETS + "/" + namespace.getKey() + "/" + path.getKey()));
+                    copy(in, out);
                     out.closeEntry();
+                    written++;
                 }
             }
-            Path config = root.resolve("config");
-            if (Files.isDirectory(config)) {
-                try (Stream<Path> files = Files.walk(config)) {
-                    for (Path held : (Iterable<Path>) files.filter(Files::isRegularFile)::iterator) {
-                        String entry = root.relativize(held).toString().replace('\\', '/');
-                        if (!names.add(entry)) { continue; }
-                        out.putNextEntry(new ZipEntry(entry));
-                        Files.copy(held, out);
-                        out.closeEntry();
-                    }
-                }
-            }
-            JsonObject old = readJson(root.resolve("pack.mcmeta"));
-            JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
-            JsonObject meta = new JsonObject();
-            JsonObject kept = new JsonObject();
-            kept.addProperty("pack_format", Port.LEGACY_FORMAT);
-            kept.add("description", pack.has("description") ? pack.get("description") : new JsonPrimitive(name));
-            meta.add("pack", kept);
-            out.putNextEntry(new ZipEntry("pack.mcmeta"));
-            out.write(GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
-            out.closeEntry();
         }
-        note("written out as a 1.12.2 pack of " + written + " file(s)");
+        JsonObject old = readJson(root.resolve("pack.mcmeta"));
+        JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
+        JsonObject meta = new JsonObject();
+        JsonObject kept = new JsonObject();
+        kept.addProperty("pack_format", Port.LEGACY_FORMAT);
+        kept.add("description", pack.has("description") ? pack.get("description") : new JsonPrimitive(name));
+        meta.add("pack", kept);
+        out.putNextEntry(new ZipEntry(prefix + "pack.mcmeta"));
+        out.write(GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
+        out.closeEntry();
+        note("written into " + prefix + ", " + written + " file(s) 1.12.2 reads differently; the rest is read from the root as it is");
+    }
+
+    private boolean carried(String namespace, String path, Source source) {
+        return source.made == null && source.kind == Port.Kind.RAW && Port.unchanged(path) && root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(path).equals(source.real);
     }
 
     private static void copy(InputStream in, OutputStream out) throws IOException {

@@ -17,10 +17,13 @@ public class MessageCard implements IMessage {
     public int background;
     public int text;
     public int ticks;
+    public boolean center;
+    public boolean panel = true;
+    public String font = "";
 
     public MessageCard() {}
 
-    public MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks) {
+    public MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks, boolean center, boolean panel, String font) {
         this.title = title;
         this.lines = lines;
         this.icon = icon;
@@ -28,6 +31,9 @@ public class MessageCard implements IMessage {
         this.background = background;
         this.text = text;
         this.ticks = ticks;
+        this.center = center;
+        this.panel = panel;
+        this.font = font;
     }
 
     @Override public void fromBytes(ByteBuf buf) {
@@ -40,6 +46,9 @@ public class MessageCard implements IMessage {
         background = buf.readInt();
         text = buf.readInt();
         ticks = buf.readInt();
+        center = buf.readBoolean();
+        panel = buf.readBoolean();
+        font = ByteBufUtils.readUTF8String(buf);
     }
 
     @Override public void toBytes(ByteBuf buf) {
@@ -51,6 +60,9 @@ public class MessageCard implements IMessage {
         buf.writeInt(background);
         buf.writeInt(text);
         buf.writeInt(ticks);
+        buf.writeBoolean(center);
+        buf.writeBoolean(panel);
+        ByteBufUtils.writeUTF8String(buf, font);
     }
 
     public static class Idle implements IMessageHandler<MessageCard, IMessage> {

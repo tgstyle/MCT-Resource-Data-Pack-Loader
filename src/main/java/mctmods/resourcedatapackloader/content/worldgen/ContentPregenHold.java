@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -170,9 +171,7 @@ public final class ContentPregenHold {
 
     private static void flash(Held held) {
         if (held.warning.isEmpty()) { return; }
-        held.connection.sendPacket(new SPacketTitle(0, 15, 10));
-        held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(held.warning).setStyle(new Style().setColor(TextFormatting.RED))));
-        held.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
+        Says.title(held.connection.player, 0, 15, 10, "", held.warning, TextFormatting.RED);
     }
 
     public static void releaseEveryone(boolean welcomed) {
@@ -194,7 +193,7 @@ public final class ContentPregenHold {
             released++;
         }
         HELD.keySet().removeIf(id -> !online(server, id));
-        if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentTerrain.worldGameMode().isEmpty() ? "the mode they had" : ContentTerrain.worldGameMode()); }
+        if (released > 0) { ContentLog.LOGGER.info("Released {} player(s) held while the land was made, back to {}", released, ContentServer.worldGameMode().isEmpty() ? "the mode they had" : ContentServer.worldGameMode()); }
     }
 
     public static void releaseAfterIntro(EntityPlayerMP player) {
@@ -211,6 +210,7 @@ public final class ContentPregenHold {
     static void welcome(EntityPlayerMP player) {
         greet(player);
         if (!ARRIVED.add(player.getUniqueID())) { return; }
+        mctmods.resourcedatapackloader.content.card.CardEvents.joined(player);
         mctmods.resourcedatapackloader.content.ContentScoring.greet(player);
         mctmods.resourcedatapackloader.content.ContentTeams.greet(player);
     }
@@ -227,9 +227,7 @@ public final class ContentPregenHold {
 
     public static void show(EntityPlayerMP player, String said, TextFormatting color) {
         if (said.isEmpty() || RDPLNetwork.sendNote(player, said)) { return; }
-        player.connection.sendPacket(new SPacketTitle(10, 70, 20));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(said).setStyle(new Style().setColor(color))));
-        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString("")));
+        Says.title(player, 10, 70, 20, "", said, color);
     }
 
     private static void release(EntityPlayerMP player, Held held) {
@@ -240,8 +238,8 @@ public final class ContentPregenHold {
     }
 
     private static void modeBack(EntityPlayerMP player, GameType before) {
-        String mode = ContentTerrain.worldGameMode();
-        GameType asked = mode.isEmpty() ? GameType.NOT_SET : ContentTerrain.gameModeFrom(mode);
+        String mode = ContentServer.worldGameMode();
+        GameType asked = mode.isEmpty() ? GameType.NOT_SET : ContentServer.gameModeFrom(mode);
         player.setGameType(asked == GameType.NOT_SET ? before : asked);
         player.getEntityData().removeTag(HELD_MODE);
     }
@@ -290,7 +288,7 @@ public final class ContentPregenHold {
         }
     }
 
-    public static void tell(String said, TextFormatting color) { Says.tellAll(said, color); }
+    public static void tell(String said, TextFormatting color) { Says.tellAll(mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_ENDED, said, color); }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         ContentPregenDimensions.startWhenEntered(event.player.dimension);
@@ -302,6 +300,6 @@ public final class ContentPregenHold {
         if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player, true); }
         String said = ContentPregenProgress.sofar(worker);
         if (said.isEmpty()) { return; }
-        if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, said, TextFormatting.YELLOW); }
+        if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_RUNNING, said, TextFormatting.YELLOW); }
     }
 }

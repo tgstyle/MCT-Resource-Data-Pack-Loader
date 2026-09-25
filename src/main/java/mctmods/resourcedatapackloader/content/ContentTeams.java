@@ -204,7 +204,7 @@ public final class ContentTeams {
     }
 
     private static void leadTold(EntityPlayerMP player, TeamDef def, String how) {
-        if (!def.leadSays.isEmpty()) { mctmods.resourcedatapackloader.util.Says.tell(player, def.leadSays.replace("{side}", def.displayName) + how, def.color); }
+        if (!def.leadSays.isEmpty()) { mctmods.resourcedatapackloader.util.Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_LEAD, def.leadSays.replace("{side}", def.displayName) + how, def.color); }
         ContentLog.LOGGER.info("{} leads {}{}", player.getName(), def.displayName, how);
     }
 
@@ -212,7 +212,7 @@ public final class ContentTeams {
         ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
         TeamDef def = held == null ? null : BY_NAME.get(held.getName());
         if (def == null) { return; }
-        mctmods.resourcedatapackloader.util.Says.tell(player, "You are on " + def.displayName, def.color);
+        mctmods.resourcedatapackloader.util.Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_JOINED, "You are on " + def.displayName, def.color);
         if (player.getName().equals(leadOf(player.world, def))) { leadTold(player, def, ""); }
     }
 
@@ -374,7 +374,7 @@ public final class ContentTeams {
             EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(one.getKey());
             if (def == null || player == null) { continue; }
             join(player.world, player.getName(), def);
-            mctmods.resourcedatapackloader.util.Says.tell(player, "The round ended, so you are on " + def.displayName, def.color);
+            mctmods.resourcedatapackloader.util.Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_ROUND_ENDED, "The round ended, so you are on " + def.displayName, def.color);
         }
         WAITING.clear();
     }

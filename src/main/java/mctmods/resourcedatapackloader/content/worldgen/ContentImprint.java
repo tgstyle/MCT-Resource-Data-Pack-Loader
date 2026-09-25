@@ -11,6 +11,7 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
@@ -94,6 +95,6 @@ public final class ContentImprint implements IContentShape {
     private static int within(int origin, int start, int span) {
         if (span >= 16) { return start; }
         int corner = ((origin - OFFSET) >> 4) * 16 + OFFSET;
-        return Math.max(corner, Math.min(start, corner + 16 - span));
+        return MathHelper.clamp(start, corner, corner + 16 - span);
     }
 }

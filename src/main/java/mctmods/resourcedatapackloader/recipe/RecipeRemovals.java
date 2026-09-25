@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 public final class RecipeRemovals {
     private static final Gson GSON = new GsonBuilder().create();
@@ -34,22 +35,27 @@ public final class RecipeRemovals {
 
     public static void apply(IForgeRegistry<IRecipe> registry) {
         if (!Config.recipes.removals) { return; }
-        if (!(registry instanceof IForgeRegistryModifiable)) {
-            ContentLog.LOGGER.error("The recipe registry cannot be modified, no recipes were removed");
-            return;
-        }
         NAMES.clear();
         PREFIXES.clear();
         OUTPUTS.clear();
         Json.eachFile(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
         if (NAMES.isEmpty() && PREFIXES.isEmpty() && OUTPUTS.isEmpty()) { return; }
-        List<ResourceLocation> doomed = new ArrayList<>();
+        int removed = removeWhere(registry, (key, recipe) -> !RecipeSpared.spares(key) && matches(key, recipe)).size();
+        if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " crafting recipe(s)"); }
+    }
+
+    public static List<ResourceLocation> removeWhere(IForgeRegistry<IRecipe> registry, BiPredicate<ResourceLocation, IRecipe> doomed) {
+        if (!(registry instanceof IForgeRegistryModifiable)) {
+            ContentLog.LOGGER.error("The recipe registry cannot be modified, no recipes were removed");
+            return new ArrayList<>();
+        }
+        List<ResourceLocation> keys = new ArrayList<>();
         for (ResourceLocation key : registry.getKeys()) {
-            if (!RecipeSpared.spares(key) && matches(key, registry.getValue(key))) { doomed.add(key); }
+            if (doomed.test(key, registry.getValue(key))) { keys.add(key); }
         }
         IForgeRegistryModifiable<IRecipe> modifiable = (IForgeRegistryModifiable<IRecipe>) registry;
-        for (ResourceLocation key : doomed) { modifiable.remove(key); }
-        if (!doomed.isEmpty()) { Summary.info("recipes.removed", "Removed " + doomed.size() + " crafting recipe(s)"); }
+        for (ResourceLocation key : keys) { modifiable.remove(key); }
+        return keys;
     }
 
     private static void read(ResourceLocation key, String contents) {

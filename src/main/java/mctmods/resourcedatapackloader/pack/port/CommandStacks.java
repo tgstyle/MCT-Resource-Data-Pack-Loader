@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 final class CommandStacks {
+    private static final Pattern DAMAGE = Pattern.compile("Damage:(\\d+)[bsil]?");
+
     private CommandStacks() {}
 
     static final class Stack {
@@ -42,7 +44,7 @@ final class CommandStacks {
         else if (brace > 0) {
             name = token.substring(0, brace);
             nbt = token.substring(brace);
-            Matcher damage = Pattern.compile("Damage:(\\d+)[bsil]?").matcher(nbt);
+            Matcher damage = DAMAGE.matcher(nbt);
             if (damage.find()) { meta = Integer.parseInt(damage.group(1)); }
         }
         if (name.startsWith("#")) { throw new Commands.Kept("an item tag has no twin in a 1.12.2 command"); }

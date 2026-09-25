@@ -40,7 +40,7 @@ public final class ContentRoundReset {
         String way = operator ? "now" : who == null ? "none" : wayFor(who, reset);
         if ("now".equals(way)) {
             drop();
-            if (!reset.leadSays.isEmpty()) { Says.tellAll(reset.leadSays.replace("{player}", name), TextFormatting.GOLD); }
+            if (!reset.leadSays.isEmpty()) { Says.tellAll(mctmods.resourcedatapackloader.content.card.CardIds.RESET_LEAD, reset.leadSays.replace("{player}", name), TextFormatting.GOLD); }
             ContentLog.LOGGER.info("{} reset the round", name);
             ContentScoring.resetRound(def);
             return "The round is reset";
@@ -54,7 +54,7 @@ public final class ContentRoundReset {
         BALLOTS.clear();
         BALLOTS.put(name, true);
         ContentLog.LOGGER.info("{} called a vote to reset the round", name);
-        if (!reset.voteSays.isEmpty()) { Says.tellAll(reset.voteSays.replace("{player}", name).replace("{seconds}", Integer.toString(left)), TextFormatting.GOLD); }
+        if (!reset.voteSays.isEmpty()) { Says.tellAll(mctmods.resourcedatapackloader.content.card.CardIds.RESET_VOTE, reset.voteSays.replace("{player}", name).replace("{seconds}", Integer.toString(left)), TextFormatting.GOLD); }
         decide(server);
         return "Your vote to reset the round is called";
     }
@@ -124,7 +124,7 @@ public final class ContentRoundReset {
         if (counted[2] > 0 && counted[0] * 100 >= needed) {
             ContentLog.LOGGER.info("The vote to reset the round passed, {} yes and {} no of {} voter(s)", counted[0], counted[1], counted[2]);
             drop();
-            if (!reset.passSays.isEmpty()) { Says.tellAll(reset.passSays, TextFormatting.GOLD); }
+            if (!reset.passSays.isEmpty()) { Says.tellAll(mctmods.resourcedatapackloader.content.card.CardIds.RESET_PASS, reset.passSays, TextFormatting.GOLD); }
             ContentScoring.resetRound(def);
             return;
         }
@@ -132,7 +132,7 @@ public final class ContentRoundReset {
         ContentLog.LOGGER.info("The vote to reset the round failed, {} yes and {} no of {} voter(s)", counted[0], counted[1], counted[2]);
         drop();
         quietUntil = System.currentTimeMillis() + reset.cooldownSeconds * 1000L;
-        if (!reset.failSays.isEmpty()) { Says.tellAll(reset.failSays, TextFormatting.GRAY); }
+        if (!reset.failSays.isEmpty()) { Says.tellAll(mctmods.resourcedatapackloader.content.card.CardIds.RESET_FAIL, reset.failSays, TextFormatting.GRAY); }
     }
 
     private static void drop() {

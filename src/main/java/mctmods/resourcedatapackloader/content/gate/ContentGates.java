@@ -17,7 +17,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,7 +81,7 @@ public final class ContentGates {
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
         String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());
         if (def.global) { broadcast(player, message); }
-        else { Says.line(player, TextFormatting.GREEN, message); }
+        else { Says.line(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
     }
 
     public static void lock(EntityPlayer player, GateDef def) {
@@ -95,7 +94,7 @@ public final class ContentGates {
         String needed = def.consume.isEmpty() ? def.craft : def.consume;
         if (needed.isEmpty()) { needed = def.hold; }
         String message = def.blockedMessage.replace("%dim%", def.name).replace("%item%", describe(needed));
-        player.sendStatusMessage(new TextComponentString(TextFormatting.RED + message), true);
+        Says.bar(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_BLOCKED, TextFormatting.RED, message);
     }
 
     public static boolean carrying(EntityPlayer player, String item) {
@@ -114,7 +113,7 @@ public final class ContentGates {
     private static void broadcast(EntityPlayer player, String message) {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
-        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { Says.line(online, TextFormatting.GREEN, message); }
+        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { Says.line(online, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
     }
 
     private static String describe(String item) {

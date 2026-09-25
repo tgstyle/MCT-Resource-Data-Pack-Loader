@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -27,12 +28,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         String seed = ContentTerrain.worldSeed();
         String fresh = I18n.format("selectWorld.newWorld");
         ContentLog.LOGGER.debug("The screen for making a world opened. A pack asks for the name '{}', the seed '{}' and the game mode '{}'. The box says '{}' and the game calls a new world '{}', so the name {} be filled in",
-                named, seed, ContentTerrain.worldGameMode(), worldName, fresh, worldName.equals(fresh) ? "will" : "will not");
+                named, seed, ContentServer.worldGameMode(), worldName, fresh, worldName.equals(fresh) ? "will" : "will not");
         if (!named.isEmpty() && worldName.equals(fresh)) { worldName = named; }
         if (!seed.isEmpty()) { worldSeed = seed; }
-        GameType asked = ContentTerrain.gameModeFrom(ContentTerrain.worldGameMode());
+        GameType asked = ContentServer.gameModeFrom(ContentServer.worldGameMode());
         if (asked != GameType.SURVIVAL && asked != GameType.CREATIVE) { return; }
-        boolean hardcore = ContentTerrain.hardcoreAsked();
+        boolean hardcore = ContentServer.hardcoreAsked();
         gameMode = hardcore ? "hardcore" : asked.getName();
         hardCoreMode = hardcore;
         if (allowCheatsWasSetByUser) { return; }

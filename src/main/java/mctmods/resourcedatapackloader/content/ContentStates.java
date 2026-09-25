@@ -15,9 +15,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentStates {
+    private static final Map<String, Optional<IBlockState>> PARSED = new ConcurrentHashMap<>();
+
     private ContentStates() {}
 
     @Nullable public static Block block(String name, Object context) {
@@ -71,7 +74,11 @@ public final class ContentStates {
         held.markDirty();
     }
 
-    @Nullable public static IBlockState parse(String name, Object context) {
+    @Nullable public static IBlockState parse(String name, Object context) { return PARSED.computeIfAbsent(name, key -> Optional.fromNullable(lookUp(key, context))).orNull(); }
+
+    public static void forget() { PARSED.clear(); }
+
+    @Nullable private static IBlockState lookUp(String name, Object context) {
         if (name.isEmpty()) { return null; }
         String[] parts = name.split(":");
         Block block = block(parts.length < 3 ? name : parts[0] + ":" + parts[1], context);

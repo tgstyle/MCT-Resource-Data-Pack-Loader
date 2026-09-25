@@ -71,7 +71,7 @@ final class DeepSky {
         this.skyFloorGen = Math.max(skyLowest, ((IRubicWorld) world).rdpl$getMaxGenerationHeight());
         this.skyCeilGen = Math.min(skyHighest, ((IMinMaxHeight) world).rdpl$getMaxHeight() - 2
                 - (skyShape == SKY_CAVES ? 0 : SKY_HEADROOM) - offsetBlocks);
-        this.skyTaper = Math.max(4, Math.min(SKY_TAPER, (skyCeilGen - skyFloorGen + 1) / 4));
+        this.skyTaper = MathHelper.clamp((skyCeilGen - skyFloorGen + 1) / 4, 4, SKY_TAPER);
     }
 
     void fillSkyCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {

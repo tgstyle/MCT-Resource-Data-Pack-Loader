@@ -32,6 +32,7 @@ final class Convert {
     private static final Set<String> FLAT_TYPES = set(FLAT, "superflat");
     private static final Pattern DIM_PREFIX = Pattern.compile("^([a-z0-9_.-]+:[a-z0-9_./-]+)=(.*)$");
     private static final Pattern REPLACEMENT = Pattern.compile("^([^=]+)=([^=]+)$");
+    private static final Pattern WEIGHT = Pattern.compile("\\d+");
     private static final Map<String, String> TABS = new HashMap<>();
 
     static {
@@ -471,7 +472,7 @@ final class Convert {
             String entry = part.trim();
             String weight = "";
             int gap = entry.lastIndexOf(' ');
-            if (gap > 0 && entry.substring(gap + 1).trim().matches("\\d+")) {
+            if (gap > 0 && WEIGHT.matcher(entry.substring(gap + 1).trim()).matches()) {
                 weight = " " + entry.substring(gap + 1).trim();
                 entry = entry.substring(0, gap).trim();
             }

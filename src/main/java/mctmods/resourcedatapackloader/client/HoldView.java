@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
@@ -47,14 +48,18 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static final int NOTE_COLOR = 0x55FF55;
     private static final float NOTE_SCALE = 2.0F;
     private static String note = "";
+    private static String font = "";
     private static boolean held;
     private static boolean fogging;
+    private static boolean shaded = true;
     private static int showing;
 
     private HoldView() {}
 
-    public static void set(boolean holding, String said, boolean fog) {
+    public static void set(boolean holding, String said, boolean fog, boolean shade, String face) {
         warning = said == null ? "" : said;
+        shaded = shade;
+        font = face;
         if (holding == held) { return; }
         if (holding) {
             note = "";
@@ -84,26 +89,30 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         GlStateManager.setFogEnd(end);
     }
 
-    @SubscribeEvent public static void onHud(RenderGameOverlayEvent.Post event) {
+    @SubscribeEvent(priority = EventPriority.HIGH) public static void onHud(RenderGameOverlayEvent.Post event) {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) { return; }
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.currentScreen != null) { return; }
-        if (held) {
-            warn(mc, event.getResolution());
-            return;
-        }
-        float strength = strength(event.getPartialTicks());
-        if (strength <= 0.0F) { return; }
-        greet(mc, event.getResolution(), strength);
         ScaledResolution resolution = event.getResolution();
+        int screenWidth = Crisp.fit(resolution.getScaledWidth());
+        int screenHeight = Crisp.fit(resolution.getScaledHeight());
+        Crisp.raise();
+        if (held) { warn(mc, screenWidth, screenHeight); }
+        else { welcome(mc, screenWidth, screenHeight, strength(event.getPartialTicks())); }
+        Crisp.lower();
+    }
+
+    private static void welcome(Minecraft mc, int screenWidth, int screenHeight, float strength) {
+        if (strength <= 0.0F) { return; }
+        greet(mc, screenWidth, screenHeight, strength);
         double gui = Crisp.factor();
-        int screenWidth = (int) Math.round(resolution.getScaledWidth() * gui);
-        int times = Math.max(1, screenWidth / 4 / LOGO_WIDTH);
+        int pixelsWide = (int) Math.round(screenWidth * gui);
+        int times = Math.max(1, pixelsWide / 4 / LOGO_WIDTH);
         int width = LOGO_WIDTH * times;
         int height = LOGO_HEIGHT * times;
         int margin = (int) Math.round(MARGIN * gui);
-        int left = leftFor(screenWidth, width, margin);
-        int top = Math.max(margin, (int) Math.round((resolution.getScaledHeight() / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
+        int left = leftFor(pixelsWide, width, margin);
+        int top = Math.max(margin, (int) Math.round((screenHeight / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -123,48 +132,50 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         return 0.0F;
     }
 
-    public static void note(String said) {
+    public static void note(String said, boolean shade, String face) {
         note = said == null ? "" : said;
+        shaded = shade;
+        font = face;
         if (note.isEmpty()) { return; }
         if (!held) { showing = SHOW + FADE; }
     }
 
-    private static void greet(Minecraft mc, ScaledResolution resolution, float strength) {
+    private static void greet(Minecraft mc, int screenWidth, int screenHeight, float strength) {
         if (note.isEmpty() || strength < LEAST_SHOWN) { return; }
         float scale = Crisp.scale(NOTE_SCALE);
-        int width = mc.fontRenderer.getStringWidth(note);
-        float x = Crisp.snap((resolution.getScaledWidth() - width * scale) / 2.0F);
-        float y = Crisp.snap(resolution.getScaledHeight() / 2.0F + SUBTITLE_TOP);
+        int width = MarkText.width(font, note);
+        float x = Crisp.snap((screenWidth - width * scale) / 2.0F);
+        float y = Crisp.snap(screenHeight / 2.0F + SUBTITLE_TOP);
         backdrop(Math.round(x), Math.round(y), Math.round(width * scale), Math.round(mc.fontRenderer.FONT_HEIGHT * scale), Math.round(strength * BACKDROP_ALPHA));
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.pushMatrix();
         GlStateManager.scale(scale, scale, 1.0F);
-        mc.fontRenderer.drawStringWithShadow(note, x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR);
+        MarkText.draw(font, note, x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR);
         GlStateManager.popMatrix();
         GlStateManager.disableBlend();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void backdrop(int left, int top, int width, int height, int alpha) {
-        if (alpha <= 0) { return; }
+        if (alpha <= 0 || !shaded) { return; }
         Gui.drawRect(left - BACKDROP_PAD, top - BACKDROP_PAD, left + width + BACKDROP_PAD, top + height + BACKDROP_PAD, alpha << 24);
     }
 
-    private static void warn(Minecraft mc, ScaledResolution resolution) {
+    private static void warn(Minecraft mc, int screenWidth, int screenHeight) {
         if (warning.isEmpty()) { return; }
         float pulse = pulse();
         if (pulse < LEAST_SHOWN) { return; }
         float scale = Crisp.scale(TEXT_SCALE);
-        int width = mc.fontRenderer.getStringWidth(warning);
-        float x = Crisp.snap((resolution.getScaledWidth() - width * scale) / 2.0F);
-        float y = Crisp.snap(resolution.getScaledHeight() / 2.0F - TEXT_ABOVE_MIDDLE);
+        int width = MarkText.width(font, warning);
+        float x = Crisp.snap((screenWidth - width * scale) / 2.0F);
+        float y = Crisp.snap(screenHeight / 2.0F - TEXT_ABOVE_MIDDLE);
         backdrop(Math.round(x), Math.round(y), Math.round(width * scale), Math.round(mc.fontRenderer.FONT_HEIGHT * scale), Math.round(pulse * BACKDROP_ALPHA));
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.pushMatrix();
         GlStateManager.scale(scale, scale, 1.0F);
-        mc.fontRenderer.drawStringWithShadow(warning, x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | WARNING_COLOR);
+        MarkText.draw(font, warning, x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | WARNING_COLOR);
         GlStateManager.popMatrix();
         GlStateManager.disableBlend();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -202,7 +213,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     public static class NoteHandler implements IMessageHandler<mctmods.resourcedatapackloader.network.MessageNote, IMessage> {
         @Override public IMessage onMessage(mctmods.resourcedatapackloader.network.MessageNote message, MessageContext ctx) {
             String said = message.said;
-            Minecraft.getMinecraft().addScheduledTask(() -> note(said));
+            Minecraft.getMinecraft().addScheduledTask(() -> note(said, message.backdrop, message.font));
             return null;
         }
     }
@@ -211,7 +222,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         @Override public IMessage onMessage(MessageHold message, MessageContext ctx) {
             boolean holding = message.held;
             String said = message.warning;
-            Minecraft.getMinecraft().addScheduledTask(() -> set(holding, said, message.fog));
+            Minecraft.getMinecraft().addScheduledTask(() -> set(holding, said, message.fog, message.backdrop, message.font));
             return null;
         }
     }

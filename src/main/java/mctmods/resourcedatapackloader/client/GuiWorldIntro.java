@@ -18,6 +18,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.io.IOUtils;
+import org.lwjgl.opengl.GL11;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,11 +26,11 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT) public class GuiWorldIntro extends GuiScreen {
     private static final int TEXT_WIDTH = 274;
-    private static final int LINE_HEIGHT = 12;
     private static final int MARGIN = 40;
     private static final int BUTTONS = 36;
     private static final int FITS = 4;
@@ -38,13 +39,12 @@ import javax.annotation.Nullable;
     private static final int NEXT = 0;
     private static final int SKIP = 1;
     private final List<IntroPageDef> pages;
-    private final List<String> lines = new ArrayList<>();
     private final List<String> written = new ArrayList<>();
     @Nullable private final ISound music;
     private final boolean landBeingMade;
     private int page;
     private boolean sounding;
-    private int wrapWidth = TEXT_WIDTH;
+    private MarkPage layout = new MarkPage("", new ArrayList<>(), TEXT_WIDTH);
     private float scale = 1.0F;
     private float totalScrollLength;
     private float ticks;
@@ -96,22 +96,18 @@ import javax.annotation.Nullable;
         if (ticks >= duration()) { advance(); }
     }
 
+    @Override public void setWorldAndResolution(@Nonnull Minecraft mc, int width, int height) { super.setWorldAndResolution(mc, Crisp.fit(width), Crisp.fit(height)); }
+
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        Crisp.raise();
         drawPageBackground(partialTicks);
-        IntroPageDef def = pages.get(page);
-        float step = LINE_HEIGHT * scale;
-        float y = offset(partialTicks);
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(scale, scale, 1.0F);
-        for (String line : lines) {
-            if (y > -step && y < height) {
-                float x = def.still() ? (width - fontRenderer.getStringWidth(line) * scale) / 2.0F : (width - wrapWidth * scale) / 2.0F;
-                fontRenderer.drawString(line, x / scale, y / scale, 0xFFFFFF, true);
-            }
-            y += step;
-        }
-        GlStateManager.popMatrix();
-        super.drawScreen(mouseX, mouseY, partialTicks);
+        int footer = (int) Math.round(BUTTONS * Crisp.factor());
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(0, footer, mc.displayWidth, Math.max(0, mc.displayHeight - footer));
+        layout.draw(width, height, offset(partialTicks), scale, pages.get(page).still());
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        super.drawScreen(Crisp.fit(mouseX), Crisp.fit(mouseY), partialTicks);
+        Crisp.lower();
     }
 
     @Override protected void actionPerformed(GuiButton button) {
@@ -153,8 +149,8 @@ import javax.annotation.Nullable;
     private float endOffset() {
         IntroPageDef def = pages.get(page);
         if (def.settle) {
-            float step = LINE_HEIGHT * def.textScale;
-            return (height - step) / 2.0F - Math.max(lines.size() - 1, 0) * step;
+            float step = layout.last() * def.textScale;
+            return (height - step) / 2.0F - Math.max(layout.height() * def.textScale - step, 0.0F);
         }
         return def.up() ? -totalScrollLength - 24.0F : height + 24.0F;
     }
@@ -181,7 +177,6 @@ import javax.annotation.Nullable;
     }
 
     private void loadPage() {
-        lines.clear();
         written.clear();
         IntroPageDef def = pages.get(page);
         scale = def.textScale;
@@ -191,10 +186,11 @@ import javax.annotation.Nullable;
             return;
         }
         float room = height - BUTTONS;
+        scale = Crisp.scale(scale);
         for (int tries = 0; tries < FITS; tries++) {
             wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
             if (totalScrollLength <= room || scale <= SMALLEST) { return; }
-            scale = Math.max(SMALLEST, scale * room / totalScrollLength);
+            scale = Crisp.below(scale * room / totalScrollLength, SMALLEST);
         }
         wrap((int) Math.max(1.0F, (width - MARGIN * 2) / scale));
     }
@@ -214,12 +210,7 @@ import javax.annotation.Nullable;
     }
 
     private void wrap(int widest) {
-        wrapWidth = widest;
-        lines.clear();
-        for (String text : written) {
-            if (text.isEmpty()) { lines.add(""); }
-            else { lines.addAll(fontRenderer.listFormattedStringToWidth(text, wrapWidth)); }
-        }
-        totalScrollLength = lines.size() * LINE_HEIGHT * scale;
+        layout = new MarkPage("", written, widest);
+        totalScrollLength = layout.height() * scale;
     }
 }

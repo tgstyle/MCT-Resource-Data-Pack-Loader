@@ -88,6 +88,8 @@ public final class ContentReplacements {
         if (replaced > 0) { chunks++; }
     }
 
+    public static boolean replaces(World world, IBlockState state, int y) { return wanted() && appliesTo(world.provider.getDimension()) && y >= minHeight && y <= maxHeight && replacementFor(state) != null; }
+
     public static void report() {
         if (REPLACED.total() == 0) { return; }
         Summary.info("replacements", "Replaced " + REPLACED.total() + " block(s) in " + chunks + " chunk(s) that already existed");

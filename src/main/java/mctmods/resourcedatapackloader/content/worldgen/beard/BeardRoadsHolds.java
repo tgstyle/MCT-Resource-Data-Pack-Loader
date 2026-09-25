@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -63,7 +64,7 @@ public final class BeardRoadsHolds {
             break;
         }
         if (low > high) { return grade < low ? low : high; }
-        return Math.max(low, Math.min(high, grade));
+        return MathHelper.clamp(grade, low, high);
     }
 
     public static void roadApron(World world, @Nullable StructureComponent piece, boolean alongX, int start, int rowMost, int acrossLeast, int acrossMost, int[] profile, int[] ground, boolean[] held, boolean[] footed, boolean[] fixed, boolean[] bridged, boolean[] square, boolean[] decks) {
@@ -116,7 +117,7 @@ public final class BeardRoadsHolds {
             if (!(overX && nearZ) && !(overZ && nearX)) { continue; }
             int otherLeast = alongX ? road.minX : road.minZ;
             int otherMost = alongX ? road.maxX : road.maxZ;
-            int center = Math.max(start, Math.min(rowMost, (otherLeast + otherMost) / 2));
+            int center = MathHelper.clamp((otherLeast + otherMost) / 2, start, rowMost);
             boolean ending = otherLeast == rowMost + 1 || otherMost == start - 1;
             boolean wet = !CityGrowth.bulbWide(other) && wetSquare(world, alongX ? own : road, alongX ? road : own, own, roads);
             if (ending) {
@@ -298,7 +299,7 @@ public final class BeardRoadsHolds {
             int otherLeast = alongX ? front.minX : front.minZ;
             int otherMost = alongX ? front.maxX : front.maxZ;
             if (otherMost < start || otherLeast > rowMost) { continue; }
-            int center = Math.max(start, Math.min(rowMost, (otherLeast + otherMost) / 2));
+            int center = MathHelper.clamp((otherLeast + otherMost) / 2, start, rowMost);
             int grade = profile[center - start];
             if (grade == Integer.MIN_VALUE) { continue; }
             int spanLo = Math.max(start, otherLeast);

@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class RegionCache {
@@ -24,6 +25,7 @@ public final class RegionCache {
     private static final float HEAP_TIGHT = 0.85f;
     private static final float HEAP_EASY = 0.75f;
     private static final int STEP = 64;
+    private static final Pattern DIGITS = Pattern.compile("\\d+");
     private static final Map<Object, IRegion<?>> OPEN = new LinkedHashMap<>(256, 0.75f, true);
     private static final int DESCRIPTOR_CEILING = descriptorCeiling();
     private static int wanted = LEAST_REGIONS;
@@ -113,7 +115,7 @@ public final class RegionCache {
                 if (!line.startsWith("Max open files")) { continue; }
                 String[] parts = line.split("\\s+");
                 for (String part : parts) {
-                    if (!part.matches("\\d+")) { continue; }
+                    if (!DIGITS.matcher(part).matches()) { continue; }
                     int allowed = Math.max(LEAST_REGIONS, Math.min(MOST_REGIONS, Integer.parseInt(part) / DESCRIPTOR_SHARE));
                     ContentLog.LOGGER.info("This machine allows {} open file(s) at once, so a rubic world holds no more than {} region file(s) open", part, allowed);
                     return allowed;

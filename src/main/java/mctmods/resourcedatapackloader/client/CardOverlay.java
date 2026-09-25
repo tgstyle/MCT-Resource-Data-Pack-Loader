@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.network.MessageCard;
 
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -42,31 +41,37 @@ import javax.annotation.Nullable;
     private CardOverlay() {}
 
     private static final class Card {
-        final String title;
-        final List<String> lines;
+        final List<MarkText.Piece> title;
+        final List<List<MarkText.Piece>> lines = new ArrayList<>();
         final ItemStack icon;
         @Nullable final ResourceLocation image;
         final int background;
+        final boolean panel;
         final int text;
         final int life;
         int age;
+        int measured;
 
         Card(MessageCard message) {
-            this.title = message.title;
-            this.lines = message.lines;
+            this.title = message.title.isEmpty() ? new ArrayList<>() : MarkText.pieces(message.font, message.title);
+            for (String line : message.lines) { lines.add(MarkText.pieces(message.font, line)); }
             this.icon = message.icon;
             this.image = message.image.isEmpty() ? null : new ResourceLocation(message.image);
             this.background = message.background;
+            this.panel = message.panel;
             this.text = message.text;
             this.life = Math.max(SLIDE + FADE, message.ticks);
         }
 
         int height() { return PAD * 2 + (title.isEmpty() ? 0 : LINE) + lines.size() * LINE; }
 
-        int width(FontRenderer font) {
-            int widest = title.isEmpty() ? 0 : font.getStringWidth(title);
-            for (String line : lines) { widest = Math.max(widest, font.getStringWidth(line)); }
-            return Math.max(LEAST_WIDTH, STRIPE + PAD + (icon.isEmpty() ? 0 : ICON + PAD) + widest + PAD);
+        int width() {
+            if (measured == 0) {
+                int widest = MarkText.width(title);
+                for (List<MarkText.Piece> line : lines) { widest = Math.max(widest, MarkText.width(line)); }
+                measured = Math.max(LEAST_WIDTH, STRIPE + PAD + (icon.isEmpty() ? 0 : ICON + PAD) + widest + PAD);
+            }
+            return measured;
         }
 
         float alpha() {
@@ -95,41 +100,40 @@ import javax.annotation.Nullable;
     @SubscribeEvent public static void onHud(RenderGameOverlayEvent.Post event) {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL || CARDS.isEmpty()) { return; }
         if (Minecraft.getMinecraft().currentScreen != null) { return; }
-        ScaledResolution resolution = event.getResolution();
-        draw(resolution.getScaledWidth(), resolution.getScaledHeight());
+        draw(event.getResolution());
     }
 
     @SubscribeEvent public static void onGui(GuiScreenEvent.DrawScreenEvent.Post event) {
         if (CARDS.isEmpty()) { return; }
-        draw(event.getGui().width, event.getGui().height);
+        draw(new ScaledResolution(Minecraft.getMinecraft()));
     }
 
-    private static void draw(int screenWidth, int screenHeight) {
+    private static void draw(ScaledResolution resolution) {
         Minecraft mc = Minecraft.getMinecraft();
-        FontRenderer font = mc.fontRenderer;
-        int bottom = screenHeight - MARGIN;
-        GlStateManager.pushMatrix();
+        int screenWidth = Crisp.fit(resolution.getScaledWidth());
+        int bottom = Crisp.fit(resolution.getScaledHeight()) - MARGIN;
+        Crisp.raise();
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         for (int i = CARDS.size() - 1; i >= 0; i--) {
             Card card = CARDS.get(i);
-            int width = card.width(font);
+            int width = card.width();
             int height = card.height();
             int top = bottom - height;
             if (top < MARGIN) { break; }
             int left = screenWidth - MARGIN - width + Math.round(card.slide() * (width + MARGIN));
             float alpha = card.alpha();
-            int panel = withAlpha(card.background, 0.85F * alpha);
-            int edge = withAlpha(darker(card.background), alpha);
-            int stripe = withAlpha(card.text, alpha);
-            Gui.drawRect(left - 1, top - 1, left + width + 1, top + height + 1, edge);
-            Gui.drawRect(left, top, left + width, top + height, panel);
+            if (card.panel) {
+                Gui.drawRect(left - 1, top - 1, left + width + 1, top + height + 1, withAlpha(darker(card.background), alpha));
+                Gui.drawRect(left, top, left + width, top + height, withAlpha(card.background, 0.85F * alpha));
+            }
+            else { GlStateManager.enableBlend(); }
             if (card.image != null) {
                 GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
                 mc.getTextureManager().bindTexture(card.image);
                 Gui.drawModalRectWithCustomSizedTexture(left, top, 0.0F, 0.0F, width, height, width, height);
             }
-            Gui.drawRect(left, top, left + STRIPE, top + height, stripe);
+            if (card.panel) { Gui.drawRect(left, top, left + STRIPE, top + height, withAlpha(card.text, alpha)); }
             int x = left + STRIPE + PAD;
             int y = top + PAD;
             if (!card.icon.isEmpty()) {
@@ -143,11 +147,11 @@ import javax.annotation.Nullable;
                 x += ICON + PAD;
             }
             if (!card.title.isEmpty()) {
-                font.drawStringWithShadow(card.title, x, y, withAlpha(card.text, alpha));
+                MarkText.draw(card.title, x, y, withAlpha(card.text, alpha));
                 y += LINE;
             }
-            for (String line : card.lines) {
-                font.drawStringWithShadow(line, x, y, withAlpha(0xE8E8E8, alpha));
+            for (List<MarkText.Piece> line : card.lines) {
+                MarkText.draw(line, x, y, withAlpha(0xE8E8E8, alpha));
                 y += LINE;
             }
             bottom = top - GAP;
@@ -155,14 +159,17 @@ import javax.annotation.Nullable;
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.enableDepth();
         GlStateManager.disableBlend();
-        GlStateManager.popMatrix();
+        Crisp.lower();
     }
 
-    private static int withAlpha(int rgb, float alpha) { return (Math.round(MathHelper.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
+    static int withAlpha(int rgb, float alpha) { return (Math.round(MathHelper.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
 
-    private static int darker(int rgb) { return ((rgb >> 16 & 0xFF) / 2 << 16) | ((rgb >> 8 & 0xFF) / 2 << 8) | ((rgb & 0xFF) / 2); }
+    static int darker(int rgb) { return ((rgb >> 16 & 0xFF) / 2 << 16) | ((rgb >> 8 & 0xFF) / 2 << 8) | ((rgb & 0xFF) / 2); }
 
     public static class Handler extends AbstractClientMessageHandler<MessageCard> {
-        @Override public void handleClientMessage(World world, EntityPlayer player, MessageCard message, MessageContext ctx) { show(message); }
+        @Override public void handleClientMessage(World world, EntityPlayer player, MessageCard message, MessageContext ctx) {
+            if (message.center) { CenterCard.show(message); }
+            else { show(message); }
+        }
     }
 }

@@ -66,7 +66,8 @@ public final class ContentSeams {
         boolean carryEntities = ContentControl.flag(ContentControl.TERRAIN, "worldSeamEntities", Config.worldgen.worldSeamEntities);
         List<Entity> falling = null;
         List<Entity> rising = null;
-        for (Entity entity : world.loadedEntityList) {
+        List<? extends Entity> scanned = carryEntities ? world.loadedEntityList : world.playerEntities;
+        for (Entity entity : scanned) {
             if (entity.isDead || entity.isRiding()) { continue; }
             boolean player = entity instanceof EntityPlayerMP;
             if (player && ((EntityPlayerMP) entity).connection == null) { continue; }

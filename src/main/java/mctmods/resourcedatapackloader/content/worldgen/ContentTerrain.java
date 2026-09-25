@@ -7,15 +7,12 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Summary;
-import mctmods.resourcedatapackloader.util.DimensionValues;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.EnumDifficulty;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -55,9 +52,16 @@ public final class ContentTerrain {
 
     public static String worldSeed() { return text("worldSeed", Config.worldgen.worldSeed); }
 
-    public static String worldName() { return text("worldName", Config.worldgen.worldName); }
+    public static void properties(Map<String, String> asked, String levelType) {
+        String seed = worldSeed();
+        if (!seed.isEmpty()) { asked.put("level-seed", seed); }
+        WorldType type = keeps(levelType) ? null : WorldType.byName(worldType());
+        if (type != null) { asked.put("level-type", type.getName()); }
+        String options = options(type == null ? levelType : type.getName());
+        if (!options.isEmpty()) { asked.put("generator-settings", options); }
+    }
 
-    public static String worldGameMode() { return text("worldGameMode", Config.worldgen.worldGameMode); }
+    public static String worldName() { return text("worldName", Config.worldgen.worldName); }
 
     public static String worldSpawn() { return text("worldSpawn", Config.worldgen.worldSpawn); }
 
@@ -65,20 +69,6 @@ public final class ContentTerrain {
         if (ContentControl.off(ContentControl.TERRAIN)) { return -1; }
         return ContentControl.number(ContentControl.TERRAIN, "worldTime", Config.worldgen.worldTime);
     }
-
-    @Nullable public static EnumDifficulty difficultyFor(int dimension) {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        return DIFFICULTY.at(dimension, ContentControl.lines(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty));
-    }
-
-    @Nullable private static EnumDifficulty difficultyFrom(String name) {
-        for (EnumDifficulty difficulty : EnumDifficulty.values()) {
-            if (difficulty.name().equalsIgnoreCase(name)) { return difficulty; }
-        }
-        return null;
-    }
-
-    private static final DimensionValues<EnumDifficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", ContentTerrain::difficultyFrom, "which is not one of peaceful, easy, normal or hard");
 
     public static int worldBorder() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return 0; }
@@ -102,16 +92,6 @@ public final class ContentTerrain {
             return null;
         }
     }
-
-    public static GameType gameModeFrom(String written) {
-        if (written.equalsIgnoreCase("hardcore")) { return GameType.SURVIVAL; }
-        for (GameType type : GameType.values()) {
-            if (type != GameType.NOT_SET && written.equalsIgnoreCase(type.getName())) { return type; }
-        }
-        return GameType.NOT_SET;
-    }
-
-    public static boolean hardcoreAsked() { return worldGameMode().equalsIgnoreCase("hardcore"); }
 
     public static long seedFrom(String written) {
         try { return Long.parseLong(written); }

@@ -8,6 +8,7 @@ import static mctmods.resourcedatapackloader.util.Json.strings;
 import net.minecraft.scoreboard.IScoreCriteria;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -99,7 +100,7 @@ public final class ContentParserGames {
             players = "none";
         }
         return new RoundResetDef(lead, "vote".equals(players), names(reset, "teams"),
-                Math.max(1, Math.min(100, JsonUtils.getInt(reset, "passPercent", 51))),
+                MathHelper.clamp(JsonUtils.getInt(reset, "passPercent", 51), 1, 100),
                 Math.max(5, JsonUtils.getInt(reset, "voteSeconds", 30)),
                 Math.max(0, JsonUtils.getInt(reset, "cooldownSeconds", 60)),
                 JsonUtils.getString(reset, "leadSays", "{player} reset the round"),

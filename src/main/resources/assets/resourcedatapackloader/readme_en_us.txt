@@ -252,7 +252,7 @@ Each of these is a folder under assets/<yourpack>:
     hardness         blastplaster     player_loot      overrides
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
-    texts            anvils
+    texts            anvils           cards
 
 Blocks come in these shapes, set by the "type" field:
 

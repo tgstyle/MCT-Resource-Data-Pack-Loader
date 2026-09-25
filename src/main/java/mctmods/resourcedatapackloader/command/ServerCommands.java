@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
     private static final int OPERATOR = 3;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
@@ -141,6 +141,8 @@ public class ServerCommands extends CommandBase {
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
+        if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, mctmods.resourcedatapackloader.content.card.CardRules.keys()); }
+        if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
         if (args.length == 2 && "vein".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentWorldgen.veinNames()); }
@@ -175,6 +177,7 @@ public class ServerCommands extends CommandBase {
             else if (args.length == 3 && "back".equals(args[2])) { allow(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
             else { throw new WrongUsageException(getUsage(sender)); }
         }
+        else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
@@ -201,6 +204,7 @@ public class ServerCommands extends CommandBase {
         else if ((args.length == 2 || args.length == 3) && "vein".equals(args[0])) { vein(sender, args[1], args.length == 3 ? parseInt(args[2], 1, 64) : 8); }
         else if (args.length == 3 && "goto".equals(args[0]) && "next".equals(args[2])) { goTo(sender, args[1], true); }
         else if (args.length == 3 && "goto".equals(args[0]) && "back".equals(args[2])) { goBack(sender, args[1]); }
+        else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -374,6 +378,7 @@ public class ServerCommands extends CommandBase {
         server.reload();
         ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
+        mctmods.resourcedatapackloader.content.card.CardRules.load();
         for (net.minecraft.world.WorldServer world : server.worlds) {
             ContentTeams.field(world);
             mctmods.resourcedatapackloader.content.ContentScoring.keep(world);

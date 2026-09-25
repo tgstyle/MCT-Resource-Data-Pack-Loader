@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.world.SavedData;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -19,33 +20,13 @@ public final class GateStorage extends WorldSavedData {
 
     public GateStorage(String name) { super(name); }
 
-    public static boolean unlockedFor(EntityPlayer player, String key) { return persisted(player).getCompoundTag(TAG).getBoolean(key); }
+    public static boolean unlockedFor(EntityPlayer player, String key) { return PlayerPersisted.read(player, TAG).getBoolean(key); }
 
-    public static void unlockFor(EntityPlayer player, String key) {
-        NBTTagCompound persisted = persisted(player);
-        NBTTagCompound gates = persisted.getCompoundTag(TAG);
-        gates.setBoolean(key, true);
-        persisted.setTag(TAG, gates);
-        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-    }
+    public static void unlockFor(EntityPlayer player, String key) { PlayerPersisted.section(player, TAG).setBoolean(key, true); }
 
-    public static void lockFor(EntityPlayer player, String key) {
-        NBTTagCompound persisted = persisted(player);
-        NBTTagCompound gates = persisted.getCompoundTag(TAG);
-        gates.removeTag(key);
-        persisted.setTag(TAG, gates);
-        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-    }
+    public static void lockFor(EntityPlayer player, String key) { PlayerPersisted.section(player, TAG).removeTag(key); }
 
-    public static int tallyFor(EntityPlayer player, String key) {
-        NBTTagCompound persisted = persisted(player);
-        NBTTagCompound tally = persisted.getCompoundTag(KILLS);
-        int now = tally.getInteger(key) + 1;
-        tally.setInteger(key, now);
-        persisted.setTag(KILLS, tally);
-        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-        return now;
-    }
+    public static int tallyFor(EntityPlayer player, String key) { return PlayerPersisted.tally(player, KILLS, key); }
 
     public static int tallyGlobally(World world, String key) {
         GateStorage data = get(world);
@@ -61,23 +42,11 @@ public final class GateStorage extends WorldSavedData {
         return data == null ? 0 : data.kills.getInteger(key);
     }
 
-    public static void noteFor(EntityPlayer player, String key, int value) {
-        NBTTagCompound persisted = persisted(player);
-        NBTTagCompound tally = persisted.getCompoundTag(KILLS);
-        tally.setInteger(key, value);
-        persisted.setTag(KILLS, tally);
-        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-    }
+    public static void noteFor(EntityPlayer player, String key, int value) { PlayerPersisted.section(player, KILLS).setInteger(key, value); }
 
-    public static int notedFor(EntityPlayer player, String key) { return persisted(player).getCompoundTag(KILLS).getInteger(key); }
+    public static int notedFor(EntityPlayer player, String key) { return PlayerPersisted.read(player, KILLS).getInteger(key); }
 
-    public static void clearTallyFor(EntityPlayer player, String key) {
-        NBTTagCompound persisted = persisted(player);
-        NBTTagCompound tally = persisted.getCompoundTag(KILLS);
-        tally.removeTag(key);
-        persisted.setTag(KILLS, tally);
-        player.getEntityData().setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
-    }
+    public static void clearTallyFor(EntityPlayer player, String key) { PlayerPersisted.clearTally(player, KILLS, key); }
 
     public static void clearTallyGlobally(World world, String key) {
         GateStorage data = get(world);
@@ -104,8 +73,6 @@ public final class GateStorage extends WorldSavedData {
         data.open.removeTag(key);
         data.markDirty();
     }
-
-    private static NBTTagCompound persisted(EntityPlayer player) { return player.getEntityData().getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG); }
 
     private static GateStorage get(World world) {
         World overworld = DimensionManager.getWorld(0);

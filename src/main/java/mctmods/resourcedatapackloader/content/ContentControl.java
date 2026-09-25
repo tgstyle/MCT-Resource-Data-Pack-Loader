@@ -32,6 +32,7 @@ public final class ContentControl {
     public static final String CHUNKS = "chunks";
     public static final String BLAST_PLASTER = "blastPlaster";
     public static final String COMMANDS = "commands";
+    public static final String SERVER = "server";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -50,7 +51,7 @@ public final class ContentControl {
             "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
             "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "prospectItems", "prospectItemsAreBlacklist", "prospectWear", "prospectSlow", "prospectDrops", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
             "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
-            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage",
+            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage", "saysBackground", "saysFont", "toasts",
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
@@ -67,7 +68,7 @@ public final class ContentControl {
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathVergeBlock", "villagePathVergeWaterBlock", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailPowerRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth", "villageRailClimb", "villageRailTail", "villageRailLinks", "villageRailLinkLeast", "villageRailLinkMost", "villageRailLinkBridgeMost", "villageRailLinkTunnelMost", "villageRailLinkStation", "villageRailLinkStationLength", "villageRailLinkPlatformWidth", "villageRailLinkPlatformBlock", "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villagePlotsLeast",
             "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageBlockSizes", "villageLayout", "biomes", "voidPlatformBlock",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
-            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether", "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals", "worldSpawnNpcs", "worldViewDistance", "worldBuildHeight", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
     private ContentControl() {}
 
@@ -198,6 +199,8 @@ public final class ContentControl {
         return found.toArray(new String[0]);
     }
 
+    public static boolean listed(String group, String key) { return setting(group, key) instanceof JsonArray; }
+
     public static String[] lines(String group, String key, String[] fallback) {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
@@ -288,6 +291,7 @@ public final class ContentControl {
             case CHUNKS: return Config.control.chunks;
             case BLAST_PLASTER: return Config.control.blastPlaster;
             case COMMANDS: return Config.control.commands;
+            case SERVER: return Config.control.server;
             default: return DEFAULT;
         }
     }
