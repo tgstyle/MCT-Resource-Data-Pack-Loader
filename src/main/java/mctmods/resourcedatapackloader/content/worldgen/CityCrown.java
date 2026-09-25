@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
@@ -91,13 +93,13 @@ public final class CityCrown {
         BoundingBox clip = clip(level, chunk);
         for (StructureStart start : cities(manager, chunk)) {
             List<BoundingBox> boxes = new ArrayList<>();
-            List<Integer> streets = new ArrayList<>();
+            IntList streets = new IntArrayList();
             for (StructurePiece piece : start.getPieces()) {
                 BoundingBox box = piece.getBoundingBox();
                 boxes.add(box);
-                if (street(piece)) { streets.addAll(List.of(box.minX(), box.minZ(), box.maxX(), box.maxZ())); }
+                if (street(piece)) { streets.addAll(IntList.of(box.minX(), box.minZ(), box.maxX(), box.maxZ())); }
             }
-            int[] roadways = streets.stream().mapToInt(Integer::intValue).toArray();
+            int[] roadways = streets.toIntArray();
             for (StructurePiece piece : start.getPieces()) {
                 if (!reaches(piece, clip)) { continue; }
                 ContentCityPlotPiece plot = piece instanceof ContentCityPlotPiece held ? held : null;

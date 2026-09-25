@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -70,7 +71,7 @@ public final class ContentProspect {
         String[] parts = sides[1].split(",");
         int radius = RADIUS;
         if (parts.length > 1) {
-            try { radius = Math.max(1, Math.min(64, Integer.parseInt(parts[1].trim()))); }
+            try { radius = Mth.clamp(Integer.parseInt(parts[1].trim()), 1, 64); }
             catch (NumberFormatException bad) { ContentLog.LOGGER.error("{} entry '{}' has a radius that is not a number, using {}", KEY, entry, RADIUS); }
         }
         Set<String> names = new HashSet<>();
@@ -158,10 +159,10 @@ public final class ContentProspect {
             String line = dx * dx + dz * dz <= ContentOreVein.REACH * ContentOreVein.REACH
                     ? Lang.tr(player, "rdpl.prospect.here", ore, height)
                     : Lang.tr(player, "rdpl.prospect.hit", ore, Lang.tr(player, "rdpl.dir." + point(dx, dz)), height);
-            Says.tell(player, line, ChatFormatting.YELLOW);
+            Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT, line, ChatFormatting.YELLOW);
             said++;
         }
-        if (said == 0) { Says.tell(player, Lang.tr(player, "rdpl.prospect.none"), ChatFormatting.GRAY); }
+        if (said == 0) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT_NONE, Lang.tr(player, "rdpl.prospect.none"), ChatFormatting.GRAY); }
     }
 
     private static String point(int dx, int dz) {

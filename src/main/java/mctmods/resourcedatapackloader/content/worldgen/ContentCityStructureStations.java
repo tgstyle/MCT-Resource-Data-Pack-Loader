@@ -2,12 +2,13 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,15 +17,15 @@ public final class ContentCityStructureStations {
     private ContentCityStructureStations() {}
 
     static int[] stations(Collection<CityRails.Laid> tracks) {
-        List<Integer> boxes = new ArrayList<>();
+        IntList boxes = new IntArrayList();
         for (CityRails.Laid track : tracks) {
             if (!track.rail().subway()) { continue; }
             for (CityRails.Station station : track.stations()) {
                 BoundingBox box = stationBox(track.rail(), station);
-                boxes.addAll(List.of(box.minX(), box.minZ(), box.maxX(), box.maxZ()));
+                boxes.addAll(IntList.of(box.minX(), box.minZ(), box.maxX(), box.maxZ()));
             }
         }
-        return boxes.stream().mapToInt(Integer::intValue).toArray();
+        return boxes.toIntArray();
     }
 
     static boolean claimed(List<BoundingBox> claims, CityPlan.Plot plot) {
@@ -50,9 +51,9 @@ public final class ContentCityStructureStations {
             boolean ends = row > most || track.profile()[at] != track.profile()[held] || track.bridged()[at] != track.bridged()[held] || track.tunnel()[at] != track.tunnel()[held] || track.crossed()[at] != track.crossed()[held];
             if (!ends) { continue; }
             if (track.crossed()[held] == crossings) {
-                List<Integer> frames = new ArrayList<>();
+                IntList frames = new IntArrayList();
                 for (int mark = from; mark < row; mark++) { if (track.frames()[mark - start]) { frames.add(mark); } }
-                builder.addPiece(new ContentCityRailPiece(from, row - 1, track.profile()[held], rail.middle(), rail.alongX(), rail.width(), track.bridged()[held], track.tunnel()[held], rail.subway(), crossings, frames.stream().mapToInt(Integer::intValue).toArray(), trunk, linkEnds));
+                builder.addPiece(new ContentCityRailPiece(from, row - 1, track.profile()[held], rail.middle(), rail.alongX(), rail.width(), track.bridged()[held], track.tunnel()[held], rail.subway(), crossings, frames.toIntArray(), trunk, linkEnds));
             }
             from = row;
         }

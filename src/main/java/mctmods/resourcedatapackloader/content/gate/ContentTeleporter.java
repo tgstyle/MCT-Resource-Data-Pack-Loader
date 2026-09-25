@@ -111,20 +111,12 @@ public final class ContentTeleporter implements ITeleporter {
         return portalPos;
     }
 
-    public static void remember(Entity entity, ResourceLocation dimension, BlockPos pos) {
-        CompoundTag portals = PlayerPersisted.of(entity, PORTALS).getCompound(PORTALS);
-        portals.putLong(dimension.toString(), pos.asLong());
-        PlayerPersisted.of(entity, PORTALS).put(PORTALS, portals);
-    }
+    public static void remember(Entity entity, ResourceLocation dimension, BlockPos pos) { PlayerPersisted.section(entity, PORTALS).putLong(dimension.toString(), pos.asLong()); }
 
-    private static void forget(Entity entity, ResourceLocation dimension) {
-        CompoundTag portals = PlayerPersisted.of(entity, PORTALS).getCompound(PORTALS);
-        portals.remove(dimension.toString());
-        PlayerPersisted.of(entity, PORTALS).put(PORTALS, portals);
-    }
+    private static void forget(Entity entity, ResourceLocation dimension) { PlayerPersisted.section(entity, PORTALS).remove(dimension.toString()); }
 
     @Nullable private static BlockPos remembered(Entity entity, ResourceLocation dimension) {
-        CompoundTag portals = PlayerPersisted.of(entity, PORTALS).getCompound(PORTALS);
+        CompoundTag portals = PlayerPersisted.read(entity, PORTALS);
         String key = dimension.toString();
         return portals.contains(key) ? BlockPos.of(portals.getLong(key)) : null;
     }

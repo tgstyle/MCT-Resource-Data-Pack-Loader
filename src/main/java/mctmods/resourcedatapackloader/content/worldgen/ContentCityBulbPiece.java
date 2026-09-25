@@ -109,9 +109,9 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
     @Override public int fellFloor() { return court.level() - 1; }
 
     private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
-        BlockState road = stateOr(dress.paving(), Blocks.DIRT_PATH.defaultBlockState());
-        BlockState edge = stateOr(dress.edge(), road);
-        BlockState curb = stateOr(dress.curb(), road);
+        BlockState road = CityPalette.stateOr(dress.paving(), Blocks.DIRT_PATH.defaultBlockState());
+        BlockState edge = CityPalette.stateOr(dress.edge(), road);
+        BlockState curb = CityPalette.stateOr(dress.curb(), road);
         BlockState air = Blocks.AIR.defaultBlockState();
         BoundingBox held = getBoundingBox();
         ContentCityTrees.fellAround(level, manager, chunk, this, box);
@@ -162,8 +162,6 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
         if (opening && away > core * core + core && offset > dress.lane()) { return CityCross.LINE; }
         return CityCross.CORE;
     }
-
-    private static BlockState stateOr(String named, BlockState fallback) { return CityPalette.stateOr(named, fallback); }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return court.box(0, 0); }
 

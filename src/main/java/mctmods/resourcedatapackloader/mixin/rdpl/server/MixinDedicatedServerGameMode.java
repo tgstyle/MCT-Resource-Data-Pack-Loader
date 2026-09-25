@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.server;
 
-import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -21,7 +21,7 @@ import java.util.Properties;
 
     @Inject(method = "initServer", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/server/ServerLifecycleHooks;handleServerAboutToStart(Lnet/minecraft/server/MinecraftServer;)Z", shift = At.Shift.AFTER, remap = false))
     private void rdpl$writeThePackMode(CallbackInfoReturnable<Boolean> cir) {
-        String mode = ContentTerrain.worldGameMode().trim().toLowerCase(Locale.ROOT);
+        String mode = ContentServer.worldGameMode().trim().toLowerCase(Locale.ROOT);
         boolean hardcore = "hardcore".equals(mode);
         GameType asked = hardcore ? GameType.SURVIVAL : GameType.byName(mode, null);
         if (asked == null) { return; }

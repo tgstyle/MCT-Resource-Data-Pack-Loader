@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
@@ -92,7 +93,7 @@ public final class ContentPregen {
         this.middleX = middleX;
         this.middleZ = middleZ;
         this.order = new ContentChunkOrder(middleX, middleZ, reach);
-        this.inFlight = Math.max(1, Math.min(512, ContentControl.number(ContentControl.CHUNKS, "pregenChunksInFlight", Config.chunks.pregenChunksInFlight())));
+        this.inFlight = Mth.clamp(ContentControl.number(ContentControl.CHUNKS, "pregenChunksInFlight", Config.chunks.pregenChunksInFlight()), 1, 512);
         this.started = System.currentTimeMillis();
     }
 
@@ -395,7 +396,7 @@ public final class ContentPregen {
                 ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);
             }
             chainBegun = 0L;
-            Says.tellAll(server, ending, ChatFormatting.GREEN);
+            Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_ENDED, ending, ChatFormatting.GREEN);
             if (!stopping) { keepPristine(server); }
             ContentPregenHold.releaseEveryone(server, !stopping);
         }

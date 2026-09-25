@@ -41,9 +41,12 @@ public final class CardOverlay {
         final ItemStack icon;
         @Nullable final ResourceLocation image;
         final int background;
+        final boolean panel;
+        final CardFont.Face face;
         final int text;
         final int life;
         int age;
+        int measured;
 
         Card(MessageCard message) {
             this.title = message.title();
@@ -51,6 +54,8 @@ public final class CardOverlay {
             this.icon = message.icon();
             this.image = message.image().isEmpty() ? null : ContentParser.location(message.image());
             this.background = message.background();
+            this.panel = message.panel();
+            this.face = CardFont.of(message.font());
             this.text = message.text();
             this.life = Math.max(SLIDE + FADE, message.ticks());
         }
@@ -58,9 +63,12 @@ public final class CardOverlay {
         int height() { return PAD * 2 + (title.isEmpty() ? 0 : LINE) + lines.size() * LINE; }
 
         int width(Font font) {
-            int widest = title.isEmpty() ? 0 : font.width(title);
-            for (String line : lines) { widest = Math.max(widest, font.width(line)); }
-            return Math.max(LEAST_WIDTH, STRIPE + PAD + (icon.isEmpty() ? 0 : ICON + PAD) + widest + PAD);
+            if (measured == 0) {
+                int widest = title.isEmpty() ? 0 : font.width(MarkText.text(face, title));
+                for (String line : lines) { widest = Math.max(widest, font.width(MarkText.text(face, line))); }
+                measured = Math.max(LEAST_WIDTH, STRIPE + PAD + (icon.isEmpty() ? 0 : ICON + PAD) + widest + PAD);
+            }
+            return measured;
         }
 
         float alpha() {
@@ -72,6 +80,10 @@ public final class CardOverlay {
     }
 
     public static void show(MessageCard message) {
+        if (message.center()) {
+            CenterCard.show(message);
+            return;
+        }
         while (CARDS.size() >= MOST) { CARDS.remove(0); }
         CARDS.add(new Card(message));
     }
@@ -88,18 +100,20 @@ public final class CardOverlay {
     public static void onHud(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (CARDS.isEmpty() || mc.screen != null) { return; }
-        draw(event.getGuiGraphics(), mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+        draw(event.getGuiGraphics());
     }
 
     public static void onScreen(ScreenEvent.Render.Post event) {
         if (CARDS.isEmpty()) { return; }
-        draw(event.getGuiGraphics(), event.getScreen().width, event.getScreen().height);
+        draw(event.getGuiGraphics());
     }
 
-    private static void draw(GuiGraphics graphics, int screenWidth, int screenHeight) {
-        Font font = Minecraft.getInstance().font;
-        int bottom = screenHeight - MARGIN;
-        graphics.pose().pushPose();
+    private static void draw(GuiGraphics graphics) {
+        Minecraft mc = Minecraft.getInstance();
+        Font font = mc.font;
+        int screenWidth = Crisp.fit(mc.getWindow().getGuiScaledWidth());
+        int bottom = Crisp.fit(mc.getWindow().getGuiScaledHeight()) - MARGIN;
+        Crisp.raise(graphics);
         graphics.pose().translate(0.0F, 0.0F, ABOVE_ITEMS);
         RenderSystem.enableBlend();
         for (int i = CARDS.size() - 1; i >= 0; i--) {
@@ -110,14 +124,16 @@ public final class CardOverlay {
             if (top < MARGIN) { break; }
             int left = screenWidth - MARGIN - width + Math.round(card.slide() * (width + MARGIN));
             float alpha = card.alpha();
-            graphics.fill(left - 1, top - 1, left + width + 1, top + height + 1, withAlpha(darker(card.background), alpha));
-            graphics.fill(left, top, left + width, top + height, withAlpha(card.background, 0.85F * alpha));
+            if (card.panel) {
+                graphics.fill(left - 1, top - 1, left + width + 1, top + height + 1, withAlpha(darker(card.background), alpha));
+                graphics.fill(left, top, left + width, top + height, withAlpha(card.background, 0.85F * alpha));
+            }
             if (card.image != null) {
                 graphics.setColor(1.0F, 1.0F, 1.0F, alpha);
                 graphics.blit(card.image, left, top, 0, 0.0F, 0.0F, width, height, width, height);
                 graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             }
-            graphics.fill(left, top, left + STRIPE, top + height, withAlpha(card.text, alpha));
+            if (card.panel) { graphics.fill(left, top, left + STRIPE, top + height, withAlpha(card.text, alpha)); }
             int x = left + STRIPE + PAD;
             int y = top + PAD;
             if (!card.icon.isEmpty()) {
@@ -125,20 +141,20 @@ public final class CardOverlay {
                 x += ICON + PAD;
             }
             if (!card.title.isEmpty()) {
-                graphics.drawString(font, card.title, x, y, withAlpha(card.text, alpha), true);
+                graphics.drawString(font, MarkText.text(card.face, card.title), x, y, withAlpha(card.text, alpha), true);
                 y += LINE;
             }
             for (String line : card.lines) {
-                graphics.drawString(font, line, x, y, withAlpha(TEXT, alpha), true);
+                graphics.drawString(font, MarkText.text(card.face, line), x, y, withAlpha(TEXT, alpha), true);
                 y += LINE;
             }
             bottom = top - GAP;
         }
         RenderSystem.disableBlend();
-        graphics.pose().popPose();
+        Crisp.lower(graphics);
     }
 
-    private static int withAlpha(int rgb, float alpha) { return (Math.round(Mth.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
+    static int withAlpha(int rgb, float alpha) { return (Math.round(Mth.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
 
-    private static int darker(int rgb) { return ((rgb >> 16 & 0xFF) / 2 << 16) | ((rgb >> 8 & 0xFF) / 2 << 8) | ((rgb & 0xFF) / 2); }
+    static int darker(int rgb) { return ((rgb >> 16 & 0xFF) / 2 << 16) | ((rgb >> 8 & 0xFF) / 2 << 8) | ((rgb & 0xFF) / 2); }
 }

@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -112,11 +112,11 @@ public final class ContentBiomeControl {
     }
 
     private static boolean allowed(ResourceLocation biome) {
-        Set<String> names = lower(ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames()));
+        Set<String> names = Settings.lower(ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames()));
         boolean blacklist = ContentControl.flag(ContentControl.BIOMES, "biomeNamesAreBlacklist", Config.worldgen.biomeNamesAreBlacklist());
         if (!names.isEmpty() && BiomeNames.named(biome, names) == blacklist) { return false; }
         if (!ContentControl.flag(ContentControl.BIOMES, "blockBiomes", Config.worldgen.blockBiomes())) { return true; }
-        return lower(ContentControl.list(ContentControl.BIOMES, "biomeWhitelist", Config.worldgen.biomeWhitelist())).contains(biome.getNamespace());
+        return Settings.lower(ContentControl.list(ContentControl.BIOMES, "biomeWhitelist", Config.worldgen.biomeWhitelist())).contains(biome.getNamespace());
     }
 
     private static String replacement(ResourceLocation blocked, String dimension) {
@@ -167,11 +167,5 @@ public final class ContentBiomeControl {
             else if (!value.isEmpty()) { found.add(value); }
         }
         return found;
-    }
-
-    private static Set<String> lower(List<String> values) {
-        Set<String> out = new LinkedHashSet<>();
-        for (String value : values) { out.add(value.trim().toLowerCase(Locale.ROOT)); }
-        return out;
     }
 }

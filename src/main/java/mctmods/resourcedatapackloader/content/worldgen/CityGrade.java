@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.util.Mth;
 import java.util.Arrays;
 import java.util.function.IntUnaryOperator;
 
@@ -44,7 +45,7 @@ public final class CityGrade {
                 profile[i] = (least + most) / 2;
                 continue;
             }
-            profile[i] = Math.max(least, Math.min(most, profile[i]));
+            profile[i] = Mth.clamp(profile[i], least, most);
         }
     }
 

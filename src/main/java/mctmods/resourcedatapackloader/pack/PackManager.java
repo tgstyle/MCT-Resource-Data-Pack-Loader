@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
+import mctmods.resourcedatapackloader.pack.port.PackPort;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -19,7 +20,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -61,6 +61,7 @@ public final class PackManager {
     public static final String STRUCTUREMAPS = "structuremaps";
     public static final String PORTALFRAMES = "portalframes";
     public static final String GATES = "gates";
+    public static final String CARDS = "cards";
     public static final String POTIONS = "potions";
     public static final String POTION_TYPES = "potion_types";
     public static final String BREWING = "brewing";
@@ -69,6 +70,7 @@ public final class PackManager {
     public static final String VILLAGES = "villages";
     public static final String ENTITIES = "entities";
     public static final String RECIPE_REMOVALS = "recipe_removals";
+    public static final String DISABLED = "disabled";
     public static final String FURNACE = "furnace";
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String PLAYER_LOOT = "player_loot";
@@ -87,7 +89,7 @@ public final class PackManager {
     public static final String OVERRIDES = "overrides";
     public static final String HARDNESS = "hardness";
     public static final String ANVILS = "anvils";
-    private static final String DISABLED = ".disabled";
+    private static final String DISABLED_SUFFIX = ".disabled";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
     private static final Gson GSON = new GsonBuilder().create();
@@ -156,7 +158,7 @@ public final class PackManager {
                     ContentLog.LOGGER.warn("Skipping the folder '{}': a pack is a zip file. Loose files go under {}/{}/<namespace> or {}/{}/<namespace>, and a pack in a folder is zipped up", fileName, packRoot, RDPLPack.ASSETS, packRoot, RDPLPack.DATA);
                     continue;
                 }
-                if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED)) {
+                if (fileName.toLowerCase(Locale.ROOT).endsWith(DISABLED_SUFFIX)) {
                     ContentLog.LOGGER.info("Skipping disabled pack '{}'", fileName);
                     continue;
                 }
@@ -241,17 +243,14 @@ public final class PackManager {
                 zip.close();
                 return null;
             }
-            if (pack.ported() != null) {
-                Path written = entry.resolveSibling(fileName + ".converting");
-                Path kept = entry.resolveSibling(stripExtension(fileName) + "_converted.zip" + DISABLED);
-                pack.ported().writeZip(written, pack.root());
-                zip.close();
-                Files.move(entry, kept, StandardCopyOption.REPLACE_EXISTING);
-                Files.move(written, entry, StandardCopyOption.REPLACE_EXISTING);
-                ContentLog.LOGGER.info("Pack '{}' was written out as a pack of this version under its own name, and the 1.12.2 pack it came from is kept beside it as '{}'. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, kept.getFileName());
-                return load(entry);
-            }
-            return pack;
+            PackPort port = pack.ported();
+            if (port == null) { return pack; }
+            Path written = PackVersions.write(entry, port);
+            if (written == null) { return pack; }
+            closeQuietly(zip);
+            if (!PackVersions.swap(written, entry)) { return null; }
+            ContentLog.LOGGER.info("Pack '{}': what this version reads differently was written into its '{}' folder, and the {} files at the root are left as they were, so the same zip still loads on {}. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, PackVersions.prefix(), port.origin(), port.origin());
+            return load(entry);
         }
         catch (IOException ex) {
             ContentLog.LOGGER.error("Could not open zip pack '{}'", fileName, ex);

@@ -115,9 +115,9 @@ public final class ContentGates {
         if (!announce || def.unlockedMessage().isEmpty()) { return; }
         String message = def.unlockedMessage().replace("%dim%", def.name()).replace("%player%", player.getName().getString());
         if (def.global()) {
-            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) { Says.line(online, ChatFormatting.GREEN, message); }
+            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) { Says.line(online, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
         }
-        else { Says.line(player, ChatFormatting.GREEN, message); }
+        else { Says.line(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
     }
 
     public static void lock(ServerPlayer player, GateDef def) {
@@ -132,7 +132,7 @@ public final class ContentGates {
         String[] parts = def.blockedMessage().replace("%dim%", def.name()).split("%item%", -1);
         MutableComponent message = Component.literal(parts[0]);
         for (int at = 1; at < parts.length; at++) { message.append(describe(needed)).append(parts[at]); }
-        player.displayClientMessage(message.withStyle(ChatFormatting.RED), true);
+        Says.bar(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_BLOCKED, ChatFormatting.RED, message);
     }
 
     public static boolean carrying(ServerPlayer player, String item) {

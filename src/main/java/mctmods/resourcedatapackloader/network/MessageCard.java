@@ -5,7 +5,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-public record MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks) {
+public record MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks, boolean center, boolean panel, String font) {
     private static final int MOST_LINES = 16;
 
     public static void write(MessageCard message, FriendlyByteBuf buf) {
@@ -18,6 +18,9 @@ public record MessageCard(String title, List<String> lines, ItemStack icon, Stri
         buf.writeInt(message.background);
         buf.writeInt(message.text);
         buf.writeInt(message.ticks);
+        buf.writeBoolean(message.center);
+        buf.writeBoolean(message.panel);
+        buf.writeUtf(message.font);
     }
 
     public static MessageCard read(FriendlyByteBuf buf) {
@@ -25,6 +28,6 @@ public record MessageCard(String title, List<String> lines, ItemStack icon, Stri
         int count = buf.readByte();
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < count; i++) { lines.add(buf.readUtf()); }
-        return new MessageCard(title, lines, buf.readItem(), buf.readUtf(), buf.readInt(), buf.readInt(), buf.readInt());
+        return new MessageCard(title, lines, buf.readItem(), buf.readUtf(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean(), buf.readBoolean(), buf.readUtf());
     }
 }

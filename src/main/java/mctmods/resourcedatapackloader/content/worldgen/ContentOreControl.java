@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonObject;
@@ -32,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -144,11 +144,7 @@ public record ContentOreControl() implements BiomeModifier {
         return listed != ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist());
     }
 
-    private static Set<String> whitelist() {
-        Set<String> out = new LinkedHashSet<>();
-        for (String mod : ContentControl.list(ContentControl.ORES, "oreWhitelist", Config.worldgen.oreWhitelist())) { out.add(mod.trim().toLowerCase(Locale.ROOT)); }
-        return out;
-    }
+    private static Set<String> whitelist() { return Settings.lower(ContentControl.list(ContentControl.ORES, "oreWhitelist", Config.worldgen.oreWhitelist())); }
 
     private static List<String> types() {
         List<String> out = new ArrayList<>();

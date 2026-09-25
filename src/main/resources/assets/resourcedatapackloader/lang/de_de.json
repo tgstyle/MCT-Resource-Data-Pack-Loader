@@ -110,6 +110,8 @@
   "rdpl.command.gateopened": "%s für %s geöffnet (Bereich %s)",
   "rdpl.command.gateclosed": "%s für %s geschlossen (Bereich %s)",
   "rdpl.command.nogate": "Kein Tor heißt %s",
+  "rdpl.command.nocard": "Keine Kartenregel heißt %s",
+  "rdpl.command.cardshown": "Karte %s an %s Spieler gezeigt",
   "rdpl.command.orenone": "Es wurde keine Erzgenerierung blockiert. Die Einstellungen sind vielleicht aus oder nicht verfügbar",
   "rdpl.command.oreblocked": "Bisher blockierte Erzgenerierung:",
   "rdpl.command.genblocked": "Bisher blockierte Weltgenerierung, nach Mod und Typ:",

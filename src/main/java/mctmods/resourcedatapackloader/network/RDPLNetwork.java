@@ -7,6 +7,8 @@ import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Toasts;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,15 +35,20 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { CardOverlay.show(message); }
         }).add();
         channel.messageBuilder(MessageHold.class, 1, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHold::write).decoder(MessageHold::read).consumerMainThread((message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog()); }
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog(), message.backdrop(), message.font()); }
         }).add();
-        channel.messageBuilder(MessageNote.class, 5, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> buf.writeUtf(message.said())).decoder(buf -> new MessageNote(buf.readUtf())).consumerMainThread((message, context) -> {
-            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said()); }
+        channel.messageBuilder(MessageNote.class, 5, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> {
+            buf.writeUtf(message.said());
+            buf.writeBoolean(message.backdrop());
+            buf.writeUtf(message.font());
+        }).decoder(buf -> new MessageNote(buf.readUtf(), buf.readBoolean(), buf.readUtf())).consumerMainThread((message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { HoldView.note(message.said(), message.backdrop(), message.font()); }
         }).add();
         channel.messageBuilder(MessageHush.class, 6, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHush::write).decoder(MessageHush::read).consumerNetworkThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { BlastHush.mark(message); }
             return true;
         }).add();
+        channel.messageBuilder(MessageToasts.class, 7, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageToasts::write).decoder(MessageToasts::read).consumerMainThread((message, context) -> Toasts.show(message.kinds())).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
         }).add();
@@ -60,12 +67,12 @@ public final class RDPLNetwork {
     }
 
     public static void sendHold(ServerPlayer player, boolean held, String warning, boolean fog) {
-        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held, warning, fog)); }
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageHold(held, warning, fog, Says.panel(), Says.font())); }
     }
 
     public static boolean sendNote(ServerPlayer player, String said) {
         if (channel == null || !reaches(player)) { return false; }
-        channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageNote(said));
+        channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageNote(said, Says.panel(), Says.font()));
         return true;
     }
 
@@ -77,6 +84,10 @@ public final class RDPLNetwork {
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {
         if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageIntroPlay(landBeingMade)); }
+    }
+
+    public static void sendToasts(ServerPlayer player, int kinds) {
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageToasts(kinds)); }
     }
 
     public static void introDone() {

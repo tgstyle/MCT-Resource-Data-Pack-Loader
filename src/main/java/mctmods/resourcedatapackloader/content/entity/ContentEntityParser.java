@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -65,8 +66,8 @@ public final class ContentEntityParser {
                 new EntityVariantDef.Sounds(GsonHelper.getAsString(sounds, "ambient", "").trim(), GsonHelper.getAsString(sounds, "hurt", "").trim(), GsonHelper.getAsString(sounds, "death", "").trim(),
                         GsonHelper.getAsString(sounds, "target", "").trim(), GsonHelper.getAsString(sounds, "explode", "").trim(), GsonHelper.getAsString(sounds, "throw", "").trim(), Math.max(0.0F, GsonHelper.getAsFloat(sounds, "targetVaries", 0.0F)),
                         Math.max(0.0F, GsonHelper.getAsFloat(json, "soundVolume", 1.0F)), Math.max(0.1F, GsonHelper.getAsFloat(json, "soundPitch", 1.0F))),
-                lowered(Json.strings(json, "immuneTo")),
-                lowered(Json.strings(json, "ignoresEffects")),
+                Settings.lowered(Json.strings(json, "immuneTo")),
+                Settings.lowered(Json.strings(json, "ignoresEffects")),
                 new EntityVariantDef.Physics(Math.max(0.1F, GsonHelper.getAsFloat(json, "jumpMultiplier", 1.0F)), Math.max(0.0F, GsonHelper.getAsFloat(json, "fallDamage", 1.0F)),
                         Math.max(-1, GsonHelper.getAsInt(json, "maxFallHeight", -1)), Math.max(0.0F, GsonHelper.getAsFloat(json, "waterSlowdown", 0.8F)),
                         GsonHelper.getAsBoolean(json, "breathesUnderwater", false), GsonHelper.getAsBoolean(json, "swims", false), GsonHelper.getAsBoolean(json, "amphibious", false),
@@ -204,11 +205,5 @@ public final class ContentEntityParser {
             found.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue().getAsString().trim());
         }
         return found;
-    }
-
-    private static List<String> lowered(List<String> values) {
-        List<String> out = new ArrayList<>(values.size());
-        for (String value : values) { out.add(value.trim().toLowerCase(Locale.ROOT)); }
-        return out;
     }
 }

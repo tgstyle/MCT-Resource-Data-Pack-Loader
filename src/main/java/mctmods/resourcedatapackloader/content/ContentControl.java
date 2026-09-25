@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -38,6 +39,7 @@ public final class ContentControl {
     public static final String REPLACEMENTS = "replacements";
     public static final String ENTITIES = "entities";
     public static final String BLAST_PLASTER = "blastPlaster";
+    public static final String SERVER = "server";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -62,7 +64,7 @@ public final class ContentControl {
             "prospectDrops", "prospectSlow", "prospectWear", "pregenAllDimensions", "pregenDimensions",
             "pregenDimensionsWhenEntered", "pregenOnNewWorld", "pregenFinishedSays", "pregenResume",
             "pregenRunningSays", "pregenSpectatingSays", "pregenStoppedSays", "pregenToBorder", "welcomeSays",
-            "saysCard", "saysIcon", "saysColor", "saysImage", "recipeMatch", "recipeWhitelist", "slowDistance",
+            "saysCard", "saysIcon", "saysColor", "saysImage", "saysBackground", "saysFont", "toasts", "recipeMatch", "recipeWhitelist", "slowDistance",
             "slowDistantEntities", "slowRate", "slowRecheck", "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes",
             "structureBiomesAreBlacklist", "structureMinDistanceFromSpawn", "structureSeparation",
             "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation", "gotoLevel",
@@ -99,7 +101,9 @@ public final class ContentControl {
             "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight",
             "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "biomes", "worldBorder", "worldBelow",
             "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
-            "worldGameMode", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
+            "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether",
+            "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals",
+            "worldSpawnNpcs", "worldViewDistance", "worldSimulationDistance", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
             "worldTypeExceptions");
     private static final Map<String, String[]> MODES = new HashMap<>();
@@ -257,6 +261,8 @@ public final class ContentControl {
         return texts(value, key, "a list of text values", fallback);
     }
 
+    public static boolean listed(String group, String key) { return setting(group, key) instanceof JsonArray; }
+
     public static List<String> lines(String group, String key, List<String> fallback) {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
@@ -346,6 +352,7 @@ public final class ContentControl {
         if (REPLACEMENTS.equals(group)) { return Config.control.replacements(); }
         if (ENTITIES.equals(group)) { return Config.control.entities(); }
         if (BLAST_PLASTER.equals(group)) { return Config.control.blastPlaster(); }
+        if (SERVER.equals(group)) { return Config.control.server(); }
         return DEFAULT;
     }
 }

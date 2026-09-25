@@ -63,6 +63,8 @@ public final class ContentReplacements {
         return dimensions.contains(level.dimension().location().toString()) != blacklist;
     }
 
+    public static boolean replaces(Level level, BlockState state, int y) { return wanted() && appliesTo(level) && y >= minHeight && y <= maxHeight && replacementFor(state) != null; }
+
     public static void reload() {
         dimensions = null;
         EXACT.clear();

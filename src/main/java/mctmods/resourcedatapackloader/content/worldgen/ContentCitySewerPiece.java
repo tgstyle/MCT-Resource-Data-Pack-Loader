@@ -112,8 +112,8 @@ public final class ContentCitySewerPiece extends StructurePiece {
         int height = ContentCity.sewerHeight();
         if (cramped(level.getMinBuildHeight(), this.level)) { return; }
         BlockState air = Blocks.AIR.defaultBlockState();
-        BlockState water = stateOr(ContentCity.sewerWaterBlock(), air);
-        BlockState walk = stateOr(ContentCity.sewerWalkBlock(), lining);
+        BlockState water = CityPalette.stateOr(ContentCity.sewerWaterBlock(), air);
+        BlockState walk = CityPalette.stateOr(ContentCity.sewerWalkBlock(), lining);
         BlockState light = block(ContentCity.sewerLightBlock());
         CityPalette moss = CityPalette.mixed(ContentCity.sewerMossBlock());
         BlockState vine = block(ContentCity.sewerVineBlock());
@@ -132,9 +132,9 @@ public final class ContentCitySewerPiece extends StructurePiece {
         int walled = 0;
         for (int row = first; row <= last; row++) {
             if (CityBiome.moved(level, alongX ? row : middle, alongX ? middle : row)) {
-                lining = stateOr(ContentCity.sewerBlock(), lining);
-                water = stateOr(ContentCity.sewerWaterBlock(), air);
-                walk = stateOr(ContentCity.sewerWalkBlock(), lining);
+                lining = CityPalette.stateOr(ContentCity.sewerBlock(), lining);
+                water = CityPalette.stateOr(ContentCity.sewerWaterBlock(), air);
+                walk = CityPalette.stateOr(ContentCity.sewerWalkBlock(), lining);
                 light = block(ContentCity.sewerLightBlock());
                 moss = CityPalette.mixed(ContentCity.sewerMossBlock());
                 vine = block(ContentCity.sewerVineBlock());
@@ -217,8 +217,6 @@ public final class ContentCitySewerPiece extends StructurePiece {
     }
 
     @Nullable static BlockState block(String named) { return CityPalette.state(named); }
-
-    static BlockState stateOr(String named, BlockState fallback) { return CityPalette.stateOr(named, fallback); }
 
     @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
         CityBiome.within(level, box, () -> laid(level, box));

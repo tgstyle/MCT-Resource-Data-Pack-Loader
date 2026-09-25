@@ -32,33 +32,15 @@ public final class GateStorage extends SavedData {
         return tag;
     }
 
-    public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.of(player, PERSISTED).getCompound(PERSISTED).getBoolean(key); }
+    public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getBoolean(key); }
 
-    public static void unlockFor(Player player, String key) {
-        CompoundTag gates = PlayerPersisted.of(player, PERSISTED).getCompound(PERSISTED);
-        gates.putBoolean(key, true);
-        PlayerPersisted.of(player, PERSISTED).put(PERSISTED, gates);
-    }
+    public static void unlockFor(Player player, String key) { PlayerPersisted.section(player, PERSISTED).putBoolean(key, true); }
 
-    public static void lockFor(Player player, String key) {
-        CompoundTag gates = PlayerPersisted.of(player, PERSISTED).getCompound(PERSISTED);
-        gates.remove(key);
-        PlayerPersisted.of(player, PERSISTED).put(PERSISTED, gates);
-    }
+    public static void lockFor(Player player, String key) { PlayerPersisted.section(player, PERSISTED).remove(key); }
 
-    public static int tallyFor(Player player, String key) {
-        CompoundTag tally = PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS);
-        int now = tally.getInt(key) + 1;
-        tally.putInt(key, now);
-        PlayerPersisted.of(player, PERSISTED_KILLS).put(PERSISTED_KILLS, tally);
-        return now;
-    }
+    public static int tallyFor(Player player, String key) { return PlayerPersisted.tally(player, PERSISTED_KILLS, key); }
 
-    public static void clearTallyFor(Player player, String key) {
-        CompoundTag tally = PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS);
-        tally.remove(key);
-        PlayerPersisted.of(player, PERSISTED_KILLS).put(PERSISTED_KILLS, tally);
-    }
+    public static void clearTallyFor(Player player, String key) { PlayerPersisted.clearTally(player, PERSISTED_KILLS, key); }
 
     public static int tallyGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);
@@ -70,13 +52,9 @@ public final class GateStorage extends SavedData {
 
     public static int countGlobally(MinecraftServer server, String key) { return of(server).kills.getInt(key); }
 
-    public static void noteFor(Player player, String key, int value) {
-        CompoundTag tally = PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS);
-        tally.putInt(key, value);
-        PlayerPersisted.of(player, PERSISTED_KILLS).put(PERSISTED_KILLS, tally);
-    }
+    public static void noteFor(Player player, String key, int value) { PlayerPersisted.section(player, PERSISTED_KILLS).putInt(key, value); }
 
-    public static int notedFor(Player player, String key) { return PlayerPersisted.of(player, PERSISTED_KILLS).getCompound(PERSISTED_KILLS).getInt(key); }
+    public static int notedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED_KILLS).getInt(key); }
 
     public static void clearTallyGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);

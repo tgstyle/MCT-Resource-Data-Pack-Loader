@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -144,7 +143,7 @@ public final class PackOptionsWorld {
                 if (!ids.isEmpty()) { content.add(registry.getKey().toString(), ids); }
             }
             out.add(CONTENT, content);
-            Files.writeString(file, new GsonBuilder().setPrettyPrinting().create().toJson(out), StandardCharsets.UTF_8);
+            Files.writeString(file, ModPacks.GSON.toJson(out), StandardCharsets.UTF_8);
         }
         catch (IOException failed) { ContentLog.LOGGER.error("The world's record of its pack options at {} could not be written: {}", file, failed.toString()); }
     }

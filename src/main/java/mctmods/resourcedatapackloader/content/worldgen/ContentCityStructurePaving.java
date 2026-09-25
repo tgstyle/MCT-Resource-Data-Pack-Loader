@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure.GenerationContext;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -64,7 +65,7 @@ public final class ContentCityStructurePaving {
             }
             from = at;
         }
-        if (line.alley()) { ContentLog.LOGGER.debug("The alley at {} running {} to {} is laid in {} piece(s) at y {} to {}", line.at(), line.from(), line.to(), pieces, profile[Math.max(0, Math.min(profile.length - 1, line.from() - start))], profile[Math.max(0, Math.min(profile.length - 1, line.to() - start))]); }
+        if (line.alley()) { ContentLog.LOGGER.debug("The alley at {} running {} to {} is laid in {} piece(s) at y {} to {}", line.at(), line.from(), line.to(), pieces, profile[Mth.clamp(line.from() - start, 0, profile.length - 1)], profile[Mth.clamp(line.to() - start, 0, profile.length - 1)]); }
         if (ContentCity.sewers()) { ContentCityStructureSewers.sewers(plan, line, context.heightAccessor().getMinBuildHeight(), start, profile, sewered, bridged, wells, hatches, builder); }
         laid.put(line, new ContentCityStructure.Laid(start, profile, grade, decked, paved, bridged, tunnels, roofed, sewered));
         ContentCityStructureEnds.ends(context, plan, line, start, profile, paving, walk, bridged, wells, bulbs, builder);

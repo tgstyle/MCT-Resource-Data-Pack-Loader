@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
@@ -65,8 +66,7 @@ public final class ContentEntityTicks {
             if (KINDS.contains(lowered)) { kinds.add(lowered); }
             else { ContentLog.LOGGER.error("slowedKinds names '{}', which is not one of {}, so nothing is slowed for it. Anything that thinks for itself is already given a slower pace without being named, and machines are never slowed", kind, KINDS); }
         }
-        Set<String> spared = new HashSet<>();
-        for (String name : ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed())) { spared.add(name.trim().toLowerCase(Locale.ROOT)); }
+        Set<String> spared = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed()));
         if (on && rate > 1) { ContentLog.LOGGER.debug("Entities more than {} block(s) from every player are given one tick in {}", (int) distance, rate); }
         return new Slowing(on, rate, recheck, distance * distance, kinds, spared);
     }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -88,13 +89,16 @@ public final class ContentPhysics {
     private static final class Scale {
         private final String key;
         private final DimensionValues<Double> values;
+        private final TemplateMemo<List<String>> memo = new TemplateMemo<>();
 
         Scale(String key) {
             this.key = key;
             this.values = new DimensionValues<>(key, Scale::positive, "which is not a number above zero");
         }
 
-        private List<String> asked() {
+        private List<String> asked() { return memo.get(this::read); }
+
+        private List<String> read() {
             return switch (key) {
                 case "worldGravity" -> ContentControl.list(ContentControl.TERRAIN, key, Config.worldgen.worldGravity());
                 case "worldFallDamage" -> ContentControl.list(ContentControl.TERRAIN, key, Config.worldgen.worldFallDamage());

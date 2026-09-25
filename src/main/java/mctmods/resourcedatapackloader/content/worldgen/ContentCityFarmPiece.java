@@ -137,9 +137,9 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     @Override @Nonnull public BoundingBox owned() { return getBeardifierBox(); }
 
     private void laid(@Nonnull WorldGenLevel world, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
-        BlockState fence = stateOr(edge, Blocks.OAK_LOG.defaultBlockState());
-        BlockState tilled = stateOr(soil, Blocks.FARMLAND.defaultBlockState());
-        BlockState under = stateOr(ground, Blocks.DIRT.defaultBlockState());
+        BlockState fence = plotState(edge, Blocks.OAK_LOG.defaultBlockState());
+        BlockState tilled = plotState(soil, Blocks.FARMLAND.defaultBlockState());
+        BlockState under = plotState(ground, Blocks.DIRT.defaultBlockState());
         BlockState pond = Blocks.WATER.defaultBlockState();
         BlockState air = Blocks.AIR.defaultBlockState();
         BoundingBox held = getBoundingBox();
@@ -207,12 +207,12 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     private BlockState crop(long seed, BlockPos at) {
         String[] names = crops.isEmpty() ? new String[0] : crops.split(",");
         RandomSource roll = RandomSource.create(Hashes.mix(seed ^ CROP_SALT, at.getX(), at.getY(), at.getZ()));
-        BlockState chosen = names.length == 0 ? Blocks.WHEAT.defaultBlockState() : stateOr(names[roll.nextInt(names.length)].trim(), Blocks.WHEAT.defaultBlockState());
+        BlockState chosen = names.length == 0 ? Blocks.WHEAT.defaultBlockState() : plotState(names[roll.nextInt(names.length)].trim(), Blocks.WHEAT.defaultBlockState());
         if (!(chosen.getBlock() instanceof CropBlock grown)) { return chosen; }
         return grown.getStateForAge(roll.nextInt(grown.getMaxAge() + 1));
     }
 
-    private static BlockState stateOr(String named, BlockState fallback) {
+    private static BlockState plotState(String named, BlockState fallback) {
         if (named.isEmpty()) { return fallback; }
         BlockState found = ContentStates.known(named, "a village plot");
         return found == null ? fallback : found;

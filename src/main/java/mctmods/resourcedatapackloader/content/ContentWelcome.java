@@ -10,10 +10,6 @@ import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,11 +19,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class ContentWelcome {
     private static final String KEY = "welcomeSays";
     private static final Set<UUID> ARRIVED = new HashSet<>();
+    private static final Pattern NUMERIC = Pattern.compile("-?\\d+");
 
     private ContentWelcome() {}
 
@@ -49,6 +47,7 @@ public final class ContentWelcome {
     public static void welcome(ServerPlayer player) {
         greet(player);
         if (!ARRIVED.add(player.getUUID())) { return; }
+        mctmods.resourcedatapackloader.content.card.CardEvents.joined(player);
         ContentScoring.greet(player);
         ContentTeams.greet(player);
     }
@@ -83,13 +82,11 @@ public final class ContentWelcome {
         ResourceLocation id = ResourceLocation.tryParse(named);
         if (id == null) { return null; }
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, id);
-        return named.contains(":") || name.trim().matches("-?\\d+") || player.serverLevel().getServer().getLevel(key) != null ? key : null;
+        return named.contains(":") || NUMERIC.matcher(name.trim()).matches() || player.serverLevel().getServer().getLevel(key) != null ? key : null;
     }
 
     public static void show(ServerPlayer player, String said, ChatFormatting color) {
         if (said.isEmpty() || RDPLNetwork.sendNote(player, said)) { return; }
-        player.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
-        player.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(said).withStyle(color)));
-        player.connection.send(new ClientboundSetTitleTextPacket(Component.empty()));
+        Says.title(player, 10, 70, 20, "", said, color);
     }
 }

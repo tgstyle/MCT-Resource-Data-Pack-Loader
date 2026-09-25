@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.extra;
 
 import mctmods.resourcedatapackloader.content.ContentWelcome;
+import mctmods.resourcedatapackloader.content.card.CardFire;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
@@ -38,6 +39,11 @@ public final class ContentIntroPlay {
     public static void finished(ServerPlayer player) {
         if (!PLAYING.remove(player.getUUID())) { return; }
         if (ContentWorldIntro.once()) { PlayerPersisted.of(player, SEEN).putBoolean(SEEN, true); }
+        welcomeUnlessHeld(player);
+        CardFire.afterIntro(player);
+    }
+
+    private static void welcomeUnlessHeld(ServerPlayer player) {
         if (ContentPregen.landBeingMade() || ContentPregenHold.releaseAfterIntro(player)) { return; }
         ContentWelcome.welcome(player);
     }

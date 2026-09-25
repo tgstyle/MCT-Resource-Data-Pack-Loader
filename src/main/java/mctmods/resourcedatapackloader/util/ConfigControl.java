@@ -18,10 +18,11 @@ public final class ConfigControl {
     private final ForgeConfigSpec.ConfigValue<String> commands;
     private final ForgeConfigSpec.ConfigValue<String> recipes;
     private final ForgeConfigSpec.ConfigValue<String> blastPlaster;
+    private final ForgeConfigSpec.ConfigValue<String> server;
 
     ConfigControl(ForgeConfigSpec.Builder builder) {
         builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
-        terrain = builder.comment("The world's name, seed and game mode at creation, generatorOptions, the cave regions, the cloud height, the seams between worlds and the difficulty [default|global|off]").define("terrain", "default");
+        terrain = builder.comment("The world's name and seed at creation, generatorOptions, the cave regions, the cloud height and the seams between worlds [default|global|off]").define("terrain", "default");
         chunks = builder.comment("The spawn chunk radius, pregeneration, retrogen and the reset, the welcome lines and the says card [default|global|off]").define("chunks", "default");
         bedrock = builder.comment("Flat bedrock and its dimension and biome lists [default|global|off]").define("bedrock", "default");
         voidWorld = builder.comment("Void world generation and its platform [default|global|off]").define("voidWorld", "default");
@@ -36,6 +37,7 @@ public final class ConfigControl {
         commands = builder.comment("Who may run the mod's own commands: the goto permission levels [default|global|off]").define("commands", "default");
         recipes = builder.comment("Recipe and furnace blocking and their whitelists [default|global|off]").define("recipes", "default");
         blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", "default");
+        server = builder.comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view and simulation distances, and commands on a world opened to LAN [default|global|off]").define("server", "default");
         builder.pop();
     }
 
@@ -68,4 +70,6 @@ public final class ConfigControl {
     public String replacements() { return Config.loaded() ? replacements.get() : ConfigCore.text("control.replacements", "default"); }
 
     public String entities() { return Config.loaded() ? entities.get() : ConfigCore.text("control.entities", "default"); }
+
+    public String server() { return Config.loaded() ? server.get() : ConfigCore.text("control.server", "default"); }
 }

@@ -23,10 +23,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -102,16 +100,10 @@ public final class AtomicModConfig extends ModConfig {
             try {
                 temp = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
                 try (OutputStream output = Files.newOutputStream(temp)) { write(config, output, charset); }
-                try { Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE); }
-                catch (AtomicMoveNotSupportedException notAtomic) { Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING); }
+                FileMoves.replace(temp, target);
             }
             catch (IOException failed) { throw new WritingException("An I/O error occured", failed); }
-            finally {
-                if (temp != null) {
-                    try { Files.deleteIfExists(temp); }
-                    catch (IOException ignored) { }
-                }
-            }
+            finally { FileMoves.deleteQuietly(temp); }
         }
     }
 }

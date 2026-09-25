@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import com.google.gson.JsonObject;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSettings;
@@ -19,16 +18,15 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.pack.port.Ids;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.DimensionValues;
 import mctmods.resourcedatapackloader.util.Summary;
 
 public final class ContentTerrain {
     public static final String HARDCORE = "hardcore";
     private static final Set<String> WARNED = new HashSet<>();
-    private static final DimensionValues<Difficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", named -> Difficulty.byName(named.toLowerCase(Locale.ROOT)), "which is not one of peaceful, easy, normal or hard");
 
     private ContentTerrain() {}
 
@@ -41,10 +39,8 @@ public final class ContentTerrain {
 
     public static String worldName() { return text("worldName", Config.worldgen.worldName()); }
 
-    public static String worldGameMode() { return text("worldGameMode", Config.worldgen.worldGameMode()); }
-
     public static LevelSettings newWorld(LevelSettings settings) {
-        String mode = worldGameMode().toLowerCase(Locale.ROOT);
+        String mode = ContentServer.worldGameMode().toLowerCase(Locale.ROOT);
         if (mode.isEmpty()) { return settings; }
         boolean hardcore = HARDCORE.equals(mode);
         GameType asked = hardcore ? GameType.SURVIVAL : GameType.byName(mode, null);
@@ -58,9 +54,12 @@ public final class ContentTerrain {
 
     public static WorldOptions newWorld(WorldOptions options) {
         String seed = worldSeed();
-        if (seed.isEmpty()) { return options; }
-        Summary.info("terrain.seed", "Making every new world with the seed " + seed + ", which is what a pack asks for");
-        return new WorldOptions(WorldOptions.parseSeed(seed).orElse(options.seed()), options.generateStructures(), options.generateBonusChest());
+        Boolean structures = ContentServer.structures();
+        if (seed.isEmpty() && structures == null) { return options; }
+        if (!seed.isEmpty()) { Summary.info("terrain.seed", "Making every new world with the seed " + seed + ", which is what a pack asks for"); }
+        if (structures != null) { Summary.info("server.structures", "Making every new world " + (structures ? "with" : "without") + " structures, which is what a pack asks for"); }
+        long made = seed.isEmpty() ? options.seed() : WorldOptions.parseSeed(seed).orElse(options.seed());
+        return new WorldOptions(made, structures == null ? options.generateStructures() : structures, options.generateBonusChest());
     }
 
     public static String worldType() { return text("worldType", Config.worldgen.worldType()); }
@@ -76,6 +75,23 @@ public final class ContentTerrain {
     }
 
     @Nullable public static JsonObject customizedOptions() { return FLAT_TYPES.contains(worldType().toLowerCase(Locale.ROOT)) ? null : generatorOptions(); }
+
+    public static void properties(Map<String, String> asked, String levelType) {
+        String seed = worldSeed();
+        if (!seed.isEmpty()) { asked.put("level-seed", seed); }
+        if (ContentWorldShape.kept(levelType)) { return; }
+        String type = ContentWorldShape.levelType();
+        if (type != null) { asked.put("level-type", type); }
+        JsonObject settings = generatorSettings();
+        if (settings != null) { asked.put("generator-settings", settings.toString()); }
+    }
+
+    @Nullable private static JsonObject generatorSettings() {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
+        JsonObject flat = ContentWorldShape.flatSettings();
+        if (flat == null) { return customizedOptions(); }
+        return String.join("", ContentControl.lines(ContentControl.TERRAIN, "generatorOptions", List.of(Config.worldgen.generatorOptions()))).isBlank() ? null : flat;
+    }
 
     public record Flat(List<String> layers, List<String> structures, boolean decorated, boolean waterLakes, boolean lakes, String biome) {}
 
@@ -174,11 +190,6 @@ public final class ContentTerrain {
     public static int worldTime() { return number("worldTime", Config.worldgen.worldTime(), -1); }
 
     public static long lockedTime(Level level) { return level.dimension() == Level.OVERWORLD ? worldTime() : -1L; }
-
-    @Nullable public static Difficulty difficultyFor(String dimension) {
-        if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        return DIFFICULTY.at(dimension, ContentControl.lines(ContentControl.TERRAIN, "worldDifficulty", Config.worldgen.worldDifficulty()));
-    }
 
     private static int number(String key, int fallback, int off) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return off; }

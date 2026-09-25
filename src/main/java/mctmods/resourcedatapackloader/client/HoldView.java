@@ -8,6 +8,8 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.ViewportEvent;
@@ -33,7 +35,9 @@ public final class HoldView {
     private static final float PULSE_LEAST = 0.11F;
     private static String warning = "";
     private static String note = "";
+    private static CardFont.Face face = new CardFont.Face(Style.DEFAULT_FONT, null);
     private static boolean fogging;
+    private static boolean shaded = true;
     private static final int NOTE_COLOR = 0x55FF55;
     private static final float NOTE_SCALE = 2.0F;
     private static final int BACKDROP_ALPHA = 0x99;
@@ -42,8 +46,10 @@ public final class HoldView {
 
     private HoldView() {}
 
-    public static void set(boolean holding, String said, boolean fog) {
+    public static void set(boolean holding, String said, boolean fog, boolean shade, String font) {
         warning = said;
+        shaded = shade;
+        face = CardFont.of(font);
         if (holding) {
             note = "";
             fogging = fog;
@@ -53,8 +59,10 @@ public final class HoldView {
         showing = holding ? 0 : SHOW + FADE;
     }
 
-    public static void note(String said) {
+    public static void note(String said, boolean shade, String font) {
         note = said == null ? "" : said;
+        shaded = shade;
+        face = CardFont.of(font);
         if (note.isEmpty()) { return; }
         if (!held) { showing = SHOW + FADE; }
     }
@@ -83,21 +91,23 @@ public final class HoldView {
     public static void onHud(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) { return; }
-        if (held) {
-            warn(event.getGuiGraphics());
-            return;
-        }
-        float strength = strength(event.getPartialTick());
-        if (strength <= 0.0F) { return; }
         GuiGraphics graphics = event.getGuiGraphics();
+        Crisp.raise(graphics);
+        if (held) { warn(graphics); }
+        else { welcome(graphics, strength(event.getPartialTick())); }
+        Crisp.lower(graphics);
+    }
+
+    private static void welcome(GuiGraphics graphics, float strength) {
+        if (strength <= 0.0F) { return; }
         double gui = Crisp.factor();
-        int screenWidth = (int) Math.round(graphics.guiWidth() * gui);
+        int screenWidth = (int) Math.round(Crisp.fit(graphics.guiWidth()) * gui);
         int times = Math.max(1, screenWidth / 4 / LOGO_WIDTH);
         int width = LOGO_WIDTH * times;
         int height = LOGO_HEIGHT * times;
         int margin = (int) Math.round(MARGIN * gui);
         int left = leftFor(screenWidth, width, margin);
-        int top = Math.max(margin, (int) Math.round((graphics.guiHeight() / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
+        int top = Math.max(margin, (int) Math.round((Crisp.fit(graphics.guiHeight()) / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
         RenderSystem.enableBlend();
         graphics.setColor(1.0F, 1.0F, 1.0F, strength);
         graphics.pose().pushPose();
@@ -120,14 +130,15 @@ public final class HoldView {
         if (note.isEmpty() || strength < PULSE_LEAST) { return; }
         Minecraft mc = Minecraft.getInstance();
         float scale = Crisp.scale(NOTE_SCALE);
-        int width = mc.font.width(note);
-        float x = Crisp.snap((graphics.guiWidth() - width * scale) / 2.0F);
-        float y = Crisp.snap(graphics.guiHeight() / 2.0F + SUBTITLE_TOP);
+        Component text = MarkText.text(face, note);
+        int width = mc.font.width(text);
+        float x = Crisp.snap((Crisp.fit(graphics.guiWidth()) - width * scale) / 2.0F);
+        float y = Crisp.snap(Crisp.fit(graphics.guiHeight()) / 2.0F + SUBTITLE_TOP);
         int pad = 4;
-        graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(strength * BACKDROP_ALPHA) << 24);
+        if (shaded) { graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(strength * BACKDROP_ALPHA) << 24); }
         graphics.pose().pushPose();
         graphics.pose().scale(scale, scale, 1.0F);
-        graphics.drawString(mc.font, note, x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR, true);
+        graphics.drawString(mc.font, text.getVisualOrderText(), x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR, true);
         graphics.pose().popPose();
     }
 
@@ -137,14 +148,15 @@ public final class HoldView {
         if (pulse < PULSE_LEAST) { return; }
         Minecraft mc = Minecraft.getInstance();
         float scale = Crisp.scale(TEXT_SCALE);
-        int width = mc.font.width(warning);
-        float x = Crisp.snap((graphics.guiWidth() - width * scale) / 2.0F);
-        float y = Crisp.snap(graphics.guiHeight() / 2.0F - TEXT_ABOVE_MIDDLE);
+        Component text = MarkText.text(face, warning);
+        int width = mc.font.width(text);
+        float x = Crisp.snap((Crisp.fit(graphics.guiWidth()) - width * scale) / 2.0F);
+        float y = Crisp.snap(Crisp.fit(graphics.guiHeight()) / 2.0F - TEXT_ABOVE_MIDDLE);
         int pad = 4;
-        graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(pulse * 0x99) << 24);
+        if (shaded) { graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(pulse * 0x99) << 24); }
         graphics.pose().pushPose();
         graphics.pose().scale(scale, scale, 1.0F);
-        graphics.drawString(mc.font, warning, x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | 0xFF5555, true);
+        graphics.drawString(mc.font, text.getVisualOrderText(), x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | 0xFF5555, true);
         graphics.pose().popPose();
     }
 

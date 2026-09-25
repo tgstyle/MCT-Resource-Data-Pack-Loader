@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgenParser;
 
 import java.util.LinkedHashMap;
@@ -106,7 +107,7 @@ public final class ContentParser {
                 Mth.clamp(GsonHelper.getAsInt(json, "maxAge", 7), 1, 7),
                 sapling(json),
                 growth(json),
-                lowered(Json.strings(json, "plantTypes")),
+                Settings.lowered(Json.strings(json, "plantTypes")),
                 behaviors(key, json),
                 GsonHelper.getAsString(json, "tint", "").trim(),
                 GsonHelper.getAsString(json, "leafSapling", "").trim(),
@@ -520,12 +521,6 @@ public final class ContentParser {
     @Nullable public static ResourceLocation location(String value) {
         String named = value == null ? "" : value.trim();
         return named.isEmpty() ? null : ResourceLocation.tryParse(named.toLowerCase(Locale.ROOT));
-    }
-
-    private static List<String> lowered(List<String> values) {
-        List<String> out = new ArrayList<>(values.size());
-        for (String value : values) { out.add(value.trim().toLowerCase(Locale.ROOT)); }
-        return Collections.unmodifiableList(out);
     }
 
     private static List<String> behaviors(ResourceLocation key, JsonObject json) {

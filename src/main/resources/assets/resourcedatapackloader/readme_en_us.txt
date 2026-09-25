@@ -187,7 +187,7 @@ Each of these is a folder under data/<yourpack>:
     fuels            brewing          potions          potion_types
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
-    tags             registry_remap
+    tags             registry_remap   cards
 
 Blocks come in these shapes, set by the "type" field:
 

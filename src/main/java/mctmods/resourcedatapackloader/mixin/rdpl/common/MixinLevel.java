@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
@@ -21,7 +22,7 @@ import javax.annotation.Nonnull;
 @Mixin(Level.class) @Implements(@Interface(iface = LevelAccessor.class, prefix = "level$")) public abstract class MixinLevel {
     @Nonnull public Difficulty level$getDifficulty() {
         Level self = Level.class.cast(this);
-        Difficulty asked = ContentTerrain.difficultyFor(self.dimension().location().toString());
+        Difficulty asked = ContentServer.difficultyFor(self.dimension().location().toString());
         return asked != null ? asked : self.getLevelData().getDifficulty();
     }
 

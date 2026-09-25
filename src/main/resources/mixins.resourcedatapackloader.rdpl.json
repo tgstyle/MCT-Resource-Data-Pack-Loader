@@ -13,8 +13,12 @@
         "common.IFireBlock",
         "common.IItem",
         "common.ILootTable",
+        "common.IRandomizableContainerBlockEntity",
         "common.IPotion",
         "common.IPotionBrewing",
+        "common.ISmithingTransformRecipe",
+        "common.ISmithingTrimRecipe",
+        "common.MixinAbstractVillager",
         "common.MixinBlock",
         "common.MixinBlockState",
         "common.MixinBlockStateBase",
@@ -47,6 +51,7 @@
         "common.MixinServerLevelHold",
         "common.MixinFallingBlock",
         "common.MixinMultiNoiseBiomeSource",
+        "common.MixinTagLoader",
         "common.MixinPrimaryLevelData",
         "common.MixinPlayerList",
         "common.MixinTheEndBiomeSource",
@@ -116,6 +121,7 @@
         "common.IDedicatedServer",
         "common.ISettings",
         "common.MixinMinecraftServer",
+        "common.MixinMinecraftServerRules",
         "common.MixinMinecraftServerSpawnWait"
     ],
     "client": [
@@ -133,17 +139,26 @@
         "client.MixinClientCommandHandler",
         "client.MixinHumanoidArmorLayer",
         "client.MixinItemInHandLayer",
+        "client.MixinItemPickerMenu",
         "client.MixinLivingEntityRenderer",
         "client.MixinWorldOpenFlows",
         "client.MixinClientTelemetryManager",
         "client.MixinAccountProfileKeyPairManager",
+        "client.MixinClientPacketListener",
+        "client.MixinToastComponent",
         "client.MixinLogoTexture",
+        "client.MixinShareToLanScreen",
+        "client.MixinIntegratedServer",
+        "client.IFont",
+        "client.MixinFontManager",
+        "client.MixinFontStringRenderOutput",
         "client.MixinLevelLoadingScreen",
         "client.MixinExplosion"
     ],
     "server": [
         "server.ISettings",
-        "server.MixinDedicatedServerGameMode"
+        "server.MixinDedicatedServerGameMode",
+        "server.MixinDedicatedServerProperties"
     ],
     "injectors": {
         "defaultRequire": 1
