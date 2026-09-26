@@ -7,6 +7,7 @@ modId="resourcedatapackloader"
 version="${version}"
 displayName="${mod_name}"
 logoFile="logo.png"
+iconFile="logo.png"
 displayURL="${mod_url}"
 authors="${mod_authors}"
 description='''${mod_description}'''
@@ -28,7 +29,7 @@ side="BOTH"
 [[dependencies.resourcedatapackloader]]
 modId="minecraft"
 type="required"
-versionRange="[${version_mc}]"
+versionRange="${version_mc_range}"
 ordering="NONE"
 side="BOTH"
 

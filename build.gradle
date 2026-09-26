@@ -38,7 +38,7 @@ tasks.withType(Jar).configureEach {
 
 group = 'mctmods.resourcedatapackloader'
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 tasks.withType(Jar).configureEach {
     zip64 = true
@@ -47,11 +47,13 @@ tasks.withType(Jar).configureEach {
 ext {
     mod_id = gradleProps['mod_id']
     version_minecraft = versionProps['version_mc']
+    version_minecraft_range = versionProps['version_mc_range']
+    version_minecraft_label = versionProps['version_mc_label']
     version_neoforge = versionProps['version_neoforge']
     version_neoforge_min = versionProps['version_neoforge_min']
     version_bp = versionProps.getProperty('version_bp', '[0,)')
     version_curios = versionProps['version_curios']
-    version_parchment = versionProps['version_parchment']
+    version_jei = versionProps['version_jei']
     mod_license = gradleProps['mod_license']
     mod_name = gradleProps['mod_name']
     mod_authors = gradleProps['mod_authors']
@@ -63,6 +65,7 @@ def version_replaces = [
         'version'             : project.version,
         'build_number'        : version_buildnumber,
         'version_mc'          : version_minecraft,
+        'version_mc_range'    : version_minecraft_range,
         'version_neoforge'    : version_neoforge,
         'version_neoforge_min': version_neoforge_min,
         'version_bp'          : version_bp,
@@ -107,11 +110,6 @@ tasks.register('copyModsTomlForIntelliJ', Copy) {
 neoForge {
     version = project.version_neoforge
 
-    parchment {
-        mappingsVersion = project.version_parchment
-        minecraftVersion = project.version_minecraft
-    }
-
     mods {
         "${mod_id}" {
             sourceSet sourceSets.main
@@ -142,8 +140,8 @@ neoForge {
 }
 
 def bpJar = null
-def bpDir = new File(projectDir, '../MCT-Blast-Plaster-21/build/libs')
-def bpSource = (bpDir.listFiles() ?: new File[0]).findAll { it.name.endsWith('-dev.jar') }.max { it.lastModified() }
+def bpDir = new File(projectDir, '../MCT-Blast-Plaster-26/build/libs')
+def bpSource = (bpDir.listFiles() ?: new File[0]).findAll { it.name.endsWith('.jar') && !it.name.endsWith('-sources.jar') }.max { it.lastModified() }
 
 if (bpSource != null) {
     bpJar = new File(projectDir, 'build/blastplaster/blastplaster-dev.jar')
@@ -153,15 +151,14 @@ if (bpSource != null) {
         java.nio.file.Files.copy(bpSource.toPath(), staged.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES)
         java.nio.file.Files.move(staged.toPath(), bpJar.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE)
     }
-    logger.lifecycle("Found Blast Plaster dev JAR: ${bpSource.name}")
+    logger.lifecycle("Found Blast Plaster JAR: ${bpSource.name}")
 } else {
-    logger.warn('No Blast Plaster dev JAR found in ../MCT-Blast-Plaster-21/build/libs, build one there first')
+    logger.warn('No Blast Plaster JAR found in ../MCT-Blast-Plaster-26/build/libs, build one there first')
 }
 
 repositories {
     mavenCentral()
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    maven { name = 'ParchmentMC' ; url = 'https://ldtteam.jfrog.io/artifactory/parchmentmc-public/' }
     maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
     maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
     maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
@@ -173,10 +170,10 @@ configurations {
 
 dependencies {
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
-    runtimeOnly 'maven.modrinth:betterf3:maXNB1dn'
-    runtimeOnly 'maven.modrinth:cloth-config:izKINKFg'
-    compileOnly "mezz.jei:jei-${version_minecraft}-common-api:19.27.0.343"
-    compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:19.27.0.343"
+    runtimeOnly 'maven.modrinth:betterf3:GKmHNRiK'
+    runtimeOnly 'maven.modrinth:cloth-config:zErG1kOw'
+    compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
+    compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"
     if (bpJar != null) {
         implementation files(bpJar)
     }
@@ -236,7 +233,7 @@ sourcesJar.dependsOn bumpVersion
 tasks.register('genIntellijRunsDummy') {}
 
 jar {
-    archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft}")
+    archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft_label}")
     archiveClassifier.set('')
 }
 

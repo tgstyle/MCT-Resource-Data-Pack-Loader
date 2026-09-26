@@ -3,7 +3,7 @@
     "minVersion": "0.8.5",
     "package": "mctmods.resourcedatapackloader.mixin.rdpl",
     "plugin": "mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin",
-    "compatibilityLevel": "JAVA_21",
+    "compatibilityLevel": "JAVA_25",
     "mixinextras": {
         "minVersion": "0.5.3"
     },
