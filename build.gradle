@@ -104,22 +104,16 @@ tasks.register('copyModsTomlForIntelliJ', Copy) {
     dependsOn processResources
 }
 
-def bpJar = null
-def bpDir = new File(projectDir, '../MCT-Blast-Plaster/build/libs')
-def bpSource = (bpDir.listFiles() ?: new File[0]).findAll { it.name.endsWith('-dev.jar') }.max { it.lastModified() }
-
-if (bpSource != null) {
-    bpJar = new File(projectDir, 'build/blastplaster/blastplaster-dev.jar')
-    if (!bpJar.exists() || bpJar.length() != bpSource.length() || bpJar.lastModified() != bpSource.lastModified()) {
-        bpJar.parentFile.mkdirs()
-        def staged = File.createTempFile('blastplaster-dev', '.jar', bpJar.parentFile)
-        java.nio.file.Files.copy(bpSource.toPath(), staged.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES)
-        java.nio.file.Files.move(staged.toPath(), bpJar.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE)
-    }
-    logger.lifecycle("Found Blast Plaster dev JAR: ${bpSource.name}")
-} else {
-    logger.warn('No Blast Plaster dev JAR found in ../MCT-Blast-Plaster/build/libs, build one there first')
+def devSyncScript = null
+for (def dir = rootDir; dir != null && devSyncScript == null; dir = dir.parentFile) {
+    def candidate = new File(dir, '#scripts/mods-devsync.gradle')
+    if (candidate.isFile()) { devSyncScript = candidate }
 }
+if (devSyncScript != null) { apply from: devSyncScript }
+
+def bpSource = devSyncScript == null ? null : devSyncPin('MCT-Blast-Plaster', versionProps['devsync_bp'])
+def bpJar = bpSource == null ? null : devSyncStaged(bpSource, 'build/blastplaster/blastplaster-dev.jar')
+if (bpSource == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp in version.properties to a snapshot in the devsync cache') }
 
 def bpModsDir = file('run/mods')
 tasks.register('copyBlastPlasterMod', Copy) {
@@ -128,7 +122,7 @@ tasks.register('copyBlastPlasterMod', Copy) {
     into bpModsDir
     doFirst {
         bpModsDir.mkdirs()
-        bpModsDir.listFiles()?.each { old -> if (old.name.startsWith('MCT-BlastPlaster-') && old.name.endsWith('.jar')) { old.delete() } }
+        bpModsDir.listFiles()?.each { old -> if ((old.name.startsWith('MCT-BlastPlaster-') || old.name.startsWith('blastplaster-')) && old.name.endsWith('.jar')) { old.delete() } }
     }
 }
 
@@ -219,16 +213,6 @@ tasks.register('bumpVersion') {
     }
 }
 
-tasks.register('sourcesJar', Jar) {
-    dependsOn classes
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar
-}
-
 tasks.register('optimizePng') {
     def pngPatterns = ["**/*.png"]
     def resourceDirs = sourceSets.main.resources.srcDirs
@@ -252,7 +236,6 @@ tasks.register('optimizePng') {
 
 processResources.dependsOn bumpVersion
 jar.dependsOn bumpVersion
-sourcesJar.dependsOn bumpVersion
 
 tasks.register('genIntellijRunsDummy') {}
 
