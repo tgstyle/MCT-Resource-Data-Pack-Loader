@@ -34,9 +34,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     @Override @Nonnull public Vec3 getBrightnessDependentFogColor(@Nonnull Vec3 color, float brightness) {
-        if (def == null || def.fogColor() < 0) { return base.getBrightnessDependentFogColor(color, brightness); }
-        int rgb = def.fogColor();
-        return new Vec3(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D);
+        return base.getBrightnessDependentFogColor(def == null || def.fogColor() < 0 ? color : Vec3.fromRGB24(def.fogColor()), brightness);
     }
 
     @Override public boolean isFoggyAt(int x, int z) { return (def != null && def.showFog()) || base.isFoggyAt(x, z); }

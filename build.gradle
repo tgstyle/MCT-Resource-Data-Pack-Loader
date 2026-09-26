@@ -112,11 +112,7 @@ neoForge {
         minecraftVersion = project.version_minecraft
     }
 
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
-    }
+    mods.register(mod_id as String) { sourceSet(sourceSets.main) }
 
     runs {
         client {
@@ -136,7 +132,7 @@ neoForge {
         }
 
         configureEach {
-            gameDirectory = project.file('run')
+            gameDirectory = layout.projectDirectory.dir('run')
         }
     }
 }
@@ -200,10 +196,7 @@ tasks.register('optimizePng') {
     doLast {
         pngFiles.each { File file ->
             long size = file.length()
-            execOps.exec {
-                executable 'optipng'
-                args '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath
-            }
+            execOps.exec { ExecSpec spec -> spec.commandLine('optipng', '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath) }
             long newSize = file.length()
             if (newSize < size) {
                 System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",

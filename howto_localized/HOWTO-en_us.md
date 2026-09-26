@@ -1193,7 +1193,7 @@ The folder is also gone over every time the packs are scanned, and any image who
 
 A PNG always wins. If both `panel.png` and `panel.png.json` exist, the PNG is served and the map is never drawn, so a generated texture can be replaced by a painted one later without changing anything that points at it.
 
-**Nobody has to write these files by hand.** The repository ships scripts for the whole round trip in [`pixelmap/`](../pixelmap): `png_to_pixelmap.py` turns one PNG into a map, `convert_pack.py` does it for every texture a pack holds, and `verify_pack.py` draws a converted pack's maps and compares them to the PNGs they came from, so a conversion can be trusted before the originals are put aside.
+**Nobody has to write these files by hand.** The repository ships scripts for the whole round trip in `pixelmap/`: `png_to_pixelmap.py` turns one PNG into a map, `convert_pack.py` does it for every texture a pack holds, and `verify_pack.py` draws a converted pack's maps and compares them to the PNGs they came from, so a conversion can be trusted before the originals are put aside.
 
 ### Traps worth knowing
 
@@ -2942,9 +2942,9 @@ A dimension is a data pack entry on this version: the dimension type and the noi
 | `cloudColor` | no | hex color | none | Cloud tint |
 | `groundLevel` | no | int | `63` | Sea level, used for the horizon, for spawn searches and for where a gate arrival or a fall over the void lands |
 | `movementFactor` | no | float | `1.0` | Distance ratio to the overworld. The nether uses 8 |
-| `fogColor` | no | hex color | none | Fog tint |
+| `fogColor` | no | hex color | none | Fog tint at noon. It darkens at night as vanilla fog does |
 | `showFog` | no | boolean | `false` | Thick fog, as in the nether |
-| `skyColor` | no | hex color | none | Sky tint |
+| `skyColor` | no | hex color | none | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does |
 | `fixedTime` | no | int, ticks | none | Locks the time of day |
 | `sunriseColors` | no | boolean | `true` | Whether sunrise and sunset are tinted |
 | `ambientLight` | no | float, 0 to 1 | `0.0` | Minimum light everywhere |
@@ -4247,7 +4247,7 @@ Text files go in `assets/<namespace>/texts/*.txt`. Plain text, one paragraph to 
 
 Intro texts take Markdown. A file with no marks shows exactly as plain text does.
 
-```markdown
+```
 # The Long Night
 ## Chapter one
 Welcome, **PLAYERNAME**. The *old roads* are ~~open~~ closed; type `/spawn` to go back.
@@ -5040,8 +5040,7 @@ Every setting below is read through its group, so the group's `control` key deci
 | `villagePathLampSideBlock` | block | `minecraft:torch` | The light hung on each side of the head, facing outward. Empty hangs none |
 | `villagePathLampStructure` | text | empty | A structure file placed as the whole lamp instead of stacking the three lamp blocks, named `mypack:street_lamp` and read from that pack's `structures` folder. It is centered on the lamp spot with its lowest layer on the curb, and the blocks it lays are held so nothing else overwrites them. Empty stacks the blocks |
 | `villageWellStructure` | list | empty | Structure files placed as the centerpiece of every plaza, one weighted entry per line written name=weight like mypack:plaza_spire=3, rolled once per plaza. It is centered on a six block square cleared and floored with villagePathBlock, its lowest layer on that floor. Empty, the empty share, or a structure that cannot be loaded builds the game's own well there instead. An entry not written name=weight is left out |
-| `villagePathDeadEnds` | list | empty | How a street that dead ends is closed off, one entry per line, rolled per end: sidewalk paves the end row with the sidewalk block and barrier stands villagePathBridgeBarrierBlock along it villagePathBridgeBarrierHeight tall; any other entry is ignored. They close only an end
- that grew no cul-de-sac, a style whose block is not set drops out of the roll, and an alley end takes only barrier. Empty leaves such ends open |
+| `villagePathDeadEnds` | list | empty | How a street that dead ends is closed off, one entry per line, rolled per end: sidewalk paves the end row with the sidewalk block and barrier stands villagePathBridgeBarrierBlock along it villagePathBridgeBarrierHeight tall; any other entry is ignored. They close only an end that grew no cul-de-sac, a style whose block is not set drops out of the roll, and an alley end takes only barrier. Empty leaves such ends open |
 | `villagePathIntersects` | list | empty | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
 
 #### Village bridges and piers
@@ -5553,7 +5552,11 @@ A single-track trunk has no second track to give the other spur, so a link whose
     "bedrockLayers": 1,
     "flatBedrockBiomes": ["minecraft:plains"],
     "flatBedrockBiomesAreBlacklist": true,
-    "flatBedrockRoof": true
+    "flatBedrockRoof": true,
+    "flatBedrockFiller": "minecraft:cobblestone",
+    "flatBedrockFillers": ["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"],
+    "flatBedrockBiomeTypes": ["minecraft:is_ocean"],
+    "flatBedrockRetrogen": true
   }
 }
 ```
@@ -6118,6 +6121,7 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl pixelmap <namespace:path>` | none | What a [pixel map](#textures-written-as-pixel-maps) came out as, character by character |
 | `/rdpl biome`, `biome list [all]` | none | Every biome that can generate, and its id; `all` includes the ones nothing can generate |
 | `/rdpl biome here` | none | The biome you are standing in: its name, id and number |
+| `/rdpl biome find <name>` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
 | `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
 
 **Which server subcommands are linked, and why the rest are not.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions` and `oregen` can only ever mean the server's, since only the server knows the world, its players and its rounds, so `/rdpl` hands them over. In single player, tab completion after one of them offers what `/rdplserver` would; on a server, `goto` offers the vanilla structure names. The rest, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` and `biome`, keep their own meaning of your packs and your client. The server's own permission check decides a linked command, so a client can neither cheat it nor be told a fabricated answer.
@@ -6155,6 +6159,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver biome list [all]` | 3 | Every biome that can generate on the server, with its number, id and name; `all` includes the ones nothing can generate |
 | `/rdplserver biome` | 3 | The biome you are standing in and what the pack does with it: its id, number and name, whether `blockBiomes` is on and which world template is active, and the ground, the block under it and the stone at y 40 |
 | `/rdplserver biome here [player]` | 3 | The biome you, or the player named, are standing in: its name, id and number. The console names a player |
+| `/rdplserver biome find <name>` | 3 | The nearest place within 6400 blocks where a biome matching that id or shown name generates: its coordinates and the distance from where it is run. Says so when none is that close, or when the name matches no biome. `/rdpl biome find` forwards to it |
 | `/rdplserver dimensions` | 3 | Every dimension, including the ones packs added |
 | `/rdplserver vein <entry> [radius]` | 3 | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it |
 
@@ -6338,7 +6343,6 @@ What a 1.12.2 pack can write that this version does not read, and why. A pack th
 | `harvestTool` naming `shears` or a modded tool class | blocks | A tool here reads block tags, not a class name, so nothing answers to one. Name the modded tool's own block tag under the variant's `tags` |
 | another mod's tab label in `creativeTab` | blocks, items, fluids | A tab is known by its id now, so a bare label is read as a tab of the pack's own. Name the mod's tab by its id, such as `modid:main` |
 | `/rdpl reload <group>` | commands | The game reloads every resource in one pass, so textures, models, languages, sounds and shaders cannot be reloaded on their own. `/rdpl reload` or F3+T reloads them all |
-| `/rdplserver biome find <name>` and `/rdpl biome find <name>` | commands | Vanilla has had its own biome search since 1.19. `/locate biome <name>` finds the nearest one, so there is no need for a pack command that does the same job |
 | `modernChestPlacement` | vanilla tweaks | The game has paired chests this way since 1.13: a chest joins a single chest beside it only when both face the same way, and sneaking keeps it single |
 | `loadingScreenPercent` | settings | The game's own world loading screen already shows how much of the spawn area is ready |
 | `disableOptimizations` | settings | It stood down the 1.12.2 pregeneration and generation optimizations, which were written for that engine and have no counterpart here |

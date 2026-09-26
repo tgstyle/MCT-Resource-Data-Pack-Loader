@@ -1193,7 +1193,7 @@ Der Ordner wird außerdem bei jedem Durchsuchen der Packs durchgegangen, und jed
 
 Eine PNG gewinnt immer. Gibt es sowohl `panel.png` als auch `panel.png.json`, wird die PNG ausgeliefert und die Karte nie gezeichnet; eine erzeugte Textur lässt sich später also durch eine gemalte ersetzen, ohne irgendetwas anzufassen, das darauf zeigt.
 
-**Niemand muss diese Dateien von Hand schreiben.** Das Repository liefert in [`pixelmap/`](../pixelmap) Skripte für den ganzen Weg hin und zurück: `png_to_pixelmap.py` macht aus einer PNG eine Karte, `convert_pack.py` erledigt das für jede Textur eines Packs, und `verify_pack.py` zeichnet die Karten eines umgewandelten Packs und vergleicht sie mit den PNGs, aus denen sie stammen, damit man einer Umwandlung trauen kann, bevor man die Originale beiseitelegt.
+**Niemand muss diese Dateien von Hand schreiben.** Das Repository liefert in `pixelmap/` Skripte für den ganzen Weg hin und zurück: `png_to_pixelmap.py` macht aus einer PNG eine Karte, `convert_pack.py` erledigt das für jede Textur eines Packs, und `verify_pack.py` zeichnet die Karten eines umgewandelten Packs und vergleicht sie mit den PNGs, aus denen sie stammen, damit man einer Umwandlung trauen kann, bevor man die Originale beiseitelegt.
 
 ### Fallen, die man kennen sollte
 
@@ -2942,9 +2942,9 @@ Eine Dimension ist in dieser Version ein Datenpaket-Eintrag: Der Dimensionstyp u
 | `cloudColor` | nein | Hex-Farbe | keine | Wolkenfärbung |
 | `groundLevel` | nein | int | `63` | Meereshöhe, genutzt für den Horizont, die Spawnsuche und dafür, wo eine Ankunft durch ein Tor oder ein Sturz über der Leere landet |
 | `movementFactor` | nein | float | `1.0` | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8 |
-| `fogColor` | nein | Hex-Farbe | keine | Nebelfärbung |
+| `fogColor` | nein | Hex-Farbe | keine | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel |
 | `showFog` | nein | boolean | `false` | Dichter Nebel, wie im Nether |
-| `skyColor` | nein | Hex-Farbe | keine | Himmelsfärbung |
+| `skyColor` | nein | Hex-Farbe | keine | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel |
 | `fixedTime` | nein | int, Ticks | keine | Hält die Tageszeit fest |
 | `sunriseColors` | nein | boolean | `true` | Ob Sonnenauf- und -untergang eingefärbt werden |
 | `ambientLight` | nein | float, 0 bis 1 | `0.0` | Mindestlicht überall |
@@ -4247,7 +4247,7 @@ Textdateien liegen unter `assets/<namespace>/texts/*.txt`. Reiner Text, ein Absa
 
 Intro-Texte verstehen Markdown. Eine Datei ohne Auszeichnungen sieht genauso aus wie reiner Text.
 
-```markdown
+```
 # The Long Night
 ## Chapter one
 Welcome, **PLAYERNAME**. The *old roads* are ~~open~~ closed; type `/spawn` to go back.
@@ -5040,8 +5040,7 @@ Jede Einstellung unten wird über ihre Gruppe gelesen, der `control`-Schlüssel 
 | `villagePathLampSideBlock` | Text | `minecraft:torch` | Das Licht, das an jeder Seite des Kopfes nach außen hängt. Leer hängt keines |
 | `villagePathLampStructure` | Text | leer | Eine Strukturdatei, die als ganze Laterne gesetzt wird, statt die drei Laternenblöcke zu stapeln, benannt `mypack:street_lamp` und aus dem `structures`-Ordner dieses Packs gelesen. Sie wird auf den Laternenplatz zentriert, ihre unterste Lage auf dem Bordstein, und die gesetzten Blöcke werden gehalten, damit nichts sie überschreibt. Leer stapelt die Blöcke |
 | `villageWellStructure` | Liste | leer | Strukturdateien, die als Mittelpunkt jedes Platzes gesetzt werden, ein gewichteter Eintrag je Zeile, geschrieben name=weight wie mypack:plaza_spire=3, einmal je Platz ausgelost. Sie wird auf ein sechs Blöcke großes Quadrat zentriert, das freigeräumt und mit villagePathBlock gepflastert wird, ihre unterste Lage auf diesem Boden. Leer, der Anteil empty oder eine Struktur, die sich nicht laden lässt, baut dort stattdessen den Brunnen des Spiels selbst. Ein Eintrag, der nicht als name=weight geschrieben ist, wird ausgelassen |
-| `villagePathDeadEnds` | Liste | leer | Wie eine Straße abgeschlossen wird, die tot endet, ein Eintrag je Zeile, je Ende ausgelost: sidewalk pflastert die letzte Reihe mit dem Gehwegblock und barrier stellt villagePathBridgeBarrierBlock in villagePathBridgeBarrierHeight Höhe an ihr entlang auf; jeder andere Eintrag wird übergangen. Beide schließen nur ein Ende
-, das keine Wendeschleife bekommen hat, ein Stil, dessen Block nicht gesetzt ist, fällt aus der Auslosung, und ein Gassenende nimmt nur barrier. Leer lässt solche Enden offen |
+| `villagePathDeadEnds` | Liste | leer | Wie eine Straße abgeschlossen wird, die tot endet, ein Eintrag je Zeile, je Ende ausgelost: sidewalk pflastert die letzte Reihe mit dem Gehwegblock und barrier stellt villagePathBridgeBarrierBlock in villagePathBridgeBarrierHeight Höhe an ihr entlang auf; jeder andere Eintrag wird übergangen. Beide schließen nur ein Ende, das keine Wendeschleife bekommen hat, ein Stil, dessen Block nicht gesetzt ist, fällt aus der Auslosung, und ein Gassenende nimmt nur barrier. Leer lässt solche Enden offen |
 | `villagePathIntersects` | Liste | leer | Muster, die an Kreuzungen gemalt werden, benannt nach Registrierungsschlüssel aus `<namespace>/pathintersects/` eines Packs. Ein Eintrag malt jede Kreuzung gleich; mehrere werden je Kreuzung nach Gewicht gewählt |
 
 #### Dorfbrücken und Stege
@@ -5553,7 +5552,11 @@ Eine eingleisige Stammstrecke hat kein zweites Gleis für die andere Stichstreck
     "bedrockLayers": 1,
     "flatBedrockBiomes": ["minecraft:plains"],
     "flatBedrockBiomesAreBlacklist": true,
-    "flatBedrockRoof": true
+    "flatBedrockRoof": true,
+    "flatBedrockFiller": "minecraft:cobblestone",
+    "flatBedrockFillers": ["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"],
+    "flatBedrockBiomeTypes": ["minecraft:is_ocean"],
+    "flatBedrockRetrogen": true
   }
 }
 ```
@@ -6118,6 +6121,7 @@ Jeder Ordner, mit vollem Pfad und einem Link zum Abschnitt, der ihn beschreibt, 
 | `/rdpl pixelmap <namespace:path>` | keine | Was aus einer [Pixelkarte](#texturen-als-pixelkarte) geworden ist, Zeichen für Zeichen |
 | `/rdpl biome`, `biome list [all]` | keine | Jedes Biom, das generieren kann, mit seiner Id; `all` nimmt die dazu, die nichts generieren kann |
 | `/rdpl biome here` | keine | Das Biom, in dem du stehst: Name, Id und Nummer |
+| `/rdpl biome find <name>` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten |
 | `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten |
 
 **Welche Server-Unterbefehle verknüpft sind und warum die übrigen nicht.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions` und `oregen` können immer nur die des Servers meinen, denn nur der Server kennt die Welt, ihre Spieler und ihre Runden, `/rdpl` gibt sie also weiter. Im Einzelspieler bietet die Tab-Vervollständigung dahinter an, was `/rdplserver` anbieten würde; auf einem Server bietet `goto` die Namen der Vanilla-Strukturen an. Die übrigen, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` und `biome`, behalten ihre eigene Bedeutung von deinen Packs und deinem Client. Die eigene Berechtigungsprüfung des Servers entscheidet über einen verknüpften Befehl, ein Client kann sie also weder umgehen noch eine erfundene Antwort bekommen.
@@ -6155,6 +6159,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver biome list [all]` | 3 | Jedes Biom, das auf dem Server generieren kann, mit Nummer, Id und Name; `all` nimmt die dazu, die nichts generieren kann |
 | `/rdplserver biome` | 3 | Das Biom, in dem du stehst, und was das Pack damit macht: seine Id, Nummer und sein Name, ob `blockBiomes` an ist und welche Weltvorlage gilt, dazu der Boden, der Block darunter und der Stein auf y 40 |
 | `/rdplserver biome here [player]` | 3 | Das Biom, in dem du oder der genannte Spieler steht: Name, Id und Nummer. Die Konsole nennt einen Spieler |
+| `/rdplserver biome find <name>` | 3 | Die nächste Stelle innerhalb von 6400 Blöcken, an der ein zu dieser Id oder dem angezeigten Namen passendes Biom generiert: seine Koordinaten und die Entfernung von der Stelle, an der er ausgeführt wird. Sagt es, wenn keins so nah ist oder der Name zu keinem Biom passt. `/rdpl biome find` leitet es weiter |
 | `/rdplserver dimensions` | 3 | Jede Dimension, auch die, die Packs hinzugefügt haben |
 | `/rdplserver vein <Eintrag> [Radius]` | 3 | Wo ein Worldgen-Eintrag der Form `vein` seine Adern in so vielen Chunks (Standard 8) um die Stelle angelegt hat, an der er ausgeführt wird, die nächste zuerst, ob diese Chunks schon da sind oder nicht |
 
@@ -6338,7 +6343,6 @@ Was ein Pack für 1.12.2 schreiben kann, diese Version aber nicht liest, und war
 | `harvestTool` mit `shears` oder einer Werkzeugklasse eines Mods | Blöcke | Ein Werkzeug liest hier Block-Tags, keinen Klassennamen, also antwortet nichts darauf. Nenne den Block-Tag des Mod-Werkzeugs unter `tags` der Variante |
 | Tab-Label eines anderen Mods in `creativeTab` | Blöcke, Items, Flüssigkeiten | Ein Tab wird heute über seine Id erkannt, ein bloßes Label gilt also als Tab des eigenen Packs. Nenne den Tab des Mods mit seiner Id, etwa `modid:main` |
 | `/rdpl reload <group>` | Befehle | Das Spiel lädt alle Ressourcen in einem Durchgang neu, Texturen, Modelle, Sprachen, Sounds und Shader lassen sich also nicht einzeln neu laden. `/rdpl reload` oder F3+T lädt sie alle |
-| `/rdplserver biome find <name>` und `/rdpl biome find <name>` | Befehle | Vanilla sucht Biome seit 1.19 mit einem eigenen Befehl. `/locate biome <name>` findet das nächste, ganz ohne einen eigenen Pack-Befehl dafür |
 | `modernChestPlacement` | Vanilla-Tweaks | Das Spiel verbindet Truhen seit 1.13 selbst so: Eine Truhe schließt sich nur an eine einzelne Truhe daneben an, die in dieselbe Richtung schaut, und beim Schleichen bleibt sie einzeln |
 | `loadingScreenPercent` | Einstellungen | Der Ladebildschirm des Spiels zeigt beim Laden einer Welt schon selbst, wie weit der Spawn-Bereich fertig ist |
 | `disableOptimizations` | Einstellungen | Der Schlüssel schaltete die Optimierungen für Vorgenerierung und Generierung von 1.12.2 ab. Sie waren für jene Engine geschrieben und haben hier kein Gegenstück |

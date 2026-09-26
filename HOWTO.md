@@ -36,13 +36,15 @@ Diese Seite ist nur ein Wegweiser. In jeder Sprachdatei steht das ganze Handbuch
 
 ---
 
-## Eleven working examples · Одиннадцать готовых примеров · Elf fertige Beispiele
+## Twelve working examples · Двенадцать готовых примеров · Zwölf fertige Beispiele
 
-Drop any of them straight into `rdploader` and look at how each file is written. Every example exists for all three versions; take the zip for yours.
+Drop any of them straight into `rdploader` and look at how each file is written. Eleven exist for all three versions; take the zip for yours. One works with a 1.12.2 mod and exists for 1.12.2 only.
 
-Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл. Каждый пример есть для всех трёх версий; берите zip для своей.
+Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл. Одиннадцать есть для всех трёх версий; берите zip для своей. Один работает с модом для 1.12.2 и есть только для 1.12.2.
 
-Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist. Jedes Beispiel gibt es für alle drei Versionen; nimm das Zip für deine.
+Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist. Elf gibt es für alle drei Versionen; nimm das Zip für deine. Eines arbeitet mit einer Mod für 1.12.2 und gibt es nur für 1.12.2.
+
+### All versions · Все версии · Alle Versionen
 
 - **RDPLExamplePack.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) · [1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExamplePack.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExamplePack.zip)) uses nearly every kind of file the loader reads: blocks, items, a fluid, a creative tab, biomes, a world template, a dimension behind a gate, worldgen, a potion and its brewing, a villager and trades, recipes, loot, overrides of vanilla things, a sound, an advancement and a function. Its readme says what to check in game.
   Использует почти все виды файлов, которые читает загрузчик: блоки, предметы, жидкость, вкладку творческого режима, биомы, шаблон мира, измерение за вратами, генерацию, зелье и его варку, жителя с торговлей, рецепты, лут, изменения ванильных вещей, звук, достижение и функцию. В его readme сказано, что проверить в игре.
@@ -77,6 +79,12 @@ Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieb
 - **RDPLExampleRaid.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) · [1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleRaid.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleRaid.zip)) defines a village raid of the pack's own: its own Bad Omen starts it, five waves of illagers, a witch and the pack's own variants come in from outside the village, and killing every raider wins a title, emeralds and Hero of the Village.
   Описывает собственный набег пака на деревню: его запускает собственное Дурное знамение пака, пять волн иллагеров, ведьма и варианты мобов самого пака подходят снаружи деревни, а за победу над всеми налётчиками дают титул, изумруды и Героя деревни.
   Definiert einen eigenen Dorfüberfall des Packs: Das eigene Böse Omen des Packs löst ihn aus, fünf Wellen aus Illagern, einer Hexe und den eigenen Varianten des Packs rücken von außerhalb des Dorfs an, und wer jeden Angreifer tötet, gewinnt einen Titel, Smaragde und Held des Dorfes.
+
+### 1.12.2 only · Только 1.12.2 · Nur 1.12.2
+
+- **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) needs Galacticraft and puts a star system of its own on the star map, with a planet reached by a tier 2 rocket that has its own sky, gravity, day length, weather and atmosphere, a planet to look at but never land on, and, with GalaxySpace, an ice planet around Tau Ceti.
+  Требует Galacticraft и добавляет на звёздную карту собственную звёздную систему: планету, куда летят на ракете 2-го уровня, со своим небом, гравитацией, длиной дня, погодой и атмосферой, планету, на которую можно только смотреть, но не садиться, а с GalaxySpace ещё и ледяную планету у Тау Кита.
+  Braucht Galacticraft und setzt ein eigenes Sternsystem auf die Sternenkarte, mit einem Planeten, den man mit einer Rakete der Stufe 2 erreicht und der eigenen Himmel, eigene Schwerkraft, Tageslänge, eigenes Wetter und eigene Atmosphäre hat, einem Planeten, den man nur ansehen, aber nie betreten kann, und, mit GalaxySpace, einem Eisplaneten um Tau Ceti.
 
 ---
 
