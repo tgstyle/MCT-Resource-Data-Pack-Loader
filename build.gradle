@@ -116,7 +116,7 @@ def bpJar = bpSource == null ? null : devSyncStaged(bpSource, 'build/blastplaste
 if (bpSource == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp in version.properties to a snapshot in the devsync cache') }
 
 def bpModsDir = file('run/mods')
-tasks.register('copyBlastPlasterMod', Copy) {
+TaskProvider<Copy> copyBlastPlasterMod = tasks.register('copyBlastPlasterMod', Copy) {
     onlyIf { bpSource != null }
     from bpSource
     into bpModsDir
@@ -136,11 +136,7 @@ legacyForge {
 
     validateAccessTransformers = true
 
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
-    }
+    mods.register(mod_id as String) { sourceSet(sourceSets.main) }
 
     runs {
         client {
@@ -160,8 +156,8 @@ legacyForge {
         }
 
         configureEach {
-            gameDirectory = project.file('run')
-            taskBefore tasks.named('copyBlastPlasterMod')
+            gameDirectory = layout.projectDirectory.dir('run')
+            taskBefore(copyBlastPlasterMod)
         }
     }
 }
@@ -221,10 +217,7 @@ tasks.register('optimizePng') {
     doLast {
         pngFiles.each { File file ->
             long size = file.length()
-            execOps.exec {
-                executable 'optipng'
-                args '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath
-            }
+            execOps.exec { ExecSpec spec -> spec.commandLine('optipng', '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath) }
             long newSize = file.length()
             if (newSize < size) {
                 System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",
