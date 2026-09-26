@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.util.Json;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
+import net.minecraft.world.WorldProvider;
 import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,18 +48,28 @@ public final class ContentDimensions {
         for (Map.Entry<ResourceLocation, DimensionDef> entry : DEFS.entrySet()) {
             DimensionDef def = entry.getValue();
             if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }
-            if (DimensionManager.isDimensionRegistered(def.id)) {
-                ContentLog.LOGGER.error("Dimension {} wants id {}, which is already registered by something else. Change the id or remove the conflicting mod", entry.getKey(), def.id);
-                continue;
+            if (def.galacticraft == null) {
+                if (register(def, ContentWorldProvider.class)) { registered.add(entry.getKey() + " as " + def.id); }
             }
-            DimensionType type = DimensionType.register(def.getName(), def.suffix, def.id, ContentWorldProvider.class, def.keepLoaded);
-            TYPES.put(def.id, type);
-            DimensionManager.registerDimension(def.id, type);
-            BY_ID.put(def.id, def);
-            registered.add(entry.getKey() + " as " + def.id);
+            else if (ContentCelestial.orbits(def)) { ContentCelestial.defer(def); }
+            else { ContentLog.LOGGER.error("Dimension {} is a Galacticraft body and Galacticraft is not loaded, so it is not registered", entry.getKey()); }
         }
         if (!registered.isEmpty()) { Summary.info("dimensions", "Registered " + registered.size() + " dimension(s): " + registered); }
     }
+
+    public static boolean register(DimensionDef def, Class<? extends WorldProvider> provider) {
+        if (DimensionManager.isDimensionRegistered(def.id)) {
+            ContentLog.LOGGER.error("Dimension {} wants id {}, which is already registered by something else. Change the id or remove the conflicting mod", def.registryName, def.id);
+            return false;
+        }
+        DimensionType type = DimensionType.register(def.getName(), def.suffix, def.id, provider, def.keepLoaded);
+        TYPES.put(def.id, type);
+        DimensionManager.registerDimension(def.id, type);
+        BY_ID.put(def.id, def);
+        return true;
+    }
+
+    public static void claim(DimensionDef def) { BY_ID.put(def.id, def); }
 
     @Nullable public static DimensionDef byId(int dimension) { return BY_ID.get(dimension); }
 

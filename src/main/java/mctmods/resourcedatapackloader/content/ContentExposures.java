@@ -59,7 +59,7 @@ public final class ContentExposures {
             if (immune != null && player.isPotionActive(immune)) { return 0; }
         }
         int most = def.levels.size();
-        int level = scanItems(def, player, most);
+        int level = Math.max(def.dimensions.getOrDefault(player.dimension, 0), scanItems(def, player, most));
         if (level >= most) { return most; }
         return Math.max(level, scanWorld(def, player, most));
     }

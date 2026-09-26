@@ -36,6 +36,7 @@ import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCelestial;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -95,7 +96,9 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLInterModComms;
 import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -237,10 +240,13 @@ public class ResourceDataPackLoader {
         }
     }
 
+    @Mod.EventHandler public void interModComms(FMLInterModComms.IMCEvent event) { ContentCelestial.register(); }
+
     @Mod.EventHandler public void loadComplete(FMLLoadCompleteEvent event) {
         RecipeDisabled.apply();
         FurnaceBlocking.apply();
         ContentSpawners.apply();
+        ContentCelestial.loadComplete();
     }
 
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {
@@ -263,6 +269,8 @@ public class ResourceDataPackLoader {
     }
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }
+
+    @Mod.EventHandler public void onServerStarted(FMLServerStartedEvent event) { ContentCelestial.serverStarted(); }
 
     @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ContentPregen.serverStopping(); }
 

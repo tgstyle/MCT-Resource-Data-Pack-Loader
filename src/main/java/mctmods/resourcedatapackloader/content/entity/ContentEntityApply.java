@@ -190,6 +190,8 @@ final class ContentEntityApply {
     }
 
     private static void flyer(EntityLiving living) {
+        AbstractAttributeMap map = living.getAttributeMap();
+        if (map.getAttributeInstanceByName(SharedMonsterAttributes.FLYING_SPEED.getName()) == null) { map.registerAttribute(SharedMonsterAttributes.FLYING_SPEED); }
         ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateFlying(living, living.world));
         ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityFlyHelper(living));
     }

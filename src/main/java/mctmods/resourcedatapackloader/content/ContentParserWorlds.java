@@ -464,7 +464,9 @@ public final class ContentParserWorlds {
                 JsonUtils.getBoolean(sky, "renderWeather", true),
                 gameRules(key, json),
                 strings(json, "requires"),
-                dimensionPortal(key, json));
+                dimensionPortal(key, json),
+                ContentParserCelestial.galacticraft(key, json),
+                ContentParserDimensionTraits.traits(key, json));
     }
 
     private static Map<String, Boolean> structures(ResourceLocation key, JsonObject json) {

@@ -36,8 +36,8 @@ public class PackGuiHandler implements IGuiHandler {
     private static final class Pouch {
         private final PouchInventory inventory;
         private final ContainerDef def;
-        private final ContainerPouch.Source source;
-        private Pouch(PouchInventory inventory, ContainerDef def, ContainerPouch.Source source) {
+        private final ContainerPouch.ISource source;
+        private Pouch(PouchInventory inventory, ContainerDef def, ContainerPouch.ISource source) {
             this.inventory = inventory;
             this.def = def;
             this.source = source;
@@ -55,7 +55,7 @@ public class PackGuiHandler implements IGuiHandler {
                 holder -> mctmods.resourcedatapackloader.content.compat.BaublesPouch.worn(holder, slot));
     }
 
-    @Nullable private static Pouch of(ItemStack stack, ContainerPouch.Source source) {
+    @Nullable private static Pouch of(ItemStack stack, ContainerPouch.ISource source) {
         if (!(stack.getItem() instanceof ContentItemContainer)) { return null; }
         ContentItemContainer item = (ContentItemContainer) stack.getItem();
         return new Pouch(new PouchInventory(stack, item.holds(), stack.getTranslationKey() + ".name"), item.holds(), source);

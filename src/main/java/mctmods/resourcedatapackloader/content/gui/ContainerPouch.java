@@ -8,9 +8,9 @@ import net.minecraft.item.ItemStack;
 import javax.annotation.Nonnull;
 
 public class ContainerPouch extends Container {
-    public interface Source { ItemStack held(EntityPlayer player); }
+    public interface ISource { ItemStack held(EntityPlayer player); }
     private final PouchInventory held;
-    private final Source source;
+    private final ISource source;
     private final ItemStack opened;
     private final int rows;
     private final int columns;
@@ -23,7 +23,7 @@ public class ContainerPouch extends Container {
         return this;
     }
 
-    public ContainerPouch(InventoryPlayer player, PouchInventory held, Source source, int rows, int columns) {
+    public ContainerPouch(InventoryPlayer player, PouchInventory held, ISource source, int rows, int columns) {
         this.held = held;
         this.source = source;
         this.opened = held.pouch();

@@ -2,18 +2,20 @@
 
 **One folder that overrides anything Minecraft or a mod provides, defines new content from JSON, and controls what generates, in every world, on clients and servers, with nothing for players to switch on.**
 
-Eight working examples. Drop any of them straight into `rdploader` and look at how each file is written.
+Twelve working examples. Drop any of them straight into `rdploader` and look at how each file is written.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) covers most features, blocks, items, biomes, a dimension, a world template and every worldgen shape.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
+- [RDPLExampleVeinShapes.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleVeinShapes.zip) puts three ore veins into an ordinary overworld, one per vein pattern (plain, banded and tube), each with rich, normal and poor tiers and a few marker blocks on the surface above it to prospect by.
+- [RDPLExampleVeinShapesVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleVeinShapesVoid.zip) hangs the same three vein patterns in an empty void, so each shape can be seen whole.
 - [RDPLExampleDeepWorld.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleDeepWorld.zip) makes the overworld a rubic world with 256 blocks of generated world below the vanilla one and 128 above it: the deep stone blend, modern noise caves, ravines, banded ore veins, three cave regions to descend through, and floating islands overhead cut by the same noise.
 - [RDPLExampleContainers.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleContainers.zip) adds blocks and carried items that hold an inventory, in every size from three slots to the largest allowed, with a loot table, the chest model tinted out of the vanilla sheet, every texture drawn as a pixel map, and two pouches that can be worn in Baubles.
-- [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) sets a flat world around a village whose well is a bell pavilion and hands the player a Bad Omen on joining: five waves of vanilla illagers, a witch and the pack's own Pillagers, Raid Captains, Axe Throwers and Ravagers, the omen and Hero of the Village as the pack's own effects with pixel map icons, a drink that brings the omen back, and the functions that end the raid.
 - [RDPLExampleMegaCity32.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity32.zip) makes a superflat world holding one deliberately enormous village, grown to a thousand plots and pinned to the origin, with the streets dressed as concrete roads, sidewalks, dashed centers and lamp posts, sewers under the streets, two subway lines with stations under those and a railway through the town, and the buildings composed from structure maps in four sizes and three facades rather than from vanilla houses.
 - [RDPLExampleMegaCity64.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleMegaCity64.zip) is that same city on a rubic world with its ceiling at 512 and the clouds lifted to 384, so towers stand 256 blocks over the street, and every district rolls a block depth of 16, 32 or 64 so a coarse grid mixes with a fine one.
 - [RDPLExampleCityCustomMap.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
-
+- [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) sets a flat world around a village whose well is a bell pavilion and hands the player a Bad Omen on joining: five waves of vanilla illagers, a witch and the pack's own Pillagers, Raid Captains, Axe Throwers and Ravagers, the omen and Hero of the Village as the pack's own effects with pixel map icons, a drink that brings the omen back, and the functions that end the raid.
+- [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) needs Galacticraft and puts a star system of its own on the star map, with a planet reached by a tier 2 rocket that has its own sky, gravity, day length, weather and atmosphere, a planet to look at but never land on, and, with GalaxySpace, an ice planet around Tau Ceti.
 ---
 
 ## Contents
@@ -64,6 +66,7 @@ Eight working examples. Drop any of them straight into `rdploader` and look at h
 - [Game rules](#game-rules)
 - [Biomes](#biomes)
 - [Dimensions](#dimensions)
+- [Galacticraft bodies](#galacticraft-bodies)
 - [Portals and gates](#portals-and-gates)
 - [Rubic worlds](#rubic-worlds)
 - [The deep world](#the-deep-world)
@@ -128,58 +131,59 @@ Resource Data Pack Loader (RDPL) reads a single folder, `rdploader`, and does th
 
 Every path in this guide is written from `assets/` onward, so `<namespace>/blocks/*.json` is `assets/mypack/blocks/ruby_ore.json` on disk for a pack whose namespace is `mypack`. Each section repeats its own path under its header, with a note on what that path becomes.
 
-| Path | What it holds |
-| --- | --- |
-| `<namespace>/blocks/*.json` | Block definitions. [Blocks](#blocks) |
-| `<namespace>/items/*.json` | Item definitions. [Items](#items) |
-| `<namespace>/fluids/*.json` | Fluids, with a block and a bucket. [Fluids](#fluids) |
-| `<namespace>/materials/*.json` | Tool and armor materials. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary) |
-| `<namespace>/tabs/*.json` | Creative tabs. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary) |
-| `<namespace>/sounds/*.json` | Sound events. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary) |
-| `<namespace>/oredict/*.json` | Ore dictionary names. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary) |
-| `<namespace>/biomes/*.json` | Biome definitions. [Biomes](#biomes) |
-| `<namespace>/worldgen/*.json` | What generates, and where. [Worldgen entries](#worldgen-entries) |
-| `<namespace>/caveregions/*.json` | Named regions painted over the underground. [Cave regions](#cave-regions) |
-| `<namespace>/dimensions/*.json` | Dimension definitions. [Dimensions](#dimensions) |
-| `<namespace>/worldtemplates/*.json` | A whole world's settings in one file. [World templates](#world-templates) |
-| `<namespace>/worldintro/*.json` | Pages shown when a player enters the world. [World intro](#world-intro) |
-| `<namespace>/gates/*.json` | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates) |
-| `<namespace>/gamerules/*.json` | Game rules for new worlds. [Game rules](#game-rules) |
-| `<namespace>/teams/*.json` | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams) |
-| `<namespace>/scoring/*.json` | Objectives, points and how a match ends. [Scoring](#scoring) |
-| `<namespace>/raids/*.json` | Waves that come for a village when a player brings an omen into it. [Raids](#raids) |
-| `<namespace>/entities/*.json` | Entity variants built on entities that already exist. [Entity variants](#entity-variants) |
-| `<namespace>/hardness/*.json` | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups) |
-| `<namespace>/exposures/*.json` | Hazards that expose players near or carrying named blocks and items. [Exposures](#exposures) |
-| `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides) |
-| `<namespace>/villages/*.json` | Plots villages can build. [Village plots](#village-plots) |
-| `<namespace>/pathintersects/*.json` | Designs painted where village roads meet. [Village roads](#village-roads) |
-| `<namespace>/structuremaps/*.json` | Templates composed into one large building on a grid. [Structure maps](#structure-maps) |
-| `<namespace>/citymaps/*.json` | A drawn street plan a village is laid out from instead of growing. [City layout maps](#city-layout-maps) |
-| `<namespace>/portalframes/*.json` | Frames a player can build and light. [Portal frames](#portal-frames) |
-| `<namespace>/blastplaster/*.json` | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration) |
-| `<namespace>/structures/*.nbt` | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override) |
-| `<namespace>/recipes/*.json` | Crafting recipes, added or replaced. [What you can override](#what-you-can-override) |
-| `<namespace>/recipe_removals/*.json` | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override) |
-| `<namespace>/disabled/*.json` | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items) |
-| `<namespace>/furnace/*.json` | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels) |
-| `<namespace>/fuels/*.json` | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels) |
-| `<namespace>/brewing/*.json` | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing) |
-| `<namespace>/potions/*.json` | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing) |
-| `<namespace>/potion_types/*.json` | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing) |
-| `<namespace>/villagers/*.json` | Villager professions. [Villagers and trades](#villagers-and-trades) |
-| `<namespace>/trades/*.json` | What careers buy and sell. [Villagers and trades](#villagers-and-trades) |
-| `<namespace>/loot_tables/*.json` | Loot tables, replaced. [What you can override](#what-you-can-override) |
-| `<namespace>/loot_injections/*.json` | A pool added to a table that already exists. [What you can override](#what-you-can-override) |
-| `<namespace>/block_drops/*.json` | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops) |
-| `<namespace>/anvils/*.json` | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work) |
-| `<namespace>/cards/*.json` | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards) |
-| `<namespace>/player_loot/*.json` | A loot table rolled when a player dies. [Player loot](#player-loot) |
-| `<namespace>/advancements/*.json` | Advancements. [What you can override](#what-you-can-override) |
-| `<namespace>/functions/*.mcfunction` | Function files. [What you can override](#what-you-can-override) |
-| `<namespace>/registry_remap/*.json` | Old names mapped to new ones. [Registry renames](#registry-renames) |
-| `<namespace>/texts/*.txt` | Plain text files, used by the world intro. [World intro](#world-intro) |
-| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | The usual asset folders. [Models, blockstates and textures](#models-blockstates-and-textures) |
+| Path                                                                                            | What it holds                                                                                                         |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json`                                                                     | Block definitions. [Blocks](#blocks)                                                                                  |
+| `<namespace>/items/*.json`                                                                      | Item definitions. [Items](#items)                                                                                     |
+| `<namespace>/fluids/*.json`                                                                     | Fluids, with a block and a bucket. [Fluids](#fluids)                                                                  |
+| `<namespace>/materials/*.json`                                                                  | Tool and armor materials. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary)            |
+| `<namespace>/tabs/*.json`                                                                       | Creative tabs. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary)                       |
+| `<namespace>/sounds/*.json`                                                                     | Sound events. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary)                        |
+| `<namespace>/oredict/*.json`                                                                    | Ore dictionary names. [Materials, tabs, sounds, ore dictionary](#materials-tabs-sounds-ore-dictionary)                |
+| `<namespace>/biomes/*.json`                                                                     | Biome definitions. [Biomes](#biomes)                                                                                  |
+| `<namespace>/worldgen/*.json`                                                                   | What generates, and where. [Worldgen entries](#worldgen-entries)                                                      |
+| `<namespace>/caveregions/*.json`                                                                | Named regions painted over the underground. [Cave regions](#cave-regions)                                             |
+| `<namespace>/dimensions/*.json`                                                                 | Dimension definitions. [Dimensions](#dimensions)                                                                      |
+| `<namespace>/celestial/*.json`                                                                  | Star systems and bodies for the Galacticraft map. [Galacticraft bodies](#galacticraft-bodies)                         |
+| `<namespace>/worldtemplates/*.json`                                                             | A whole world's settings in one file. [World templates](#world-templates)                                             |
+| `<namespace>/worldintro/*.json`                                                                 | Pages shown when a player enters the world. [World intro](#world-intro)                                               |
+| `<namespace>/gates/*.json`                                                                      | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates)                                         |
+| `<namespace>/gamerules/*.json`                                                                  | Game rules for new worlds. [Game rules](#game-rules)                                                                  |
+| `<namespace>/teams/*.json`                                                                      | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams)                                                 |
+| `<namespace>/scoring/*.json`                                                                    | Objectives, points and how a match ends. [Scoring](#scoring)                                                          |
+| `<namespace>/raids/*.json`                                                                      | Waves that come for a village when a player brings an omen into it. [Raids](#raids)                                   |
+| `<namespace>/entities/*.json`                                                                   | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                             |
+| `<namespace>/hardness/*.json`                                                                   | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                           |
+| `<namespace>/exposures/*.json`                                                                  | Hazards that expose players near named blocks, carrying named items or in named dimensions. [Exposures](#exposures)   |
+| `<namespace>/overrides/<target>/<name>.json`                                                    | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)    |
+| `<namespace>/villages/*.json`                                                                   | Plots villages can build. [Village plots](#village-plots)                                                             |
+| `<namespace>/pathintersects/*.json`                                                             | Designs painted where village roads meet. [Village roads](#village-roads)                                             |
+| `<namespace>/structuremaps/*.json`                                                              | Templates composed into one large building on a grid. [Structure maps](#structure-maps)                               |
+| `<namespace>/citymaps/*.json`                                                                   | A drawn street plan a village is laid out from instead of growing. [City layout maps](#city-layout-maps)              |
+| `<namespace>/portalframes/*.json`                                                               | Frames a player can build and light. [Portal frames](#portal-frames)                                                  |
+| `<namespace>/blastplaster/*.json`                                                               | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration)    |
+| `<namespace>/structures/*.nbt`                                                                  | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                 |
+| `<namespace>/recipes/*.json`                                                                    | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                  |
+| `<namespace>/recipe_removals/*.json`                                                            | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                         |
+| `<namespace>/disabled/*.json`                                                                   | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                           |
+| `<namespace>/furnace/*.json`                                                                    | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                            |
+| `<namespace>/fuels/*.json`                                                                      | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                   |
+| `<namespace>/brewing/*.json`                                                                    | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                         |
+| `<namespace>/potions/*.json`                                                                    | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                |
+| `<namespace>/potion_types/*.json`                                                               | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)      |
+| `<namespace>/villagers/*.json`                                                                  | Villager professions. [Villagers and trades](#villagers-and-trades)                                                   |
+| `<namespace>/trades/*.json`                                                                     | What careers buy and sell. [Villagers and trades](#villagers-and-trades)                                              |
+| `<namespace>/loot_tables/*.json`                                                                | Loot tables, replaced. [What you can override](#what-you-can-override)                                                |
+| `<namespace>/loot_injections/*.json`                                                            | A pool added to a table that already exists. [What you can override](#what-you-can-override)                          |
+| `<namespace>/block_drops/*.json`                                                                | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                |
+| `<namespace>/anvils/*.json`                                                                     | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work) |
+| `<namespace>/cards/*.json`                                                                      | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                            |
+| `<namespace>/player_loot/*.json`                                                                | A loot table rolled when a player dies. [Player loot](#player-loot)                                                   |
+| `<namespace>/advancements/*.json`                                                               | Advancements. [What you can override](#what-you-can-override)                                                         |
+| `<namespace>/functions/*.mcfunction`                                                            | Function files. [What you can override](#what-you-can-override)                                                       |
+| `<namespace>/registry_remap/*.json`                                                             | Old names mapped to new ones. [Registry renames](#registry-renames)                                                   |
+| `<namespace>/texts/*.txt`                                                                       | Plain text files, used by the world intro. [World intro](#world-intro)                                                |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | The usual asset folders. [Models, blockstates and textures](#models-blockstates-and-textures)                         |
 
 ## Reading the tables
 
@@ -204,28 +208,28 @@ Every file is standard JSON. A representative worldgen entry:
 
 The key tables in this document state whether a key is required, what it holds, and the default when omitted. Unrecognized values are logged and replaced with the default; they do not crash the game. Value types used throughout:
 
-| When a table says | You write |
-| --- | --- |
-| int | `8` |
-| int, ticks | `100` (20 ticks = 1 second) |
-| int or range | `8`, or `{ "min": 4, "max": 12 }` to roll between them |
-| 0 to 15, 1 to 100 and such | an int inside those bounds |
-| float | `0.5` |
-| boolean | `true` or `false` |
-| string | `"words in quotes"` |
-| block name, item name | `"minecraft:stone"`, metadata as a third part: `"minecraft:stone:3"` |
-| `namespace:name` | `"mypack:ruby_ore"` |
-| biome name, sound name, tab name | the same quoted `namespace:name` form |
-| hex color | six hex digits, `"A0C8FF"`, `#` optional |
-| texture path | `"mypack:blocks/ruby_ore"` |
-| list of ints | `[0, -1]` |
-| list of block names | `["minecraft:stone", "minecraft:andesite"]` |
-| list of biome names | `["minecraft:extreme_hills", "mypack:ruby_hills"]` |
-| list of dictionary types | `["MOUNTAIN", "FOREST"]` |
-| list of mod ids or pack namespaces | `["quark", "mypack"]` |
-| list of objects | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`, keys per that object's own table |
-| object | `{ "type": "cluster" }`, keys per its own table |
-| object of role to biome, of variant name to variant | keys are the first thing, values the second: `{ "ocean": "mypack:ruby_ocean" }` |
+| When a table says                                   | You write                                                                                |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| int                                                 | `8`                                                                                      |
+| int, ticks                                          | `100` (20 ticks = 1 second)                                                              |
+| int or range                                        | `8`, or `{ "min": 4, "max": 12 }` to roll between them                                   |
+| 0 to 15, 1 to 100 and such                          | an int inside those bounds                                                               |
+| float                                               | `0.5`                                                                                    |
+| boolean                                             | `true` or `false`                                                                        |
+| string                                              | `"words in quotes"`                                                                      |
+| block name, item name                               | `"minecraft:stone"`, metadata as a third part: `"minecraft:stone:3"`                     |
+| `namespace:name`                                    | `"mypack:ruby_ore"`                                                                      |
+| biome name, sound name, tab name                    | the same quoted `namespace:name` form                                                    |
+| hex color                                           | six hex digits, `"A0C8FF"`, `#` optional                                                 |
+| texture path                                        | `"mypack:blocks/ruby_ore"`                                                               |
+| list of ints                                        | `[0, -1]`                                                                                |
+| list of block names                                 | `["minecraft:stone", "minecraft:andesite"]`                                              |
+| list of biome names                                 | `["minecraft:extreme_hills", "mypack:ruby_hills"]`                                       |
+| list of dictionary types                            | `["MOUNTAIN", "FOREST"]`                                                                 |
+| list of mod ids or pack namespaces                  | `["quark", "mypack"]`                                                                    |
+| list of objects                                     | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`, keys per that object's own table |
+| object                                              | `{ "type": "cluster" }`, keys per its own table                                          |
+| object of role to biome, of variant name to variant | keys are the first thing, values the second: `{ "ocean": "mypack:ruby_ocean" }`          |
 
 Most definitions also accept `requires`, a list of mod ids or pack namespaces that must be present or the file is skipped.
 
@@ -357,13 +361,13 @@ Every key an option file accepts:
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| an option name | yes | boolean, or an object | | `true` or `false` is the option's default. An object carries the three keys below |
-| `hide` at the top level | no | boolean | `false` | Keeps this pack's options out of the options screen and out of the generated file entirely, while they still gate content at their defaults |
-| `default` | yes | boolean | | The option's value until the user changes it. An object without a boolean `default` is ignored, with a warning |
-| `hide` inside an option | no | boolean | `false` | Hides that one option, so it cannot be flipped and stays at its default |
-| `description` | no | string | none | Shown under the option's name in the options screen |
+| Key                     | Required | Value                 | Default | What it does                                                                                                                                |
+| ----------------------- | -------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| an option name          | yes      | boolean, or an object |         | `true` or `false` is the option's default. An object carries the three keys below                                                           |
+| `hide` at the top level | no       | boolean               | `false` | Keeps this pack's options out of the options screen and out of the generated file entirely, while they still gate content at their defaults |
+| `default`               | yes      | boolean               |         | The option's value until the user changes it. An object without a boolean `default` is ignored, with a warning                              |
+| `hide` inside an option | no       | boolean               | `false` | Hides that one option, so it cannot be flipped and stays at its default                                                                     |
+| `description`           | no       | string                | none    | Shown under the option's name in the options screen                                                                                         |
 
 On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start. Options belong to named packs only, that is zips, since the generated file is named after the pack; loose files under `rdploader/assets` have no pack name and carry no options, so zip loose content into a named pack if it needs a switch.
 
@@ -454,15 +458,15 @@ RDPL is good for replacing one or two recipes, and recipes for your own content 
 
 A pack can live on the server alone, with players on plain vanilla clients, under one constraint: **nothing in it may register anything**. Both mod ids accept any remote; the pack decides. A vanilla client plays with the registries it shipped with, so a pack that adds to them must be on both sides.
 
-| Server alone is enough | Needs the pack on the client too |
-| --- | --- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions` | `blocks`, `items`, `fluids`, `materials` |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps` | `potions`, `potion_types`, `sounds`, `tabs` |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled` | `biomes`, `dimensions`, `portalframes` |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions` | `villagers` |
-| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client) |
-| `teams`, `scoring` | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
-| the whole control layer, settings, and pregeneration | |
+| Server alone is enough                                                                                                                                  | Needs the pack on the client too                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                      |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                               | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                      | `biomes`, `dimensions`, `portalframes`                                                        |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                   | `villagers`                                                                                   |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client)              |
+| `teams`, `scoring`                                                                                                                                      | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
+| the whole control layer, settings, and pregeneration                                                                                                    |                                                                                               |
 
 The right-hand column is a hard stop: a vanilla client sent to an unknown dimension disconnects, and unknown blocks cannot be described to it. The left-hand column works because everything there either runs entirely server-side or reaches the client through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
 
@@ -527,10 +531,10 @@ Every mod that ships one gets an entry in `rdploader/config/mods.json` the first
 }
 ```
 
-| Field | Values | Default | What it does |
-| --- | --- | --- | --- |
-| `enabled` | `true` or `false` | `true` | Turns that mod's content off, the way `.disabled` turns off a pack |
-| `priority` | `-1` or a number | `-1` | `-1` holds the mod under every pack; any other number puts it in the ordinary [priority](#organizing-packs) order beside the numbered packs |
+| Field      | Values            | Default | What it does                                                                                                                                |
+| ---------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`  | `true` or `false` | `true`  | Turns that mod's content off, the way `.disabled` turns off a pack                                                                          |
+| `priority` | `-1` or a number  | `-1`    | `-1` holds the mod under every pack; any other number puts it in the ordinary [priority](#organizing-packs) order beside the numbered packs |
 
 A mod pack never joins the resource pack override tier whatever `overrideResourcePacks` says, since only a pack author can ask for that with the `O` letter. The log marks mod packs and lists packs lowest first, so nothing loads unseen.
 
@@ -553,17 +557,17 @@ A modern block file comes back with a `meta` for each variant, in the order the 
 }
 ```
 
-| Modern file | 1.12.2 file |
-| --- | --- |
-| `data/<ns>/<folder>/` for every definition folder | `assets/<ns>/<folder>/` |
-| `recipe/`, `loot_table/`, `advancement/`, `function/`, `structure/` (1.21.1) | `recipes/`, `loot_tables/`, `advancements/`, `functions/`, `structures/` |
-| `data/*/tags/items/` (1.21.1: `tags/item/`) | `assets/<ns>/oredict/converted_tags.json` |
-| `data/minecraft/tags/functions/tick.json` | `assets/<ns>/gamerules/converted_tick.json`, the overworld `gameLoopFunction` |
-| `minecraft:smelting` recipes | `assets/<ns>/furnace/converted_smelting.json` |
-| `assets/<ns>/lang/<lang>.json` | `assets/<ns>/lang/<lang>.lang` |
-| `textures/block/`, `textures/item/` | `textures/blocks/`, `textures/items/` |
-| `models/item/<variant>.json` | `models/item/<file>/<variant>.json` |
-| no blockstate (generated on the modern line) | a generated Forge blockstate per block file, with the models its type needs |
+| Modern file                                                                  | 1.12.2 file                                                                   |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `data/<ns>/<folder>/` for every definition folder                            | `assets/<ns>/<folder>/`                                                       |
+| `recipe/`, `loot_table/`, `advancement/`, `function/`, `structure/` (1.21.1) | `recipes/`, `loot_tables/`, `advancements/`, `functions/`, `structures/`      |
+| `data/*/tags/items/` (1.21.1: `tags/item/`)                                  | `assets/<ns>/oredict/converted_tags.json`                                     |
+| `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, the overworld `gameLoopFunction` |
+| `minecraft:smelting` recipes                                                 | `assets/<ns>/furnace/converted_smelting.json`                                 |
+| `assets/<ns>/lang/<lang>.json`                                               | `assets/<ns>/lang/<lang>.lang`                                                |
+| `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                         |
+| `models/item/<variant>.json`                                                 | `models/item/<file>/<variant>.json`                                           |
+| no blockstate (generated on the modern line)                                 | a generated Forge blockstate per block file, with the models its type needs   |
 
 - Every modern vanilla id is carried back through a flattening table shipped in the jar, built from the game's own data fixers, so it comes out as the 1.12.2 block or item with its metadata: `minecraft:red_wool` becomes `minecraft:wool:14`, `minecraft:oak_log` with `axis=x` becomes `minecraft:log:4`. Where a key holds a block and a meta apart, such as `block` in worldgen and `modelBlock`, the meta goes into `meta` or `modelMeta`; a `soil` keeps the whole block. The pack's own ids resolve through its own files: `mypack:worm` becomes `mypack:test_ore:1`. Entity, biome, loot table, sound, particle and attribute names are carried back the same way, and a named dimension becomes a number: the pack's own take their `id` or, without one, a stable number from 1000 up that the log names.
 - Tags become ore dictionary names through the reverse of the convention mapping: `forge:gems/testium` and `c:gems/testium` become `gemTestium`, `minecraft:logs` becomes `logWood`. A recipe ingredient's `tag` becomes a `forge:ore_dict` ingredient and the recipe `forge:ore_shaped` or `forge:ore_shapeless`; a fuel's `tag` becomes `oreDict`. Every recipe item gets a `data`, since 1.12.2 refuses an item with subtypes without one.
@@ -659,96 +663,96 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 *blocks*
 
-| Type | What you get |
-| --- | --- |
-| `basic` | A plain block. Used when `type` is missing |
-| `ore` | Drops something other than itself, with fortune and silk touch |
-| `falling` | Falls like sand or gravel |
-| `slab` | Bottom, top and double, and two of them merge in hand |
-| `stairs` | Corners and slopes handled for you |
-| `fence` | Connects to its neighbors, and to fences from other mods |
-| `pane` | Connects like glass panes |
-| `wall` | Connects like cobblestone walls, with the post shape |
-| `door` | Two blocks tall, opens by hand and answers to redstone. Uses one variant, since the rest of the metadata carries the hinge, the facing and whether it is open |
-| `trapdoor` | A hinged flap on the top or bottom of a block, opened by hand or by redstone. One variant, the metadata carries the facing, the half and whether it is open |
-| `fence_gate` | A gate in a fence line, opened by hand or by redstone, and lowered where it meets a wall. One variant |
-| `banner` | A banner on a post or against a wall, sixteen standing rotations, carrying your own design. Registers a second block named `<name>_wall` for the hanging one |
-| `ladder` | Climbable, placed against a wall |
-| `torch` | Wall and floor placement, with a particle |
-| `bell` | A bell like the one villages have from 1.14 on: rings when used on its side, by redstone or when a projectile strikes it, swings in its frame, and makes nearby raiders glow. One variant, the metadata carries the facing and how it hangs |
-| `log` | Rotates to the face you place it against, and is registered as `logWood` in the ore dictionary so tree felling and Blast Plaster treat it as a trunk |
-| `leaves` | Decays, shears, tints and drops a sapling, and is registered as `treeLeaves` in the ore dictionary |
-| `sapling` | Grows into a tree or into one of your structures |
-| `crop` | Grows through stages, drops a seed and a produce item |
-| `flower` | A one-block plant standing on soil |
-| `cane` | Grows upward in a column, like reeds or cactus |
-| `vine` | Climbs and hangs on the sides of blocks |
-| `portal` | Sends whatever walks in to another dimension |
-| `container` | Holds an inventory a player can open, of any size, and can fill itself from a loot table the first time it is opened. Draws as an ordinary block or as a chest, whichever the pack asks for |
+| Type         | What you get                                                                                                                                                                                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `basic`      | A plain block. Used when `type` is missing                                                                                                                                                                                                  |
+| `ore`        | Drops something other than itself, with fortune and silk touch                                                                                                                                                                              |
+| `falling`    | Falls like sand or gravel                                                                                                                                                                                                                   |
+| `slab`       | Bottom, top and double, and two of them merge in hand                                                                                                                                                                                       |
+| `stairs`     | Corners and slopes handled for you                                                                                                                                                                                                          |
+| `fence`      | Connects to its neighbors, and to fences from other mods                                                                                                                                                                                    |
+| `pane`       | Connects like glass panes                                                                                                                                                                                                                   |
+| `wall`       | Connects like cobblestone walls, with the post shape                                                                                                                                                                                        |
+| `door`       | Two blocks tall, opens by hand and answers to redstone. Uses one variant, since the rest of the metadata carries the hinge, the facing and whether it is open                                                                               |
+| `trapdoor`   | A hinged flap on the top or bottom of a block, opened by hand or by redstone. One variant, the metadata carries the facing, the half and whether it is open                                                                                 |
+| `fence_gate` | A gate in a fence line, opened by hand or by redstone, and lowered where it meets a wall. One variant                                                                                                                                       |
+| `banner`     | A banner on a post or against a wall, sixteen standing rotations, carrying your own design. Registers a second block named `<name>_wall` for the hanging one                                                                                |
+| `ladder`     | Climbable, placed against a wall                                                                                                                                                                                                            |
+| `torch`      | Wall and floor placement, with a particle                                                                                                                                                                                                   |
+| `bell`       | A bell like the one villages have from 1.14 on: rings when used on its side, by redstone or when a projectile strikes it, swings in its frame, and makes nearby raiders glow. One variant, the metadata carries the facing and how it hangs |
+| `log`        | Rotates to the face you place it against, and is registered as `logWood` in the ore dictionary so tree felling and Blast Plaster treat it as a trunk                                                                                        |
+| `leaves`     | Decays, shears, tints and drops a sapling, and is registered as `treeLeaves` in the ore dictionary                                                                                                                                          |
+| `sapling`    | Grows into a tree or into one of your structures                                                                                                                                                                                            |
+| `crop`       | Grows through stages, drops a seed and a produce item                                                                                                                                                                                       |
+| `flower`     | A one-block plant standing on soil                                                                                                                                                                                                          |
+| `cane`       | Grows upward in a column, like reeds or cactus                                                                                                                                                                                              |
+| `vine`       | Climbs and hangs on the sides of blocks                                                                                                                                                                                                     |
+| `portal`     | Sends whatever walks in to another dimension                                                                                                                                                                                                |
+| `container`  | Holds an inventory a player can open, of any size, and can fill itself from a loot table the first time it is opened. Draws as an ordinary block or as a chest, whichever the pack asks for                                                 |
 
 ### File keys
 
 *blocks*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `variants` | yes | object of variant name to variant | | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
-| `type` | no | one of the types above | `basic` | Which shape the block takes |
-| `material` | no | one of the [block materials](#value-lists) | `rock` | Mining behavior, pistons, fire and liquids |
-| `soundType` | no | one of the [sound types](#value-lists) | `stone`; `wood` for a `log`, `plant` for `leaves` and a `crop`, the `modelBlock`'s for `stairs` and a `wall` | Footsteps, breaking and placing |
-| `mapColor` | no | one of the [map colors](#value-lists) | from the material | How it looks on a map |
-| `harvestTool` | no | `pickaxe`, `axe`, `shovel` | `pickaxe` | Which tool harvests it |
-| `harvestToolLevel` | no | 0 to 3 | `0` | 0 wood, 1 stone, 2 iron, 3 diamond |
-| `silkHarvest` | no | boolean | `true` | Whether silk touch returns the block itself |
-| `opensWith` | no | item id | none | Makes the block a lockbox: breaking it drops the block itself, and right-clicking with the named item consumes one, plays the block's break sound, pays out the variant's `drops` list and removes the block. Any other click shows the action-bar line `tile.<pack>:<block>.<variant>.locked` from the lang files |
-| `openSound` | no | sound name | the break sound | What a lockbox plays when opened instead of its break sound |
-| `expDrop` | no | object with `min` and `max` | none | Experience dropped when broken without silk touch |
-| `creativeTab` | no | tab name | none | The tab it appears in |
-| `renderLayer` | no | `solid`, `cutout`, `cutout_mipped`, `translucent` | to suit the type | How it is drawn |
-| `opaque` | no | boolean | `true` | Whether it blocks sight and light entirely |
-| `fullCube` | no | boolean | same as `opaque` | Whether it fills its whole space |
-| `lightOpacity` | no | 0 to 255 | `255` when opaque, else `0` | How much light it absorbs |
-| `slipperiness` | no | float | `0.6` | Ice is `0.98` |
-| `flammability` | no | int | `0` | How readily fire consumes it |
-| `fireSpread` | no | int | `0` | How readily fire spreads from it |
-| `explosionResistanceDivisor` | no | float | `1.0` | Divides each variant's `resistance` against explosions |
-| `modelBlock` | no | block name | `minecraft:stone` | Block whose model is borrowed when yours has none |
-| `modelMeta` | no | int | `0` | Which variant of that model |
-| `itemModel` | no | `state`, `item` | `state` | `state` follows the blockstate, `item` looks for its own file |
-| `tint` | no | `biome`, `none`, or a hex color | none | Needs a `tintindex` in the model to show |
-| `plantTypes` | no | list of [plant types](#value-lists) | none | What can be planted on it |
-| `behavesAs` | no | list of `till`, `path`, `bush`, `animals` | none | Vanilla behaviors to take on |
-| `bounds` | no | list of six numbers, 0 to 1 | full block | The collision box, as `[x1, y1, z1, x2, y2, z2]` |
-| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
-| `particle` | torch only | `none`, `flame`, `colored` | `flame` | The particle above a torch |
-| `particleColor` | torch only | hex color | `FFFFFF` | Used when `particle` is `colored` |
-| `smoke` | torch only | boolean | `true` | Whether it smokes |
-| `leafSapling` | leaves only | block name | none | The sapling they drop |
-| `leafSaplingChance` | leaves only | int | `5` | One in N leaves drops one |
-| `seed` | crop only | item name | `minecraft:wheat_seeds` | The item that plants it, and what an unripe crop drops |
-| `produce` | crop only | item name | `minecraft:wheat` | What harvesting yields |
-| `maxAge` | crop only | int | `7` | How many growth stages |
-| `growth` | plants only | object | none | See [Growth](#growth) |
-| `sapling` | sapling only | object | none | See [Saplings](#saplings) |
-| `portal` | portal only | object | none | See [Portals and gates](#portals-and-gates) |
-| `container` | container only | object | none | See [Containers](#containers) |
-| `bell` | bell only | object | none | See [Bells](#bells) |
+| Key                          | Required       | Value                                             | Default                                                                                                      | What it does                                                                                                                                                                                                                                                                                                       |
+| ---------------------------- | -------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `variants`                   | yes            | object of variant name to variant                 |                                                                                                              | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path                                                                                                                                                        |
+| `type`                       | no             | one of the types above                            | `basic`                                                                                                      | Which shape the block takes                                                                                                                                                                                                                                                                                        |
+| `material`                   | no             | one of the [block materials](#value-lists)        | `rock`                                                                                                       | Mining behavior, pistons, fire and liquids                                                                                                                                                                                                                                                                         |
+| `soundType`                  | no             | one of the [sound types](#value-lists)            | `stone`; `wood` for a `log`, `plant` for `leaves` and a `crop`, the `modelBlock`'s for `stairs` and a `wall` | Footsteps, breaking and placing                                                                                                                                                                                                                                                                                    |
+| `mapColor`                   | no             | one of the [map colors](#value-lists)             | from the material                                                                                            | How it looks on a map                                                                                                                                                                                                                                                                                              |
+| `harvestTool`                | no             | `pickaxe`, `axe`, `shovel`                        | `pickaxe`                                                                                                    | Which tool harvests it                                                                                                                                                                                                                                                                                             |
+| `harvestToolLevel`           | no             | 0 to 3                                            | `0`                                                                                                          | 0 wood, 1 stone, 2 iron, 3 diamond                                                                                                                                                                                                                                                                                 |
+| `silkHarvest`                | no             | boolean                                           | `true`                                                                                                       | Whether silk touch returns the block itself                                                                                                                                                                                                                                                                        |
+| `opensWith`                  | no             | item id                                           | none                                                                                                         | Makes the block a lockbox: breaking it drops the block itself, and right-clicking with the named item consumes one, plays the block's break sound, pays out the variant's `drops` list and removes the block. Any other click shows the action-bar line `tile.<pack>:<block>.<variant>.locked` from the lang files |
+| `openSound`                  | no             | sound name                                        | the break sound                                                                                              | What a lockbox plays when opened instead of its break sound                                                                                                                                                                                                                                                        |
+| `expDrop`                    | no             | object with `min` and `max`                       | none                                                                                                         | Experience dropped when broken without silk touch                                                                                                                                                                                                                                                                  |
+| `creativeTab`                | no             | tab name                                          | none                                                                                                         | The tab it appears in                                                                                                                                                                                                                                                                                              |
+| `renderLayer`                | no             | `solid`, `cutout`, `cutout_mipped`, `translucent` | to suit the type                                                                                             | How it is drawn                                                                                                                                                                                                                                                                                                    |
+| `opaque`                     | no             | boolean                                           | `true`                                                                                                       | Whether it blocks sight and light entirely                                                                                                                                                                                                                                                                         |
+| `fullCube`                   | no             | boolean                                           | same as `opaque`                                                                                             | Whether it fills its whole space                                                                                                                                                                                                                                                                                   |
+| `lightOpacity`               | no             | 0 to 255                                          | `255` when opaque, else `0`                                                                                  | How much light it absorbs                                                                                                                                                                                                                                                                                          |
+| `slipperiness`               | no             | float                                             | `0.6`                                                                                                        | Ice is `0.98`                                                                                                                                                                                                                                                                                                      |
+| `flammability`               | no             | int                                               | `0`                                                                                                          | How readily fire consumes it                                                                                                                                                                                                                                                                                       |
+| `fireSpread`                 | no             | int                                               | `0`                                                                                                          | How readily fire spreads from it                                                                                                                                                                                                                                                                                   |
+| `explosionResistanceDivisor` | no             | float                                             | `1.0`                                                                                                        | Divides each variant's `resistance` against explosions                                                                                                                                                                                                                                                             |
+| `modelBlock`                 | no             | block name                                        | `minecraft:stone`                                                                                            | Block whose model is borrowed when yours has none                                                                                                                                                                                                                                                                  |
+| `modelMeta`                  | no             | int                                               | `0`                                                                                                          | Which variant of that model                                                                                                                                                                                                                                                                                        |
+| `itemModel`                  | no             | `state`, `item`                                   | `state`                                                                                                      | `state` follows the blockstate, `item` looks for its own file                                                                                                                                                                                                                                                      |
+| `tint`                       | no             | `biome`, `none`, or a hex color                   | none                                                                                                         | Needs a `tintindex` in the model to show                                                                                                                                                                                                                                                                           |
+| `plantTypes`                 | no             | list of [plant types](#value-lists)               | none                                                                                                         | What can be planted on it                                                                                                                                                                                                                                                                                          |
+| `behavesAs`                  | no             | list of `till`, `path`, `bush`, `animals`         | none                                                                                                         | Vanilla behaviors to take on                                                                                                                                                                                                                                                                                       |
+| `bounds`                     | no             | list of six numbers, 0 to 1                       | full block                                                                                                   | The collision box, as `[x1, y1, z1, x2, y2, z2]`                                                                                                                                                                                                                                                                   |
+| `requires`                   | no             | list of mod ids or pack namespaces                | none                                                                                                         | The file is skipped unless all are present                                                                                                                                                                                                                                                                         |
+| `particle`                   | torch only     | `none`, `flame`, `colored`                        | `flame`                                                                                                      | The particle above a torch                                                                                                                                                                                                                                                                                         |
+| `particleColor`              | torch only     | hex color                                         | `FFFFFF`                                                                                                     | Used when `particle` is `colored`                                                                                                                                                                                                                                                                                  |
+| `smoke`                      | torch only     | boolean                                           | `true`                                                                                                       | Whether it smokes                                                                                                                                                                                                                                                                                                  |
+| `leafSapling`                | leaves only    | block name                                        | none                                                                                                         | The sapling they drop                                                                                                                                                                                                                                                                                              |
+| `leafSaplingChance`          | leaves only    | int                                               | `5`                                                                                                          | One in N leaves drops one                                                                                                                                                                                                                                                                                          |
+| `seed`                       | crop only      | item name                                         | `minecraft:wheat_seeds`                                                                                      | The item that plants it, and what an unripe crop drops                                                                                                                                                                                                                                                             |
+| `produce`                    | crop only      | item name                                         | `minecraft:wheat`                                                                                            | What harvesting yields                                                                                                                                                                                                                                                                                             |
+| `maxAge`                     | crop only      | int                                               | `7`                                                                                                          | How many growth stages                                                                                                                                                                                                                                                                                             |
+| `growth`                     | plants only    | object                                            | none                                                                                                         | See [Growth](#growth)                                                                                                                                                                                                                                                                                              |
+| `sapling`                    | sapling only   | object                                            | none                                                                                                         | See [Saplings](#saplings)                                                                                                                                                                                                                                                                                          |
+| `portal`                     | portal only    | object                                            | none                                                                                                         | See [Portals and gates](#portals-and-gates)                                                                                                                                                                                                                                                                        |
+| `container`                  | container only | object                                            | none                                                                                                         | See [Containers](#containers)                                                                                                                                                                                                                                                                                      |
+| `bell`                       | bell only      | object                                            | none                                                                                                         | See [Bells](#bells)                                                                                                                                                                                                                                                                                                |
 
 ### Variant keys
 
 *blocks*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `meta` | yes | 0 to 15 | | The metadata value this variant claims |
-| `hardness` | no | float | `1.0` | How long it takes to break. Obsidian is `50`, `-1` is unbreakable |
-| `resistance` | no | float | `5.0` | Blast resistance |
-| `light` | no | 0 to 15 | `0` | Light emitted |
-| `harvestLevel` | no | 0 to 3 | `0` | Overrides the tool tier for this variant |
-| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip |
-| `maxSize` | no | 1 to 64 | `64` | Stack size |
-| `oreDict` | no | list of ore dictionary names | none | Ore dictionary names this variant is registered under |
-| `drops` | no | list of drops | drops itself | What breaking it yields |
+| Key            | Required | Value                                | Default      | What it does                                                      |
+| -------------- | -------- | ------------------------------------ | ------------ | ----------------------------------------------------------------- |
+| `meta`         | yes      | 0 to 15                              |              | The metadata value this variant claims                            |
+| `hardness`     | no       | float                                | `1.0`        | How long it takes to break. Obsidian is `50`, `-1` is unbreakable |
+| `resistance`   | no       | float                                | `5.0`        | Blast resistance                                                  |
+| `light`        | no       | 0 to 15                              | `0`          | Light emitted                                                     |
+| `harvestLevel` | no       | 0 to 3                               | `0`          | Overrides the tool tier for this variant                          |
+| `rarity`       | no       | `common`, `uncommon`, `rare`, `epic` | `common`     | Name color in the tooltip                                         |
+| `maxSize`      | no       | 1 to 64                              | `64`         | Stack size                                                        |
+| `oreDict`      | no       | list of ore dictionary names         | none         | Ore dictionary names this variant is registered under             |
+| `drops`        | no       | list of drops                        | drops itself | What breaking it yields                                           |
 
 **Metadata is permanent.** The number a variant claims is written into every saved world that contains it. Renumbering or reordering variants later turns placed blocks into something else. Add new variants at the end and never reuse a number.
 
@@ -770,16 +774,16 @@ A `basic` block can hold sixteen variants; a `slab` eight; `log` and `leaves` fo
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `block` | one of the two | block or item name | | What is dropped |
-| `entity` | one of the two | entity name | | An entity let out when the block breaks, instead of an item |
-| `meta` | no | int | `0` | Which variant of it |
-| `amount` | no | int or range | `1` | How many |
-| `chance` | no | 0 to 100 | `100`, or `0` when `guaranteed` is off | How often the drop happens at all |
-| `weight` | no | int | `0` | Above zero, the entry joins a pool that yields exactly one drop. See below |
-| `bonusChance` | no | list of ints | none | Extra drops per fortune level, one entry per level |
-| `guaranteed` | no | boolean | `true` | Legacy shorthand for `chance`. On is `100`, off is `0` |
+| Key           | Required       | Value              | Default                                | What it does                                                               |
+| ------------- | -------------- | ------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
+| `block`       | one of the two | block or item name |                                        | What is dropped                                                            |
+| `entity`      | one of the two | entity name        |                                        | An entity let out when the block breaks, instead of an item                |
+| `meta`        | no             | int                | `0`                                    | Which variant of it                                                        |
+| `amount`      | no             | int or range       | `1`                                    | How many                                                                   |
+| `chance`      | no             | 0 to 100           | `100`, or `0` when `guaranteed` is off | How often the drop happens at all                                          |
+| `weight`      | no             | int                | `0`                                    | Above zero, the entry joins a pool that yields exactly one drop. See below |
+| `bonusChance` | no             | list of ints       | none                                   | Extra drops per fortune level, one entry per level                         |
+| `guaranteed`  | no             | boolean            | `true`                                 | Legacy shorthand for `chance`. On is `100`, off is `0`                     |
 
 Every entry with no `weight` is decided on its own, so a block with three of them can drop all three, or none. Give entries a `weight` and they stop being independent: they form one pool, exactly one of which is chosen each time the block breaks, the odds in proportion to the weights. Above, diamond and emerald share a pool at one to four, so one of the two always comes out and it is emerald four times in five, while the ruby and the coal are decided separately and the silverfish is its own thing again. Items and entities pool separately, so a weighted item and a weighted entity do not compete.
 
@@ -812,20 +816,20 @@ For `crop`, `flower`, `cane` and `vine`.
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `stages` | no | int | `16` | Growth stages before it is done |
-| `growth` | no | int | | One in N chance per random tick to advance |
-| `spread` | no | int | `0` | How far it spreads to neighboring blocks |
-| `maxHeight` | no | int | `3` | Cane only. How tall the column grows |
-| `drop` | no | item name | none | What it drops when broken |
-| `dropCount` | no | int | `1` | How many |
-| `needsSky` | no | boolean | `false` | Only grows where the sky is visible |
-| `needsWater` | no | boolean | `false` | Only grows near water |
-| `waterRange` | no | int | `1` | How far that water may be |
-| `damage` | no | boolean | `false` | Hurts whatever touches it |
-| `damageAmount` | no | float, half hearts | `1.0` | How much it hurts |
-| `breaksNeighbors` | no | boolean | `false` | Breaks blocks placed beside it, like cactus |
+| Key               | Required | Value              | Default | What it does                                |
+| ----------------- | -------- | ------------------ | ------- | ------------------------------------------- |
+| `stages`          | no       | int                | `16`    | Growth stages before it is done             |
+| `growth`          | no       | int                |         | One in N chance per random tick to advance  |
+| `spread`          | no       | int                | `0`     | How far it spreads to neighboring blocks    |
+| `maxHeight`       | no       | int                | `3`     | Cane only. How tall the column grows        |
+| `drop`            | no       | item name          | none    | What it drops when broken                   |
+| `dropCount`       | no       | int                | `1`     | How many                                    |
+| `needsSky`        | no       | boolean            | `false` | Only grows where the sky is visible         |
+| `needsWater`      | no       | boolean            | `false` | Only grows near water                       |
+| `waterRange`      | no       | int                | `1`     | How far that water may be                   |
+| `damage`          | no       | boolean            | `false` | Hurts whatever touches it                   |
+| `damageAmount`    | no       | float, half hearts | `1.0`   | How much it hurts                           |
+| `breaksNeighbors` | no       | boolean            | `false` | Breaks blocks placed beside it, like cactus |
 
 ### Saplings
 
@@ -857,18 +861,18 @@ A `structure` replaces the generated tree with one of your templates, which is t
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `soil` | no | list of block names | none | What it will grow on |
-| `stages` | no | int | `2` | Growth stages before it becomes a tree |
-| `chance` | no | int | `7` | One in N per random tick |
-| `light` | no | 0 to 15 | `9` | Light level needed |
-| `log` | no | block name | `minecraft:log` | Trunk block |
-| `leaves` | no | block name | `minecraft:leaves` | Leaf block |
-| `height` | no | int | `4` | Trunk height |
-| `vines` | no | boolean | `false` | Hang vines from the leaves |
-| `structure` | no | `namespace:name` | none | Grow into this template instead of a generated tree |
-| `structures` | no | list | none | Several templates to grow into, one chosen each time it grows. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
+| Key          | Required | Value               | Default            | What it does                                                                                                                                                                        |
+| ------------ | -------- | ------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `soil`       | no       | list of block names | none               | What it will grow on                                                                                                                                                                |
+| `stages`     | no       | int                 | `2`                | Growth stages before it becomes a tree                                                                                                                                              |
+| `chance`     | no       | int                 | `7`                | One in N per random tick                                                                                                                                                            |
+| `light`      | no       | 0 to 15             | `9`                | Light level needed                                                                                                                                                                  |
+| `log`        | no       | block name          | `minecraft:log`    | Trunk block                                                                                                                                                                         |
+| `leaves`     | no       | block name          | `minecraft:leaves` | Leaf block                                                                                                                                                                          |
+| `height`     | no       | int                 | `4`                | Trunk height                                                                                                                                                                        |
+| `vines`      | no       | boolean             | `false`            | Hang vines from the leaves                                                                                                                                                          |
+| `structure`  | no       | `namespace:name`    | none               | Grow into this template instead of a generated tree                                                                                                                                 |
+| `structures` | no       | list                | none               | Several templates to grow into, one chosen each time it grows. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
 
 ## Containers
 
@@ -891,16 +895,16 @@ A `structure` replaces the generated tree with one of your templates, which is t
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `rows` | int | `3` | How many rows of slots, 1 to 9 |
-| `columns` | int | `9` | How many slots in a row, 1 to 12 |
-| `lootTable` | text | empty | A loot table rolled into the block the first time a player opens it, exactly as a dungeon chest fills. Empty leaves it starting empty |
-| `chestModel` | boolean or text | `false` | Draws as a chest with a lid that opens, instead of as an ordinary block from your own model. `true` uses the vanilla chest artwork; a texture name such as `mypack:blocks/strongbox_chest` uses your own chest sheet instead, for the placed block and for the item alike. Give the blockstate the model `resourcedatapackloader:pack_chest`, with the same name under `texture`, so the item in your hand is chest-shaped too A chest-model block also defaults `opaque` to `false`, the way a vanilla chest is, so light is not cut off at the block and the chest is not drawn dark. |
-| `guiTexture` | text | empty | Your own background image for the screen. Empty draws one from the vanilla chest screen at whatever size the rows and columns need |
-| `guiWidth` | int | none | How wide that image is, required with `guiTexture` |
-| `guiHeight` | int | none | How tall that image is, required with `guiTexture` |
-| `bauble` | text | empty | An item only: the Baubles slot it can be worn in — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` or `charm`. A backpack usually takes `body` or `charm`. Ignored, with everything else about the item still working, when Baubles is not installed. Each name is one square in the Baubles tab, so an item asking for `body` fits that square and no other; `ring` is the two ring squares and `trinket` fits every square. Baubles is a soft dependency: this mod loads after it when it is there and runs without it when it is not, so a pack naming a slot is safe on a server that has never heard of Baubles. |
+| Setting      | Type            | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------ | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rows`       | int             | `3`     | How many rows of slots, 1 to 9                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `columns`    | int             | `9`     | How many slots in a row, 1 to 12                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `lootTable`  | text            | empty   | A loot table rolled into the block the first time a player opens it, exactly as a dungeon chest fills. Empty leaves it starting empty                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `chestModel` | boolean or text | `false` | Draws as a chest with a lid that opens, instead of as an ordinary block from your own model. `true` uses the vanilla chest artwork; a texture name such as `mypack:blocks/strongbox_chest` uses your own chest sheet instead, for the placed block and for the item alike. Give the blockstate the model `resourcedatapackloader:pack_chest`, with the same name under `texture`, so the item in your hand is chest-shaped too A chest-model block also defaults `opaque` to `false`, the way a vanilla chest is, so light is not cut off at the block and the chest is not drawn dark.                                   |
+| `guiTexture` | text            | empty   | Your own background image for the screen. Empty draws one from the vanilla chest screen at whatever size the rows and columns need                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `guiWidth`   | int             | none    | How wide that image is, required with `guiTexture`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `guiHeight`  | int             | none    | How tall that image is, required with `guiTexture`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `bauble`     | text            | empty   | An item only: the Baubles slot it can be worn in — `amulet`, `ring`, `belt`, `trinket`, `head`, `body` or `charm`. A backpack usually takes `body` or `charm`. Ignored, with everything else about the item still working, when Baubles is not installed. Each name is one square in the Baubles tab, so an item asking for `body` fits that square and no other; `ring` is the two ring squares and `trinket` fits every square. Baubles is a soft dependency: this mod loads after it when it is there and runs without it when it is not, so a pack naming a slot is safe on a server that has never heard of Baubles. |
 
 **Nine rows by twelve is the ceiling**, which is the largest Iron Chest offers and the most a screen can carry. A pack asking for more is cut to it with an error line saying so. One warning about the tallest: a nine-row screen is 276 pixels, and a 1080 display at GUI scale `auto` gives 270, so the top and bottom clip by three pixels each — scale 3 shows it whole. Iron Chest fits nine rows because it ships its own tighter artwork; a pack that wants the same can set `guiTexture` and draw its own.
 
@@ -968,11 +972,11 @@ And its blockstate, `assets/mypack/blockstates/village_bell.json`:
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `swing` | boolean | `true` | Draws the body from its own model and swings it when the bell rings. `false` draws the whole bell as one still block, with nothing animated |
-| `sound` | sound name | `minecraft:block.note.bell` | Played when the bell rings. Empty rings silently |
-| `resonateSound` | sound name | `minecraft:block.note.chime` | Played when the bell resonates because raiders are near. Empty resonates silently |
+| Setting         | Type       | Default                      | What it does                                                                                                                                |
+| --------------- | ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `swing`         | boolean    | `true`                       | Draws the body from its own model and swings it when the bell rings. `false` draws the whole bell as one still block, with nothing animated |
+| `sound`         | sound name | `minecraft:block.note.bell`  | Played when the bell rings. Empty rings silently                                                                                            |
+| `resonateSound` | sound name | `minecraft:block.note.chime` | Played when the bell resonates because raiders are near. Empty resonates silently                                                           |
 
 **It hangs the way the game's own bell does from 1.14 on.** Placed on top of a block it stands on the floor, turned the way you face; under a block it hangs from the ceiling; against a wall it hangs from that wall, and between two walls when the far side is solid too. It drops when whatever holds it is gone, and a bell between two walls becomes a single-wall bell when one of them goes. Its hit box follows vanilla's for each of the four, so `bounds` is not read.
 
@@ -1023,27 +1027,27 @@ Where the block has properties of its own, they are joined with commas in the or
 
 Two things decide what a blockstate file has to hold: whether the type carries the `blocks` property, and what properties it has of its own.
 
-| Type | Registers | Blockstate properties | Variants |
-| --- | --- | --- | --- |
-| `basic`, `ore`, `falling` | one block | `blocks` | 16 |
-| `flower` | one block | `blocks` | 16 |
-| `portal` | one block | `blocks` | 16 |
-| `fence`, `pane` | one block | `blocks`, `north`, `east`, `south`, `west` | 16 |
-| `wall` | one block | `blocks`, `up`, `north`, `east`, `south`, `west` | 16 |
-| `slab` | two, `<name>` and `<name>_double` | the half slab `blocks` and `half`; the double `blocks` alone | 8 |
-| `log` | one block | `blocks`, `axis`, which is `x`, `y`, `z` or `none` | 4 |
-| `leaves` | one block | `blocks` | 4 |
-| `stairs` | one block | `facing`, `half`, `shape` | 1 |
-| `door` | one block | `facing`, `half`, `hinge`, `open` | 1 |
-| `trapdoor` | one block | `facing`, `half`, `open` | 1 |
-| `fence_gate` | one block | `facing`, `in_wall`, `open` | 1 |
-| `banner` | two, `<name>` and `<name>_wall` | standing `rotation`, `0` to `15`; the wall one `facing` | 1 |
-| `ladder`, `torch` | one block | `facing`, and a torch adds `up` to the four walls | 1 |
-| `bell` | one block | `facing` and `attachment`, which is `floor`, `ceiling`, `single_wall` or `double_wall`, plus a `body` entry for the swinging part | 1 |
-| `crop` | one block | `age`, always `0` to `7`, whatever `maxAge` says | 1 |
-| `cane` | one block | `age`, `0` to `15` | 1 |
-| `sapling` | one block | `stage`, `0` to one less than `stages` | 1 |
-| `vine` | one block | `up`, `north`, `east`, `south`, `west`, and multipart only | 1 |
+| Type                      | Registers                         | Blockstate properties                                                                                                             | Variants |
+| ------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `basic`, `ore`, `falling` | one block                         | `blocks`                                                                                                                          | 16       |
+| `flower`                  | one block                         | `blocks`                                                                                                                          | 16       |
+| `portal`                  | one block                         | `blocks`                                                                                                                          | 16       |
+| `fence`, `pane`           | one block                         | `blocks`, `north`, `east`, `south`, `west`                                                                                        | 16       |
+| `wall`                    | one block                         | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                  | 16       |
+| `slab`                    | two, `<name>` and `<name>_double` | the half slab `blocks` and `half`; the double `blocks` alone                                                                      | 8        |
+| `log`                     | one block                         | `blocks`, `axis`, which is `x`, `y`, `z` or `none`                                                                                | 4        |
+| `leaves`                  | one block                         | `blocks`                                                                                                                          | 4        |
+| `stairs`                  | one block                         | `facing`, `half`, `shape`                                                                                                         | 1        |
+| `door`                    | one block                         | `facing`, `half`, `hinge`, `open`                                                                                                 | 1        |
+| `trapdoor`                | one block                         | `facing`, `half`, `open`                                                                                                          | 1        |
+| `fence_gate`              | one block                         | `facing`, `in_wall`, `open`                                                                                                       | 1        |
+| `banner`                  | two, `<name>` and `<name>_wall`   | standing `rotation`, `0` to `15`; the wall one `facing`                                                                           | 1        |
+| `ladder`, `torch`         | one block                         | `facing`, and a torch adds `up` to the four walls                                                                                 | 1        |
+| `bell`                    | one block                         | `facing` and `attachment`, which is `floor`, `ceiling`, `single_wall` or `double_wall`, plus a `body` entry for the swinging part | 1        |
+| `crop`                    | one block                         | `age`, always `0` to `7`, whatever `maxAge` says                                                                                  | 1        |
+| `cane`                    | one block                         | `age`, `0` to `15`                                                                                                                | 1        |
+| `sapling`                 | one block                         | `stage`, `0` to one less than `stages`                                                                                            | 1        |
+| `vine`                    | one block                         | `up`, `north`, `east`, `south`, `west`, and multipart only                                                                        | 1        |
 
 Four properties are dropped for you, so write the keys without them: `powered` on doors and gates, `variant` on walls, and `check_decay` and `decayable` on leaves.
 
@@ -1142,10 +1146,10 @@ All three spend their whole metadata on the shape they take, so each is a single
 
 **Point the models at the parents that take textures**, not at the finished vanilla ones:
 
-| Type | Parents |
-| --- | --- |
-| `door` | `block/door_bottom`, `block/door_bottom_rh`, `block/door_top`, `block/door_top_rh` |
-| `trapdoor` | `block/trapdoor_bottom`, `block/trapdoor_top`, `block/trapdoor_open` |
+| Type         | Parents                                                                                              |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| `door`       | `block/door_bottom`, `block/door_bottom_rh`, `block/door_top`, `block/door_top_rh`                   |
+| `trapdoor`   | `block/trapdoor_bottom`, `block/trapdoor_top`, `block/trapdoor_open`                                 |
 | `fence_gate` | `block/fence_gate_closed`, `block/fence_gate_open`, `block/wall_gate_closed`, `block/wall_gate_open` |
 
 A door takes two textures, `bottom` and `top`; the other two take one, `texture`. Both door top models reach for `bottom` to face their upper edge, so declare both in all four files even though the top ones seem to need only one. Gate variants want `"uvlock": true`, as the game's own do.
@@ -1185,13 +1189,13 @@ A banner is the one type where the shape of the block and the shape of the model
 
 **The model is nearly two blocks tall.** A banner occupies one block for placement and collision, but it is drawn far outside it, and a model that stops at the top of its own block looks stunted. Vanilla's proportions, in sixteenths of a block, are worth copying exactly:
 
-| Part | From | To |
-| --- | --- | --- |
-| Post | `0` | `28` |
-| Crossbar | `28` | `29.33` |
-| Cloth | `2.67` | `29.33` |
+| Part        | From   | To      |
+| ----------- | ------ | ------- |
+| Post        | `0`    | `28`    |
+| Crossbar    | `28`   | `29.33` |
+| Cloth       | `2.67` | `29.33` |
 | Cloth width | `1.33` | `14.67` |
-| Wall cloth | `-13` | `13.67` |
+| Wall cloth  | `-13`  | `13.67` |
 
 So a standing banner reaches to `29.33`, most of two blocks, and a wall banner hangs thirteen sixteenths *below* the block holding it. Model elements may run from `-16` to `32`, so both fit. The wall form has no post or crossbar, only cloth.
 
@@ -1242,14 +1246,14 @@ A texture can be a JSON file instead of a PNG. Put it where the PNG would have g
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `size` | yes, or inherited | `widthxheight` | | How many pixels across and down |
-| `rows` | yes, or inherited | list of text | | One string per row of pixels, one character per pixel, from the top down |
-| `palette` | yes, or inherited | object | | A character to a color, `#RRGGBB` or `#AARRGGBB` |
-| `extends` | no | another pixel map | | The map this one starts from |
-| `tint` | no | object with `from` and `to` | | Recolors everything inherited along a ramp between two colors |
-| `notes` | no | object | | A character to a line saying what it is for, inherited and never drawn |
+| Key       | Required          | Value                       | Default | What it does                                                             |
+| --------- | ----------------- | --------------------------- | ------- | ------------------------------------------------------------------------ |
+| `size`    | yes, or inherited | `widthxheight`              |         | How many pixels across and down                                          |
+| `rows`    | yes, or inherited | list of text                |         | One string per row of pixels, one character per pixel, from the top down |
+| `palette` | yes, or inherited | object                      |         | A character to a color, `#RRGGBB` or `#AARRGGBB`                         |
+| `extends` | no                | another pixel map           |         | The map this one starts from                                             |
+| `tint`    | no                | object with `from` and `to` |         | Recolors everything inherited along a ramp between two colors            |
+| `notes`   | no                | object                      |         | A character to a line saying what it is for, inherited and never drawn   |
 
 **There is no name to declare.** The file's own path is its name, exactly as a PNG's is, so a map at `assets/mypack/textures/blocks/panel.png.json` is `mypack:blocks/panel` in a model and a map at `assets/mypack/textures/items/gem.png.json` is `mypack:items/gem` in an item model. Nothing points at a pixel map specially; a block or an item names its texture the way it always did and never learns which of the two it got. That also means the block and item folders stay apart, as they do for PNGs: `textures/blocks/gem.png.json` and `textures/items/gem.png.json` are two different textures and are cached as two different files.
 
@@ -1367,12 +1371,12 @@ Vanilla checks for its own blocks by identity in a dozen places, so a pack block
 
 **`behavesAs`** makes vanilla treat your block like one of its own:
 
-| Value | What it does |
-| --- | --- |
-| `till` | A hoe turns it into farmland |
-| `path` | A shovel turns it into a grass path |
-| `bush` | Flowers, grass and saplings can be planted on it and stay on it, as on dirt. The same as `plains` in `plantTypes` |
-| `animals` | Animals spawn on it in the light, as they do on grass |
+| Value     | What it does                                                                                                      |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `till`    | A hoe turns it into farmland                                                                                      |
+| `path`    | A shovel turns it into a grass path                                                                               |
+| `bush`    | Flowers, grass and saplings can be planted on it and stay on it, as on dirt. The same as `plains` in `plantTypes` |
+| `animals` | Animals spawn on it in the light, as they do on grass                                                             |
 
 ## Items
 
@@ -1421,15 +1425,15 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 *items*
 
-| Type | What you get |
-| --- | --- |
-| `basic` | A plain item. Used when `type` is missing |
-| `food` | Eaten, with hunger and saturation |
-| `drink` | Drunk rather than eaten, returning an empty container |
-| `tool` | Pickaxe, axe, shovel or sword from a material |
-| `armor` | Helmet, chestplate, leggings or boots from a material |
-| `seed` | Plants one of your crops |
-| `potion` | Applies your potion effects when used |
+| Type            | What you get                                              |
+| --------------- | --------------------------------------------------------- |
+| `basic`         | A plain item. Used when `type` is missing                 |
+| `food`          | Eaten, with hunger and saturation                         |
+| `drink`         | Drunk rather than eaten, returning an empty container     |
+| `tool`          | Pickaxe, axe, shovel or sword from a material             |
+| `armor`         | Helmet, chestplate, leggings or boots from a material     |
+| `seed`          | Plants one of your crops                                  |
+| `potion`        | Applies your potion effects when used                     |
 | `potion_bottle` | Holds your potion types, and shows them in a creative tab |
 
 A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion type names such as `["mypack:ruby_tonic"]`. One with an empty list registers nothing, and the log says so.
@@ -1438,37 +1442,37 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 
 *items*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `variants` | yes | object of variant name to variant | | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
-| `type` | no | one of the types above | `basic` | Which type the item takes |
-| `creativeTab` | no | tab name | none | The tab it appears in |
-| `material` | tool, armor | material name | none | Which of your materials it is made from |
-| `toolClass` | tool | `pickaxe`, `axe`, `shovel`, `sword` | none | Which tool it is |
-| `slot` | armor | `head`, `chest`, `legs`, `feet` | none | Where it is worn. `helmet`, `chestplate`, `leggings` and `boots` also work |
-| `eat` | food | boolean | `false` | Uses the eating animation |
-| `alwaysEdible` | food | boolean | `false` | Can be eaten on a full hunger bar |
-| `useDuration` | no | int, ticks | `32` | How long using it takes |
-| `attackSpeed` | no | float | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4` |
-| `cooldown` | no | int, ticks | `0` | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed |
-| `container` | drink | item name | none | What is left behind, such as a bottle |
-| `crop` | seed | block name | none | The crop it plants |
-| `soil` | seed | block name | `minecraft:farmland` | What it can be planted on |
-| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+| Key            | Required    | Value                               | Default                | What it does                                                                                                                                                |
+| -------------- | ----------- | ----------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | yes         | object of variant name to variant   |                        | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path |
+| `type`         | no          | one of the types above              | `basic`                | Which type the item takes                                                                                                                                   |
+| `creativeTab`  | no          | tab name                            | none                   | The tab it appears in                                                                                                                                       |
+| `material`     | tool, armor | material name                       | none                   | Which of your materials it is made from                                                                                                                     |
+| `toolClass`    | tool        | `pickaxe`, `axe`, `shovel`, `sword` | none                   | Which tool it is                                                                                                                                            |
+| `slot`         | armor       | `head`, `chest`, `legs`, `feet`     | none                   | Where it is worn. `helmet`, `chestplate`, `leggings` and `boots` also work                                                                                  |
+| `eat`          | food        | boolean                             | `false`                | Uses the eating animation                                                                                                                                   |
+| `alwaysEdible` | food        | boolean                             | `false`                | Can be eaten on a full hunger bar                                                                                                                           |
+| `useDuration`  | no          | int, ticks                          | `32`                   | How long using it takes                                                                                                                                     |
+| `attackSpeed`  | no          | float                               | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                           |
+| `cooldown`     | no          | int, ticks                          | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed                                                                     |
+| `container`    | drink       | item name                           | none                   | What is left behind, such as a bottle                                                                                                                       |
+| `crop`         | seed        | block name                          | none                   | The crop it plants                                                                                                                                          |
+| `soil`         | seed        | block name                          | `minecraft:farmland`   | What it can be planted on                                                                                                                                   |
+| `requires`     | no          | list of mod ids or pack namespaces  | none                   | The file is skipped unless all are present                                                                                                                  |
 
 ### Item variant keys
 
 *items*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `meta` | yes | 0 to 15 | | The metadata value this variant claims |
-| `maxSize` | no | 1 to 64 | `64` | Stack size |
-| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip |
-| `healAmount` | food | int, half drumsticks | `0` | Hunger restored |
-| `saturation` | food | float | `0.0` | Saturation restored |
-| `oreDict` | no | list of ore dictionary names | none | Ore dictionary names this variant is registered under |
-| `potion` | food, drink | `potion,duration,amplifier` | none | An effect applied when the variant is eaten or drunk. A fourth part, `true`, makes it ambient. A beneficial effect is named in the tooltip |
+| Key          | Required    | Value                                | Default  | What it does                                                                                                                               |
+| ------------ | ----------- | ------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `meta`       | yes         | 0 to 15                              |          | The metadata value this variant claims                                                                                                     |
+| `maxSize`    | no          | 1 to 64                              | `64`     | Stack size                                                                                                                                 |
+| `rarity`     | no          | `common`, `uncommon`, `rare`, `epic` | `common` | Name color in the tooltip                                                                                                                  |
+| `healAmount` | food        | int, half drumsticks                 | `0`      | Hunger restored                                                                                                                            |
+| `saturation` | food        | float                                | `0.0`    | Saturation restored                                                                                                                        |
+| `oreDict`    | no          | list of ore dictionary names         | none     | Ore dictionary names this variant is registered under                                                                                      |
+| `potion`     | food, drink | `potion,duration,amplifier`          | none     | An effect applied when the variant is eaten or drunk. A fourth part, `true`, makes it ambient. A beneficial effect is named in the tooltip |
 
 ## Fluids
 
@@ -1502,21 +1506,21 @@ The file's path is the fluid's registry name unless `name` overrides it.
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `name` | no | string | the file name | The fluid's registry name |
-| `still` | no | texture path | vanilla water still | Texture for the still fluid |
-| `flow` | no | texture path | vanilla water flowing | Texture for the flowing fluid |
-| `color` | no | hex color | none | Tint applied to those textures |
-| `bucket` | no | boolean | `true` | Register a bucket for it |
-| `luminosity` | no | 0 to 15 | `0` | Light emitted |
-| `density` | no | int | `1000` | Negative floats upward, like a gas |
-| `temperature` | no | int, kelvin | `300` | Water is 300, lava 1300 |
-| `viscosity` | no | int | `1000` | How slowly it flows. Water is 1000, lava 6000 |
-| `gaseous` | no | boolean | `false` | Treated as a gas |
-| `creativeTab` | no | tab name | none | The tab the bucket appears in |
-| `block` | no | object | | The fluid block. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (none, a list of effects given to whatever stands in it, each written `potion,duration,amplifier` with an optional fourth part `true` for an ambient one) |
-| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+| Key           | Required | Value                              | Default               | What it does                                                                                                                                                                                                                                                                 |
+| ------------- | -------- | ---------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | no       | string                             | the file name         | The fluid's registry name                                                                                                                                                                                                                                                    |
+| `still`       | no       | texture path                       | vanilla water still   | Texture for the still fluid                                                                                                                                                                                                                                                  |
+| `flow`        | no       | texture path                       | vanilla water flowing | Texture for the flowing fluid                                                                                                                                                                                                                                                |
+| `color`       | no       | hex color                          | none                  | Tint applied to those textures                                                                                                                                                                                                                                               |
+| `bucket`      | no       | boolean                            | `true`                | Register a bucket for it                                                                                                                                                                                                                                                     |
+| `luminosity`  | no       | 0 to 15                            | `0`                   | Light emitted                                                                                                                                                                                                                                                                |
+| `density`     | no       | int                                | `1000`                | Negative floats upward, like a gas                                                                                                                                                                                                                                           |
+| `temperature` | no       | int, kelvin                        | `300`                 | Water is 300, lava 1300                                                                                                                                                                                                                                                      |
+| `viscosity`   | no       | int                                | `1000`                | How slowly it flows. Water is 1000, lava 6000                                                                                                                                                                                                                                |
+| `gaseous`     | no       | boolean                            | `false`               | Treated as a gas                                                                                                                                                                                                                                                             |
+| `creativeTab` | no       | tab name                           | none                  | The tab the bucket appears in                                                                                                                                                                                                                                                |
+| `block`       | no       | object                             |                       | The fluid block. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (none, a list of effects given to whatever stands in it, each written `potion,duration,amplifier` with an optional fourth part `true` for an ambient one) |
+| `requires`    | no       | list of mod ids or pack namespaces | none                  | The file is skipped unless all are present                                                                                                                                                                                                                                   |
 
 ## Materials, tabs, sounds, ore dictionary
 
@@ -1541,18 +1545,18 @@ The file's path is the material's name, which a tool or armor item then names in
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `harvestLevel` | no | 0 to 3 | `1` | Tool tier. 0 wood, 1 stone, 2 iron, 3 diamond |
-| `durability` | no | int | `250` | Uses before it breaks |
-| `efficiency` | no | float | `6.0` | Mining speed. Diamond is 8 |
-| `damage` | no | float | `2.0` | Attack damage bonus |
-| `enchantability` | no | int | `14` | How good enchantments are. Gold is 22 |
-| `repairItem` | no | item name | none | What repairs it in an anvil |
-| `reduction` | no | list of four ints | | Armor points, in the order feet, legs, chest, head |
-| `toughness` | no | float | `0.0` | Armor toughness, as diamond has |
-| `equipSound` | no | sound name | `item.armor.equip_iron` | Sound when armor is put on |
-| `armorTexture` | no | texture prefix | the file name | The worn armor texture |
+| Key              | Required | Value             | Default                 | What it does                                       |
+| ---------------- | -------- | ----------------- | ----------------------- | -------------------------------------------------- |
+| `harvestLevel`   | no       | 0 to 3            | `1`                     | Tool tier. 0 wood, 1 stone, 2 iron, 3 diamond      |
+| `durability`     | no       | int               | `250`                   | Uses before it breaks                              |
+| `efficiency`     | no       | float             | `6.0`                   | Mining speed. Diamond is 8                         |
+| `damage`         | no       | float             | `2.0`                   | Attack damage bonus                                |
+| `enchantability` | no       | int               | `14`                    | How good enchantments are. Gold is 22              |
+| `repairItem`     | no       | item name         | none                    | What repairs it in an anvil                        |
+| `reduction`      | no       | list of four ints |                         | Armor points, in the order feet, legs, chest, head |
+| `toughness`      | no       | float             | `0.0`                   | Armor toughness, as diamond has                    |
+| `equipSound`     | no       | sound name        | `item.armor.equip_iron` | Sound when armor is put on                         |
+| `armorTexture`   | no       | texture prefix    | the file name           | The worn armor texture                             |
 
 ### Creative tabs
 
@@ -1566,10 +1570,10 @@ The file's path is the tab's name unless `label` overrides it, and blocks and it
 { "label": "rubypack", "icon": "mypack:ruby" }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `label` | no | string | the file name | The tab's id: blocks and items name it in `creativeTab`, and the shown name comes from `itemGroup.<label>` in the lang files |
-| `icon` | no | item name | none | The item shown on the tab |
+| Key     | Required | Value     | Default       | What it does                                                                                                                 |
+| ------- | -------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `label` | no       | string    | the file name | The tab's id: blocks and items name it in `creativeTab`, and the shown name comes from `itemGroup.<label>` in the lang files |
+| `icon`  | no       | item name | none          | The item shown on the tab                                                                                                    |
 
 ### Sounds
 
@@ -1601,10 +1605,10 @@ A key starting with `-` removes instead: `"-ingotCopper": ["thermalfoundation:ma
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| an ore dictionary name | yes | list of item names | | The items registered under it. Metadata as a third part, `"mypack:ruby:1"` |
-| a name starting with `_` | no | anything | | Skipped, so a file can carry a note to itself |
+| Key                      | Required | Value              | Default | What it does                                                               |
+| ------------------------ | -------- | ------------------ | ------- | -------------------------------------------------------------------------- |
+| an ore dictionary name   | yes      | list of item names |         | The items registered under it. Metadata as a third part, `"mypack:ruby:1"` |
+| a name starting with `_` | no       | anything           |         | Skipped, so a file can carry a note to itself                              |
 
 ## Property overrides
 
@@ -1654,16 +1658,16 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 Every key is optional and a file changes only what it names, so a file at `overrides/minecraft/stone.json` holding `hardness`, `light` and `soundType` alone makes stone mine almost instantly, glow, and sound like glass. One file carries block, item and potion keys together. These apply when the target is a block:
 
-| Key | Value | What it does |
-| --- | --- | --- |
-| `hardness` | float | Mining time, the same figure a block definition takes |
-| `resistance` | float | Blast resistance |
-| `slipperiness` | float | `0.6` is ordinary ground, `0.98` is ice |
-| `light` | `0` to `15` | Light given off |
-| `lightOpacity` | `0` to `255` | How much light the block stops |
-| `soundType` | one of the sound types | Step, place and break sounds |
-| `harvestTool` | tool class | What mines it; `harvestToolLevel`, default `0`, sets the tier |
-| `flammability` | int | How readily it burns away; `fireSpread`, default `5`, how readily fire reaches it |
+| Key            | Value                  | What it does                                                                      |
+| -------------- | ---------------------- | --------------------------------------------------------------------------------- |
+| `hardness`     | float                  | Mining time, the same figure a block definition takes                             |
+| `resistance`   | float                  | Blast resistance                                                                  |
+| `slipperiness` | float                  | `0.6` is ordinary ground, `0.98` is ice                                           |
+| `light`        | `0` to `15`            | Light given off                                                                   |
+| `lightOpacity` | `0` to `255`           | How much light the block stops                                                    |
+| `soundType`    | one of the sound types | Step, place and break sounds                                                      |
+| `harvestTool`  | tool class             | What mines it; `harvestToolLevel`, default `0`, sets the tier                     |
+| `flammability` | int                    | How readily it burns away; `fireSpread`, default `5`, how readily fire reaches it |
 
 ### Item properties
 
@@ -1671,12 +1675,12 @@ Every key is optional and a file changes only what it names, so a file at `overr
 
 And these when the target is an item:
 
-| Key | Value | What it does |
-| --- | --- | --- |
-| `maxStackSize` | `1` to `64` | Stack size |
-| `maxDamage` | int | Durability |
-| `containerItem` | item name | Left behind in the crafting grid, the way a bucket is |
-| `food` | object | Makes the item edible, see below |
+| Key             | Value       | What it does                                          |
+| --------------- | ----------- | ----------------------------------------------------- |
+| `maxStackSize`  | `1` to `64` | Stack size                                            |
+| `maxDamage`     | int         | Durability                                            |
+| `containerItem` | item name   | Left behind in the crafting grid, the way a bucket is |
+| `food`          | object      | Makes the item edible, see below                      |
 
 A name that is both a block and an item, and every placeable block's item is, takes both groups from one file:
 
@@ -1763,17 +1767,17 @@ Gives a group of blocks a mining time multiplier, rolled per block position. The
 
 *hardness groups*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `blocks` | yes | list of block names or objects | | The group. Same three forms as a worldgen `replace` |
-| `except` | no | list of block names or objects | none | Taken back out of the group, whatever `blocks` says |
-| `miningTime` | no | number, or object with `min` and `max` | `1.0` | How many times longer the block takes to break, for a player and for a `digs` mob alike |
-| `blastResistance` | no | number, or object with `min` and `max` | `1.0` | Multiplies the block's blast resistance |
-| `buckets` | no | 1 to 256 | `10` | How many steps the range is divided into |
-| `minHeight` | no | int | `0` | Below this the roll is the hardest step |
-| `maxHeight` | no | int | `255` | Above this the roll is the hardest step |
-| `field` | no | object | see below | The shape the roll clumps into |
-| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+| Key               | Required | Value                                  | Default   | What it does                                                                            |
+| ----------------- | -------- | -------------------------------------- | --------- | --------------------------------------------------------------------------------------- |
+| `blocks`          | yes      | list of block names or objects         |           | The group. Same three forms as a worldgen `replace`                                     |
+| `except`          | no       | list of block names or objects         | none      | Taken back out of the group, whatever `blocks` says                                     |
+| `miningTime`      | no       | number, or object with `min` and `max` | `1.0`     | How many times longer the block takes to break, for a player and for a `digs` mob alike |
+| `blastResistance` | no       | number, or object with `min` and `max` | `1.0`     | Multiplies the block's blast resistance                                                 |
+| `buckets`         | no       | 1 to 256                               | `10`      | How many steps the range is divided into                                                |
+| `minHeight`       | no       | int                                    | `0`       | Below this the roll is the hardest step                                                 |
+| `maxHeight`       | no       | int                                    | `255`     | Above this the roll is the hardest step                                                 |
+| `field`           | no       | object                                 | see below | The shape the roll clumps into                                                          |
+| `requires`        | no       | list of mod ids or pack namespaces     | none      | The file is skipped unless all are present                                              |
 
 A single number gives every block in the group the same multiplier, and nothing is rolled. A `min` and `max` roll per position: `max` where the field is empty, `min` at the middle of a clump, and the steps between decided by `buckets`.
 
@@ -1781,12 +1785,12 @@ A single number gives every block in the group the same multiplier, and nothing 
 
 *hardness groups*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `keeps` | no | boolean | `false` | The block stays where it is when it is mined out: the drops, the experience, the tool wear and the break sound all happen and the block is still there to mine again, so the group is an endless seam at whatever pace `miningTime` sets. Creative removes it as ever |
-| `adventure` | no | object | none | Who may break the group in adventure mode, where nothing breaks otherwise. `tools` lists the items one of which must be in hand, empty for anything held; `teams`, `players` and `entities` say who, a team by its name, a player by name, a mob by its entity id for the `digs` task, and all three empty means anyone with the tool. Survival and creative are untouched |
-| `advancement` | no | `namespace:path` | none | The group counts for a player only once they have that advancement. Two groups may name the same block, one with an advancement and one without, and the unlocked one wins; a player without it gets the plain group, or vanilla if there is none. Mobs hold no advancements, so a gated group never reaches a `digs` task, and blast resistance and the texture roll, which belong to no player, come from the plain group |
-| `becomes` | no | object | none | The group's blocks turn into another block, world wide, the moment any player earns `advancement`: `{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`. Every loaded chunk is swept at once, a chunk loaded later is swept as it comes in, and a chunk made later is swept right after its ore is placed, so the old block is gone for good. Give the new block a group of its own to change how it mines |
+| Key           | Required | Value            | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------- | -------- | ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `keeps`       | no       | boolean          | `false` | The block stays where it is when it is mined out: the drops, the experience, the tool wear and the break sound all happen and the block is still there to mine again, so the group is an endless seam at whatever pace `miningTime` sets. Creative removes it as ever                                                                                                                                                       |
+| `adventure`   | no       | object           | none    | Who may break the group in adventure mode, where nothing breaks otherwise. `tools` lists the items one of which must be in hand, empty for anything held; `teams`, `players` and `entities` say who, a team by its name, a player by name, a mob by its entity id for the `digs` task, and all three empty means anyone with the tool. Survival and creative are untouched                                                  |
+| `advancement` | no       | `namespace:path` | none    | The group counts for a player only once they have that advancement. Two groups may name the same block, one with an advancement and one without, and the unlocked one wins; a player without it gets the plain group, or vanilla if there is none. Mobs hold no advancements, so a gated group never reaches a `digs` task, and blast resistance and the texture roll, which belong to no player, come from the plain group |
+| `becomes`     | no       | object           | none    | The group's blocks turn into another block, world wide, the moment any player earns `advancement`: `{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`. Every loaded chunk is swept at once, a chunk loaded later is swept as it comes in, and a chunk made later is swept right after its ore is placed, so the old block is gone for good. Give the new block a group of its own to change how it mines  |
 
 ### The field
 
@@ -1800,9 +1804,9 @@ The roll is not made for each block entirely on its own, or hard and soft would 
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `type` | no | `speckle` or `seeded` | `speckle` | Which of the two below is used |
+| Key    | Required | Value                 | Default   | What it does                   |
+| ------ | -------- | --------------------- | --------- | ------------------------------ |
+| `type` | no       | `speckle` or `seeded` | `speckle` | Which of the two below is used |
 
 #### speckle
 
@@ -1820,10 +1824,10 @@ Every block draws its own step, and a block one face away can pass a weaker step
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `chances` | no | list of ints, per thousand | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | How often a block starts at each step, softest last. Anything left over is the hardest step |
-| `spread` | no | 0.0 to 1.0 | `0.15` | How often a step carries to the block next to it, one step weaker or three |
+| Key       | Required | Value                      | Default                                | What it does                                                                                |
+| --------- | -------- | -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `chances` | no       | list of ints, per thousand | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | How often a block starts at each step, softest last. Anything left over is the hardest step |
+| `spread`  | no       | 0.0 to 1.0                 | `0.15`                                 | How often a step carries to the block next to it, one step weaker or three                  |
 
 The list is read softest-last, so the final entry is the softest step and the first is one above hardest. With the numbers above about seven blocks in ten are the hardest step and the rest are scattered through it.
 
@@ -1846,13 +1850,13 @@ Seeds sit on a lattice worked out from the world and the position, and a block's
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `cell` | no | int, blocks | `8` | How far apart the seeds are |
-| `seeds` | no | 1 to 4 | `1` | Seeds in each cell |
-| `reach` | no | float, blocks | `3.0` | How far a seed's influence carries |
-| `arms` | no | 0 to 6 | `0` | Arms radiating from each seed |
-| `armReach` | no | float, blocks | `0.0` | How far the arms carry |
+| Key        | Required | Value         | Default | What it does                       |
+| ---------- | -------- | ------------- | ------- | ---------------------------------- |
+| `cell`     | no       | int, blocks   | `8`     | How far apart the seeds are        |
+| `seeds`    | no       | 1 to 4        | `1`     | Seeds in each cell                 |
+| `reach`    | no       | float, blocks | `3.0`   | How far a seed's influence carries |
+| `arms`     | no       | 0 to 6        | `0`     | Arms radiating from each seed      |
+| `armReach` | no       | float, blocks | `0.0`   | How far the arms carry             |
 
 With `arms` left out the patches are round. Giving a seed arms turns it into a knot with tendrils, and arms from neighboring knots reach toward each other, which is a vein rather than a blob. Keep `reach` above half of `cell` or the patches cannot touch and you get separate balls with nothing between them.
 
@@ -1914,12 +1918,12 @@ Takes blocks and items out of play without unregistering them, so worlds keep th
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `names` | no | list of block and item names | none | What is disabled. Metadata as a third part, `"thermalfoundation:material:128"`, disables that one item, and `:*` every metadata. A name ending in `*` matches every name that starts with the rest |
-| `namespaces` | no | list of mod ids | none | Every block and item of the mod |
-| `oreDict` | no | list of ore dictionary names | none | Every item registered under the name, and the name is left empty |
-| `requires` | no | list of mod ids | none | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else |
+| Key          | Required | Value                        | Default | What it does                                                                                                                                                                                       |
+| ------------ | -------- | ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `names`      | no       | list of block and item names | none    | What is disabled. Metadata as a third part, `"thermalfoundation:material:128"`, disables that one item, and `:*` every metadata. A name ending in `*` matches every name that starts with the rest |
+| `namespaces` | no       | list of mod ids              | none    | Every block and item of the mod                                                                                                                                                                    |
+| `oreDict`    | no       | list of ore dictionary names | none    | Every item registered under the name, and the name is left empty                                                                                                                                   |
+| `requires`   | no       | list of mod ids              | none    | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else                                                                                      |
 
 A disabled block or item:
 
@@ -1960,12 +1964,12 @@ Adds and removes smelting recipes.
 
 Entries under `add`:
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `input` | yes | item name | none | What goes in |
-| `output` | yes | item name | none | What comes out |
-| `count` | no | int | `1` | How many come out |
-| `experience` | no | number | `0.0` | Experience per smelt. Iron ore gives 0.7 |
+| Key          | Required | Value     | Default | What it does                             |
+| ------------ | -------- | --------- | ------- | ---------------------------------------- |
+| `input`      | yes      | item name | none    | What goes in                             |
+| `output`     | yes      | item name | none    | What comes out                           |
+| `count`      | no       | int       | `1`     | How many come out                        |
+| `experience` | no       | number    | `0.0`   | Experience per smelt. Iron ore gives 0.7 |
 
 An addition whose input something already smelts is ignored, and the log names what that input smelts into now; remove that recipe in the same file to replace it.
 
@@ -1984,11 +1988,11 @@ The file name is yours to choose, only the folder is read, and several files sta
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `item` | one of the two | item name | none | The item that burns |
-| `oreDict` | one of the two | ore dictionary name | none | Everything under that name burns |
-| `burnTime` | yes | int, ticks | `0` | Coal is 1600, a plank 300 |
+| Key        | Required       | Value               | Default | What it does                     |
+| ---------- | -------------- | ------------------- | ------- | -------------------------------- |
+| `item`     | one of the two | item name           | none    | The item that burns              |
+| `oreDict`  | one of the two | ore dictionary name | none    | Everything under that name burns |
+| `burnTime` | yes            | int, ticks          | `0`     | Coal is 1600, a plank 300        |
 
 ## Potions, potion types and brewing
 
@@ -2014,17 +2018,17 @@ The file's path is the effect's registry name, so `mypack/potions/ruby_sight.jso
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `name` | no | translation key | `effect.<namespace>.<name>` | What the player sees |
-| `color` | no | hex color | `FFFFFF` | Particle color |
-| `badEffect` | no | boolean | `false` | Counts as harmful, so a fermented spider eye inverts it |
-| `beneficial` | no | boolean | `false` | Shown as a good effect |
-| `instant` | no | boolean | `false` | Applies once instead of over time |
-| `effectiveness` | no | float | `0.5` | How much mob AI values it |
-| `icon` | no | object with `x` and `y` | `0`, `0` | Where the icon sits in the sheet |
-| `iconTexture` | no | texture path | the RDPL icon, or the vanilla sheet when `icon` is set | Your own 18 by 18 icon |
-| `attributes` | no | list of objects | none | `attribute`, `uuid`, `amount` (`0.0`), `operation` (`0`) |
+| Key             | Required | Value                   | Default                                                | What it does                                             |
+| --------------- | -------- | ----------------------- | ------------------------------------------------------ | -------------------------------------------------------- |
+| `name`          | no       | translation key         | `effect.<namespace>.<name>`                            | What the player sees                                     |
+| `color`         | no       | hex color               | `FFFFFF`                                               | Particle color                                           |
+| `badEffect`     | no       | boolean                 | `false`                                                | Counts as harmful, so a fermented spider eye inverts it  |
+| `beneficial`    | no       | boolean                 | `false`                                                | Shown as a good effect                                   |
+| `instant`       | no       | boolean                 | `false`                                                | Applies once instead of over time                        |
+| `effectiveness` | no       | float                   | `0.5`                                                  | How much mob AI values it                                |
+| `icon`          | no       | object with `x` and `y` | `0`, `0`                                               | Where the icon sits in the sheet                         |
+| `iconTexture`   | no       | texture path            | the RDPL icon, or the vanilla sheet when `icon` is set | Your own 18 by 18 icon                                   |
+| `attributes`    | no       | list of objects         | none                                                   | `attribute`, `uuid`, `amount` (`0.0`), `operation` (`0`) |
 
 ### Potion types
 
@@ -2043,10 +2047,10 @@ The file's path is the potion type's registry name, which a `potion_bottle` item
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `baseName` | no | string | the namespace and name | The name the bottle is built from |
-| `effects` | yes | list of objects | | See below |
+| Key        | Required | Value           | Default                | What it does                      |
+| ---------- | -------- | --------------- | ---------------------- | --------------------------------- |
+| `baseName` | no       | string          | the namespace and name | The name the bottle is built from |
+| `effects`  | yes      | list of objects |                        | See below                         |
 
 Each effect takes `potion` (required), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) and `showParticles` (`true`).
 
@@ -2090,15 +2094,15 @@ Put the named item in an anvil's left slot and its `with` item in the right, and
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `item` | yes | item name, or `{ "item", "count" }` | | What goes in the left slot, and how many of it one piece of work takes, one by default; the rest of the stack stays for the next. `{ "item": "minecraft:coal", "count": 8 }` with a diamond `result` is eight coal to one diamond. Metadata as `minecraft:dye:4` |
-| `with` | yes | item name, or `{ "item", "count" }` | | What goes in the right slot, and how many of it are spent, one by default: `{ "item": "minecraft:coal", "count": 10 }` asks for a stack of at least ten and takes ten. An anvil never speaks up for a lone item, so every piece of work is a pair |
-| `result` | no | item name, or `{ "item", "count" }` | the left item | What comes out instead of the left item, and how many, one by default, keeping the left item's tags, so an unbreakable iron pickaxe and ten coal can come back as an unbreakable diamond one. The enchantments go on whichever comes out |
-| `levels` | no | int | `1` | The experience levels the work costs, 1 at the least |
-| `enchantments` | no | object of enchantment name to level | none | What the item comes back with. A level it already has at that height or above is left alone, and with nothing to raise the anvil offers nothing, unless `grants` is set |
-| `grants` | no | `namespace:path` | none | An advancement earned as the work is taken out. Ship it under `advancements/` with an `impossible` criterion, so nothing else earns it |
-| `locks` | no | boolean | `false` | Until the player has `grants`, the item cannot be swung at anything, used, or dug with; they are told what it waits on as it comes into their hand. Putting it in the anvil is still allowed, which is how it gets unlocked |
+| Key            | Required | Value                               | Default       | What it does                                                                                                                                                                                                                                                     |
+| -------------- | -------- | ----------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item`         | yes      | item name, or `{ "item", "count" }` |               | What goes in the left slot, and how many of it one piece of work takes, one by default; the rest of the stack stays for the next. `{ "item": "minecraft:coal", "count": 8 }` with a diamond `result` is eight coal to one diamond. Metadata as `minecraft:dye:4` |
+| `with`         | yes      | item name, or `{ "item", "count" }` |               | What goes in the right slot, and how many of it are spent, one by default: `{ "item": "minecraft:coal", "count": 10 }` asks for a stack of at least ten and takes ten. An anvil never speaks up for a lone item, so every piece of work is a pair                |
+| `result`       | no       | item name, or `{ "item", "count" }` | the left item | What comes out instead of the left item, and how many, one by default, keeping the left item's tags, so an unbreakable iron pickaxe and ten coal can come back as an unbreakable diamond one. The enchantments go on whichever comes out                         |
+| `levels`       | no       | int                                 | `1`           | The experience levels the work costs, 1 at the least                                                                                                                                                                                                             |
+| `enchantments` | no       | object of enchantment name to level | none          | What the item comes back with. A level it already has at that height or above is left alone, and with nothing to raise the anvil offers nothing, unless `grants` is set                                                                                          |
+| `grants`       | no       | `namespace:path`                    | none          | An advancement earned as the work is taken out. Ship it under `advancements/` with an `impossible` criterion, so nothing else earns it                                                                                                                           |
+| `locks`        | no       | boolean                             | `false`       | Until the player has `grants`, the item cannot be swung at anything, used, or dug with; they are told what it waits on as it comes into their hand. Putting it in the anvil is still allowed, which is how it gets unlocked                                      |
 
 The anvil's own repairs and combinations are untouched: this only answers when the left holds a named item and the right holds its `with`.
 
@@ -2128,24 +2132,24 @@ Vanilla 1.12 blocks have no loot tables, so a pack could add to what its own blo
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `block` | yes | block id | | The block the rule watches |
-| `meta` | no | int | `-1` | Only this metadata of the block; `-1` is every state |
-| `replace` | no | boolean | `false` | Whether the usual drops are discarded before these are rolled |
-| `advancement` | no | `namespace:path` | none | The rule counts only for a player who has that advancement, so the same block can drop one thing before and another after |
-| `drops` | yes | list of drops | | Each rolled on its own when a player breaks the block |
+| Key           | Required | Value            | Default | What it does                                                                                                              |
+| ------------- | -------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `block`       | yes      | block id         |         | The block the rule watches                                                                                                |
+| `meta`        | no       | int              | `-1`    | Only this metadata of the block; `-1` is every state                                                                      |
+| `replace`     | no       | boolean          | `false` | Whether the usual drops are discarded before these are rolled                                                             |
+| `advancement` | no       | `namespace:path` | none    | The rule counts only for a player who has that advancement, so the same block can drop one thing before and another after |
+| `drops`       | yes      | list of drops    |         | Each rolled on its own when a player breaks the block                                                                     |
 
 Each drop:
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `item` | yes, unless `experience` | item id | | What drops, with metadata as `minecraft:dye:4` |
-| `experience` | no | number or `low-high` | | Instead of an item, that much experience as orbs, rolled evenly within the range. `chance` and `silkTouch` apply as for an item |
-| `count` | no | number or `low-high` | `1` | How many, rolled evenly within the range |
-| `chance` | no | float | `1.0` | The odds the drop happens at all, `0.05` being one break in twenty |
-| `fortune` | no | int | `0` | Up to this many extra per level of Fortune on the tool |
-| `silkTouch` | no | `either`, `only` or `never` | `either` | Whether the drop needs a Silk Touch tool, refuses one, or does not care |
+| Key          | Required                 | Value                       | Default  | What it does                                                                                                                    |
+| ------------ | ------------------------ | --------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `item`       | yes, unless `experience` | item id                     |          | What drops, with metadata as `minecraft:dye:4`                                                                                  |
+| `experience` | no                       | number or `low-high`        |          | Instead of an item, that much experience as orbs, rolled evenly within the range. `chance` and `silkTouch` apply as for an item |
+| `count`      | no                       | number or `low-high`        | `1`      | How many, rolled evenly within the range                                                                                        |
+| `chance`     | no                       | float                       | `1.0`    | The odds the drop happens at all, `0.05` being one break in twenty                                                              |
+| `fortune`    | no                       | int                         | `0`      | Up to this many extra per level of Fortune on the tool                                                                          |
+| `silkTouch`  | no                       | `either`, `only` or `never` | `either` | Whether the drop needs a Silk Touch tool, refuses one, or does not care                                                         |
 
 Rules only see a player's harvest; explosions, pistons and mob grief roll nothing. Several rules for one block all apply, a `replace` on any of them clearing the usual drops first.
 
@@ -2168,12 +2172,12 @@ Vanilla 1.12 gives players no loot table — death drops only the inventory, and
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `table` | yes | table name | | The loot table rolled when a player dies |
-| `mode` | no | `add` or `replace` | `add` | Whether the table's items join the inventory or take its place |
-| `rollOnKeepInventory` | no | boolean | `false` | Whether the table is rolled at all on a death that kept the inventory |
-| `dropLoose` | no | boolean | `false` | Whether the items are put on the ground directly instead of joining the death drops |
+| Key                   | Required | Value              | Default | What it does                                                                        |
+| --------------------- | -------- | ------------------ | ------- | ----------------------------------------------------------------------------------- |
+| `table`               | yes      | table name         |         | The loot table rolled when a player dies                                            |
+| `mode`                | no       | `add` or `replace` | `add`   | Whether the table's items join the inventory or take its place                      |
+| `rollOnKeepInventory` | no       | boolean            | `false` | Whether the table is rolled at all on a death that kept the inventory               |
+| `dropLoose`           | no       | boolean            | `false` | Whether the items are put on the ground directly instead of joining the death drops |
 
 `add` drops the table's items alongside the inventory — use it for kill bounties. `replace` discards the inventory and drops only what the table rolls.
 
@@ -2212,11 +2216,11 @@ The file's path is the profession's registry name, so `mypack/villagers/jeweller
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `careers` | yes | list of names | none | The careers this profession offers. A profession with none is refused |
-| `texture` | no | texture path | the vanilla villager | How the villager looks |
-| `zombieTexture` | no | texture path | the vanilla zombie villager | How it looks once zombified |
+| Key             | Required | Value         | Default                     | What it does                                                          |
+| --------------- | -------- | ------------- | --------------------------- | --------------------------------------------------------------------- |
+| `careers`       | yes      | list of names | none                        | The careers this profession offers. A profession with none is refused |
+| `texture`       | no       | texture path  | the vanilla villager        | How the villager looks                                                |
+| `zombieTexture` | no       | texture path  | the vanilla zombie villager | How it looks once zombified                                           |
 
 ### Trades
 
@@ -2241,12 +2245,12 @@ The file name is yours to choose, only the folder is read, and several files sta
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `profession` | yes | profession name | | Whose trade this is |
-| `career` | yes | career name | | Which career within it |
-| `level` | no | int | `1` | Which trade tier it appears at |
-| `maxUses` | no | int | `12` | Times it can be used before locking |
+| Key          | Required | Value           | Default | What it does                        |
+| ------------ | -------- | --------------- | ------- | ----------------------------------- |
+| `profession` | yes      | profession name |         | Whose trade this is                 |
+| `career`     | yes      | career name     |         | Which career within it              |
+| `level`      | no       | int             | `1`     | Which trade tier it appears at      |
+| `maxUses`    | no       | int             | `12`    | Times it can be used before locking |
 
 A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `min`.
 
@@ -2378,18 +2382,18 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `entity` | yes | `namespace:name` | none | The entity to build on. Any mod's, as long as it takes a plain world constructor |
-| `name` | no | string | none | The name it carries in the world, in death messages and on its egg |
-| `showName` | no | boolean | `false` | Show the name without looking at it |
-| `egg` | no | boolean or object | `true` | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out |
-| `becomes` | no | list | none | Other variants this one may turn into as it spawns, by weight. See below |
-| `baby` | no | boolean or 0.0 to 1.0 | `false` | How often one spawns young, and it stays that way. `true` is always, a number is that share of them |
-| `keepsBaseBaby` | no | boolean | `false` | Whether the base's own young roll also runs. Without it a zombie-based variant spawns young only as `baby` says, with no Forge `zombieBabyChance` child and no chicken jockey |
-| `profession` | no | `namespace:name` | random | For a villager, the trade it practices |
-| `career` | no | int | random | Which career within that profession, from 1 upwards |
-| `requires` | no | list of mod ids or pack namespaces | none | The variant is left out unless all are present |
+| Key             | Required | Value                              | Default | What it does                                                                                                                                                                  |
+| --------------- | -------- | ---------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entity`        | yes      | `namespace:name`                   | none    | The entity to build on. Any mod's, as long as it takes a plain world constructor                                                                                              |
+| `name`          | no       | string                             | none    | The name it carries in the world, in death messages and on its egg                                                                                                            |
+| `showName`      | no       | boolean                            | `false` | Show the name without looking at it                                                                                                                                           |
+| `egg`           | no       | boolean or object                  | `true`  | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out                 |
+| `becomes`       | no       | list                               | none    | Other variants this one may turn into as it spawns, by weight. See below                                                                                                      |
+| `baby`          | no       | boolean or 0.0 to 1.0              | `false` | How often one spawns young, and it stays that way. `true` is always, a number is that share of them                                                                           |
+| `keepsBaseBaby` | no       | boolean                            | `false` | Whether the base's own young roll also runs. Without it a zombie-based variant spawns young only as `baby` says, with no Forge `zombieBabyChance` child and no chicken jockey |
+| `profession`    | no       | `namespace:name`                   | random  | For a villager, the trade it practices                                                                                                                                        |
+| `career`        | no       | int                                | random  | Which career within that profession, from 1 upwards                                                                                                                           |
+| `requires`      | no       | list of mod ids or pack namespaces | none    | The variant is left out unless all are present                                                                                                                                |
 
 A variant is a class of its own, so a world that contains one depends on the pack that made it, the same way it depends on a mod. Take the file away and the creatures in that world go with it.
 
@@ -2412,21 +2416,21 @@ Naming itself is how it stays as it is, and the weights are the odds. Put that o
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `texture` | no | `namespace:textures/entity/<file>.png` | none | A skin of its own, laid out the same way the entity it copies is |
-| `tint` | no | hex color | none | Colors the entity as it is drawn |
-| `tintParts` | no | list of `body`, `armor`, `held` | `["body"]` | Which parts the tint reaches |
-| `scale` | no | float | `1.0` | How big it is drawn, and how big its hitbox is |
-| `angryScale` | no | float | `scale` | The size it swells to while it has something to attack, and for three seconds after it loses one |
-| `width` | no | float | the base's | Its hitbox across, before `scale` is applied |
-| `height` | no | float | the base's | Its hitbox up, before `scale` is applied |
-| `glowing` | no | boolean | `false` | Outlined through walls |
-| `bright` | no | boolean | `false` | Drawn at full light wherever it stands, as if in noon sun, so it is never dimmed by night, shade or a cave |
-| `invisible` | no | boolean | `false` | Not drawn, though its gear still is |
-| `hideArmor` | no | boolean | `false` | Wears its armor without it being drawn |
-| `hideHeld` | no | boolean | `false` | The same for whatever it is holding |
-| `leftHanded` | no | boolean | `false` | Holds its weapon in the other hand |
+| Key          | Required | Value                                  | Default    | What it does                                                                                               |
+| ------------ | -------- | -------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `texture`    | no       | `namespace:textures/entity/<file>.png` | none       | A skin of its own, laid out the same way the entity it copies is                                           |
+| `tint`       | no       | hex color                              | none       | Colors the entity as it is drawn                                                                           |
+| `tintParts`  | no       | list of `body`, `armor`, `held`        | `["body"]` | Which parts the tint reaches                                                                               |
+| `scale`      | no       | float                                  | `1.0`      | How big it is drawn, and how big its hitbox is                                                             |
+| `angryScale` | no       | float                                  | `scale`    | The size it swells to while it has something to attack, and for three seconds after it loses one           |
+| `width`      | no       | float                                  | the base's | Its hitbox across, before `scale` is applied                                                               |
+| `height`     | no       | float                                  | the base's | Its hitbox up, before `scale` is applied                                                                   |
+| `glowing`    | no       | boolean                                | `false`    | Outlined through walls                                                                                     |
+| `bright`     | no       | boolean                                | `false`    | Drawn at full light wherever it stands, as if in noon sun, so it is never dimmed by night, shade or a cave |
+| `invisible`  | no       | boolean                                | `false`    | Not drawn, though its gear still is                                                                        |
+| `hideArmor`  | no       | boolean                                | `false`    | Wears its armor without it being drawn                                                                     |
+| `hideHeld`   | no       | boolean                                | `false`    | The same for whatever it is holding                                                                        |
+| `leftHanded` | no       | boolean                                | `false`    | Holds its weapon in the other hand                                                                         |
 
 `scale` changes both the model and the hitbox on both sides, so what you see is what you can hit. A creature that changes its own size, an animal growing up or a zombie that is a child, is scaled around whatever size it has chosen, so the two do not fight. `angryScale` swells it while it has a target and returns it to `scale` when it loses one. Since the client is never told what a creature is hunting, the sprinting flag carries that news across, it is set on a variant that uses `angryScale` and on nothing else, so a mod reading sprinting on your variants will see it change. Growing inside a low ceiling is possible, the same way a slime growing is, so keep the difference modest.
 
@@ -2438,73 +2442,73 @@ Armor is only ever drawn on an entity whose renderer has an armor layer, which i
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `sounds` | no | object | the base's | `ambient`, `hurt` and `death`, each a registered sound event. Three more it has no base sound for: `target` is played once each time it takes a target, and `explode` is what its blast sounds like in place of the game's, whether it blows itself up with `explodes` or throws TNT with `throws`. `throw` plays as it throws anything with `throws`, in place of the snowball throw, or of the fuse hiss for TNT. `targetVaries` shifts each `target` play up or down by a random amount within that many semitones, so `3` wanders a quarter octave either way; `0` plays it as it is |
-| `soundVolume` | no | number | `1.0` | How loud those sounds are |
-| `soundPitch` | no | number | `1.0` | How high they play. Under 1 is deeper, over 1 is squeakier |
-| `silent` | no | boolean | `false` | Makes no sound |
+| Key           | Required | Value   | Default    | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------- | -------- | ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sounds`      | no       | object  | the base's | `ambient`, `hurt` and `death`, each a registered sound event. Three more it has no base sound for: `target` is played once each time it takes a target, and `explode` is what its blast sounds like in place of the game's, whether it blows itself up with `explodes` or throws TNT with `throws`. `throw` plays as it throws anything with `throws`, in place of the snowball throw, or of the fuse hiss for TNT. `targetVaries` shifts each `target` play up or down by a random amount within that many semitones, so `3` wanders a quarter octave either way; `0` plays it as it is |
+| `soundVolume` | no       | number  | `1.0`      | How loud those sounds are                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `soundPitch`  | no       | number  | `1.0`      | How high they play. Under 1 is deeper, over 1 is squeakier                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `silent`      | no       | boolean | `false`    | Makes no sound                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### Health, damage and effects
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `attributes` | no | object | none | `maxHealth`, `movementSpeed`, `attackDamage`, `attackSpeed`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it. `attackSpeed` is blows a second for a melee fighter, `1` as the game has it, so `2` strikes twice as often. Any name the base already carries works too, `zombie.spawnReinforcements`, `horse.jumpStrength`. `attackDamage` on a base that shoots is what its arrows hit for |
-| `absorption` | no | float | `0` | Extra hearts on top of its health |
-| `invulnerable` | no | boolean | `false` | Takes no damage from anything but the void and creative |
-| `fireproof` | no | boolean | `false` | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight |
-| `immuneTo` | no | list of damage types | none | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest |
-| `fallDamage` | no | float | `1.0` | Multiplies the damage a fall does. `0` takes fall damage away |
-| `hurtResistance` | no | int, ticks | the base's, `20` | How long after a hit it cannot be hurt again. Blows faster than half of this are lost, so a fast attacker wants a target with less |
-| `effects` | no | list of objects | none | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
-| `ignoresEffects` | no | list of potion ids, or `all` | none | Effects that never take on it, whoever or whatever applies them: a hit, a splash, a beacon, an arrow, `/effect`. `all` refuses every effect, so a variant starts as a blank slate. Its own `effects` are still put on it |
-| `creatureAttribute` | no | `undefined`, `undead`, `arthropod` or `illager` | the base's | What it counts as, so Smite and healing potions treat it accordingly |
+| Key                 | Required | Value                                           | Default          | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | -------- | ----------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `attributes`        | no       | object                                          | none             | `maxHealth`, `movementSpeed`, `attackDamage`, `attackSpeed`, `knockbackResistance`, `followRange`, `armor`. An attribute the entity does not normally have is given to it. `attackSpeed` is blows a second for a melee fighter, `1` as the game has it, so `2` strikes twice as often. Any name the base already carries works too, `zombie.spawnReinforcements`, `horse.jumpStrength`. `attackDamage` on a base that shoots is what its arrows hit for |
+| `absorption`        | no       | float                                           | `0`              | Extra hearts on top of its health                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `invulnerable`      | no       | boolean                                         | `false`          | Takes no damage from anything but the void and creative                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `fireproof`         | no       | boolean                                         | `false`          | Never catches fire at all, so it is never hurt by fire or lava and never burns in daylight                                                                                                                                                                                                                                                                                                                                                              |
+| `immuneTo`          | no       | list of damage types                            | none             | Damage it shrugs off: `fall`, `drown`, `explosion`, `magic`, `cactus`, `lava`, `wither`, `starve`, `anvil`, `inWall` and the rest                                                                                                                                                                                                                                                                                                                       |
+| `fallDamage`        | no       | float                                           | `1.0`            | Multiplies the damage a fall does. `0` takes fall damage away                                                                                                                                                                                                                                                                                                                                                                                           |
+| `hurtResistance`    | no       | int, ticks                                      | the base's, `20` | How long after a hit it cannot be hurt again. Blows faster than half of this are lost, so a fast attacker wants a target with less                                                                                                                                                                                                                                                                                                                      |
+| `effects`           | no       | list of objects                                 | none             | Effects it always has: `{ "potion": "minecraft:strength", "amplifier": 1 }`                                                                                                                                                                                                                                                                                                                                                                             |
+| `ignoresEffects`    | no       | list of potion ids, or `all`                    | none             | Effects that never take on it, whoever or whatever applies them: a hit, a splash, a beacon, an arrow, `/effect`. `all` refuses every effect, so a variant starts as a blank slate. Its own `effects` are still put on it                                                                                                                                                                                                                                |
+| `creatureAttribute` | no       | `undefined`, `undead`, `arthropod` or `illager` | the base's       | What it counts as, so Smite and healing potions treat it accordingly                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ### Movement
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `jumpMultiplier` | no | float | `1.0` | How much higher it jumps than the entity it copies |
-| `stepHeight` | no | float, blocks | the base's | How high a ledge it walks up without jumping. Most creatures step `0.6`, a zombie `1.0` |
-| `maxFallHeight` | no | int | the base's | How far it will drop while pathing |
-| `climbs` | no | boolean | the base's | Climbs walls the way a spider does, and paths over them; `false` grounds a spider |
-| `teleports` | no | boolean | `true` | Whether an enderman or a shulker may teleport. Off, it stays where it stands, in daylight and in water too |
-| `walks` | no | boolean | `false` | A rabbit walks the way other animals do instead of moving in hops. Only a rabbit reads it |
-| `pathPriorities` | no | object | none | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
-| `leashable` | no | boolean | `false` | Can be led on a lead, even if the entity it copies never could |
-| `steerable` | no | boolean | `false` | Can be steered while ridden |
-| `noAI` | no | boolean | `false` | Stands where it is put and does nothing |
+| Key              | Required | Value         | Default    | What it does                                                                                                                              |
+| ---------------- | -------- | ------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `jumpMultiplier` | no       | float         | `1.0`      | How much higher it jumps than the entity it copies                                                                                        |
+| `stepHeight`     | no       | float, blocks | the base's | How high a ledge it walks up without jumping. Most creatures step `0.6`, a zombie `1.0`                                                   |
+| `maxFallHeight`  | no       | int           | the base's | How far it will drop while pathing                                                                                                        |
+| `climbs`         | no       | boolean       | the base's | Climbs walls the way a spider does, and paths over them; `false` grounds a spider                                                         |
+| `teleports`      | no       | boolean       | `true`     | Whether an enderman or a shulker may teleport. Off, it stays where it stands, in daylight and in water too                                |
+| `walks`          | no       | boolean       | `false`    | A rabbit walks the way other animals do instead of moving in hops. Only a rabbit reads it                                                 |
+| `pathPriorities` | no       | object        | none       | What it will walk through, as `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` and the rest, each a number where a negative means never |
+| `leashable`      | no       | boolean       | `false`    | Can be led on a lead, even if the entity it copies never could                                                                            |
+| `steerable`      | no       | boolean       | `false`    | Can be steered while ridden                                                                                                               |
+| `noAI`           | no       | boolean       | `false`    | Stands where it is put and does nothing                                                                                                   |
 
 ### Water
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `breathesUnderwater` | no | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it |
-| `swims` | no | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it |
-| `amphibious` | no | boolean | `false` | Walks on land and swims properly in water, changing how it finds its way as it enters and leaves the water. It never drowns. Whatever it was chasing is forgotten at the water's edge, so it hesitates for a moment each time it crosses |
-| `waterSlowdown` | no | float | `0.8` | How much water slows it. Higher is faster |
+| Key                  | Required | Value   | Default | What it does                                                                                                                                                                                                                             |
+| -------------------- | -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `breathesUnderwater` | no       | boolean | `false` | Never drowns, and sinks to walk the bottom rather than swimming for the surface. It still finds its way about on the ground, so deep water it cannot walk out of will hold it                                                            |
+| `swims`              | no       | boolean | `false` | Moves through water the way a squid or a guardian does, and never drowns. It finds its way through water rather than over ground, so it belongs in water and is stranded out of it                                                       |
+| `amphibious`         | no       | boolean | `false` | Walks on land and swims properly in water, changing how it finds its way as it enters and leaves the water. It never drowns. Whatever it was chasing is forgotten at the water's edge, so it hesitates for a moment each time it crosses |
+| `waterSlowdown`      | no       | float   | `0.8`   | How much water slows it. Higher is faster                                                                                                                                                                                                |
 
 ### Fighting
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `hostile` | no | boolean | `false` | Attacks what it can reach, and fights back when hurt. A hostile variant counts as a monster to the game whatever its base, so the monster cap holds it and peaceful clears it, and it drops the animal tasks its base came with, breeding, being tempted, following a parent, an owner or its own kind, sitting |
-| `passive` | no | boolean | `false` | Stops it attacking anything, however it normally behaves |
-| `targets` | no | list of entity names | the player | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity |
-| `attackReach` | no | float, blocks | its size | How far a melee blow reaches. The game reaches twice the width, which is why a scaled-up creature hits from further away; this sets it outright |
-| `knockback` | no | float | the base's, `0.4` | How hard its blows shove. `0` shoves not at all |
-| `hitEffects` | no | boolean | `true` | Whether it puts on whatever it hits the effect the entity it copies does: a wither skeleton's wither, a cave spider's poison, a husk's hunger. Off, it hits for damage alone |
-| `hitFire` | no | boolean | `true` | Whether it sets alight whatever it hits when the entity it copies would: a burning zombie, a blaze's fireball. Off, nothing it does starts a fire on its target |
-| `threatLeast` | no | int | `0` | The lowest threat band a player or other carrier within 128 blocks must stand in before the variant spawns naturally. `0` spawns as usual |
-| `threatHostile` | no | int | `0` | The lowest threat band a player must stand in before the variant goes after them on its own. Below it the variant is docile toward that player, though it still fights back when hit. `0` attacks as usual |
+| Key             | Required | Value                | Default           | What it does                                                                                                                                                                                                                                                                                                    |
+| --------------- | -------- | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hostile`       | no       | boolean              | `false`           | Attacks what it can reach, and fights back when hurt. A hostile variant counts as a monster to the game whatever its base, so the monster cap holds it and peaceful clears it, and it drops the animal tasks its base came with, breeding, being tempted, following a parent, an owner or its own kind, sitting |
+| `passive`       | no       | boolean              | `false`           | Stops it attacking anything, however it normally behaves                                                                                                                                                                                                                                                        |
+| `targets`       | no       | list of entity names | the player        | What it goes looking for while hostile. `minecraft:player` is understood even though the player is not a registered entity                                                                                                                                                                                      |
+| `attackReach`   | no       | float, blocks        | its size          | How far a melee blow reaches. The game reaches twice the width, which is why a scaled-up creature hits from further away; this sets it outright                                                                                                                                                                 |
+| `knockback`     | no       | float                | the base's, `0.4` | How hard its blows shove. `0` shoves not at all                                                                                                                                                                                                                                                                 |
+| `hitEffects`    | no       | boolean              | `true`            | Whether it puts on whatever it hits the effect the entity it copies does: a wither skeleton's wither, a cave spider's poison, a husk's hunger. Off, it hits for damage alone                                                                                                                                    |
+| `hitFire`       | no       | boolean              | `true`            | Whether it sets alight whatever it hits when the entity it copies would: a burning zombie, a blaze's fireball. Off, nothing it does starts a fire on its target                                                                                                                                                 |
+| `threatLeast`   | no       | int                  | `0`               | The lowest threat band a player or other carrier within 128 blocks must stand in before the variant spawns naturally. `0` spawns as usual                                                                                                                                                                       |
+| `threatHostile` | no       | int                  | `0`               | The lowest threat band a player must stand in before the variant goes after them on its own. Below it the variant is docile toward that player, though it still fights back when hit. `0` attacks as usual                                                                                                      |
 
 `hostile` also takes away the behavior that made the creature run: an animal that avoided players or panicked when hurt does neither once it is hostile, since otherwise it would flee the thing it is meant to be attacking. It needs an entity that walks the ground, since it uses the same attack behavior vanilla gives its own mobs. A flying or swimming base is logged and left alone. `passive` works more widely, but only reaches behavior built the way vanilla builds it, a mod whose hostility is written into its own tick or damage code is not something a pack can talk out of.
 
@@ -2512,14 +2516,14 @@ Armor is only ever drawn on an entity whose renderer has an armor layer, which i
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `equipment` | no | object | none | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name |
-| `dropChance` | no | 0 to 1 | `0` | How likely each piece of equipment is to drop |
-| `picksUpLoot` | no | boolean | `false` | Picks up what it walks over |
-| `lootTable` | no | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops |
-| `experience` | no | int | the base's | How much experience it drops |
-| `collectsExperience` | no | boolean | `false` | Gathers experience the way a player does: orbs within eight blocks drift to it and are taken on touch, Mending on its gear is repaired first, and the points build levels on the player's own curve, kept on the mob through a save. What it kills drops its experience as if a player had made the kill, a block its `digs` task breaks drops the block's own experience, and a `block_drops` experience roll lands for it too. On death it drops seven per level up to a hundred, unless `keepInventory` is on. Objectives with the `xp` or `level` criterion carry its total and level on a row named by its UUID, so a function reads them with `score_<objective>_min`. It spends its levels on anvil work the way a player does, see [Anvil work](#anvil-work) |
+| Key                  | Required | Value                       | Default    | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------- | -------- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `equipment`          | no       | object                      | none       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, each an item name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `dropChance`         | no       | 0 to 1                      | `0`        | How likely each piece of equipment is to drop                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `picksUpLoot`        | no       | boolean                     | `false`    | Picks up what it walks over                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `lootTable`          | no       | `namespace:entities/<name>` | the base's | What it drops. Without this it drops whatever the entity it copies drops                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `experience`         | no       | int                         | the base's | How much experience it drops                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `collectsExperience` | no       | boolean                     | `false`    | Gathers experience the way a player does: orbs within eight blocks drift to it and are taken on touch, Mending on its gear is repaired first, and the points build levels on the player's own curve, kept on the mob through a save. What it kills drops its experience as if a player had made the kill, a block its `digs` task breaks drops the block's own experience, and a `block_drops` experience roll lands for it too. On death it drops seven per level up to a hundred, unless `keepInventory` is on. Objectives with the `xp` or `level` criterion carry its total and level on a row named by its UUID, so a function reads them with `score_<objective>_min`. It spends its levels on anvil work the way a player does, see [Anvil work](#anvil-work) |
 
 A variant drops whatever the entity it copies drops, because the loot table is fixed in that entity's own code rather than looked up by name. `lootTable` points it at a table of your own, which you then supply at `loot_tables/entities/<name>.json` like any other.
 
@@ -2527,30 +2531,30 @@ A variant drops whatever the entity it copies drops, because the loot table is f
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `throws` | no | boolean | `false` | Throws what it holds at its target from a distance, and if that is TNT it lights it and backs off. Needs `hostile` |
-| `throwAmmo` | no | int | none | How many it has to throw. Left out, it never runs short |
-| `throwReload` | no | int, seconds | `explosionFuse` | How long its hand stays empty before it draws another |
-| `throwRetreat` | no | int, seconds | `explosionFuse` | How long it keeps away after a throw before turning back |
-| `throwPower` | no | float | `1.0` | How hard it throws. Doubling it roughly doubles the reach |
-| `throwArc` | no | float | `0.35` | How high it lobs. Higher hangs longer, near zero is a flat hurl, below zero throws downward |
-| `throwReturns` | no | boolean | `false` | What it throws flies like a trident: it hits for the variant's `attackDamage`, or 8 on a base without one, then flies back into its hand the way Loyalty brings a trident back. It is never used up and is aimed at the target the way a skeleton aims, faster with `throwPower` and with less spread on harder difficulties, and the thrower stands its ground while it flies, so `throwAmmo`, `throwReload`, `throwRetreat` and `throwArc` do not apply to it. TNT is thrown as ever |
-| `explodes` | no | boolean | `false` | Blows itself up next to its target, like a creeper. Needs `hostile` |
-| `explosionPower` | no | number | `3.0` | How big the blast is. A creeper is 3, TNT is 4. On a creeper base it is the creeper's own blast as well, and on a ghast the fireball's |
-| `explosionFuse` | no | int, ticks | `30` | How long it hisses before going off. On a creeper base it is the creeper's own fuse as well |
-| `explosionFire` | no | boolean | `false` | Leaves fires behind |
-| `charges` | no | boolean | `false` | Rushes its target from a distance and hits with a heavy knockback on contact, the way a ravager does, then rests before the next run. Needs `hostile` |
-| `pounces` | no | boolean | `false` | Crouches, then leaps onto its target in an arc and strikes on landing, the way a fox does. Needs `hostile` |
-| `sniffs` | no | int, blocks | `0` | Hears players moving within that many blocks, walls or not, and walks to where it heard them; a sneaking or standing player is not heard, and one it then sees becomes its target. `0` does not listen. Needs `hostile` |
-| `fleesWhenHurt` | no | 0.0 to 1.0 | `0` | Breaks off and runs from whoever it is fighting while its health is under that fraction, and comes back once above it. `0` never flees. Needs `hostile` |
-| `sleepsByDay` | no | boolean | `false` | Finds shade by day and stands still there until night or until something attacks it. While it rests it lies on its side |
-| `home` | no | int, blocks | `0` | Keeps to that many blocks around the spot it first stood on, wandering inside it and walking back when it strays. `0` roams freely |
-| `patrols` | no | boolean | `false` | Walks the land in long legs with others of its kind following a leader, the way a pillager patrol does. A group that spawns together picks one leader; the rest keep within a few blocks of it, and when the leader takes a target they all do. A follower that loses its leader takes the lead itself. Needs `hostile` |
-| `swoops` | no | boolean | `false` | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile` |
-| `gusts` | no | boolean | `false` | Winds up and lets loose a blast of wind at its target from a distance, throwing everything near the target back and up, the way a breeze's wind charge does. Needs `hostile` |
-| `gustPower` | no | float | `1.5` | How hard a gust throws. A hit from a mob is 0.4, a strong knockback enchantment about 1 |
-| `digs` | no | boolean | `false` | Digs through whatever stands between it and its target, with the tool in its hand: a shovel through dirt, sand and gravel, a pickaxe through stone, an axe through wood, and only what that tool's material can break, so a wooden pickaxe never opens iron ore and nothing opens obsidian short of diamond. A block takes as long as it would for a player with that tool, drops what it would, and wears the tool. Give it the tool with `equipment`; bare-handed it digs nothing, and it digs nothing where `mobGriefing` is off. It never looks for a way around: with a target it walks straight at it and digs whatever stands in the way, and where the tool cannot open the block it stands and pushes. Needs `hostile`. It takes its targets without needing to see them, since what it digs toward is by nature behind something |
+| Key              | Required | Value        | Default         | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------- | -------- | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `throws`         | no       | boolean      | `false`         | Throws what it holds at its target from a distance, and if that is TNT it lights it and backs off. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `throwAmmo`      | no       | int          | none            | How many it has to throw. Left out, it never runs short                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `throwReload`    | no       | int, seconds | `explosionFuse` | How long its hand stays empty before it draws another                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `throwRetreat`   | no       | int, seconds | `explosionFuse` | How long it keeps away after a throw before turning back                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `throwPower`     | no       | float        | `1.0`           | How hard it throws. Doubling it roughly doubles the reach                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `throwArc`       | no       | float        | `0.35`          | How high it lobs. Higher hangs longer, near zero is a flat hurl, below zero throws downward                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `throwReturns`   | no       | boolean      | `false`         | What it throws flies like a trident: it hits for the variant's `attackDamage`, or 8 on a base without one, then flies back into its hand the way Loyalty brings a trident back. It is never used up and is aimed at the target the way a skeleton aims, faster with `throwPower` and with less spread on harder difficulties, and the thrower stands its ground while it flies, so `throwAmmo`, `throwReload`, `throwRetreat` and `throwArc` do not apply to it. TNT is thrown as ever                                                                                                                                                                                                                                                                                                                                                     |
+| `explodes`       | no       | boolean      | `false`         | Blows itself up next to its target, like a creeper. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `explosionPower` | no       | number       | `3.0`           | How big the blast is. A creeper is 3, TNT is 4. On a creeper base it is the creeper's own blast as well, and on a ghast the fireball's                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `explosionFuse`  | no       | int, ticks   | `30`            | How long it hisses before going off. On a creeper base it is the creeper's own fuse as well                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `explosionFire`  | no       | boolean      | `false`         | Leaves fires behind                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `charges`        | no       | boolean      | `false`         | Rushes its target from a distance and hits with a heavy knockback on contact, the way a ravager does, then rests before the next run. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `pounces`        | no       | boolean      | `false`         | Crouches, then leaps onto its target in an arc and strikes on landing, the way a fox does. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `sniffs`         | no       | int, blocks  | `0`             | Hears players moving within that many blocks, walls or not, and walks to where it heard them; a sneaking or standing player is not heard, and one it then sees becomes its target. `0` does not listen. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `fleesWhenHurt`  | no       | 0.0 to 1.0   | `0`             | Breaks off and runs from whoever it is fighting while its health is under that fraction, and comes back once above it. `0` never flees. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `sleepsByDay`    | no       | boolean      | `false`         | Finds shade by day and stands still there until night or until something attacks it. While it rests it lies on its side                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `home`           | no       | int, blocks  | `0`             | Keeps to that many blocks around the spot it first stood on, wandering inside it and walking back when it strays. `0` roams freely                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `patrols`        | no       | boolean      | `false`         | Walks the land in long legs with others of its kind following a leader, the way a pillager patrol does. A group that spawns together picks one leader; the rest keep within a few blocks of it, and when the leader takes a target they all do. A follower that loses its leader takes the lead itself. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `swoops`         | no       | boolean      | `false`         | Circles above its target and dives through it, striking on the pass, the way a phantom does. The variant is given a flying helper, so it flies while it hunts and settles to the ground when idle; it needs a base that is a creature, a parrot for one, and a bat is not. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `gusts`          | no       | boolean      | `false`         | Winds up and lets loose a blast of wind at its target from a distance, throwing everything near the target back and up, the way a breeze's wind charge does. Needs `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `gustPower`      | no       | float        | `1.5`           | How hard a gust throws. A hit from a mob is 0.4, a strong knockback enchantment about 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `digs`           | no       | boolean      | `false`         | Digs through whatever stands between it and its target, with the tool in its hand: a shovel through dirt, sand and gravel, a pickaxe through stone, an axe through wood, and only what that tool's material can break, so a wooden pickaxe never opens iron ore and nothing opens obsidian short of diamond. A block takes as long as it would for a player with that tool, drops what it would, and wears the tool. Give it the tool with `equipment`; bare-handed it digs nothing, and it digs nothing where `mobGriefing` is off. It never looks for a way around: with a target it walks straight at it and digs whatever stands in the way, and where the tool cannot open the block it stands and pushes. Needs `hostile`. It takes its targets without needing to see them, since what it digs toward is by nature behind something |
 
 **Throwing instead of charging.** `explodes` sends a creature in to blow itself up. `throws` is the other temperament: it keeps its distance, throws whatever is in its main hand at what it is fighting, and if that happens to be TNT it lights it, throws it, and backs away while it burns.
 
@@ -2589,105 +2593,105 @@ How the throw itself flies is `throwPower` and `throwArc`. The first is a multip
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `tasks` | no | list | none | Any task the game has, added to the variant by name at a priority of your choosing, or taken away from what its base came with. The list below |
+| Key     | Required | Value | Default | What it does                                                                                                                                   |
+| ------- | -------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tasks` | no       | list  | none    | Any task the game has, added to the variant by name at a priority of your choosing, or taken away from what its base came with. The list below |
 
 The list is applied after `hostile`, `passive` and the behaviors above have done their work, so it has the last word. Tasks that move the body lock each other out: one only runs when nothing ahead of it in priority is moving the creature, and the attack a monster comes with sits at 2, so a leap or a flee on a zombie needs priority 1 or it never gets a turn; the spider and the wolf keep their leap ahead of their attack for the same reason. A task the base already runs is added a second time rather than replaced; drop the old one first. Some tasks only make sense on a base that has what they drive: a bow fight needs a base that shoots, sitting needs a base that can be tamed, and trading needs a villager. Ask for one on a base that cannot carry it and the log says which base it needs, and the variant does without it.
 
-| Key | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `priority` | int | required | Where it sits among the base's tasks. Lower runs first |
-| `speed` | number | the task's usual | How fast it moves while the task runs, as a multiplier on its walking speed |
-| `nearSpeed` | number | `1.2` | `avoidEntity`: the multiplier once the thing it avoids is close |
-| `distance` | number, blocks | the task's usual | How far it looks, follows, shoots or keeps away |
-| `near` | number, blocks | the task's usual | `follow`, `followOwner`, `followOwnerFlying`: how close it comes before it stops |
-| `chance` | number | the task's usual | `wander`: one roll in that many ticks; `wanderAvoidWater`: the odds, 0 to 1, of leaving cover; `watchClosest`, `watchClosest2`: the odds, 0 to 1, of looking each tick |
-| `leap` | number | `0.4` | `leapAtTarget`: how high the leap goes |
-| `cooldown` | int, ticks | `20` | `attackRanged`, `attackRangedBow`: ticks between shots |
-| `entity` | entity name | none | Which entity the task looks for, avoids, watches or breeds with. `minecraft:player` is understood |
-| `items` | list of item names | none | `tempt`: what a player holds out |
-| `sight` | boolean | `true` | `nearestAttackableTarget`, `targetNonTamed`: only what it can see |
-| `nearby` | boolean | `false` | `nearestAttackableTarget`: only what is within its own follow range |
-| `help` | boolean | `false` | `hurtByTarget`: others of its kind nearby join in |
-| `memory` | boolean | `false` | `attackMelee`, `zombieAttack`: keeps after a target it lost sight of |
-| `close` | boolean | `false` | `openDoor`: closes the door behind it |
-| `nocturnal` | boolean | `false` | `moveThroughVillage`: only at night |
-| `scared` | boolean | `false` | `tempt`: a player moving too fast breaks the spell |
+| Key         | Type               | Default          | What it does                                                                                                                                                           |
+| ----------- | ------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `priority`  | int                | required         | Where it sits among the base's tasks. Lower runs first                                                                                                                 |
+| `speed`     | number             | the task's usual | How fast it moves while the task runs, as a multiplier on its walking speed                                                                                            |
+| `nearSpeed` | number             | `1.2`            | `avoidEntity`: the multiplier once the thing it avoids is close                                                                                                        |
+| `distance`  | number, blocks     | the task's usual | How far it looks, follows, shoots or keeps away                                                                                                                        |
+| `near`      | number, blocks     | the task's usual | `follow`, `followOwner`, `followOwnerFlying`: how close it comes before it stops                                                                                       |
+| `chance`    | number             | the task's usual | `wander`: one roll in that many ticks; `wanderAvoidWater`: the odds, 0 to 1, of leaving cover; `watchClosest`, `watchClosest2`: the odds, 0 to 1, of looking each tick |
+| `leap`      | number             | `0.4`            | `leapAtTarget`: how high the leap goes                                                                                                                                 |
+| `cooldown`  | int, ticks         | `20`             | `attackRanged`, `attackRangedBow`: ticks between shots                                                                                                                 |
+| `entity`    | entity name        | none             | Which entity the task looks for, avoids, watches or breeds with. `minecraft:player` is understood                                                                      |
+| `items`     | list of item names | none             | `tempt`: what a player holds out                                                                                                                                       |
+| `sight`     | boolean            | `true`           | `nearestAttackableTarget`, `targetNonTamed`: only what it can see                                                                                                      |
+| `nearby`    | boolean            | `false`          | `nearestAttackableTarget`: only what is within its own follow range                                                                                                    |
+| `help`      | boolean            | `false`          | `hurtByTarget`: others of its kind nearby join in                                                                                                                      |
+| `memory`    | boolean            | `false`          | `attackMelee`, `zombieAttack`: keeps after a target it lost sight of                                                                                                   |
+| `close`     | boolean            | `false`          | `openDoor`: closes the door behind it                                                                                                                                  |
+| `nocturnal` | boolean            | `false`          | `moveThroughVillage`: only at night                                                                                                                                    |
+| `scared`    | boolean            | `false`          | `tempt`: a player moving too fast breaks the spell                                                                                                                     |
 
 The `List` column says where the task lives. `tasks` is what the creature does; `targets` is how it picks what to go after, and a target task without a matching attack does nothing on its own.
 
-| Task | Needs | List | Reads | What it does |
-| --- | --- | --- | --- | --- |
-| `attackMelee` | a walking creature | `tasks` | `speed`, `memory` | Walks up to its target and hits it |
-| `attackRanged` | a base that shoots | `tasks` | `speed`, `cooldown`, `distance` | Keeps its distance and shoots whatever its base shoots |
-| `attackRangedBow` | a monster that shoots | `tasks` | `speed`, `cooldown`, `distance` | The skeleton's bow fight: strafes, draws and looses |
-| `avoidEntity` | a walking creature | `tasks` | `entity`, `distance`, `speed`, `nearSpeed` | Runs from the named entity when it comes within `distance` |
-| `beg` | a wolf | `tasks` | `distance` | Begs from a player holding out food |
-| `breakDoor` | any base | `tasks` |  | Breaks the wooden doors in its way, on hard difficulty |
-| `creeperSwell` | a creeper | `tasks` |  | Hisses and goes off next to its target |
-| `defendVillage` | an iron golem | `targets` |  | Goes after whoever attacked a villager |
-| `eatGrass` | any base | `tasks` |  | Eats grass, the way a sheep does |
-| `findEntityNearest` | any base | `targets` | `entity` | Targets the nearest of the named entity, the way a slime or ghast targets |
-| `findEntityNearestPlayer` | any base | `targets` |  | Targets the nearest player it can reach |
-| `fleeSun` | a walking creature | `tasks` | `speed` | Looks for shade when the sun is on it |
-| `follow` | any base | `tasks` | `speed`, `near`, `distance` | Follows others of its own kind |
-| `followGolem` | a villager | `tasks` |  | Follows an iron golem holding out a poppy |
-| `followOwner` | a tameable base | `tasks` | `speed`, `near`, `distance` | Follows its owner, and teleports after them when far behind |
-| `followOwnerFlying` | a tameable base | `tasks` | `speed`, `near`, `distance` | The same, flying |
-| `followParent` | an animal | `tasks` | `speed` | A child keeps close to a grown one of its kind |
-| `harvestFarmland` | a villager | `tasks` | `speed` | Harvests ripe crops and replants them |
-| `hurtByTarget` | a walking creature | `targets` | `help` | Fights back at whatever hit it |
-| `landOnOwnersShoulder` | a parrot | `tasks` |  | Rides on its owner's shoulder |
-| `leapAtTarget` | any base | `tasks` | `leap` | Leaps at its target from close by |
-| `llamaFollowCaravan` | a llama | `tasks` | `speed` | Falls in behind a led llama |
-| `lookAtTradePlayer` | a villager | `tasks` |  | Faces the player it is trading with |
-| `lookAtVillager` | an iron golem | `tasks` |  | Looks at villagers |
-| `lookIdle` | any base | `tasks` |  | Looks about now and then |
-| `mate` | an animal | `tasks` | `speed`, `entity` | Breeds when in love, with its own kind or the `entity` named |
-| `moveIndoors` | a walking creature | `tasks` |  | Goes inside a village house at nightfall |
-| `moveThroughVillage` | a walking creature | `tasks` | `speed`, `nocturnal` | Walks the village paths from door to door |
-| `moveTowardsRestriction` | a walking creature | `tasks` | `speed` | Walks back toward its home spot when it strays |
-| `moveTowardsTarget` | a walking creature | `tasks` | `speed`, `distance` | Closes in on a target that is far off |
-| `nearestAttackableTarget` | a walking creature | `targets` | `entity`, `sight`, `nearby` | Targets the nearest of the named entity |
-| `ocelotAttack` | any base | `tasks` |  | The cat's stalk and pounce |
-| `ocelotSit` | an ocelot | `tasks` | `speed` | Sits on chests, beds and lit furnaces |
-| `openDoor` | any base | `tasks` | `close` | Opens the wooden doors it walks through |
-| `ownerHurtByTarget` | a tameable base | `targets` |  | Goes after whatever hit its owner |
-| `ownerHurtTarget` | a tameable base | `targets` |  | Goes after whatever its owner hit |
-| `panic` | a walking creature | `tasks` | `speed` | Runs when hurt or on fire |
-| `play` | a villager | `tasks` | `speed` | Children play tag with each other |
-| `restrictOpenDoor` | a walking creature | `tasks` |  | Stays inside the village doors at night |
-| `restrictSun` | a walking creature | `tasks` |  | Keeps to the shade by day |
-| `runAroundLikeCrazy` | a horse, donkey, mule or llama | `tasks` | `speed` | Bucks a rider it does not trust yet |
-| `sit` | a tameable base | `tasks` |  | Sits when told to |
-| `skeletonRiders` | a skeleton horse | `tasks` |  | Calls in skeleton riders when a player comes near, the trap horse |
-| `swimming` | any base | `tasks` |  | Keeps its head above water |
-| `targetNonTamed` | a tameable base | `targets` | `entity`, `sight` | Targets the named entity while it is not yet tamed |
-| `tempt` | a walking creature | `tasks` | `items`, `speed`, `scared` | Follows a player holding out one of the `items` |
-| `tradePlayer` | a villager | `tasks` |  | Stands still while trading |
-| `villagerInteract` | a villager | `tasks` |  | Chats with other villagers |
-| `villagerMate` | a villager | `tasks` |  | Breeds when the village has room |
-| `wander` | a walking creature | `tasks` | `speed`, `chance` | Wanders about |
-| `wanderAvoidWater` | a walking creature | `tasks` | `speed`, `chance` | Wanders, keeping out of the water |
-| `wanderAvoidWaterFlying` | a walking creature | `tasks` | `speed` | Wanders in the air and perches in trees |
-| `watchClosest` | any base | `tasks` | `entity`, `distance`, `chance` | Looks at the nearest of the named entity, the player if none is named |
-| `watchClosest2` | any base | `tasks` | `entity`, `distance`, `chance` | The same, kept up while another task runs |
-| `zombieAttack` | a zombie | `tasks` | `speed`, `memory` | The zombie's attack, arms raised |
+| Task                      | Needs                          | List      | Reads                                      | What it does                                                              |
+| ------------------------- | ------------------------------ | --------- | ------------------------------------------ | ------------------------------------------------------------------------- |
+| `attackMelee`             | a walking creature             | `tasks`   | `speed`, `memory`                          | Walks up to its target and hits it                                        |
+| `attackRanged`            | a base that shoots             | `tasks`   | `speed`, `cooldown`, `distance`            | Keeps its distance and shoots whatever its base shoots                    |
+| `attackRangedBow`         | a monster that shoots          | `tasks`   | `speed`, `cooldown`, `distance`            | The skeleton's bow fight: strafes, draws and looses                       |
+| `avoidEntity`             | a walking creature             | `tasks`   | `entity`, `distance`, `speed`, `nearSpeed` | Runs from the named entity when it comes within `distance`                |
+| `beg`                     | a wolf                         | `tasks`   | `distance`                                 | Begs from a player holding out food                                       |
+| `breakDoor`               | any base                       | `tasks`   |                                            | Breaks the wooden doors in its way, on hard difficulty                    |
+| `creeperSwell`            | a creeper                      | `tasks`   |                                            | Hisses and goes off next to its target                                    |
+| `defendVillage`           | an iron golem                  | `targets` |                                            | Goes after whoever attacked a villager                                    |
+| `eatGrass`                | any base                       | `tasks`   |                                            | Eats grass, the way a sheep does                                          |
+| `findEntityNearest`       | any base                       | `targets` | `entity`                                   | Targets the nearest of the named entity, the way a slime or ghast targets |
+| `findEntityNearestPlayer` | any base                       | `targets` |                                            | Targets the nearest player it can reach                                   |
+| `fleeSun`                 | a walking creature             | `tasks`   | `speed`                                    | Looks for shade when the sun is on it                                     |
+| `follow`                  | any base                       | `tasks`   | `speed`, `near`, `distance`                | Follows others of its own kind                                            |
+| `followGolem`             | a villager                     | `tasks`   |                                            | Follows an iron golem holding out a poppy                                 |
+| `followOwner`             | a tameable base                | `tasks`   | `speed`, `near`, `distance`                | Follows its owner, and teleports after them when far behind               |
+| `followOwnerFlying`       | a tameable base                | `tasks`   | `speed`, `near`, `distance`                | The same, flying                                                          |
+| `followParent`            | an animal                      | `tasks`   | `speed`                                    | A child keeps close to a grown one of its kind                            |
+| `harvestFarmland`         | a villager                     | `tasks`   | `speed`                                    | Harvests ripe crops and replants them                                     |
+| `hurtByTarget`            | a walking creature             | `targets` | `help`                                     | Fights back at whatever hit it                                            |
+| `landOnOwnersShoulder`    | a parrot                       | `tasks`   |                                            | Rides on its owner's shoulder                                             |
+| `leapAtTarget`            | any base                       | `tasks`   | `leap`                                     | Leaps at its target from close by                                         |
+| `llamaFollowCaravan`      | a llama                        | `tasks`   | `speed`                                    | Falls in behind a led llama                                               |
+| `lookAtTradePlayer`       | a villager                     | `tasks`   |                                            | Faces the player it is trading with                                       |
+| `lookAtVillager`          | an iron golem                  | `tasks`   |                                            | Looks at villagers                                                        |
+| `lookIdle`                | any base                       | `tasks`   |                                            | Looks about now and then                                                  |
+| `mate`                    | an animal                      | `tasks`   | `speed`, `entity`                          | Breeds when in love, with its own kind or the `entity` named              |
+| `moveIndoors`             | a walking creature             | `tasks`   |                                            | Goes inside a village house at nightfall                                  |
+| `moveThroughVillage`      | a walking creature             | `tasks`   | `speed`, `nocturnal`                       | Walks the village paths from door to door                                 |
+| `moveTowardsRestriction`  | a walking creature             | `tasks`   | `speed`                                    | Walks back toward its home spot when it strays                            |
+| `moveTowardsTarget`       | a walking creature             | `tasks`   | `speed`, `distance`                        | Closes in on a target that is far off                                     |
+| `nearestAttackableTarget` | a walking creature             | `targets` | `entity`, `sight`, `nearby`                | Targets the nearest of the named entity                                   |
+| `ocelotAttack`            | any base                       | `tasks`   |                                            | The cat's stalk and pounce                                                |
+| `ocelotSit`               | an ocelot                      | `tasks`   | `speed`                                    | Sits on chests, beds and lit furnaces                                     |
+| `openDoor`                | any base                       | `tasks`   | `close`                                    | Opens the wooden doors it walks through                                   |
+| `ownerHurtByTarget`       | a tameable base                | `targets` |                                            | Goes after whatever hit its owner                                         |
+| `ownerHurtTarget`         | a tameable base                | `targets` |                                            | Goes after whatever its owner hit                                         |
+| `panic`                   | a walking creature             | `tasks`   | `speed`                                    | Runs when hurt or on fire                                                 |
+| `play`                    | a villager                     | `tasks`   | `speed`                                    | Children play tag with each other                                         |
+| `restrictOpenDoor`        | a walking creature             | `tasks`   |                                            | Stays inside the village doors at night                                   |
+| `restrictSun`             | a walking creature             | `tasks`   |                                            | Keeps to the shade by day                                                 |
+| `runAroundLikeCrazy`      | a horse, donkey, mule or llama | `tasks`   | `speed`                                    | Bucks a rider it does not trust yet                                       |
+| `sit`                     | a tameable base                | `tasks`   |                                            | Sits when told to                                                         |
+| `skeletonRiders`          | a skeleton horse               | `tasks`   |                                            | Calls in skeleton riders when a player comes near, the trap horse         |
+| `swimming`                | any base                       | `tasks`   |                                            | Keeps its head above water                                                |
+| `targetNonTamed`          | a tameable base                | `targets` | `entity`, `sight`                          | Targets the named entity while it is not yet tamed                        |
+| `tempt`                   | a walking creature             | `tasks`   | `items`, `speed`, `scared`                 | Follows a player holding out one of the `items`                           |
+| `tradePlayer`             | a villager                     | `tasks`   |                                            | Stands still while trading                                                |
+| `villagerInteract`        | a villager                     | `tasks`   |                                            | Chats with other villagers                                                |
+| `villagerMate`            | a villager                     | `tasks`   |                                            | Breeds when the village has room                                          |
+| `wander`                  | a walking creature             | `tasks`   | `speed`, `chance`                          | Wanders about                                                             |
+| `wanderAvoidWater`        | a walking creature             | `tasks`   | `speed`, `chance`                          | Wanders, keeping out of the water                                         |
+| `wanderAvoidWaterFlying`  | a walking creature             | `tasks`   | `speed`                                    | Wanders in the air and perches in trees                                   |
+| `watchClosest`            | any base                       | `tasks`   | `entity`, `distance`, `chance`             | Looks at the nearest of the named entity, the player if none is named     |
+| `watchClosest2`           | any base                       | `tasks`   | `entity`, `distance`, `chance`             | The same, kept up while another task runs                                 |
+| `zombieAttack`            | a zombie                       | `tasks`   | `speed`, `memory`                          | The zombie's attack, arms raised                                          |
 
 ### Spawning and despawning
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `spawns` | no | list of objects | none | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses |
-| `biomes` | no | list of biome names | every biome | Where those spawns are added |
-| `biomeTypes` | no | list of dictionary types | none | The same, by type |
-| `ignoresSpawnRules` | no | boolean | `false` | Spawns wherever it is put, ignoring the rules it inherited |
-| `despawns` | no | boolean | `true` | Off, it stays even when it would normally be cleared away |
-| `despawnAfter` | no | int, seconds | none | It goes quietly once it has been in the world this long, however far away anyone is |
-| `persistent` | no | boolean | `false` | Never despawns |
+| Key                 | Required | Value                    | Default     | What it does                                                                        |
+| ------------------- | -------- | ------------------------ | ----------- | ----------------------------------------------------------------------------------- |
+| `spawns`            | no       | list of objects          | none        | `creatureType`, `weight`, `min` and `max`, the same shape a biome uses              |
+| `biomes`            | no       | list of biome names      | every biome | Where those spawns are added                                                        |
+| `biomeTypes`        | no       | list of dictionary types | none        | The same, by type                                                                   |
+| `ignoresSpawnRules` | no       | boolean                  | `false`     | Spawns wherever it is put, ignoring the rules it inherited                          |
+| `despawns`          | no       | boolean                  | `true`      | Off, it stays even when it would normally be cleared away                           |
+| `despawnAfter`      | no       | int, seconds             | none        | It goes quietly once it has been in the world this long, however far away anyone is |
+| `persistent`        | no       | boolean                  | `false`     | Never despawns                                                                      |
 
 **A creature with a shelf life.** `despawnAfter` counts in seconds from the moment a creature first enters the world and takes it away quietly when the time is up: no death, no drops, no sound, exactly as if it had wandered off and been cleared. The clock is written into the creature itself, so it keeps running across a save and reload rather than starting over each time a chunk comes back.
 
@@ -2699,11 +2703,11 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 
 *entity variants*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `trackingRange` | no | int | `80` | How far away the client is told about it |
-| `trackVelocity` | no | boolean | `true` | Send its speed as well as its position. Off saves traffic on things that barely move |
-| `trackingFrequency` | no | int | `3` | How often, in ticks |
+| Key                 | Required | Value   | Default | What it does                                                                         |
+| ------------------- | -------- | ------- | ------- | ------------------------------------------------------------------------------------ |
+| `trackingRange`     | no       | int     | `80`    | How far away the client is told about it                                             |
+| `trackVelocity`     | no       | boolean | `true`  | Send its speed as well as its position. Off saves traffic on things that barely move |
+| `trackingFrequency` | no       | int     | `3`     | How often, in ticks                                                                  |
 
 ## Exposures
 
@@ -2713,12 +2717,13 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 
 The file's path is the hazard's name, and its death message comes from the lang key `death.attack.rdpl.<file name>`.
 
-A pack-defined hazard: named blocks and items expose players standing near them or carrying them, in levels, each level applying effects and periodic damage. One file defines one hazard; several run side by side. The per-key defaults are the numbers Immersive World's radiation uses.
+A pack-defined hazard: named blocks, items and dimensions expose players standing near those blocks, carrying those items or staying in those dimensions, in levels, each level applying effects and periodic damage. One file defines one hazard; several run side by side. The per-key defaults are the numbers Immersive World's radiation uses.
 
 ```json
 {
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
+  "dimensions": [ "-1" ],
   "immunity": "mypack:antirad",
   "scanInterval": 20,
   "range": 10,
@@ -2734,16 +2739,17 @@ A pack-defined hazard: named blocks and items expose players standing near them 
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `blocks` | one of the two | list of `block` or `block=level` | | Blocks that expose a player standing near them. No level means 1 |
-| `items` | one of the two | list of `item` or `item=level` | | Items that expose a player carrying or wearing them |
-| `levels` | yes | list of levels | | The severity ladder, first entry is level 1. A player gets the highest level any source reaches |
-| `immunity` | no | potion name | none | An effect whose bearer is not exposed at all |
-| `scanInterval` | no | ticks | `20` | How often surroundings and inventory are checked |
-| `range` | no | blocks | `10` | How far a block's exposure reaches, as a sphere |
-| `sourcesForNextLevel` | no | int | `0` | This many nearby sources of one level push it one level further. `0` turns that off |
-| `skipsCreative` | no | boolean | `true` | Creative and spectator players are left alone |
+| Key                   | Required         | Value                            | Default | What it does                                                                                    |
+| --------------------- | ---------------- | -------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `blocks`              | one of the three | list of `block` or `block=level` |         | Blocks that expose a player standing near them. No level means 1                                |
+| `items`               | one of the three | list of `item` or `item=level`   |         | Items that expose a player carrying or wearing them                                             |
+| `dimensions`          | one of the three | list of `dim` or `dim=level`     |         | Numeric dimension ids that expose any player in them                                            |
+| `levels`              | yes              | list of levels                   |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches |
+| `immunity`            | no               | potion name                      | none    | An effect whose bearer is not exposed at all                                                    |
+| `scanInterval`        | no               | ticks                            | `20`    | How often surroundings and inventory are checked                                                |
+| `range`               | no               | blocks                           | `10`    | How far a block's exposure reaches, as a sphere                                                 |
+| `sourcesForNextLevel` | no               | int                              | `0`     | This many nearby sources of one level push it one level further. `0` turns that off             |
+| `skipsCreative`       | no               | boolean                          | `true`  | Creative and spectator players are left alone                                                   |
 
 ### Levels
 
@@ -2751,12 +2757,12 @@ A pack-defined hazard: named blocks and items expose players standing near them 
 
 Each level:
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `effect` | yes | potion name | | The effect that marks the level on the player. Its presence drives the damage, so it should be one the pack defines for this |
-| `damage` | no | half-hearts | `0` | Damage dealt every `damageInterval` ticks while the level holds. It ignores armor |
-| `damageInterval` | no | ticks | `160` | How often that damage lands |
-| `effects` | no | list of effects | none | Extra effects applied alongside, the same shape potion types use. Without a `duration` they follow the scan window |
+| Key              | Required | Value           | Default | What it does                                                                                                                 |
+| ---------------- | -------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `effect`         | yes      | potion name     |         | The effect that marks the level on the player. Its presence drives the damage, so it should be one the pack defines for this |
+| `damage`         | no       | half-hearts     | `0`     | Damage dealt every `damageInterval` ticks while the level holds. It ignores armor                                            |
+| `damageInterval` | no       | ticks           | `160`   | How often that damage lands                                                                                                  |
+| `effects`        | no       | list of effects | none    | Extra effects applied alongside, the same shape potion types use. Without a `duration` they follow the scan window           |
 
 The level effects last slightly past the next scan, so walking away lets them lapse on their own. Death by exposure damage reads its message from `death.attack.rdpl.<file name>`, which the pack's lang files supply.
 
@@ -2793,14 +2799,14 @@ Gathers a world's shape into one file, so a pack ships a whole world at once rat
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `name` | no | string | the file name | Shown in the log and in reports |
-| `default` | no | biome name or `void` | `void` | What fills a biome that blocking removed |
-| `roles` | no | object of role to biome | none | Biomes filling particular roles, such as ocean or river |
-| `structures` | no | object of [structure name](#value-lists) to boolean | none | Vanilla structures switched on or off |
-| `settings` | no | object | none | Config values the template sets |
-| `dimensions` | no | list of ints | every dimension | Which dimensions it applies to |
+| Key          | Required | Value                                               | Default         | What it does                                            |
+| ------------ | -------- | --------------------------------------------------- | --------------- | ------------------------------------------------------- |
+| `name`       | no       | string                                              | the file name   | Shown in the log and in reports                         |
+| `default`    | no       | biome name or `void`                                | `void`          | What fills a biome that blocking removed                |
+| `roles`      | no       | object of role to biome                             | none            | Biomes filling particular roles, such as ocean or river |
+| `structures` | no       | object of [structure name](#value-lists) to boolean | none            | Vanilla structures switched on or off                   |
+| `settings`   | no       | object                                              | none            | Config values the template sets                         |
+| `dimensions` | no       | list of ints                                        | every dimension | Which dimensions it applies to                          |
 
 `settings` uses the same key names as the config, so there is no translation table to learn.
 
@@ -2902,51 +2908,51 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 *biomes*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `name` | no | string | the file name | Name shown to the player |
-| `id` | no | int | assigned for you | Fixed biome id. Only set this if you need it stable |
-| `types` | no | list of dictionary types | guessed | Registers the biome under these, such as `FOREST`, `COLD`, `WET` or `NETHER`, so other mods find it. Left out, Forge best-guesses them from the biome's tree count, height, temperature, rainfall and ground block |
-| `baseBiome` | no | biome name | none | An existing biome to copy settings from |
-| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+| Key         | Required | Value                              | Default          | What it does                                                                                                                                                                                                       |
+| ----------- | -------- | ---------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`      | no       | string                             | the file name    | Name shown to the player                                                                                                                                                                                           |
+| `id`        | no       | int                                | assigned for you | Fixed biome id. Only set this if you need it stable                                                                                                                                                                |
+| `types`     | no       | list of dictionary types           | guessed          | Registers the biome under these, such as `FOREST`, `COLD`, `WET` or `NETHER`, so other mods find it. Left out, Forge best-guesses them from the biome's tree count, height, temperature, rainfall and ground block |
+| `baseBiome` | no       | biome name                         | none             | An existing biome to copy settings from                                                                                                                                                                            |
+| `requires`  | no       | list of mod ids or pack namespaces | none             | The file is skipped unless all are present                                                                                                                                                                         |
 
 ### Climate
 
 *biomes*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `temperature` | no | float | `0.5` | Below 0.15 snows, above 1.0 is desert-hot |
-| `rainfall` | no | float, 0 to 1 | `0.5` | How wet it is |
-| `rain` | no | boolean | `true` | Whether weather happens at all |
-| `snow` | no | boolean | `false` | Whether rain falls as snow |
+| Key           | Required | Value         | Default | What it does                              |
+| ------------- | -------- | ------------- | ------- | ----------------------------------------- |
+| `temperature` | no       | float         | `0.5`   | Below 0.15 snows, above 1.0 is desert-hot |
+| `rainfall`    | no       | float, 0 to 1 | `0.5`   | How wet it is                             |
+| `rain`        | no       | boolean       | `true`  | Whether weather happens at all            |
+| `snow`        | no       | boolean       | `false` | Whether rain falls as snow                |
 
 ### Ground and colors
 
 *biomes*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `baseHeight` | no | float | `0.1` | Terrain height. Sea level is 0, plains 0.125 |
-| `heightVariation` | no | float | `0.2` | How hilly it is |
-| `topBlock` | no | block name | grass | The surface block |
-| `fillerBlock` | no | block name | dirt | Just below the surface |
-| `stoneBlock` | no | block name | stone | The bulk of the ground |
-| `waterColor` | no | hex color | `FFFFFF` | Water tint |
-| `grassColor` | no | hex color | from the climate | Grass tint, in place of the color temperature and rainfall would give |
-| `foliageColor` | no | hex color | from the climate | Leaf tint, the same way |
+| Key               | Required | Value      | Default          | What it does                                                          |
+| ----------------- | -------- | ---------- | ---------------- | --------------------------------------------------------------------- |
+| `baseHeight`      | no       | float      | `0.1`            | Terrain height. Sea level is 0, plains 0.125                          |
+| `heightVariation` | no       | float      | `0.2`            | How hilly it is                                                       |
+| `topBlock`        | no       | block name | grass            | The surface block                                                     |
+| `fillerBlock`     | no       | block name | dirt             | Just below the surface                                                |
+| `stoneBlock`      | no       | block name | stone            | The bulk of the ground                                                |
+| `waterColor`      | no       | hex color  | `FFFFFF`         | Water tint                                                            |
+| `grassColor`      | no       | hex color  | from the climate | Grass tint, in place of the color temperature and rainfall would give |
+| `foliageColor`    | no       | hex color  | from the climate | Leaf tint, the same way                                               |
 
 ### Decoration and spawns
 
 *biomes*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `decoration` | no | object | vanilla counts | Per-chunk counts. The names it reads are `trees`, `flowers`, `grass`, `deadbush`, `mushrooms`, `bigmushrooms`, `reeds`, `cacti`, `sand`, `gravel`, `clay` and `waterlily`, plus `falls`, where above zero means lakes and springs generate, and `extratreechance`, a percentage chance of one tree more. Any other name is logged and ignored |
-| `spawns` | no | list of objects | vanilla list | See below |
-| `keepDefaultSpawns` | no | boolean | `false` | Keep vanilla's list alongside yours |
-| `spawnChance` | no | float, below 1 | `0.1` | How likely another herd is placed as the land is first made. The game keeps rolling for as long as it succeeds, so 1 never stops and fills the world until it runs out of room. Anything at or above 0.99 is refused and 0.99 used |
-| `spawnRates` | no | object of `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` to a multiplier | none | How often hostile mobs spawn here, in place of the global settings. See below |
+| Key                 | Required | Value                                                                                        | Default        | What it does                                                                                                                                                                                                                                                                                                                                  |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `decoration`        | no       | object                                                                                       | vanilla counts | Per-chunk counts. The names it reads are `trees`, `flowers`, `grass`, `deadbush`, `mushrooms`, `bigmushrooms`, `reeds`, `cacti`, `sand`, `gravel`, `clay` and `waterlily`, plus `falls`, where above zero means lakes and springs generate, and `extratreechance`, a percentage chance of one tree more. Any other name is logged and ignored |
+| `spawns`            | no       | list of objects                                                                              | vanilla list   | See below                                                                                                                                                                                                                                                                                                                                     |
+| `keepDefaultSpawns` | no       | boolean                                                                                      | `false`        | Keep vanilla's list alongside yours                                                                                                                                                                                                                                                                                                           |
+| `spawnChance`       | no       | float, below 1                                                                               | `0.1`          | How likely another herd is placed as the land is first made. The game keeps rolling for as long as it succeeds, so 1 never stops and fills the world until it runs out of room. Anything at or above 0.99 is refused and 0.99 used                                                                                                            |
+| `spawnRates`        | no       | object of `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` to a multiplier | none           | How often hostile mobs spawn here, in place of the global settings. See below                                                                                                                                                                                                                                                                 |
 
 A spawn entry takes `entity` (required), `type` (`creature`, one of the [creature types](#value-lists)), `weight` (`10`), `min` (`1`) and `max` (`min`).
 
@@ -2956,34 +2962,34 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of the [creatur
 
 *biomes*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `placement` | no | object | none | Where it generates. See below |
-| `villageType` | no | `oak`, `sandstone`, `acacia` or `spruce` | none | What a village standing here is built from. Empty builds with oak, as it would without the key |
+| Key           | Required | Value                                    | Default | What it does                                                                                   |
+| ------------- | -------- | ---------------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `placement`   | no       | object                                   | none    | Where it generates. See below                                                                  |
+| `villageType` | no       | `oak`, `sandstone`, `acacia` or `spruce` | none    | What a village standing here is built from. Empty builds with oak, as it would without the key |
 
 `placement`:
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `climate` | no | string | none | Which vanilla climate group it joins |
-| `weight` | no | int | `10` | How often it is chosen against its neighbors |
-| `villages` | no | boolean | `false` | Villages may generate |
-| `villageSpawn` | no | boolean | `true` | Villagers may spawn in them |
-| `strongholds` | no | boolean | `false` | Strongholds may generate |
-| `playerSpawn` | no | boolean | `false` | The world spawn may be placed here |
+| Key            | Required | Value   | Default | What it does                                 |
+| -------------- | -------- | ------- | ------- | -------------------------------------------- |
+| `climate`      | no       | string  | none    | Which vanilla climate group it joins         |
+| `weight`       | no       | int     | `10`    | How often it is chosen against its neighbors |
+| `villages`     | no       | boolean | `false` | Villages may generate                        |
+| `villageSpawn` | no       | boolean | `true`  | Villagers may spawn in them                  |
+| `strongholds`  | no       | boolean | `false` | Strongholds may generate                     |
+| `playerSpawn`  | no       | boolean | `false` | The world spawn may be placed here           |
 
 ### Height bands and sky islands
 
 *biomes*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `minHeight` | no | int | none | Lowest y this biome takes over as a 3D biome. Setting either height turns the biome into a band: the column keeps its own biome outside it, and inside it every 4 by 4 by 4 cell of the world reports this one. Rubic worlds only, and applied as land is made, so existing land keeps what it had |
-| `maxHeight` | no | int | none | Highest y of that band |
-| `replaces` | no | list of biome names | every biome | Restricts the band to columns whose own biome is named here, so an alpine band can sit over mountains and nothing else |
-| `skyStone` | no | block name | the world setting | The block sky islands are made of under their surface where this biome applies. On a band, `topBlock` and `fillerBlock` paint the island surface with it, so a band is how one stretch of sky gets islands of its own |
-| `skyIslands` | no | float, `-1` to `1` | the world setting | The island threshold where this biome applies. Lower gathers more land |
-| `skyThickness` | no | float, `0` or more | the world setting | How solid the islands are where this biome applies |
+| Key            | Required | Value               | Default           | What it does                                                                                                                                                                                                                                                                                       |
+| -------------- | -------- | ------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minHeight`    | no       | int                 | none              | Lowest y this biome takes over as a 3D biome. Setting either height turns the biome into a band: the column keeps its own biome outside it, and inside it every 4 by 4 by 4 cell of the world reports this one. Rubic worlds only, and applied as land is made, so existing land keeps what it had |
+| `maxHeight`    | no       | int                 | none              | Highest y of that band                                                                                                                                                                                                                                                                             |
+| `replaces`     | no       | list of biome names | every biome       | Restricts the band to columns whose own biome is named here, so an alpine band can sit over mountains and nothing else                                                                                                                                                                             |
+| `skyStone`     | no       | block name          | the world setting | The block sky islands are made of under their surface where this biome applies. On a band, `topBlock` and `fillerBlock` paint the island surface with it, so a band is how one stretch of sky gets islands of its own                                                                              |
+| `skyIslands`   | no       | float, `-1` to `1`  | the world setting | The island threshold where this biome applies. Lower gathers more land                                                                                                                                                                                                                             |
+| `skyThickness` | no       | float, `0` or more  | the world setting | How solid the islands are where this biome applies                                                                                                                                                                                                                                                 |
 
 ### Temperature by height
 
@@ -3003,11 +3009,11 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of the [creatur
 }
 ```
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `biomeTemperatureCenterY` | int | `64` | The height the curve is measured from. At or below it a biome reports its own `temperature` untouched |
+| Key                            | Value | Default     | What it does                                                                                                                                   |
+| ------------------------------ | ----- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomeTemperatureCenterY`      | int   | `64`        | The height the curve is measured from. At or below it a biome reports its own `temperature` untouched                                          |
 | `biomeTemperatureHeightFactor` | float | `-0.001667` | How much the temperature moves per block above that height, the game's own 0.05 across 30 blocks. Negative cools with altitude, positive warms |
-| `biomeTemperatureScaleMaxY` | int | `256` | The height the curve stops at, so a world taller than the game's own does not keep cooling all the way to its ceiling |
+| `biomeTemperatureScaleMaxY`    | int   | `256`       | The height the curve stops at, so a world taller than the game's own does not keep cooling all the way to its ceiling                          |
 
 ## Dimensions
 
@@ -3056,7 +3062,22 @@ Every key, shown at once. A real file writes only the ones it needs.
     "starBrightness": 0.8,
     "renderSky": true,
     "renderClouds": true,
-    "renderWeather": true
+    "renderWeather": true,
+    "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+    ],
+    "stars": { "count": 6000, "size": 0.12 }
+  },
+  "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
+  "time": { "dayLength": 36000 },
+  "weather": {
+    "precipitation": true,
+    "lightning": false,
+    "snow": false,
+    "freeze": false,
+    "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6 }
   },
   "gameRules": { "doMobSpawning": "false" }
 }
@@ -3066,63 +3087,366 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 *dimensions*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `id` | yes | int | | The dimension id. Must not clash with another mod |
-| `suffix` | no | string | `DIM_<name>` | The save folder |
-| `keepLoaded` | no | boolean | `false` | Keep it loaded when nobody is in it |
-| `gameRules` | no | object | none | Rules that apply only here |
-| `requires` | no | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+| Key          | Required | Value                              | Default      | What it does                                      |
+| ------------ | -------- | ---------------------------------- | ------------ | ------------------------------------------------- |
+| `id`         | yes      | int                                |              | The dimension id. Must not clash with another mod |
+| `suffix`     | no       | string                             | `DIM_<name>` | The save folder                                   |
+| `keepLoaded` | no       | boolean                            | `false`      | Keep it loaded when nobody is in it               |
+| `gameRules`  | no       | object                             | none         | Rules that apply only here                        |
+| `requires`   | no       | list of mod ids or pack namespaces | none         | The file is skipped unless all are present        |
 
 ### The `terrain` block
 
 *dimensions*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `type` | no | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Which generator builds it |
-| `generatorOptions` | no | string | none | The generator string, as a superflat preset uses |
-| `structures` | no | boolean | `true` | Whether vanilla structures generate |
+| Key                | Required | Value                                        | Default     | What it does                                     |
+| ------------------ | -------- | -------------------------------------------- | ----------- | ------------------------------------------------ |
+| `type`             | no       | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Which generator builds it                        |
+| `generatorOptions` | no       | string                                       | none        | The generator string, as a superflat preset uses |
+| `structures`       | no       | boolean                                      | `true`      | Whether vanilla structures generate              |
 
 ### The `biomes` block
 
 *dimensions*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `source` | no | `inherit`, `single` | `inherit` | `inherit` uses the normal biome map, `single` uses one biome everywhere |
-| `biome` | when `single` | biome name | `minecraft:plains` | Which biome that is |
+| Key      | Required      | Value               | Default            | What it does                                                            |
+| -------- | ------------- | ------------------- | ------------------ | ----------------------------------------------------------------------- |
+| `source` | no            | `inherit`, `single` | `inherit`          | `inherit` uses the normal biome map, `single` uses one biome everywhere |
+| `biome`  | when `single` | biome name          | `minecraft:plains` | Which biome that is                                                     |
 
 ### The `sky` block
 
 *dimensions*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `hasSkyLight` | no | boolean | `true` | Whether daylight reaches it |
-| `surfaceWorld` | no | boolean | `true` | Whether maps and compasses behave as in the overworld |
-| `respawn` | no | boolean | `true` | Whether players respawn here |
-| `respawnDimension` | no | int | none | Where they respawn instead |
-| `spawning` | no | boolean | `true` | Whether mobs spawn |
-| `nether` | no | boolean | `false` | Treated as the nether for portals and ceilings |
-| `beds` | no | boolean | `true` | Off, beds explode |
-| `waterVaporizes` | no | boolean | `false` | Water evaporates |
-| `cloudHeight` | no | int | `128` | Where clouds sit |
-| `cloudColor` | no | hex color | none | Cloud tint |
-| `groundLevel` | no | int | `63` | Sea level, used for the horizon and spawn searches |
-| `movementFactor` | no | float | `1.0` | Distance ratio to the overworld. The nether uses 8 |
-| `fogColor` | no | hex color | none | Fog tint |
-| `showFog` | no | boolean | `false` | Thick fog, as in the nether |
-| `skyColor` | no | hex color | none | Sky tint |
-| `fixedTime` | no | int, ticks | none | Locks the time of day |
-| `sunriseColors` | no | boolean | `true` | Whether sunrise and sunset are tinted |
-| `ambientLight` | no | float, 0 to 1 | `0.0` | Minimum light everywhere |
-| `starBrightness` | no | float, 0 to 1 | none | How bright the stars are |
-| `renderSky` | no | boolean | `true` | Off, nothing draws the sky, sun, moon or stars, leaving the fog color |
-| `renderClouds` | no | boolean | `true` | Off, no clouds are drawn |
-| `renderWeather` | no | boolean | `true` | Off, no rain or snow is drawn |
+| Key                | Required | Value           | Default | What it does                                                                                |
+| ------------------ | -------- | --------------- | ------- | ------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | no       | boolean         | `true`  | Whether daylight reaches it                                                                 |
+| `surfaceWorld`     | no       | boolean         | `true`  | Whether maps and compasses behave as in the overworld                                       |
+| `respawn`          | no       | boolean         | `true`  | Whether players respawn here                                                                |
+| `respawnDimension` | no       | int             | none    | Where they respawn instead                                                                  |
+| `spawning`         | no       | boolean         | `true`  | Whether mobs spawn                                                                          |
+| `nether`           | no       | boolean         | `false` | Treated as the nether for portals and ceilings                                              |
+| `beds`             | no       | boolean         | `true`  | Off, beds explode                                                                           |
+| `waterVaporizes`   | no       | boolean         | `false` | Water evaporates                                                                            |
+| `cloudHeight`      | no       | int             | `128`   | Where clouds sit                                                                            |
+| `cloudColor`       | no       | hex color       | none    | Cloud tint                                                                                  |
+| `groundLevel`      | no       | int             | `63`    | Sea level, used for the horizon and spawn searches                                          |
+| `movementFactor`   | no       | float           | `1.0`   | Distance ratio to the overworld. The nether uses 8                                          |
+| `fogColor`         | no       | hex color       | none    | Fog tint at noon. It darkens at night as vanilla fog does                                   |
+| `showFog`          | no       | boolean         | `false` | Thick fog, as in the nether                                                                 |
+| `skyColor`         | no       | hex color       | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does |
+| `fixedTime`        | no       | int, ticks      | none    | Locks the time of day                                                                       |
+| `sunriseColors`    | no       | boolean         | `true`  | Whether sunrise and sunset are tinted                                                       |
+| `ambientLight`     | no       | float, 0 to 1   | `0.0`   | Minimum light everywhere                                                                    |
+| `starBrightness`   | no       | float, 0 to 1   | none    | How bright the stars are                                                                    |
+| `renderSky`        | no       | boolean         | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                       |
+| `renderClouds`     | no       | boolean         | `true`  | Off, no clouds are drawn                                                                    |
+| `renderWeather`    | no       | boolean         | `true`  | Off, no rain or snow is drawn                                                               |
+| `sun`              | no       | object          | none    | Your own sun. See [The sky renderer](#the-sky-renderer)                                     |
+| `bodies`           | no       | list of objects | none    | Planets and moons hung in the sky. See [The sky renderer](#the-sky-renderer)                |
+| `stars`            | no       | object          | none    | Your own star field. See [The sky renderer](#the-sky-renderer)                              |
 
-Colors and the three render switches are all that is offered. Drawing something of your own up there, a painted dome, your own sun and moon, still needs Java.
+### The sky renderer
+
+*dimensions*
+
+Setting any of `sun`, `bodies` or `stars` swaps the vanilla sky for RDPL's own, which draws the same dome, sunrise glow and void as vanilla but takes the sun, the other bodies and the stars from the pack. It is drawn on the client only, and a dedicated server never loads it. `renderSky: false` still wins and draws nothing, and `renderClouds: false` is how a sky without clouds is made.
+
+Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list is everything besides the sun, so an empty list is a sky with no moon.
+
+| Key                    | Required | Value          | Default         | What it does                                                                                                                                                                                     |
+| ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sun.texture`          | no       | texture path   | the vanilla sun | The sun's picture                                                                                                                                                                                |
+| `sun.size`             | no       | float          | `30`            | Half the sun's width at a distance of 100. `0` hides it                                                                                                                                          |
+| `bodies[].texture`     | yes      | texture path   |                 | The body's picture                                                                                                                                                                               |
+| `bodies[].size`        | no       | float          | `20`            | Half its width at a distance of 100. The vanilla moon is `20`                                                                                                                                    |
+| `bodies[].angle`       | no       | float, degrees | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon |
+| `bodies[].tilt`        | no       | float, degrees | `0`             | How far it sits off the sun's path, north or south                                                                                                                                               |
+| `bodies[].followsTime` | no       | boolean        | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                            |
+| `stars.count`          | no       | int            | `1500`          | How many stars                                                                                                                                                                                   |
+| `stars.size`           | no       | float          | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                        |
+
+### The `physics` block
+
+*dimensions*
+
+| Key            | Required | Value          | Default           | What it does                                                            |
+| -------------- | -------- | -------------- | ----------------- | ----------------------------------------------------------------------- |
+| `gravity`      | no       | float, above 0 | `1.0`             | Fall acceleration here, as a multiplier of vanilla. `0.17` is moon-like |
+| `fallDamage`   | no       | float, above 0 | `1.0`             | Fall damage here, as a multiplier                                       |
+| `arrowGravity` | no       | float, above 0 | follows `gravity` | How fast arrows drop here, as a multiplier                              |
+
+These are the same multipliers as [World physics](#world-physics), set on the dimension. A world template's `dimension=value` line for this dimension still wins; a bare world template value covers only dimensions that set nothing of their own. On a [Galacticraft body](#galacticraft-bodies) Galacticraft applies them.
+
+### The `time` block
+
+*dimensions*
+
+| Key         | Required | Value      | Default | What it does                                                                             |
+| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
+| `dayLength` | no       | int, ticks | `24000` | How long one day and night lasts here. The moon phase still turns once every 24000 ticks |
+
+### The `weather` block
+
+*dimensions*
+
+| Key                 | Required | Value                  | Default        | What it does                                                                           |
+| ------------------- | -------- | ---------------------- | -------------- | -------------------------------------------------------------------------------------- |
+| `precipitation`     | no       | boolean                | `true`         | Off, it never rains, snows or storms here                                              |
+| `lightning`         | no       | boolean                | `true`         | Off, rain comes without lightning                                                      |
+| `snow`              | no       | boolean                | `true`         | Off, snow never settles                                                                |
+| `freeze`            | no       | boolean                | `true`         | Off, water never freezes over                                                          |
+| `cycle.rainTicks`   | no       | int or `[min, max]`    | `[1000, 4600]` | How long a shower lasts                                                                |
+| `cycle.clearTicks`  | no       | int or `[min, max]`    | `[1000, 3000]` | How long the dry spell between showers lasts                                           |
+| `cycle.maxStrength` | no       | float, above 0 up to 1 | `0.6`          | The heaviest a shower gets. Each shower drifts between a quarter of this and all of it |
+
+Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, with no thunder, whatever the overworld is doing. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches.
+
+## Galacticraft bodies
+
+*the world*
+
+`<namespace>/celestial/*.json` and the `galacticraft` block of `<namespace>/dimensions/*.json`
+
+With Galacticraft installed, a pack can put its own star systems, planets and moons on the Galacticraft star map, and make a pack dimension a place a rocket flies to. Without Galacticraft all of it is skipped: the `celestial/` files are ignored and a dimension with a `galacticraft` block is not registered, and the log says so.
+
+A body's name on the map comes from the pack's lang file, under the key Galacticraft uses: `solarsystem.<name>`, `star.<name>`, `planet.<name>` or `moon.<name>`.
+
+### Star systems and map-only bodies
+
+*galacticraft bodies*
+
+`<namespace>/celestial/*.json`
+
+A file here is either a star system or a planet or moon that sits on the map with nowhere to land.
+
+```json
+{
+  "kind": "system",
+  "name": "ember",
+  "galaxy": "milky_way",
+  "mapPosition": [0.9, -0.5],
+  "star": {
+    "name": "ember",
+    "icon": "galacticraftcore:textures/gui/celestialbodies/sun.png",
+    "relativeSize": 1.2
+  }
+}
+```
+
+```json
+{
+  "kind": "planet",
+  "name": "ash",
+  "parent": "ember",
+  "icon": "galacticraftcore:textures/gui/celestialbodies/mercury.png",
+  "relativeSize": 0.5,
+  "distance": 1.4,
+  "orbitTime": 2.5,
+  "tier": 3
+}
+```
+
+| Key           | Required     | Value                              | Default     | What it does                               |
+| ------------- | ------------ | ---------------------------------- | ----------- | ------------------------------------------ |
+| `kind`        | yes          | `system`, `planet`, `moon`         |             | What the file makes                        |
+| `galaxy`      | no           | string                             | `milky_way` | A system's galaxy                          |
+| `mapPosition` | for a system | `[x, y]` or `[x, y, z]`            |             | Where the system sits on the galaxy map    |
+| `star`        | no           | object of [map keys](#map-keys)    |             | The system's star, drawn at its center     |
+| `requires`    | no           | list of mod ids or pack namespaces | none        | The file is skipped unless all are present |
+
+A planet or moon here takes the [map keys](#map-keys) with a `tier` default of `0`. Planets and moons go on the map after every system, so a planet may circle a system from the same pack.
+
+### Map keys
+
+*galacticraft bodies*
+
+Every body, whether a `celestial/` file, a system's `star` or a dimension's `galacticraft` block, places itself on the map with these keys.
+
+| Key              | Required   | Value          | Default                               | What it does                                                                                                                                                                                                                                     |
+| ---------------- | ---------- | -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`           | no         | string         | the file name                         | The body's name, which its lang key and every `parent` use                                                                                                                                                                                       |
+| `parent`         | for a moon | name           | `sol` for a planet                    | The system a planet circles, or the planet a moon circles                                                                                                                                                                                        |
+| `icon`           | no         | texture path   | Galacticraft's Mars, Moon or Sun icon | The picture on the map                                                                                                                                                                                                                           |
+| `relativeSize`   | no         | float          | `1.0`, a moon `0.2667`                | Its size on the map                                                                                                                                                                                                                              |
+| `distance`       | no         | float          | `1.0`, a moon `13`                    | How far out it circles                                                                                                                                                                                                                           |
+| `scaledDistance` | no         | float          | `distance`                            | The distance used on the zoomed map                                                                                                                                                                                                              |
+| `orbitTime`      | no         | float, years   | `1.0`, a moon `100`                   | How long one orbit takes on the map. Negative runs backward                                                                                                                                                                                      |
+| `phaseShift`     | no         | float, radians | `0`                                   | Where along its orbit it starts                                                                                                                                                                                                                  |
+| `ringColor`      | no         | hex color      | `19E599`                              | The orbit line, where the map draws one                                                                                                                                                                                                          |
+| `tier`           | no         | int            | `1` for a dimension, `0` otherwise    | The rocket tier the map shows it needs. With GalaxySpace, AsmodeusCore's map works the tier out from distance instead, and a body around another star needs the top tier, unless `enableNewTierSystem` is off in `config/AsmodeusCore/core.conf` |
+
+### The `galacticraft` block
+
+*galacticraft bodies*
+
+`<namespace>/dimensions/*.json`
+
+A `galacticraft` block in a dimension file makes that dimension a planet or moon of its own. Everything outside the block, the sky, physics, time and weather, stays the dimension's and works the same with or without Galacticraft; the block holds only what Galacticraft reads.
+
+```json
+{
+  "id": 71,
+  "sky": { "skyColor": "3A1A10", "sun": { "size": 18 } },
+  "physics": { "gravity": 0.4, "fallDamage": 0.5 },
+  "weather": { "cycle": { "maxStrength": 0.5 } },
+  "galacticraft": {
+    "kind": "planet",
+    "name": "cinder",
+    "parent": "ember",
+    "distance": 0.75,
+    "tier": 2,
+    "minTier": 2,
+    "landing": "balloons",
+    "landingHeight": 700,
+    "arrival": "departure",
+    "exitHeight": 1000,
+    "rocketGui": "mypack:textures/gui/cinder_rocket_gui.png",
+    "checklist": ["equip_oxygen_suit", "thermal_padding"],
+    "atmosphere": {
+      "gases": ["CO2", "NITROGEN"],
+      "breathable": false,
+      "corrosive": true,
+      "temperature": 3.0,
+      "wind": 0.3,
+      "density": 0.4
+    },
+    "meteorFrequency": 10,
+    "fuelMultiplier": 0.9,
+    "soundReduction": 2.5,
+    "solarEnergy": 1.6,
+    "netherPortals": false,
+    "dungeon": { "spacing": 704, "chest": "mypack:chests/cinder_dungeon" },
+    "rain": { "particle": "smoke", "sound": "minecraft:block.lava.extinguish", "volume": 0.04, "interval": 20 }
+  }
+}
+```
+
+The block takes the [map keys](#map-keys), plus:
+
+| Key               | Required | Value                             | Default                      | What it does                                                                                                                                 |
+| ----------------- | -------- | --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`            | no       | `planet`, `moon`                  | `planet`                     | What the dimension is                                                                                                                        |
+| `reachable`       | no       | boolean                           | `true`                       | Off, it is on the map but no rocket goes there                                                                                               |
+| `minTier`         | no       | int                               | `tier`                       | The lowest rocket tier that may land                                                                                                         |
+| `landing`         | no       | `lander`, `parachute`, `balloons` | `lander`                     | How a player comes down. `balloons` needs Galacticraft Planets and is a lander without it. Galacticraft's `disableLander` forces `parachute` |
+| `landingHeight`   | no       | float                             | `900`, a parachute `250`     | The height a player arrives at                                                                                                               |
+| `arrival`         | no       | `departure`, `spawn`              | `departure`                  | Land above where the rocket took off, or above this dimension's spawn                                                                        |
+| `exitHeight`      | no       | float                             | `1200`                       | The height at which a rocket leaving this dimension leaves it                                                                                |
+| `rocketGui`       | no       | texture path                      | Galacticraft's overworld one | The flight screen                                                                                                                            |
+| `checklist`       | no       | list of strings                   | none                         | Galacticraft checklist keys shown before launch                                                                                              |
+| `meteorFrequency` | no       | float                             | from `density`               | How rarely meteors fall, near each player about once in this many times 750 ticks. `0` stops them                                            |
+| `fuelMultiplier`  | no       | float                             | `1.0`                        | Fuel a rocket burns leaving from here                                                                                                        |
+| `soundReduction`  | no       | float                             | from `density`               | How much quieter sound is in this air                                                                                                        |
+| `solarEnergy`     | no       | float                             | `1.0`                        | Solar panel output here                                                                                                                      |
+| `netherPortals`   | no       | boolean                           | `false`                      | Whether nether portals light here                                                                                                            |
+
+| `atmosphere` key | Required | Value                                                                                  | Default                       | What it does                                                                               |
+| ---------------- | -------- | -------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------ |
+| `gases`          | no       | list of `NITROGEN`, `OXYGEN`, `CO2`, `WATER`, `METHANE`, `HYDROGEN`, `HELIUM`, `ARGON` | none                          | The air. None is a vacuum, and fire needs `OXYGEN`                                         |
+| `breathable`     | no       | boolean                                                                                | oxygen and no CO2             | Whether players breathe without a suit                                                     |
+| `corrosive`      | no       | boolean                                                                                | `false`                       | Eats armor without a shield controller                                                     |
+| `temperature`    | no       | float                                                                                  | `0`                           | Galacticraft's thermal level. Below 0 is cold and above is hot; thermal padding answers it |
+| `wind`           | no       | float                                                                                  | `1.0` with gases, `0` without | Moves flags and drives wind power                                                          |
+| `density`        | no       | float                                                                                  | `1.0`                         | How thick the air is. It sets the meteor and sound defaults                                |
+
+| `dungeon` key | Required | Value       | Default | What it does                                        |
+| ------------- | -------- | ----------- | ------- | --------------------------------------------------- |
+| `spacing`     | no       | int, blocks | `0`     | Distance between Galacticraft dungeons. `0` is none |
+| `chest`       | no       | loot table  | none    | The loot in their chests                            |
+
+Galacticraft only builds its dungeons in its own terrain, so `dungeon` matters only where something runs Galacticraft's dungeon generator; RDPL terrain does not.
+
+| `rain` key | Required | Value         | Default                  | What it does                                                             |
+| ---------- | -------- | ------------- | ------------------------ | ------------------------------------------------------------------------ |
+| `particle` | no       | particle name | `droplet`                | What splashes where rain lands                                           |
+| `sound`    | no       | sound name    | `minecraft:weather.rain` | The sound of the rain                                                    |
+| `volume`   | no       | float         | `0.2`                    | Its loudness, halved when the rain falls above you                       |
+| `interval` | no       | int           | `3`                      | How rarely the sound plays; higher is sparser, `0` plays it every chance |
+
+Without a `rain` block rain looks and sounds as vanilla's.
+
+**Who registers the dimension.** A reachable body's dimension is registered by Galacticraft, so rockets and multiplayer clients see it; one with `reachable: false` is registered by RDPL. If the body cannot be placed, because its parent is unknown or its name is taken, the dimension is not registered, and the log says why.
+
+### GalaxySpace and ExtraPlanets
+
+*galacticraft bodies*
+
+`<namespace>/celestial/*.json` and the `galacticraft` block of `<namespace>/dimensions/*.json`
+
+Two Galacticraft add-ons read more about a body than Galacticraft does. A `galaxyspace` object, in a `celestial/` planet or moon, a system's `star` or a dimension's `galacticraft` block, takes effect when GalaxySpace is installed. An `extraplanets` object, in a dimension's `galacticraft` block only, takes effect when ExtraPlanets is installed. Without the add-on its object does nothing and the log says so once for the body, which is still made as a plain Galacticraft body. A planet may circle a GalaxySpace system, such as `tauceti`, `barnards`, `acentauri` or `proxima`, with or without these objects.
+
+```json
+{
+  "id": 72,
+  "physics": { "gravity": 0.7 },
+  "time": { "dayLength": 48000 },
+  "galacticraft": {
+    "name": "frost",
+    "parent": "tauceti",
+    "distance": 1.4,
+    "tier": 5,
+    "atmosphere": { "gases": ["NITROGEN", "METHANE"], "temperature": -2.5 },
+    "galaxyspace": {
+      "pressure": 30,
+      "radiation": true,
+      "class": "iceworld",
+      "orbitEccentricity": [1.2, 0.9],
+      "orbitOffset": [0.5, 0],
+      "thermalVariation": 0.4,
+      "solarWind": 0.8,
+      "weather": "frozen_storm"
+    },
+    "extraplanets": {
+      "pressure": 40,
+      "radiation": 12,
+      "temperatureDay": -60,
+      "temperatureNight": -80,
+      "lander": "general"
+    }
+  }
+}
+```
+
+```json
+{
+  "kind": "system",
+  "name": "ember",
+  "mapPosition": [0.9, -0.5],
+  "star": {
+    "name": "ember",
+    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "habitableZone": [1.2, 0.6] }
+  }
+}
+```
+
+A dimension's `gravity` and `dayLength` are also what GalaxySpace shows for the body and uses for it; they need no key of their own.
+
+| `galaxyspace` key   | Required | Value                                                                                            | Default                 | What it does                                                                                                                                                                      |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pressure`          | no       | float                                                                                            | `0`                     | Air pressure. Above `10` it brings nausea, above `25` slowness, above `35` blindness and above `45` damage, unless GalaxySpace armor or its config stops it                       |
+| `radiation`         | no       | boolean                                                                                          | `false`                 | Solar radiation, which builds up in a player standing in daylight under open sky unless their armor shields it                                                                    |
+| `class`             | no       | `selena`, `desert`, `terra`, `oceanide`, `gasgiant`, `icegiant`, `asteroid`, `titan`, `iceworld` | none                    | The planet class the GalaxySpace map and guide book show                                                                                                                          |
+| `orbitEccentricity` | no       | `[x, y]`                                                                                         | `[0, 0]`                | Stretches the orbit the GalaxySpace map draws along each axis. `0` or less leaves that axis round                                                                                 |
+| `orbitOffset`       | no       | `[x, y]`                                                                                         | `[0, 0]`                | Moves the center of that orbit                                                                                                                                                    |
+| `freezeBlocks`      | no       | boolean                                                                                          | `true`                  | Whether GalaxySpace's liquid methane and helium-hydrogen placed outside sealed air turn to fire in strong heat or vanish in strong cold; water is never changed                   |
+| `thermalVariation`  | no       | float                                                                                            | `0`                     | How far the thermal level swings between noon and midnight, as a share of `atmosphere.temperature`, or by this much when that is `0`. Needs GalaxySpace's advanced thermal system |
+| `solarWind`         | no       | float                                                                                            | the star's size squared | Output of GalaxySpace solar wind panels here                                                                                                                                      |
+| `weather`           | no       | `dust_storm`, `frozen_storm`, `lightning_storm`, `meteoric_rain`                                 | none                    | A storm that comes and goes. A dust storm hurts whoever stands under open sky, meteoric rain drops meteors, a lightning storm strikes lightning                                   |
+| `weatherFrequency`  | no       | float                                                                                            | `1`                     | How often a lightning storm strikes                                                                                                                                               |
+| `starType`          | no       | `subdwarf`, `dwarf`, `subgiant`, `giant`, `supergiant`, `hypergiant`, `blackhole`                | none                    | A star's type, shown on the GalaxySpace map                                                                                                                                       |
+| `starColor`         | no       | `brown`, `red`, `orange`, `yellow`, `white`, `lightblue`, `blue`, or a class `M1` to `O3`        | none                    | A star's color class, shown on the GalaxySpace map                                                                                                                                |
+| `habitableZone`     | no       | `[distance, width]`                                                                              | `[0, 0]`                | The band around a star the GalaxySpace map marks as habitable                                                                                                                     |
+
+`starType`, `starColor` and `habitableZone` are read only in a system's `star`; the rest only in a planet or moon. GalaxySpace draws its storms per planet, so a pack's storm acts but shows no sky of its own.
+
+| `extraplanets` key | Required | Value                                                          | Default                                 | What it does                                                                                                                                     |
+| ------------------ | -------- | -------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pressure`         | no       | int, `0` to `100`                                              | none                                    | ExtraPlanets pressure. Above `0` it hurts a player without an ExtraPlanets space suit, and shows on its HUD                                      |
+| `radiation`        | no       | int, `0` to `100`                                              | ExtraPlanets' default for other add-ons | ExtraPlanets radiation, which builds up in a player whose suit tier does not cover it                                                            |
+| `temperatureDay`   | no       | float                                                          | `atmosphere.temperature`                | The thermal level by day, on ExtraPlanets' scale, which runs from about `-140` to `100`. Needs ExtraPlanets' tier 3 and 4 thermal padding option |
+| `temperatureNight` | no       | float                                                          | `temperatureDay`                        | The thermal level by night                                                                                                                       |
+| `lander`           | no       | `general`, `jupiter`, `saturn`, `mercury`, `neptune`, `uranus` | Galacticraft's lander                   | The ExtraPlanets lander a player comes down in, where `landing` is `lander`                                                                      |
 
 ## Portals and gates
 
@@ -3152,17 +3476,17 @@ A `portal` block carries a `portal` section:
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `dimension` | yes | int | | Where it sends you |
-| `returnDimension` | no | int | `0` | Where it sends you back to |
-| `gate` | no | gate name | none | A gate that must be open to pass |
-| `cooldown` | no | int, ticks | `60` | Before the same player can use it again |
-| `platform` | no | boolean | `true` | Build a landing platform on arrival |
-| `platformBlock` | no | block name | the portal's own frame | What that platform is made of |
-| `sound` | no | sound name | none | Played on passing |
-| `owned` | no | boolean | `true` | Only whoever built it, and those they allow, may use it. An owned portal is also immune to explosions |
-| `walkIn` | no | boolean | `false` | Walking into the block travels, the way a nether portal does. Off, it is used by hand |
+| Key               | Required | Value      | Default                | What it does                                                                                          |
+| ----------------- | -------- | ---------- | ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `dimension`       | yes      | int        |                        | Where it sends you                                                                                    |
+| `returnDimension` | no       | int        | `0`                    | Where it sends you back to                                                                            |
+| `gate`            | no       | gate name  | none                   | A gate that must be open to pass                                                                      |
+| `cooldown`        | no       | int, ticks | `60`                   | Before the same player can use it again                                                               |
+| `platform`        | no       | boolean    | `true`                 | Build a landing platform on arrival                                                                   |
+| `platformBlock`   | no       | block name | the portal's own frame | What that platform is made of                                                                         |
+| `sound`           | no       | sound name | none                   | Played on passing                                                                                     |
+| `owned`           | no       | boolean    | `true`                 | Only whoever built it, and those they allow, may use it. An owned portal is also immune to explosions |
+| `walkIn`          | no       | boolean    | `false`                | Walking into the block travels, the way a nether portal does. Off, it is used by hand                 |
 
 ### Portal frames
 
@@ -3190,14 +3514,14 @@ A frame is a picture of what a player has to build, and nothing else: it says wh
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `name` | no | string | the file name | The name used in the log |
-| `axis` | no | `vertical`, `horizontal` or `both` | `vertical` | Whether it stands up like a nether portal, lies flat like an end portal, or may do either |
-| `legend` | yes | object of one character to a block | none | The blocks the rows may use. A block name with states is read the same way as anywhere else |
-| `rows` | yes | list of strings | none | The picture, drawn top row first |
-| `maxWidth` | no | int | `21` | Widest hole a `*` may stretch to |
-| `maxHeight` | no | int | `21` | Tallest hole a `*` may stretch to |
+| Key         | Required | Value                              | Default       | What it does                                                                                |
+| ----------- | -------- | ---------------------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| `name`      | no       | string                             | the file name | The name used in the log                                                                    |
+| `axis`      | no       | `vertical`, `horizontal` or `both` | `vertical`    | Whether it stands up like a nether portal, lies flat like an end portal, or may do either   |
+| `legend`    | yes      | object of one character to a block | none          | The blocks the rows may use. A block name with states is read the same way as anywhere else |
+| `rows`      | yes      | list of strings                    | none          | The picture, drawn top row first                                                            |
+| `maxWidth`  | no       | int                                | `21`          | Widest hole a `*` may stretch to                                                            |
+| `maxHeight` | no       | int                                | `21`          | Tallest hole a `*` may stretch to                                                           |
 
 Three characters are not blocks. `.` is the hole the portal stands in, and a frame without one is refused. A space is a cell the frame does not care about, so an L shaped surround is drawn by leaving the corners blank. `*` repeats: a row that is nothing but `*` repeats the row above it as many times as the player built, and a `*` inside a row repeats the character before it the same way. It may repeat no times at all, so the picture read with every `*` struck out is the smallest thing that will light, and the maxima below are the largest. A picture with no `*` in it is exact, and the player must build that and nothing else.
 
@@ -3233,18 +3557,18 @@ A dimension opens through a frame by carrying a `portal` section. The frame and 
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `frames` | yes | list of frame names | none | The frames that open this dimension |
-| `ignitedBy` | no | item name | `minecraft:flint_and_steel` | What a player holds to light one |
-| `color` | no | hex color | white | The color the portal is drawn in |
-| `return` | no | `built`, `player` or `none` | `built` | Whether a way back is provided, built by the player, or not at all |
-| `gate` | no | gate name | none | A gate that must be open to pass |
-| `cooldown` | no | int, ticks | `60` | Before the same player can pass again |
-| `platform` | no | boolean | `true` | Build a landing platform on arrival |
-| `platformBlock` | no | block name | stone | What that platform is made of |
-| `sound` | no | sound name | none | Played on passing |
-| `owned` | no | boolean | `false` | Only whoever lit it, and those they allow, may use it |
+| Key             | Required | Value                       | Default                     | What it does                                                       |
+| --------------- | -------- | --------------------------- | --------------------------- | ------------------------------------------------------------------ |
+| `frames`        | yes      | list of frame names         | none                        | The frames that open this dimension                                |
+| `ignitedBy`     | no       | item name                   | `minecraft:flint_and_steel` | What a player holds to light one                                   |
+| `color`         | no       | hex color                   | white                       | The color the portal is drawn in                                   |
+| `return`        | no       | `built`, `player` or `none` | `built`                     | Whether a way back is provided, built by the player, or not at all |
+| `gate`          | no       | gate name                   | none                        | A gate that must be open to pass                                   |
+| `cooldown`      | no       | int, ticks                  | `60`                        | Before the same player can pass again                              |
+| `platform`      | no       | boolean                     | `true`                      | Build a landing platform on arrival                                |
+| `platformBlock` | no       | block name                  | stone                       | What that platform is made of                                      |
+| `sound`         | no       | sound name                  | none                        | Played on passing                                                  |
+| `owned`         | no       | boolean                     | `false`                     | Only whoever lit it, and those they allow, may use it              |
 
 The block that stands in the hole is not written by the pack. A dimension with a `portal` section is given one of its own, named `<namespace>:portal_<dimension>`, drawn in the game's own portal texture under `color`, walked into rather than used by hand, and unbreakable. The color multiplies the texture, the way a `tintindex` does, so `#C77DFF` keeps the nether's violet and `#4CFFB0` turns it poisonous. For a portal that is not the vanilla texture at all, write an ordinary `portal` block of your own with its own model and a texture drawn as a [pixel map](#textures-written-as-pixel-maps), where `tint` can ramp between two colors.
 
@@ -3288,18 +3612,18 @@ Every key, shown at once. A real file writes only the ones it needs.
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `dimension` | yes | int | | The dimension it guards |
-| `name` | no | string | the file name | Shown to the player |
-| `scope` | no | `player`, `global` | `player` | One player at a time, or the whole world at once |
-| `open` | no | boolean | `false` | Whether it starts open |
-| `unlock` | no | object | | What opens it. See below |
-| `unlockedMessage` | no | string | `%dim% is now open` | Shown when it opens |
-| `blockedMessage` | no | string | `You need %item% to enter %dim%` | Shown when it refuses |
-| `safeReturn` | no | boolean | `false` | A blocked return still lands somewhere safe rather than refusing |
-| `requires` | no | list of mod ids or pack namespaces | none | The gate is skipped unless all are present |
-| `portalBlocks` | no | list of block names | every portal | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one |
+| Key               | Required | Value                              | Default                          | What it does                                                                                     |
+| ----------------- | -------- | ---------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `dimension`       | yes      | int                                |                                  | The dimension it guards                                                                          |
+| `name`            | no       | string                             | the file name                    | Shown to the player                                                                              |
+| `scope`           | no       | `player`, `global`                 | `player`                         | One player at a time, or the whole world at once                                                 |
+| `open`            | no       | boolean                            | `false`                          | Whether it starts open                                                                           |
+| `unlock`          | no       | object                             |                                  | What opens it. See below                                                                         |
+| `unlockedMessage` | no       | string                             | `%dim% is now open`              | Shown when it opens                                                                              |
+| `blockedMessage`  | no       | string                             | `You need %item% to enter %dim%` | Shown when it refuses                                                                            |
+| `safeReturn`      | no       | boolean                            | `false`                          | A blocked return still lands somewhere safe rather than refusing                                 |
+| `requires`        | no       | list of mod ids or pack namespaces | none                             | The gate is skipped unless all are present                                                       |
+| `portalBlocks`    | no       | list of block names                | every portal                     | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one |
 
 `unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`.
 
@@ -3326,14 +3650,14 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 All keys sit in the `terrain` group, in a world template's `settings` block like the rest:
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `rubicWorld` | boolean | `false` | Turns rubic worlds on |
-| `worldMinHeight` | int, multiple of 16 | `-64` | The world floor |
-| `worldMaxHeight` | int, multiple of 16 | `320` | The world ceiling |
-| `rubicWorldDimensions` | list of ints | empty | Which dimensions become rubic. Empty means every dimension |
-| `rubicWorldDimensionsAreBlacklist` | boolean | `false` | Treat the list as the dimensions to leave alone instead |
-| `terrainOffset` | int, non-negative multiple of 16 | `0` | Shifts the whole vanilla terrain window upward. For plain layered presets: a flat world with `272` puts its surface near y 275, above the vanilla ceiling. Decorations and structures a preset asks for still generate at their unshifted heights |
+| Key                                | Value                            | Default | What it does                                                                                                                                                                                                                                      |
+| ---------------------------------- | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rubicWorld`                       | boolean                          | `false` | Turns rubic worlds on                                                                                                                                                                                                                             |
+| `worldMinHeight`                   | int, multiple of 16              | `-64`   | The world floor                                                                                                                                                                                                                                   |
+| `worldMaxHeight`                   | int, multiple of 16              | `320`   | The world ceiling                                                                                                                                                                                                                                 |
+| `rubicWorldDimensions`             | list of ints                     | empty   | Which dimensions become rubic. Empty means every dimension                                                                                                                                                                                        |
+| `rubicWorldDimensionsAreBlacklist` | boolean                          | `false` | Treat the list as the dimensions to leave alone instead                                                                                                                                                                                           |
+| `terrainOffset`                    | int, non-negative multiple of 16 | `0`     | Shifts the whole vanilla terrain window upward. For plain layered presets: a flat world with `272` puts its surface near y 275, above the vanilla ceiling. Decorations and structures a preset asks for still generate at their unshifted heights |
 
 **Heights.** `worldMinHeight` must be below `worldMaxHeight`, both multiples of 16, and both inside the reach `rubicHeightLimit` in the config allows (`4096` blocks either way by default; config only, never a pack key). Anything else is refused with a log line and the world is made at `-64` to `320`. Height costs room: every 16 blocks is another cube in every column, so memory, disk and pregeneration time scale with it — the config comment on `rubicHeightLimit` carries the numbers.
 
@@ -3368,12 +3692,12 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 }
 ```
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `verticalCubeLoadDistance` | int, cubes | `8` | How many cubes above and below a player a chunk loading ticket holds. The video settings slider of the same name is the client's own view distance, set by whoever is playing rather than by a pack |
-| `cubesSentPerTick` | int, cubes | `649` | How many cubes a player may be sent in one tick. Raising it fills a view bubble faster and makes each tick's packets larger; a packet is still split at 1024 cubes or 512 KB, whichever comes first |
-| `cubeGenMillisPerRound` | int, milliseconds | `50` | How long a tick may spend generating the cubes players are waiting on |
-| `cubeGCInterval` | int, ticks | `200` | How often cubes nobody is watching are let go |
+| Key                        | Value             | Default | What it does                                                                                                                                                                                        |
+| -------------------------- | ----------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verticalCubeLoadDistance` | int, cubes        | `8`     | How many cubes above and below a player a chunk loading ticket holds. The video settings slider of the same name is the client's own view distance, set by whoever is playing rather than by a pack |
+| `cubesSentPerTick`         | int, cubes        | `649`   | How many cubes a player may be sent in one tick. Raising it fills a view bubble faster and makes each tick's packets larger; a packet is still split at 1024 cubes or 512 KB, whichever comes first |
+| `cubeGenMillisPerRound`    | int, milliseconds | `50`    | How long a tick may spend generating the cubes players are waiting on                                                                                                                               |
+| `cubeGCInterval`           | int, ticks        | `200`   | How often cubes nobody is watching are let go                                                                                                                                                       |
 
 **Client.** Video settings gain a vertical render distance slider, the vertical analog of render distance (`verticalCubeLoadDistance` in the config, which belongs to whoever is playing). Everything else in the `terrain` group — pregeneration, world physics, spawn, border — applies to rubic worlds unchanged.
 
@@ -3404,17 +3728,17 @@ Nine more `terrain` keys fill the space a rubic world opens around the vanilla t
 }
 ```
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `deepStone` | `namespace:block`, meta as `@meta` | none | The block the world below the window is made of, such as a pack's own deepslate. It blends into the window's stone across the window's lowest eight layers, the way modern versions blend deepslate |
-| `skyStone` | `namespace:block`, meta as `@meta` | none | The block the world above the window is made of under its surface, shaped into floating land by the same noise that carves the deep world below, so what is cave down there is island up here. Empty leaves the space above the window empty, as it has always been. The land carries the column's own surface, the top block and the three under it taken from the biome, so an overworld island reads as grass over dirt over this block. A biome or a cave region can name its own `skyStone`, `skyIslands` and `skyThickness`, so one band or one region carries islands of its own, resolved per column with the region winning over the band and the band over the biome. The islands are decorated in their own right: each cube above the window runs the biome's own features against the surface inside that cube, so trees, grass, flowers, mushrooms, reeds and patches land on the island rather than being scattered down the column the way vanilla places them, and a biome band up there decorates with its own counts. A biome's own additions run there too, not only the shared ones: desert wells, jungle melons, the dense canopy and mushrooms of a roofed forest, taiga boulders, ice spikes on the icy biomes, and the tall flowers and grasses each biome places. An island is never made of a block that falls: where a biome's surface would be sand or gravel the island uses sandstone, or its own `skyStone` for anything else, since nothing holds a falling block up in mid air. Herds are placed the same way, per cube, so animals start on the islands as the land is made. Surface depth varies from one to four filler blocks with the noise, so an island edge is not a uniform crust, and the crust is measured along the slope rather than straight down, so a steep face keeps its soil instead of thinning to nothing. The surface follows whatever biome the sky itself reports, the cave region first, then a height banded biome, then the column below, so naming `minecraft:mesa` on a sky region gives islands of banded clay at any height, the same bands the ground has, and naming a desert gives its sand, turned to sandstone because nothing holds a falling block up. Animals settle on it, which `skyAnimals` in the `spawning` group turns off. How much of the sky becomes land is `skyIslands`, and its default of 0.5 is an archipelago: on a generated world it leaves roughly seven cubes in eight above the window empty and its fullest layer sits near a third, so the sky is flown through rather than walked on. Lower it toward 0.2 and the band closes up into a rolling ceiling with hills standing on it, about four fifths solid through its middle, which is something to build on but no longer islands. Islands stop eight blocks short of `worldMaxHeight`, so a top is never cut flat against the ceiling and trees and plants have room above it; `caves` fills to the ceiling as before. Every rubic dimension has a window of its own, so this fills the space above each: in the nether, whose window is 128 tall, that is the room above the bedrock roof, and a seam that opens the ceiling clears the roof itself |
-| `skyShape` | `islands` or `caves` | `islands` | What the world above the window is shaped into. `islands` is floating land. `caves` is solid rock with caves carved through it, the deep world's own treatment turned upward, which comes out about 86 percent solid, the same rock to cave ratio the deep world has. Nothing floods either way, since no aquifer is consulted above the window. Only read when `skyStone` names a block |
-| `skyIslands` | number, `-1` to `1` | `0.5` | How readily the sky gathers into islands. Lower spreads island across more of the sky and deepens the shadow beneath it, higher leaves fewer and smaller pieces. The default leaves roughly seven cubes in eight empty and peaks near a third; around `0.2` the band closes into a ceiling with hills, about four fifths solid through its middle. Only read when `skyStone` names a block and `skyShape` is `islands` |
-| `skyThickness` | number, `0` or more | `2.0` | How solid an island is. Higher fills islands out, lower hollows them and thins their edges away to nothing. Only read when `skyStone` names a block and `skyShape` is `islands` |
-| `skyHeights` | two ints, lowest then highest | none | The lowest and highest block an island may reach, counted from the bottom of the window the way `oreVeins` heights are. Empty fills the whole world above the window, which on a tall world is a great deal of sky. Only read when `skyStone` names a block |
-| `noiseCaves` | `off`, `deep`, `world` | `off` | Modern-style noise caves: cheese caverns, spaghetti tunnels, cave mouths near the surface and pillars in the big rooms. `deep` carves only below the window, `world` carves the whole world |
-| `deepRavines` | boolean | `false` | Cut vanilla-style ravines through the world below the window, long steep canyons. A ravine takes the deep world's own fluids where it passes through them, filling with lava below the lava line and keeping an aquifer's water or its pressure wall above it, so it never drains what it cuts. Modern versions carve their canyons inside the window only, so the deep has none unless this is on |
-| `oreVeins` | list of `ore,extra,filler,lowest,highest` | none | Large banded ore veins, mostly the `filler` block with the `ore` scattered through it and a rare chance of the `extra`, which may be left empty. Heights count from the bottom of the window, so negatives reach the deep world |
+| Key            | Value                                     | Default   | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------- | ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `deepStone`    | `namespace:block`, meta as `@meta`        | none      | The block the world below the window is made of, such as a pack's own deepslate. It blends into the window's stone across the window's lowest eight layers, the way modern versions blend deepslate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `skyStone`     | `namespace:block`, meta as `@meta`        | none      | The block the world above the window is made of under its surface, shaped into floating land by the same noise that carves the deep world below, so what is cave down there is island up here. Empty leaves the space above the window empty, as it has always been. The land carries the column's own surface, the top block and the three under it taken from the biome, so an overworld island reads as grass over dirt over this block. A biome or a cave region can name its own `skyStone`, `skyIslands` and `skyThickness`, so one band or one region carries islands of its own, resolved per column with the region winning over the band and the band over the biome. The islands are decorated in their own right: each cube above the window runs the biome's own features against the surface inside that cube, so trees, grass, flowers, mushrooms, reeds and patches land on the island rather than being scattered down the column the way vanilla places them, and a biome band up there decorates with its own counts. A biome's own additions run there too, not only the shared ones: desert wells, jungle melons, the dense canopy and mushrooms of a roofed forest, taiga boulders, ice spikes on the icy biomes, and the tall flowers and grasses each biome places. An island is never made of a block that falls: where a biome's surface would be sand or gravel the island uses sandstone, or its own `skyStone` for anything else, since nothing holds a falling block up in mid air. Herds are placed the same way, per cube, so animals start on the islands as the land is made. Surface depth varies from one to four filler blocks with the noise, so an island edge is not a uniform crust, and the crust is measured along the slope rather than straight down, so a steep face keeps its soil instead of thinning to nothing. The surface follows whatever biome the sky itself reports, the cave region first, then a height banded biome, then the column below, so naming `minecraft:mesa` on a sky region gives islands of banded clay at any height, the same bands the ground has, and naming a desert gives its sand, turned to sandstone because nothing holds a falling block up. Animals settle on it, which `skyAnimals` in the `spawning` group turns off. How much of the sky becomes land is `skyIslands`, and its default of 0.5 is an archipelago: on a generated world it leaves roughly seven cubes in eight above the window empty and its fullest layer sits near a third, so the sky is flown through rather than walked on. Lower it toward 0.2 and the band closes up into a rolling ceiling with hills standing on it, about four fifths solid through its middle, which is something to build on but no longer islands. Islands stop eight blocks short of `worldMaxHeight`, so a top is never cut flat against the ceiling and trees and plants have room above it; `caves` fills to the ceiling as before. Every rubic dimension has a window of its own, so this fills the space above each: in the nether, whose window is 128 tall, that is the room above the bedrock roof, and a seam that opens the ceiling clears the roof itself |
+| `skyShape`     | `islands` or `caves`                      | `islands` | What the world above the window is shaped into. `islands` is floating land. `caves` is solid rock with caves carved through it, the deep world's own treatment turned upward, which comes out about 86 percent solid, the same rock to cave ratio the deep world has. Nothing floods either way, since no aquifer is consulted above the window. Only read when `skyStone` names a block                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `skyIslands`   | number, `-1` to `1`                       | `0.5`     | How readily the sky gathers into islands. Lower spreads island across more of the sky and deepens the shadow beneath it, higher leaves fewer and smaller pieces. The default leaves roughly seven cubes in eight empty and peaks near a third; around `0.2` the band closes into a ceiling with hills, about four fifths solid through its middle. Only read when `skyStone` names a block and `skyShape` is `islands`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `skyThickness` | number, `0` or more                       | `2.0`     | How solid an island is. Higher fills islands out, lower hollows them and thins their edges away to nothing. Only read when `skyStone` names a block and `skyShape` is `islands`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `skyHeights`   | two ints, lowest then highest             | none      | The lowest and highest block an island may reach, counted from the bottom of the window the way `oreVeins` heights are. Empty fills the whole world above the window, which on a tall world is a great deal of sky. Only read when `skyStone` names a block                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `noiseCaves`   | `off`, `deep`, `world`                    | `off`     | Modern-style noise caves: cheese caverns, spaghetti tunnels, cave mouths near the surface and pillars in the big rooms. `deep` carves only below the window, `world` carves the whole world                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `deepRavines`  | boolean                                   | `false`   | Cut vanilla-style ravines through the world below the window, long steep canyons. A ravine takes the deep world's own fluids where it passes through them, filling with lava below the lava line and keeping an aquifer's water or its pressure wall above it, so it never drains what it cuts. Modern versions carve their canyons inside the window only, so the deep has none unless this is on                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `oreVeins`     | list of `ore,extra,filler,lowest,highest` | none      | Large banded ore veins, mostly the `filler` block with the `ore` scattered through it and a rare chance of the `extra`, which may be left empty. Heights count from the bottom of the window, so negatives reach the deep world                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 Water and lava behave down there. Bulk lava fills the lowest layers, and the caves above carry local aquifers — the same sample-point-and-pressure scheme modern versions use, ported from 26.1.2 — so pockets of still water sit at their own levels, with walls of the deep stone shaped by noise wherever two levels meet or water meets lava. Under oceans the caves flood toward sea level, the way modern versions tie their aquifers to the surface.
 
@@ -3474,31 +3798,31 @@ Every key, shown at once. A real file writes only the ones it needs.
 }
 ```
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `weight` | int | `1` | Share of cells this region wins. `0` switches it off |
-| `minHeight` | int | the world floor | Bottom of the band the region exists in |
-| `maxHeight` | int | `48` | Top of that band. A cell whose center sits outside the band never picks the region |
-| `dimensions` | list of ints | all | Which dimensions the region appears in |
-| `floorCover` | block | none | Replaces the top block of cave floors inside the region |
-| `floorChance` | 0.0 to 1.0 | `1.0` | How much of the floor gets covered |
-| `ceilingCover` | block | none | Replaces cave ceiling blocks inside the region |
-| `ceilingChance` | 0.0 to 1.0 | `1.0` | How much of the ceiling |
-| `coverReplace` | list of blocks | anything stone-like | What the covers may replace |
-| `waterLevel` | int | none | Pins the water level of every aquifer sample point inside the region, so its caves flood to this height. Walls where the region meets dry caves are shaped by the same pressure noise as modern aquifers, and water never touches the lava floor. Needs `noiseCaves` on |
-| `spawns` | list | none | Mobs that spawn inside the region, the same entries a biome's `spawns` takes: `entity`, `type` (monster, creature, ambient or water), `weight`, `min` and `max` for the group size. Under the terrain window a spot that can see the sky is left to the biome, like the covers are; above the window, where the only land is the sky generation, the list applies in the open as well |
-| `keepDefaultSpawns` | boolean | `false` | Keep the biome's own spawn list alongside the region's. Off, the region's list replaces it entirely inside the region |
-| `structures` | list | none | A structure placed once per region cell, at the cell's heart, snapped to a cave floor — the way modern versions give a cave biome its landmark. Entries are `namespace:name` templates, or `{ "structure": "...", "weight": 3 }` to choose between several |
-| `structureChance` | 0.0 to 1.0 | `1.0` | The chance each cell of the region actually gets its structure |
-| `structureLoot` | `namespace:path` | none | The loot table every chest inside a placed structure is filled from the first time it is opened |
-| `biome` | biome name | none | The biome the region reports inside its volume, written into the cube as a 3D biome. Gives the region its own foliage, grass and water colors, music and ambient sounds, and lets vanilla spawn weighting read it. The surface above is untouched, since only the cells the region occupies are written |
-| `skyStone` | block | the world setting | The block sky islands are made of under their surface inside this region, so one region carries islands of its own |
-| `skyIslands` | `-1` to `1` | the world setting | The island threshold inside the region. Lower gathers more land |
-| `skyThickness` | `0` or more | the world setting | How solid the region's islands are |
-| `ambientSound` | sound name | none | A sound played now and then to a player standing inside the region, the way modern biomes add their own cave sounds. Sent by the server to that player alone |
-| `soundChance` | 0.0 to 1.0 | `0.0111` | The chance each tick that `ambientSound` plays |
-| `particle` | particle name | none | A particle shown around a player inside the region, one of the game's particle names such as `dripWater`, `happyVillager` or `depthsuspend`. Only air inside the region shows it |
-| `particleChance` | 0.0 to 1.0 | `0.00625` | Modern biomes' particle density: each tick about 667 spots within 16 blocks are tried, and each shows the particle at this chance |
+| Key                 | Value            | Default             | What it does                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------- | ---------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `weight`            | int              | `1`                 | Share of cells this region wins. `0` switches it off                                                                                                                                                                                                                                                                                                                                  |
+| `minHeight`         | int              | the world floor     | Bottom of the band the region exists in                                                                                                                                                                                                                                                                                                                                               |
+| `maxHeight`         | int              | `48`                | Top of that band. A cell whose center sits outside the band never picks the region                                                                                                                                                                                                                                                                                                    |
+| `dimensions`        | list of ints     | all                 | Which dimensions the region appears in                                                                                                                                                                                                                                                                                                                                                |
+| `floorCover`        | block            | none                | Replaces the top block of cave floors inside the region                                                                                                                                                                                                                                                                                                                               |
+| `floorChance`       | 0.0 to 1.0       | `1.0`               | How much of the floor gets covered                                                                                                                                                                                                                                                                                                                                                    |
+| `ceilingCover`      | block            | none                | Replaces cave ceiling blocks inside the region                                                                                                                                                                                                                                                                                                                                        |
+| `ceilingChance`     | 0.0 to 1.0       | `1.0`               | How much of the ceiling                                                                                                                                                                                                                                                                                                                                                               |
+| `coverReplace`      | list of blocks   | anything stone-like | What the covers may replace                                                                                                                                                                                                                                                                                                                                                           |
+| `waterLevel`        | int              | none                | Pins the water level of every aquifer sample point inside the region, so its caves flood to this height. Walls where the region meets dry caves are shaped by the same pressure noise as modern aquifers, and water never touches the lava floor. Needs `noiseCaves` on                                                                                                               |
+| `spawns`            | list             | none                | Mobs that spawn inside the region, the same entries a biome's `spawns` takes: `entity`, `type` (monster, creature, ambient or water), `weight`, `min` and `max` for the group size. Under the terrain window a spot that can see the sky is left to the biome, like the covers are; above the window, where the only land is the sky generation, the list applies in the open as well |
+| `keepDefaultSpawns` | boolean          | `false`             | Keep the biome's own spawn list alongside the region's. Off, the region's list replaces it entirely inside the region                                                                                                                                                                                                                                                                 |
+| `structures`        | list             | none                | A structure placed once per region cell, at the cell's heart, snapped to a cave floor — the way modern versions give a cave biome its landmark. Entries are `namespace:name` templates, or `{ "structure": "...", "weight": 3 }` to choose between several                                                                                                                            |
+| `structureChance`   | 0.0 to 1.0       | `1.0`               | The chance each cell of the region actually gets its structure                                                                                                                                                                                                                                                                                                                        |
+| `structureLoot`     | `namespace:path` | none                | The loot table every chest inside a placed structure is filled from the first time it is opened                                                                                                                                                                                                                                                                                       |
+| `biome`             | biome name       | none                | The biome the region reports inside its volume, written into the cube as a 3D biome. Gives the region its own foliage, grass and water colors, music and ambient sounds, and lets vanilla spawn weighting read it. The surface above is untouched, since only the cells the region occupies are written                                                                               |
+| `skyStone`          | block            | the world setting   | The block sky islands are made of under their surface inside this region, so one region carries islands of its own                                                                                                                                                                                                                                                                    |
+| `skyIslands`        | `-1` to `1`      | the world setting   | The island threshold inside the region. Lower gathers more land                                                                                                                                                                                                                                                                                                                       |
+| `skyThickness`      | `0` or more      | the world setting   | How solid the region's islands are                                                                                                                                                                                                                                                                                                                                                    |
+| `ambientSound`      | sound name       | none                | A sound played now and then to a player standing inside the region, the way modern biomes add their own cave sounds. Sent by the server to that player alone                                                                                                                                                                                                                          |
+| `soundChance`       | 0.0 to 1.0       | `0.0111`            | The chance each tick that `ambientSound` plays                                                                                                                                                                                                                                                                                                                                        |
+| `particle`          | particle name    | none                | A particle shown around a player inside the region, one of the game's particle names such as `dripWater`, `happyVillager` or `depthsuspend`. Only air inside the region shows it                                                                                                                                                                                                      |
+| `particleChance`    | 0.0 to 1.0       | `0.00625`           | Modern biomes' particle density: each tick about 667 spots within 16 blocks are tried, and each shows the particle at this chance                                                                                                                                                                                                                                                     |
 
 ### Cells
 
@@ -3516,11 +3840,11 @@ Every key, shown at once. A real file writes only the ones it needs.
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `caveRegionCells` | int, blocks | `128` | How wide a region cell is |
-| `caveRegionCellsY` | int, blocks | `64` | How tall a region cell is |
-| `caveRegionPlainWeight` | int | `4` | The weight of plain, region-less underground in each cell's roll. Higher leaves more of the underground without any region: with a single region of weight 1, about a fifth of the cells get it |
+| Setting                 | Type        | Default | What it does                                                                                                                                                                                    |
+| ----------------------- | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caveRegionCells`       | int, blocks | `128`   | How wide a region cell is                                                                                                                                                                       |
+| `caveRegionCellsY`      | int, blocks | `64`    | How tall a region cell is                                                                                                                                                                       |
+| `caveRegionPlainWeight` | int         | `4`     | The weight of plain, region-less underground in each cell's roll. Higher leaves more of the underground without any region: with a single region of weight 1, about a fifth of the cells get it |
 
 How much of the underground stays plain is the `caveRegionPlainWeight` `terrain` key, default `4`: with a single region of weight 1, about a fifth of the cells get the region. Covers apply under a roof, so a region reaching above ground never shows on the surface; above the terrain window they also apply in the open, since everything up there is land the sky generation made. Covers work in every cave, whichever generator carved it; `waterLevel` is the one key that needs the noise caves, because the flood is placed while they are carved.
 
@@ -3608,65 +3932,65 @@ Only `block` is required; everything else may be left out and takes its default.
 
 *worldgen entries*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `block` | yes | block name | | What is placed |
-| `meta` | no | int | `0` | Which variant of that block |
-| `blocks` | no | list of objects | none | A weighted list, used instead of one block. See below |
-| `size` | no | int or range | `8` | How many blocks one attempt places, or how large a shape with a radius is |
-| `attempts` | no | int or range | `8` | How many times per chunk it tries |
-| `sparse` | no | boolean | `false` | Scatters the blocks instead of packing them together |
-| `shape` | no | object | `{ "type": "cluster" }` | The form it takes. See [Shapes](#shapes) |
-| `spread` | no | object | `{ "type": "even" }` | Where it is put. See [Spreads](#spreads) |
-| `replace` | no | list of block names or objects | `["minecraft:stone"]` | What it may replace. See below |
-| `adjacent` | no | list of block names or objects | none | Only place where one of these is among the 26 blocks touching the spot. Same three forms as `replace` |
+| Key        | Required | Value                          | Default                 | What it does                                                                                          |
+| ---------- | -------- | ------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| `block`    | yes      | block name                     |                         | What is placed                                                                                        |
+| `meta`     | no       | int                            | `0`                     | Which variant of that block                                                                           |
+| `blocks`   | no       | list of objects                | none                    | A weighted list, used instead of one block. See below                                                 |
+| `size`     | no       | int or range                   | `8`                     | How many blocks one attempt places, or how large a shape with a radius is                             |
+| `attempts` | no       | int or range                   | `8`                     | How many times per chunk it tries                                                                     |
+| `sparse`   | no       | boolean                        | `false`                 | Scatters the blocks instead of packing them together                                                  |
+| `shape`    | no       | object                         | `{ "type": "cluster" }` | The form it takes. See [Shapes](#shapes)                                                              |
+| `spread`   | no       | object                         | `{ "type": "even" }`    | Where it is put. See [Spreads](#spreads)                                                              |
+| `replace`  | no       | list of block names or objects | `["minecraft:stone"]`   | What it may replace. See below                                                                        |
+| `adjacent` | no       | list of block names or objects | none                    | Only place where one of these is among the 26 blocks touching the spot. Same three forms as `replace` |
 
 ### Where it may generate
 
 *worldgen entries*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `minHeight` | no | int | `0` | Lowest y it will place at |
-| `maxHeight` | no | int | `64` | Highest y it will place at |
-| `snap` | no | `floor` or `ceiling` | none | Move each attempt vertically to the nearest cave floor or ceiling first |
-| `snapDepth` | no | int | `0` | How far past the surface `snap` then moves, down from a floor and up from a ceiling. `0` stays in the open space against the surface, `1` is the surface block itself, `2` the one behind it. What it may overwrite is still governed by `replace`, so this is how a pack bands a block just under the ground rather than on top of it |
-| `dimensions` | no | list of ints | every dimension | Which dimensions it runs in |
-| `dimensionsAreBlacklist` | no | boolean | `false` | Turn that list into the ones to avoid |
-| `biomes` | no | list of biome names | every biome | Which biomes it runs in |
-| `biomeTypes` | no | list of dictionary types | none | Biomes by type, such as `FOREST` or `NETHER` |
-| `biomesAreBlacklist` | no | boolean | `false` | Turn those lists into the ones to avoid |
-| `minTemperature` | no | float | `-100.0` | Coldest biome it will generate in |
-| `maxTemperature` | no | float | `100.0` | Warmest biome it will generate in |
-| `minRainfall` | no | float | `-100.0` | Driest biome it will generate in |
-| `maxRainfall` | no | float | `100.0` | Wettest biome it will generate in |
-| `minDistanceFromSpawn` | no | int, blocks | `0` | How far from world spawn before it starts |
-| `caveRegions` | no | list of region names | none | Only generate inside these [cave regions](#cave-regions) |
+| Key                      | Required | Value                    | Default         | What it does                                                                                                                                                                                                                                                                                                                           |
+| ------------------------ | -------- | ------------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minHeight`              | no       | int                      | `0`             | Lowest y it will place at                                                                                                                                                                                                                                                                                                              |
+| `maxHeight`              | no       | int                      | `64`            | Highest y it will place at                                                                                                                                                                                                                                                                                                             |
+| `snap`                   | no       | `floor` or `ceiling`     | none            | Move each attempt vertically to the nearest cave floor or ceiling first                                                                                                                                                                                                                                                                |
+| `snapDepth`              | no       | int                      | `0`             | How far past the surface `snap` then moves, down from a floor and up from a ceiling. `0` stays in the open space against the surface, `1` is the surface block itself, `2` the one behind it. What it may overwrite is still governed by `replace`, so this is how a pack bands a block just under the ground rather than on top of it |
+| `dimensions`             | no       | list of ints             | every dimension | Which dimensions it runs in                                                                                                                                                                                                                                                                                                            |
+| `dimensionsAreBlacklist` | no       | boolean                  | `false`         | Turn that list into the ones to avoid                                                                                                                                                                                                                                                                                                  |
+| `biomes`                 | no       | list of biome names      | every biome     | Which biomes it runs in                                                                                                                                                                                                                                                                                                                |
+| `biomeTypes`             | no       | list of dictionary types | none            | Biomes by type, such as `FOREST` or `NETHER`                                                                                                                                                                                                                                                                                           |
+| `biomesAreBlacklist`     | no       | boolean                  | `false`         | Turn those lists into the ones to avoid                                                                                                                                                                                                                                                                                                |
+| `minTemperature`         | no       | float                    | `-100.0`        | Coldest biome it will generate in                                                                                                                                                                                                                                                                                                      |
+| `maxTemperature`         | no       | float                    | `100.0`         | Warmest biome it will generate in                                                                                                                                                                                                                                                                                                      |
+| `minRainfall`            | no       | float                    | `-100.0`        | Driest biome it will generate in                                                                                                                                                                                                                                                                                                       |
+| `maxRainfall`            | no       | float                    | `100.0`         | Wettest biome it will generate in                                                                                                                                                                                                                                                                                                      |
+| `minDistanceFromSpawn`   | no       | int, blocks              | `0`             | How far from world spawn before it starts                                                                                                                                                                                                                                                                                              |
+| `caveRegions`            | no       | list of region names     | none            | Only generate inside these [cave regions](#cave-regions)                                                                                                                                                                                                                                                                               |
 
 ### Surface signs and followers
 
 *worldgen entries*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `indicators` | no | list of `block=weight` | none | Blocks left scattered on the surface over a vein that generated, so a player can tell what lies under the ground; pick them to match the vein's contents. `empty=weight` leaves a spot bare |
-| `indicatorCount` | no | int or range | `1` | How many surface spots each generated vein gets |
-| `indicatorSpread` | no | int, blocks | `0` | How far past the vein's footprint an indicator may land |
-| `then` | no | list of `name=weight` or objects | none | Worldgen entries that grow out of this one right after it generates, attached to it: the follower's origin is set just outside this vein's edge, in the direction `thenSpread` and `thenDepth` give, so the two touch. An entry is `name=weight`, or an object with `name`, `weight` and its own `spread` and `depth` (int or range) that override the vein's for that follower alone, so one list can send a diamond tip down and a branch sideways. A bare name is read in this pack's namespace, `empty=weight` queues nothing. A follower keeps its own shape, blocks, size and `replace` but skips its own attempts, chance, height band and biome gates, and may carry `then` itself, as deep as the pack wants; an entry that already generated in the same chain stops it |
-| `thenCount` | no | int or range | `1` | How many different followers are picked from that list per generated vein, each entry at most once, so a count equal to the list's length grows every one of them |
-| `thenSpread` | no | int, blocks | the shape's radius | How far sideways the direction a follower grows in may lean, rolled from minus this to plus this |
-| `thenDepth` | no | int or range | `0` | How far down (negative) or up the direction leans. `0` with no sideways lean hangs the follower straight down |
-| `prospectAs` | no | string | the file name | How a prospecting item names this entry in its reading, e.g. `Hematite` |
+| Key               | Required | Value                            | Default            | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------- | -------- | -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `indicators`      | no       | list of `block=weight`           | none               | Blocks left scattered on the surface over a vein that generated, so a player can tell what lies under the ground; pick them to match the vein's contents. `empty=weight` leaves a spot bare                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `indicatorCount`  | no       | int or range                     | `1`                | How many surface spots each generated vein gets                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `indicatorSpread` | no       | int, blocks                      | `0`                | How far past the vein's footprint an indicator may land                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `then`            | no       | list of `name=weight` or objects | none               | Worldgen entries that grow out of this one right after it generates, attached to it: the follower's origin is set just outside this vein's edge, in the direction `thenSpread` and `thenDepth` give, so the two touch. An entry is `name=weight`, or an object with `name`, `weight` and its own `spread` and `depth` (int or range) that override the vein's for that follower alone, so one list can send a diamond tip down and a branch sideways. A bare name is read in this pack's namespace, `empty=weight` queues nothing. A follower keeps its own shape, blocks, size and `replace` but skips its own attempts, chance, height band and biome gates, and may carry `then` itself, as deep as the pack wants; an entry that already generated in the same chain stops it |
+| `thenCount`       | no       | int or range                     | `1`                | How many different followers are picked from that list per generated vein, each entry at most once, so a count equal to the list's length grows every one of them                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `thenSpread`      | no       | int, blocks                      | the shape's radius | How far sideways the direction a follower grows in may lean, rolled from minus this to plus this                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `thenDepth`       | no       | int or range                     | `0`                | How far down (negative) or up the direction leans. `0` with no sideways lean hangs the follower straight down                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `prospectAs`      | no       | string                           | the file name      | How a prospecting item names this entry in its reading, e.g. `Hematite`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### Retrogen and requirements
 
 *worldgen entries*
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `retrogen` | no | boolean | `false` | Also generate into chunks that already exist |
-| `retrogenKey` | no | string | the config's key | Overrides the retrogen key for this entry alone |
-| `requires` | no | list of mod ids or pack namespaces | none | The entry is skipped unless all are present |
+| Key           | Required | Value                              | Default          | What it does                                    |
+| ------------- | -------- | ---------------------------------- | ---------------- | ----------------------------------------------- |
+| `retrogen`    | no       | boolean                            | `false`          | Also generate into chunks that already exist    |
+| `retrogenKey` | no       | string                             | the config's key | Overrides the retrogen key for this entry alone |
+| `requires`    | no       | list of mod ids or pack namespaces | none             | The entry is skipped unless all are present     |
 
 ### Weighted blocks
 
@@ -3683,12 +4007,12 @@ Only `block` is required; everything else may be left out and takes its default.
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `block` | yes | block name | | What is placed |
-| `meta` | no | int | `0` | Which variant |
-| `weight` | no | int | `1` | How often this one is chosen against the others |
-| `properties` | no | object of property to value | none | Block state properties by name, for states with no metadata of their own |
+| Key          | Required | Value                       | Default | What it does                                                             |
+| ------------ | -------- | --------------------------- | ------- | ------------------------------------------------------------------------ |
+| `block`      | yes      | block name                  |         | What is placed                                                           |
+| `meta`       | no       | int                         | `0`     | Which variant                                                            |
+| `weight`     | no       | int                         | `1`     | How often this one is chosen against the others                          |
+| `properties` | no       | object of property to value | none    | Block state properties by name, for states with no metadata of their own |
 
 `block` and `meta` are still required at the top level of the file even when `blocks` is used, the first entry is a good value to put there.
 
@@ -3709,11 +4033,11 @@ Only `block` is required; everything else may be left out and takes its default.
 }
 ```
 
-| Form | Example | What it matches |
-| --- | --- | --- |
-| Name | `"minecraft:stone"` | Every state of that block |
-| Name and metadata | `"minecraft:stone:3"` | Only that metadata, here diorite |
-| Object | `{ "block": "minecraft:stone", "properties": { "variant": "andesite" } }` | Only that state |
+| Form              | Example                                                                   | What it matches                  |
+| ----------------- | ------------------------------------------------------------------------- | -------------------------------- |
+| Name              | `"minecraft:stone"`                                                       | Every state of that block        |
+| Name and metadata | `"minecraft:stone:3"`                                                     | Only that metadata, here diorite |
+| Object            | `{ "block": "minecraft:stone", "properties": { "variant": "andesite" } }` | Only that state                  |
 
 The object form also takes `meta` instead of `properties`, which is the same as the colon form. Use `"minecraft:air"` to generate in open space.
 
@@ -3753,12 +4077,12 @@ An entry in a worldgen entry's `then` list is a name with a weight, or an object
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `name` | yes | entry name | | The worldgen entry that grows out of this one. A bare name is read in this pack's namespace |
-| `weight` | no | int | `1` | How often this follower is picked against the others in the list |
-| `spread` | no | int, blocks | the entry's `thenSpread` | How far sideways this follower's direction may lean, for this entry alone |
-| `depth` | no | int or range | the entry's `thenDepth` | How far down, negative, or up this follower's direction leans, for this entry alone |
+| Key      | Required | Value        | Default                  | What it does                                                                                |
+| -------- | -------- | ------------ | ------------------------ | ------------------------------------------------------------------------------------------- |
+| `name`   | yes      | entry name   |                          | The worldgen entry that grows out of this one. A bare name is read in this pack's namespace |
+| `weight` | no       | int          | `1`                      | How often this follower is picked against the others in the list                            |
+| `spread` | no       | int, blocks  | the entry's `thenSpread` | How far sideways this follower's direction may lean, for this entry alone                   |
+| `depth`  | no       | int or range | the entry's `thenDepth`  | How far down, negative, or up this follower's direction leans, for this entry alone         |
 
 `name=weight` is the short form of an object with only those two, and `empty=weight` queues nothing. Because `spread` and `depth` are per entry, one list can send a diamond tip straight down and a branch sideways off the same vein.
 
@@ -3816,63 +4140,63 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 }
 ```
 
-| Type | What it makes |
-| --- | --- |
-| `cluster` | The default blob, an ore vein. Uses `size` |
-| `largevein` | A long wandering vein with branches. Uses `size` |
-| `plate` | A flat disc |
-| `geode` | A hollow pocket with a crust |
-| `decoration` | Surface scatter, such as flowers or mushrooms. Uses `size` |
-| `tree` | A whole tree |
-| `vines` | Vines on what is already there. Uses `size` |
-| `basin` | A bowl that deepens toward the middle |
-| `spire` | A tapering column |
-| `nodule` | A rough ball |
-| `vent` | A narrow column that stops when it hits something |
-| `imprint` | One of your `.nbt` templates. One that fits inside a chunk is nudged so it lands whole in the chunk being built rather than reaching into a neighbor that has not been made yet, whichever way it is turned; one larger than a chunk is placed only where the ground around it already exists |
-| `belt` | A cluster spanning several chunks, for stone regions |
-| `field` | Veins worked out for every block at once, sharing their shape with hardness groups |
-| `vein` | A deposit worked out as a seeded noise field around an origin, the way Immersive Geology does it: every chunk writes its own slice of every vein whose 24-block reach touches it, so nothing cascades, and `/rdplserver vein` can tell where a vein will be before the land is made. Uses `size`, `attempts`, `rarity` and the height band; `pattern` picks the look |
-| `spring` | A fluid leaking out of a cave wall: placed where rock stands above, below and on three sides with one side open, and set flowing |
+| Type         | What it makes                                                                                                                                                                                                                                                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cluster`    | The default blob, an ore vein. Uses `size`                                                                                                                                                                                                                                                                                                                           |
+| `largevein`  | A long wandering vein with branches. Uses `size`                                                                                                                                                                                                                                                                                                                     |
+| `plate`      | A flat disc                                                                                                                                                                                                                                                                                                                                                          |
+| `geode`      | A hollow pocket with a crust                                                                                                                                                                                                                                                                                                                                         |
+| `decoration` | Surface scatter, such as flowers or mushrooms. Uses `size`                                                                                                                                                                                                                                                                                                           |
+| `tree`       | A whole tree                                                                                                                                                                                                                                                                                                                                                         |
+| `vines`      | Vines on what is already there. Uses `size`                                                                                                                                                                                                                                                                                                                          |
+| `basin`      | A bowl that deepens toward the middle                                                                                                                                                                                                                                                                                                                                |
+| `spire`      | A tapering column                                                                                                                                                                                                                                                                                                                                                    |
+| `nodule`     | A rough ball                                                                                                                                                                                                                                                                                                                                                         |
+| `vent`       | A narrow column that stops when it hits something                                                                                                                                                                                                                                                                                                                    |
+| `imprint`    | One of your `.nbt` templates. One that fits inside a chunk is nudged so it lands whole in the chunk being built rather than reaching into a neighbor that has not been made yet, whichever way it is turned; one larger than a chunk is placed only where the ground around it already exists                                                                        |
+| `belt`       | A cluster spanning several chunks, for stone regions                                                                                                                                                                                                                                                                                                                 |
+| `field`      | Veins worked out for every block at once, sharing their shape with hardness groups                                                                                                                                                                                                                                                                                   |
+| `vein`       | A deposit worked out as a seeded noise field around an origin, the way Immersive Geology does it: every chunk writes its own slice of every vein whose 24-block reach touches it, so nothing cascades, and `/rdplserver vein` can tell where a vein will be before the land is made. Uses `size`, `attempts`, `rarity` and the height band; `pattern` picks the look |
+| `spring`     | A fluid leaking out of a cave wall: placed where rock stands above, below and on three sides with one side open, and set flowing                                                                                                                                                                                                                                     |
 
 ### Size and form
 
 *shapes*
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `type` | all | one of the shapes above | `cluster` | Which shape |
-| `radius` | plate, geode, basin, spire, nodule, vent | int or range | `6` | How wide it is |
-| `height` | plate, geode, basin, spire, vent, tree | int or range | `1`, `8` for geode, `5` for tree | How tall or thick it is |
-| `width` | geode | int or range | `12` | The overall span of the pocket |
-| `plane` | plate, basin, spire, vent | `circle`, `square` | `circle` | Its footprint |
-| `slim` | plate, largevein, nodule | boolean | `false` | Plate: one layer thinner. Largevein: single block branches. Nodule: hollow shell |
-| `hanging` | spire, vent | boolean | `false` | Grow downward from a ceiling instead of up from a floor |
-| `taper` | spire | `straight`, `bell`, `needle` | `straight` | How the width falls away toward the tip. `straight` narrows evenly, `bell` keeps its width low down then drops, `needle` thins at once into a long point |
-| `outline` | geode | block name | none | The crust block |
-| `fill` | geode | block name | none | What fills the middle. Left out, the middle is hollow |
-| `middle` | geode | block name | none | A shell between the body and `outline`, the calcite of a modern amethyst geode |
-| `budding` | geode | block name | none | Swapped in for body blocks that face the hollow middle, as budding amethyst is. Needs `fill` |
-| `buddingChance` | geode | 0.0 to 1.0 | `0.083` | How many of those body blocks bud |
-| `crystal` | geode | block name | none | Grown into the hollow beside a `budding` block, as an amethyst cluster is |
-| `crystalChance` | geode | 0.0 to 1.0 | `0.35` | How many of those spots grow one |
-| `crack` | geode | 0.0 to 1.0 | `0` | The chance a geode is cracked open: a tube from the middle out through every layer on one side, filled with `fill`. Modern amethyst geodes use `0.95` |
+| Key             | Used by                                  | Value                        | Default                          | What it does                                                                                                                                             |
+| --------------- | ---------------------------------------- | ---------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`          | all                                      | one of the shapes above      | `cluster`                        | Which shape                                                                                                                                              |
+| `radius`        | plate, geode, basin, spire, nodule, vent | int or range                 | `6`                              | How wide it is                                                                                                                                           |
+| `height`        | plate, geode, basin, spire, vent, tree   | int or range                 | `1`, `8` for geode, `5` for tree | How tall or thick it is                                                                                                                                  |
+| `width`         | geode                                    | int or range                 | `12`                             | The overall span of the pocket                                                                                                                           |
+| `plane`         | plate, basin, spire, vent                | `circle`, `square`           | `circle`                         | Its footprint                                                                                                                                            |
+| `slim`          | plate, largevein, nodule                 | boolean                      | `false`                          | Plate: one layer thinner. Largevein: single block branches. Nodule: hollow shell                                                                         |
+| `hanging`       | spire, vent                              | boolean                      | `false`                          | Grow downward from a ceiling instead of up from a floor                                                                                                  |
+| `taper`         | spire                                    | `straight`, `bell`, `needle` | `straight`                       | How the width falls away toward the tip. `straight` narrows evenly, `bell` keeps its width low down then drops, `needle` thins at once into a long point |
+| `outline`       | geode                                    | block name                   | none                             | The crust block                                                                                                                                          |
+| `fill`          | geode                                    | block name                   | none                             | What fills the middle. Left out, the middle is hollow                                                                                                    |
+| `middle`        | geode                                    | block name                   | none                             | A shell between the body and `outline`, the calcite of a modern amethyst geode                                                                           |
+| `budding`       | geode                                    | block name                   | none                             | Swapped in for body blocks that face the hollow middle, as budding amethyst is. Needs `fill`                                                             |
+| `buddingChance` | geode                                    | 0.0 to 1.0                   | `0.083`                          | How many of those body blocks bud                                                                                                                        |
+| `crystal`       | geode                                    | block name                   | none                             | Grown into the hollow beside a `budding` block, as an amethyst cluster is                                                                                |
+| `crystalChance` | geode                                    | 0.0 to 1.0                   | `0.35`                           | How many of those spots grow one                                                                                                                         |
+| `crack`         | geode                                    | 0.0 to 1.0                   | `0`                              | The chance a geode is cracked open: a tube from the middle out through every layer on one side, filled with `fill`. Modern amethyst geodes use `0.95`    |
 
 ### Placement
 
 *shapes*
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `surface` | decoration, tree | list of block names | none | What it will sit on |
-| `seeSky` | decoration | boolean | `true` | Only place where the sky is visible |
-| `checkStay` | decoration | boolean | `true` | Only place where the block would survive |
-| `stackHeight` | decoration | int or range | `1` | How many to stack on top of each other |
-| `scatterX` | decoration, tree | int | `8` | How far it wanders sideways |
-| `scatterY` | decoration, tree | int | `4` | How far it wanders vertically |
-| `scatterZ` | decoration, tree | int | `8` | How far it wanders sideways |
-| `rarity` | any | int | none (`400` for belt) | One placement per this many chunks. On a belt this spaces the belts out; on any other shape it gates the whole entry so only one chunk in this many rolls its `attempts` at all. `field` ignores it |
-| `rarityIsPerChunk` | any | boolean | `false` | Turn `rarity` into how many placements each chunk gets instead |
+| Key                | Used by          | Value               | Default               | What it does                                                                                                                                                                                        |
+| ------------------ | ---------------- | ------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surface`          | decoration, tree | list of block names | none                  | What it will sit on                                                                                                                                                                                 |
+| `seeSky`           | decoration       | boolean             | `true`                | Only place where the sky is visible                                                                                                                                                                 |
+| `checkStay`        | decoration       | boolean             | `true`                | Only place where the block would survive                                                                                                                                                            |
+| `stackHeight`      | decoration       | int or range        | `1`                   | How many to stack on top of each other                                                                                                                                                              |
+| `scatterX`         | decoration, tree | int                 | `8`                   | How far it wanders sideways                                                                                                                                                                         |
+| `scatterY`         | decoration, tree | int                 | `4`                   | How far it wanders vertically                                                                                                                                                                       |
+| `scatterZ`         | decoration, tree | int                 | `8`                   | How far it wanders sideways                                                                                                                                                                         |
+| `rarity`           | any              | int                 | none (`400` for belt) | One placement per this many chunks. On a belt this spaces the belts out; on any other shape it gates the whole entry so only one chunk in this many rolls its `attempts` at all. `field` ignores it |
+| `rarityIsPerChunk` | any              | boolean             | `false`               | Turn `rarity` into how many placements each chunk gets instead                                                                                                                                      |
 
 ### Trees
 
@@ -3886,26 +4210,26 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 A `tree` with no `log` or `leaves` generates nothing, and says so in the log. Naming a `structure`, or several under `structures`, plants that template at each spot instead of growing one, and then no `log` or `leaves` is needed; a templated tree reads `turns`, `mirrors`, `integrity`, `lootTable` and `locateAs` exactly as an `imprint` does.
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `log` | tree | block name | none | The trunk block |
-| `leaves` | tree | block name | none | The leaf block |
-| `vines` | tree | boolean | `false` | Hang vines from the leaves |
+| Key      | Used by | Value      | Default | What it does               |
+| -------- | ------- | ---------- | ------- | -------------------------- |
+| `log`    | tree    | block name | none    | The trunk block            |
+| `leaves` | tree    | block name | none    | The leaf block             |
+| `vines`  | tree    | boolean    | `false` | Hang vines from the leaves |
 
 ### Placing templates
 
 *shapes*
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `structure` | imprint, tree | `namespace:name` | none | The template to place |
-| `integrity` | imprint, tree | 1 to 100 | `100` | Percentage of the template's blocks that actually appear |
-| `lootTable` | imprint, tree | `namespace:path` | none | The loot table every chest inside the placed template is filled from the first time it is opened, and any other container that takes one, a shulker box or a mod's crate among them. Covers `structure` and every entry of `structures`; each chest rolls its own seed |
-| `structures` | imprint, tree | list | none | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
-| `turns` | imprint, tree | list | any | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely |
-| `mirrors` | imprint, tree | list | none | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight`. An entry naming its own weight is written `{ "mirror": "leftright", "weight": 2 }`, and a `turns` entry the same with `turn` |
-| `at` | imprint | two ints, x and z | none | Place exactly once at those block coordinates on the surface, when that chunk generates, instead of by chance. See [Structures at exact places](#structures-at-exact-places) |
-| `locateAs` | imprint, tree | string | none | Register every structure this entry places under that name, so `/locate <name>` finds the nearest. See [Finding placed structures](#finding-placed-structures) |
+| Key          | Used by       | Value             | Default | What it does                                                                                                                                                                                                                                                           |
+| ------------ | ------------- | ----------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structure`  | imprint, tree | `namespace:name`  | none    | The template to place                                                                                                                                                                                                                                                  |
+| `integrity`  | imprint, tree | 1 to 100          | `100`   | Percentage of the template's blocks that actually appear                                                                                                                                                                                                               |
+| `lootTable`  | imprint, tree | `namespace:path`  | none    | The loot table every chest inside the placed template is filled from the first time it is opened, and any other container that takes one, a shulker box or a mod's crate among them. Covers `structure` and every entry of `structures`; each chest rolls its own seed |
+| `structures` | imprint, tree | list              | none    | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure`                                                                                        |
+| `turns`      | imprint, tree | list              | any     | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely                                                                                                                       |
+| `mirrors`    | imprint, tree | list              | none    | Flip it as well: `none`, `leftright`, `frontback`, with optional `weight`. An entry naming its own weight is written `{ "mirror": "leftright", "weight": 2 }`, and a `turns` entry the same with `turn`                                                                |
+| `at`         | imprint       | two ints, x and z | none    | Place exactly once at those block coordinates on the surface, when that chunk generates, instead of by chance. See [Structures at exact places](#structures-at-exact-places)                                                                                           |
+| `locateAs`   | imprint, tree | string            | none    | Register every structure this entry places under that name, so `/locate <name>` finds the nearest. See [Finding placed structures](#finding-placed-structures)                                                                                                         |
 
 For a shape no built-in type covers, `imprint` is the way: build it as an `.nbt` template and place that, with `structures` to vary it, `turns` and `mirrors` to turn it about, and `integrity` to dissolve it into something rougher than the file you drew.
 
@@ -3915,9 +4239,9 @@ For a shape no built-in type covers, `imprint` is the way: build it as an `.nbt`
 
 Vanilla structures pin to exact spots with `structureAt` in the `terrain` settings, as `structure=x,z` entries, one per line: `"structureAt": ["villages=1000,-500"]`. **The x and z are block coordinates, not chunk coordinates**, and the structure generates in the chunk that holds that block; a village's well stands on that block itself, while other structures start where the game would start them in that chunk. One entry per wanted instance. Its spacing, separation, minimum spawn distance and flat-ground checks all stand aside, so the spot is the pack's responsibility, and two pins closer than a chunk apart put two structures in the same chunk. The structure seats to the ground at its chunk by the usual rules once founded.
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `structureAt` | list of `structure=x,z` | none | Pins a vanilla structure to an exact spot, one entry per wanted instance. The x and z are block coordinates, and the structure generates in the chunk that holds that block; its spacing, separation, minimum spawn distance and flat-ground checks all stand aside |
+| Setting       | Type                    | Default | What it does                                                                                                                                                                                                                                                        |
+| ------------- | ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structureAt` | list of `structure=x,z` | none    | Pins a vanilla structure to an exact spot, one entry per wanted instance. The x and z are block coordinates, and the structure generates in the chunk that holds that block; its spacing, separation, minimum spawn distance and flat-ground checks all stand aside |
 
 An `imprint` entry pins the same way with `"at": [x, z]` in its shape, placing exactly once at those coordinates on the surface when that chunk generates, instead of by chance. It composes with `locateAs`, so a pinned structure can also be found with /locate.
 
@@ -3931,17 +4255,17 @@ An `imprint` entry with `"locateAs": "Crypt"` registers every structure it place
 
 *shapes*
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `field` | field | object | `{ "type": "speckle" }` | How the field is worked out. Same keys as a hardness group's `field`, described under [The field](#the-field): `speckle` with `chances` and `spread`, or `seeded` with `cell`, `seeds`, `reach`, `arms` and `armReach` |
-| `threshold` | field, vein | 0.0 to 1.0 | `0.5` (`0.4` for vein) | How strong the field must be at a block before it is placed. Lower fills more |
-| `fade` | field | int | `0` | Speckle out the top of the band instead of ending it flat: over the top this many blocks of the height range, each block's odds of placing thin out step by step, the same look the engine gives `deepStone` where it meets the world above |
-| `pattern` | vein | `default`, `banded` or `tube` | `default` | The deposit's look: a warped blob, layers stacked every few blocks, or hollow tubes winding through the rock |
-| `density` | vein | 0.0 to 1.0 | `1.0` | The share of qualifying blocks that are actually placed, a per-block coin |
-| `rich` | vein | block name | none | Placed in the top fifth of the field's range above `threshold`, the heart of the deposit, instead of the entry's blocks |
-| `poor` | vein | block name | none | Placed in the bottom two fifths of that range, the fringe, instead of the entry's blocks; the middle is the entry's own blocks. Either tier left out places the entry's blocks there |
-| `richAt` | vein | 0.0 to 1.0 | `0.88` | Where the rich tier starts in that range: `0.88` keeps the rich block to the strongest eighth of the deposit, a lower number makes the rich core fatter, `1.0` leaves no rich block at all |
-| `poorAt` | vein | 0.0 to 1.0 | `0.4` | Where the entry's own blocks start: below this the `poor` block is placed, so `0.4` gives a fringe of the bottom two fifths and `0.0` leaves no poor fringe. Clamped to `richAt` |
+| Key         | Used by     | Value                         | Default                 | What it does                                                                                                                                                                                                                                |
+| ----------- | ----------- | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `field`     | field       | object                        | `{ "type": "speckle" }` | How the field is worked out. Same keys as a hardness group's `field`, described under [The field](#the-field): `speckle` with `chances` and `spread`, or `seeded` with `cell`, `seeds`, `reach`, `arms` and `armReach`                      |
+| `threshold` | field, vein | 0.0 to 1.0                    | `0.5` (`0.4` for vein)  | How strong the field must be at a block before it is placed. Lower fills more                                                                                                                                                               |
+| `fade`      | field       | int                           | `0`                     | Speckle out the top of the band instead of ending it flat: over the top this many blocks of the height range, each block's odds of placing thin out step by step, the same look the engine gives `deepStone` where it meets the world above |
+| `pattern`   | vein        | `default`, `banded` or `tube` | `default`               | The deposit's look: a warped blob, layers stacked every few blocks, or hollow tubes winding through the rock                                                                                                                                |
+| `density`   | vein        | 0.0 to 1.0                    | `1.0`                   | The share of qualifying blocks that are actually placed, a per-block coin                                                                                                                                                                   |
+| `rich`      | vein        | block name                    | none                    | Placed in the top fifth of the field's range above `threshold`, the heart of the deposit, instead of the entry's blocks                                                                                                                     |
+| `poor`      | vein        | block name                    | none                    | Placed in the bottom two fifths of that range, the fringe, instead of the entry's blocks; the middle is the entry's own blocks. Either tier left out places the entry's blocks there                                                        |
+| `richAt`    | vein        | 0.0 to 1.0                    | `0.88`                  | Where the rich tier starts in that range: `0.88` keeps the rich block to the strongest eighth of the deposit, a lower number makes the rich core fatter, `1.0` leaves no rich block at all                                                  |
+| `poorAt`    | vein        | 0.0 to 1.0                    | `0.4`                   | Where the entry's own blocks start: below this the `poor` block is placed, so `0.4` gives a fringe of the bottom two fifths and `0.0` leaves no poor fringe. Clamped to `richAt`                                                            |
 
 ### Belts
 
@@ -3979,10 +4303,10 @@ A `field` places nothing at a point and everything at once. Instead of picking a
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `threshold` | no | 0.0 to 1.0 | `0.5` | How strong the field has to be before a block is placed |
-| `field` | yes | object | none | The same object a hardness group takes, with the same `speckle` and `seeded` types |
+| Key         | Required | Value      | Default | What it does                                                                       |
+| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------- |
+| `threshold` | no       | 0.0 to 1.0 | `0.5`   | How strong the field has to be before a block is placed                            |
+| `field`     | yes      | object     | none    | The same object a hardness group takes, with the same `speckle` and `seeded` types |
 
 A low `threshold` takes most of the field and gives broad seams, a high one takes only the middle of each clump and gives small scattered pockets. With `speckle` you get many tiny specks, with `seeded` you get rounder patches or, once it has arms, knots with tendrils reaching between them.
 
@@ -4028,28 +4352,28 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 }
 ```
 
-| Type | Where it puts things |
-| --- | --- |
-| `even` | Anywhere between the heights, evenly. The default |
-| `centered` | Weighted toward one height, thinning out with distance |
-| `sprawl` | Fractal veins spanning a height range |
-| `terrain` | Following the surface |
-| `cavern` | On cave floors, or roofs |
-| `submerged` | Under water or another fluid |
+| Type        | Where it puts things                                   |
+| ----------- | ------------------------------------------------------ |
+| `even`      | Anywhere between the heights, evenly. The default      |
+| `centered`  | Weighted toward one height, thinning out with distance |
+| `sprawl`    | Fractal veins spanning a height range                  |
+| `terrain`   | Following the surface                                  |
+| `cavern`    | On cave floors, or roofs                               |
+| `submerged` | Under water or another fluid                           |
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `type` | all | one of the spreads above | `even` | Which spread |
-| `center` | centered | int | midpoint of the height range | The height it clusters around |
-| `range` | centered | int | half the height range | How far from that height it reaches |
-| `smoothness` | centered | 1 to 8 | `2` | How many rolls are averaged. Higher is a tighter band |
-| `veinHeight` | sprawl | int | the height range | How tall one vein is |
-| `veinDiameter` | sprawl | int | `12` | How wide one vein is |
-| `verticalDensity` | sprawl | 1 to 100 | `16` | How solid it is vertically |
-| `horizontalDensity` | sprawl | 1 to 100 | `32` | How solid it is horizontally |
-| `offsetMin` | terrain | int | `0` | Lowest offset from the surface |
-| `offsetMax` | terrain | int | `offsetMin` | Highest offset from the surface |
-| `ceiling` | cavern | boolean | `false` | Attach to the cave roof instead of the floor |
+| Key                 | Used by  | Value                    | Default                      | What it does                                          |
+| ------------------- | -------- | ------------------------ | ---------------------------- | ----------------------------------------------------- |
+| `type`              | all      | one of the spreads above | `even`                       | Which spread                                          |
+| `center`            | centered | int                      | midpoint of the height range | The height it clusters around                         |
+| `range`             | centered | int                      | half the height range        | How far from that height it reaches                   |
+| `smoothness`        | centered | 1 to 8                   | `2`                          | How many rolls are averaged. Higher is a tighter band |
+| `veinHeight`        | sprawl   | int                      | the height range             | How tall one vein is                                  |
+| `veinDiameter`      | sprawl   | int                      | `12`                         | How wide one vein is                                  |
+| `verticalDensity`   | sprawl   | 1 to 100                 | `16`                         | How solid it is vertically                            |
+| `horizontalDensity` | sprawl   | 1 to 100                 | `32`                         | How solid it is horizontally                          |
+| `offsetMin`         | terrain  | int                      | `0`                          | Lowest offset from the surface                        |
+| `offsetMax`         | terrain  | int                      | `offsetMin`                  | Highest offset from the surface                       |
+| `ceiling`           | cavern   | boolean                  | `false`                      | Attach to the cave roof instead of the floor          |
 
 ## Structure maps
 
@@ -4083,24 +4407,24 @@ A structure map composes templates into one named building on a grid, far past t
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `name` | text | the file name | What the map is called in logs |
-| `cell` | number | `32` | The grid pitch in blocks, up to 48. A template smaller than the cell sits at the cell's corner, so full-size pieces butt together seamlessly |
-| `ground` | number | `0` | Which layer floors at the terrain surface. Layers before it dig down, which is how a building gets basements |
-| `at` | two numbers | none | Pins one copy at exact block coordinates, the way `structureAt` pins a village |
-| `spacing` | number | `0` | Scatters copies on a grid this many chunks apart, jittered from the world seed. `0` scatters none, so a map with only `at` builds exactly once |
-| `chance` | number | `100` | The percent of grid spots that build a copy |
-| `dimensions` | list | all | Dimension ids the map may build in |
-| `layers` | list | none | The layers, bottom up, each a `palette` and a `map` |
+| Setting      | Type        | Default       | What it does                                                                                                                                   |
+| ------------ | ----------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | text        | the file name | What the map is called in logs                                                                                                                 |
+| `cell`       | number      | `32`          | The grid pitch in blocks, up to 48. A template smaller than the cell sits at the cell's corner, so full-size pieces butt together seamlessly   |
+| `ground`     | number      | `0`           | Which layer floors at the terrain surface. Layers before it dig down, which is how a building gets basements                                   |
+| `at`         | two numbers | none          | Pins one copy at exact block coordinates, the way `structureAt` pins a village                                                                 |
+| `spacing`    | number      | `0`           | Scatters copies on a grid this many chunks apart, jittered from the world seed. `0` scatters none, so a map with only `at` builds exactly once |
+| `chance`     | number      | `100`         | The percent of grid spots that build a copy                                                                                                    |
+| `dimensions` | list        | all           | Dimension ids the map may build in                                                                                                             |
+| `layers`     | list        | none          | The layers, bottom up, each a `palette` and a `map`                                                                                            |
 
 A palette names templates by registry key from a pack's `<namespace>/structures/`.
 
-| Value | What it does |
-| --- | --- |
-| `"a": "mypack:keep"` | Every `a` cell of that layer places this template |
+| Value                                       | What it does                                                                                                                                                        |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"a": "mypack:keep"`                        | Every `a` cell of that layer places this template                                                                                                                   |
 | `"a": ["mypack:wall=3", "mypack:broken=1"]` | Each `a` cell rolls the list by weight, from the world seed and the cell's spot, so two copies of the building differ but the same world always builds the same one |
-| `.` | An empty cell, nothing placed |
+| `.`                                         | An empty cell, nothing placed                                                                                                                                       |
 
 Every copy rolls one of the four facings from the world seed and the whole building turns together, templates included, so walls that meet across cells still meet. The ground layer floors at the sampled terrain surface under the building's middle. Each chunk builds only its own slice of the grid, so a building spanning many chunks arrives without cascading generation, whatever order the chunks load in. A [village plot](#village-plots) of type `template` may also name a map as its `structure`, which makes the composite a village building.
 
@@ -4146,18 +4470,18 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 *village plots*
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `type` | all | `farm` or `template` | `farm` | Which kind of plot |
-| `weight` | all | int | `3` | How often this plot is picked against the pack's others |
-| `leastCount` | all | int | `1` | Fewest per village, before village size is added |
-| `mostCount` | all | int | `4` | Most per village, before village size is added |
-| `width` | all | int | `7` | Size across the path |
-| `height` | all | int | `4` | Height cleared above the ground |
-| `depth` | all | int | `9` | Size away from the path |
-| `apron` | all | int | `2` | How far the ground may be off the road's level under the plot before it is refused or slid along its road: that many blocks of fill under it, or of cut into a rise above it, and no more than that between its highest and lowest corner. A wide plot in hills needs more. Set it high and the plot terraces straight into a slope, which in the wrong place eats a mountain |
-| `ground` | all | block name | `minecraft:dirt` | What is packed underneath on a slope |
-| `requires` | all | list of mod ids or pack namespaces | none | The plot is left out unless all are present |
+| Key          | Used by | Value                              | Default          | What it does                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------ | ------- | ---------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`       | all     | `farm` or `template`               | `farm`           | Which kind of plot                                                                                                                                                                                                                                                                                                                                                            |
+| `weight`     | all     | int                                | `3`              | How often this plot is picked against the pack's others                                                                                                                                                                                                                                                                                                                       |
+| `leastCount` | all     | int                                | `1`              | Fewest per village, before village size is added                                                                                                                                                                                                                                                                                                                              |
+| `mostCount`  | all     | int                                | `4`              | Most per village, before village size is added                                                                                                                                                                                                                                                                                                                                |
+| `width`      | all     | int                                | `7`              | Size across the path                                                                                                                                                                                                                                                                                                                                                          |
+| `height`     | all     | int                                | `4`              | Height cleared above the ground                                                                                                                                                                                                                                                                                                                                               |
+| `depth`      | all     | int                                | `9`              | Size away from the path                                                                                                                                                                                                                                                                                                                                                       |
+| `apron`      | all     | int                                | `2`              | How far the ground may be off the road's level under the plot before it is refused or slid along its road: that many blocks of fill under it, or of cut into a rise above it, and no more than that between its highest and lowest corner. A wide plot in hills needs more. Set it high and the plot terraces straight into a slope, which in the wrong place eats a mountain |
+| `ground`     | all     | block name                         | `minecraft:dirt` | What is packed underneath on a slope                                                                                                                                                                                                                                                                                                                                          |
+| `requires`   | all     | list of mod ids or pack namespaces | none             | The plot is left out unless all are present                                                                                                                                                                                                                                                                                                                                   |
 
 Every pack plot is offered to villages as one entry, so `weight` decides which of your plots is chosen once a village asks for one. Which plot a placement used is written into the village's own data, so it rebuilds correctly on load.
 
@@ -4180,13 +4504,13 @@ A `farm` is vanilla's field, described rather than coded: a plot of the size you
 }
 ```
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `crops` | farm | list of block names | wheat | Planted one per block, at a random growth stage |
-| `edge` | farm | block name | `minecraft:log` | The frame around the plot |
-| `soil` | farm | block name | `minecraft:farmland` | What the rows are made of |
-| `water` | farm | boolean | `true` | Put a water channel between the rows |
-| `rowWidth` | farm | int | `2` | How wide each row of soil is |
+| Key        | Used by | Value               | Default              | What it does                                    |
+| ---------- | ------- | ------------------- | -------------------- | ----------------------------------------------- |
+| `crops`    | farm    | list of block names | wheat                | Planted one per block, at a random growth stage |
+| `edge`     | farm    | block name          | `minecraft:log`      | The frame around the plot                       |
+| `soil`     | farm    | block name          | `minecraft:farmland` | What the rows are made of                       |
+| `water`    | farm    | boolean             | `true`               | Put a water channel between the rows            |
+| `rowWidth` | farm    | int                 | `2`                  | How wide each row of soil is                    |
 
 ### Built from templates
 
@@ -4216,16 +4540,16 @@ A `template` whose `structure` names one of your [structure maps](#structure-map
 }
 ```
 
-| Key | Used by | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `structure` | template | `namespace:name` | none | The template to place, or one of your structure maps, which then sets the plot's size |
-| `integrity` | template | 1 to 100 | `100` | Percentage of the template's blocks that appear |
-| `lootTable` | template | `namespace:path` | none | The loot table every chest inside the placed template is filled from the first time it is opened. A plot that names a structure map is left alone |
-| `villagers` | all | int | `0` | How many people the plot spawns |
-| `villagerEntity` | all | `namespace:name` | a villager | Who lives there, such as an entity variant of your own |
-| `villagerX` | all | int | `1` | Where they appear, across the plot |
-| `villagerY` | all | int | `1` | Where they appear, above the floor |
-| `villagerZ` | all | int | `1` | Where they appear, into the plot |
+| Key              | Used by  | Value            | Default    | What it does                                                                                                                                      |
+| ---------------- | -------- | ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structure`      | template | `namespace:name` | none       | The template to place, or one of your structure maps, which then sets the plot's size                                                             |
+| `integrity`      | template | 1 to 100         | `100`      | Percentage of the template's blocks that appear                                                                                                   |
+| `lootTable`      | template | `namespace:path` | none       | The loot table every chest inside the placed template is filled from the first time it is opened. A plot that names a structure map is left alone |
+| `villagers`      | all      | int              | `0`        | How many people the plot spawns                                                                                                                   |
+| `villagerEntity` | all      | `namespace:name` | a villager | Who lives there, such as an entity variant of your own                                                                                            |
+| `villagerX`      | all      | int              | `1`        | Where they appear, across the plot                                                                                                                |
+| `villagerY`      | all      | int              | `1`        | Where they appear, above the floor                                                                                                                |
+| `villagerZ`      | all      | int              | `1`        | Where they appear, into the plot                                                                                                                  |
 
 ## City layout maps
 
@@ -4265,27 +4589,27 @@ A city map draws a village's street plan on a grid, one character to a cell, and
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `name` | text | the file name | What the map is called in logs |
-| `cell` | number | `48` | The grid pitch in blocks, 8 to 128. Roads run down the middle of their cells at the pack's road width and plots are centered in theirs, so a cell wants the widest plot plus room to front the street |
-| `palette` | object | none | What each character lays, listed below |
-| `map` | list | none | The rows, up to 64 by 64 cells. A row shorter than the widest is open past its end |
-| `settings` | object | none | Village settings for this map alone, under the names a world template uses, such as `villagePathCenterBlock`. They win over the template's, and a biome's own village settings still win over them |
+| Setting    | Type   | Default       | What it does                                                                                                                                                                                          |
+| ---------- | ------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | text   | the file name | What the map is called in logs                                                                                                                                                                        |
+| `cell`     | number | `48`          | The grid pitch in blocks, 8 to 128. Roads run down the middle of their cells at the pack's road width and plots are centered in theirs, so a cell wants the widest plot plus room to front the street |
+| `palette`  | object | none          | What each character lays, listed below                                                                                                                                                                |
+| `map`      | list   | none          | The rows, up to 64 by 64 cells. A row shorter than the widest is open past its end                                                                                                                    |
+| `settings` | object | none          | Village settings for this map alone, under the names a world template uses, such as `villagePathCenterBlock`. They win over the template's, and a biome's own village settings still win over them    |
 
-| Value | What it does |
-| --- | --- |
-| `"#": "street"` | A run of street cells along a row or column becomes one road box at the pack's road width. Where a row run crosses a column run the junction is painted like any other. A lone street cell with no run in either axis is laid as a short stub along the row |
-| `"+": "plaza"` | A well with its plaza ring. Runs pass through plaza cells, so streets meet at the well, and a plaza on a crossing stands its well, or its `villageWellStructure` centerpiece, in the middle of the crossroads like a roundabout. The first plaza in the file is the village's own well, which pins the map to where the village founds; a map without one is centered there |
-| `"a": "alley"` | A narrow run. Buildings front it, but it connects nothing, the alley rule as usual |
-| `"J": "junction"` | A street cell laid in both directions, so a crossing stands there even where the drawing runs only one way through it. The arm across it is one cell long |
-| `"b": "bulb"` | A street cell that ends in a cul-de-sac. Once a map has a bulb cell, only road ends lying in bulb cells get a bulb, and every one with room for it does; a map without one keeps three ends in four |
-| `"E": { "kind": "elevated", "height": 8 }` | A street cell raised onto a deck `height` blocks, 2 to 64, above the highest ground under its stretch of joined elevated cells, with a ramp of one block a row at each end. A street crossing inside the stretch rises with it. A stretch whose deck or ramps would reach a row that a railway or a well holds at its own level stays at grade, with a line in the log. Any value can be written as an object this way, `kind` naming the word |
+| Value                                                                   | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `"#": "street"`                                                         | A run of street cells along a row or column becomes one road box at the pack's road width. Where a row run crosses a column run the junction is painted like any other. A lone street cell with no run in either axis is laid as a short stub along the row                                                                                                                                                                                                              |
+| `"+": "plaza"`                                                          | A well with its plaza ring. Runs pass through plaza cells, so streets meet at the well, and a plaza on a crossing stands its well, or its `villageWellStructure` centerpiece, in the middle of the crossroads like a roundabout. The first plaza in the file is the village's own well, which pins the map to where the village founds; a map without one is centered there                                                                                              |
+| `"a": "alley"`                                                          | A narrow run. Buildings front it, but it connects nothing, the alley rule as usual                                                                                                                                                                                                                                                                                                                                                                                       |
+| `"J": "junction"`                                                       | A street cell laid in both directions, so a crossing stands there even where the drawing runs only one way through it. The arm across it is one cell long                                                                                                                                                                                                                                                                                                                |
+| `"b": "bulb"`                                                           | A street cell that ends in a cul-de-sac. Once a map has a bulb cell, only road ends lying in bulb cells get a bulb, and every one with room for it does; a map without one keeps three ends in four                                                                                                                                                                                                                                                                      |
+| `"E": { "kind": "elevated", "height": 8 }`                              | A street cell raised onto a deck `height` blocks, 2 to 64, above the highest ground under its stretch of joined elevated cells, with a ramp of one block a row at each end. A street crossing inside the stretch rises with it. A stretch whose deck or ramps would reach a row that a railway or a well holds at its own level stays at grade, with a line in the log. Any value can be written as an object this way, `kind` naming the word                           |
 | `"W": { "kind": "street", "settings": { "villagePathExtraWidth": 8 } }` | A street laid and paved with its own road keys, which win over the map's and the template's. Its width follows its own `villagePathExtraWidth`, `villagePathSidewalkWidth` and line, and its surface, lines and sidewalks follow its own block keys, so an avenue or a lane is drawn with a mark of its own. A run takes the keys of its first cell that sets any. However wide or narrow, a drawn street stays a street: it is never taken for an alley or a cul-de-sac |
-| `"T": "mypack:tower"` | A plot cell, laid from that plot definition, centered in the cell and facing the nearest street |
-| `"T": ["mypack:a=3", "mypack:b=1"]` | The same, rolled by weight from the world seed and the cell's spot, so the same world always lays the same plot there |
-| `"g": "grow"` | Left to the growth. With `villagePlotsLeast` set, the grown districts and the street infill fill such cells and spread outward from the map; without it the cell stays open |
-| `.` | Open ground, nothing laid |
+| `"T": "mypack:tower"`                                                   | A plot cell, laid from that plot definition, centered in the cell and facing the nearest street                                                                                                                                                                                                                                                                                                                                                                          |
+| `"T": ["mypack:a=3", "mypack:b=1"]`                                     | The same, rolled by weight from the world seed and the cell's spot, so the same world always lays the same plot there                                                                                                                                                                                                                                                                                                                                                    |
+| `"g": "grow"`                                                           | Left to the growth. With `villagePlotsLeast` set, the grown districts and the street infill fill such cells and spread outward from the map; without it the cell stays open                                                                                                                                                                                                                                                                                              |
+| `.`                                                                     | Open ground, nothing laid                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Every map rolls one of the four facings from the world seed and turns whole, so a plan reads the same from any side. Roads are laid first, so a plot that would overlap a road or another plot is left open with a line in the log, and a plot name no pack provides leaves its cell open the same way. The map does not change how the pieces dress: the road keys, `villageBlocks`, the lamps and the well replacement all read as they do for a grown village. Nothing grows out of a drawn map: no alleys are filled in beside its streets, and its road ends get their bulbs, three in four as usual or as its bulb cells say, but no houses along them.
 
@@ -4304,9 +4628,9 @@ Every map rolls one of the four facings from the world seed and turns whole, so 
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `retrogen` | boolean | `false` | Catches chunks saved before an entry existed up on every worldgen entry marked `"retrogen": true`. Off, chunks that already exist are left alone |
+| Setting               | Type    | Default | What it does                                                                                                                                                                                                                            |
+| --------------------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `retrogen`            | boolean | `false` | Catches chunks saved before an entry existed up on every worldgen entry marked `"retrogen": true`. Off, chunks that already exist are left alone                                                                                        |
 | `adoptExistingChunks` | boolean | `false` | What happens the first time an old chunk is seen: on, it is stamped as though this pack had already generated it and is never caught up; off, it is caught up like any other. To fill an existing world, set `retrogen` on and this off |
 
 An entry with `"retrogen": true` is generated into chunks that were saved before you added it. Each chunk records what it has had, so nothing is done twice.
@@ -4386,25 +4710,25 @@ In a pack these go in a [world template's](#world-templates) `settings` block, l
 
 *pregeneration*
 
-| Key | What it does | Why you would set it |
-| --- | --- | --- |
-| `pregenOnNewWorld` | Radius in chunks made around the spawn before anybody plays. 12 is the floor and 0 means that floor rather than nothing, since the game makes 12 chunks around the spawn on its own anyway: the run adopts that ground and lights it in one pass instead of leaving it to trickle in behind the player. Raise it to reach further than the game does | Sets how far a pack reaches past the ground the game already makes |
-| `pregenDimensions` | Which dimensions are made, in order, each around its own spawn | Add the nether, the end, or your own dimensions |
-| `pregenAllDimensions` | Every registered dimension instead of a list, overworld first | Packs with many dimensions. Every mod's dimensions count, so mind the size |
-| `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done | Dimensions most players never visit; the ones who never go pay nothing |
-| `pregenToBorder` | Fill each dimension out to its world border instead of a radius | Bounded worlds |
-| `pregenBorderLimit` | How far a border may reach before the run is refused. Config only, never a pack key | A guard against a runaway run; raise it only knowing the time and disk it allows |
+| Key                           | What it does                                                                                                                                                                                                                                                                                                                                         | Why you would set it                                                             |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `pregenOnNewWorld`            | Radius in chunks made around the spawn before anybody plays. 12 is the floor and 0 means that floor rather than nothing, since the game makes 12 chunks around the spawn on its own anyway: the run adopts that ground and lights it in one pass instead of leaving it to trickle in behind the player. Raise it to reach further than the game does | Sets how far a pack reaches past the ground the game already makes               |
+| `pregenDimensions`            | Which dimensions are made, in order, each around its own spawn                                                                                                                                                                                                                                                                                       | Add the nether, the end, or your own dimensions                                  |
+| `pregenAllDimensions`         | Every registered dimension instead of a list, overworld first                                                                                                                                                                                                                                                                                        | Packs with many dimensions. Every mod's dimensions count, so mind the size       |
+| `pregenDimensionsWhenEntered` | These are made the first time somebody sets foot in them, holding everyone again until done                                                                                                                                                                                                                                                          | Dimensions most players never visit; the ones who never go pay nothing           |
+| `pregenToBorder`              | Fill each dimension out to its world border instead of a radius                                                                                                                                                                                                                                                                                      | Bounded worlds                                                                   |
+| `pregenBorderLimit`           | How far a border may reach before the run is refused. Config only, never a pack key                                                                                                                                                                                                                                                                  | A guard against a runaway run; raise it only knowing the time and disk it allows |
 
 ### How a run behaves
 
 *pregeneration*
 
-| Key | What it does | Why you would set it |
-| --- | --- | --- |
-| `pregenResume` | A stopped or interrupted run picks up where it left off. The run's dimension, center and radius are written into the save when it starts, so a crash, a power cut or a quit mid-run all resume within about ten seconds of where they died on the next load. A run stopped on purpose, by command or by the watchdog, stays stopped | Long runs on servers; small runs restart cheaply without it |
-| `pregenKeepLoaded` | Chunks kept loaded behind the run so a chunk's neighbors are on hand when it is dressed and lit | Raise it if the relight reports many chunks left for later; costs memory |
-| `pregenPauseAbove` | The run rests when this many chunks are waiting to be written | Lower it for a slow disk |
-| `pregenMillisPerRound` | How long each tick may spend making land | Turn it up on an empty world, down on a server people are playing on |
+| Key                    | What it does                                                                                                                                                                                                                                                                                                                        | Why you would set it                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `pregenResume`         | A stopped or interrupted run picks up where it left off. The run's dimension, center and radius are written into the save when it starts, so a crash, a power cut or a quit mid-run all resume within about ten seconds of where they died on the next load. A run stopped on purpose, by command or by the watchdog, stays stopped | Long runs on servers; small runs restart cheaply without it              |
+| `pregenKeepLoaded`     | Chunks kept loaded behind the run so a chunk's neighbors are on hand when it is dressed and lit                                                                                                                                                                                                                                     | Raise it if the relight reports many chunks left for later; costs memory |
+| `pregenPauseAbove`     | The run rests when this many chunks are waiting to be written                                                                                                                                                                                                                                                                       | Lower it for a slow disk                                                 |
+| `pregenMillisPerRound` | How long each tick may spend making land                                                                                                                                                                                                                                                                                            | Turn it up on an empty world, down on a server people are playing on     |
 
 Pregeneration has its own fast path for lighting, and it stands aside when a light engine such as Alfheim or Phosphor is installed, letting that engine do the work instead. Either way you end up with finished, fully lit land.
 
@@ -4414,35 +4738,35 @@ Run it yourself before shipping, at the radius being shipped, start to finish. C
 
 *pregeneration*
 
-| Key | What it does | Why you would set it |
-| --- | --- | --- |
-| `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | The chat messages for each stage. The first two may hold `%d` for the percent and, after it, `%s` for the dimension's name, or `%1$d` and `%2$s` to put them in any order, and always end with ` - ETA 00:00:00` for that pass, which is not a setting. Finished and stopped are said once, when everything asked for is done, ending with ` - Total time 00:00:00` for the whole of it, which is not a setting either | Reword them in your pack's voice, name the dimension when several are made, or silence them |
-| `pregenSpectatingSays` | The mid-screen hold line while land is being made. Left at its default it speaks each player's language; empty shows nothing | Keep it under about thirty-five characters or small windows clip it |
-| `pregenLogo` | Where the logo stands when pregeneration finishes: `left`, `center` or `right`, above the mid-screen text, shown for a few seconds and then fading out with the fog | It is always shown; an unknown word is read as `center` |
-| `welcomeSays` | The green greeting, shown on every login and after pregeneration. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
-| `saysCard` | Shows the lines this mod says, the welcome, the pregeneration progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too | Turn it on when chat is busy or the lines should read as part of the world rather than as chatter |
-| `saysIcon` | An item drawn on the card, e.g. `minecraft:compass`. Empty draws none | Give the card your pack's emblem |
-| `saysColor` | The card's background color as hex, e.g. `1E2630`. Empty uses a dark slate | Match your pack's palette |
-| `saysImage` | A PNG from the pack's client assets, e.g. `rubyworld:textures/gui/card.png`, stretched over the card as its background and drawn over the color. Empty draws none | Give the card a painted panel; keep the image wide and short, it is stretched to whatever the text needs |
-| `saysBackground` | Draws the card's panel, its border and the color stripe, and the dark backdrop behind the welcome and the notes in the middle of the screen while a player is held. Off leaves only the text, which keeps its shadow, and `saysImage` if one is set | Let the lines float over the world, or let a painted `saysImage` stand on its own |
-| `saysFont` | The font the card's text is drawn in, named as `namespace:name`, e.g. `rubyworld:runes`. Empty uses the RDPL font, `resourcedatapackloader:rdpl`. The file it names is described under Cards | Give the card your pack's own lettering |
-| `toasts` | Which of the game's toasts, the pop-ups in the upper right corner, are shown. `true` shows them all and `false` none; a list shows only the kinds it names: `advancements`, `recipes` for unlocked recipes, `tutorial` for the how-to hints, `system` for the game's own notices, and `other` for every toast the rest do not cover, such as other mods'. The default shows none. A player's client takes the value as they join | Keep `["advancements"]` when your pack guides players with advancements and the rest get in the way |
+| Key                                                                                 | What it does                                                                                                                                                                                                                                                                                                                                                                                                                     | Why you would set it                                                                                                  |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `pregenRunningSays`, `pregenRelightSays`, `pregenFinishedSays`, `pregenStoppedSays` | The chat messages for each stage. The first two may hold `%d` for the percent and, after it, `%s` for the dimension's name, or `%1$d` and `%2$s` to put them in any order, and always end with ` - ETA 00:00:00` for that pass, which is not a setting. Finished and stopped are said once, when everything asked for is done, ending with ` - Total time 00:00:00` for the whole of it, which is not a setting either           | Reword them in your pack's voice, name the dimension when several are made, or silence them                           |
+| `pregenSpectatingSays`                                                              | The mid-screen hold line while land is being made. Left at its default it speaks each player's language; empty shows nothing                                                                                                                                                                                                                                                                                                     | Keep it under about thirty-five characters or small windows clip it                                                   |
+| `pregenLogo`                                                                        | Where the logo stands when pregeneration finishes: `left`, `center` or `right`, above the mid-screen text, shown for a few seconds and then fading out with the fog                                                                                                                                                                                                                                                              | It is always shown; an unknown word is read as `center`                                                               |
+| `welcomeSays`                                                                       | The green greeting, shown on every login and after pregeneration. A bare entry is the line for everywhere; a `dimension=message` entry overrides it for that dimension and also greets every arrival there, e.g. `"-1=Welcome to the Nether!"`. An empty message after the `=` mutes that dimension; an empty list shows nothing. Left at its default it speaks each player's language                                           | One bare line names your pack; add dimension lines to theme each world. Keep lines under about thirty-five characters |
+| `saysCard`                                                                          | Shows the lines this mod says, the welcome, the pregeneration progress and the threat lines, as a card in the lower right corner instead of in chat. The card slides in, stays eight seconds and fades, and shows over an open screen too                                                                                                                                                                                        | Turn it on when chat is busy or the lines should read as part of the world rather than as chatter                     |
+| `saysIcon`                                                                          | An item drawn on the card, e.g. `minecraft:compass`. Empty draws none                                                                                                                                                                                                                                                                                                                                                            | Give the card your pack's emblem                                                                                      |
+| `saysColor`                                                                         | The card's background color as hex, e.g. `1E2630`. Empty uses a dark slate                                                                                                                                                                                                                                                                                                                                                       | Match your pack's palette                                                                                             |
+| `saysImage`                                                                         | A PNG from the pack's client assets, e.g. `rubyworld:textures/gui/card.png`, stretched over the card as its background and drawn over the color. Empty draws none                                                                                                                                                                                                                                                                | Give the card a painted panel; keep the image wide and short, it is stretched to whatever the text needs              |
+| `saysBackground`                                                                    | Draws the card's panel, its border and the color stripe, and the dark backdrop behind the welcome and the notes in the middle of the screen while a player is held. Off leaves only the text, which keeps its shadow, and `saysImage` if one is set                                                                                                                                                                              | Let the lines float over the world, or let a painted `saysImage` stand on its own                                     |
+| `saysFont`                                                                          | The font the card's text is drawn in, named as `namespace:name`, e.g. `rubyworld:runes`. Empty uses the RDPL font, `resourcedatapackloader:rdpl`. The file it names is described under Cards                                                                                                                                                                                                                                     | Give the card your pack's own lettering                                                                               |
+| `toasts`                                                                            | Which of the game's toasts, the pop-ups in the upper right corner, are shown. `true` shows them all and `false` none; a list shows only the kinds it names: `advancements`, `recipes` for unlocked recipes, `tutorial` for the how-to hints, `system` for the game's own notices, and `other` for every toast the rest do not cover, such as other mods'. The default shows none. A player's client takes the value as they join | Keep `["advancements"]` when your pack guides players with advancements and the rest get in the way                   |
 
 ### Backup and map reset
 
 *pregeneration*
 
-| Key | What it does | Why you would set it |
-| --- | --- | --- |
-| `pregenBackup` | Copy the world to a pristine backup once pregeneration finishes, while the players are still held. Generation is then paid once: a later reset, or a new world on the same pack and seed, restores the copy instead of generating again, which is far faster than pregenerating twice. The copy is kept outside the save, at `rdpl-pristine/<world>` beside it, so another mod's backups do not sweep it up and it does not appear in a folder they manage. A copy whose packs no longer match the ones loaded is thrown away and kept again from the world in hand, so a pack change never resets to someone else's map | `false` |
-| `pregenBackupSays` | The mid-screen line players are shown while that copy is made, with the percentage after it. Empty shows nothing and the copy is made quietly | `Pack requested world backup` |
-| `resetSays` | The mid-screen line players are shown while `/rdplserver reset` or a round's end puts the map back. Empty resets quietly | `Pack requested map reset` |
-| `resetSendsTo` | Where players are put by a reset: `spawn`, a position as `x,y,z`, or `dimension:x,y,z` to send them into another world, which is how a reset drops everyone in a lobby rather than back in the arena | `spawn` |
-| `resetRuns` | A function run after a reset has cleared the map, named `namespace:path`. This is what builds the arena again, since a pack that made its map from a function can simply run it a second time. Empty runs nothing | empty |
-| `resetClearsEntities` | Remove every entity that is not a player. Mobs, dropped items and experience all go, which is what leaves the map as it started | `true` |
-| `resetClearsScores` | Set every objective the pack keeps back to nothing, so a new match starts from zero. Teams themselves are kept | `true` |
-| `resetClearsInventory` | Empty every player's inventory, armor and off hand included, so a round starts with what the map hands out and not what the last one left. A side's `gives` is handed out again right after | `false` |
-| `resetClearsExperience` | Set every player's experience back to level zero | `false` |
+| Key                     | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Why you would set it          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| `pregenBackup`          | Copy the world to a pristine backup once pregeneration finishes, while the players are still held. Generation is then paid once: a later reset, or a new world on the same pack and seed, restores the copy instead of generating again, which is far faster than pregenerating twice. The copy is kept outside the save, at `rdpl-pristine/<world>` beside it, so another mod's backups do not sweep it up and it does not appear in a folder they manage. A copy whose packs no longer match the ones loaded is thrown away and kept again from the world in hand, so a pack change never resets to someone else's map | `false`                       |
+| `pregenBackupSays`      | The mid-screen line players are shown while that copy is made, with the percentage after it. Empty shows nothing and the copy is made quietly                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `Pack requested world backup` |
+| `resetSays`             | The mid-screen line players are shown while `/rdplserver reset` or a round's end puts the map back. Empty resets quietly                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Pack requested map reset`    |
+| `resetSendsTo`          | Where players are put by a reset: `spawn`, a position as `x,y,z`, or `dimension:x,y,z` to send them into another world, which is how a reset drops everyone in a lobby rather than back in the arena                                                                                                                                                                                                                                                                                                                                                                                                                     | `spawn`                       |
+| `resetRuns`             | A function run after a reset has cleared the map, named `namespace:path`. This is what builds the arena again, since a pack that made its map from a function can simply run it a second time. Empty runs nothing                                                                                                                                                                                                                                                                                                                                                                                                        | empty                         |
+| `resetClearsEntities`   | Remove every entity that is not a player. Mobs, dropped items and experience all go, which is what leaves the map as it started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `true`                        |
+| `resetClearsScores`     | Set every objective the pack keeps back to nothing, so a new match starts from zero. Teams themselves are kept                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `true`                        |
+| `resetClearsInventory`  | Empty every player's inventory, armor and off hand included, so a round starts with what the map hands out and not what the last one left. A side's `gives` is handed out again right after                                                                                                                                                                                                                                                                                                                                                                                                                              | `false`                       |
+| `resetClearsExperience` | Set every player's experience back to level zero                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`                       |
 
 ---
 
@@ -4487,12 +4811,12 @@ Shows a run of pages when a player enters the world, before they take control. S
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `pages` | yes | list of pages | none | Shown in order. A file with no pages is refused with an error |
-| `once` | no | boolean | `false` | Play once per player per world instead of on every join |
-| `music` | no | sound event name | none | One track for the whole run, started with the first page |
-| `requires` | no | list of mod ids or pack namespaces | none | The intro is skipped unless all are present |
+| Key        | Required | Value                              | Default | What it does                                                  |
+| ---------- | -------- | ---------------------------------- | ------- | ------------------------------------------------------------- |
+| `pages`    | yes      | list of pages                      | none    | Shown in order. A file with no pages is refused with an error |
+| `once`     | no       | boolean                            | `false` | Play once per player per world instead of on every join       |
+| `music`    | no       | sound event name                   | none    | One track for the whole run, started with the first page      |
+| `requires` | no       | list of mod ids or pack namespaces | none    | The intro is skipped unless all are present                   |
 
 ### Pages
 
@@ -4500,17 +4824,17 @@ Shows a run of pages when a player enters the world, before they take control. S
 
 Each entry in `pages`:
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `mode` | no | `scroll` or `static` | `scroll` | Text that moves, or text that sits still until the player moves on |
-| `text` | no | path to a `.txt` file | none | The words. Leave it out for a page that is just pictures |
-| `background` | no | texture path | the tiled dirt background | One background |
-| `backgrounds` | no | list of texture paths | none | Several, cycled. Adds to `background` if you give both |
-| `interval` | no | seconds | `5.0` | How long each background is held, when there is more than one |
-| `time` | no | seconds | worked out from the text | How long a scrolling page takes, start to finish. On a still page, or on the last page of any kind, it is how long until the page moves on by itself, and without it they wait for the button |
-| `direction` | no | `up` or `down` | `up` | Which way scrolling text travels |
-| `textScale` | no | number | `1.0` | Multiplies the font size. A `static` page wraps its text to the width of the screen, less a margin either side, and when it would still run under the buttons its text is drawn smaller, down to half, until it fits |
-| `settle` | no | boolean | `false` | Finish with the last line centered rather than running clear off the screen |
+| Key           | Required | Value                 | Default                   | What it does                                                                                                                                                                                                         |
+| ------------- | -------- | --------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`        | no       | `scroll` or `static`  | `scroll`                  | Text that moves, or text that sits still until the player moves on                                                                                                                                                   |
+| `text`        | no       | path to a `.txt` file | none                      | The words. Leave it out for a page that is just pictures                                                                                                                                                             |
+| `background`  | no       | texture path          | the tiled dirt background | One background                                                                                                                                                                                                       |
+| `backgrounds` | no       | list of texture paths | none                      | Several, cycled. Adds to `background` if you give both                                                                                                                                                               |
+| `interval`    | no       | seconds               | `5.0`                     | How long each background is held, when there is more than one                                                                                                                                                        |
+| `time`        | no       | seconds               | worked out from the text  | How long a scrolling page takes, start to finish. On a still page, or on the last page of any kind, it is how long until the page moves on by itself, and without it they wait for the button                        |
+| `direction`   | no       | `up` or `down`        | `up`                      | Which way scrolling text travels                                                                                                                                                                                     |
+| `textScale`   | no       | number                | `1.0`                     | Multiplies the font size. A `static` page wraps its text to the width of the screen, less a margin either side, and when it would still run under the buttons its text is drawn smaller, down to half, until it fits |
+| `settle`      | no       | boolean               | `false`                   | Finish with the last line centered rather than running clear off the screen                                                                                                                                          |
 
 ### Text and timing
 
@@ -4526,7 +4850,7 @@ Text files go in `<namespace>/texts/*.txt`. Plain text, one paragraph to a line,
 
 Intro texts take Markdown. A file with no marks shows exactly as plain text does.
 
-```markdown
+```
 # The Long Night
 ## Chapter one
 Welcome, **PLAYERNAME**. The *old roads* are ~~open~~ closed; type `/spawn` to go back.
@@ -4541,22 +4865,22 @@ Welcome, **PLAYERNAME**. The *old roads* are ~~open~~ closed; type `/spawn` to g
 See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 ```
 
-| Mark | Written as | Shows as |
-| --- | --- | --- |
-| Heading | `# `, `## `, `### ` at the start of a line | Bold and larger: twice, one and a half times and one and a quarter times the text size, aligned like the body text |
-| Bold | `**text**` | The font's bold cut |
-| Italic | `*text*` | The font's italic cut |
-| Bold italic | `***text***` | The bold cut, slanted |
-| Strikethrough | `~~text~~` | Struck through |
-| Code | `` `text` `` | Tinted aqua |
-| Link | `[text](url)` | The text alone, underlined; not clickable |
-| Runic | `{runic}text{/runic}` | The text in the rune cipher, `resourcedatapackloader:rdpl_runic`, while the rest of the line keeps its font; bold and italic inside it take the cipher's bold and italic cuts. It works in headings, list items and quotes, and an unclosed `{runic}` shows as written |
-| Bullet | `- ` or `* ` at the start of a line | A bullet, with wrapped lines indented under the text; two spaces before the mark nest it one level |
-| Numbered | `1. ` at the start of a line | The number as written, indented the same way |
-| Quote | `> ` at the start of a line | Indented and dimmed |
-| Rule | `---` on a line of its own | A horizontal line across the text width |
-| Image | `![alt](namespace:textures/....png)` on a line of its own | The picture, scaled down to the text width and keeping its shape; the alt text shows if it cannot be read |
-| Escape | `\` before a mark, e.g. `\*` | The mark as a plain character |
+| Mark          | Written as                                                | Shows as                                                                                                                                                                                                                                                               |
+| ------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Heading       | `# `, `## `, `### ` at the start of a line                | Bold and larger: twice, one and a half times and one and a quarter times the text size, aligned like the body text                                                                                                                                                     |
+| Bold          | `**text**`                                                | The font's bold cut                                                                                                                                                                                                                                                    |
+| Italic        | `*text*`                                                  | The font's italic cut                                                                                                                                                                                                                                                  |
+| Bold italic   | `***text***`                                              | The bold cut, slanted                                                                                                                                                                                                                                                  |
+| Strikethrough | `~~text~~`                                                | Struck through                                                                                                                                                                                                                                                         |
+| Code          | `` `text` ``                                              | Tinted aqua                                                                                                                                                                                                                                                            |
+| Link          | `[text](url)`                                             | The text alone, underlined; not clickable                                                                                                                                                                                                                              |
+| Runic         | `{runic}text{/runic}`                                     | The text in the rune cipher, `resourcedatapackloader:rdpl_runic`, while the rest of the line keeps its font; bold and italic inside it take the cipher's bold and italic cuts. It works in headings, list items and quotes, and an unclosed `{runic}` shows as written |
+| Bullet        | `- ` or `* ` at the start of a line                       | A bullet, with wrapped lines indented under the text; two spaces before the mark nest it one level                                                                                                                                                                     |
+| Numbered      | `1. ` at the start of a line                              | The number as written, indented the same way                                                                                                                                                                                                                           |
+| Quote         | `> ` at the start of a line                               | Indented and dimmed                                                                                                                                                                                                                                                    |
+| Rule          | `---` on a line of its own                                | A horizontal line across the text width                                                                                                                                                                                                                                |
+| Image         | `![alt](namespace:textures/....png)` on a line of its own | The picture, scaled down to the text width and keeping its shape; the alt text shows if it cannot be read                                                                                                                                                              |
+| Escape        | `\` before a mark, e.g. `\*`                              | The mark as a plain character                                                                                                                                                                                                                                          |
 
 Tables and fenced code blocks (between ``` lines) are drawn as plain text, marks and all. A scrolling page's worked-out time and a still page's shrink to fit both count the laid-out height, images included. Card titles and lines, Says messages and the welcome and hold notes take the inline marks from bold to runic, one line each.
 
@@ -4606,42 +4930,42 @@ A side is only fielded where a pack asks for one: with no `teams` folder anywher
 
 *teams*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `name` | text | the file name | The team's name on the scoreboard, 1 to 16 characters. This is what `/scoreboard` and the other files use |
-| `displayName` | text | the name | What players are shown instead of the name |
-| `color` | text | `white` | One of the sixteen text colors. It tints the nameplate and is what the per-team sidebar slots key off |
-| `prefix` | text | empty | Put in front of a member's name, after the color |
-| `suffix` | text | empty | Put after a member's name |
-| `scoreboard` | boolean | `true` | Whether the side stands as a team on the game's scoreboard. Off fields no team at all: its mobs wear the side's color in their name instead, nothing keeps them from fighting each other, and no points land on it, since scoring goes by the team |
+| Setting       | Type    | Default       | What it does                                                                                                                                                                                                                                       |
+| ------------- | ------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | text    | the file name | The team's name on the scoreboard, 1 to 16 characters. This is what `/scoreboard` and the other files use                                                                                                                                          |
+| `displayName` | text    | the name      | What players are shown instead of the name                                                                                                                                                                                                         |
+| `color`       | text    | `white`       | One of the sixteen text colors. It tints the nameplate and is what the per-team sidebar slots key off                                                                                                                                              |
+| `prefix`      | text    | empty         | Put in front of a member's name, after the color                                                                                                                                                                                                   |
+| `suffix`      | text    | empty         | Put after a member's name                                                                                                                                                                                                                          |
+| `scoreboard`  | boolean | `true`        | Whether the side stands as a team on the game's scoreboard. Off fields no team at all: its mobs wear the side's color in their name instead, nothing keeps them from fighting each other, and no points land on it, since scoring goes by the team |
 
 ### Fighting and visibility
 
 *teams*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `friendlyFire` | boolean | `false` | Whether members can hurt each other. Also the default of `mobFriendlyFire` |
-| `mobFriendlyFire` | boolean | `friendlyFire` | Whether a side's mobs can hurt their own side with explosions and thrown TNT, which the game alone never stops. Off spares the side; on leaves it as the game has it |
-| `seeFriendlyInvisibles` | boolean | `true` | Whether members see each other while invisible |
-| `nameTags` | text | `always` | `always`, `never`, `hideForOtherTeams` or `hideForOwnTeam` |
-| `deathMessages` | text | `always` | The same four words, for who is told when a member dies |
-| `collision` | text | `always` | `always`, `never`, `pushOtherTeams` or `pushOwnTeam` |
+| Setting                 | Type    | Default        | What it does                                                                                                                                                         |
+| ----------------------- | ------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `friendlyFire`          | boolean | `false`        | Whether members can hurt each other. Also the default of `mobFriendlyFire`                                                                                           |
+| `mobFriendlyFire`       | boolean | `friendlyFire` | Whether a side's mobs can hurt their own side with explosions and thrown TNT, which the game alone never stops. Off spares the side; on leaves it as the game has it |
+| `seeFriendlyInvisibles` | boolean | `true`         | Whether members see each other while invisible                                                                                                                       |
+| `nameTags`              | text    | `always`       | `always`, `never`, `hideForOtherTeams` or `hideForOwnTeam`                                                                                                           |
+| `deathMessages`         | text    | `always`       | The same four words, for who is told when a member dies                                                                                                              |
+| `collision`             | text    | `always`       | `always`, `never`, `pushOtherTeams` or `pushOwnTeam`                                                                                                                 |
 
 ### Who joins
 
 *teams*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `entities` | list | empty | Entity ids whose every spawn joins this side, such as `minecraft:zombie` or one of your own |
-| `players` | list | empty | Player names that join this side as they log in |
-| `spawnBox` | list | none | Six whole numbers, x y z to x y z. Anything spawning inside joins, and the corners may be given either way round |
-| `joinable` | boolean | `true` | Whether a player may join with `/rdpl team join`. Set it false for a side that is only for mobs |
-| `balance` | boolean | `false` | Whether `/rdpl team join` with no name may put a player here. Among the sides that allow it, the one with the fewest players is chosen |
-| `picks` | number | `0` | How many members this side draws at random. Each round open the side lets its last draw go back where they stood and draws afresh from everything `picksFrom` names; between draws a login or a spawn from that pool fills an empty seat at once. One player out of everyone, on a side of their own, is what it is for |
-| `picksFrom` | list | empty | What the draw is made from: `players` for everyone online, and entity ids for every living mob of that kind |
-| `standIn` | object | none | A mob that holds the side while no player is on it: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` keeps one of that entity alive at that spot in the overworld, summoning it when it is missing, and removes it the moment a player joins the side, so a game plays against the AI until a player takes the part. Checked every five seconds; the spot must be in loaded ground. In a game with a lobby (`opens.by: leader`) a stand-in is only summoned while the lobby waits and as the round opens, so one that falls stays gone through the rest of the round and its end until everyone is back in the lobby; without a lobby, a fallen stand-in is not replaced while a round that ends on `ends.lastStanding` runs |
+| Setting     | Type    | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`  | list    | empty   | Entity ids whose every spawn joins this side, such as `minecraft:zombie` or one of your own                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `players`   | list    | empty   | Player names that join this side as they log in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `spawnBox`  | list    | none    | Six whole numbers, x y z to x y z. Anything spawning inside joins, and the corners may be given either way round                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `joinable`  | boolean | `true`  | Whether a player may join with `/rdpl team join`. Set it false for a side that is only for mobs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `balance`   | boolean | `false` | Whether `/rdpl team join` with no name may put a player here. Among the sides that allow it, the one with the fewest players is chosen                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `picks`     | number  | `0`     | How many members this side draws at random. Each round open the side lets its last draw go back where they stood and draws afresh from everything `picksFrom` names; between draws a login or a spawn from that pool fills an empty seat at once. One player out of everyone, on a side of their own, is what it is for                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `picksFrom` | list    | empty   | What the draw is made from: `players` for everyone online, and entity ids for every living mob of that kind                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `standIn`   | object  | none    | A mob that holds the side while no player is on it: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` keeps one of that entity alive at that spot in the overworld, summoning it when it is missing, and removes it the moment a player joins the side, so a game plays against the AI until a player takes the part. Checked every five seconds; the spot must be in loaded ground. In a game with a lobby (`opens.by: leader`) a stand-in is only summoned while the lobby waits and as the round opens, so one that falls stays gone through the rest of the round and its end until everyone is back in the lobby; without a lobby, a fallen stand-in is not replaced while a round that ends on `ends.lastStanding` runs |
 
 Three ways to join, and a side may use all of them. `entities` names entity ids, and anything of that type joins as it spawns, which is how a pack gives mobs sides without touching the mobs. `spawnBox` claims a corner of the world, and anything spawning inside joins, which suits an arena where both sides use the same mob. `players` names players outright. Beyond those, a player can join with `/rdpl team join <name>` unless the side sets `joinable` to false, and leave with `/rdpl team leave`.
 
@@ -4649,22 +4973,22 @@ Three ways to join, and a side may use all of them. `entities` names entity ids,
 
 *teams*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `gives` | list | empty | Items put in a player's inventory as they join the side, an item name for one or `{ "item", "count", "unbreakable" }` for more, or for one that never wears, into any free slot and dropped at their feet when none is. Handed out again after a reset that clears inventories (`resetClearsInventory`) |
-| `spawn` | text | none | `x,y,z` in the overworld where the side's players are put as a round opens, so each side starts on its own ground; without it they stay where the reset or the lobby left them |
+| Setting | Type | Default | What it does                                                                                                                                                                                                                                                                                            |
+| ------- | ---- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gives` | list | empty   | Items put in a player's inventory as they join the side, an item name for one or `{ "item", "count", "unbreakable" }` for more, or for one that never wears, into any free slot and dropped at their feet when none is. Handed out again after a reset that clears inventories (`resetClearsInventory`) |
+| `spawn` | text | none    | `x,y,z` in the overworld where the side's players are put as a round opens, so each side starts on its own ground; without it they stay where the reset or the lobby left them                                                                                                                          |
 
 ### The lead
 
 *teams*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `lead` | text | `none` | How the side's lead is chosen: `none`, `first` for whoever joined the side earliest among those online, so it passes down the order of joining while one is away and comes back with them; they are told as they arrive, past the intro and any hold, and again when it passes to them, `topScore` for whoever is highest on the objective `leadOn` names, `appointed` for the player `leadIs` names, `vote` for whoever the members vote for, or `claim` for whoever claims it first. A lead is a label and a color and nothing more: it grants no power, so a lead who logs out breaks nothing |
-| `leadOn` | text | empty | With `topScore`, the objective the members are ranked by. It is worked out afresh every time it is read, so it follows the score |
-| `leadIs` | text | empty | With `appointed`, the player who leads |
-| `leadSays` | text | `You are the current round leader` | Told to a player as the lead comes to them: as they arrive on a side they lead, as they claim it, or as a `first` lead passes to them, when it carries who left. `{side}` is the side's display name; empty tells nothing |
-| `leadRuns` | text | empty | A function, `namespace:path`, run once each time the lead passes to a player: the first lead, and every hand-on after. It runs as the lead, at their position, with the permission a function an advancement rewards has, so `@s` is the lead. Checked every second; a lead who is offline is run for when they are next on. A restart decides the lead afresh |
+| Setting    | Type | Default                            | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------- | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lead`     | text | `none`                             | How the side's lead is chosen: `none`, `first` for whoever joined the side earliest among those online, so it passes down the order of joining while one is away and comes back with them; they are told as they arrive, past the intro and any hold, and again when it passes to them, `topScore` for whoever is highest on the objective `leadOn` names, `appointed` for the player `leadIs` names, `vote` for whoever the members vote for, or `claim` for whoever claims it first. A lead is a label and a color and nothing more: it grants no power, so a lead who logs out breaks nothing |
+| `leadOn`   | text | empty                              | With `topScore`, the objective the members are ranked by. It is worked out afresh every time it is read, so it follows the score                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `leadIs`   | text | empty                              | With `appointed`, the player who leads                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `leadSays` | text | `You are the current round leader` | Told to a player as the lead comes to them: as they arrive on a side they lead, as they claim it, or as a `first` lead passes to them, when it carries who left. `{side}` is the side's display name; empty tells nothing                                                                                                                                                                                                                                                                                                                                                                        |
+| `leadRuns` | text | empty                              | A function, `namespace:path`, run once each time the lead passes to a player: the first lead, and every hand-on after. It runs as the lead, at their position, with the permission a function an advancement rewards has, so `@s` is the lead. Checked every second; a lead who is offline is run for when they are next on. A restart decides the lead afresh                                                                                                                                                                                                                                   |
 
 ## Scoring
 
@@ -4704,27 +5028,27 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 
 *scoring*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `name` | text | the file name | The objective's name on the scoreboard, 1 to 16 characters |
-| `displayName` | text | the name | What players are shown instead of the name |
-| `criterion` | text | `dummy` | What the game counts by itself. An unknown one is refused with a line saying so |
-| `display` | text | empty | `sidebar`, `list`, `belowName` or `sidebar.team.<color>`. Empty shows it nowhere; there is no scoreboard screen to open |
-| `render` | text | the criterion's own | `integer` or `hearts` |
-| `teamTotals` | boolean | `true` | Points land on a row named after the member's team |
-| `individuals` | boolean | `false` | Points also land on a row for the member itself |
-| `carries` | boolean | `false` | The objective survives a map reset instead of being wiped with it. A match tally of round wins is one |
-| `awardsTo` | text | empty | Another objective this one hands a point to when it ends, to the side that led. Level standings hand out nothing |
+| Setting       | Type    | Default             | What it does                                                                                                            |
+| ------------- | ------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `name`        | text    | the file name       | The objective's name on the scoreboard, 1 to 16 characters                                                              |
+| `displayName` | text    | the name            | What players are shown instead of the name                                                                              |
+| `criterion`   | text    | `dummy`             | What the game counts by itself. An unknown one is refused with a line saying so                                         |
+| `display`     | text    | empty               | `sidebar`, `list`, `belowName` or `sidebar.team.<color>`. Empty shows it nowhere; there is no scoreboard screen to open |
+| `render`      | text    | the criterion's own | `integer` or `hearts`                                                                                                   |
+| `teamTotals`  | boolean | `true`              | Points land on a row named after the member's team                                                                      |
+| `individuals` | boolean | `false`             | Points also land on a row for the member itself                                                                         |
+| `carries`     | boolean | `false`             | The objective survives a map reset instead of being wiped with it. A match tally of round wins is one                   |
+| `awardsTo`    | text    | empty               | Another objective this one hands a point to when it ends, to the side that led. Level standings hand out nothing        |
 
 ### Points
 
 *scoring*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `points.kill` | object | empty | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill |
-| `points.death` | int | `0` | Points whenever a member dies, however it died. May be negative |
-| `points.ownKill` | int | `0` | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty |
+| Setting          | Type   | Default | What it does                                                                                                                      |
+| ---------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | object | empty   | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill                                       |
+| `points.death`   | int    | `0`     | Points whenever a member dies, however it died. May be negative                                                                   |
+| `points.ownKill` | int    | `0`     | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty |
 
 `points` is what this mod adds on top of what the game counts, fed into the same objective so `/scoreboard` still reads it. `kill` is worth so many points per entity id killed, credited to the killer's side; `death` is worth so many whenever a member of a side dies, and may be negative. With `teamTotals` the points land on a row named after the team, which is what lets the sidebar show four sides rather than a row for every mob. `individuals` adds a row per member as well, and is off by default because a row per mob UUID reads as noise.
 
@@ -4732,14 +5056,14 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 
 *scoring*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `ends.atScore` | int | `0` | The match ends the moment a side reaches this. 0 never ends on score |
-| `ends.afterMinutes` | int | `0` | The match ends after this many minutes. 0 never ends on time |
-| `ends.afterRounds` | int | `0` | For an objective another one `awardsTo`: the match ends once this many rounds have been awarded in all, whoever took them. 0 never ends on rounds |
-| `ends.lastStanding` | boolean | `false` | The round ends when only one side is left standing. The sides in play are those with a player or a living mob on them as the round opens, two at the least; a player who dies is out, back as a spectator until the round is over, and a side whose players are all out or gone and whose mobs are all dead has fallen. The side left standing takes the round, and `awardsTo` records it for that side whatever the score. With `resets` and `opens.by: leader` the game then goes back to the lobby. A side's `standIn` is not summoned again while such a round runs |
-| `ends.outSays` | text | `You are out until the round ends` | What a knocked-out player is told. Empty says nothing |
-| `ends.locksTeams` | boolean | `true` | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway |
+| Setting             | Type    | Default                            | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | ------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ends.atScore`      | int     | `0`                                | The match ends the moment a side reaches this. 0 never ends on score                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `ends.afterMinutes` | int     | `0`                                | The match ends after this many minutes. 0 never ends on time                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `ends.afterRounds`  | int     | `0`                                | For an objective another one `awardsTo`: the match ends once this many rounds have been awarded in all, whoever took them. 0 never ends on rounds                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ends.lastStanding` | boolean | `false`                            | The round ends when only one side is left standing. The sides in play are those with a player or a living mob on them as the round opens, two at the least; a player who dies is out, back as a spectator until the round is over, and a side whose players are all out or gone and whose mobs are all dead has fallen. The side left standing takes the round, and `awardsTo` records it for that side whatever the score. With `resets` and `opens.by: leader` the game then goes back to the lobby. A side's `standIn` is not summoned again while such a round runs |
+| `ends.outSays`      | text    | `You are out until the round ends` | What a knocked-out player is told. Empty says nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ends.locksTeams`   | boolean | `true`                             | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 `ends` finishes the match, either the moment a side reaches `atScore` or once `afterMinutes` have passed. The standings are then shown, ranked by the game itself: as chat, or as a card if `results` asks for one. A player without this mod is told the same standings as chat lines, so nobody is left without a result. With `resets`, that end is a round's: the standings stand for `intermissionSeconds` while a cooldown counts down on the action bar, the map resets to the welcome, and the next round opens after a five-second count. `awardsTo` hands the round to the side that led, on an objective that `carries` across the reset. A carried objective can end on its own -- `atScore` for a best-of, `afterRounds` for a fixed count -- and its standing is cleared at the reset after, so a fresh match opens.
 
@@ -4747,25 +5071,25 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 
 *scoring*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `ends.resets` | boolean | `false` | Ending the round resets the map, as `resetSays` and the other reset settings describe, then a new round opens |
-| `ends.intermissionSeconds` | int | `10` | How long the standings stand between the end and the reset |
-| `ends.intermissionSays` | text | `Round cooldown {seconds}` | Shown on the action bar every second of the intermission after a round ends, with `{seconds}` counting down to the reset. Empty shows nothing |
-| `ends.startsSays` | text | `Round starting in {seconds}` | Shown on the action bar through the five-second count that opens the next round after the reset, with `{seconds}` counting down. Empty shows nothing |
+| Setting                    | Type    | Default                       | What it does                                                                                                                                         |
+| -------------------------- | ------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ends.resets`              | boolean | `false`                       | Ending the round resets the map, as `resetSays` and the other reset settings describe, then a new round opens                                        |
+| `ends.intermissionSeconds` | int     | `10`                          | How long the standings stand between the end and the reset                                                                                           |
+| `ends.intermissionSays`    | text    | `Round cooldown {seconds}`    | Shown on the action bar every second of the intermission after a round ends, with `{seconds}` counting down to the reset. Empty shows nothing        |
+| `ends.startsSays`          | text    | `Round starting in {seconds}` | Shown on the action bar through the five-second count that opens the next round after the reset, with `{seconds}` counting down. Empty shows nothing |
 
 ### The lobby
 
 *scoring*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `opens.by` | text | `auto` | `auto` opens the next round on its own, five seconds after the reset. `leader` holds the game in a lobby instead: after the reset, and when the world first loads, nothing is scored and no clock runs, sides may be joined and left freely, and the round opens only when a side's lead, or an operator, runs `/rdpl round start`, and not while anyone is still reading the world intro; then the five-second count runs, the draws are made, and each side is put at its `spawn`. While the world waits, until the five-second count ends, players stay where they stand and can break, place, use, hit or drop nothing and take no damage, being shown the waiting line when they try, and every other living thing stands still: no AI, no movement. Commands still work, so sides can be joined and the round started |
-| `opens.says` | text | `Waiting for {leader} to start the round` | Flashed mid-screen, the way the welcome is, to each player who does not lead: as they arrive in the lobby past the intro, once the welcome has shown; as the lobby opens again after a round; whenever it changes, as a lead comes or goes; and when they try something the lobby refuses. `{leader}` is the leads of every side, or `a leader` while nobody leads. Empty shows nothing |
-| `opens.leaderSays` | text | `Type /rdpl round start` | Flashed in the same way and at the same moments to a player who leads a side, in place of `opens.says`. Empty shows nothing |
-| `opens.lobby` | text | none | `x,y,z` in the overworld, or `dimension:x,y,z` in another world, such as `-1:0,64,0`, where everyone waits while the lobby holds: every player, and every living mob on a side, is stood on a ring around that spot, each facing its middle, so they stand staring at one another. Each is given an arc as wide as it is plus two blocks, so none overlaps another, and the ring grows as more arrive; it is laid out again whenever someone joins or leaves it. The height is the floor they stand on, found within three blocks either way. Players and mobs cross into that world and back directly, with no portal built. As the round opens players go to their side's `spawn`, and a mob that is still standing is put back where it was, in its own world |
-| `opens.lobbyJoins` | boolean | `false` | Put a player who logs in mid-round in the lobby as a spectator until the round ends, instead of where they logged out. Needs `opens.lobby` |
-| `opens.joinsSays` | text | `Round is in progress, you can join after it ends` | What they are told. Empty says nothing |
+| Setting            | Type    | Default                                            | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------ | ------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `opens.by`         | text    | `auto`                                             | `auto` opens the next round on its own, five seconds after the reset. `leader` holds the game in a lobby instead: after the reset, and when the world first loads, nothing is scored and no clock runs, sides may be joined and left freely, and the round opens only when a side's lead, or an operator, runs `/rdpl round start`, and not while anyone is still reading the world intro; then the five-second count runs, the draws are made, and each side is put at its `spawn`. While the world waits, until the five-second count ends, players stay where they stand and can break, place, use, hit or drop nothing and take no damage, being shown the waiting line when they try, and every other living thing stands still: no AI, no movement. Commands still work, so sides can be joined and the round started |
+| `opens.says`       | text    | `Waiting for {leader} to start the round`          | Flashed mid-screen, the way the welcome is, to each player who does not lead: as they arrive in the lobby past the intro, once the welcome has shown; as the lobby opens again after a round; whenever it changes, as a lead comes or goes; and when they try something the lobby refuses. `{leader}` is the leads of every side, or `a leader` while nobody leads. Empty shows nothing                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `opens.leaderSays` | text    | `Type /rdpl round start`                           | Flashed in the same way and at the same moments to a player who leads a side, in place of `opens.says`. Empty shows nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `opens.lobby`      | text    | none                                               | `x,y,z` in the overworld, or `dimension:x,y,z` in another world, such as `-1:0,64,0`, where everyone waits while the lobby holds: every player, and every living mob on a side, is stood on a ring around that spot, each facing its middle, so they stand staring at one another. Each is given an arc as wide as it is plus two blocks, so none overlaps another, and the ring grows as more arrive; it is laid out again whenever someone joins or leaves it. The height is the floor they stand on, found within three blocks either way. Players and mobs cross into that world and back directly, with no portal built. As the round opens players go to their side's `spawn`, and a mob that is still standing is put back where it was, in its own world                                                            |
+| `opens.lobbyJoins` | boolean | `false`                                            | Put a player who logs in mid-round in the lobby as a spectator until the round ends, instead of where they logged out. Needs `opens.lobby`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `opens.joinsSays`  | text    | `Round is in progress, you can join after it ends` | What they are told. Empty says nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ### Resetting a round
 
@@ -4787,19 +5111,19 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `reset.lead` | text | `none` | What `/rdpl round reset` does for a side's lead while a round runs. `now` ends the round at once and resets the map; `vote` calls a vote instead; `none` gives the lead no say of its own, so the lead calls a vote like any other player where `players` allows it. An operator always resets at once |
-| `reset.players` | text | `none` | `vote` lets a player on any side call a vote with `/rdpl round reset`. `none` leaves resetting to the lead |
-| `reset.teams` | list | empty | The sides whose players may call a vote. Empty is every side |
-| `reset.passPercent` | int | `51` | The share of voters, 1 to 100, who must vote yes for the round to be reset. `51` is more than half, `100` is everyone |
-| `reset.voteSeconds` | int | `30` | How long a vote runs, five seconds at the least. It closes early the moment its outcome is certain |
-| `reset.cooldownSeconds` | int | `60` | How long after a failed vote before another can be called. A lead with `now` is not held back by it |
-| `reset.leadSays` | text | `{player} reset the round` | Told to everyone when the round is reset at once, `{player}` being who reset it. Empty says nothing |
-| `reset.voteSays` | text | `{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds` | Told to everyone as a vote is called, `{player}` being who called it. Empty says nothing |
-| `reset.tallySays` | text | `Reset the round? {yes} yes, {no} no, {seconds}` | Shown on the action bar every second of a vote, with `{seconds}` counting down. Empty shows nothing |
-| `reset.passSays` | text | `The vote passed, so the round is reset` | Told to everyone when a vote passes. Empty says nothing |
-| `reset.failSays` | text | `The vote failed, so the round goes on` | Told to everyone when a vote fails. Empty says nothing |
+| Setting                 | Type | Default                                                                                   | What it does                                                                                                                                                                                                                                                                                           |
+| ----------------------- | ---- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `reset.lead`            | text | `none`                                                                                    | What `/rdpl round reset` does for a side's lead while a round runs. `now` ends the round at once and resets the map; `vote` calls a vote instead; `none` gives the lead no say of its own, so the lead calls a vote like any other player where `players` allows it. An operator always resets at once |
+| `reset.players`         | text | `none`                                                                                    | `vote` lets a player on any side call a vote with `/rdpl round reset`. `none` leaves resetting to the lead                                                                                                                                                                                             |
+| `reset.teams`           | list | empty                                                                                     | The sides whose players may call a vote. Empty is every side                                                                                                                                                                                                                                           |
+| `reset.passPercent`     | int  | `51`                                                                                      | The share of voters, 1 to 100, who must vote yes for the round to be reset. `51` is more than half, `100` is everyone                                                                                                                                                                                  |
+| `reset.voteSeconds`     | int  | `30`                                                                                      | How long a vote runs, five seconds at the least. It closes early the moment its outcome is certain                                                                                                                                                                                                     |
+| `reset.cooldownSeconds` | int  | `60`                                                                                      | How long after a failed vote before another can be called. A lead with `now` is not held back by it                                                                                                                                                                                                    |
+| `reset.leadSays`        | text | `{player} reset the round`                                                                | Told to everyone when the round is reset at once, `{player}` being who reset it. Empty says nothing                                                                                                                                                                                                    |
+| `reset.voteSays`        | text | `{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds` | Told to everyone as a vote is called, `{player}` being who called it. Empty says nothing                                                                                                                                                                                                               |
+| `reset.tallySays`       | text | `Reset the round? {yes} yes, {no} no, {seconds}`                                          | Shown on the action bar every second of a vote, with `{seconds}` counting down. Empty shows nothing                                                                                                                                                                                                    |
+| `reset.passSays`        | text | `The vote passed, so the round is reset`                                                  | Told to everyone when a vote passes. Empty says nothing                                                                                                                                                                                                                                                |
+| `reset.failSays`        | text | `The vote failed, so the round goes on`                                                   | Told to everyone when a vote fails. Empty says nothing                                                                                                                                                                                                                                                 |
 
 A reset cuts the round short where it stands. The standings are shown under `The round was reset`, nobody is awarded the round, the intermission counts down, and the map resets as though the round had ended with `ends.resets`, back to the lobby where `opens.by` is `leader`. It works whether or not the round would ever end on its own, but not in the lobby, through the count that opens a round, or once a round is over and its reset is on the way; a vote still running then is dropped.
 
@@ -4809,14 +5133,14 @@ Every online player on a side votes, whatever side they are on, with `/rdpl roun
 
 *scoring*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `results.card` | boolean | `false` | Show the standings as a card rather than as chat |
-| `results.title` | text | the name and `results` | The card's heading |
-| `results.icon` | text | empty | An item drawn on the card, e.g. `minecraft:tnt` |
-| `results.image` | text | empty | An image drawn on the card instead of an item |
-| `results.background` | text | a dark slate | The card's background color |
-| `results.seconds` | int | `8` | How long the card stands, at least one second |
+| Setting              | Type    | Default                | What it does                                     |
+| -------------------- | ------- | ---------------------- | ------------------------------------------------ |
+| `results.card`       | boolean | `false`                | Show the standings as a card rather than as chat |
+| `results.title`      | text    | the name and `results` | The card's heading                               |
+| `results.icon`       | text    | empty                  | An item drawn on the card, e.g. `minecraft:tnt`  |
+| `results.image`      | text    | empty                  | An image drawn on the card instead of an item    |
+| `results.background` | text    | a dark slate           | The card's background color                      |
+| `results.seconds`    | int     | `8`                    | How long the card stands, at least one second    |
 
 ## Raids
 
@@ -4854,29 +5178,29 @@ While a wave is on the village, its villagers run indoors to the nearest door th
 
 *raids*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `omen` | effect name | none, required | The effect that starts the raid when its holder is inside a village. Any registered effect will do, a pack's own potion included |
-| `name` | text | `Raid` | The boss bar's title |
-| `color` | text | `red` | The bar's color: `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white` |
-| `waves` | list of waves | none, required | Each wave is a list of groups, and the waves come in order |
-| `waveDelay` | int | `300` | Ticks before the first wave, and between the end of a wave and the next |
-| `spawnDistance` | int | `32` | How far from the village center a wave arrives. The first tries are at twice this, then at this, then inside the village |
-| `reach` | int | `96` | Players within this many blocks of the center see the bar, and the ending function runs as them. A raider that strays sixteen blocks past it leaves the raid |
-| `timeout` | int | `48000` | Ticks after which an unfinished raid stops without an ending. `0` never stops it |
-| `sound` | sound name | none | Played to every player in reach, from the side the wave comes from, as each wave arrives |
-| `wins` | function | none | Runs as every player in reach when the raid is won |
-| `loses` | function | none | Runs as every player in reach when the raid is lost |
-| `bell` | block name or list | none | Other blocks that ring as a bell, when a player uses them and whenever a wave arrives. A block of type `bell` rings without being named. Place it in the village through an NBT structure, since nothing generates it |
+| Setting         | Type               | Default        | What it does                                                                                                                                                                                                          |
+| --------------- | ------------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `omen`          | effect name        | none, required | The effect that starts the raid when its holder is inside a village. Any registered effect will do, a pack's own potion included                                                                                      |
+| `name`          | text               | `Raid`         | The boss bar's title                                                                                                                                                                                                  |
+| `color`         | text               | `red`          | The bar's color: `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`                                                                                                                                        |
+| `waves`         | list of waves      | none, required | Each wave is a list of groups, and the waves come in order                                                                                                                                                            |
+| `waveDelay`     | int                | `300`          | Ticks before the first wave, and between the end of a wave and the next                                                                                                                                               |
+| `spawnDistance` | int                | `32`           | How far from the village center a wave arrives. The first tries are at twice this, then at this, then inside the village                                                                                              |
+| `reach`         | int                | `96`           | Players within this many blocks of the center see the bar, and the ending function runs as them. A raider that strays sixteen blocks past it leaves the raid                                                          |
+| `timeout`       | int                | `48000`        | Ticks after which an unfinished raid stops without an ending. `0` never stops it                                                                                                                                      |
+| `sound`         | sound name         | none           | Played to every player in reach, from the side the wave comes from, as each wave arrives                                                                                                                              |
+| `wins`          | function           | none           | Runs as every player in reach when the raid is won                                                                                                                                                                    |
+| `loses`         | function           | none           | Runs as every player in reach when the raid is lost                                                                                                                                                                   |
+| `bell`          | block name or list | none           | Other blocks that ring as a bell, when a player uses them and whenever a wave arrives. A block of type `bell` rings without being named. Place it in the village through an NBT structure, since nothing generates it |
 
 ### A group
 
 *raids*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `entity` | entity name | none, required | What comes. An entity variant keeps all of its own behavior and gains the march |
-| `count` | int or `{ "min", "max" }` | `1` | How many come |
+| Setting  | Type                      | Default        | What it does                                                                    |
+| -------- | ------------------------- | -------------- | ------------------------------------------------------------------------------- |
+| `entity` | entity name               | none, required | What comes. An entity variant keeps all of its own behavior and gains the march |
+| `count`  | int or `{ "min", "max" }` | `1`            | How many come                                                                   |
 
 ---
 
@@ -4932,24 +5256,24 @@ The third greets a player on the first join with a center card that has no panel
 
 *cards*
 
-| Trigger | Needs | Fires when |
-| --- | --- | --- |
-| `command` | nothing | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger |
-| `first_join` | nothing | A player joins the world for the first time |
-| `dimension_enter` | `dimension` | A player arrives in that dimension |
-| `biome_enter` | `biomes` | A player walks into one of those biomes from somewhere else |
-| `structure_enter` | `structures` | A player walks into one of those structures from outside it |
-| `advancement` | `advancement` | A player earns that advancement |
-| `time_of_day` | `time` | The day clock passes that tick, `0` to `23999`, while players are in the dimension. A clock set by a command or a bed does not count |
-| `day` | nothing, or `day` | A new day begins in the dimension; with `day`, only that day |
-| `craft` | `item` | A player crafts that item |
-| `pickup` | `item` | A player picks that item up |
-| `kill` | `entity` | A player kills that entity, or the `count`th one of it |
-| `respawn` | nothing | A player respawns after dying |
-| `death` | nothing | A player dies |
-| `y_level` | `below` or `above` | A player goes below or above that height |
-| `play_time` | `minutes` | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them |
-| `score` | `objective` | A player's score in that objective reaches `score` |
+| Trigger           | Needs              | Fires when                                                                                                                                                                 |
+| ----------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command`         | nothing            | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger |
+| `first_join`      | nothing            | A player joins the world for the first time                                                                                                                                |
+| `dimension_enter` | `dimension`        | A player arrives in that dimension                                                                                                                                         |
+| `biome_enter`     | `biomes`           | A player walks into one of those biomes from somewhere else                                                                                                                |
+| `structure_enter` | `structures`       | A player walks into one of those structures from outside it                                                                                                                |
+| `advancement`     | `advancement`      | A player earns that advancement                                                                                                                                            |
+| `time_of_day`     | `time`             | The day clock passes that tick, `0` to `23999`, while players are in the dimension. A clock set by a command or a bed does not count                                       |
+| `day`             | nothing, or `day`  | A new day begins in the dimension; with `day`, only that day                                                                                                               |
+| `craft`           | `item`             | A player crafts that item                                                                                                                                                  |
+| `pickup`          | `item`             | A player picks that item up                                                                                                                                                |
+| `kill`            | `entity`           | A player kills that entity, or the `count`th one of it                                                                                                                     |
+| `respawn`         | nothing            | A player respawns after dying                                                                                                                                              |
+| `death`           | nothing            | A player dies                                                                                                                                                              |
+| `y_level`         | `below` or `above` | A player goes below or above that height                                                                                                                                   |
+| `play_time`       | `minutes`          | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                          |
+| `score`           | `objective`        | A player's score in that objective reaches `score`                                                                                                                         |
 
 Biome, structure, height, play time and score are checked once a second for each player, and fire on the change from outside to inside, never on the first check after a join. A `time_of_day` or `day` rule whose audience is not `player` fires once for the dimension instead of once for each player in it.
 
@@ -4959,23 +5283,23 @@ A card that fires while a player still has the world intro open waits and shows 
 
 *cards*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `trigger` | text | none, required | One of the triggers above. A built-in rule takes none |
-| `dimension` | text | none | A dimension id such as `-1`, or its name such as `the_nether`. For `dimension_enter` it is the one entered; for every other trigger it limits the rule to players in that dimension |
-| `biomes` | list | none | Biome names such as `minecraft:desert`, or `#TYPE` for a Forge biome type such as `#SNOWY` |
-| `structures` | list | none | `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` or `EndCity`, or the name of a structure a pack places through `structures`, which counts within `radius` of where it was placed |
-| `radius` | int | `32` | How close counts as inside a pack's own structure |
-| `advancement` | text | none | The advancement id |
-| `item` | text | none | The item, written as elsewhere in a pack, such as `minecraft:diamond_sword` |
-| `entity` | text | none | The entity id, such as `minecraft:zombie` |
-| `count` | int | `1` | For `kill`: how many kills it takes. The count starts again after the rule fires |
-| `below`, `above` | int | none | For `y_level`: the height to go below or above |
-| `time` | int | `0` | For `time_of_day`: the tick of the day |
-| `day` | int | none | For `day`: the one day to fire on. Without it, every day |
-| `minutes` | int | none | For `play_time` |
-| `objective`, `score` | text, int | none, `1` | For `score`: the objective and the value to reach |
-| `requires` | list of mod ids or pack namespaces | none | The file is skipped unless all are present |
+| Setting              | Type                               | Default        | What it does                                                                                                                                                                                                       |
+| -------------------- | ---------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `trigger`            | text                               | none, required | One of the triggers above. A built-in rule takes none                                                                                                                                                              |
+| `dimension`          | text                               | none           | A dimension id such as `-1`, or its name such as `the_nether`. For `dimension_enter` it is the one entered; for every other trigger it limits the rule to players in that dimension                                |
+| `biomes`             | list                               | none           | Biome names such as `minecraft:desert`, or `#TYPE` for a Forge biome type such as `#SNOWY`                                                                                                                         |
+| `structures`         | list                               | none           | `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` or `EndCity`, or the name of a structure a pack places through `structures`, which counts within `radius` of where it was placed |
+| `radius`             | int                                | `32`           | How close counts as inside a pack's own structure                                                                                                                                                                  |
+| `advancement`        | text                               | none           | The advancement id                                                                                                                                                                                                 |
+| `item`               | text                               | none           | The item, written as elsewhere in a pack, such as `minecraft:diamond_sword`                                                                                                                                        |
+| `entity`             | text                               | none           | The entity id, such as `minecraft:zombie`                                                                                                                                                                          |
+| `count`              | int                                | `1`            | For `kill`: how many kills it takes. The count starts again after the rule fires                                                                                                                                   |
+| `below`, `above`     | int                                | none           | For `y_level`: the height to go below or above                                                                                                                                                                     |
+| `time`               | int                                | `0`            | For `time_of_day`: the tick of the day                                                                                                                                                                             |
+| `day`                | int                                | none           | For `day`: the one day to fire on. Without it, every day                                                                                                                                                           |
+| `minutes`            | int                                | none           | For `play_time`                                                                                                                                                                                                    |
+| `objective`, `score` | text, int                          | none, `1`      | For `score`: the objective and the value to reach                                                                                                                                                                  |
+| `requires`           | list of mod ids or pack namespaces | none           | The file is skipped unless all are present                                                                                                                                                                         |
 
 ### When
 
@@ -4983,35 +5307,35 @@ A card that fires while a player still has the world intro open waits and shows 
 
 `when` holds conditions that must all be true at the moment the trigger fires.
 
-| Setting | Type | What it checks |
-| --- | --- | --- |
-| `biomes` | list | The player stands in one of these biomes, written as for the trigger |
-| `timeFrom`, `timeTo` | int | The day clock is inside this window, which may run past midnight, such as `13000` to `1000` |
-| `dayAtLeast` | int | The day number is at least this |
-| `advancement` | text | The player has this advancement |
-| `gameMode` | text | The player is in this game mode: `survival`, `creative`, `adventure` or `spectator` |
-| `team` | text | The player is on this scoreboard team |
-| `objective`, `scoreAtLeast` | text, int | The player's score in the objective is at least this |
+| Setting                     | Type      | What it checks                                                                              |
+| --------------------------- | --------- | ------------------------------------------------------------------------------------------- |
+| `biomes`                    | list      | The player stands in one of these biomes, written as for the trigger                        |
+| `timeFrom`, `timeTo`        | int       | The day clock is inside this window, which may run past midnight, such as `13000` to `1000` |
+| `dayAtLeast`                | int       | The day number is at least this                                                             |
+| `advancement`               | text      | The player has this advancement                                                             |
+| `gameMode`                  | text      | The player is in this game mode: `survival`, `creative`, `adventure` or `spectator`         |
+| `team`                      | text      | The player is on this scoreboard team                                                       |
+| `objective`, `scoreAtLeast` | text, int | The player's score in the objective is at least this                                        |
 
 ### The card
 
 *cards*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `title` | text | none | The first line, drawn larger on a center card |
-| `lines` | list | none | Up to sixteen lines. A rule needs a title or lines, apart from a built-in one. `{player}`, `{dim}`, `{biome}` and `{day}` are filled in; `{text}` is the built-in message, and on a line of its own gives every line of it |
-| `style` | text | `corner` | `corner` is the card in the lower right that `saysCard` shows; `center` is a card in the middle of the screen; `chat` is chat lines; `bar` is the action bar |
-| `icon` | text | `saysIcon` | An item drawn on a corner card. Empty draws none |
-| `color` | text | `saysColor` | The card's background color as hex |
-| `image` | text | `saysImage` | A PNG from the pack's client assets, stretched over the card as its background |
-| `background` | boolean | `saysBackground` | `false` drops the panel, its border and the color stripe; the text keeps its shadow, and an `image` still draws |
-| `font` | text | `saysFont` | The font the card's text is drawn in, as `namespace:name`. Empty uses the RDPL font |
-| `ticks` | int | `160` | How long the card stays, fading included |
-| `audience` | text | `player` | Who sees it: `player`, `everyone`, `dimension` (everyone in the player's dimension) or `team` (the player's scoreboard team) |
-| `repeat` | text | `always` | `always`, `once_per_player`, `once_per_world` or `once_per_session` (again after the player logs back in) |
-| `cooldown` | int | `0` | Seconds before the rule fires again for the same player |
-| `runs` | text | none | A function run as the player when the rule fires |
+| Setting      | Type    | Default          | What it does                                                                                                                                                                                                               |
+| ------------ | ------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`      | text    | none             | The first line, drawn larger on a center card                                                                                                                                                                              |
+| `lines`      | list    | none             | Up to sixteen lines. A rule needs a title or lines, apart from a built-in one. `{player}`, `{dim}`, `{biome}` and `{day}` are filled in; `{text}` is the built-in message, and on a line of its own gives every line of it |
+| `style`      | text    | `corner`         | `corner` is the card in the lower right that `saysCard` shows; `center` is a card in the middle of the screen; `chat` is chat lines; `bar` is the action bar                                                               |
+| `icon`       | text    | `saysIcon`       | An item drawn on a corner card. Empty draws none                                                                                                                                                                           |
+| `color`      | text    | `saysColor`      | The card's background color as hex                                                                                                                                                                                         |
+| `image`      | text    | `saysImage`      | A PNG from the pack's client assets, stretched over the card as its background                                                                                                                                             |
+| `background` | boolean | `saysBackground` | `false` drops the panel, its border and the color stripe; the text keeps its shadow, and an `image` still draws                                                                                                            |
+| `font`       | text    | `saysFont`       | The font the card's text is drawn in, as `namespace:name`. Empty uses the RDPL font                                                                                                                                        |
+| `ticks`      | int     | `160`            | How long the card stays, fading included                                                                                                                                                                                   |
+| `audience`   | text    | `player`         | Who sees it: `player`, `everyone`, `dimension` (everyone in the player's dimension) or `team` (the player's scoreboard team)                                                                                               |
+| `repeat`     | text    | `always`         | `always`, `once_per_player`, `once_per_world` or `once_per_session` (again after the player logs back in)                                                                                                                  |
+| `cooldown`   | int     | `0`              | Seconds before the rule fires again for the same player                                                                                                                                                                    |
+| `runs`       | text    | none             | A function run as the player when the rule fires                                                                                                                                                                           |
 
 A corner card goes to chat when `saysCard` is off. What a player has been shown is kept with the player, so it survives death and moving between dimensions; `once_per_world` is kept with the world.
 
@@ -5019,11 +5343,11 @@ The RDPL font, `resourcedatapackloader:rdpl`, is the default for all text: cards
 
 RDPL ships these fonts and characters. A card, note or intro `font` can name an RDPL font by its short name, or by its full id:
 
-| Name | What it draws |
-| --- | --- |
-| `rdpl` (or `resourcedatapackloader:rdpl`) | The RDPL font, with Cyrillic (U+0400 to U+04FF) and the runic alphabet (U+16A0 to U+16F8) |
+| Name                                                  | What it draws                                                                                                                                                                                |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl` (or `resourcedatapackloader:rdpl`)             | The RDPL font, with Cyrillic (U+0400 to U+04FF) and the runic alphabet (U+16A0 to U+16F8)                                                                                                    |
 | `rdpl_runic` (or `resourcedatapackloader:rdpl_runic`) | A rune cipher: the letters A to Z and a to z draw as runes, and every other character draws in the RDPL font. A bold run draws in `rdpl_runic_bold` and an italic run in `rdpl_runic_italic` |
-| Runes, U+16A0 to U+16F8 | Written as the runic characters themselves (ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ), in any text the RDPL font draws, chat included; bold and italic runs keep their cut |
+| Runes, U+16A0 to U+16F8                               | Written as the runic characters themselves (ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ), in any text the RDPL font draws, chat included; bold and italic runs keep their cut                                                |
 
 A card font is a PNG at `assets/<namespace>/textures/font/<name>.png`, a grid of 16 by 16 glyphs laid out like the game's own `ascii.png`, and the card is sized to the glyph widths read from it. A `<name>_cyrillic.png` beside it, the same grid holding Unicode U+0400 to U+04FF, draws Cyrillic; without one, Cyrillic comes from the game's own pages. A `<name>_runes.png`, the same grid holding U+1600 to U+16FF, draws runes the same way. The 1.20.1 and 1.21.1 builds read a font definition at `assets/<namespace>/font/<name>.json` instead, whose `bitmap` provider can point at the same PNG, so a pack that ships both files draws the same lettering on all three versions. `minecraft:default` names the game's font. A font no pack holds falls back to the game's font, with one warning in `rdpl.log`.
 
@@ -5035,28 +5359,28 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 
 *cards*
 
-| Id | The message | Its text comes from |
-| --- | --- | --- |
-| `rdpl:gate_unlocked` | A gate opens | `unlockedMessage` in [Gates](#gates) |
-| `rdpl:gate_blocked` | A closed gate turns a player back, on the action bar | `blockedMessage` in [Gates](#gates) |
-| `rdpl:team_joined` | A player joins a side | the side's `displayName` |
-| `rdpl:team_lead` | The lead of a side comes to a player | `leadSays` in [Teams](#teams) |
-| `rdpl:team_picked` | A player is picked for a side | the side's `displayName` |
-| `rdpl:team_round_ended` | The round ended, so a player is moved to a side | the side's `displayName` |
-| `rdpl:lobby_joins` | A player who logs in mid-round is sent to the lobby | `opens.joinsSays` in [The lobby](#the-lobby) |
-| `rdpl:lobby_note` | The mid-screen lobby line | `opens.says`, `opens.leaderSays` in [The lobby](#the-lobby) |
-| `rdpl:scoring_results` | The standings at the end of a round, to each player | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Results](#results) |
-| `rdpl:scoring_out` | A knocked-out player | `ends.outSays` in [How a round ends](#how-a-round-ends) |
-| `rdpl:reset_lead` | The lead resets the round | `reset.leadSays` in [Resetting a round](#resetting-a-round) |
-| `rdpl:reset_vote` | A reset vote is called | `reset.voteSays` |
-| `rdpl:reset_pass` | The vote passes | `reset.passSays` |
-| `rdpl:reset_fail` | The vote fails | `reset.failSays` |
-| `rdpl:anvil_waits` | An anvil's work waits on an advancement | [Anvil work](#anvil-work) |
-| `rdpl:threat` | A player's threat band changes | `threatSays` |
-| `rdpl:prospect` | Each line a prospecting find reports | the find |
-| `rdpl:prospect_none` | Prospecting found nothing | the language file |
-| `rdpl:pregen_ended` | Pregeneration finishes or stops | `pregenFinishedSays`, `pregenStoppedSays` in [Pregeneration](#pregeneration) |
-| `rdpl:pregen_running` | The progress line a player sees on joining during pregeneration | `pregenRunningSays` |
+| Id                      | The message                                                     | Its text comes from                                                                                                              |
+| ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:gate_unlocked`    | A gate opens                                                    | `unlockedMessage` in [Gates](#gates)                                                                                             |
+| `rdpl:gate_blocked`     | A closed gate turns a player back, on the action bar            | `blockedMessage` in [Gates](#gates)                                                                                              |
+| `rdpl:team_joined`      | A player joins a side                                           | the side's `displayName`                                                                                                         |
+| `rdpl:team_lead`        | The lead of a side comes to a player                            | `leadSays` in [Teams](#teams)                                                                                                    |
+| `rdpl:team_picked`      | A player is picked for a side                                   | the side's `displayName`                                                                                                         |
+| `rdpl:team_round_ended` | The round ended, so a player is moved to a side                 | the side's `displayName`                                                                                                         |
+| `rdpl:lobby_joins`      | A player who logs in mid-round is sent to the lobby             | `opens.joinsSays` in [The lobby](#the-lobby)                                                                                     |
+| `rdpl:lobby_note`       | The mid-screen lobby line                                       | `opens.says`, `opens.leaderSays` in [The lobby](#the-lobby)                                                                      |
+| `rdpl:scoring_results`  | The standings at the end of a round, to each player             | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Results](#results) |
+| `rdpl:scoring_out`      | A knocked-out player                                            | `ends.outSays` in [How a round ends](#how-a-round-ends)                                                                          |
+| `rdpl:reset_lead`       | The lead resets the round                                       | `reset.leadSays` in [Resetting a round](#resetting-a-round)                                                                      |
+| `rdpl:reset_vote`       | A reset vote is called                                          | `reset.voteSays`                                                                                                                 |
+| `rdpl:reset_pass`       | The vote passes                                                 | `reset.passSays`                                                                                                                 |
+| `rdpl:reset_fail`       | The vote fails                                                  | `reset.failSays`                                                                                                                 |
+| `rdpl:anvil_waits`      | An anvil's work waits on an advancement                         | [Anvil work](#anvil-work)                                                                                                        |
+| `rdpl:threat`           | A player's threat band changes                                  | `threatSays`                                                                                                                     |
+| `rdpl:prospect`         | Each line a prospecting find reports                            | the find                                                                                                                         |
+| `rdpl:prospect_none`    | Prospecting found nothing                                       | the language file                                                                                                                |
+| `rdpl:pregen_ended`     | Pregeneration finishes or stops                                 | `pregenFinishedSays`, `pregenStoppedSays` in [Pregeneration](#pregeneration)                                                     |
+| `rdpl:pregen_running`   | The progress line a player sees on joining during pregeneration | `pregenRunningSays`                                                                                                              |
 
 `welcomeSays` is not a rule and keeps its logo; a `first_join` or `dimension_enter` rule adds to it. The action-bar countdowns and tallies of a round stay as their settings make them.
 
@@ -5070,11 +5394,11 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 
 Everything that stops or changes generation is grouped, and each group has one key in the config's `control` category with three values:
 
-| Value | What it means |
-| --- | --- |
-| `default` | The pack decides. Config values are the fallback |
-| `global` | The config wins. Pack sections are ignored |
-| `off` | The group is disabled entirely and no pack can enable it |
+| Value     | What it means                                            |
+| --------- | -------------------------------------------------------- |
+| `default` | The pack decides. Config values are the fallback         |
+| `global`  | The config wins. Pack sections are ignored               |
+| `off`     | The group is disabled entirely and no pack can enable it |
 
 The groups are `ores`, `biomes`, `generators`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `entities`, `chunks`, `commands` and `server`.
 
@@ -5124,19 +5448,19 @@ With a group's control at `default` these win, at `global` they are ignored, and
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `blockOres` | boolean | `false` | Stops every mod and Minecraft generating ore, except the mods named in `oreWhitelist`. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all |
-| `oreWhitelist` | list of mod ids | `["minecraft"]` | The mods still allowed to generate ore while `blockOres` is on |
-| `oreTypes` | list of ore types | none | Which ore types the blocking applies to, written as Forge names, `COAL`, `IRON`. Empty means every type |
-| `oreTypesAreBlacklist` | boolean | `true` | On, the types in `oreTypes` are the ones blocked. Off, only those types generate |
-| `blockOreDimensions` | list of ints | none | The dimensions ore blocking applies to, empty meaning every one. A dimension outside the scope is not touched at all, so another mod's ores generate there while the overworld stays blocked |
-| `blockOreDimensionsAreBlacklist` | boolean | `false` | On, the dimensions listed are the ones left alone |
-| `prospectItems` | list of `item=entries` | none | Items that prospect for `vein` shaped worldgen entries when a sneaking player breaks a block with one in hand. The form is in the paragraph below |
-| `prospectItemsAreBlacklist` | boolean | `false` | On, each item's list is the entries it does not read |
-| `prospectWear` | int | `2` | How many times the normal wear a prospecting break costs the tool. `2`, double, is the least allowed, and an item with no durability pays nothing |
-| `prospectSlow` | int | `2` | How many times longer a sneaking player with a tagged item takes to break a block. `1` is normal speed |
-| `prospectDrops` | boolean | `false` | On, a block broken in prospecting mode still drops and gives experience. Off, the sample is spent |
+| Setting                          | Type                   | Default         | What it does                                                                                                                                                                                                       |
+| -------------------------------- | ---------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `blockOres`                      | boolean                | `false`         | Stops every mod and Minecraft generating ore, except the mods named in `oreWhitelist`. Only generation that goes through Forge's ore generation event can be reached, which is Minecraft and most mods but not all |
+| `oreWhitelist`                   | list of mod ids        | `["minecraft"]` | The mods still allowed to generate ore while `blockOres` is on                                                                                                                                                     |
+| `oreTypes`                       | list of ore types      | none            | Which ore types the blocking applies to, written as Forge names, `COAL`, `IRON`. Empty means every type                                                                                                            |
+| `oreTypesAreBlacklist`           | boolean                | `true`          | On, the types in `oreTypes` are the ones blocked. Off, only those types generate                                                                                                                                   |
+| `blockOreDimensions`             | list of ints           | none            | The dimensions ore blocking applies to, empty meaning every one. A dimension outside the scope is not touched at all, so another mod's ores generate there while the overworld stays blocked                       |
+| `blockOreDimensionsAreBlacklist` | boolean                | `false`         | On, the dimensions listed are the ones left alone                                                                                                                                                                  |
+| `prospectItems`                  | list of `item=entries` | none            | Items that prospect for `vein` shaped worldgen entries when a sneaking player breaks a block with one in hand. The form is in the paragraph below                                                                  |
+| `prospectItemsAreBlacklist`      | boolean                | `false`         | On, each item's list is the entries it does not read                                                                                                                                                               |
+| `prospectWear`                   | int                    | `2`             | How many times the normal wear a prospecting break costs the tool. `2`, double, is the least allowed, and an item with no durability pays nothing                                                                  |
+| `prospectSlow`                   | int                    | `2`             | How many times longer a sneaking player with a tagged item takes to break a block. `1` is normal speed                                                                                                             |
+| `prospectDrops`                  | boolean                | `false`         | On, a block broken in prospecting mode still drops and gives experience. Off, the sample is spent                                                                                                                  |
 
 **The reading.** A `prospectItems` entry is written `item=entry|entry[,radius in chunks]`, or `item=*[,radius]` for every vein entry, the radius defaulting to 8. A sneaking player breaking a block with such an item in hand is told, for each entry it reads, `Possible hit on <ore> <direction> of this location, <deeper down | higher up | at about this depth>` — one of eight compass points from the broken block to the nearest seeded vein, and never a position; `at this location` when the block already lies within the vein's reach, and `No sign of anything here` when nothing is seeded in the radius. The ore is named by the entry's `prospectAs`, else by its file name. The reading replays the same rolls generation makes, so it is right about land not yet made, and a tagged item says what it prospects for in its tooltip.
 
@@ -5159,14 +5483,14 @@ With a group's control at `default` these win, at `global` they are ignored, and
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `blockBiomes` | boolean | `false` | Stops every biome generating except those of the mods in `biomeWhitelist`. Blocked biomes are replaced on the finished biome map, the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores. Block every one and the overworld becomes a void world by itself |
-| `biomeWhitelist` | list of mod ids | `minecraft` | The mods whose biomes still generate while `blockBiomes` is on. A pack biome uses the pack's namespace |
-| `biomeNames` | list of biome names | none | Biomes this applies to by name, whoever owns them and whatever the whitelist says. A friendly name such as `Birch Forest` or a registry name |
-| `biomeNamesAreBlacklist` | boolean | `true` | On, the names in `biomeNames` are blocked. Off, only those names generate |
-| `blockBiomeDimensions` | list of ints | `0`, the overworld | The dimensions biome blocking applies to. Empty means every one |
-| `blockBiomeDimensionsAreBlacklist` | boolean | `false` | On, blocking skips the dimensions listed. Off, it applies only to them |
+| Setting                            | Type                | Default            | What it does                                                                                                                                                                                                                                                                                |
+| ---------------------------------- | ------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockBiomes`                      | boolean             | `false`            | Stops every biome generating except those of the mods in `biomeWhitelist`. Blocked biomes are replaced on the finished biome map, the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores. Block every one and the overworld becomes a void world by itself |
+| `biomeWhitelist`                   | list of mod ids     | `minecraft`        | The mods whose biomes still generate while `blockBiomes` is on. A pack biome uses the pack's namespace                                                                                                                                                                                      |
+| `biomeNames`                       | list of biome names | none               | Biomes this applies to by name, whoever owns them and whatever the whitelist says. A friendly name such as `Birch Forest` or a registry name                                                                                                                                                |
+| `biomeNamesAreBlacklist`           | boolean             | `true`             | On, the names in `biomeNames` are blocked. Off, only those names generate                                                                                                                                                                                                                   |
+| `blockBiomeDimensions`             | list of ints        | `0`, the overworld | The dimensions biome blocking applies to. Empty means every one                                                                                                                                                                                                                             |
+| `blockBiomeDimensionsAreBlacklist` | boolean             | `false`            | On, blocking skips the dimensions listed. Off, it applies only to them                                                                                                                                                                                                                      |
 
 `blockBiomes` and `biomeWhitelist` work by mod, and `biomeNames` with `biomeNamesAreBlacklist` by name. Blocked biomes are replaced on the finished biome map, which is the only way to reach oceans, mushroom islands, mesa variants, jungle, hills and shores, those are chosen outside the lists a mod can edit. Block every biome and the overworld becomes a void world by itself. `blockBiomeDimensions` limits all of it to certain dimensions, empty meaning every one, and `blockBiomeDimensionsAreBlacklist` turns that list into an exclusion.
 
@@ -5192,17 +5516,17 @@ With a group's control at `default` these win, at `global` they are ignored, and
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `blockWorldGenerators` | boolean | `false` | Stops other mods generating through their own world generators, which is how mods add what Forge's events never see: slime islands, cave crystals and the like. This mod's own pack generation is never blocked |
-| `generatorWhitelist` | list of mod ids | `minecraft` | The mods still allowed to run their own generators |
-| `blockedGenerators` | list of mod ids or class-name parts | none | Individual generators blocked outright, whatever the whitelist says |
-| `blockGeneratorDimensions` | list of ints | `0`, the overworld | The dimensions this applies to. Empty means every one |
-| `blockGeneratorDimensionsAreBlacklist` | boolean | `false` | On, blocking skips the dimensions listed. Off, it applies only to them |
-| `generatorTypes` | list of types | none | Blocks by what a generator makes instead of by who owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched |
-| `generatorTypesAreBlacklist` | boolean | `true` | On, the types listed are blocked. Off, only those types generate |
-| `generatorTypeMap` | list of `pattern=type` | none | Types for generators the class name does not describe, the pattern being a mod id or part of a generator class name. Mapped entries are checked before the built-in words, so they also correct one the words read the wrong way |
-| `logBlockedGenerators` | boolean | `true` | Logs each generator with the type it was given the first time it is blocked. `/rdplserver generators` shows the running totals by mod and type |
+| Setting                                | Type                                | Default            | What it does                                                                                                                                                                                                                     |
+| -------------------------------------- | ----------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockWorldGenerators`                 | boolean                             | `false`            | Stops other mods generating through their own world generators, which is how mods add what Forge's events never see: slime islands, cave crystals and the like. This mod's own pack generation is never blocked                  |
+| `generatorWhitelist`                   | list of mod ids                     | `minecraft`        | The mods still allowed to run their own generators                                                                                                                                                                               |
+| `blockedGenerators`                    | list of mod ids or class-name parts | none               | Individual generators blocked outright, whatever the whitelist says                                                                                                                                                              |
+| `blockGeneratorDimensions`             | list of ints                        | `0`, the overworld | The dimensions this applies to. Empty means every one                                                                                                                                                                            |
+| `blockGeneratorDimensionsAreBlacklist` | boolean                             | `false`            | On, blocking skips the dimensions listed. Off, it applies only to them                                                                                                                                                           |
+| `generatorTypes`                       | list of types                       | none               | Blocks by what a generator makes instead of by who owns it: `ores`, `structures`, `flora`, `lakes`, `terrain`, or `unknown` for the ones nothing matched                                                                         |
+| `generatorTypesAreBlacklist`           | boolean                             | `true`             | On, the types listed are blocked. Off, only those types generate                                                                                                                                                                 |
+| `generatorTypeMap`                     | list of `pattern=type`              | none               | Types for generators the class name does not describe, the pattern being a mod id or part of a generator class name. Mapped entries are checked before the built-in words, so they also correct one the words read the wrong way |
+| `logBlockedGenerators`                 | boolean                             | `true`             | Logs each generator with the type it was given the first time it is blocked. `/rdplserver generators` shows the running totals by mod and type                                                                                   |
 
 `blockWorldGenerators` stops other mods generating through their own world generators, which is how mods add what Forge's events never see, slime islands, cave crystals and the like. `generatorWhitelist` keeps named mods, `blockedGenerators` names individual ones, and this mod's own pack generation is never blocked. `blockGeneratorDimensions` limits it to certain dimensions, with `blockGeneratorDimensionsAreBlacklist` to invert the list.
 
@@ -5239,14 +5563,14 @@ Mapped entries are checked before the built in words, so they also correct a gen
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `blockReplacements` | list of `block=block` | none | Blocks swapped out of chunks that already exist, with an optional meta on either side. Each chunk is done once as it loads and marked in its own data, so it is never done twice |
-| `blockReplacementDimensions` | list of ints | none | The dimensions this applies to. Empty means every one |
-| `blockReplacementDimensionsAreBlacklist` | boolean | `false` | On, replacement skips the dimensions listed. Off, it applies only to them |
-| `blockReplacementMinHeight` | int | `0` | The lowest y it looks at |
-| `blockReplacementMaxHeight` | int | `255` | The highest y it looks at |
-| `blockReplacementKey` | string | `0000` | Change it and every chunk goes through replacement again |
+| Setting                                  | Type                  | Default | What it does                                                                                                                                                                     |
+| ---------------------------------------- | --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockReplacements`                      | list of `block=block` | none    | Blocks swapped out of chunks that already exist, with an optional meta on either side. Each chunk is done once as it loads and marked in its own data, so it is never done twice |
+| `blockReplacementDimensions`             | list of ints          | none    | The dimensions this applies to. Empty means every one                                                                                                                            |
+| `blockReplacementDimensionsAreBlacklist` | boolean               | `false` | On, replacement skips the dimensions listed. Off, it applies only to them                                                                                                        |
+| `blockReplacementMinHeight`              | int                   | `0`     | The lowest y it looks at                                                                                                                                                         |
+| `blockReplacementMaxHeight`              | int                   | `255`   | The highest y it looks at                                                                                                                                                        |
+| `blockReplacementKey`                    | string                | `0000`  | Change it and every chunk goes through replacement again                                                                                                                         |
 
 `blockReplacements` swaps blocks out of chunks that already exist, one `block=block` per line, with an optional meta on either side:
 
@@ -5284,17 +5608,17 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageBlocks` | list of `original=replacement` | none | The blocks village pieces are built from, applied after every other mod has had its say. A pair may carry a chance and a condition, and is then a rule; the fields are in the table below |
-| `villagePieces` | list of piece names | none | Vanilla village pieces named one per line: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1`, `field2`. A pack plot is named by its own template, and so are pieces other mods add |
-| `villagePiecesAreBlacklist` | boolean | `true` | On, the pieces listed are blocked. Off, only those pieces generate, and a whitelist only ever removes vanilla's own pieces |
-| `villagePlotsLeast` | int | `0` | The fewest built plots a village settles for, counting houses, farms and pack plots but never roads, torches or the well. A village that lays out smaller is regrown a few times and the largest layout wins. `0` keeps vanilla |
-| `villagePlotsBackRow` | boolean | `true` | Once the village has grown, a second pass seats a plot directly behind every plot that fronts a street, turned to face it, with the same roll and the same room test, so the inside of a block between two streets is built rather than left bare |
-| `villagePlotsMost` | int | `0` | The most it may have; at the maximum it stops growing outright, no more buildings and no more roads. `0` keeps vanilla |
-| `villageTieStreets` | boolean | `true` | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down |
-| `villageBlockSizes` | list of `size=weight` | none | How deep the blocks between a city's parallel streets are, rolled once per district from its plaza position. Empty sizes every block to the largest plot the pack ships |
-| `villageLayout` | string | empty | Names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it |
+| Setting                     | Type                           | Default | What it does                                                                                                                                                                                                                                      |
+| --------------------------- | ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageBlocks`             | list of `original=replacement` | none    | The blocks village pieces are built from, applied after every other mod has had its say. A pair may carry a chance and a condition, and is then a rule; the fields are in the table below                                                         |
+| `villagePieces`             | list of piece names            | none    | Vanilla village pieces named one per line: `house1`, `house2`, `house3`, `house4garden`, `church`, `woodhut`, `hall`, `field1`, `field2`. A pack plot is named by its own template, and so are pieces other mods add                              |
+| `villagePiecesAreBlacklist` | boolean                        | `true`  | On, the pieces listed are blocked. Off, only those pieces generate, and a whitelist only ever removes vanilla's own pieces                                                                                                                        |
+| `villagePlotsLeast`         | int                            | `0`     | The fewest built plots a village settles for, counting houses, farms and pack plots but never roads, torches or the well. A village that lays out smaller is regrown a few times and the largest layout wins. `0` keeps vanilla                   |
+| `villagePlotsBackRow`       | boolean                        | `true`  | Once the village has grown, a second pass seats a plot directly behind every plot that fronts a street, turned to face it, with the same roll and the same room test, so the inside of a block between two streets is built rather than left bare |
+| `villagePlotsMost`          | int                            | `0`     | The most it may have; at the maximum it stops growing outright, no more buildings and no more roads. `0` keeps vanilla                                                                                                                            |
+| `villageTieStreets`         | boolean                        | `true`  | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down                                                               |
+| `villageBlockSizes`         | list of `size=weight`          | none    | How deep the blocks between a city's parallel streets are, rolled once per district from its plaza position. Empty sizes every block to the largest plot the pack ships                                                                           |
+| `villageLayout`             | string                         | empty   | Names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it                                                                                                                             |
 
 Villages use the same `structure=value` lists as every other structure, under the name `villages`, so `structureSpacing`, `structureMinDistanceFromSpawn`, `structureBiomes` and `structureBiomesAreBlacklist` all reach them. A `structureBiomes` list that is not a blacklist also adds any named biome the structure's own list never held, so villages can be sent into the mountains, name them by registry name for that, since only registry names can add. Their spacing has a floor of 9, because vanilla subtracts 8 from it. `villagePieces` belongs to the same group, so one switch covers everything about where villages go and what they are built from, while the `villages` group covers only the plots a pack adds.
 
@@ -5302,11 +5626,11 @@ Villages use the same `structure=value` lists as every other structure, under th
 
 A pair may carry a chance and a condition after it, written as fields separated by commas, and then it is a rule rather than a plain swap. `minecraft:cobblestone=minecraft:mossy_cobblestone,20` weathers a fifth of the cobble a village lays; `minecraft:planks=minecraft:sandstone,100,under=minecraft:sand` changes the floor only where a house stands on sand. The fields after the pair may be given in any order, and an entry naming a field it cannot read is refused whole rather than half applied.
 
-| Field | Value | Default | What it does |
-| --- | --- | --- | --- |
-| chance | int, 1 to 100 | `100` | How often the rule takes, out of a hundred |
-| `at=` | block name | none | Only where this block already stands in the spot being built on |
-| `under=` | block name | none | Only where this block lies directly beneath the spot |
+| Field    | Value         | Default | What it does                                                    |
+| -------- | ------------- | ------- | --------------------------------------------------------------- |
+| chance   | int, 1 to 100 | `100`   | How often the rule takes, out of a hundred                      |
+| `at=`    | block name    | none    | Only where this block already stands in the spot being built on |
+| `under=` | block name    | none    | Only where this block lies directly beneath the spot            |
 
 A plain pair is answered where a piece asks the game what it should build from, so it changes every wall of that block at once. A rule is weighed where the block is actually laid, one spot at a time, which is what lets a chance and a condition mean anything, and it sees the block as it is about to be placed, after any plain pair has had its say. Which spots a chance falls on is worked out from the world seed and the spot itself, so the same world always weathers the same blocks, however many times it is generated.
 
@@ -5393,29 +5717,29 @@ Everything below only does anything while `terrainAdaptation` is on. Every one o
 
 **Mixing blocks.** Some block settings take a mix instead of one block: blocks separated by commas, each followed by a space and a weight, as in `"minecraft:stonebrick 3, minecraft:cobblestone 1"`. A block with no weight counts once. Each block placed rolls the mix from the world seed and its spot, so the same world always builds the same pattern. The settings that take a mix are `villagePathVergeBlock`, `villagePathVergeWaterBlock`, `villagePathTunnelBlock`, `villagePathBridgeFrameBlock`, `villagePathBridgeFrameTopBlock`, `villageRailTunnelBlock`, `villageRailDeckBlock`, `villageRailSupportBlock`, `villageRailBarrierBlock`, `villageRailBridgeFrameBlock`, `villageRailBridgeFrameTopBlock`, `villageSubwayTunnelBlock`, `villageSubwayPlatformBlock`, `villageSubwayRailingBlock`, `villageSubwayBenchEndBlock` and `villageSewerMossBlock`. Every other block setting uses the first block of a mix throughout.
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villagePathBlock` | block | empty | The road surface. Empty keeps the block the biome would use, sandstone over sand, hardened clay over mesa, grass path over earth |
-| `villagePathVergeBlock` | block | empty | The block the ground beside a road and under a plot is filled with where the village has to make land. Empty follows the terrain, laying the biome's own filler with grass on top where it would be dirt |
-| `villagePathVergeWaterBlock` | block | `minecraft:planks` | What that fill becomes where it stands over water, so a verge carried out onto a lake is not a column of dirt. It dresses a stone doorstep left over water too |
-| `villagePathCenterBlock` | block | empty | A center line down the middle of the road. Empty draws none |
-| `villagePathCenterDash` | number | `0` | Dashes that line: N blocks of line, then one of road. Anchored to world coordinates, so the dashes of one road piece continue into the next. `0` keeps it solid |
-| `villagePathLineBlock` | block | empty | Edge lines between road and sidewalk. Empty draws none |
-| `villagePathSidewalkBlock` | block | empty | Sidewalks, laid level with the road outside the edge lines. Empty lays none |
-| `villagePathSidewalkWidth` | number | `2` | How wide each sidewalk is, once `villagePathSidewalkBlock` is set |
-| `villagePathExtraWidth` | number | `0` | Extra blocks of road on each side beyond vanilla's 3. Widens the road pieces themselves, so houses stand back from a wide street |
-| `villagePathMinimumWidth` | number | `0` | The narrowest road worth laying. A segment that cannot fit its full dress drops to a bare 3 wide alley; below this width it is not laid at all and the village lays out around it. `0` never refuses |
-| `villagePathAlleyBlock` | block | empty | The surface of an alley, a road too narrow to carry lines and sidewalks. An alley runs between the sidewalks of the streets it meets and carries none of its own, and no crossing is painted where it meets a street. Empty lays alleys with the road block |
-| `villagePathAlleyChance` | number | `0` | The percent chance a road is laid as an alley instead of widening to a full street. `0` lays an alley only where a full street will not fit, which in practice is only the crowded first district. Raising it changes which roads are laid and so reshapes the whole street graph; measured at 50 it cost seven more split junctions, so raise it and check the result |
-| `villagePathFlatRun` | number | `6` | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighboring pieces agree. `0` steps every block, as vanilla slopes do |
-| `villagePathIntersects` | list | none | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight |
-| `villagePathDeadEnds` | list | none | How a road that dead ends is closed off, when it did not grow a cul-de-sac, listed below. One entry closes every dead end alike; several roll one per end from the world seed. Empty leaves dead ends open |
-| `villagePathLampBlock` | block or block with data | `minecraft:oak_fence` | The block a lamp post along a road is built from, stacked on the curb. Empty stands no lamp posts |
-| `villagePathLampHeight` | number | `3` | How many blocks tall the post stands before its head |
-| `villagePathLampTopBlock` | block or block with data | `minecraft:wool:15` | The head on top of the post. Empty leaves it bare |
-| `villagePathLampSideBlock` | block or block with data | `minecraft:torch` | The light hung on each side of the head, facing outward. Empty hangs none |
-| `villagePathLampStructure` | text | empty | A structure file placed as the whole lamp instead of stacking the three lamp blocks, named `mypack:street_lamp` and read from that pack's `structures` folder. It is centered on the lamp spot with its lowest layer on the curb, and the blocks it lays are held so nothing else overwrites them. Empty stacks the blocks |
-| `villageWellStructure` | list | none | Structure files placed as the plaza centerpiece instead of the well, as weighted `name=weight` entries like `mypack:plaza_spire=3`, read from that pack's `structures` folder and rolled once per well from its position, so the same well always gets the same one. An `empty=weight` entry keeps the well for that share. The chosen one is centered on the well's six by six footprint with its lowest layer on the plaza floor, that floor is paved under it, and the blocks it lays are held so the plaza dress leaves them alone. A wider structure spreads out over the plaza ring. No entries builds the well |
+| Setting                      | Type                     | Default               | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------- | ------------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagePathBlock`           | block                    | empty                 | The road surface. Empty keeps the block the biome would use, sandstone over sand, hardened clay over mesa, grass path over earth                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `villagePathVergeBlock`      | block                    | empty                 | The block the ground beside a road and under a plot is filled with where the village has to make land. Empty follows the terrain, laying the biome's own filler with grass on top where it would be dirt                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `villagePathVergeWaterBlock` | block                    | `minecraft:planks`    | What that fill becomes where it stands over water, so a verge carried out onto a lake is not a column of dirt. It dresses a stone doorstep left over water too                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `villagePathCenterBlock`     | block                    | empty                 | A center line down the middle of the road. Empty draws none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `villagePathCenterDash`      | number                   | `0`                   | Dashes that line: N blocks of line, then one of road. Anchored to world coordinates, so the dashes of one road piece continue into the next. `0` keeps it solid                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `villagePathLineBlock`       | block                    | empty                 | Edge lines between road and sidewalk. Empty draws none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `villagePathSidewalkBlock`   | block                    | empty                 | Sidewalks, laid level with the road outside the edge lines. Empty lays none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `villagePathSidewalkWidth`   | number                   | `2`                   | How wide each sidewalk is, once `villagePathSidewalkBlock` is set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `villagePathExtraWidth`      | number                   | `0`                   | Extra blocks of road on each side beyond vanilla's 3. Widens the road pieces themselves, so houses stand back from a wide street                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `villagePathMinimumWidth`    | number                   | `0`                   | The narrowest road worth laying. A segment that cannot fit its full dress drops to a bare 3 wide alley; below this width it is not laid at all and the village lays out around it. `0` never refuses                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `villagePathAlleyBlock`      | block                    | empty                 | The surface of an alley, a road too narrow to carry lines and sidewalks. An alley runs between the sidewalks of the streets it meets and carries none of its own, and no crossing is painted where it meets a street. Empty lays alleys with the road block                                                                                                                                                                                                                                                                                                                                                           |
+| `villagePathAlleyChance`     | number                   | `0`                   | The percent chance a road is laid as an alley instead of widening to a full street. `0` lays an alley only where a full street will not fit, which in practice is only the crowded first district. Raising it changes which roads are laid and so reshapes the whole street graph; measured at 50 it cost seven more split junctions, so raise it and check the result                                                                                                                                                                                                                                                |
+| `villagePathFlatRun`         | number                   | `6`                   | How many blocks a road holds one height before it steps. Anchored to world coordinates so neighboring pieces agree. `0` steps every block, as vanilla slopes do                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `villagePathIntersects`      | list                     | none                  | Designs painted at junctions, named by registry key from a pack's `<namespace>/pathintersects/`. One entry paints every junction alike; several are picked per junction by weight                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `villagePathDeadEnds`        | list                     | none                  | How a road that dead ends is closed off, when it did not grow a cul-de-sac, listed below. One entry closes every dead end alike; several roll one per end from the world seed. Empty leaves dead ends open                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `villagePathLampBlock`       | block or block with data | `minecraft:oak_fence` | The block a lamp post along a road is built from, stacked on the curb. Empty stands no lamp posts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `villagePathLampHeight`      | number                   | `3`                   | How many blocks tall the post stands before its head                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `villagePathLampTopBlock`    | block or block with data | `minecraft:wool:15`   | The head on top of the post. Empty leaves it bare                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `villagePathLampSideBlock`   | block or block with data | `minecraft:torch`     | The light hung on each side of the head, facing outward. Empty hangs none                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `villagePathLampStructure`   | text                     | empty                 | A structure file placed as the whole lamp instead of stacking the three lamp blocks, named `mypack:street_lamp` and read from that pack's `structures` folder. It is centered on the lamp spot with its lowest layer on the curb, and the blocks it lays are held so nothing else overwrites them. Empty stacks the blocks                                                                                                                                                                                                                                                                                            |
+| `villageWellStructure`       | list                     | none                  | Structure files placed as the plaza centerpiece instead of the well, as weighted `name=weight` entries like `mypack:plaza_spire=3`, read from that pack's `structures` folder and rolled once per well from its position, so the same well always gets the same one. An `empty=weight` entry keeps the well for that share. The chosen one is centered on the well's six by six footprint with its lowest layer on the plaza floor, that floor is paved under it, and the blocks it lays are held so the plaza dress leaves them alone. A wider structure spreads out over the plaza ring. No entries builds the well |
 
 A road is dressed from the middle out: center line, then road, then edge lines, then sidewalks. Widths that do not fit fall back rather than overrun, so a narrow segment quietly loses its sidewalk before it loses its road.
 
@@ -5425,10 +5749,10 @@ A road is dressed from the middle out: center line, then road, then edge lines, 
 
 **Dead ends.** A road that dead ends without growing a cul-de-sac is closed off by `villagePathDeadEnds`, one style rolled per end from the world seed. A style whose block is not set drops out of the roll, so `barrier` closes nothing until `villagePathBridgeBarrierBlock` names a block, and an alley end never takes `sidewalk`.
 
-| Value | What it does |
-| --- | --- |
-| `sidewalk` | Paves the end row with the sidewalk block |
-| `barrier` | Stands the barrier block along the end row, `villagePathBridgeBarrierHeight` tall |
+| Value      | What it does                                                                      |
+| ---------- | --------------------------------------------------------------------------------- |
+| `sidewalk` | Paves the end row with the sidewalk block                                         |
+| `barrier`  | Stands the barrier block along the end row, `villagePathBridgeBarrierHeight` tall |
 
 **Junction designs.** `villagePathIntersects` names files a pack ships, each one a small picture of what to paint where two roads meet, drawn as rows of single characters, one character to a block.
 
@@ -5446,13 +5770,13 @@ The file's path is the design's registry key, which `villagePathIntersects` then
 }
 ```
 
-| Key | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `name` | string | the file name | The name used in the log |
-| `weight` | int, 1 and up | `1` | Share of junctions this design wins when several are listed |
-| `legend` | object of one character to a block | none | The characters the rows may use beyond the roles below. A character that is already a role is refused with a log line |
-| `mouth` | list of strings | none | Rows painted on each approach, outside the crossing road. The first row is the one nearest the junction and the rest work outward. Characters run across the road and repeat where a row is shorter than the road is wide |
-| `corner` | list of strings | none | Rows painted inside the junction itself. The first row is the one nearest the crossing road's edge, and within a row the first character is the one nearest the road's own edge, working inward. A cell the picture does not reach is left alone |
+| Key      | Value                              | Default       | What it does                                                                                                                                                                                                                                     |
+| -------- | ---------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`   | string                             | the file name | The name used in the log                                                                                                                                                                                                                         |
+| `weight` | int, 1 and up                      | `1`           | Share of junctions this design wins when several are listed                                                                                                                                                                                      |
+| `legend` | object of one character to a block | none          | The characters the rows may use beyond the roles below. A character that is already a role is refused with a log line                                                                                                                            |
+| `mouth`  | list of strings                    | none          | Rows painted on each approach, outside the crossing road. The first row is the one nearest the junction and the rest work outward. Characters run across the road and repeat where a row is shorter than the road is wide                        |
+| `corner` | list of strings                    | none          | Rows painted inside the junction itself. The first row is the one nearest the crossing road's edge, and within a row the first character is the one nearest the road's own edge, working inward. A cell the picture does not reach is left alone |
 
 Five characters are roles rather than blocks, so they follow whatever the road is already dressed in: `r` is the road surface, `l` the edge line, `s` the sidewalk, `.` leaves the block exactly as it was, and `c` is reserved and paints the road surface. A role whose block the pack never set falls back to the road surface, and any other character is looked up in the `legend`, falling back to the road surface as well.
 
@@ -5462,22 +5786,22 @@ Which design a junction gets is worked out from the world seed and the junction'
 
 *villages*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villagePathSupportBlock` | block | empty | The surface itself where the ground is bare rock, and the piers and legs under a road over water. Empty keeps vanilla gravel, sandstone in desert villages |
-| `villagePathBridgeBlock` | block | empty | What a road crosses water with. Empty keeps vanilla planks |
-| `villagePathBridgeBarrierBlock` | block | empty | Barriers stacked along both edges of a bridge deck. Empty builds none |
-| `villagePathBridgeBarrierHeight` | number | `1` | How many blocks tall those barriers stand |
-| `villagePathBridgeSidewalkBlock` | block | empty | Decks the sidewalk where a road crosses water. Empty carries the normal sidewalk block across |
-| `villagePathBridgeDrop` | number | `0` | How far a road's grade must stand clear of the ground before the drop under it is bridged rather than filled solid. `0` keeps roads on the ground: they bridge water and nothing else. `3` is the rule a railway trestle follows. This moves the grade, not only the dress |
-| `villagePathBridgeFrameBlock` | block | empty | An overhead frame over a long bridge: a post up each side of the deck and a beam across the top. Each frame carries a pier down to the ground under the deck, and no lamp post is raised on the row it stands on. Empty builds none |
-| `villagePathBridgeFrameTopBlock` | block | empty | The beam across the top of that frame. Empty uses `villagePathBridgeFrameBlock` |
-| `villagePathBridgeFrameHeight` | number | `4` | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that |
-| `villagePathBridgeFrameRun` | number | `24` | How many rows apart the frames stand when a bridge is long enough for several |
-| `villagePathBridgeFrameLeast` | number | `24` | The shortest bridged run that gets a frame at all. A shorter bridge is left plain |
-| `villagePathPiers` | list | none | Pier styles for a road that dead-ends over water, listed below. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge |
-| `villagePathPierCargo` | list | none | Cargo stood along the inside of a pier's rails, as weighted entries listed below. Every other row of every pier rolls the list on each side, so the weights decide how crowded a pier reads. Empty leaves piers bare |
-| `villagePathPierLoot` | text | `resourcedatapackloader:chests/pier_cargo` | The loot table cargo with an inventory is filled from, rolled the first time it is opened. Empty leaves such cargo empty |
+| Setting                          | Type   | Default                                    | What it does                                                                                                                                                                                                                                                               |
+| -------------------------------- | ------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagePathSupportBlock`        | block  | empty                                      | The surface itself where the ground is bare rock, and the piers and legs under a road over water. Empty keeps vanilla gravel, sandstone in desert villages                                                                                                                 |
+| `villagePathBridgeBlock`         | block  | empty                                      | What a road crosses water with. Empty keeps vanilla planks                                                                                                                                                                                                                 |
+| `villagePathBridgeBarrierBlock`  | block  | empty                                      | Barriers stacked along both edges of a bridge deck. Empty builds none                                                                                                                                                                                                      |
+| `villagePathBridgeBarrierHeight` | number | `1`                                        | How many blocks tall those barriers stand                                                                                                                                                                                                                                  |
+| `villagePathBridgeSidewalkBlock` | block  | empty                                      | Decks the sidewalk where a road crosses water. Empty carries the normal sidewalk block across                                                                                                                                                                              |
+| `villagePathBridgeDrop`          | number | `0`                                        | How far a road's grade must stand clear of the ground before the drop under it is bridged rather than filled solid. `0` keeps roads on the ground: they bridge water and nothing else. `3` is the rule a railway trestle follows. This moves the grade, not only the dress |
+| `villagePathBridgeFrameBlock`    | block  | empty                                      | An overhead frame over a long bridge: a post up each side of the deck and a beam across the top. Each frame carries a pier down to the ground under the deck, and no lamp post is raised on the row it stands on. Empty builds none                                        |
+| `villagePathBridgeFrameTopBlock` | block  | empty                                      | The beam across the top of that frame. Empty uses `villagePathBridgeFrameBlock`                                                                                                                                                                                            |
+| `villagePathBridgeFrameHeight`   | number | `4`                                        | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that                                                                                                                                                                      |
+| `villagePathBridgeFrameRun`      | number | `24`                                       | How many rows apart the frames stand when a bridge is long enough for several                                                                                                                                                                                              |
+| `villagePathBridgeFrameLeast`    | number | `24`                                       | The shortest bridged run that gets a frame at all. A shorter bridge is left plain                                                                                                                                                                                          |
+| `villagePathPiers`               | list   | none                                       | Pier styles for a road that dead-ends over water, listed below. The bridged tail becomes a pier; several entries roll one style per pier. Empty leaves such a bridge a plain bridge                                                                                        |
+| `villagePathPierCargo`           | list   | none                                       | Cargo stood along the inside of a pier's rails, as weighted entries listed below. Every other row of every pier rolls the list on each side, so the weights decide how crowded a pier reads. Empty leaves piers bare                                                       |
+| `villagePathPierLoot`            | text   | `resourcedatapackloader:chests/pier_cargo` | The loot table cargo with an inventory is filled from, rolled the first time it is opened. Empty leaves such cargo empty                                                                                                                                                   |
 
 **A level deck.** Every bridge lies at one height from end to end, however its two banks stand; the road either side ramps to meet it.
 
@@ -5487,19 +5811,19 @@ Which design a junction gets is worked out from the world seed and the junction'
 
 **Piers.** A road that runs out over water and ends on nothing becomes a pier rather than a bridge to nowhere, once `villagePathPiers` names at least one style. Several entries roll one style per pier, from the world seed and the pier's end, so the same world always builds the same pier. Every pier stands on pilings of the support block, driven to the bed below at both edges of the deck every fourth row, whatever its style. The deck is the bridge block, rails and posts the barrier block, and pilings the support block.
 
-| Value | What it does |
-| --- | --- |
-| `railed` | Keeps the full deck, plain with no lines or sidewalk band, and closes the far end with the barrier block |
-| `pilings` | Opens the side barriers into posts every fourth row, standing over those same supports |
-| `boardwalk` | Narrows the deck to the road's core width |
+| Value       | What it does                                                                                             |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| `railed`    | Keeps the full deck, plain with no lines or sidewalk band, and closes the far end with the barrier block |
+| `pilings`   | Opens the side barriers into posts every fourth row, standing over those same supports                   |
+| `boardwalk` | Narrows the deck to the road's core width                                                                |
 
 **Pier cargo.** `villagePathPierCargo` stands cargo on a pier. Every other row rolls the list once on each side, one column in from the rails, which leaves the middle of the deck clear to walk, never crowds the railed end row, and keeps two pieces of cargo from ever standing side by side, since two chests set touching would pair into one double chest. A stack is laid only where every block of it fits, and naming the same block twice at different heights is how a pier gets piles of mixed size.
 
-| Value | What it does |
-| --- | --- |
-| `<block>=<weight>` | A block and its share of the spots, stood one high |
+| Value                       | What it does                                         |
+| --------------------------- | ---------------------------------------------------- |
+| `<block>=<weight>`          | A block and its share of the spots, stood one high   |
 | `<block>=<weight>,<height>` | The same, stacked that many blocks high, from 1 to 8 |
-| `empty=<weight>` | The share of deck left clear |
+| `empty=<weight>`            | The share of deck left clear                         |
 
 A block that carries a loot inventory, a chest among them, is filled from `villagePathPierLoot`, rolled the first time a player opens it the way a vanilla chest is. The built-in table is easily gathered sea salvage. A pack replaces it by shipping its own `loot_tables/chests/pier_cargo.json` under the `resourcedatapackloader` namespace, or by naming a table of its own.
 
@@ -5507,12 +5831,12 @@ A block that carries a loot inventory, a chest among them, is filled from `villa
 
 *villages*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villagePathTunnelBlock` | block | empty | Lines a road where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels, and a road cuts through a hill as before |
-| `villagePathTunnelDepth` | number | `10` | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
-| `villagePathTunnelLightBlock` | block | empty | A light set into the tunnel roof down its center line. Empty lights none |
-| `villagePathTunnelLightRun` | number | `8` | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next; a tunnel too short to reach one of those spots is lit once, in its middle |
+| Setting                       | Type   | Default | What it does                                                                                                                                                                                                                                                                                               |
+| ----------------------------- | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagePathTunnelBlock`      | block  | empty   | Lines a road where it bores through a hill instead of cutting it open: the walls either side of the bore and the roof over it. Empty bores no tunnels, and a road cuts through a hill as before                                                                                                            |
+| `villagePathTunnelDepth`      | number | `10`    | How much ground has to stand over the road surface before a stretch is bored rather than cut. A rise buried that deep for twelve rows or more is held level and bored through, its shallower approaches cut open; a shorter bump is cut as before. Only counts once `villagePathTunnelBlock` names a block |
+| `villagePathTunnelLightBlock` | block  | empty   | A light set into the tunnel roof down its center line. Empty lights none                                                                                                                                                                                                                                   |
+| `villagePathTunnelLightRun`   | number | `8`     | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next; a tunnel too short to reach one of those spots is lit once, in its middle                                                                                                   |
 
 **Tunnels.** Without a tunnel block a road that meets a hill climbs it, one block a row at most, and cuts no deeper than two blocks into a short rise. Once `villagePathTunnelBlock` names a block, a rise that stands `villagePathTunnelDepth` or more over the road for at least twelve rows is bored instead: the road holds the level of the higher side through the whole rise, every row with that much ground over it gets a bore four blocks high with the lining block for walls and roof, and the shallower rows before the portals are cut open as the approach. A road that meets a mountain face rather than a hill it can see over is not climbed either: it holds the level it arrives at and looks for the far side, up to 98 rows beyond where the piece would have ended. Found within that reach, with the ground between free of other pieces, the piece is lengthened to come out at the far portal, so a tunnel always runs through. Not found, the road stops at the foot of the mountain and never enters it. The whole street runs through, lanes, lines and sidewalks alike, lit from the roof by `villagePathTunnelLightBlock` every `villagePathTunnelLightRun` blocks, while lamp posts and verge decoration stop at the portals. A junction is never bored, so a crossing street always meets the road in the open. No plot is seated along a stretch the road will bore and no street branches off it, so a house never fronts a tunnel and no junction is cut into one; a district that finds no room for its plots elsewhere lays fewer streets there.
 
@@ -5520,23 +5844,23 @@ A block that carries a loot inventory, a chest among them, is filled from `villa
 
 *villages*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageSewerBlock` | block name | none | The block a sewer is lined with under a village's streets and alleys: its floor, its two walls and its roof. Empty digs no sewers |
-| `villageSewerDepth` | number | `8` | How far under a street's own surface the sewer floor sits. The sewer follows the street it runs under, so a climbing street carries a climbing sewer |
-| `villageSewerHeight` | number | `3` | How many blocks of headroom stand over the walkway |
-| `villageSewerWidth` | number | `5` | How wide the sewer runs, counted across including its two walls. An even number is rounded up so the channel keeps the middle |
-| `villageSewerWaterBlock` | block name | `minecraft:water` | What fills the channel down the middle. Empty leaves the channel dry |
-| `villageSewerWalkBlock` | block name | none | What the walkways either side of the channel are surfaced with. Empty walks on the lining block |
-| `villageSewerLightBlock` | block name | none | The block set into the roof over the channel as a light. Empty lights none |
-| `villageSewerLightRun` | number | `8` | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next |
-| `villageSewerLadderBlock` | block name | none | The block a manhole shaft is climbed by, set down the shaft from the street to the sewer walkway. Empty leaves the shaft open |
-| `villageSewerCoverBlock` | block name | none | The block covering a manhole, set flush in an east-west street wherever a street or alley meets it, and on the plaza where that street crosses the sewer loop. A wooden trapdoor is the usual choice: an iron one takes a redstone signal and no player can open it by hand, which shuts the sewer to them. Empty leaves the shaft mouth open |
-| `villageSewerMossBlock` | block name | none | A second block mixed into the lining here and there, mossy stone among plain for instance. Empty lines the sewer with one block throughout |
-| `villageSewerMossChance` | 0 to 100 | `25` | What percentage of lining blocks come out as that second block. Rolled per block position from the world seed, so the same sewer always comes out the same |
-| `villageSewerVineBlock` | block name | none | A block hung on the inside of the sewer walls here and there, vines for instance. It is clung to whichever wall it stands against. Empty hangs nothing |
-| `villageSewerVineChance` | 0 to 100 | `20` | What percentage of the cells beside a wall carry it. Rolled per block position from the world seed, so the same sewer always hangs the same |
-| `villageSewerWellEntrance` | boolean | `true` | A loop of sewer under the plaza ring around the well, every street's sewer running through it, and a manhole on the plaza down onto the loop on each side where an east-west street crosses it, so the sewers are one connected system with a way in at the town center. Off, each street's sewer ends at the well and the plaza has no way down |
+| Setting                    | Type       | Default           | What it does                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------- | ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `villageSewerBlock`        | block name | none              | The block a sewer is lined with under a village's streets and alleys: its floor, its two walls and its roof. Empty digs no sewers                                                                                                                                                                                                                |
+| `villageSewerDepth`        | number     | `8`               | How far under a street's own surface the sewer floor sits. The sewer follows the street it runs under, so a climbing street carries a climbing sewer                                                                                                                                                                                             |
+| `villageSewerHeight`       | number     | `3`               | How many blocks of headroom stand over the walkway                                                                                                                                                                                                                                                                                               |
+| `villageSewerWidth`        | number     | `5`               | How wide the sewer runs, counted across including its two walls. An even number is rounded up so the channel keeps the middle                                                                                                                                                                                                                    |
+| `villageSewerWaterBlock`   | block name | `minecraft:water` | What fills the channel down the middle. Empty leaves the channel dry                                                                                                                                                                                                                                                                             |
+| `villageSewerWalkBlock`    | block name | none              | What the walkways either side of the channel are surfaced with. Empty walks on the lining block                                                                                                                                                                                                                                                  |
+| `villageSewerLightBlock`   | block name | none              | The block set into the roof over the channel as a light. Empty lights none                                                                                                                                                                                                                                                                       |
+| `villageSewerLightRun`     | number     | `8`               | How many blocks apart those lights sit. Anchored to world coordinates, so the lights of one road piece continue into the next                                                                                                                                                                                                                    |
+| `villageSewerLadderBlock`  | block name | none              | The block a manhole shaft is climbed by, set down the shaft from the street to the sewer walkway. Empty leaves the shaft open                                                                                                                                                                                                                    |
+| `villageSewerCoverBlock`   | block name | none              | The block covering a manhole, set flush in an east-west street wherever a street or alley meets it, and on the plaza where that street crosses the sewer loop. A wooden trapdoor is the usual choice: an iron one takes a redstone signal and no player can open it by hand, which shuts the sewer to them. Empty leaves the shaft mouth open    |
+| `villageSewerMossBlock`    | block name | none              | A second block mixed into the lining here and there, mossy stone among plain for instance. Empty lines the sewer with one block throughout                                                                                                                                                                                                       |
+| `villageSewerMossChance`   | 0 to 100   | `25`              | What percentage of lining blocks come out as that second block. Rolled per block position from the world seed, so the same sewer always comes out the same                                                                                                                                                                                       |
+| `villageSewerVineBlock`    | block name | none              | A block hung on the inside of the sewer walls here and there, vines for instance. It is clung to whichever wall it stands against. Empty hangs nothing                                                                                                                                                                                           |
+| `villageSewerVineChance`   | 0 to 100   | `20`              | What percentage of the cells beside a wall carry it. Rolled per block position from the world seed, so the same sewer always hangs the same                                                                                                                                                                                                      |
+| `villageSewerWellEntrance` | boolean    | `true`            | A loop of sewer under the plaza ring around the well, every street's sewer running through it, and a manhole on the plaza down onto the loop on each side where an east-west street crosses it, so the sewers are one connected system with a way in at the town center. Off, each street's sewer ends at the well and the plaza has no way down |
 
 **Sewers.** Naming `villageSewerBlock` digs a sewer under every street and alley, `villageSewerDepth` blocks beneath that street's own surface. It is not a network of its own: it follows the roads, so wherever the streets go the sewer goes, it turns where they turn, it climbs where they climb, and two sewers meet under a crossroads because the streets above them meet; where a street or alley ends against another road, its sewer runs on under that road to join the other's. A cul-de-sac bulb and a row carried on a bridge carry none. The section is a lined floor, a channel down the middle filled with `villageSewerWaterBlock`, a walkway either side surfaced with `villageSewerWalkBlock`, `villageSewerHeight` blocks of headroom and a lined roof, `villageSewerWidth` wide across including its two walls. `villageSewerLightBlock` sets a light into the roof over the channel every `villageSewerLightRun` blocks. A sewer never rises far enough to disturb the street over it, and a stretch with no room between the road and the world floor is skipped rather than squeezed.
 
@@ -5619,38 +5943,38 @@ A block that carries a loot inventory, a chest among them, is filled from `villa
 
 A railway line is a straight run of track that crosses the whole village on one axis and runs on past its last piece at either end. It is laid before the first street, so the town grows around it: no house stands on the line, a street may only cross it straight through, and nothing branches from it. Like the roads it needs `terrainAdaptation`. `villageRailLines` is `0` by default, which lays none and leaves a village exactly as it was.
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageRailLines` | number | `0` | How many lines run through each village. `0` lays none |
-| `villageRailSpacing` | number | `48` | The fewest blocks of clear ground between one line's bed and the next of the same village. `1` lays them a block apart, which is how a pack builds a yard of parallel lines |
-| `villageRailDirection` | text | `any` | Which way the lines run: `ew` east to west, `ns` north to south, `any` rolls it per village. `e`, `w`, `n` and `s` are read the same way |
-| `villageRailWidth` | number | `3` | The least the railbed is. `3` carries one track down the middle and `5` carries two; a bed asked for more tracks than that fits widens to hold them |
-| `villageRailTracks` | number | `0` | How many tracks the one bed carries, side by side and `villageRailTrackGap` apart. **The bed widens to hold them all**, so three tracks share one railbed rather than becoming three lines. `0` lays one track on a bed under five wide and two on a wider one |
-| `villageRailTrackGap` | number | `2` | How many blocks apart the tracks on a bed sit, center to center. `2`, the least allowed, leaves one block of bed between them, which is what keeps them from curving into one another the way touching rails do |
-| `villageRailBlock` | block | empty | The track. Empty lays vanilla rails, which minecarts ride; any other block is laid as it stands |
-| `villageRailTrackSeat` | `auto`, `on` or `in` | `auto` | Where the track sits. `auto` seats a rail block on the bed and sets any other block flush into the bed surface; `on` always lays it on the bed; `in` always sets it into the bed. A track set into the bed is how a pack lays a rail look out of iron blocks or slabs rather than minecart rails, and a level crossing then runs flush through the pavement |
-| `villageRailBedBlock` | block | empty | The bed under the track. Empty lays gravel |
-| `villageRailTieBlock` | block | empty | The sleeper laid across the bed every `villageRailTieRun` rows. Empty lays planks |
-| `villageRailTieRun` | number | `2` | How many rows apart the sleepers lie |
-| `villageRailShoulderBlock` | block | empty | Dresses the outermost columns of the bed, a maintenance path beside the track and the railway's answer to a road sidewalk. Empty lays none |
-| `villageRailShoulderWidth` | number | `1` | How many columns wide that shoulder is on each side, added outside `villageRailWidth` |
-| `villageRailPowerBlock` | block | empty | The powered track set into the line every `villageRailPowerRun` rows. Empty uses a vanilla powered rail; a block that is not a rail is simply laid there |
-| `villageRailPowerBase` | block | empty | What sits under a powered track to feed it. Empty uses a redstone block |
-| `villageRailPowerRun` | number | `0` | Every so many rows a powered rail over a redstone block is set into a vanilla rail track, so a cart keeps rolling. `0` powers none, and any track but vanilla rails ignores it |
-| `villageRailSupportBlock` | block | empty | The posts under a trestle. Empty uses logs |
-| `villageRailDeckBlock` | block | empty | The deck a trestle carries the bed on. Empty uses planks |
-| `villageRailBarrierBlock` | block | empty | Barriers along both edges of a trestle deck. Empty stands none |
-| `villageRailBridgeFrameBlock` | block | empty | An overhead frame over a long trestle: a post up each side of the deck and a beam across the top. Every row that carries one also carries its support posts down to the bed. Empty builds none |
-| `villageRailBridgeFrameTopBlock` | block | empty | The beam across the top of that frame. Empty uses `villageRailBridgeFrameBlock` |
-| `villageRailBridgeFrameHeight` | number | `4` | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that |
-| `villageRailBridgeFrameRun` | number | `24` | How many rows apart the frames stand when a trestle is long enough for several |
-| `villageRailBridgeFrameLeast` | number | `24` | The shortest trestle that gets a frame at all. A shorter trestle is left plain |
-| `villageRailTunnelBlock` | block | empty | Lines the walls and roof where the line bores through a hill. Empty bores no tunnels and cuts every hill open |
-| `villageRailTunnelDepth` | number | `6` | How much ground must stand over the bed before a stretch is bored rather than cut. Needs `villageRailTunnelBlock` |
-| `villageRailTunnelLightBlock` | block | empty | A light set into a railway tunnel's roof down its center line. Empty lights none |
-| `villageRailTunnelLightRun` | number | `8` | How many blocks apart those tunnel lights sit, anchored to world coordinates so pieces agree |
-| `villageRailClimb` | number | `8` | How many rows the line runs level for every block it climbs or falls. `1` grades it as steep as a road |
-| `villageRailTail` | number | `48` | How far the line runs on past the last piece of the village at either end |
+| Setting                          | Type                 | Default | What it does                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------- | -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageRailLines`               | number               | `0`     | How many lines run through each village. `0` lays none                                                                                                                                                                                                                                                                                                      |
+| `villageRailSpacing`             | number               | `48`    | The fewest blocks of clear ground between one line's bed and the next of the same village. `1` lays them a block apart, which is how a pack builds a yard of parallel lines                                                                                                                                                                                 |
+| `villageRailDirection`           | text                 | `any`   | Which way the lines run: `ew` east to west, `ns` north to south, `any` rolls it per village. `e`, `w`, `n` and `s` are read the same way                                                                                                                                                                                                                    |
+| `villageRailWidth`               | number               | `3`     | The least the railbed is. `3` carries one track down the middle and `5` carries two; a bed asked for more tracks than that fits widens to hold them                                                                                                                                                                                                         |
+| `villageRailTracks`              | number               | `0`     | How many tracks the one bed carries, side by side and `villageRailTrackGap` apart. **The bed widens to hold them all**, so three tracks share one railbed rather than becoming three lines. `0` lays one track on a bed under five wide and two on a wider one                                                                                              |
+| `villageRailTrackGap`            | number               | `2`     | How many blocks apart the tracks on a bed sit, center to center. `2`, the least allowed, leaves one block of bed between them, which is what keeps them from curving into one another the way touching rails do                                                                                                                                             |
+| `villageRailBlock`               | block                | empty   | The track. Empty lays vanilla rails, which minecarts ride; any other block is laid as it stands                                                                                                                                                                                                                                                             |
+| `villageRailTrackSeat`           | `auto`, `on` or `in` | `auto`  | Where the track sits. `auto` seats a rail block on the bed and sets any other block flush into the bed surface; `on` always lays it on the bed; `in` always sets it into the bed. A track set into the bed is how a pack lays a rail look out of iron blocks or slabs rather than minecart rails, and a level crossing then runs flush through the pavement |
+| `villageRailBedBlock`            | block                | empty   | The bed under the track. Empty lays gravel                                                                                                                                                                                                                                                                                                                  |
+| `villageRailTieBlock`            | block                | empty   | The sleeper laid across the bed every `villageRailTieRun` rows. Empty lays planks                                                                                                                                                                                                                                                                           |
+| `villageRailTieRun`              | number               | `2`     | How many rows apart the sleepers lie                                                                                                                                                                                                                                                                                                                        |
+| `villageRailShoulderBlock`       | block                | empty   | Dresses the outermost columns of the bed, a maintenance path beside the track and the railway's answer to a road sidewalk. Empty lays none                                                                                                                                                                                                                  |
+| `villageRailShoulderWidth`       | number               | `1`     | How many columns wide that shoulder is on each side, added outside `villageRailWidth`                                                                                                                                                                                                                                                                       |
+| `villageRailPowerBlock`          | block                | empty   | The powered track set into the line every `villageRailPowerRun` rows. Empty uses a vanilla powered rail; a block that is not a rail is simply laid there                                                                                                                                                                                                    |
+| `villageRailPowerBase`           | block                | empty   | What sits under a powered track to feed it. Empty uses a redstone block                                                                                                                                                                                                                                                                                     |
+| `villageRailPowerRun`            | number               | `0`     | Every so many rows a powered rail over a redstone block is set into a vanilla rail track, so a cart keeps rolling. `0` powers none, and any track but vanilla rails ignores it                                                                                                                                                                              |
+| `villageRailSupportBlock`        | block                | empty   | The posts under a trestle. Empty uses logs                                                                                                                                                                                                                                                                                                                  |
+| `villageRailDeckBlock`           | block                | empty   | The deck a trestle carries the bed on. Empty uses planks                                                                                                                                                                                                                                                                                                    |
+| `villageRailBarrierBlock`        | block                | empty   | Barriers along both edges of a trestle deck. Empty stands none                                                                                                                                                                                                                                                                                              |
+| `villageRailBridgeFrameBlock`    | block                | empty   | An overhead frame over a long trestle: a post up each side of the deck and a beam across the top. Every row that carries one also carries its support posts down to the bed. Empty builds none                                                                                                                                                              |
+| `villageRailBridgeFrameTopBlock` | block                | empty   | The beam across the top of that frame. Empty uses `villageRailBridgeFrameBlock`                                                                                                                                                                                                                                                                             |
+| `villageRailBridgeFrameHeight`   | number               | `4`     | How many blocks of clear headroom the frame leaves over the deck, the beam lying one block above that                                                                                                                                                                                                                                                       |
+| `villageRailBridgeFrameRun`      | number               | `24`    | How many rows apart the frames stand when a trestle is long enough for several                                                                                                                                                                                                                                                                              |
+| `villageRailBridgeFrameLeast`    | number               | `24`    | The shortest trestle that gets a frame at all. A shorter trestle is left plain                                                                                                                                                                                                                                                                              |
+| `villageRailTunnelBlock`         | block                | empty   | Lines the walls and roof where the line bores through a hill. Empty bores no tunnels and cuts every hill open                                                                                                                                                                                                                                               |
+| `villageRailTunnelDepth`         | number               | `6`     | How much ground must stand over the bed before a stretch is bored rather than cut. Needs `villageRailTunnelBlock`                                                                                                                                                                                                                                           |
+| `villageRailTunnelLightBlock`    | block                | empty   | A light set into a railway tunnel's roof down its center line. Empty lights none                                                                                                                                                                                                                                                                            |
+| `villageRailTunnelLightRun`      | number               | `8`     | How many blocks apart those tunnel lights sit, anchored to world coordinates so pieces agree                                                                                                                                                                                                                                                                |
+| `villageRailClimb`               | number               | `8`     | How many rows the line runs level for every block it climbs or falls. `1` grades it as steep as a road                                                                                                                                                                                                                                                      |
+| `villageRailTail`                | number               | `48`    | How far the line runs on past the last piece of the village at either end                                                                                                                                                                                                                                                                                   |
 
 **Where a line goes.** The lines run parallel, on the axis `villageRailDirection` names, and are spaced out from the well plaza in turn, first one side then the other, each keeping at least `villageRailSpacing` blocks of ground between its bed and the next line's. A line never passes through the plaza or a plot: it is laid before the first street, so every street and house of the village is placed around it, and it is trimmed to the grown village plus `villageRailTail` at either end once the village is laid out.
 
@@ -5666,31 +5990,31 @@ A railway line is a straight run of track that crosses the whole village on one 
 
 *villages*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageSubwayLines` | number | `0` | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them |
-| `villageSubwayDepth` | number | `24` | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level |
-| `villageSubwaySpacing` | number | `64` | How far apart a village's subway lines are kept from one another |
-| `villageSubwayDirection` | string | `any` | Which way subway lines run: `ew` east to west, `ns` north to south, or `any` to roll per village |
-| `villageSubwayWidth` | number | `3` | How wide the bed is, before shoulders |
-| `villageSubwayTracks` | number | `0` | How many parallel tracks the bed carries. 0 takes as many as the width allows |
-| `villageSubwayTrackGap` | number | `2` | How far apart parallel tracks sit |
-| `villageSubwayBlock` | block | empty | The track block. Empty lays vanilla rail |
-| `villageSubwayTrackSeat` | string | `auto` | Whether the track sits on the bed, in it, or `auto` to let the block decide |
-| `villageSubwayBedBlock` | block | empty | The block the bed is made of. Empty uses gravel |
-| `villageSubwayTieBlock` | block | empty | The block laid across the bed as sleepers. Empty uses planks |
-| `villageSubwayTieRun` | number | `2` | How many blocks apart the sleepers sit |
-| `villageSubwayShoulderBlock` | block | empty | The block either side of the bed. Empty leaves no shoulder |
-| `villageSubwayShoulderWidth` | number | `1` | How wide that shoulder is |
-| `villageSubwayPowerBlock` | block | empty | The powered track block. Empty uses vanilla powered rail |
-| `villageSubwayPowerBase` | block | empty | The block set under a powered track to drive it. Empty uses a redstone block |
-| `villageSubwayPowerRun` | number | `0` | How many blocks apart the powered tracks sit. 0 lays none |
-| `villageSubwayTunnelBlock` | block | empty | The block the bore is lined with: the walls either side and the roof over it. Empty digs the bore and its stations unlined |
-| `villageSubwayTunnelLightBlock` | block | empty | The block set into the tunnel roof as a light. Empty lights none |
-| `villageSubwayTunnelLightRun` | number | `8` | How many blocks apart those lights sit, anchored to world coordinates so pieces agree |
-| `villageSubwayClimb` | number | `8` | How many blocks a line runs before it may step one block up or down |
-| `villageSubwayTail` | number | `48` | How far past the village's own pieces a line runs before it stops |
-| `villageSubwaySurfaces` | number | `25` | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
+| Setting                         | Type   | Default | What it does                                                                                                                                                                                                            |
+| ------------------------------- | ------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageSubwayLines`            | number | `0`     | How many underground railway lines a village digs. 0 digs none and rolls nothing, so the village is laid exactly as it would be without them                                                                            |
+| `villageSubwayDepth`            | number | `24`    | How far under the surface the bed sits. The line is graded from the ground above it, so it follows the land at that depth rather than running level                                                                     |
+| `villageSubwaySpacing`          | number | `64`    | How far apart a village's subway lines are kept from one another                                                                                                                                                        |
+| `villageSubwayDirection`        | string | `any`   | Which way subway lines run: `ew` east to west, `ns` north to south, or `any` to roll per village                                                                                                                        |
+| `villageSubwayWidth`            | number | `3`     | How wide the bed is, before shoulders                                                                                                                                                                                   |
+| `villageSubwayTracks`           | number | `0`     | How many parallel tracks the bed carries. 0 takes as many as the width allows                                                                                                                                           |
+| `villageSubwayTrackGap`         | number | `2`     | How far apart parallel tracks sit                                                                                                                                                                                       |
+| `villageSubwayBlock`            | block  | empty   | The track block. Empty lays vanilla rail                                                                                                                                                                                |
+| `villageSubwayTrackSeat`        | string | `auto`  | Whether the track sits on the bed, in it, or `auto` to let the block decide                                                                                                                                             |
+| `villageSubwayBedBlock`         | block  | empty   | The block the bed is made of. Empty uses gravel                                                                                                                                                                         |
+| `villageSubwayTieBlock`         | block  | empty   | The block laid across the bed as sleepers. Empty uses planks                                                                                                                                                            |
+| `villageSubwayTieRun`           | number | `2`     | How many blocks apart the sleepers sit                                                                                                                                                                                  |
+| `villageSubwayShoulderBlock`    | block  | empty   | The block either side of the bed. Empty leaves no shoulder                                                                                                                                                              |
+| `villageSubwayShoulderWidth`    | number | `1`     | How wide that shoulder is                                                                                                                                                                                               |
+| `villageSubwayPowerBlock`       | block  | empty   | The powered track block. Empty uses vanilla powered rail                                                                                                                                                                |
+| `villageSubwayPowerBase`        | block  | empty   | The block set under a powered track to drive it. Empty uses a redstone block                                                                                                                                            |
+| `villageSubwayPowerRun`         | number | `0`     | How many blocks apart the powered tracks sit. 0 lays none                                                                                                                                                               |
+| `villageSubwayTunnelBlock`      | block  | empty   | The block the bore is lined with: the walls either side and the roof over it. Empty digs the bore and its stations unlined                                                                                              |
+| `villageSubwayTunnelLightBlock` | block  | empty   | The block set into the tunnel roof as a light. Empty lights none                                                                                                                                                        |
+| `villageSubwayTunnelLightRun`   | number | `8`     | How many blocks apart those lights sit, anchored to world coordinates so pieces agree                                                                                                                                   |
+| `villageSubwayClimb`            | number | `8`     | How many blocks a line runs before it may step one block up or down                                                                                                                                                     |
+| `villageSubwayTail`             | number | `48`    | How far past the village's own pieces a line runs before it stops                                                                                                                                                       |
+| `villageSubwaySurfaces`         | number | `25`    | The chance in a hundred that a subway line climbs to the surface at one end and carries on from there as an ordinary railway, tunnel behind it and open track ahead. `0` keeps every subway buried for its whole length |
 
 **Climbing out.** `villageSubwaySurfaces` is the chance in a hundred that a line, instead of staying buried end to end, climbs to the surface at one end and carries on from there as an ordinary railway — tunnel behind it, open track ahead. The climb obeys `villageSubwayClimb`, one block per that many rows, so a line `villageSubwayDepth` deep spends depth times climb rows on the ramp alone and needs a good stretch beyond it to be worth the name; a line with no room for both simply stays underground. On a short line carrying a station, raising `villageSubwayClimb` is what makes room for both.
 
@@ -5698,19 +6022,19 @@ A railway line is a straight run of track that crosses the whole village on one 
 
 *villages*
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageSubwayStationLength` | number | `0` | How many blocks long a station chamber is, centered on the row where the line passes nearest the well. 0 builds no stations at all |
-| `villageSubwayStationRun` | number | `0` | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one |
-| `villageSubwayStationRepeat` | number | `12` | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build |
-| `villageSubwayStationFoot` | number | `4` | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here |
-| `villageSubwayPlatformWidth` | number | `3` | How far the chamber is opened out either side of the bed to make a platform |
-| `villageSubwayPlatformBlock` | block | empty | The block the platform is floored with. Empty floors it with the tunnel lining |
-| `villageSubwayStation` | text | empty | The structure file every station is built from, named `mypack:subway_station` and read from that pack's `structures` folder. Its blocks are laid as built, with sponge standing for the tunnel lining, and its air cells are carved, so what stands underground is the build rather than a description of it. A line gets stations only when this names a build that loads: empty, or a name that cannot be loaded, builds no station at all |
-| `villageSubwayRailingBlock` | block | `minecraft:iron_bars` | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed |
-| `villageSubwayBenchBlock` | block | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out |
-| `villageSubwayBenchEndBlock` | block | `minecraft:log` | The arms at each end of a station bench. Empty leaves the seat bare at both ends |
-| `villageSubwayBenchLength` | number | `5` | How long a station bench is, arms included. `0` leaves the benches out |
+| Setting                      | Type   | Default                | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------- | ------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageSubwayStationLength` | number | `0`                    | How many blocks long a station chamber is, centered on the row where the line passes nearest the well. 0 builds no stations at all                                                                                                                                                                                                                                                                                                           |
+| `villageSubwayStationRun`    | number | `0`                    | How many blocks apart further stations sit along the line, past the one at the well. Each one slides a little way along to find ground that will take it and is left out where none does. 0 builds only that one                                                                                                                                                                                                                             |
+| `villageSubwayStationRepeat` | number | `12`                   | How many layers of a station build repeat, so one build serves any depth: the shaft grows by whole copies of this band and the corridor absorbs what is left over. It must be a whole turn of the stairs or the flights will not join. `0` never grows the build                                                                                                                                                                             |
+| `villageSubwayStationFoot`   | number | `4`                    | How many layers at the foot of a station build are laid once, before the part that repeats. The floor and the doorway out to the platform live here                                                                                                                                                                                                                                                                                          |
+| `villageSubwayPlatformWidth` | number | `3`                    | How far the chamber is opened out either side of the bed to make a platform                                                                                                                                                                                                                                                                                                                                                                  |
+| `villageSubwayPlatformBlock` | block  | empty                  | The block the platform is floored with. Empty floors it with the tunnel lining                                                                                                                                                                                                                                                                                                                                                               |
+| `villageSubwayStation`       | text   | empty                  | The structure file every station is built from, named `mypack:subway_station` and read from that pack's `structures` folder. Its blocks are laid as built, with sponge standing for the tunnel lining, and its air cells are carved, so what stands underground is the build rather than a description of it. A line gets stations only when this names a build that loads: empty, or a name that cannot be loaded, builds no station at all |
+| `villageSubwayRailingBlock`  | block  | `minecraft:iron_bars`  | The block railed around the head of a station's stairs where they open on the street, so nobody walks into the well. Empty leaves the head unrailed                                                                                                                                                                                                                                                                                          |
+| `villageSubwayBenchBlock`    | block  | `minecraft:oak_stairs` | The seat of the benches set on a station's platform and beside its stair head. A stairs block is turned to face away from the line and reads as a bench; any block works. Empty leaves the benches out                                                                                                                                                                                                                                       |
+| `villageSubwayBenchEndBlock` | block  | `minecraft:log`        | The arms at each end of a station bench. Empty leaves the seat bare at both ends                                                                                                                                                                                                                                                                                                                                                             |
+| `villageSubwayBenchLength`   | number | `5`                    | How long a station bench is, arms included. `0` leaves the benches out                                                                                                                                                                                                                                                                                                                                                                       |
 
 **Stations.** A subway line gets a station where it passes nearest the well once `villageSubwayStationLength` is set and `villageSubwayStation` names a build that loads, and further ones every `villageSubwayStationRun` blocks along it. Each of those slides a few blocks either way to find a spot the ground will take, keeps clear of the stations already claimed, and is simply left out where nothing viable is near, so a line never carries a chamber with no way into it. The chamber is the bed opened out `villageSubwayPlatformWidth` either side, floored with `villageSubwayPlatformBlock`, walled and roofed in the tunnel lining, and lit from the tunnel's own `villageSubwayTunnelLightBlock` and `villageSubwayTunnelLightRun`. From the platform a corridor runs to a stairwell that climbs to the street beside the road, never under it, and never through the well plaza or a house; where the climb is too long to go straight the corridor turns back along the chamber first. A railing of `villageSubwayRailingBlock` rings the stair head at street level with the near end left open as the way in, and a bench of `villageSubwayBenchBlock` with `villageSubwayBenchEndBlock` arms, `villageSubwayBenchLength` long, stands on the platform and again beside the stair head.
 
@@ -5741,17 +6065,17 @@ A railway line is a straight run of track that crosses the whole village on one 
 
 Railway links join neighboring villages into one network. Villages are founded one to a cell of the village grid (`structureSpacing`), and a link runs along the seam between two cells: each village's first line carries on past its tail as a spur, straight out to the seam, and meets a trunk laid along the seam at right angles. The trunk runs from one spur to the other and never past either. It needs `villageRailLines`, or `villageSubwayLines` on a pack with no surface lines, and it is off by default.
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageRailLinks` | true/false | `false` | Links neighboring villages whose first lines face each other across a seam |
-| `villageRailLinkLeast` | number | `128` | The shortest link laid, spur plus trunk plus spur, in blocks |
-| `villageRailLinkMost` | number | `1024` | The longest link laid, spur plus trunk plus spur, in blocks |
-| `villageRailLinkBridgeMost` | number | `96` | The longest bridge a link may need. A link over wider water or a deeper drop is not laid |
-| `villageRailLinkTunnelMost` | number | `192` | The longest tunnel a link may need where `villageRailTunnelBlock` bores tunnels. A link that would bore further is not laid |
-| `villageRailLinkStation` | text | `both` | The station on each spur just before the trunk: `both` lays a platform either side of the line, `one` a single platform on the left of a train arriving at the trunk, `none` builds none |
-| `villageRailLinkStationLength` | number | `16` | How many rows long the station platforms are. `0` builds no stations |
-| `villageRailLinkPlatformWidth` | number | `3` | How many blocks wide each platform is |
-| `villageRailLinkPlatformBlock` | block | empty | The block the platforms are built of. Empty uses stone bricks |
+| Setting                        | Type       | Default | What it does                                                                                                                                                                             |
+| ------------------------------ | ---------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageRailLinks`             | true/false | `false` | Links neighboring villages whose first lines face each other across a seam                                                                                                               |
+| `villageRailLinkLeast`         | number     | `128`   | The shortest link laid, spur plus trunk plus spur, in blocks                                                                                                                             |
+| `villageRailLinkMost`          | number     | `1024`  | The longest link laid, spur plus trunk plus spur, in blocks                                                                                                                              |
+| `villageRailLinkBridgeMost`    | number     | `96`    | The longest bridge a link may need. A link over wider water or a deeper drop is not laid                                                                                                 |
+| `villageRailLinkTunnelMost`    | number     | `192`   | The longest tunnel a link may need where `villageRailTunnelBlock` bores tunnels. A link that would bore further is not laid                                                              |
+| `villageRailLinkStation`       | text       | `both`  | The station on each spur just before the trunk: `both` lays a platform either side of the line, `one` a single platform on the left of a train arriving at the trunk, `none` builds none |
+| `villageRailLinkStationLength` | number     | `16`    | How many rows long the station platforms are. `0` builds no stations                                                                                                                     |
+| `villageRailLinkPlatformWidth` | number     | `3`     | How many blocks wide each platform is                                                                                                                                                    |
+| `villageRailLinkPlatformBlock` | block      | empty   | The block the platforms are built of. Empty uses stone bricks                                                                                                                            |
 
 **Which villages link.** Two villages link only when they stand in neighboring cells, their first lines run on the axis that crosses the seam between them, and the whole link, measured from well to well along the track, is between `villageRailLinkLeast` and `villageRailLinkMost` blocks. Every part of the decision is worked out from the seed and the two village sites, so it comes out the same whichever village or chunk is made first. A link that cannot be built whole is not laid at all, never half built: one that would need a longer bridge or tunnel than the settings allow, reach past the world border, run into a woodland mansion, stand two villages closer than `structureSeparation` allows, or bring a join too close to a corner of the cells. A trunk is only laid toward a village that was actually founded: when a cap such as `structureMost` stops the neighbor, or it grows too small to keep, neither half of the trunk nor the spur past the village's own tail is built. Pinned villages link the same way, one per cell; a cell holding two pins links neither. Other villages keep clear of a link's spur and trunk as they grow, the way they keep clear of each other.
 
@@ -5800,9 +6124,9 @@ A single-track trunk has no second track to give the other spur, so a link whose
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `villageDecor` | list of `name=weight` | none | Scatters this pack's own worldgen along the verges of village roads. The name is a worldgen registry key, the weight is that entry's share of the spots, and `empty=weight` is the share of spots left bare |
+| Setting        | Type                  | Default | What it does                                                                                                                                                                                                |
+| -------------- | --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor` | list of `name=weight` | none    | Scatters this pack's own worldgen along the verges of village roads. The name is a worldgen registry key, the weight is that entry's share of the spots, and `empty=weight` is the share of spots left bare |
 
 `villageDecor` scatters a pack's own worldgen along the verges of village roads, which is what stops a village reading as houses standing in bare grass. Each entry is `name=weight`: the name is a worldgen registry key, `mypack:street_flowers`, and the weight is that entry's share of the spots. The name `empty` is the share of spots left bare, and it is the one to get right, because a list without it fills every spot on every verge and the village comes out a nursery rather than a street.
 
@@ -5866,17 +6190,17 @@ What happens after an explosion, from `<namespace>/blastplaster/*.json`. `defaul
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `structureSpacing` | list of `structure=chunks` | vanilla | How far apart a structure is seeded. Reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many, since that is how vanilla places them |
-| `structureSeparation` | list of `structure=chunks` | vanilla | The closest two of a structure may be. Reaches monuments, mansions, end cities, strongholds and villages, for which it is the fewest chunks between one village and the next whatever the grid would allow |
-| `structureMinDistanceFromSpawn` | list of `structure=blocks` | vanilla | How far from world spawn a structure starts generating |
-| `structureBiomes` | list of `structure=biome,biome` | vanilla | Which biomes a structure generates in, by registry name or biome dictionary type. Reaches every structure except end cities, since the End is one biome in this version |
-| `structureBiomesAreBlacklist` | list of `structure=true` or `structure=false` | `false` | The direction of each structure's biome list |
-| `structureSpawns` | list of `structure=entity:weight:least:most` | vanilla | The mobs a structure spawns whatever the biome around it says. Only temples, monuments and nether fortresses keep such a list; an empty line after the equals sign stops that structure spawning anything of its own |
-| `structureSpawners` | list of `structure=entity` | vanilla | What the mob spawner inside a vanilla structure spawns, comma separated for a random pick per spawner. The four that place one are dungeons, mineshafts, nether fortresses and strongholds |
-| `structureAt` | list of `structure=x,z` | none | Pins a structure to an exact spot. See [Structures at exact places](#structures-at-exact-places) |
-| `structureMost` | list of `structure=count` | none | The most of a structure a dimension may hold. Only villages read it, and one pinned with `structureAt` is founded regardless |
+| Setting                         | Type                                          | Default | What it does                                                                                                                                                                                                         |
+| ------------------------------- | --------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structureSpacing`              | list of `structure=chunks`                    | vanilla | How far apart a structure is seeded. Reaches temples, monuments, mansions, end cities and strongholds; for `mineshafts` the number means one chunk in that many, since that is how vanilla places them               |
+| `structureSeparation`           | list of `structure=chunks`                    | vanilla | The closest two of a structure may be. Reaches monuments, mansions, end cities, strongholds and villages, for which it is the fewest chunks between one village and the next whatever the grid would allow           |
+| `structureMinDistanceFromSpawn` | list of `structure=blocks`                    | vanilla | How far from world spawn a structure starts generating                                                                                                                                                               |
+| `structureBiomes`               | list of `structure=biome,biome`               | vanilla | Which biomes a structure generates in, by registry name or biome dictionary type. Reaches every structure except end cities, since the End is one biome in this version                                              |
+| `structureBiomesAreBlacklist`   | list of `structure=true` or `structure=false` | `false` | The direction of each structure's biome list                                                                                                                                                                         |
+| `structureSpawns`               | list of `structure=entity:weight:least:most`  | vanilla | The mobs a structure spawns whatever the biome around it says. Only temples, monuments and nether fortresses keep such a list; an empty line after the equals sign stops that structure spawning anything of its own |
+| `structureSpawners`             | list of `structure=entity`                    | vanilla | What the mob spawner inside a vanilla structure spawns, comma separated for a random pick per spawner. The four that place one are dungeons, mineshafts, nether fortresses and strongholds                           |
+| `structureAt`                   | list of `structure=x,z`                       | none    | Pins a structure to an exact spot. See [Structures at exact places](#structures-at-exact-places)                                                                                                                     |
+| `structureMost`                 | list of `structure=count`                     | none    | The most of a structure a dimension may hold. Only villages read it, and one pinned with `structureAt` is founded regardless                                                                                         |
 
 Vanilla structures switched off by name, per dimension. Placement is controlled with four lists written as `structure=value`, one per line: `structureSpacing` for how far apart they are seeded, `structureSeparation` for the closest two may be, `structureMinDistanceFromSpawn` for how far out they start, and `structureBiomes` with `structureBiomesAreBlacklist` for where they are allowed.
 
@@ -5945,24 +6269,24 @@ Spacing decides where a structure is seeded, so changing it in a world that alre
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `surfaceDayMonsterRate` | float | `1.0` | Multiplier on hostile spawning on the surface by day, `1.0` being vanilla, so daylight surface spawning can be turned off without touching the caves |
-| `surfaceNightMonsterRate` | float | `1.0` | The same for the surface at night |
-| `undergroundDayMonsterRate` | float | `1.0` | The same underground by day |
-| `undergroundNightMonsterRate` | float | `1.0` | The same underground at night |
-| `monsterCap` | int | `-1` | How many hostiles may be loaded at once. Vanilla is 70, and `-1` leaves it alone |
-| `creatureCap` | int | `-1` | The same for passive animals. Vanilla is 10 |
-| `ambientCap` | int | `-1` | The same for bats and the like. Vanilla is 15 |
-| `waterCreatureCap` | int | `-1` | The same for squid. Vanilla is 5 |
-| `monsterSpawnLight` | int | `-1` | The most block light a hostile spawn tolerates, on top of the vanilla checks. `0` is the modern rule, where a torch fully protects a cave; `-1` keeps vanilla's dice |
-| `skyAnimals` | boolean | `true` | Whether passive mobs settle on the land a rubic world generates above its terrain window, the sky islands above all. Off keeps animals and bats on the ground below. Spawners ignore both |
-| `threatItems` | list of `item=level,count` | none | The items that raise a carrier's threat score, with an optional `,each` or `,batch`: `each`, the default, adds the level for every one held up to `count`; `batch` adds it once per whole `count` held |
-| `threatLevels` | list of ints | none | The scores that enter each band, rising, so `10, 25, 50` makes three bands. Empty turns the threat level off |
-| `threatMost` | int | `-1` | Caps the score. `-1` leaves it uncapped |
-| `threatSpawnRate` | float | `1.0` | Scales hostile spawning within 128 blocks of a carrier in the top band, on top of the other rates, with lower bands taking a proportional share |
-| `threatNotice` | float, blocks | `0.0` | How many blocks farther hostile mobs, vanilla ones included, see a carrier in the top band, again shared out over the lower bands |
-| `threatSays` | list of `band=message` | none | The lines shown in yellow when a player's own band changes, band `0` being the line for dropping back below the first band |
+| Setting                       | Type                       | Default | What it does                                                                                                                                                                                           |
+| ----------------------------- | -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `surfaceDayMonsterRate`       | float                      | `1.0`   | Multiplier on hostile spawning on the surface by day, `1.0` being vanilla, so daylight surface spawning can be turned off without touching the caves                                                   |
+| `surfaceNightMonsterRate`     | float                      | `1.0`   | The same for the surface at night                                                                                                                                                                      |
+| `undergroundDayMonsterRate`   | float                      | `1.0`   | The same underground by day                                                                                                                                                                            |
+| `undergroundNightMonsterRate` | float                      | `1.0`   | The same underground at night                                                                                                                                                                          |
+| `monsterCap`                  | int                        | `-1`    | How many hostiles may be loaded at once. Vanilla is 70, and `-1` leaves it alone                                                                                                                       |
+| `creatureCap`                 | int                        | `-1`    | The same for passive animals. Vanilla is 10                                                                                                                                                            |
+| `ambientCap`                  | int                        | `-1`    | The same for bats and the like. Vanilla is 15                                                                                                                                                          |
+| `waterCreatureCap`            | int                        | `-1`    | The same for squid. Vanilla is 5                                                                                                                                                                       |
+| `monsterSpawnLight`           | int                        | `-1`    | The most block light a hostile spawn tolerates, on top of the vanilla checks. `0` is the modern rule, where a torch fully protects a cave; `-1` keeps vanilla's dice                                   |
+| `skyAnimals`                  | boolean                    | `true`  | Whether passive mobs settle on the land a rubic world generates above its terrain window, the sky islands above all. Off keeps animals and bats on the ground below. Spawners ignore both              |
+| `threatItems`                 | list of `item=level,count` | none    | The items that raise a carrier's threat score, with an optional `,each` or `,batch`: `each`, the default, adds the level for every one held up to `count`; `batch` adds it once per whole `count` held |
+| `threatLevels`                | list of ints               | none    | The scores that enter each band, rising, so `10, 25, 50` makes three bands. Empty turns the threat level off                                                                                           |
+| `threatMost`                  | int                        | `-1`    | Caps the score. `-1` leaves it uncapped                                                                                                                                                                |
+| `threatSpawnRate`             | float                      | `1.0`   | Scales hostile spawning within 128 blocks of a carrier in the top band, on top of the other rates, with lower bands taking a proportional share                                                        |
+| `threatNotice`                | float, blocks              | `0.0`   | How many blocks farther hostile mobs, vanilla ones included, see a carrier in the top band, again shared out over the lower bands                                                                      |
+| `threatSays`                  | list of `band=message`     | none    | The lines shown in yellow when a player's own band changes, band `0` being the line for dropping back below the first band                                                                             |
 
 Mob spawn rates and caps, per biome. Hostile spawning is scaled by `surfaceDayMonsterRate`, `surfaceNightMonsterRate`, `undergroundDayMonsterRate` and `undergroundNightMonsterRate`, each a multiplier where `1.0` is vanilla, so daylight surface spawning can be turned off without touching the caves. The caps are `monsterCap`, `creatureCap` for passive animals, `ambientCap` for bats and the like, and `waterCreatureCap` for squid; vanilla's are 70, 10, 15 and 5, and `-1` leaves one alone. `monsterSpawnLight` caps the block light a hostile spawn tolerates on top of the vanilla checks: `0` is the modern rule, where a torch fully protects a cave, and `-1`, the default, keeps vanilla's dice. `skyAnimals` decides whether passive mobs settle on the land a rubic world generates above its terrain window, the sky islands above all: `true`, the default, leaves vanilla's herds wherever the top block is, and `false` keeps animals and bats on the ground below. Spawners ignore both.
 
@@ -5982,8 +6306,8 @@ The threat level scores what each player carries and lets the world answer. `thr
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
+| Setting               | Type                     | Default                                             | What it does                                                                                                                                                                              |
+| --------------------- | ------------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `structureAdaptation` | list of `structure=mode` | villages and mansions `beard_thin`, the rest `none` | Which structures the terrain adapts to and how, over villages, strongholds, mineshafts, monuments and mansions. The modes are `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate` |
 
 `structureAdaptation` decides which structures the terrain adapts to and how, as `structure=mode` entries, `"mansions=bury"`, `"monuments=none"`, over villages, strongholds, mineshafts, monuments and mansions, with the five modes modern versions use: `none`, `bury`, `beard_thin`, `beard_box` and `encapsulate`. Villages and mansions are `beard_thin` unless overridden and everything else is `none` unless named. Temples cannot be named yet, because they place themselves only as they are built, so there is nothing for terrain to adapt to in time.
@@ -6002,8 +6326,8 @@ The threat level scores what each player carries and lets the world answer. `thr
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
+| Setting             | Type    | Default | What it does                                                                                                                                                                    |
+| ------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `terrainAdaptation` | boolean | `false` | Reworks how villages choose their ground and sit on it: graded roads, seated buildings, banked rings and everything else this section describes. What it lays down is permanent |
 
 **What it lays down is permanent.** It reshapes the terrain as the world is made, so whatever it puts in a save stays there. A village laid down by an older build is never revisited or repaired by a newer one, so two worlds made from the same seed on two different versions of the mod will not match, and the villages in a world are a snapshot of the day those chunks generated.
@@ -6042,19 +6366,19 @@ It reshapes the terrain itself as it is made, so a world generated with it on di
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `flatBedrock` | boolean | `false` | Replaces the jagged bedrock at the bottom of the world with flat layers. New chunks only, unless `flatBedrockRetrogen` is on |
-| `flatBedrockRetrogen` | boolean | `false` | Flattens the bedrock in chunks that already exist too. Each chunk is done once and remembers it, and it cannot be undone: the original pattern is not recorded anywhere |
-| `bedrockLayers` | int | `1` | How many layers of bedrock are left |
-| `flatBedrockRoof` | boolean | `false` | Flattens the bedrock ceiling too, where a dimension has one, such as the Nether roof |
-| `flatBedrockFiller` | block | empty | What replaces the bedrock that is taken away. Empty picks per dimension: stone, netherrack, end stone |
-| `flatBedrockFillers` | list of `dimension=block` | the nether and end defaults | A filler per dimension, which overrides `flatBedrockFiller` for the dimensions named |
-| `flatBedrockDimensions` | list of ints | `0`, the overworld | The dimensions to flatten in. Empty means every one |
-| `flatBedrockDimensionsAreBlacklist` | boolean | `false` | On, flattening skips the dimensions listed. Off, it applies only to them |
-| `flatBedrockBiomes` | list of biome names | none | The biomes to flatten in, by friendly or registry name. Empty means every biome |
-| `flatBedrockBiomeTypes` | list of dictionary types | none | Biome dictionary types to flatten in, alongside `flatBedrockBiomes`. `OCEAN`, `RIVER`, `MOUNTAIN` and the rest |
-| `flatBedrockBiomesAreBlacklist` | boolean | `false` | On, flattening skips the biomes listed. Off, it applies only to them |
+| Setting                             | Type                      | Default                     | What it does                                                                                                                                                            |
+| ----------------------------------- | ------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flatBedrock`                       | boolean                   | `false`                     | Replaces the jagged bedrock at the bottom of the world with flat layers. New chunks only, unless `flatBedrockRetrogen` is on                                            |
+| `flatBedrockRetrogen`               | boolean                   | `false`                     | Flattens the bedrock in chunks that already exist too. Each chunk is done once and remembers it, and it cannot be undone: the original pattern is not recorded anywhere |
+| `bedrockLayers`                     | int                       | `1`                         | How many layers of bedrock are left                                                                                                                                     |
+| `flatBedrockRoof`                   | boolean                   | `false`                     | Flattens the bedrock ceiling too, where a dimension has one, such as the Nether roof                                                                                    |
+| `flatBedrockFiller`                 | block                     | empty                       | What replaces the bedrock that is taken away. Empty picks per dimension: stone, netherrack, end stone                                                                   |
+| `flatBedrockFillers`                | list of `dimension=block` | the nether and end defaults | A filler per dimension, which overrides `flatBedrockFiller` for the dimensions named                                                                                    |
+| `flatBedrockDimensions`             | list of ints              | `0`, the overworld          | The dimensions to flatten in. Empty means every one                                                                                                                     |
+| `flatBedrockDimensionsAreBlacklist` | boolean                   | `false`                     | On, flattening skips the dimensions listed. Off, it applies only to them                                                                                                |
+| `flatBedrockBiomes`                 | list of biome names       | none                        | The biomes to flatten in, by friendly or registry name. Empty means every biome                                                                                         |
+| `flatBedrockBiomeTypes`             | list of dictionary types  | none                        | Biome dictionary types to flatten in, alongside `flatBedrockBiomes`. `OCEAN`, `RIVER`, `MOUNTAIN` and the rest                                                          |
+| `flatBedrockBiomesAreBlacklist`     | boolean                   | `false`                     | On, flattening skips the biomes listed. Off, it applies only to them                                                                                                    |
 
 `flatBedrock` replaces the jagged layer with flat ones, per dimension and per biome, with a filler block you choose. `flatBedrockRetrogen` does it to chunks that already exist. It cannot be undone, the original pattern is not recorded anywhere. `bedrockLayers` sets how many layers are left, `flatBedrockRoof` does the ceiling too where a dimension has one, and `flatBedrockFiller` is what replaces the bedrock taken away, left empty to pick per dimension, with `flatBedrockFillers` naming one per dimension instead. Which dimensions and biomes it reaches is `flatBedrockDimensions`, `flatBedrockBiomes` and `flatBedrockBiomeTypes`, with `flatBedrockDimensionsAreBlacklist` and `flatBedrockBiomesAreBlacklist` turning those lists into exclusions.
 
@@ -6079,14 +6403,14 @@ It reshapes the terrain itself as it is made, so a world generated with it on di
 
 Entities cost a server more than anything else, and most of them are nowhere near a player. `slowDistantEntities` gives a chunk with no player within `slowDistance` blocks one tick in `slowRate`, so what is in it still moves, floats, burns and despawns, only at a slower pace. Nothing is ever left unticked.
 
-| Key | Required | Value | Default | What it does |
-| --- | --- | --- | --- | --- |
-| `slowDistantEntities` | no | boolean | `true` | Whether anything is slowed at all |
-| `slowedKinds` | no | list of `items`, `experience`, `projectiles` | `{items, experience}` | Which kinds are given fewer ticks. Anything that thinks for itself is always slowed instead, and is not named here. Machines are never slowed |
-| `slowDistance` | no | int, 64 and up | `192` | How far from the nearest player before a chunk is slowed |
-| `slowRate` | no | int, 1 to 20 | `4` | One tick in this many is given to a slowed chunk. `1` slows nothing |
-| `neverSlowed` | no | list of entity names | none | Left alone however far away they are |
-| `slowRecheck` | no | int, 1 to 100 | `20` | How often the distance to the nearest player is worked out again |
+| Key                   | Required | Value                                        | Default               | What it does                                                                                                                                  |
+| --------------------- | -------- | -------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `slowDistantEntities` | no       | boolean                                      | `true`                | Whether anything is slowed at all                                                                                                             |
+| `slowedKinds`         | no       | list of `items`, `experience`, `projectiles` | `{items, experience}` | Which kinds are given fewer ticks. Anything that thinks for itself is always slowed instead, and is not named here. Machines are never slowed |
+| `slowDistance`        | no       | int, 64 and up                               | `192`                 | How far from the nearest player before a chunk is slowed                                                                                      |
+| `slowRate`            | no       | int, 1 to 20                                 | `4`                   | One tick in this many is given to a slowed chunk. `1` slows nothing                                                                           |
+| `neverSlowed`         | no       | list of entity names                         | none                  | Left alone however far away they are                                                                                                          |
+| `slowRecheck`         | no       | int, 1 to 100                                | `20`                  | How often the distance to the nearest player is worked out again                                                                              |
 
 Anything that thinks for itself, every mob, animal, villager and golem, whatever mod it came from, is treated differently from the rest, and is not named in `slowedKinds` at all. It is never given fewer ticks, because a player can watch it walk. Instead it is left ticking every tick and made to think less often: the part of its mind that decides what to do next, which is also the expensive part of it, is asked one time in `slowRate` rather than every third tick. It keeps moving, falling, drowning, burning and pathing exactly as it would, and simply changes its mind less often while nobody is near it. There is nothing to see, no stepping and no catching up, and one a player walks up on is back to its ordinary self before it is in view. Because it cannot be noticed, it is not a choice: it happens wherever slowing is on at all.
 
@@ -6142,9 +6466,9 @@ Before a chunk can be written it is turned into the form that goes on the disk, 
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `hurryWritesAbove` | int, chunks | `100` | How many finished chunks may be waiting to be written before the writer stops resting a hundredth of a second after each one and simply writes as fast as it can. `0` leaves it resting always, as the game does |
+| Setting            | Type        | Default | What it does                                                                                                                                                                                                     |
+| ------------------ | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hurryWritesAbove` | int, chunks | `100`   | How many finished chunks may be waiting to be written before the writer stops resting a hundredth of a second after each one and simply writes as fast as it can. `0` leaves it resting always, as the game does |
 
 The game writes finished chunks on a thread of its own, one at a time, resting a hundredth of a second after each. That holds it to about a hundred chunks a second no matter how quick the disk is, which is plenty while somebody plays and nowhere near enough while land is being made in bulk, so the unwritten chunks pile up in memory instead. `hurryWritesAbove` says how many may be waiting before it stops resting and simply writes as fast as it can. `100` is the default and matches the point at which the game itself starts holding generation back; `0` leaves it resting always, as the game does. Nothing changes while the number waiting is small, which is every ordinary moment of play.
 
@@ -6167,10 +6491,10 @@ A last line says how much working scrap was thrown away since the last look, how
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `spawnChunkRadius` | int, blocks | `128` | How far from a world's spawn point, in blocks, chunks are held loaded whether or not anyone is there. B blocks hold `r = (B + 8) / 16` chunks each way from the spawn chunk, `(2r+1)²` in all, and the world prepares `(2r+9)²` chunks around it as it starts. `128` is what the game does, with 289 held and 625 prepared, and `0` holds and prepares none |
-| `spawnChunkRadii` | list of `dimension=blocks` | none | A radius for one dimension at a time, which overrides `spawnChunkRadius` for the dimensions named |
+| Setting            | Type                       | Default | What it does                                                                                                                                                                                                                                                                                                                                                |
+| ------------------ | -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `spawnChunkRadius` | int, blocks                | `128`   | How far from a world's spawn point, in blocks, chunks are held loaded whether or not anyone is there. B blocks hold `r = (B + 8) / 16` chunks each way from the spawn chunk, `(2r+1)²` in all, and the world prepares `(2r+9)²` chunks around it as it starts. `128` is what the game does, with 289 held and 625 prepared, and `0` holds and prepares none |
+| `spawnChunkRadii`  | list of `dimension=blocks` | none    | A radius for one dimension at a time, which overrides `spawnChunkRadius` for the dimensions named                                                                                                                                                                                                                                                           |
 
 The game holds the chunks around a world's spawn point loaded whether or not anyone is there, so mods have somewhere that always ticks. It is 128 blocks in every direction, about 289 chunks, and it is not adjustable in the game. `spawnChunkRadius` sets that distance. `128` is what the game does and is the default, a smaller number keeps a smaller anchor, and `0` holds none at all, so the spawn area unloads like anywhere else. `spawnChunkRadii` sets a radius for one dimension at a time, written as `dimension=blocks`, one per line, and overrides `spawnChunkRadius` for the dimensions named.
 
@@ -6195,14 +6519,14 @@ Only a dimension that was registered to hold its spawn keeps one, which in the g
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `voidWorld` | boolean | `false` | Generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there |
-| `voidPlatformBlock` | block | `minecraft:stone` | What the platform is made of |
-| `voidPlatformSize` | int, blocks | `9` | How wide the platform is, rounded down to an odd number so it sits centered on spawn |
-| `voidPlatformHeight` | int | `64` | How high above the bottom of the world the platform sits |
-| `voidWorldDimensions` | list of ints | `0`, the overworld | Which dimensions are emptied. Only the overworld is given a platform |
-| `voidWorldDimensionsAreBlacklist` | boolean | `false` | On, the dimensions listed are the ones left alone |
+| Setting                           | Type         | Default            | What it does                                                                                                                                         |
+| --------------------------------- | ------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `voidWorld`                       | boolean      | `false`            | Generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there |
+| `voidPlatformBlock`               | block        | `minecraft:stone`  | What the platform is made of                                                                                                                         |
+| `voidPlatformSize`                | int, blocks  | `9`                | How wide the platform is, rounded down to an odd number so it sits centered on spawn                                                                 |
+| `voidPlatformHeight`              | int          | `64`               | How high above the bottom of the world the platform sits                                                                                             |
+| `voidWorldDimensions`             | list of ints | `0`, the overworld | Which dimensions are emptied. Only the overworld is given a platform                                                                                 |
+| `voidWorldDimensionsAreBlacklist` | boolean      | `false`            | On, the dimensions listed are the ones left alone                                                                                                    |
 
 `voidWorld` generates an empty world with a platform at the spawn point, and stops mobs, animals, structures and everything a mod would otherwise generate there. The platform's block, size and height are `voidPlatformBlock`, `voidPlatformSize` and `voidPlatformHeight`; the size is rounded down to an odd number of blocks so the platform sits centered on spawn. `voidWorldDimensions` chooses which worlds are emptied, the overworld alone by default, and `voidWorldDimensionsAreBlacklist` turns that list into the ones to leave alone. The nether and the end are emptied the same way the overworld is, whether they are the ones this version builds or ones a mod has replaced them with. Only the overworld is given a platform, so a way into an emptied nether or end is something a pack provides itself. An emptied end has no dragon, no crystals and no bedrock fountain either, since the fight that builds them is left unstarted.
 
@@ -6220,9 +6544,9 @@ Only a dimension that was registered to hold its spawn keeps one, which in the g
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `dragonFight` | boolean | `true` | Whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. Belongs to the `structures` group |
+| Setting       | Type    | Default | What it does                                                                                                                                                                                    |
+| ------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dragonFight` | boolean | `true`  | Whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. Belongs to the `structures` group |
 
 `dragonFight` belongs to the `structures` group and decides whether the whole thing happens at all: the dragon, its bar, the crystals, the fountain it stands on, and the respawn a player would start with end crystals. An emptied end leaves it out unless a pack asks for it, and an ordinary end has it unless a pack says otherwise, so `dragonFight` is worth setting either way round.
 
@@ -6245,13 +6569,13 @@ Only a dimension that was registered to hold its spawn keeps one, which in the g
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `worldType` | string | empty | The world type every new world is made with, whatever was chosen on the screen where it was made: `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds. A dedicated server writes it into `server.properties` as `level-type` before the worlds load, unless `level-type` already names one of the `worldTypeExceptions`. Empty leaves the choice to whoever makes the world |
-| `worldTypeExceptions` | list of world types | `flat`, `debug_all_block_states` | The choices `worldType` leaves standing |
-| `worldSeed` | string | empty | The seed every new world is made with, written the way it would be typed: a number is used as it is, and anything else is turned into one the way the game does. A dedicated server writes it into `server.properties` as `level-seed` before the worlds load |
-| `terrainWorldTypes` | list of world types | none | Which world types the terrain settings are given to at all. Empty means every one |
-| `terrainWorldTypesAreBlacklist` | boolean | `false` | On, the world types listed are the ones left alone |
+| Setting                         | Type                | Default                          | What it does                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------- | ------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldType`                     | string              | empty                            | The world type every new world is made with, whatever was chosen on the screen where it was made: `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds. A dedicated server writes it into `server.properties` as `level-type` before the worlds load, unless `level-type` already names one of the `worldTypeExceptions`. Empty leaves the choice to whoever makes the world |
+| `worldTypeExceptions`           | list of world types | `flat`, `debug_all_block_states` | The choices `worldType` leaves standing                                                                                                                                                                                                                                                                                                                                                        |
+| `worldSeed`                     | string              | empty                            | The seed every new world is made with, written the way it would be typed: a number is used as it is, and anything else is turned into one the way the game does. A dedicated server writes it into `server.properties` as `level-seed` before the worlds load                                                                                                                                  |
+| `terrainWorldTypes`             | list of world types | none                             | Which world types the terrain settings are given to at all. Empty means every one                                                                                                                                                                                                                                                                                                              |
+| `terrainWorldTypesAreBlacklist` | boolean             | `false`                          | On, the world types listed are the ones left alone                                                                                                                                                                                                                                                                                                                                             |
 
 `worldType` decides what kind of world a new world is, whatever was chosen on the screen where it was made, `default`, `largebiomes`, `amplified`, `customized`, or one a mod adds such as `biomesop` or `realistic`. A pack that is built around one world type names it here and every new world is made that way. Empty, the default, leaves the choice to whoever is making the world. A world that already exists keeps the type it was made with, and a name nothing provides is logged and ignored. `worldTypeExceptions` names the choices that are left to stand, flat and the debug world to begin with, since a pack that wants one world type rarely means to take superflat away from someone testing, and whoever makes a world is told in chat, once they are in it, that the pack chose its type. That message is the config file's to decide with `tellWorldType`, not a pack's, so someone playing can turn it off for themselves and no pack can turn it back on. Settings the world was made with are dropped when the type is changed, since they were written for the type that was chosen.
 
@@ -6304,26 +6628,26 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 
 `control.server` decides this group: the lines of `server.properties` a pack may set, with the game mode, the difficulty and commands on a world opened to LAN. On a dedicated server every value a pack sets here is written into `server.properties` as the server starts, so the file names what is in force, and the ones the server has already read are set on it as well. A single player world takes what an integrated server has, as each row says. Empty, or `-1` for a number, leaves the server's own value, and with `control.server` at `off` every line stays as the server has it.
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `worldGameMode` | `survival`, `hardcore`, `creative`, `adventure` or `spectator` | empty | The mode every new world is started in, applied at creation only in single player. A dedicated server sets every world to its `server.properties` mode at each start, so there the pack's mode is written into `server.properties` (`gamemode` and `hardcore`) before the worlds load. `hardcore` is survival plus the save-wide hardcore flag, and `creative` also enables cheats |
-| `worldLanCommands` | boolean | `true` | Whether a player opening a single player world to LAN may turn commands on for everyone who joins. `false` grays out the Open to LAN screen's Allow Cheats button and holds it at off, and the world is opened without commands however it is asked for, `/publish` included |
-| `worldDifficulty` | list | none | Locks the difficulty to `peaceful`, `easy`, `normal` or `hard`. A bare difficulty covers every dimension, and a `dimension=difficulty` line overrides it for that one. A dedicated server writes the overworld's difficulty into `server.properties` as `difficulty` |
-| `worldForceGameMode` | boolean | empty | Whether a player who joins is put back in the server's game mode every time, the `force-gamemode` line. A single player world opened to LAN takes it too |
-| `worldPvp` | boolean | empty | Whether players can hurt each other, the `pvp` line. A single player world takes it too |
-| `worldFlight` | boolean | empty | Whether a player flying in survival is left alone instead of kicked, the `allow-flight` line. A single player world takes it too |
-| `worldSpawnProtection` | int, -1 or more | `-1` | How many blocks around the spawn point only operators may build in, the `spawn-protection` line, 0 for none. Only a dedicated server protects its spawn |
-| `worldNether` | boolean | empty | Whether the Nether can be entered, the `allow-nether` line. `false` closes it in a single player world too |
-| `worldCommandBlocks` | boolean | empty | Whether command blocks run, the `enable-command-block` line. A single player world runs them already, and `false` turns them off there too |
-| `worldIdleTimeout` | int, -1 or more | `-1` | How many minutes a player may stand idle before being kicked, the `player-idle-timeout` line, 0 for never. A single player world takes it too |
-| `worldMotd` | text | empty | The line shown under the server's name in the server list, the `motd` line. A single player world opened to LAN shows it in place of the owner and world name |
-| `worldMaxSize` | int, -1 to 29999984 | `-1` | The farthest out, in blocks from the middle, a world border may ever reach, the `max-world-size` line. A single player world takes it too |
-| `worldStructures` | boolean | empty | Whether a new world generates structures, the `generate-structures` line and the Generate Structures choice on the world screen. Only applied to a world as it is created |
-| `worldSpawnMonsters` | boolean | empty | Whether hostile mobs spawn, the `spawn-monsters` line. `false` stops them in a single player world too |
-| `worldSpawnAnimals` | boolean | empty | Whether animals spawn, the `spawn-animals` line. A single player world takes it too |
-| `worldSpawnNpcs` | boolean | empty | Whether villagers spawn, the `spawn-npcs` line. A single player world takes it too |
-| `worldViewDistance` | int, -1 to 32 | `-1` | How many chunks out a dedicated server sends the world to each player, the `view-distance` line. A single player world follows the render distance instead |
-| `worldBuildHeight` | int, -1 to 256 | `-1` | The highest y a block may be placed at, the `max-build-height` line, rounded to a multiple of 16 between 64 and 256. A single player world takes it too |
+| Setting                | Type                                                           | Default | What it does                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------- | -------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldGameMode`        | `survival`, `hardcore`, `creative`, `adventure` or `spectator` | empty   | The mode every new world is started in, applied at creation only in single player. A dedicated server sets every world to its `server.properties` mode at each start, so there the pack's mode is written into `server.properties` (`gamemode` and `hardcore`) before the worlds load. `hardcore` is survival plus the save-wide hardcore flag, and `creative` also enables cheats |
+| `worldLanCommands`     | boolean                                                        | `true`  | Whether a player opening a single player world to LAN may turn commands on for everyone who joins. `false` grays out the Open to LAN screen's Allow Cheats button and holds it at off, and the world is opened without commands however it is asked for, `/publish` included                                                                                                       |
+| `worldDifficulty`      | list                                                           | none    | Locks the difficulty to `peaceful`, `easy`, `normal` or `hard`. A bare difficulty covers every dimension, and a `dimension=difficulty` line overrides it for that one. A dedicated server writes the overworld's difficulty into `server.properties` as `difficulty`                                                                                                               |
+| `worldForceGameMode`   | boolean                                                        | empty   | Whether a player who joins is put back in the server's game mode every time, the `force-gamemode` line. A single player world opened to LAN takes it too                                                                                                                                                                                                                           |
+| `worldPvp`             | boolean                                                        | empty   | Whether players can hurt each other, the `pvp` line. A single player world takes it too                                                                                                                                                                                                                                                                                            |
+| `worldFlight`          | boolean                                                        | empty   | Whether a player flying in survival is left alone instead of kicked, the `allow-flight` line. A single player world takes it too                                                                                                                                                                                                                                                   |
+| `worldSpawnProtection` | int, -1 or more                                                | `-1`    | How many blocks around the spawn point only operators may build in, the `spawn-protection` line, 0 for none. Only a dedicated server protects its spawn                                                                                                                                                                                                                            |
+| `worldNether`          | boolean                                                        | empty   | Whether the Nether can be entered, the `allow-nether` line. `false` closes it in a single player world too                                                                                                                                                                                                                                                                         |
+| `worldCommandBlocks`   | boolean                                                        | empty   | Whether command blocks run, the `enable-command-block` line. A single player world runs them already, and `false` turns them off there too                                                                                                                                                                                                                                         |
+| `worldIdleTimeout`     | int, -1 or more                                                | `-1`    | How many minutes a player may stand idle before being kicked, the `player-idle-timeout` line, 0 for never. A single player world takes it too                                                                                                                                                                                                                                      |
+| `worldMotd`            | text                                                           | empty   | The line shown under the server's name in the server list, the `motd` line. A single player world opened to LAN shows it in place of the owner and world name                                                                                                                                                                                                                      |
+| `worldMaxSize`         | int, -1 to 29999984                                            | `-1`    | The farthest out, in blocks from the middle, a world border may ever reach, the `max-world-size` line. A single player world takes it too                                                                                                                                                                                                                                          |
+| `worldStructures`      | boolean                                                        | empty   | Whether a new world generates structures, the `generate-structures` line and the Generate Structures choice on the world screen. Only applied to a world as it is created                                                                                                                                                                                                          |
+| `worldSpawnMonsters`   | boolean                                                        | empty   | Whether hostile mobs spawn, the `spawn-monsters` line. `false` stops them in a single player world too                                                                                                                                                                                                                                                                             |
+| `worldSpawnAnimals`    | boolean                                                        | empty   | Whether animals spawn, the `spawn-animals` line. A single player world takes it too                                                                                                                                                                                                                                                                                                |
+| `worldSpawnNpcs`       | boolean                                                        | empty   | Whether villagers spawn, the `spawn-npcs` line. A single player world takes it too                                                                                                                                                                                                                                                                                                 |
+| `worldViewDistance`    | int, -1 to 32                                                  | `-1`    | How many chunks out a dedicated server sends the world to each player, the `view-distance` line. A single player world follows the render distance instead                                                                                                                                                                                                                         |
+| `worldBuildHeight`     | int, -1 to 256                                                 | `-1`    | The highest y a block may be placed at, the `max-build-height` line, rounded to a multiple of 16 between 64 and 256. A single player world takes it too                                                                                                                                                                                                                            |
 
 **`worldGameMode`** (`server` group): `survival`, `hardcore`, `creative`, `adventure` or `spectator`. Applied at world creation only; existing worlds are untouched, and changing mode later is left alone. `hardcore` is survival plus the vanilla save-wide hardcore flag; `creative` also enables cheats, as the create screen's checkbox would. The create screen opens with the mode (and the pack's seed) pre-selected; a player may change it there, but the pack sets it back at creation. `adventure` and `spectator` are not offered on that screen and are applied as the world is made.
 
@@ -6349,13 +6673,13 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `logBlockedOres` | boolean | `true` | Logs the first time each mod and ore type is turned away |
-| `logBlockedBiomes` | boolean | `true` | Logs a per-mod count of which biomes were blocked |
-| `logBlockedGenerators` | boolean | `true` | Logs the first time each mod and generator is blocked |
-| `logBlockedRecipes` | boolean | `true` | Logs a per-mod count of what was blocked |
-| `logBlockReplacements` | boolean | `true` | Logs the first time each replacement is made, and a total when a world catches up |
+| Setting                | Type    | Default | What it does                                                                      |
+| ---------------------- | ------- | ------- | --------------------------------------------------------------------------------- |
+| `logBlockedOres`       | boolean | `true`  | Logs the first time each mod and ore type is turned away                          |
+| `logBlockedBiomes`     | boolean | `true`  | Logs a per-mod count of which biomes were blocked                                 |
+| `logBlockedGenerators` | boolean | `true`  | Logs the first time each mod and generator is blocked                             |
+| `logBlockedRecipes`    | boolean | `true`  | Logs a per-mod count of what was blocked                                          |
+| `logBlockReplacements` | boolean | `true`  | Logs the first time each replacement is made, and a total when a world catches up |
 
 `logBlockedOres`, `logBlockedBiomes`, `logBlockedRecipes` and `logBlockReplacements` each log the first time something is turned away, so you can see what a blocking rule actually caught rather than guessing from what is missing. They are the first thing to turn on when a rule seems to be doing nothing, or too much.
 
@@ -6379,15 +6703,15 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `blockRecipes` | boolean | `false` | Removes every crafting recipe except those of the mods in `recipeWhitelist`. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive |
-| `recipeWhitelist` | list of mod ids | `minecraft` | The mods whose crafting recipes survive |
-| `blockedRecipeMods` | list of mod ids | none | Mods whose crafting recipes are removed outright, whatever the whitelist says |
-| `blockFurnaceRecipes` | boolean | `false` | The same for furnace recipes, the mod being read from the item produced |
-| `furnaceWhitelist` | list of mod ids | `minecraft` | The mods whose furnace recipes survive |
-| `blockedFurnaceMods` | list of mod ids | none | Mods whose furnace recipes are removed outright |
-| `recipeMatch` | `recipe`, `output` or `both` | `recipe` | Where the mod id is read from when crafting recipes are blocked: the recipe's own name, the item it makes, or either, which blocks when either matches and spares when either is whitelisted |
+| Setting               | Type                         | Default     | What it does                                                                                                                                                                                                             |
+| --------------------- | ---------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `blockRecipes`        | boolean                      | `false`     | Removes every crafting recipe except those of the mods in `recipeWhitelist`. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive |
+| `recipeWhitelist`     | list of mod ids              | `minecraft` | The mods whose crafting recipes survive                                                                                                                                                                                  |
+| `blockedRecipeMods`   | list of mod ids              | none        | Mods whose crafting recipes are removed outright, whatever the whitelist says                                                                                                                                            |
+| `blockFurnaceRecipes` | boolean                      | `false`     | The same for furnace recipes, the mod being read from the item produced                                                                                                                                                  |
+| `furnaceWhitelist`    | list of mod ids              | `minecraft` | The mods whose furnace recipes survive                                                                                                                                                                                   |
+| `blockedFurnaceMods`  | list of mod ids              | none        | Mods whose furnace recipes are removed outright                                                                                                                                                                          |
+| `recipeMatch`         | `recipe`, `output` or `both` | `recipe`    | Where the mod id is read from when crafting recipes are blocked: the recipe's own name, the item it makes, or either, which blocks when either matches and spares when either is whitelisted                             |
 
 `blockRecipes` and `blockFurnaceRecipes` remove everything except the mods in their whitelists. Nothing is exempt by default, so list your own pack's namespace to keep its recipes. CraftTweaker and GroovyScript additions always survive, whatever the whitelist says. The whitelists are `recipeWhitelist` and `furnaceWhitelist`; `blockedRecipeMods` and `blockedFurnaceMods` go the other way and remove a named mod's recipes whatever the whitelist says. `recipeMatch` decides where the mod id is read from when crafting recipes are blocked: `recipe`, the default, uses the recipe's own name, `output` uses the item it makes, and `both` blocks when either matches and spares when either is whitelisted.
 
@@ -6401,13 +6725,13 @@ Everything else a pack does, blocking biomes and ores, replacing blocks, flat be
 
 Universal Tweaks overlaps several of this mod's vanilla tweaks. Where they overlap, this mod stands down (logged each time, naming what was skipped) rather than have two mods edit the same method.
 
-| What overlaps | When this mod steps aside |
-| --- | --- |
-| `promptLeafDecay` | Universal Tweaks has `Fast Leaf Decay` on |
-| `lenientPaths` | Universal Tweaks has `Lenient Paths` on |
-| `cactusMaxHeight` | Universal Tweaks is installed |
-| `caneMaxHeight` | Universal Tweaks is installed |
-| Nether portal return | Universal Tweaks is installed |
+| What overlaps        | When this mod steps aside                 |
+| -------------------- | ----------------------------------------- |
+| `promptLeafDecay`    | Universal Tweaks has `Fast Leaf Decay` on |
+| `lenientPaths`       | Universal Tweaks has `Lenient Paths` on   |
+| `cactusMaxHeight`    | Universal Tweaks is installed             |
+| `caneMaxHeight`      | Universal Tweaks is installed             |
+| Nether portal return | Universal Tweaks is installed             |
 
 The first two read Universal Tweaks' own switches out of `config/Universal Tweaks - Tweaks.cfg`, so turning one off there hands that job back here. The height pair has no such switch to read, only `Cactus Size` and `Sugar Cane Size`, so this mod steps aside whenever Universal Tweaks is present at all and you set the height there instead.
 
@@ -6421,11 +6745,11 @@ The first two read Universal Tweaks' own switches out of `config/Universal Tweak
 
 Mo' Villages adds village biomes and swaps village materials — both things packs can also set. Unlike the Universal Tweaks overlaps, here the pack keeps the last word.
 
-| What overlaps | What happens |
-| --- | --- |
+| What overlaps                   | What happens                                                                                                                                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `structureSpacing` for villages | Mo' Villages sets its own spacing from `villageDistance` after this mod has asked. If a pack named a spacing, this mod puts its number back and says so once in the log |
-| `villageBlocks` | Mo' Villages swaps village materials per biome and marks the swap final. A pack's map is applied after that, so the pack wins |
-| `structureBiomes` for villages | Mo' Villages adds its biomes to the game's own list. A pack whitelist still decides what survives |
+| `villageBlocks`                 | Mo' Villages swaps village materials per biome and marks the swap final. A pack's map is applied after that, so the pack wins                                           |
+| `structureBiomes` for villages  | Mo' Villages adds its biomes to the game's own list. A pack whitelist still decides what survives                                                                       |
 
 Nothing here needs turning on. If a pack states no spacing and no block map, Mo' Villages is left alone to do as it likes.
 
@@ -6511,25 +6835,25 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 `explosionMode` is the primary switch: `HEAL` restores the crater over time, `EJECT_DROPS` leaves the hole and drops roughly a third of the blocks (vanilla behavior), `VISUAL_TOSS` leaves the hole and drops nothing. When driven by a pack the default is `EJECT_DROPS` (not Blast Plaster's `HEAL`), so an unconfigured install behaves like vanilla.
 
-| Key | Value | What it does |
-| --- | --- | --- |
-| `explosionMode` | `HEAL`, `EJECT_DROPS`, `VISUAL_TOSS` | What happens after the bang |
-| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | true or false | Which explosions are handled at all |
-| `processPlayerIgnitedTNT` | true or false | Whether TNT a player lit is handled with the rest |
-| `customEntitiesToHeal` | list of entity names | Explosions from other mods, named as `modid:entity` |
-| `healFullTrees` | true or false | A tree clipped by a blast is taken or restored whole, rather than sheared through |
-| `maxTreeSize` | number | The most blocks one tree may claim before it is left alone |
-| `minimumTicksBeforeHeal`, `randomTickVar` | numbers | How long before mending starts, and how ragged its pace is |
-| `overrideBlocks` | true or false | Whether mending overwrites what has since been built in the hole |
-| `enableFakeTossedBlocks` | true or false | The debris that flies out of the blast |
-| `enableExplosionFlash` | true or false | The bright flash at the moment of the blast |
-| `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | numbers | How long the flash lasts, how bright it burns, how many particles it throws and how many times it pulses |
-| `enableExplosionSmoke` | true or false | The column of smoke afterwards |
-| `explosionSmokeDuration`, `explosionSmokeParticleCount` | numbers | How long the smoke lingers and how thick it stands |
-| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true or false | What a player's own TNT leaves behind |
-| `enableDropSuppression`, `dtSpecialDrops` | true or false | Drops inside a blast, and Dynamic Trees' own drops |
-| `preventMobDrops` | true or false | Whether mobs killed by a blast still drop |
-| `blockConversions` | list of rules | What a blasted block turns into instead of returning as it was, so a build wears down one step per blast |
+| Key                                                                                                         | Value                                | What it does                                                                                             |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `explosionMode`                                                                                             | `HEAL`, `EJECT_DROPS`, `VISUAL_TOSS` | What happens after the bang                                                                              |
+| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll`                                                 | true or false                        | Which explosions are handled at all                                                                      |
+| `processPlayerIgnitedTNT`                                                                                   | true or false                        | Whether TNT a player lit is handled with the rest                                                        |
+| `customEntitiesToHeal`                                                                                      | list of entity names                 | Explosions from other mods, named as `modid:entity`                                                      |
+| `healFullTrees`                                                                                             | true or false                        | A tree clipped by a blast is taken or restored whole, rather than sheared through                        |
+| `maxTreeSize`                                                                                               | number                               | The most blocks one tree may claim before it is left alone                                               |
+| `minimumTicksBeforeHeal`, `randomTickVar`                                                                   | numbers                              | How long before mending starts, and how ragged its pace is                                               |
+| `overrideBlocks`                                                                                            | true or false                        | Whether mending overwrites what has since been built in the hole                                         |
+| `enableFakeTossedBlocks`                                                                                    | true or false                        | The debris that flies out of the blast                                                                   |
+| `enableExplosionFlash`                                                                                      | true or false                        | The bright flash at the moment of the blast                                                              |
+| `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | numbers                              | How long the flash lasts, how bright it burns, how many particles it throws and how many times it pulses |
+| `enableExplosionSmoke`                                                                                      | true or false                        | The column of smoke afterwards                                                                           |
+| `explosionSmokeDuration`, `explosionSmokeParticleCount`                                                     | numbers                              | How long the smoke lingers and how thick it stands                                                       |
+| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks`                                                           | true or false                        | What a player's own TNT leaves behind                                                                    |
+| `enableDropSuppression`, `dtSpecialDrops`                                                                   | true or false                        | Drops inside a blast, and Dynamic Trees' own drops                                                       |
+| `preventMobDrops`                                                                                           | true or false                        | Whether mobs killed by a blast still drop                                                                |
+| `blockConversions`                                                                                          | list of rules                        | What a blasted block turns into instead of returning as it was, so a build wears down one step per blast |
 
 `blockConversions` decides what a blasted block turns into instead of coming back as it was. A rule reads `<source>=<result>[@chance]`: the source is a block id, a block id with a meta (`minecraft:log:1`), or an ore dictionary name with a leading `#`; the result is a block id, a block id with a meta, or `nothing` to leave the space empty; the chance runs 0.0 to 1.0 and defaults to 1.0. The first matching rule wins, so specific rules go above broad ones, and a block that is already some rule's result is never converted again — a wall gives up one step per blast rather than wearing away to nothing.
 
@@ -6608,14 +6932,14 @@ The `terrain` keys below, together in a world template's `settings` block:
 }
 ```
 
-| Setting | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `worldName` | string | empty | Prefills the create-world screen's name box, and the save folder follows from it. It only fills the box while the box still holds the game's default, and unlike the seed and game mode it is not reapplied afterward |
-| `worldSpawn` | `x,z` or `x,y,z` | empty | Where every new world spawns, applied at creation only. Without a y the surface at the world type's ground level is used |
-| `worldBorder` | int, blocks | `0` | The border diameter every new world is given, the figure `/worldborder set` takes. `0` leaves the border alone |
-| `worldTime` | int, ticks | `-1` | The time of day every new world starts at. `-1` leaves it alone |
-| `weatherCeiling` | list of `dimension=y` | none | The highest y rain and snow reach. A bare number covers every dimension |
-| `cloudHeight` | list of `dimension=y` | none | The y clouds are drawn at. A bare number covers every dimension, and empty keeps the game's own height |
+| Setting          | Type                  | Default | What it does                                                                                                                                                                                                          |
+| ---------------- | --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldName`      | string                | empty   | Prefills the create-world screen's name box, and the save folder follows from it. It only fills the box while the box still holds the game's default, and unlike the seed and game mode it is not reapplied afterward |
+| `worldSpawn`     | `x,z` or `x,y,z`      | empty   | Where every new world spawns, applied at creation only. Without a y the surface at the world type's ground level is used                                                                                              |
+| `worldBorder`    | int, blocks           | `0`     | The border diameter every new world is given, the figure `/worldborder set` takes. `0` leaves the border alone                                                                                                        |
+| `worldTime`      | int, ticks            | `-1`    | The time of day every new world starts at. `-1` leaves it alone                                                                                                                                                       |
+| `weatherCeiling` | list of `dimension=y` | none    | The highest y rain and snow reach. A bare number covers every dimension                                                                                                                                               |
+| `cloudHeight`    | list of `dimension=y` | none    | The y clouds are drawn at. A bare number covers every dimension, and empty keeps the game's own height                                                                                                                |
 
 **`worldName`** (`terrain` group) prefills the create-world screen's name box; the save folder follows from it as usual. It only fills the box while the box still holds the game's default, so a player-typed name is never overwritten, and unlike the seed and game mode it is not reapplied afterward — whatever is in the box at creation is the name.
 
@@ -6648,12 +6972,12 @@ The `terrain` keys below, together in a world template's `settings` block:
 }
 ```
 
-| Setting | Scales | Notes |
-| --- | --- | --- |
-| `worldGravity` | Fall acceleration of players, mobs, dropped items, falling blocks, arrows, thrown entities, TNT and XP orbs | `0.17` is moon-like; jump arcs and projectile ranges follow automatically |
-| `worldFallDamage` | Fall damage | A low-gravity dimension usually wants this matched |
-| `worldJumpStrength` | Jump velocity | Applied on top of the gravity change |
-| `worldTerminalVelocity` | Maximum fall speed, as a share of the vanilla cap | Elytra flight is untouched |
+| Setting                 | Scales                                                                                                      | Notes                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `worldGravity`          | Fall acceleration of players, mobs, dropped items, falling blocks, arrows, thrown entities, TNT and XP orbs | `0.17` is moon-like; jump arcs and projectile ranges follow automatically |
+| `worldFallDamage`       | Fall damage                                                                                                 | A low-gravity dimension usually wants this matched                        |
+| `worldJumpStrength`     | Jump velocity                                                                                               | Applied on top of the gravity change                                      |
+| `worldTerminalVelocity` | Maximum fall speed, as a share of the vanilla cap                                                           | Elytra flight is untouched                                                |
 
 All four empty (default) keep vanilla physics. On Galacticraft dimensions the gravity key scales Galacticraft's own gravity.
 
@@ -6676,12 +7000,12 @@ All four empty (default) keep vanilla physics. On Galacticraft dimensions the gr
 }
 ```
 
-| Setting | Value | Default | What it does |
-| --- | --- | --- | --- |
-| `worldBelow` | `dimension=target` lines, or a bare id for every dimension | none | Dimension entered on falling past the world floor |
-| `worldAbove` | the same | none | Dimension entered on rising past the generated top, meaning the nether's roof rather than its build limit |
-| `worldSeamEntities` | boolean | `true` | Whether items, mobs and other entities cross, or players alone |
-| `worldSeamBedrock` | boolean | `false` | Keep bedrock at a seam boundary. Off, the boundary generates none, so the way through can be dug |
+| Setting             | Value                                                      | Default | What it does                                                                                              |
+| ------------------- | ---------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `worldBelow`        | `dimension=target` lines, or a bare id for every dimension | none    | Dimension entered on falling past the world floor                                                         |
+| `worldAbove`        | the same                                                   | none    | Dimension entered on rising past the generated top, meaning the nether's roof rather than its build limit |
+| `worldSeamEntities` | boolean                                                    | `true`  | Whether items, mobs and other entities cross, or players alone                                            |
+| `worldSeamBedrock`  | boolean                                                    | `false` | Keep bedrock at a seam boundary. Off, the boundary generates none, so the way through can be dug          |
 
 Both lists empty (the default) keep every world closed. A world's outermost block layer is its doorway: entering the bottom layer carries you down, entering the top layer carries you back up. Arrivals land clear of it, three layers inside when traveling down and one when traveling up, so nothing bounces straight back. Coming down also cuts the layers above the arrival open all the way to the doorway, so the way in stays visible from below and serves as the way back.
 
@@ -6711,28 +7035,28 @@ Every folder, with its full path and a link to the section that describes it, is
 
 `/rdpl` runs on your own machine and needs no permissions, because everything it touches is yours. A reload rescans the folder you own, re-applies your [property overrides](#property-overrides) to your own copy of the blocks and items, and refreshes your own resources; it reaches no server, so the server's copy is reloaded with `/rdplserver reload` instead. In single player the two are one machine, so `/rdpl reload` also reloads the integrated server's loot tables, advancements and functions, the same as vanilla's own reload. It works on any server, whether or not the server has the mod.
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdpl list` | none | Every loaded pack, its priority, and what it contains. Click a pack to look up a file in it |
-| `/rdpl which <namespace:path>` | none | Which pack provides a given file, and which packs it shadows |
-| `/rdpl reload` | none | Rescan the folder and reload everything |
-| `/rdpl reload <group>` | none | Reload just one kind, `textures`, `models`, `languages`, `sounds` or `shaders` |
-| `/rdpl unused` | none | Files in your packs that nothing has asked for yet, usually a typo in a path |
-| `/rdpl config unused` | none | Option files in `rdploader/config` that no installed pack defines any more |
-| `/rdpl config prune` | none | Delete those files |
-| `/rdpl pixelmap <namespace:path>` | none | What a [pixel map](#textures-written-as-pixel-maps) came out as, character by character |
-| `/rdpl biome list` | none | Every biome that can generate, and its id |
-| `/rdpl biome here` | none | The biome you are standing in |
-| `/rdpl biome find <name>` | the server's | Linked. Passed to `/rdplserver biome find`, the only side that knows the seed |
-| `/rdpl team` | none | The sides a pack has fielded, each in its own color, which one you are on, and who leads each |
-| `/rdpl team join [name]` | none | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into. Leave the name off to be put on the side with the fewest players among those that take players by `balance` |
-| `/rdpl team leave` | none | Leave the side you are on |
-| `/rdpl team vote <player>` | none | Vote for who leads your side, where the pack chooses its lead by a vote. A tie leaves nobody leading |
-| `/rdpl team claim` | none | Take the lead of your side, where the pack lets it be claimed and nobody on the side holds it |
-| `/rdpl round start` | none | Start the round, where the pack holds it in a lobby (`opens.by`). For the lead of a side, or an operator |
-| `/rdpl round reset` | none | Reset the running round, or call a vote to, as the pack's `reset` allows. For the lead of a side, a player on a side the pack lets call a vote, or an operator |
-| `/rdpl round vote yes`, `no` | none | Vote in a running vote to reset the round. For a player on a side |
-| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below |
+| Command                                                                               | Level        | What it does                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdpl list`                                                                          | none         | Every loaded pack, its priority, and what it contains. Click a pack to look up a file in it                                                                                                                      |
+| `/rdpl which <namespace:path>`                                                        | none         | Which pack provides a given file, and which packs it shadows                                                                                                                                                     |
+| `/rdpl reload`                                                                        | none         | Rescan the folder and reload everything                                                                                                                                                                          |
+| `/rdpl reload <group>`                                                                | none         | Reload just one kind, `textures`, `models`, `languages`, `sounds` or `shaders`                                                                                                                                   |
+| `/rdpl unused`                                                                        | none         | Files in your packs that nothing has asked for yet, usually a typo in a path                                                                                                                                     |
+| `/rdpl config unused`                                                                 | none         | Option files in `rdploader/config` that no installed pack defines any more                                                                                                                                       |
+| `/rdpl config prune`                                                                  | none         | Delete those files                                                                                                                                                                                               |
+| `/rdpl pixelmap <namespace:path>`                                                     | none         | What a [pixel map](#textures-written-as-pixel-maps) came out as, character by character                                                                                                                          |
+| `/rdpl biome list`                                                                    | none         | Every biome that can generate, and its id                                                                                                                                                                        |
+| `/rdpl biome here`                                                                    | none         | The biome you are standing in                                                                                                                                                                                    |
+| `/rdpl biome find <name>`                                                             | the server's | Linked. Passed to `/rdplserver biome find`, the only side that knows the seed                                                                                                                                    |
+| `/rdpl team`                                                                          | none         | The sides a pack has fielded, each in its own color, which one you are on, and who leads each                                                                                                                    |
+| `/rdpl team join [name]`                                                              | none         | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into. Leave the name off to be put on the side with the fewest players among those that take players by `balance` |
+| `/rdpl team leave`                                                                    | none         | Leave the side you are on                                                                                                                                                                                        |
+| `/rdpl team vote <player>`                                                            | none         | Vote for who leads your side, where the pack chooses its lead by a vote. A tie leaves nobody leading                                                                                                             |
+| `/rdpl team claim`                                                                    | none         | Take the lead of your side, where the pack lets it be claimed and nobody on the side holds it                                                                                                                    |
+| `/rdpl round start`                                                                   | none         | Start the round, where the pack holds it in a lobby (`opens.by`). For the lead of a side, or an operator                                                                                                         |
+| `/rdpl round reset`                                                                   | none         | Reset the running round, or call a vote to, as the pack's `reset` allows. For the lead of a side, a player on a side the pack lets call a vote, or an operator                                                   |
+| `/rdpl round vote yes`, `no`                                                          | none         | Vote in a running vote to reset the round. For a player on a side                                                                                                                                                |
+| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below                                                                                                                             |
 
 **Which server subcommands are linked, and why the rest are not.** A server subcommand gets a passthrough exactly when the client has no meaning of its own for that name: `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` and `team` can only ever mean the server's, so `/rdpl` hands them over. The six the client also has, `reload`, `list`, `which`, `unused`, `config` and `biome`, keep their own meaning of your packs and your client, and forwarding them would take that away. `biome find` is the one part of a shared name that belongs to the server anyway, since only the server knows the world seed, so that one form is passed on while `biome list` and `biome here` stay with you. That also settles the permission: the server's own operator check decides it, and a client can neither cheat it nor be told a fabricated answer.
 
@@ -6750,75 +7074,75 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 *server commands*
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdplserver reload` | 3 | Rescan the server's folder and reload everything |
-| `/rdplserver list` | 3 | Every pack the server loaded, its priority, and what it contains |
-| `/rdplserver which <namespace:path>` | 3 | Which pack provides a given file, and which packs it shadows |
-| `/rdplserver unused` | 3 | Files in the server's packs that nothing has asked for |
-| `/rdplserver config unused` | 3 | Option files in `rdploader/config` that no installed pack defines any more |
-| `/rdplserver config prune` | 3 | Delete those files |
+| Command                              | Level | What it does                                                               |
+| ------------------------------------ | ----- | -------------------------------------------------------------------------- |
+| `/rdplserver reload`                 | 3     | Rescan the server's folder and reload everything                           |
+| `/rdplserver list`                   | 3     | Every pack the server loaded, its priority, and what it contains           |
+| `/rdplserver which <namespace:path>` | 3     | Which pack provides a given file, and which packs it shadows               |
+| `/rdplserver unused`                 | 3     | Files in the server's packs that nothing has asked for                     |
+| `/rdplserver config unused`          | 3     | Option files in `rdploader/config` that no installed pack defines any more |
+| `/rdplserver config prune`           | 3     | Delete those files                                                         |
 
 #### World and generation
 
 *server commands*
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdplserver oregen` | 3 | Running totals of ore generation that was blocked, per mod and type |
-| `/rdplserver generators` | 3 | Running totals of world generators that were blocked, per mod and type |
-| `/rdplserver biome` | 3 | Every biome that can generate on the server |
-| `/rdplserver biome list [all]` | 3 | The same with each biome's id, and `all` includes the ones nothing can generate |
-| `/rdplserver biome here` | 3 | The biome you are standing in. The console is standing nowhere, so from there it asks for a player instead |
-| `/rdplserver biome here <player>` | 3 | The biome that player is standing in, which is the form the console and a script want |
-| `/rdplserver biome find <name>` | 3 | The nearest place a biome generates, without generating chunks to look |
-| `/rdplserver dimensions` | 3 | Every dimension, including the ones packs added |
-| `/rdplserver vein <entry> [radius]` | 3 | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it |
+| Command                             | Level | What it does                                                                                                                                                                                        |
+| ----------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver oregen`                | 3     | Running totals of ore generation that was blocked, per mod and type                                                                                                                                 |
+| `/rdplserver generators`            | 3     | Running totals of world generators that were blocked, per mod and type                                                                                                                              |
+| `/rdplserver biome`                 | 3     | Every biome that can generate on the server                                                                                                                                                         |
+| `/rdplserver biome list [all]`      | 3     | The same with each biome's id, and `all` includes the ones nothing can generate                                                                                                                     |
+| `/rdplserver biome here`            | 3     | The biome you are standing in. The console is standing nowhere, so from there it asks for a player instead                                                                                          |
+| `/rdplserver biome here <player>`   | 3     | The biome that player is standing in, which is the form the console and a script want                                                                                                               |
+| `/rdplserver biome find <name>`     | 3     | The nearest place a biome generates, without generating chunks to look                                                                                                                              |
+| `/rdplserver dimensions`            | 3     | Every dimension, including the ones packs added                                                                                                                                                     |
+| `/rdplserver vein <entry> [radius]` | 3     | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it |
 
 #### Gate commands
 
 *server commands*
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdplserver gate list` | 3 | Every gate and whether it is open |
-| `/rdplserver gate check <player>` | 3 | Which gates a player has passed |
-| `/rdplserver gate grant <player> <gate>` | 3 | Open a gate for a player |
-| `/rdplserver gate revoke <player> <gate>` | 3 | Close one again |
+| Command                                   | Level | What it does                      |
+| ----------------------------------------- | ----- | --------------------------------- |
+| `/rdplserver gate list`                   | 3     | Every gate and whether it is open |
+| `/rdplserver gate check <player>`         | 3     | Which gates a player has passed   |
+| `/rdplserver gate grant <player> <gate>`  | 3     | Open a gate for a player          |
+| `/rdplserver gate revoke <player> <gate>` | 3     | Close one again                   |
 
 #### Pregeneration commands
 
 *server commands*
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdplserver pregen <radius>` | 3 | Make every chunk within that many chunks of where it is run. See [Pregeneration](#pregeneration) |
-| `/rdplserver pregen <radius> relight` | 3 | Run only the lighting pass over land that already exists |
-| `/rdplserver pregen status` | 3 | How far along a run is |
-| `/rdplserver pregen stop` | 3 | End it |
+| Command                               | Level | What it does                                                                                     |
+| ------------------------------------- | ----- | ------------------------------------------------------------------------------------------------ |
+| `/rdplserver pregen <radius>`         | 3     | Make every chunk within that many chunks of where it is run. See [Pregeneration](#pregeneration) |
+| `/rdplserver pregen <radius> relight` | 3     | Run only the lighting pass over land that already exists                                         |
+| `/rdplserver pregen status`           | 3     | How far along a run is                                                                           |
+| `/rdplserver pregen stop`             | 3     | End it                                                                                           |
 
 #### Players, teams and rounds
 
 *server commands*
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdplserver intro` | 0 | Let the world intro play again on your next join. Any player may run it, and it only ever clears their own |
-| `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0 | The same as the `/rdpl team` forms above, which are passed to these |
-| `/rdplserver round start` | 0 | The same as `/rdpl round start`, which is passed to it |
-| `/rdplserver round reset`, `round vote yes`, `round vote no` | 0 | The same as the `/rdpl round` forms above, which are passed to these |
-| `/rdplserver card <rule> [players]` | 2 | Show a [card rule](#cards) to the players named, or to yourself, by its id or file name. `when`, `repeat` and `cooldown` are skipped |
-| `/rdplserver reset` | 3 | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |
+| Command                                                                                  | Level | What it does                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver intro`                                                                      | 0     | Let the world intro play again on your next join. Any player may run it, and it only ever clears their own                                                                                                                                                                                                              |
+| `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0     | The same as the `/rdpl team` forms above, which are passed to these                                                                                                                                                                                                                                                     |
+| `/rdplserver round start`                                                                | 0     | The same as `/rdpl round start`, which is passed to it                                                                                                                                                                                                                                                                  |
+| `/rdplserver round reset`, `round vote yes`, `round vote no`                             | 0     | The same as the `/rdpl round` forms above, which are passed to these                                                                                                                                                                                                                                                    |
+| `/rdplserver card <rule> [players]`                                                      | 2     | Show a [card rule](#cards) to the players named, or to yourself, by its id or file name. `when`, `repeat` and `cooldown` are skipped                                                                                                                                                                                    |
+| `/rdplserver reset`                                                                      | 3     | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |
 
 #### Going to places
 
 *server commands*
 
-| Command | Level | What it does |
-| --- | --- | --- |
-| `/rdplserver goto <structure>` | `gotoLevel`, `3` | Take you to the nearest one nobody has been to yet, looking without generating the land on the way |
+| Command                             | Level                | What it does                                                                                                          |
+| ----------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver goto <structure>`      | `gotoLevel`, `3`     | Take you to the nearest one nobody has been to yet, looking without generating the land on the way                    |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before |
-| `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Take you to the one before it, stepping back through where this session has sent you |
+| `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Take you to the one before it, stepping back through where this session has sent you                                  |
 
 ### Who may use goto
 
@@ -6839,11 +7163,11 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 }
 ```
 
-| Setting | What it governs |
-| --- | --- |
-| `gotoLevel` | `goto <structure>` |
-| `gotoNextLevel` | `goto <structure> next` |
-| `gotoBackLevel` | `goto <structure> back` |
+| Setting           | What it governs                     |
+| ----------------- | ----------------------------------- |
+| `gotoLevel`       | `goto <structure>`                  |
+| `gotoNextLevel`   | `goto <structure> next`             |
+| `gotoBackLevel`   | `goto <structure> back`             |
 | `gotoPlaceLevels` | One named place, in all three forms |
 
 The value is the permission level a sender needs. `3` (operator) is the default. `2` also admits command blocks, so a pack can put a jump on a button or pressure plate without exposing the rest of `/rdplserver`. `0` opens it to any player. The three settings are independent: for example, `next` open to command blocks for a village tour while `back` stays operator-only.
@@ -6891,20 +7215,20 @@ These sit in the `commands` group, so `control.commands` in the config decides w
 
 Small changes to how vanilla behaves, each switched in the `tweaks` config category.
 
-| Option | Default | What it does |
-| --- | --- | --- |
-| `promptLeafDecay` | on | Leaves that lose their tree decay within a second instead of waiting on random ticks |
-| `lenientPaths` | on | Grass paths can be made under a block and stay there when one is placed above |
-| `unbreakableSpawners` | off | Mob spawners cannot be mined or blown up |
-| `modernChestPlacement` | on | Chests pair up as they do from 1.13 on |
+| Option                 | Default | What it does                                                                         |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------ |
+| `promptLeafDecay`      | on      | Leaves that lose their tree decay within a second instead of waiting on random ticks |
+| `lenientPaths`         | on      | Grass paths can be made under a block and stay there when one is placed above        |
+| `unbreakableSpawners`  | off     | Mob spawners cannot be mined or blown up                                             |
+| `modernChestPlacement` | on      | Chests pair up as they do from 1.13 on                                               |
 
 Three more sit in the `content` category rather than `tweaks`:
 
-| Option | Default | What it does |
-| --- | --- | --- |
-| `cactusMaxHeight` | `3` | How tall vanilla cactus grows |
-| `caneMaxHeight` | `3` | How tall vanilla sugar cane grows |
-| `shovelPaths` | on | A shovel turns blocks marked `behavesAs` path into a path, and sneaking reverts one |
+| Option            | Default | What it does                                                                        |
+| ----------------- | ------- | ----------------------------------------------------------------------------------- |
+| `cactusMaxHeight` | `3`     | How tall vanilla cactus grows                                                       |
+| `caneMaxHeight`   | `3`     | How tall vanilla sugar cane grows                                                   |
+| `shovelPaths`     | on      | A shovel turns blocks marked `behavesAs` path into a path, and sneaking reverts one |
 
 **These give way to Universal Tweaks**, which changes the same vanilla blocks. See [Universal Tweaks](#universal-tweaks) for exactly when.
 

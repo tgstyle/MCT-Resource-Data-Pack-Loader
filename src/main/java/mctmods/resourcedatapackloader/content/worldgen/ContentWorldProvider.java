@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 
 import net.minecraft.init.Biomes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -14,6 +16,7 @@ import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldProviderSurface;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeProviderSingle;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkGeneratorEnd;
 import net.minecraft.world.gen.ChunkGeneratorFlat;
 import net.minecraft.world.gen.ChunkGeneratorHell;
@@ -28,7 +31,8 @@ import javax.annotation.Nullable;
 
 public class ContentWorldProvider extends WorldProviderSurface {
     private static final String FLAT_DEFAULT = "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1";
-    @Nullable private DimensionDef def;
+    private final ContentWeatherCycle weatherCycle = new ContentWeatherCycle();
+    @Nullable protected DimensionDef def;
 
     @Override protected void init() {
         this.def = ContentDimensions.byId(getDimension());
@@ -55,6 +59,8 @@ public class ContentWorldProvider extends WorldProviderSurface {
     }
 
     @Override @Nonnull public DimensionType getDimensionType() { return ContentDimensions.typeFor(getDimension()); }
+
+    public boolean galacticraftPhysics() { return false; }
 
     @Override public boolean isSurfaceWorld() { return def == null || def.surfaceWorld; }
 
@@ -109,6 +115,30 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return def.fixedTime;
     }
 
+    @Override public float calculateCelestialAngle(long worldTime, float partialTicks) {
+        if (def == null || def.traits.dayLength == DimensionTraitsDef.VANILLA_DAY) { return super.calculateCelestialAngle(worldTime, partialTicks); }
+        float angle = ((float) (worldTime % def.traits.dayLength) + partialTicks) / def.traits.dayLength - 0.25F;
+        if (angle < 0.0F) { angle++; }
+        if (angle > 1.0F) { angle--; }
+        float eased = 1.0F - (float) ((Math.cos(angle * Math.PI) + 1.0D) / 2.0D);
+        return angle + (eased - angle) / 3.0F;
+    }
+
+    @Override public void updateWeather() {
+        if (def == null) { super.updateWeather(); }
+        else if (!def.traits.precipitation) { ContentWeatherCycle.clear(world); }
+        else if (def.traits.cycle != null) { weatherCycle.tick(world, def.traits.cycle); }
+        else { super.updateWeather(); }
+    }
+
+    @Override public boolean canDoLightning(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation && def.traits.lightning; }
+
+    @Override public boolean canDoRainSnowIce(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation; }
+
+    @Override public boolean canSnowAt(@Nonnull BlockPos pos, boolean checkLight) { return (def == null || def.traits.snow) && super.canSnowAt(pos, checkLight); }
+
+    @Override public boolean canBlockFreeze(@Nonnull BlockPos pos, boolean byWater) { return (def == null || def.traits.freeze) && super.canBlockFreeze(pos, byWater); }
+
     @Override public boolean isDaytime() {
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
         long time = def.fixedTime % 24000L;
@@ -122,13 +152,29 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getSkyColor(@Nonnull Entity camera, float partialTicks) {
         if (def == null || def.skyColor < 0) { return super.getSkyColor(camera, partialTicks); }
-        return color(def.skyColor);
+        Vec3d sky = color(def.skyColor).scale(daylight(world.getCelestialAngle(partialTicks)));
+        sky = overcast(sky, world.getRainStrength(partialTicks), 0.6D);
+        sky = overcast(sky, world.getThunderStrength(partialTicks), 0.2D);
+        if (world.getLastLightningBolt() <= 0) { return sky; }
+        double flash = Math.min(world.getLastLightningBolt() - partialTicks, 1.0F) * 0.45D;
+        return new Vec3d(sky.x * (1.0D - flash) + 0.8D * flash, sky.y * (1.0D - flash) + 0.8D * flash, sky.z * (1.0D - flash) + flash);
+    }
+
+    private static Vec3d overcast(Vec3d sky, float strength, double dim) {
+        if (strength <= 0.0F) { return sky; }
+        double gray = (sky.x * 0.3D + sky.y * 0.59D + sky.z * 0.11D) * dim;
+        double keep = 1.0D - strength * 0.75D;
+        return new Vec3d(sky.x * keep + gray * (1.0D - keep), sky.y * keep + gray * (1.0D - keep), sky.z * keep + gray * (1.0D - keep));
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
         if (def == null || def.fogColor < 0) { return super.getFogColor(celestialAngle, partialTicks); }
-        return color(def.fogColor);
+        float light = daylight(celestialAngle);
+        Vec3d fog = color(def.fogColor);
+        return new Vec3d(fog.x * (light * 0.94F + 0.06F), fog.y * (light * 0.94F + 0.06F), fog.z * (light * 0.91F + 0.09F));
     }
+
+    private static float daylight(float celestialAngle) { return MathHelper.clamp(MathHelper.cos(celestialAngle * (float) Math.PI * 2.0F) * 2.0F + 0.5F, 0.0F, 1.0F); }
 
     @Override @Nonnull public String getSaveFolder() { return def == null ? "DIM" + getDimension() : def.suffix; }
 }

@@ -64,6 +64,7 @@ public final class PackManager {
     public static final String BLASTPLASTER = "blastplaster";
     public static final String WORLDINTRO = "worldintro";
     public static final String DIMENSIONS = "dimensions";
+    public static final String CELESTIAL = "celestial";
     public static final String GAMERULES = "gamerules";
     public static final String TEAMS = "teams";
     public static final String SCORING = "scoring";
@@ -389,7 +390,7 @@ public final class PackManager {
         return extraData(path) || path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
                 || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
                 || path.startsWith(GATES + "/") || path.startsWith(CARDS + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
-                || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(GAMERULES + "/")
+                || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(CELESTIAL + "/") || path.startsWith(GAMERULES + "/")
                 || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(DISABLED + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(BLOCK_DROPS + "/") || path.startsWith(ANVILS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
     }
 

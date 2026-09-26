@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
@@ -8,9 +10,11 @@ import mctmods.resourcedatapackloader.util.TemplateMemo;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldProvider;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import javax.annotation.Nullable;
 
 public final class ContentPhysics {
     private ContentPhysics() {}
@@ -22,24 +26,53 @@ public final class ContentPhysics {
     private static final Scale TERMINAL = new Scale("worldTerminalVelocity");
 
     public static boolean enabled() {
-        return GRAVITY.asked().length > 0 || FALL_DAMAGE.asked().length > 0 || JUMP.asked().length > 0 || TERMINAL.asked().length > 0;
+        if (GRAVITY.asked().length > 0 || FALL_DAMAGE.asked().length > 0 || JUMP.asked().length > 0 || TERMINAL.asked().length > 0) { return true; }
+        for (DimensionDef def : ContentDimensions.all().values()) {
+            if (def.traits.fallDamage > 0.0D) { return true; }
+        }
+        return false;
     }
 
-    public static double gravity(World world, double base) { return base * GRAVITY.factorFor(world.provider.getDimension()); }
+    public static double gravity(World world, double base) { return base * gravityFactor(world.provider.getDimension()); }
+
+    public static double arrowGravity(World world, double base) { return base * arrowGravityFactor(world.provider.getDimension()); }
+
+    public static double gravityFactor(int dimension) {
+        DimensionTraitsDef traits = traits(dimension);
+        return GRAVITY.factorFor(dimension, traits == null ? -1.0D : traits.gravity);
+    }
+
+    public static double arrowGravityFactor(int dimension) {
+        DimensionTraitsDef traits = traits(dimension);
+        if (traits != null && traits.arrowGravity > 0.0D) { return traits.arrowGravity; }
+        return gravityFactor(dimension);
+    }
+
+    public static double fallDamageFactor(int dimension) {
+        DimensionTraitsDef traits = traits(dimension);
+        return FALL_DAMAGE.factorFor(dimension, traits == null ? -1.0D : traits.fallDamage);
+    }
+
+    @Nullable private static DimensionTraitsDef traits(int dimension) {
+        DimensionDef def = ContentDimensions.byId(dimension);
+        return def == null ? null : def.traits;
+    }
 
     @SubscribeEvent public static void onFall(LivingFallEvent event) {
-        double factor = FALL_DAMAGE.factorFor(event.getEntity().world.provider.getDimension());
+        WorldProvider provider = event.getEntity().world.provider;
+        if (provider instanceof ContentWorldProvider && ((ContentWorldProvider) provider).galacticraftPhysics()) { return; }
+        double factor = fallDamageFactor(provider.getDimension());
         if (factor != 1.0) { event.setDamageMultiplier((float) (event.getDamageMultiplier() * factor)); }
     }
 
     @SubscribeEvent public static void onJump(LivingEvent.LivingJumpEvent event) {
-        double factor = JUMP.factorFor(event.getEntity().world.provider.getDimension());
+        double factor = JUMP.factorFor(event.getEntity().world.provider.getDimension(), -1.0D);
         if (factor != 1.0) { event.getEntity().motionY *= factor; }
     }
 
     @SubscribeEvent public static void onTick(LivingEvent.LivingUpdateEvent event) {
         EntityLivingBase falling = event.getEntityLiving();
-        double factor = TERMINAL.factorFor(falling.world.provider.getDimension());
+        double factor = TERMINAL.factorFor(falling.world.provider.getDimension(), -1.0D);
         if (factor == 1.0 || falling.isElytraFlying()) { return; }
         double cap = -VANILLA_TERMINAL * factor;
         if (falling.motionY < cap) { falling.motionY = cap; }
@@ -65,10 +98,11 @@ public final class ContentPhysics {
             }
         }
 
-        double factorFor(int dimension) {
-            if (ContentControl.off(ContentControl.TERRAIN)) { return 1.0; }
+        double factorFor(int dimension, double own) {
+            double fallback = own > 0.0D ? own : 1.0D;
+            if (ContentControl.off(ContentControl.TERRAIN)) { return fallback; }
             String[] asked = asked();
-            if (asked.length == 0) { return 1.0; }
+            if (asked.length == 0) { return fallback; }
             if (asked != raw) {
                 double bare = 1.0;
                 Int2DoubleOpenHashMap scoped = new Int2DoubleOpenHashMap();
@@ -96,7 +130,8 @@ public final class ContentPhysics {
                 byDimension = scoped;
                 raw = asked;
             }
-            return byDimension.containsKey(dimension) ? byDimension.get(dimension) : everywhere;
+            if (byDimension.containsKey(dimension)) { return byDimension.get(dimension); }
+            return own > 0.0D ? own : everywhere;
         }
     }
 }

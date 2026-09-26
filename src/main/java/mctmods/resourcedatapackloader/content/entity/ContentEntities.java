@@ -333,7 +333,8 @@ public final class ContentEntities {
 
     public static float fallDamage(Entity entity, float original) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
-        return def == null ? original : original * def.fallDamage;
+        if (def == null) { return original; }
+        return def.swoops ? 0.0F : original * def.fallDamage;
     }
 
     public static float sound(Entity entity, float original, boolean pitch) {

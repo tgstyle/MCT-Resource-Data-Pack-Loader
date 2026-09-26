@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentParser {
@@ -359,10 +360,11 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Exposure {} has no usable levels, ignoring it", key);
             return null;
         }
-        Map<ResourceLocation, Integer> blocks = leveledNames(key, json, "blocks");
-        Map<ResourceLocation, Integer> items = leveledNames(key, json, "items");
-        if (blocks.isEmpty() && items.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks and no items, ignoring it", key);
+        Map<ResourceLocation, Integer> blocks = leveled(key, json, "blocks", ResourceLocation::new);
+        Map<ResourceLocation, Integer> items = leveled(key, json, "items", ResourceLocation::new);
+        Map<Integer, Integer> dimensions = leveled(key, json, "dimensions", named -> dimension(key, named));
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items or dimensions, ignoring it", key);
             return null;
         }
         return new ExposureDef(key,
@@ -371,11 +373,20 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "skipsCreative", true),
                 Math.max(0, JsonUtils.getInt(json, "sourcesForNextLevel", 0)),
                 JsonUtils.getString(json, "immunity", "").trim(),
-                blocks, items, Collections.unmodifiableList(levels));
+                blocks, items, dimensions, Collections.unmodifiableList(levels));
     }
 
-    private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) {
-        Map<ResourceLocation, Integer> out = new LinkedHashMap<>();
+    @Nullable private static Integer dimension(ResourceLocation key, String named) {
+        try {
+            return Integer.parseInt(named);
+        } catch (NumberFormatException bad) {
+            ContentLog.LOGGER.error("The dimensions entry '{}' in {} is not a numeric dimension id, so it is ignored", named, key);
+            return null;
+        }
+    }
+
+    private static <T> Map<T, Integer> leveled(ResourceLocation key, JsonObject json, String member, Function<String, T> parse) {
+        Map<T, Integer> out = new LinkedHashMap<>();
         for (String entry : strings(json, member)) {
             String named = entry.trim();
             int level = 1;
@@ -389,7 +400,8 @@ public final class ContentParser {
                 named = named.substring(0, split).trim();
             }
             if (named.isEmpty()) { continue; }
-            out.put(new ResourceLocation(named), level);
+            T parsed = parse.apply(named);
+            if (parsed != null) { out.put(parsed, level); }
         }
         return out;
     }

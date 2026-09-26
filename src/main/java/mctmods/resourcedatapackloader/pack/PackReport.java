@@ -24,7 +24,7 @@ final class PackReport {
         clientSide(off, Config.content.villagers, "content.villagers", PackManager.VILLAGERS);
         collect(off, Config.content.villagers, "content.villagers", PackManager.JSON, PackManager.TRADES);
         clientSide(off, Config.content.biomes, "content.biomes", PackManager.BIOMES);
-        clientSide(off, Config.content.dimensions, "content.dimensions", PackManager.DIMENSIONS);
+        clientSide(off, Config.content.dimensions, "content.dimensions", PackManager.DIMENSIONS, PackManager.CELESTIAL);
         collect(off, Config.content.villages, "content.villages", PackManager.JSON, PackManager.VILLAGES);
         clientSide(off, Config.content.entities, "content.entities", PackManager.ENTITIES);
         collect(off, Config.content.hardness, "content.hardness", PackManager.JSON, PackManager.HARDNESS);

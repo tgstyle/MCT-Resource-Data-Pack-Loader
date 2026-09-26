@@ -250,6 +250,7 @@
     "client.IGuiScreenResourcePacks",
     "client.IGuiVideoSettings",
     "client.INetHandlerPlayClient",
+    "client.IParticleManager",
     "client.IViewFrustum",
     "client.IWeightedBakedModel",
     "client.IWeightedModel",
