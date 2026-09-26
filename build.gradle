@@ -81,19 +81,18 @@ configurations {
     }
 }
 
-def bpJar = null
-def bpDir = file('../MCT-Blast-Plaster-Legacy/build/libs')
-def bpJars = bpDir.exists() ? fileTree(bpDir) {
-    include '*-dev.jar'
-    exclude '**/*-sources.jar'
-}.files : []
-
-if (!bpJars.isEmpty()) {
-    bpJar = bpJars.sort { a, b -> a.lastModified() <=> b.lastModified() }.last()
-    logger.lifecycle("Found Blast Plaster dev JAR: ${bpJar.name}")
-} else {
-    logger.warn('No Blast Plaster dev JAR found in ../MCT-Blast-Plaster-Legacy/build/libs, falling back to the CurseForge version')
+def devSyncScript = null
+for (def dir = rootDir; dir != null && devSyncScript == null; dir = dir.parentFile) {
+    def candidate = new File(dir, '#scripts/mods-devsync.gradle')
+    if (candidate.isFile()) { devSyncScript = candidate }
 }
+if (devSyncScript != null) {
+    apply from: devSyncScript
+    build.finalizedBy 'devSync'
+}
+
+def bpJar = devSyncScript == null ? null : devSyncStaged(devSyncPin('MCT-Blast-Plaster-Legacy', versionProps['devsync_bp']), 'build/devsync-pins/MCT-Blast-Plaster-Legacy.jar')
+if (bpJar == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp in version.properties to a snapshot in the devsync cache; falling back to the CurseForge version') }
 
 dependencies {
     if (bpJar != null) {
