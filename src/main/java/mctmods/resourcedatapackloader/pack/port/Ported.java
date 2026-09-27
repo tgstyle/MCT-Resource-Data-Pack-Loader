@@ -72,7 +72,7 @@ public final class Ported implements IPackPort {
 
     @Override public String origin() { return "1.12.2"; }
 
-    @Override public PackType reads() { return PackType.CLIENT_RESOURCES; }
+    @Override public boolean reads(PackType type) { return type == PackType.CLIENT_RESOURCES; }
 
     public String mainNamespace() { return namespaces.isEmpty() ? "minecraft" : namespaces.iterator().next(); }
 
@@ -127,7 +127,7 @@ public final class Ported implements IPackPort {
 
     public Map<String, String> renamedIn(String namespace, String folder, String file) { return renamed.getOrDefault(namespace + ":" + folder + "/" + file, Map.of()); }
 
-    @Override public void index(String namespace, List<String> realPaths) {
+    @Override public void index(PackType type, String namespace, List<String> realPaths) {
         namespaces.add(namespace);
         Path home = root.resolve("assets").resolve(namespace);
         for (String path : realPaths) {

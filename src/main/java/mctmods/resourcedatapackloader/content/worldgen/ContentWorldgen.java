@@ -65,7 +65,7 @@ public final class ContentWorldgen {
         loaded = true;
         if (Config.worldgen.loadOff()) { return; }
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
-            if (ContentRegistry.reserved(key)) { return; }
+            if (ContentRegistry.reserved(key) || key.getPath().indexOf('/') >= 0) { return; }
             WorldgenDef def = ContentWorldgenParser.parse(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });

@@ -12,9 +12,9 @@ import javax.annotation.Nullable;
 public interface IPackPort {
     String origin();
 
-    PackType reads();
+    boolean reads(PackType type);
 
-    void index(String namespace, List<String> realPaths);
+    void index(PackType type, String namespace, List<String> realPaths);
 
     Map<PackType, Map<String, Set<String>>> exposed();
 
