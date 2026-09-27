@@ -34,7 +34,7 @@ Zwölf fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an
 - [Packs nur auf dem Server](#packs-nur-auf-dem-server)
 - [Registry-Umbenennungen](#registry-umbenennungen)
 - [Mod-API](#mod-api)
-- [Packs für 1.20.1 und 1.21.1](#packs-für-1201-und-1211)
+- [Packs für 1.20.1, 1.21.1 und 26.x](#packs-für-1201-1211-und-26x)
 
 **Blöcke und Items**
 - [Blöcke](#blöcke)
@@ -271,7 +271,9 @@ Groß-/Kleinschreibung ist egal; ein Leerzeichen, Bindestrich oder Unterstrich n
 
 **Ein Pack deaktivieren:** `.disabled` an den Namen anhängen.
 
-**Ein Zip für jede Version.** Ein Zip darf für jede Minecraft-Version, die es bedient, einen Ordner `versions/<version>/` mitbringen, also `versions/1.12.2/`, `versions/1.20.1/` und `versions/1.21.1/`, jeder aufgebaut wie die Wurzel eines Packs für diese Version, samt `pack.mcmeta`. Eine Datei im Ordner der laufenden Version wird anstelle desselben Pfads in der Wurzel gelesen; die Wurzel teilen sich alle Versionen, und der Ordner einer anderen Version wird nie gelesen. Was jede Version gleich liest, gehört in die Wurzel, nur was sich unterscheidet, in einen Versionsordner, und ein einziges Zip lädt auf allen dreien.
+**Ein Zip für jede Version.** Ein Zip darf für jede Minecraft-Version, die es bedient, einen Ordner `versions/<version>/` mitbringen: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/`, und auf 26.x die genaue laufende Version, `versions/26.1.2/` oder `versions/26.2/`. Jeder ist aufgebaut wie die Wurzel eines Packs für diese Version, samt `pack.mcmeta`. Eine Datei im Ordner der laufenden Version wird anstelle desselben Pfads in der Wurzel gelesen; die Wurzel teilen sich alle Versionen, und der Ordner einer anderen Version wird nie gelesen. Was jede Version gleich liest, gehört in die Wurzel, nur was sich unterscheidet, in einen Versionsordner, und ein einziges Zip lädt auf allen vieren.
+
+**Packs wandeln sich zwischen Versionen um.** Ein Pack, das für eine andere Linie geschrieben ist, wird beim ersten Laden auf dieselbe Art umgewandelt und das Geänderte in seinen eigenen Ordner `versions/<version>/` geschrieben, wie oben; das läuft automatisch beim Laden ab – auch bei dem Laden, das `/rdpl reload` oder `/rdplserver reload` auslöst – nie über einen eigenen Befehl. Jedes Versionspaar wandelt sich in beide Richtungen um, sodass ein 1.12.2-, 1.20.1-, 1.21.1- oder 26.x-Pack auf jeder der anderen lädt.
 
 ## Ressourcenpakete: wer gewinnt
 
@@ -538,11 +540,11 @@ Jede Mod, die so etwas mitbringt, bekommt beim ersten Erkennen einen Eintrag in 
 
 Ein Mod-Pack kommt nie in die Überschreibungsstufe der Ressourcenpakete, egal was `overrideResourcePacks` sagt, denn darum kann nur ein Pack-Autor mit dem Buchstaben `O` bitten. Das Log kennzeichnet Mod-Packs und listet Packs mit dem niedrigsten zuerst, es lädt also nichts ungesehen.
 
-## Packs für 1.20.1 und 1.21.1
+## Packs für 1.20.1, 1.21.1 und 26.x
 
 *wie Packs funktionieren*
 
-Ein Pack für die 1.20.1- oder 1.21.1-Linie dieser Mod lädt auch hier. Der Loader erkennt es an einem `pack.mcmeta`-Format über 3, an einem `data/`-Ordner neben `assets/` oder an `.json`-Sprachdateien und `textures/block/` ohne 1.12.2-Gegenstück und trägt es zurück. Ein Zip wird einmal umgewandelt, und zwar in sich selbst: Jede Datei, die 1.12.2 anders liest, landet im Ordner `versions/1.12.2/` des Zips, und die modernen Dateien in der Wurzel bleiben, wie sie waren. So lädt dasselbe Zip weiterhin unter 1.20.1 und 1.21.1, wie unter [ein Zip für jede Version](#packs-organisieren) beschrieben. Ein Zip, das schon einen Ordner `versions/1.12.2/` hat, wird darüber gelesen und nie ein zweites Mal umgewandelt, und von den Dateien in der Wurzel werden nur die weiter gelesen, die die Portierung unverändert durchreicht, etwa Sounds und Texturen außerhalb von `textures/block/` und `textures/item/`. Das Zip wird zuerst in eine temporäre Datei geschrieben und ersetzt das Original erst, wenn es vollständig ist. Lose Dateien unter `rdploader/assets` und `rdploader/data` werden nicht umgeschrieben; sie laufen bei jedem Scan des Ordners durch dieselbe Portierung.
+Ein Pack für die 1.20.1-, 1.21.1- oder 26.x-Linie dieser Mod lädt auch hier. Der Loader erkennt es an einem `pack.mcmeta`-Format über 3, an einem `data/`-Ordner neben `assets/` oder an `.json`-Sprachdateien und `textures/block/` ohne 1.12.2-Gegenstück und trägt es auf dieselbe Art zurück, egal für welche dieser Linien es geschrieben wurde. Ein Zip wird einmal umgewandelt, und zwar in sich selbst: Jede Datei, die 1.12.2 anders liest, landet im Ordner `versions/1.12.2/` des Zips, und die modernen Dateien in der Wurzel bleiben, wie sie waren. So lädt dasselbe Zip weiterhin unter 1.20.1, 1.21.1 und 26.x, wie unter [ein Zip für jede Version](#packs-organisieren) beschrieben. Ein Zip, das schon einen Ordner `versions/1.12.2/` hat, wird darüber gelesen und nie ein zweites Mal umgewandelt, und von den Dateien in der Wurzel werden nur die weiter gelesen, die die Portierung unverändert durchreicht, etwa Sounds und Texturen außerhalb von `textures/block/` und `textures/item/`. Das Zip wird zuerst in eine temporäre Datei geschrieben und ersetzt das Original erst, wenn es vollständig ist. Lose Dateien unter `rdploader/assets` und `rdploader/data` werden nicht umgeschrieben; sie laufen bei jedem Scan des Ordners durch dieselbe Portierung.
 
 Eine moderne Blockdatei kommt mit einem `meta` für jede Variante zurück, in der Reihenfolge, in der die Varianten stehen, und ihre Tags werden zu Namen im Ore Dictionary:
 

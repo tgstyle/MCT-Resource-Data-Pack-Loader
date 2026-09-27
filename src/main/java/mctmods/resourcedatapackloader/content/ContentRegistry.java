@@ -117,7 +117,7 @@ public final class ContentRegistry {
             if (def != null) { FLUID_DEFS.put(key, def); }
         });
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
-            if (ContentOwners.reserved(key)) { return; }
+            if (ContentOwners.reserved(key) || key.getPath().indexOf('/') >= 0) { return; }
             WorldgenDef def = ContentParserWorldgen.worldgen(key, contents);
             if (def != null) { WORLDGEN_DEFS.put(key, def); }
         });

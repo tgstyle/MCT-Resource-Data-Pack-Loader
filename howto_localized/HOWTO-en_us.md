@@ -34,7 +34,7 @@ Twelve working examples. Drop any of them straight into `rdploader` and look at 
 - [Server-side packs](#server-side-packs)
 - [Registry renames](#registry-renames)
 - [Mod API](#mod-api)
-- [Packs written for 1.20.1 and 1.21.1](#packs-written-for-1201-and-1211)
+- [Packs written for 1.20.1, 1.21.1 and 26.x](#packs-written-for-1201-1211-and-26x)
 
 **Blocks and items**
 - [Blocks](#blocks)
@@ -271,7 +271,9 @@ Case-insensitive; a space, dash or underscore after the number is optional; the 
 
 **Disable a pack** by appending `.disabled` to its name.
 
-**One zip for every version.** A zip may carry a `versions/<version>/` folder for each Minecraft version it serves, `versions/1.12.2/`, `versions/1.20.1/` and `versions/1.21.1/`, each laid out like the root of a pack for that version, `pack.mcmeta` included. A file under the running version's folder is read in place of the same path at the root; the root is shared by every version, and another version's folder is never read. Put what every version reads alike at the root and only what differs into a version folder, and one zip loads on all three.
+**One zip for every version.** A zip may carry a `versions/<version>/` folder for each Minecraft version it serves: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/`, and on 26.x the exact version it runs, `versions/26.1.2/` or `versions/26.2/`. Each is laid out like the root of a pack for that version, `pack.mcmeta` included. A file under the running version's folder is read in place of the same path at the root; the root is shared by every version, and another version's folder is never read. Put what every version reads alike at the root and only what differs into a version folder, and one zip loads on all four.
+
+**Packs convert between versions.** Loading a pack written for a different line converts it the first time, the same way, writing what changed into its own `versions/<version>/` folder as above; this happens automatically at load — including the load a `/rdpl reload` or `/rdplserver reload` triggers — never through a command of its own. Every pair of versions converts both ways, so a 1.12.2, 1.20.1, 1.21.1 or 26.x pack loads on any of the others.
 
 ## Resource packs: who wins
 
@@ -538,11 +540,11 @@ Every mod that ships one gets an entry in `rdploader/config/mods.json` the first
 
 A mod pack never joins the resource pack override tier whatever `overrideResourcePacks` says, since only a pack author can ask for that with the `O` letter. The log marks mod packs and lists packs lowest first, so nothing loads unseen.
 
-## Packs written for 1.20.1 and 1.21.1
+## Packs written for 1.20.1, 1.21.1 and 26.x
 
 *how packs work*
 
-A pack made for the 1.20.1 or 1.21.1 line of this mod loads here too. The loader recognizes one by a `pack.mcmeta` format above 3, by a `data/` folder beside `assets/`, or by `.json` lang files and `textures/block/` with no 1.12.2 twin, and carries it back. A zip is converted once, inside itself: every file 1.12.2 reads differently is written into the zip's `versions/1.12.2/` folder, and the modern files at the root stay as they were, so the same zip still loads on 1.20.1 and 1.21.1, as [one zip for every version](#organizing-packs) describes. A zip that already has a `versions/1.12.2/` folder is read through it and never converted again, and of the root's files only those the port passes through unchanged, such as sounds and textures outside `textures/block/` and `textures/item/`, are still read. The zip is written to a temporary file first and replaces the original only once it is complete. Loose files under `rdploader/assets` and `rdploader/data` are not rewritten; they are read through the same port every time the folder is scanned.
+A pack made for the 1.20.1, 1.21.1 or 26.x line of this mod loads here too. The loader recognizes one by a `pack.mcmeta` format above 3, by a `data/` folder beside `assets/`, or by `.json` lang files and `textures/block/` with no 1.12.2 twin, and carries it back the same way whichever of those lines it was written for. A zip is converted once, inside itself: every file 1.12.2 reads differently is written into the zip's `versions/1.12.2/` folder, and the modern files at the root stay as they were, so the same zip still loads on 1.20.1, 1.21.1 and 26.x, as [one zip for every version](#organizing-packs) describes. A zip that already has a `versions/1.12.2/` folder is read through it and never converted again, and of the root's files only those the port passes through unchanged, such as sounds and textures outside `textures/block/` and `textures/item/`, are still read. The zip is written to a temporary file first and replaces the original only once it is complete. Loose files under `rdploader/assets` and `rdploader/data` are not rewritten; they are read through the same port every time the folder is scanned.
 
 A modern block file comes back with a `meta` for each variant, in the order the variants are written, and its tags as ore dictionary names:
 
