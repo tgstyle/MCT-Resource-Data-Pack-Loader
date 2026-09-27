@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.LightShardSource;
+import mctmods.resourcedatapackloader.util.ILightShardSource;
 import mctmods.resourcedatapackloader.util.LightShards;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(DataLayerStorageMap.class) public abstract class MixinDataLayerStorageMap implements LightShardSource {
+@Mixin(DataLayerStorageMap.class) public abstract class MixinDataLayerStorageMap implements ILightShardSource {
     @Shadow @Final protected Long2ObjectOpenHashMap<DataLayer> map;
     @Unique private final LongSet rdpl$touched = new LongOpenHashSet();
     @Unique private LightShards rdpl$issued = new LightShards();

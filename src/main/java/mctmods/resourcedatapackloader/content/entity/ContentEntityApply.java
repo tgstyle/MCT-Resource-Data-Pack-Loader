@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IGhast;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMob;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.SwoopMoveControl;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 
 import net.minecraft.nbt.CompoundTag;
@@ -24,7 +25,6 @@ import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
@@ -221,7 +221,7 @@ final class ContentEntityApply {
         else if (def.physics().amphibious() && mob.getNavigation() instanceof GroundPathNavigation ground) { ground.setCanFloat(true); }
         if (def.combat().swoops()) {
             inner.rdpl$setNavigation(new FlyingPathNavigation(mob, mob.level()));
-            inner.rdpl$setMoveControl(new FlyingMoveControl(mob, 20, true));
+            inner.rdpl$setMoveControl(new SwoopMoveControl(mob));
         }
         if (def.physics().walks()) { walker(mob, def); }
         if (def.physics().breathesUnderwater() || def.physics().swims()) { ContentTasks.drop(mob.goalSelector, FloatGoal.class); }

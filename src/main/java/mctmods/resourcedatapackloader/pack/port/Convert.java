@@ -101,6 +101,7 @@ public final class Convert {
         JsonArray furnaceRemovals = "furnace".equals(folder) && json.has("remove") && json.get("remove").isJsonArray() ? ConvertDefinitions.furnaceRemovals(json.remove("remove").getAsJsonArray(), pack) : null;
         JsonArray exposureBlocks = "exposures".equals(folder) && json.has("blocks") && json.get("blocks").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("blocks").getAsJsonArray(), true, pack) : null;
         JsonArray exposureItems = "exposures".equals(folder) && json.has("items") && json.get("items").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("items").getAsJsonArray(), false, pack) : null;
+        JsonArray exposureDimensions = "exposures".equals(folder) && json.has("dimensions") && json.get("dimensions").isJsonArray() ? ConvertDefinitions.exposureDimensions(json.remove("dimensions").getAsJsonArray(), pack) : null;
         if ("fuels".equals(folder) && json.has("fuels") && json.get("fuels").isJsonArray()) {
             for (JsonElement element : json.getAsJsonArray("fuels")) {
                 if (!element.isJsonObject()) { continue; }
@@ -118,6 +119,7 @@ public final class Convert {
         if (furnaceRemovals != null) { json.add("remove", furnaceRemovals); }
         if (exposureBlocks != null) { json.add("blocks", exposureBlocks); }
         if (exposureItems != null) { json.add("items", exposureItems); }
+        if (exposureDimensions != null) { json.add("dimensions", exposureDimensions); }
         return Ported.GSON.toJson(json);
     }
 

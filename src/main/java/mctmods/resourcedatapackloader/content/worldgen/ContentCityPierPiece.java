@@ -27,7 +27,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityPierPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityPierPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPierPiece::new;
     public static final String RAILED = "railed";
     public static final String PILINGS = "pilings";

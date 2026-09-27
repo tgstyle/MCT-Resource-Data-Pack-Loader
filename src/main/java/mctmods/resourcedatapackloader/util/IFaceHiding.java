@@ -1,5 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-public interface FaceHiding {
+public interface IFaceHiding {
     boolean rdpl$faceHiding();
 }

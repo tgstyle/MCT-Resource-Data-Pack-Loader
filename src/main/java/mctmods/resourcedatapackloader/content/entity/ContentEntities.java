@@ -488,7 +488,9 @@ public final class ContentEntities {
 
     public static void onFall(LivingFallEvent event) {
         EntityVariantDef def = BY_TYPE.get(event.getEntity().getType());
-        if (def != null && def.physics().fallDamage() != 1.0F) { event.setDamageMultiplier(event.getDamageMultiplier() * def.physics().fallDamage()); }
+        if (def == null) { return; }
+        float factor = def.combat().swoops() ? 0.0F : def.physics().fallDamage();
+        if (factor != 1.0F) { event.setDamageMultiplier(event.getDamageMultiplier() * factor); }
     }
 
     public static void onExperience(LivingExperienceDropEvent event) {

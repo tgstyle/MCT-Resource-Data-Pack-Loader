@@ -36,7 +36,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityStampPiece extends StructurePiece implements ContentCityTrees.Felling {
+public final class ContentCityStampPiece extends StructurePiece implements ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityStampPiece::new;
     private static final int PASSAGE_MOST = 32;
     private static final int DOOR = 7;

@@ -19,7 +19,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityStairsPiece extends StructurePiece implements ContentCityTrees.Felling {
+public final class ContentCityStairsPiece extends StructurePiece implements ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityStairsPiece::new;
     public static final int RUN = 7;
     public static final int WIDE = 5;

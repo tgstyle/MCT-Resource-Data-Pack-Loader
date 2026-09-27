@@ -1,5 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-public interface LightShardSource {
+public interface ILightShardSource {
     LightShards rdpl$issue();
 }

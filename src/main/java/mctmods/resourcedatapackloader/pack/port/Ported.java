@@ -30,7 +30,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
-public final class Ported implements PackPort {
+public final class Ported implements IPackPort {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final List<String> PRIMARY_TEXTURES = List.of("all", "cross", "texture", "side", "pane", "torch", "crop", "particle", "layer0", "wall", "top", "end");
     private static final String WALL = "_wall";

@@ -25,7 +25,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-public final class ContentCityFarmPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityFarmPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityFarmPiece::new;
     private static final long CROP_SALT = 0x6A7F11L;
     private static final String LEVEL = "Level";

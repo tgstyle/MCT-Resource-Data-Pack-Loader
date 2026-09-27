@@ -77,7 +77,7 @@ public final class ContentParser {
             return null;
         }
         String harvestTool = GsonHelper.getAsString(json, "harvestTool", "pickaxe").trim().toLowerCase(Locale.ROOT);
-        if (!HARVEST_TOOLS.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, HARVEST_TOOLS, TAGS); }
+        if (!harvestTool.isEmpty() && !HARVEST_TOOLS.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, HARVEST_TOOLS, TAGS); }
         return new BlockDef(key, type,
                 GsonHelper.getAsString(json, "material", "rock").trim().toLowerCase(Locale.ROOT),
                 GsonHelper.getAsString(json, "mapColor", "").trim().toLowerCase(Locale.ROOT),
@@ -404,12 +404,13 @@ public final class ContentParser {
         }
         Map<ResourceLocation, Integer> blocks = leveledNames(key, json, "blocks");
         Map<ResourceLocation, Integer> items = leveledNames(key, json, "items");
-        if (blocks.isEmpty() && items.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks and no items, ignoring it", key);
+        Map<ResourceLocation, Integer> dimensions = leveledNames(key, json, "dimensions");
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items or dimensions, ignoring it", key);
             return null;
         }
         return new ExposureDef(key, Math.max(1, GsonHelper.getAsInt(json, "scanInterval", 20)), Math.max(0, GsonHelper.getAsInt(json, "range", 10)), GsonHelper.getAsBoolean(json, "skipsCreative", true),
-                Math.max(0, GsonHelper.getAsInt(json, "sourcesForNextLevel", 0)), GsonHelper.getAsString(json, "immunity", "").trim(), blocks, items, Collections.unmodifiableList(levels));
+                Math.max(0, GsonHelper.getAsInt(json, "sourcesForNextLevel", 0)), GsonHelper.getAsString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels));
     }
 
     private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) {

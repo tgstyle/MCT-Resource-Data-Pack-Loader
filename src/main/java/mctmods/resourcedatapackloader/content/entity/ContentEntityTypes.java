@@ -24,6 +24,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
@@ -114,9 +115,14 @@ public final class ContentEntityTypes {
             EntityVariantDef def = ContentEntities.BY_TYPE.get(type);
             for (String name : def.attributes().keySet()) {
                 Attribute attribute = ContentAttributes.find(name, def.key());
-                if (attribute != null && !event.has(living(type), attribute)) { event.add(living(type), attribute); }
+                if (attribute != null) { grant(event, type, attribute); }
             }
+            if (def.combat().swoops()) { grant(event, type, Attributes.FLYING_SPEED); }
         }
+    }
+
+    private static void grant(EntityAttributeModificationEvent event, EntityType<?> type, Attribute attribute) {
+        if (!event.has(living(type), attribute)) { event.add(living(type), attribute); }
     }
 
     public static void placements(SpawnPlacementRegisterEvent event) {
