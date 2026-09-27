@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.SharedConstants;
@@ -23,6 +24,8 @@ public final class Port {
     private static final int FIRST_1_21_FORMAT = 41;
     private static final int LAST_1_21_DATA_FORMAT = 48;
     private static final int LAST_1_21_RESOURCE_FORMAT = 34;
+    private static final int LAST_26_2_DATA_FORMAT = 107;
+    private static final int LAST_26_2_RESOURCE_FORMAT = 88;
     public static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "worldintro", "cards", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
 
     private Port() {}
@@ -32,7 +35,7 @@ public final class Port {
     public record Mapped(PackType type, String path, Kind kind) {}
 
     public enum Line {
-        V1_20("1.20.1"), V1_21("1.21.1"), V26("26.x");
+        V1_20("1.20.1"), V1_21("1.21.1"), V26("26.x"), V26_3("26.3");
 
         private final String name;
 
@@ -78,11 +81,22 @@ public final class Port {
         int format = pack != null && pack.has("pack_format") && pack.get("pack_format").isJsonPrimitive() ? pack.get("pack_format").getAsInt() : 0;
         boolean ranged = pack != null && (pack.has("min_format") || pack.has("max_format"));
         if (plural > 0 && singular == 0) { return Line.V1_20; }
-        if (singular > 0 && plural == 0) { return ranged || format > LAST_1_21_DATA_FORMAT ? Line.V26 : Line.V1_21; }
-        if (ranged) { return Line.V26; }
+        boolean hasData = Files.isDirectory(data);
+        if (singular > 0 && plural == 0) { return ranged || format > LAST_1_21_DATA_FORMAT ? modern(pack, format, true) : Line.V1_21; }
+        if (ranged) { return modern(pack, format, hasData); }
         if (format > 0 && format <= LAST_1_20_FORMAT) { return Line.V1_20; }
-        if (!Files.isDirectory(data)) { return format > LAST_1_21_RESOURCE_FORMAT ? Line.V26 : null; }
-        return format > LAST_1_21_DATA_FORMAT ? Line.V26 : format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
+        if (!hasData) { return format > LAST_1_21_RESOURCE_FORMAT ? modern(pack, format, false) : null; }
+        return format > LAST_1_21_DATA_FORMAT ? modern(pack, format, true) : format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
+    }
+
+    private static Line modern(@Nullable JsonObject pack, int format, boolean data) {
+        int max = pack != null && pack.has("max_format") ? major(pack.get("max_format")) : format;
+        return max > (data ? LAST_26_2_DATA_FORMAT : LAST_26_2_RESOURCE_FORMAT) ? Line.V26_3 : Line.V26;
+    }
+
+    private static int major(JsonElement value) {
+        JsonElement held = value.isJsonArray() && !value.getAsJsonArray().isEmpty() ? value.getAsJsonArray().get(0) : value;
+        return held.isJsonPrimitive() && held.getAsJsonPrimitive().isNumber() ? held.getAsInt() : 0;
     }
 
     private static String folder(String prefix) { return prefix.substring(0, prefix.length() - 1); }
