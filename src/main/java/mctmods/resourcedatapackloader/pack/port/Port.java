@@ -21,6 +21,8 @@ public final class Port {
     private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
     private static final int LAST_1_20_FORMAT = 26;
     private static final int FIRST_1_21_FORMAT = 41;
+    private static final int LAST_1_21_DATA_FORMAT = 48;
+    private static final int LAST_1_21_RESOURCE_FORMAT = 34;
     public static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "worldintro", "cards", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
 
     private Port() {}
@@ -30,7 +32,7 @@ public final class Port {
     public record Mapped(PackType type, String path, Kind kind) {}
 
     public enum Line {
-        V1_20("1.20.1"), V1_21("1.21.1");
+        V1_20("1.20.1"), V1_21("1.21.1"), V26("26.x");
 
         private final String name;
 
@@ -72,24 +74,27 @@ public final class Port {
             }
             catch (IOException ignored) { }
         }
+        JsonObject pack = packSection(root);
+        int format = pack != null && pack.has("pack_format") && pack.get("pack_format").isJsonPrimitive() ? pack.get("pack_format").getAsInt() : 0;
+        boolean ranged = pack != null && (pack.has("min_format") || pack.has("max_format"));
         if (plural > 0 && singular == 0) { return Line.V1_20; }
-        if (singular > 0 && plural == 0) { return Line.V1_21; }
-        int format = packFormat(root);
+        if (singular > 0 && plural == 0) { return ranged || format > LAST_1_21_DATA_FORMAT ? Line.V26 : Line.V1_21; }
+        if (ranged) { return Line.V26; }
         if (format > 0 && format <= LAST_1_20_FORMAT) { return Line.V1_20; }
-        return format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
+        if (!Files.isDirectory(data)) { return format > LAST_1_21_RESOURCE_FORMAT ? Line.V26 : null; }
+        return format > LAST_1_21_DATA_FORMAT ? Line.V26 : format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
     }
 
     private static String folder(String prefix) { return prefix.substring(0, prefix.length() - 1); }
 
-    private static int packFormat(Path root) {
+    @Nullable private static JsonObject packSection(Path root) {
         Path meta = root.resolve("pack.mcmeta");
-        if (!Files.isRegularFile(meta)) { return 0; }
+        if (!Files.isRegularFile(meta)) { return null; }
         try {
             JsonObject json = JsonParser.parseString(Files.readString(meta, StandardCharsets.UTF_8)).getAsJsonObject();
-            JsonObject pack = json.has("pack") && json.get("pack").isJsonObject() ? json.getAsJsonObject("pack") : null;
-            return pack != null && pack.has("pack_format") ? pack.get("pack_format").getAsInt() : 0;
+            return json.has("pack") && json.get("pack").isJsonObject() ? json.getAsJsonObject("pack") : null;
         }
-        catch (IOException | RuntimeException ignored) { return 0; }
+        catch (IOException | RuntimeException ignored) { return null; }
     }
 
     public static boolean legacy(Path root) {

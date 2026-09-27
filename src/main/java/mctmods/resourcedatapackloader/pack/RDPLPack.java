@@ -143,8 +143,8 @@ public final class RDPLPack {
         }
         if (nested > 0) { ContentLog.LOGGER.warn("Pack '{}': {} file(s) under '{}/{}/{}/' are ignored. Nothing reads a '{}' folder inside a namespace; content folders sit directly under the namespace", name, nested, type.getDirectory(), namespace, PackManager.ROOT_DIRECTORY, PackManager.ROOT_DIRECTORY); }
         if (paths.isEmpty()) { return; }
-        if (ported != null && type == ported.reads()) {
-            ported.index(namespace, new ArrayList<>(paths));
+        if (ported != null && ported.reads(type)) {
+            ported.index(type, namespace, new ArrayList<>(paths));
             return;
         }
         Set<String> held = index.computeIfAbsent(type, k -> new HashMap<>()).computeIfAbsent(namespace, k -> new LinkedHashSet<>());
