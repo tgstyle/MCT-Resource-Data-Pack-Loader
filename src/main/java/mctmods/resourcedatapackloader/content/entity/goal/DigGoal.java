@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 
@@ -7,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -73,7 +73,7 @@ public final class DigGoal extends Goal {
             return;
         }
         mob.getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F);
-        if ((total - left) % SWING == 0) { mob.swing(InteractionHand.MAIN_HAND); }
+        if ((total - left) % SWING == 0) { LineCompat.swing(mob); }
         left--;
         mob.level().destroyBlockProgress(mob.getId(), pos, (int) (9.0F * (total - left) / total));
         if (left > 0) { return; }

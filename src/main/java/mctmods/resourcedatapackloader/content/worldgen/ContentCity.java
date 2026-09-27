@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
@@ -483,7 +484,7 @@ public final class ContentCity {
         if (cargo > 0) { ContentLog.LOGGER.info("Piers carry {} kind(s) of cargo", cargo); }
         int decor = weighted("villageDecor", decorNames()).size();
         if (decor > 0) { ContentLog.LOGGER.info("Villages scatter {} kind(s) of decoration along their roads", decor); }
-        StructureTemplateManager templates = server == null ? null : server.getStructureManager();
+        StructureTemplateManager templates = server == null ? null : LineCompat.templates(server);
         stationSpan = ContentCityTemplates.stationBuild(templates);
         ContentVillages.measure(templates);
         ContentVillages.vanilla(server == null ? Map.of() : ContentCityTemplates.vanillaHouses(server, templates));

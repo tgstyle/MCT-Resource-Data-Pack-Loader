@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -61,7 +62,7 @@ public final class PounceGoal extends Goal {
             if (crouched < CROUCH) { return; }
             Vec3 leap = new Vec3(target.getX() - mob.getX(), 0.0D, target.getZ() - mob.getZ()).normalize();
             mob.setDeltaMovement(leap.x * 0.9D, 0.5D, leap.z * 0.9D);
-            mob.hurtMarked = true;
+            LineCompat.markVelocity(mob);
             airborne = true;
             return;
         }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentDrops;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
@@ -24,12 +25,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
-import java.util.function.BiConsumer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerBlock;
@@ -46,7 +43,7 @@ import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentBlock extends Block {
+public class ContentBlock extends Block implements LineCompat.TreeSoil {
     public static final String BUSH = "bush";
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
@@ -100,7 +97,7 @@ public class ContentBlock extends Block {
 
     protected void removed(ServerLevel level, BlockPos pos, BlockState state, BlockState replaced) { ContentDrops.removed(level, pos, state, replaced); }
 
-    @Override public boolean onTreeGrow(@Nonnull BlockState state, @Nonnull WorldGenLevel level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return def.behavesAs().contains(BUSH); }
+    @Override public boolean keepsUnderTree() { return def.behavesAs().contains(BUSH); }
 
     @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
 

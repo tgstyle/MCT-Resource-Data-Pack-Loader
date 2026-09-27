@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.compat.LinePort;
+import mctmods.resourcedatapackloader.util.LineNote;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -12,7 +15,7 @@ final class Modern {
 
     private Modern() {}
 
-    static boolean active() { return Port.Line.running() == Port.Line.V26; }
+    static boolean active() { return Port.Line.running().ordinal() >= Port.Line.V26.ordinal(); }
 
     static void data(JsonObject json, Port.Kind kind, String path, String file, boolean stacks, Consumer<String> note) {
         switch (kind) {
@@ -37,14 +40,23 @@ final class Modern {
     }
 
     static String ported(Port.Kind kind, String contents, String path, Consumer<String> note) {
-        if (kind == Port.Kind.FUNCTION) { return path.endsWith(".mcfunction") ? function(contents, path, note) : contents; }
+        boolean lined = Port.Line.V26.acrossSplit();
+        LineNote said = s -> note.accept("'" + path + "' " + s);
+        if (kind == Port.Kind.FUNCTION) {
+            if (!path.endsWith(".mcfunction")) { return contents; }
+            String out = function(contents, path, note);
+            return lined ? LinePort.function(out, said) : out;
+        }
         if (kind != Port.Kind.RECIPE && kind != Port.Kind.LOOT && kind != Port.Kind.ADVANCEMENT && kind != Port.Kind.MODEL) { return contents; }
         JsonElement parsed = JsonParser.parseString(contents);
         if (!parsed.isJsonObject()) { return contents; }
         JsonObject json = parsed.getAsJsonObject();
-        if (kind == Port.Kind.MODEL) { ModernAssets.model(json); }
-        else { data(json, kind, path, path, false, note); }
-        return Ported.GSON.toJson(json);
+        if (kind == Port.Kind.MODEL) {
+            ModernAssets.model(json);
+            return Ported.GSON.toJson(lined ? LinePort.asset(json, path, said) : json);
+        }
+        data(json, kind, path, path, false, note);
+        return Ported.GSON.toJson(lined ? LinePort.data(json, LinePort.path(path), said) : json);
     }
 
     static String function(String contents, String file, Consumer<String> note) {

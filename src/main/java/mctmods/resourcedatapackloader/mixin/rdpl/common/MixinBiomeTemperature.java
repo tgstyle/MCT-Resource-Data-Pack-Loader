@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.synth.PerlinSimplexNoise;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Biome.class) public abstract class MixinBiomeTemperature {
-    @Shadow @Final private static PerlinSimplexNoise TEMPERATURE_NOISE;
     @Shadow @Final private Biome.ClimateSettings climateSettings;
     @Unique private static final TemplateMemo<float[]> rdpl$curve = new TemplateMemo<>();
 
@@ -35,7 +34,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
             cir.setReturnValue(base);
             return;
         }
-        float noise = (float) (TEMPERATURE_NOISE.getValue(pos.getX() / 8.0F, pos.getZ() / 8.0F, false) * 8.0D);
-        cir.setReturnValue(base + (noise + Math.min(pos.getY(), curve[1]) - curve[0]) * curve[2]);
+        cir.setReturnValue(base + (LineCompat.temperatureNoise(pos) + Math.min(pos.getY(), curve[1]) - curve[0]) * curve[2]);
     }
 }

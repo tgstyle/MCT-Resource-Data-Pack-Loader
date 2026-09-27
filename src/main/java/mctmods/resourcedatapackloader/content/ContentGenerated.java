@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentContainerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentCropBlock;
@@ -104,9 +105,8 @@ public final class ContentGenerated {
         if (entry.isMain()) {
             tagBlock(entry, blockTags, itemTags, hasItem);
             SaplingDef sapling = def.sapling();
-            if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && sapling.growsVanilla() && !provided(PackType.SERVER_DATA, namespace, "worldgen/configured_feature/" + name + "_tree.json")) {
-                data(namespace, "worldgen/configured_feature/" + name + "_tree.json", tree(sapling));
-            }
+            String treePath = ContentFormats.CONFIGURED_FEATURES + "/" + name + "_tree.json";
+            if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && sapling.growsVanilla() && !provided(PackType.SERVER_DATA, namespace, treePath)) { data(namespace, treePath, LineCompat.worldgenOut(treePath, tree(sapling))); }
         }
     }
 
@@ -265,6 +265,7 @@ public final class ContentGenerated {
         }
         harvestTags(blockTags, id, def.harvestTool(), ContentBlockTypes.harvestLevel(def, entry.variant()));
         materialTags(blockTags, id, def);
+        LineCompat.fluidTags(entry.block().defaultBlockState(), tag -> tag(blockTags, tag, id));
         boolean wood = "wood".equals(def.material());
         switch (def.type()) {
             case ContentBlockTypes.FENCE -> {

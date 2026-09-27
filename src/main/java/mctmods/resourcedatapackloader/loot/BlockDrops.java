@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.ContentStates;
@@ -43,10 +44,8 @@ import net.minecraft.world.level.block.WebBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
-import net.neoforged.neoforge.common.loot.LootModifier;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import java.util.ArrayList;
@@ -57,7 +56,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class BlockDrops extends LootModifier {
+public final class BlockDrops extends LineCompat.Modifier {
     public static final String DROPS = "drops";
     public static final String REPLACE = "replace";
     public static final String ITEM = "item";
@@ -70,7 +69,7 @@ public final class BlockDrops extends LootModifier {
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
-    public static final MapCodec<BlockDrops> CODEC = RecordCodecBuilder.mapCodec(instance -> codecStart(instance).apply(instance, BlockDrops::new));
+    public static final MapCodec<BlockDrops> CODEC = RecordCodecBuilder.mapCodec(instance -> LineCompat.Modifier.start(instance).apply(instance, BlockDrops::new));
     public static final DeferredRegister<MapCodec<? extends IGlobalLootModifier>> REGISTER = DeferredRegister.create(NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, ResourceDataPackLoader.MOD_ID);
     private static final Gson GSON = new Gson();
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
@@ -78,7 +77,7 @@ public final class BlockDrops extends LootModifier {
 
     static { REGISTER.register("block_drops", () -> CODEC); }
 
-    public BlockDrops(LootItemCondition[] conditions, int priority) { super(conditions, priority); }
+    private BlockDrops(LineCompat.ModifierStart start) { super(start); }
 
     @Override @Nonnull public MapCodec<? extends IGlobalLootModifier> codec() { return CODEC; }
 
@@ -177,14 +176,14 @@ public final class BlockDrops extends LootModifier {
 
     private static ObjectArrayList<ItemStack> rolled(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
         if (Config.data.blockDropsOff()) { return generatedLoot; }
-        BlockState state = context.getOptionalParameter(LootContextParams.BLOCK_STATE);
-        Vec3 origin = context.getOptionalParameter(LootContextParams.ORIGIN);
+        BlockState state = LineCompat.param(context,LootContextParams.BLOCK_STATE);
+        Vec3 origin = LineCompat.param(context,LootContextParams.ORIGIN);
         if (state == null || origin == null) { return generatedLoot; }
         if (GENERATION.stale()) { reload(); }
         List<Rule> rules = BY_BLOCK.get(state.getBlock());
         if (rules == null) { return generatedLoot; }
-        Player player = context.getOptionalParameter(LootContextParams.THIS_ENTITY) instanceof Player held ? held : null;
-        roll(rules, generatedLoot, state, context.getLevel(), BlockPos.containing(origin), player, context.getOptionalParameter(LootContextParams.TOOL), context.getOptionalParameter(LootContextParams.EXPLOSION_RADIUS), context.getRandom(), false);
+        Player player = LineCompat.param(context,LootContextParams.THIS_ENTITY) instanceof Player held ? held : null;
+        roll(rules, generatedLoot, state, context.getLevel(), BlockPos.containing(origin), player, LineCompat.param(context,LootContextParams.TOOL), LineCompat.param(context,LootContextParams.EXPLOSION_RADIUS), context.getRandom(), false);
         return generatedLoot;
     }
 

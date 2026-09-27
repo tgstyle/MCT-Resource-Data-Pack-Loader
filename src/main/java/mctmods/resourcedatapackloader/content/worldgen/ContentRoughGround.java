@@ -32,7 +32,7 @@ public final class ContentRoughGround {
         Integer reach = TEMPLE_REACH.get(id);
         if (!mansion && reach == null) { return false; }
         ChunkPos chunk = start.getChunkPos();
-        if (ContentStructureSpread.pinned(chunk) || !ContentCity.wanted()) { return false; }
+        if (ContentStructurePins.pinned(chunk) || !ContentCity.wanted()) { return false; }
         CityGround ground = CityGround.of(seed, generator, random, registries);
         boolean rough = mansion ? rough(ground, chunk.getMinBlockX() + MANSION_OFFSET, chunk.getMinBlockZ() + MANSION_OFFSET, MANSION_REACH) : rough(ground, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ(), reach);
         if (rough) { ContentLog.LOGGER.debug("Structure {} at chunk {} stands on ground more than {} blocks uneven, so it is not founded", id, chunk, TOLERANCE); }

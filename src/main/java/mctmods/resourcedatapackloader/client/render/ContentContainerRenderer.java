@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.render;
 
+import mctmods.resourcedatapackloader.compat.LineClientCompat;
 import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 
@@ -56,9 +57,9 @@ public class ContentContainerRenderer implements BlockEntityRenderer<ContentCont
         if (state.sheet == null) { return; }
         pose.pushPose();
         pose.translate(0.5F, 0.5F, 0.5F);
-        pose.mulPose(Axis.YP.rotationDegrees(-state.facing.toYRot()));
+        pose.last().rotate(Axis.YP.rotationDegrees(-state.facing.toYRot()));
         pose.translate(-0.5F, -0.5F, -0.5F);
-        collector.submitModel(model, state.open, pose, RenderTypes.entityCutout(state.sheet), state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
+        LineClientCompat.submitModel(collector, model, state.open, pose, RenderTypes.entityCutout(state.sheet), state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
         pose.popPose();
     }
 }

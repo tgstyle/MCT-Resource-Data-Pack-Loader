@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
+
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.shorts.Short2BooleanMap;
@@ -129,7 +131,7 @@ import javax.annotation.Nonnull;
         if (block instanceof LiquidBlockContainer container) { return container.canPlaceLiquid(null, level, pos, state, fluid); }
         if (block instanceof DoorBlock || state.is(BlockTags.SIGNS) || state.is(Blocks.LADDER) || state.is(Blocks.SUGAR_CANE) || state.is(Blocks.BUBBLE_COLUMN)) { return false; }
         if (state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY) || state.is(Blocks.STRUCTURE_VOID)) { return false; }
-        return !state.blocksMotion();
+        return LineCompat.passable(state);
     }
 
     private boolean sourceOfThis(FluidState state) { return state.getType().isSame(this) && state.isSource(); }

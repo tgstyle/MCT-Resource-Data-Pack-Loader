@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentContainers;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
@@ -7,7 +8,6 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -22,7 +22,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Mirror;
@@ -37,11 +36,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.util.TriState;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentContainerBlock extends BaseEntityBlock implements IContentContainer {
+public final class ContentContainerBlock extends LineCompat.ContainerBase implements IContentContainer {
     private final ContainerDef container;
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
@@ -55,8 +53,6 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
         this.expDrop = ContentBlock.expRange(def);
         registerDefaultState(stateDefinition.any().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
     }
-
-    @Override @Nonnull protected MapCodec<? extends BaseEntityBlock> codec() { return MapCodec.unit(this); }
 
     @Override public ContainerDef container() { return container; }
 

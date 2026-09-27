@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStates;
@@ -370,7 +371,8 @@ public final class ContentWorldgen {
         JsonObject configured = new JsonObject();
         configured.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + SHAPE_FEATURE);
         configured.add("config", config);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + key.getPath() + ".json", configured.toString());
+        String featurePath = ContentFormats.CONFIGURED_FEATURES + "/" + key.getPath() + ".json";
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, featurePath, LineCompat.worldgenOut(featurePath, configured).toString());
         JsonObject spread = new JsonObject();
         spread.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + SPREAD_PLACEMENT);
         spread.addProperty("entry", key.toString());

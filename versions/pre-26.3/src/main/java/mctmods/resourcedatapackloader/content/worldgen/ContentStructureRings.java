@@ -47,7 +47,7 @@ public final class ContentStructureRings extends ConcentricRingsStructurePlaceme
         this.pins = pins;
         this.vanillaBiomes = vanillaBiomes;
         this.filteredFor = filteredFor;
-        ContentStructureSpread.hold(pins);
+        ContentStructurePins.hold(pins);
     }
 
     public List<List<Integer>> pins() { return pins; }
@@ -68,7 +68,7 @@ public final class ContentStructureRings extends ConcentricRingsStructurePlaceme
         return vanillaBiomes;
     }
 
-    @Override protected boolean isPlacementChunk(@Nonnull ChunkGeneratorStructureState state, int x, int z) { return ContentStructureSpread.pinnedAt(pins, x, z) || super.isPlacementChunk(state, x, z); }
+    @Override protected boolean isPlacementChunk(@Nonnull ChunkGeneratorStructureState state, int x, int z) { return ContentStructurePins.pinnedAt(pins, x, z) || super.isPlacementChunk(state, x, z); }
 
     @Override @Nonnull public StructurePlacementType<?> type() { return TYPE; }
 }

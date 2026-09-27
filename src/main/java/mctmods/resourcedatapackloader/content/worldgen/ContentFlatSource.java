@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -19,7 +19,6 @@ import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
@@ -27,7 +26,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
@@ -36,18 +34,15 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.world.level.levelgen.blending.Blender;
-import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentFlatSource extends NoiseBasedChunkGenerator {
+public final class ContentFlatSource extends LineCompat.FlatBase {
     public static final String ID = "flat";
     public static final MapCodec<ContentFlatSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             BiomeSource.CODEC.fieldOf("biome_source").forGetter(ChunkGenerator::getBiomeSource),
@@ -105,24 +100,17 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
         return generator instanceof ContentFlatSource source ? source.settings() : null;
     }
 
-    @Override @Nonnull public ChunkGeneratorStructureState createState(@Nonnull HolderLookup<StructureSet> lookup, @Nonnull RandomState random, long seed) {
-        Stream<Holder<StructureSet>> sets = settings.structureOverrides().map(HolderSet::stream).orElseGet(() -> lookup.listElements().map(set -> set));
-        return ChunkGeneratorStructureState.createForFlat(random, seed, biomeSource, sets);
-    }
+    @Override protected Stream<Holder<StructureSet>> structureSets(HolderLookup<StructureSet> lookup) { return settings.structureOverrides().map(HolderSet::stream).orElseGet(() -> lookup.listElements().map(set -> set)); }
+
+    @Override protected FlatLevelSource flat() { return flat; }
 
     @Override @Nonnull protected MapCodec<? extends ChunkGenerator> codec() { return CODEC; }
 
-    @Override public void buildSurface(@Nonnull WorldGenRegion level, @Nonnull StructureManager structures, @Nonnull RandomState random, @Nonnull ChunkAccess chunk) {}
-
     @Override public int getSpawnHeight(@Nonnull LevelHeightAccessor level) { return flat.getSpawnHeight(level); }
-
-    @Override @Nonnull public CompletableFuture<ChunkAccess> fillFromNoise(@Nonnull Blender blender, @Nonnull RandomState random, @Nonnull StructureManager structures, @Nonnull ChunkAccess chunk) { return flat.fillFromNoise(blender, random, structures, chunk); }
 
     @Override public int getBaseHeight(int x, int z, @Nonnull Heightmap.Types type, @Nonnull LevelHeightAccessor level, @Nonnull RandomState random) { return flat.getBaseHeight(x, z, type, level, random); }
 
     @Override @Nonnull public NoiseColumn getBaseColumn(int x, int z, @Nonnull LevelHeightAccessor level, @Nonnull RandomState random) { return flat.getBaseColumn(x, z, level, random); }
-
-    @Override public void applyCarvers(@Nonnull WorldGenRegion level, long seed, @Nonnull RandomState random, @Nonnull BiomeManager biomes, @Nonnull StructureManager structures, @Nonnull ChunkAccess chunk) {}
 
     @Override public void applyBiomeDecoration(@Nonnull WorldGenLevel level, @Nonnull ChunkAccess chunk, @Nonnull StructureManager structures) {
         if ((waterLakes || lavaLakes) && !villaged(level, chunk, structures)) { placeLakes(level, chunk.getPos()); }
@@ -131,7 +119,7 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
 
     private static boolean villaged(WorldGenLevel level, ChunkAccess chunk, StructureManager structures) {
         Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-        return !structures.startsForStructure(chunk.getPos(), structure -> registry.wrapAsHolder(structure).is(StructureTags.VILLAGE)).isEmpty();
+        return !LineCompat.starts(structures, chunk.getPos(), structure -> registry.wrapAsHolder(structure).is(StructureTags.VILLAGE)).isEmpty();
     }
 
     private void placeLakes(WorldGenLevel level, ChunkPos at) {
@@ -150,7 +138,7 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
     private void lake(WorldGenLevel level, WorldgenRandom random, Block fluid, Block barrier, BlockPos at) {
         BlockPos pos = at;
         while (pos.getY() > level.getMinY() + 5 && level.isEmptyBlock(pos)) { pos = pos.below(); }
-        if (Feature.LAKE.place(Compat.lake(fluid, barrier), level, this, random, pos.offset(8, 0, 8))) { grassRim(level, pos.below(4)); }
+        if (LineCompat.lake(level, this, random, fluid, barrier, pos.offset(8, 0, 8))) { grassRim(level, pos.below(4)); }
     }
 
     private static void grassRim(WorldGenLevel level, BlockPos corner) {

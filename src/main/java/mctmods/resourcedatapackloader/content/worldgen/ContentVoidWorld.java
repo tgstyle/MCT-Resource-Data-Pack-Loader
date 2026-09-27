@@ -15,7 +15,6 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import java.util.List;
@@ -60,8 +59,7 @@ public final class ContentVoidWorld {
     public static boolean voidRefuses(LevelAccessor level, Structure structure) { return level instanceof ServerLevel server && !(structure instanceof ContentMapStructure) && voidApplies(server); }
 
     public static boolean voidRefuses(WorldGenLevel level, PlacedFeature feature) {
-        Feature<?> type = feature.feature().value().feature();
-        return !(type instanceof ContentShapeFeature || type instanceof ContentCoverFeature || type instanceof ContentCaveStructureFeature) && voidApplies(level.getLevel());
+        return ContentFeatureTypes.foreign(feature) && voidApplies(level.getLevel());
     }
 
     static void standOn(ServerPlayer player) {

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -13,7 +14,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
@@ -76,7 +76,7 @@ public final class LootInjections {
         List<JsonElement> pools = BY_TABLE.get(event.getName());
         if (pools == null) { return; }
         LootTable table = event.getTable();
-        RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, event.getRegistries());
+        RegistryOps<JsonElement> ops = LineCompat.lootOps(event);
         for (JsonElement pool : pools) {
             try { table.addPool(LootPool.CODEC.parse(ops, pool).getOrThrow(JsonParseException::new)); }
             catch (RuntimeException ex) {

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
@@ -52,7 +53,7 @@ public final class CityCrown {
         private int spot(int x, int z) { return (x - minX) * 16 + (z - minZ); }
     }
 
-    static List<StructureStart> cities(StructureManager manager, ChunkPos chunk) { return manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure); }
+    static List<StructureStart> cities(StructureManager manager, ChunkPos chunk) { return LineCompat.starts(manager, chunk, structure -> structure instanceof ContentCityStructure); }
 
     static boolean settling(StructurePiece piece) { return piece instanceof ContentCityPlotPiece plot ? plot.settled() : piece instanceof ContentCityFarmPiece || piece instanceof ContentMapPiece || piece instanceof ContentCityWellPiece well && well.crowned(); }
 

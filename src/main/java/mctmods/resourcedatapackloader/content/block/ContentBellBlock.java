@@ -1,12 +1,12 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentBells;
 import mctmods.resourcedatapackloader.content.def.BellDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBell;
 import mctmods.resourcedatapackloader.util.Registered;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,7 +19,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BellBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -28,11 +27,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentBellBlock extends BellBlock implements IContentBell {
+public final class ContentBellBlock extends LineCompat.BellBase implements IContentBell {
     private static final double HIGHEST_HIT = 0.8124F;
     private static final float RING_VOLUME = 2.0F;
     private static final float RESONATE_VOLUME = 1.0F;
@@ -42,8 +40,6 @@ public final class ContentBellBlock extends BellBlock implements IContentBell {
         super(properties);
         this.bell = def.bell() == null ? BellDef.PLAIN : def.bell();
     }
-
-    @Override @Nonnull public MapCodec<BellBlock> codec() { return MapCodec.unit(this); }
 
     @Override public boolean swings() { return bell.swing(); }
 

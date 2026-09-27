@@ -113,7 +113,7 @@ public final class ContentCityTrees {
     }
 
     private static void sweep(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
-        for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
+        for (StructureStart start : CityCrown.cities(manager, chunk)) {
             BoundingBox city = start.getBoundingBox();
             int minX = Math.max(city.minX() - SWEEP_OUT, chunk.getMinBlockX() - WRITTEN);
             int maxX = Math.min(city.maxX() + SWEEP_OUT, chunk.getMaxBlockX() + WRITTEN);
@@ -197,7 +197,7 @@ public final class ContentCityTrees {
 
     public static List<BoundingBox> footprints(StructureManager manager, ChunkPos chunk, StructurePiece but, BoundingBox near) {
         List<BoundingBox> found = new ArrayList<>();
-        for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
+        for (StructureStart start : CityCrown.cities(manager, chunk)) {
             for (StructurePiece piece : start.getPieces()) {
                 if (piece == but) { continue; }
                 BoundingBox stood = piece instanceof IFelling felling ? felling.stood() : piece instanceof ContentCityPlazaPiece plaza ? plaza.reached() : null;
@@ -227,7 +227,7 @@ public final class ContentCityTrees {
 
     private static List<StructurePiece> pieces(StructureManager manager, ChunkPos chunk, StructurePiece mine, BoundingBox near, Predicate<StructurePiece> kind, boolean own) {
         List<StructurePiece> found = new ArrayList<>();
-        for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
+        for (StructureStart start : CityCrown.cities(manager, chunk)) {
             if (start.getPieces().contains(mine) != own) { continue; }
             for (StructurePiece piece : start.getPieces()) {
                 if (!kind.test(piece)) { continue; }
@@ -242,7 +242,7 @@ public final class ContentCityTrees {
 
     private static List<Stood> standing(StructureManager manager, ChunkPos chunk, BoundingBox near) {
         List<Stood> found = new ArrayList<>();
-        for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
+        for (StructureStart start : CityCrown.cities(manager, chunk)) {
             for (StructurePiece piece : start.getPieces()) {
                 if (!(piece instanceof IFelling felling)) { continue; }
                 BoundingBox felled = felling.felled();

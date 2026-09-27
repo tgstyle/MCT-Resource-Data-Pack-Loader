@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.SharedConstants;
@@ -23,6 +24,8 @@ public final class Port {
     private static final int FIRST_1_21_FORMAT = 41;
     private static final int LAST_1_21_DATA_FORMAT = 48;
     private static final int LAST_1_21_RESOURCE_FORMAT = 34;
+    private static final int LAST_26_2_DATA_FORMAT = 107;
+    private static final int LAST_26_2_RESOURCE_FORMAT = 88;
     public static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "worldintro", "cards", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
 
     private Port() {}
@@ -32,17 +35,19 @@ public final class Port {
     public record Mapped(PackType type, String path, Kind kind) {}
 
     public enum Line {
-        V1_20("1.20.1"), V1_21("1.21.1"), V26("");
+        V1_20("1.20.1"), V1_21("1.21.1"), V26("26.1.2-26.2"), V26_3("26.3");
 
         private final String name;
 
         Line(String name) { this.name = name; }
 
-        public String title() { return name.isEmpty() ? SharedConstants.getCurrentVersion().name() : name; }
+        public String title() { return this == running() ? SharedConstants.getCurrentVersion().name() : name; }
+
+        public boolean acrossSplit() { return (this == V26_3) != (running() == V26_3); }
 
         public static Line running() {
             String name = SharedConstants.getCurrentVersion().name();
-            return name.startsWith("1.20") ? V1_20 : name.startsWith("1.21") ? V1_21 : V26;
+            return name.startsWith("1.20") ? V1_20 : name.startsWith("1.21") ? V1_21 : name.startsWith("26.1") || name.startsWith("26.2") ? V26 : V26_3;
         }
     }
 
@@ -78,15 +83,30 @@ public final class Port {
             catch (IOException ignored) { }
         }
         JsonObject pack = packSection(root);
-        int format = pack != null && pack.has("pack_format") && pack.get("pack_format").isJsonPrimitive() ? pack.get("pack_format").getAsInt() : 0;
+        int format = major(pack, "pack_format");
         boolean ranged = pack != null && (pack.has("min_format") || pack.has("max_format"));
         boolean hasData = Files.isDirectory(data);
         if (plural > 0 && singular == 0) { return Line.V1_20; }
-        if (singular > 0 && plural == 0) { return ranged || format > LAST_1_21_DATA_FORMAT ? Line.V26 : format > 0 ? Line.V1_21 : null; }
-        if (ranged) { return Line.V26; }
+        if (singular > 0 && plural == 0) { return ranged || format > LAST_1_21_DATA_FORMAT ? modern(pack, format, true) : format > 0 ? Line.V1_21 : null; }
+        if (ranged) { return modern(pack, format, hasData); }
         if (format > 0 && format <= LAST_1_20_FORMAT) { return Line.V1_20; }
-        if (!hasData) { return format > LAST_1_21_RESOURCE_FORMAT ? Line.V26 : format > 0 ? Line.V1_21 : null; }
-        return format > LAST_1_21_DATA_FORMAT ? Line.V26 : format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
+        if (!hasData) { return format > LAST_1_21_RESOURCE_FORMAT ? modern(pack, format, false) : format > 0 ? Line.V1_21 : null; }
+        return format > LAST_1_21_DATA_FORMAT ? modern(pack, format, true) : format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
+    }
+
+    private static Line modern(@Nullable JsonObject pack, int format, boolean data) {
+        int last = data ? LAST_26_2_DATA_FORMAT : LAST_26_2_RESOURCE_FORMAT;
+        int current = SharedConstants.getCurrentVersion().packVersion(data ? PackType.SERVER_DATA : PackType.CLIENT_RESOURCES).major();
+        int min = pack != null && pack.has("min_format") ? major(pack, "min_format") : format;
+        int max = pack != null && pack.has("max_format") ? major(pack, "max_format") : format;
+        if (min <= current && current <= max) { return Line.running(); }
+        return max > last ? Line.V26_3 : Line.V26;
+    }
+
+    private static int major(@Nullable JsonObject pack, String key) {
+        JsonElement value = pack == null ? null : pack.get(key);
+        if (value != null && value.isJsonArray() && !value.getAsJsonArray().isEmpty()) { value = value.getAsJsonArray().get(0); }
+        return value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber() ? value.getAsInt() : 0;
     }
 
     private static String folder(String prefix) { return prefix.substring(0, prefix.length() - 1); }

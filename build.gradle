@@ -85,7 +85,8 @@ subprojects {
             'stage'               : stage,
     ]
 
-    sourceSets.main.java.srcDirs = ["$rootDir/src/main/java", "$projectDir/src/main/java"]
+    def layerDirs = (project.name in ['26.1.2', '26.2'] ? ["$rootDir/versions/pre-26.3/src/main/java"] : []) + (project.name in ['26.2', '26.3'] ? ["$rootDir/versions/post-26.1.2/src/main/java"] : [])
+    sourceSets.main.java.srcDirs = ["$rootDir/src/main/java"] + layerDirs + ["$projectDir/src/main/java"]
     sourceSets.main.resources.srcDirs = ["$rootDir/src/main/resources", "$projectDir/src/main/resources"]
 
     processResources {
@@ -164,7 +165,9 @@ subprojects {
 
     dependencies {
         runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
-        runtimeOnly "maven.modrinth:betterf3:${version_betterf3}"
+        if (version_betterf3 != null) {
+            runtimeOnly "maven.modrinth:betterf3:${version_betterf3}"
+        }
         runtimeOnly "maven.modrinth:cloth-config:${version_cloth}"
         compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
         compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"

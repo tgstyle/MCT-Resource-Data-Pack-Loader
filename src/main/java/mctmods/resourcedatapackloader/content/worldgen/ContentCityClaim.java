@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -26,7 +27,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -62,7 +62,7 @@ public final class ContentCityClaim {
         if (city == null) { return true; }
         CityPlan plan = CityPlan.of(ground, CityPlan.districtOf(x, true), CityPlan.districtOf(z, false));
         if (plan == null) { return true; }
-        Holder<Biome> biome = generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(plan.windowX()), QuartPos.fromBlock(generator.getSeaLevel()), QuartPos.fromBlock(plan.windowZ()), random.sampler());
+        Holder<Biome> biome = LineCompat.noiseBiomes(generator.getBiomeSource(), random).at(QuartPos.fromBlock(plan.windowX()), QuartPos.fromBlock(generator.getSeaLevel()), QuartPos.fromBlock(plan.windowZ()));
         return !city.biomes().contains(biome);
     }
 
@@ -74,7 +74,7 @@ public final class ContentCityClaim {
         if (structure.type() == StructureType.RUINED_PORTAL) { return overStreets(start, CityGround.of(seed, generator, random, registries), id); }
         if (structure instanceof ContentCityStructure || structure.step() != GenerationStep.Decoration.SURFACE_STRUCTURES) { return false; }
         if (id == null || !ContentStructureControl.structures("villages").contains(id)) { return false; }
-        if (ContentStructureSpread.pinned(start.getChunkPos())) { return false; }
+        if (ContentStructurePins.pinned(start.getChunkPos())) { return false; }
         CityGround ground = CityGround.of(seed, generator, random, registries);
         BoundingBox box = start.getBoundingBox();
         for (int districtX = CityPlan.districtOf(box.minX(), true); districtX <= CityPlan.districtOf(box.maxX(), true); districtX++) {
@@ -232,15 +232,15 @@ public final class ContentCityClaim {
         return found;
     }
 
-    public static void veinStarts(WorldGenLevel level, OreConfiguration config, int leastX, int leastZ, int mostX, int mostZ) {
+    public static void veinStarts(WorldGenLevel level, List<BlockState> ores, int leastX, int leastZ, int mostX, int mostZ) {
         Vein vein = VEIN.get();
         vein.lines = List.of();
         vein.ore = null;
         vein.spared = 0;
         if (ContentCity.idle()) { return; }
-        for (OreConfiguration.TargetBlockState target : config.targetStates) {
-            if (target.state.getBlock() instanceof FallingBlock) {
-                vein.ore = target.state;
+        for (BlockState ore : ores) {
+            if (ore.getBlock() instanceof FallingBlock) {
+                vein.ore = ore;
                 break;
             }
         }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.types;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.block.ContentContainerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
@@ -129,7 +130,7 @@ public final class ContentBlockTypes {
             case CONTAINER -> List.of(new Created(id, new ContentContainerBlock(def, properties), ContentRegistry.MAIN));
             case BELL -> List.of(new Created(id, new ContentBellBlock(def, properties.noOcclusion()), ContentRegistry.MAIN));
             case LOG -> List.of(new Created(id, new ContentLogBlock(def, properties), ContentRegistry.MAIN));
-            case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, properties.randomTicks().isSuffocating((_, _, _) -> false).isViewBlocking((_, _, _) -> false)), ContentRegistry.MAIN));
+            case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, LineCompat.notViewBlocking(properties.randomTicks().isSuffocating((_, _, _) -> false))), ContentRegistry.MAIN));
             case SAPLING -> {
                 if (def.sapling() == null) {
                     ContentLog.LOGGER.error("Block {} is a sapling but has no 'sapling' section, so there is nothing for it to grow into", variant.id());

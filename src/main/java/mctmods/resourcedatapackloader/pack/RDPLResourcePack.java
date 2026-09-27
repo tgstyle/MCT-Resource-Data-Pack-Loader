@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -40,13 +41,7 @@ public final class RDPLResourcePack implements PackResources {
 
     public static String id(boolean overriding) { return overriding ? ID_OVERRIDING : ID; }
 
-    public static Pack.ResourcesSupplier supplier(PackType type, boolean overriding) {
-        return new Pack.ResourcesSupplier() {
-            @Override @Nonnull public PackResources openPrimary(@Nonnull PackLocationInfo location) { return new RDPLResourcePack(location, type, overriding); }
-
-            @Override @Nonnull public PackResources openFull(@Nonnull PackLocationInfo location, @Nonnull Pack.Metadata metadata) { return new RDPLResourcePack(location, type, overriding); }
-        };
-    }
+    public static Pack.ResourcesSupplier supplier(PackType type, boolean overriding) { return LineCompat.packSupplier(location -> new RDPLResourcePack(location, type, overriding)); }
 
     @Override @Nonnull public PackLocationInfo location() { return location; }
 

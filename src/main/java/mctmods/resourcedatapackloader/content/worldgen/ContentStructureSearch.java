@@ -206,7 +206,7 @@ public final class ContentStructureSearch {
             if (checked == StructureCheckResult.START_PRESENT) { site = placement.getLocatePos(spot); }
             else {
                 ChunkAccess chunk = level.getChunk(spot.x(), spot.z(), ChunkStatus.STRUCTURE_STARTS);
-                StructureStart start = manager.getStartForStructure(SectionPos.bottomOf(chunk), holder.value(), chunk);
+                StructureStart start = chunk.getStartForStructure(holder.value());
                 if (start != null && start.isValid()) { site = placement.getLocatePos(start.getChunkPos()); }
             }
             if (site != null) { return skipped.test(site) ? null : site; }

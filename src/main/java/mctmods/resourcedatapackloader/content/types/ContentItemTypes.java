@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.types;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
@@ -14,6 +15,7 @@ import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
+
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -23,10 +25,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.Unit;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.Consumable;
 import net.minecraft.world.item.component.Consumables;
@@ -97,8 +97,8 @@ public final class ContentItemTypes {
         Item.Properties lasting = lasting(properties, tool.durability());
         Item made = switch (def.toolClass()) {
             case "pickaxe" -> new Item(lasting.pickaxe(tool, 1.0F, speed(def, -2.8F)));
-            case "axe" -> new AxeItem(tool, 6.0F, speed(def, -3.2F), lasting);
-            case "shovel" -> new ShovelItem(tool, 1.5F, speed(def, -3.0F), lasting);
+            case "axe" -> LineCompat.axe(lasting, tool, 6.0F, speed(def, -3.2F));
+            case "shovel" -> LineCompat.shovel(lasting, tool, 1.5F, speed(def, -3.0F));
             case "sword" -> new Item(lasting.tool(tool, SWORD_MINEABLE, 3.0F, speed(def, -2.4F), 0.0F));
             default -> {
                 ContentLog.LOGGER.error("Unknown toolClass '{}' in {}, the item is skipped. Known classes are pickaxe, axe, shovel and sword", def.toolClass(), variant.id());

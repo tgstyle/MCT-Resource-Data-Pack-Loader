@@ -1,0 +1,17 @@
+package mctmods.resourcedatapackloader.mixin.rdpl.common;
+
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Enderman;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(Enderman.class) public abstract class MixinEnderMan {
+    @Inject(method = "teleport()Z", at = @At("HEAD"), cancellable = true)
+    private void rdpl$staysPut(CallbackInfoReturnable<Boolean> cir) {
+        if (ContentEntities.staysPut(Entity.class.cast(this))) { cir.setReturnValue(Boolean.FALSE); }
+    }
+}

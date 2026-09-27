@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.client;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import mctmods.resourcedatapackloader.compat.LineClientCompat;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import javax.annotation.Nonnull;
 
 public final class EntityTint {
@@ -9,14 +10,13 @@ public final class EntityTint {
 
     public static VertexConsumer wrap(VertexConsumer consumer, int tint) { return tint == 0 ? consumer : new Tinted(consumer, tint); }
 
-    private static final class Tinted implements VertexConsumer {
-        private final VertexConsumer inner;
+    private static final class Tinted extends LineClientCompat.ForwardingVertices {
         private final int red;
         private final int green;
         private final int blue;
 
         Tinted(VertexConsumer inner, int tint) {
-            this.inner = inner;
+            super(inner);
             this.red = tint >> 16 & 255;
             this.green = tint >> 8 & 255;
             this.blue = tint & 255;

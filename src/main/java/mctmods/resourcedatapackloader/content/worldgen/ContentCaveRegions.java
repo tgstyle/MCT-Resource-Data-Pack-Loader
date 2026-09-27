@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentParser;
@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -289,7 +290,7 @@ public final class ContentCaveRegions {
             for (BiomeSpawnDef spawn : def.spawns()) {
                 EntityType<?> type = Registered.find(BuiltInRegistries.ENTITY_TYPE, spawn.entity());
                 if (type == null) { continue; }
-                made.computeIfAbsent(spawn.category(), _ -> new ArrayList<>()).add(new Weighted<>(new MobSpawnSettings.SpawnerData(type, spawn.min(), spawn.max()), spawn.weight()));
+                made.computeIfAbsent(spawn.category(), _ -> new ArrayList<>()).add(new Weighted<>(LineCompat.spawner(type, spawn.min(), spawn.max()), spawn.weight()));
             }
             SPAWNERS.put(def.key(), made);
         }
@@ -379,7 +380,8 @@ public final class ContentCaveRegions {
         JsonObject configured = new JsonObject();
         configured.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + feature);
         configured.add("config", config);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + path + ".json", configured.toString());
+        String featurePath = ContentFormats.CONFIGURED_FEATURES + "/" + path + ".json";
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, featurePath, LineCompat.worldgenOut(featurePath, configured).toString());
         JsonObject placed = new JsonObject();
         placed.addProperty("feature", namespace + ":" + path);
         placed.add("placement", new JsonArray());

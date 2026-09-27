@@ -1,11 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerChunkCache;
@@ -14,16 +11,16 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
-import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.Noises;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.synth.NormalNoise;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class CityBergs {
     private static final int REACH = 32;
@@ -31,9 +28,7 @@ public final class CityBergs {
     private static final int MELT_Y = 63;
     static final int TEMPERATURE_SEA = 63;
     private final WorldGenLevel level;
-    private final NormalNoise surface;
-    private final NormalNoise pillar;
-    private final NormalNoise roof;
+    private final LineCompat.IBergNoise noise;
     private final BiomeManager biomes;
     private final int sea;
     private final int minX;
@@ -46,13 +41,10 @@ public final class CityBergs {
         this.level = level;
         ServerChunkCache source = level.getLevel().getChunkSource();
         RandomState random = source.randomState();
-        this.surface = random.getOrCreateNoise(Noises.ICEBERG_SURFACE);
-        this.pillar = random.getOrCreateNoise(Noises.ICEBERG_PILLAR);
-        this.roof = random.getOrCreateNoise(Noises.ICEBERG_PILLAR_ROOF);
-        BiomeSource born = source.getGenerator().getBiomeSource();
-        Climate.Sampler sampler = random.sampler();
+        this.noise = LineCompat.bergNoise(random);
+        LineCompat.INoiseBiomes born = LineCompat.noiseBiomes(source.getGenerator().getBiomeSource(), random);
         Map<Long, Holder<Biome>> seen = new HashMap<>();
-        this.biomes = level.getBiomeManager().withDifferentSource((x, y, z) -> seen.computeIfAbsent(BlockPos.asLong(x, y, z), _ -> born.getNoiseBiome(x, y, z, sampler)));
+        this.biomes = LineCompat.withBiomes(level.getBiomeManager(), (x, y, z) -> seen.computeIfAbsent(BlockPos.asLong(x, y, z), _ -> born.at(x, y, z)));
         this.sea = source.getGenerator().getSeaLevel();
         this.minX = window.minX();
         this.minZ = window.minZ();
@@ -91,11 +83,11 @@ public final class CityBergs {
     }
 
     private boolean rises(int x, int z) {
-        double rise = Math.min(Math.abs(surface.getValue(x, 0.0, z) * 8.25), pillar.getValue(x * 1.28, 0.0, z * 1.28) * 15.0);
+        double rise = noise.rise(x, z);
         if (rise <= 1.8) { return false; }
         Holder<Biome> biome = biomes.getBiome(probe.set(x, sea, z));
         if (!biome.is(Biomes.FROZEN_OCEAN) && !biome.is(Biomes.DEEP_FROZEN_OCEAN)) { return false; }
-        double top = Math.min(rise * rise * 1.2, Math.ceil(Math.abs(roof.getValue(x * 1.17, 0.0, z * 1.17) * 1.5) * 40.0) + 14.0);
+        double top = Math.min(rise * rise * 1.2, Math.ceil(noise.roof(x, z) * 40.0) + 14.0);
         if (biome.value().shouldMeltFrozenOceanIcebergSlightly(probe.set(x, MELT_Y, z), TEMPERATURE_SEA)) { top -= 2.0; }
         return top > 2.0;
     }

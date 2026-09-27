@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -210,7 +211,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         BlockState lining = linings.first();
         String named = ContentCity.stationStructure();
         Identifier key = named.isEmpty() ? null : Identifier.tryParse(named);
-        StructureTemplate held = key == null ? null : level.getLevel().getServer().getStructureManager().get(key).orElse(null);
+        StructureTemplate held = key == null ? null : LineCompat.templates(level.getLevel().getServer()).get(key).orElse(null);
         BoundingBox stood = getBoundingBox();
         if (held == null) {
             ContentCity.missingStation(named);

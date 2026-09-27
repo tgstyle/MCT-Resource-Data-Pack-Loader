@@ -1,16 +1,13 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseBasedChunkGenerator;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseChunk;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Parallel;
 
-import com.google.gson.JsonObject;
-import com.mojang.serialization.JsonOps;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.RegistryAccess;
@@ -25,14 +22,10 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
-import net.minecraft.world.level.levelgen.NoiseChunk;
-import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
@@ -45,7 +38,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class CityGround {
@@ -54,13 +46,13 @@ public final class CityGround {
     private static final int HEIGHTS_HELD = 1 << 18;
     private static final Map<Column, Integer> HEIGHTS = new ConcurrentHashMap<>();
     private static final int CELLS_HELD = 256;
-    private static final Map<Cell, CellNoise> CELLS = new ConcurrentHashMap<>();
-    private static final DensityFunctions.BeardifierOrMarker MARKER = (DensityFunctions.BeardifierOrMarker) DensityFunctions.BeardifierOrMarker.CODEC.codec().codec().parse(JsonOps.INSTANCE, new JsonObject()).result().orElseThrow();
+    private static final Map<Cell, CityCells> CELLS = new ConcurrentHashMap<>();
     private final long seed;
     private final ChunkGenerator generator;
     private final RandomState random;
     private final LevelHeightAccessor height;
     private final RegistryAccess registries;
+    @Nullable private LineCompat.INoiseBiomes biomes;
 
     private CityGround(long seed, ChunkGenerator generator, RandomState random, LevelHeightAccessor height, RegistryAccess registries) {
         this.seed = seed;
@@ -100,17 +92,17 @@ public final class CityGround {
         }
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) generator;
         NoiseSettings shape = shape(noise);
-        if (Math.floorDiv(shape.height(), shape.getCellHeight()) <= 0) {
+        int width = CityCells.width(shape);
+        if (width <= 0) {
             hold(key, height.getMinY() - 1);
             return height.getMinY() - 1;
         }
-        int width = shape.getCellWidth();
         Cell cellKey = new Cell(generator, random, height.getMinY(), height.getHeight(), Math.floorDiv(x, width), Math.floorDiv(z, width));
-        CellNoise cell = CELLS.get(cellKey);
+        CityCells cell = CELLS.get(cellKey);
         if (cell == null) {
-            CellNoise made = new CellNoise(noise, random, shape, cellKey.x() * width, cellKey.z() * width);
+            CityCells made = new CityCells(noise, random, shape, cellKey.x() * width, cellKey.z() * width);
             if (CELLS.size() >= CELLS_HELD) { CELLS.clear(); }
-            CellNoise kept = CELLS.putIfAbsent(cellKey, made);
+            CityCells kept = CELLS.putIfAbsent(cellKey, made);
             cell = kept == null ? made : kept;
         }
         return held(cell, x, z, type);
@@ -120,8 +112,8 @@ public final class CityGround {
         if (generator.getClass() != NoiseBasedChunkGenerator.class) { return; }
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) generator;
         NoiseSettings shape = shape(noise);
-        if (Math.floorDiv(shape.height(), shape.getCellHeight()) <= 0) { return; }
-        int width = shape.getCellWidth();
+        int width = CityCells.width(shape);
+        if (width <= 0) { return; }
         List<int[]> open = new ArrayList<>();
         for (int cellX = Math.floorDiv(minX, width); cellX <= Math.floorDiv(maxX, width); cellX++) {
             for (int cellZ = Math.floorDiv(minZ, width); cellZ <= Math.floorDiv(maxZ, width); cellZ++) {
@@ -133,7 +125,7 @@ public final class CityGround {
         Parallel.each(open.size(), at -> {
             int originX = open.get(at)[0] * width;
             int originZ = open.get(at)[1] * width;
-            CellNoise cell = new CellNoise(noise, random, shape, originX, originZ);
+            CityCells cell = new CityCells(noise, random, shape, originX, originZ);
             for (int x = originX; x < originX + width; x++) {
                 for (int z = originZ; z < originZ + width; z++) { held(cell, x, z, Heightmap.Types.OCEAN_FLOOR_WG); }
             }
@@ -149,7 +141,7 @@ public final class CityGround {
         return true;
     }
 
-    private int held(CellNoise cell, int x, int z, Heightmap.Types type) {
+    private int held(CityCells cell, int x, int z, Heightmap.Types type) {
         int[] tops = cell.tops(x, z, height.getMinY());
         hold(column(Heightmap.Types.WORLD_SURFACE_WG, x, z), tops[0] - 1);
         hold(column(Heightmap.Types.OCEAN_FLOOR_WG, x, z), tops[1] - 1);
@@ -174,13 +166,20 @@ public final class CityGround {
 
     public int surfaceDepth(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceDepth(x, z); }
 
-    public double surfaceNoise(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceNoise().getValue(x, 0.0, z); }
+    public double surfaceNoise(int x, int z) { return LineCompat.surfaceNoise(random, x, z); }
 
     public BlockState band(int x, int y, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getBand(x, y, z); }
 
     public BlockState stone() { return generator instanceof NoiseBasedChunkGenerator noise ? noise.generatorSettings().value().defaultBlock() : Blocks.STONE.defaultBlockState(); }
 
-    public Holder<Biome> biome(int x, int z) { return generator.getBiomeSource().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(sea()), QuartPos.fromBlock(z), random.sampler()); }
+    public Holder<Biome> biome(int x, int z) {
+        LineCompat.INoiseBiomes held = biomes;
+        if (held == null) {
+            held = LineCompat.noiseBiomes(generator.getBiomeSource(), random);
+            biomes = held;
+        }
+        return held.at(QuartPos.fromBlock(x), QuartPos.fromBlock(sea()), QuartPos.fromBlock(z));
+    }
 
     @Nullable public String villageType(int x, int z) { return villageTag(biome(x, z)); }
 
@@ -261,52 +260,5 @@ public final class CityGround {
             }
         }
         return false;
-    }
-
-    private static final class CellNoise {
-        private final NoiseChunk noise;
-        private final NoiseSettings shape;
-        private final BlockState fallback;
-
-        private CellNoise(NoiseBasedChunkGenerator generator, RandomState random, NoiseSettings shape, int originX, int originZ) {
-            NoiseGeneratorSettings settings = generator.generatorSettings().value();
-            this.shape = shape;
-            this.fallback = settings.defaultBlock();
-            this.noise = new NoiseChunk(1, random, originX, originZ, shape, MARKER, settings, ((INoiseBasedChunkGenerator) generator).rdpl$getGlobalFluidPicker().get(), Blender.empty());
-            noise.initializeForFirstCellX();
-            noise.advanceCellX(0);
-        }
-
-        private synchronized int[] tops(int x, int z, int bottom) {
-            int tall = shape.getCellHeight();
-            int wide = shape.getCellWidth();
-            int lowest = Math.floorDiv(shape.minY(), tall);
-            double alongX = (double) Math.floorMod(x, wide) / wide;
-            double alongZ = (double) Math.floorMod(z, wide) / wide;
-            Predicate<BlockState> surface = Heightmap.Types.WORLD_SURFACE_WG.isOpaque();
-            Predicate<BlockState> floor = Heightmap.Types.OCEAN_FLOOR_WG.isOpaque();
-            int[] tops = {bottom, bottom};
-            boolean surfaced = false;
-            for (int cellY = Math.floorDiv(shape.height(), tall) - 1; cellY >= 0; cellY--) {
-                noise.selectCellYZ(cellY, 0);
-                for (int inY = tall - 1; inY >= 0; inY--) {
-                    int y = (lowest + cellY) * tall + inY;
-                    noise.updateForY(y, (double) inY / tall);
-                    noise.updateForX(x, alongX);
-                    noise.updateForZ(z, alongZ);
-                    BlockState state = ((INoiseChunk) noise).rdpl$getInterpolatedState();
-                    BlockState found = state == null ? fallback : state;
-                    if (!surfaced && surface.test(found)) {
-                        tops[0] = y + 1;
-                        surfaced = true;
-                    }
-                    if (surfaced && floor.test(found)) {
-                        tops[1] = y + 1;
-                        return tops;
-                    }
-                }
-            }
-            return tops;
-        }
     }
 }

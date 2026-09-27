@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.item;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
@@ -51,7 +52,7 @@ public class ContentDrinkItem extends Item {
         if (container == null) { return stack; }
         ItemStack left = new ItemStack(container);
         if (stack.isEmpty()) { return left; }
-        if (player != null && !player.getInventory().add(left)) { player.drop(left, false); }
+        if (player != null && !player.getInventory().add(left)) { LineCompat.drop(player, left); }
         return stack;
     }
 

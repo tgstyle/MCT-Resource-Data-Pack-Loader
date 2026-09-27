@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.util.Scores;
@@ -62,7 +63,7 @@ final class CardPlace {
             Identifier id = Identifier.tryParse(name);
             Structure structure = id == null ? null : level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValue(id);
             if (structure != null) {
-                if (level.structureManager().getStructureWithPieceAt(at, structure).isValid()) { return true; }
+                if (LineCompat.pieceAt(level.structureManager(), at, structure).isValid()) { return true; }
                 continue;
             }
             BlockPos near = ContentLocate.nearest(level, name, at);

@@ -15,7 +15,7 @@ public final class CityDeckBeard extends Beardifier {
         this.beard = beard;
     }
 
-    public static Beardifier around(Beardifier beard, StructureManager manager, ChunkPos chunk) { return manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure).isEmpty() ? beard : new CityDeckBeard(beard); }
+    public static Beardifier around(Beardifier beard, StructureManager manager, ChunkPos chunk) { return CityCrown.cities(manager, chunk).isEmpty() ? beard : new CityDeckBeard(beard); }
 
     @Override public double compute(@Nonnull DensityFunction.FunctionContext context) { return beard.compute(context); }
 

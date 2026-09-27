@@ -21,7 +21,6 @@ import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
-import mctmods.resourcedatapackloader.content.worldgen.ContentCaveStructureFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCity;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityBulbPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityCapPiece;
@@ -44,20 +43,16 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCityRailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityStructure;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityWellPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlotPoolElement;
-import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentFeatureTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentFlatSource;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
-import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapStructure;
-import mctmods.resourcedatapackloader.content.worldgen.ContentSpreadPlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
-import mctmods.resourcedatapackloader.content.worldgen.ContentStructureRings;
-import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSpread;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
 import mctmods.resourcedatapackloader.util.Config;
@@ -88,14 +83,8 @@ public final class ContentEvents {
     private ContentEvents() {}
 
     public static void onRegister(RegisterEvent event) {
-        if (event.getRegistryKey().equals(Registries.FEATURE)) {
-            event.register(Registries.FEATURE, helper -> {
-                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
-                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
-                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.STRUCTURE_FEATURE), ContentCaveStructureFeature.INSTANCE);
-            });
-        }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
+        ContentFeatureTypes.register(event);
+        if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
                 helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC);
                 helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
             });
@@ -128,13 +117,6 @@ public final class ContentEvents {
             helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stairs"), ContentCityStairsPiece.TYPE);
             helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stamp"), ContentCityStampPiece.TYPE);
         }); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) {
-            event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
-                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE);
-                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RINGS_PLACEMENT), ContentStructureRings.TYPE);
-            });
-        }
-        else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
         else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
         if (Config.contentOff()) {
             if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, _ -> generateData()); }

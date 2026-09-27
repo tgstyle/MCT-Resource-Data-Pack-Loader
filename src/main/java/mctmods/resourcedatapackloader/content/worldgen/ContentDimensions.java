@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
@@ -229,7 +230,7 @@ public final class ContentDimensions {
         boolean veinless = "overworld".equals(vanillaSettings) && ContentOreControl.veinsBlocked(dimension);
         boolean grounded = "overworld".equals(vanillaSettings) && ContentBiomes.any();
         if (def.shapesNoise() || seamed || flatBedrock || veinless || grounded) {
-            JsonObject settings = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
+            JsonObject settings = LineCompat.worldgenIn("worldgen/noise_settings/" + vanillaSettings + ".json");
             if (settings != null) {
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
                 if (veinless) { settings.addProperty("ore_veins_enabled", false); }
@@ -251,7 +252,8 @@ public final class ContentDimensions {
                     settings.add("default_fluid", lava);
                 }
                 Identifier id = Identifier.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
-                GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
+                String settingsPath = "worldgen/noise_settings/" + id.getPath() + ".json";
+                GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), settingsPath, LineCompat.worldgenOut(settingsPath, settings).toString());
                 if ("overworld".equals(vanillaSettings)) { ContentWorldShape.overworldNoise(id); }
                 settingsId = id.toString();
             }

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
+
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -36,6 +38,6 @@ public final class Advancements {
 
     public static String title(MinecraftServer server, String name) {
         AdvancementHolder advancement = find(server, name);
-        return advancement == null ? name : advancement.value().display().map(shown -> shown.getTitle().getString()).orElse(name);
+        return advancement == null ? name : advancement.value().display().map(shown -> LineCompat.title(shown).getString()).orElse(name);
     }
 }

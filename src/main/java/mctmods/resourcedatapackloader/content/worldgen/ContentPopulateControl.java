@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
@@ -13,7 +14,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -49,7 +49,7 @@ public final class ContentPopulateControl {
         boolean any() { return animals || !features.isEmpty() || !carvers.isEmpty() || !structures.isEmpty(); }
     }
 
-    private record Bound(Set<PlacedFeature> features, Set<ConfiguredWorldCarver<?>> carvers, boolean animals, Set<Structure> structures) {}
+    private record Bound(Set<PlacedFeature> features, Set<Object> carvers, boolean animals, Set<Structure> structures) {}
 
     public static boolean readsOption(String key) { return OPTIONS.containsKey(key); }
 
@@ -123,8 +123,8 @@ public final class ContentPopulateControl {
         Set<PlacedFeature> features = Collections.newSetFromMap(new IdentityHashMap<>());
         Registry<PlacedFeature> placed = level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE);
         for (String path : featureNames) { placed.getOptional(Identifier.fromNamespaceAndPath("minecraft", path)).ifPresent(features::add); }
-        Set<ConfiguredWorldCarver<?>> carvers = Collections.newSetFromMap(new IdentityHashMap<>());
-        Registry<ConfiguredWorldCarver<?>> configured = level.registryAccess().lookupOrThrow(Registries.CONFIGURED_CARVER);
+        Set<Object> carvers = Collections.newSetFromMap(new IdentityHashMap<>());
+        Registry<?> configured = LineCompat.carvers(level.registryAccess());
         for (String path : carverNames) { configured.getOptional(Identifier.fromNamespaceAndPath("minecraft", path)).ifPresent(carvers::add); }
         Set<Structure> structures = Collections.newSetFromMap(new IdentityHashMap<>());
         Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
@@ -144,7 +144,7 @@ public final class ContentPopulateControl {
         return held != null && held.features().contains(feature);
     }
 
-    public static boolean carves(ChunkGenerator generator, ConfiguredWorldCarver<?> carver) {
+    public static boolean carves(ChunkGenerator generator, Object carver) {
         Bound held = bound.get(generator);
         return held == null || !held.carvers().contains(carver);
     }

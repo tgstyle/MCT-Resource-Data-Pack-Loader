@@ -27,7 +27,6 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmithingTrimRecipe;
 import net.minecraft.world.item.crafting.display.RecipeDisplay;
-import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import net.minecraft.world.item.equipment.trim.TrimMaterial;
 import net.minecraft.world.item.equipment.trim.TrimMaterials;
@@ -155,10 +154,8 @@ public final class RecipeLoading {
 
     public static boolean late(Identifier id, Recipe<?> recipe, ItemStack result) { return RecipeDisabled.uses(recipe, result) || !FurnaceRecipes.resolvedAtLoad() && recipe instanceof AbstractCookingRecipe cooking && FurnaceRecipes.removesLate(id, List.of(cooking.input()), result, spared(id)); }
 
-    public static ContextMap displayContext(HolderLookup.Provider registries) { return new ContextMap.Builder().withParameter(SlotDisplayContext.REGISTRIES, registries).create(SlotDisplayContext.CONTEXT); }
-
-    public static ItemStack result(Recipe<?> recipe, ContextMap context) {
-        if (recipe instanceof SmithingTrimRecipe) { return trimmed(context.getOrThrow(SlotDisplayContext.REGISTRIES)); }
+    public static ItemStack result(Recipe<?> recipe, ContextMap context, HolderLookup.Provider registries) {
+        if (recipe instanceof SmithingTrimRecipe) { return trimmed(registries); }
         List<RecipeDisplay> displays = recipe.display();
         return displays.isEmpty() ? ItemStack.EMPTY : displays.getFirst().result().resolveForFirstStack(context);
     }

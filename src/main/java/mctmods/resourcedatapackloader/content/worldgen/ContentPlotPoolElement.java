@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 
 import com.mojang.datafixers.util.Either;
@@ -66,7 +67,7 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
         tag.putString("pool", "minecraft:empty");
         tag.putString("joint", "aligned");
         tag.putString("final_state", "minecraft:air");
-        found.addFirst(StructureTemplate.JigsawBlockInfo.of(new StructureTemplate.StructureBlockInfo(at, Blocks.JIGSAW.defaultBlockState().setValue(JigsawBlock.ORIENTATION, FrontAndTop.fromFrontAndTop(rotation.rotate(Direction.NORTH), Direction.UP)), tag)));
+        found.addFirst(LineCompat.jigsaw(new StructureTemplate.StructureBlockInfo(at, Blocks.JIGSAW.defaultBlockState().setValue(JigsawBlock.ORIENTATION, FrontAndTop.fromFrontAndTop(rotation.rotate(Direction.NORTH), Direction.UP)), tag)));
         return found;
     }
 

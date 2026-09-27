@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
@@ -31,7 +32,7 @@ public final class ContentDeepCaves {
     private static final String FOLDER = "worldgen/density_function";
     private static final String VANILLA_NOODLE = "minecraft:overworld/caves/noodle";
     private static final String VANILLA_SPAGHETTI = "minecraft:overworld/caves/spaghetti_2d";
-    private static final String GRADIENT = "minecraft:y_clamped_gradient";
+    private static final String GRADIENT = LineCompat.DENSITY_GRADIENT;
     private static final String RANGE = "minecraft:range_choice";
     private static final String HEIGHT = "minecraft:y";
 
@@ -106,8 +107,8 @@ public final class ContentDeepCaves {
     private static JsonElement spaghettiFloor(JsonElement element, int floor) {
         JsonObject gradient = gradient(element, ContentWorldShape.VANILLA_MAX);
         if (gradient != null) {
-            gradient.addProperty("from_y", floor);
-            gradient.addProperty("to_y", floor + SPAGHETTI_SPAN);
+            gradient.addProperty(LineCompat.GRADIENT_FROM, floor);
+            gradient.addProperty(LineCompat.GRADIENT_TO, floor + SPAGHETTI_SPAN);
         }
         return element;
     }
@@ -115,8 +116,8 @@ public final class ContentDeepCaves {
     private static JsonElement deepFloor(JsonElement element, int floor, String noodleId, String spaghettiId) {
         JsonObject slide = gradient(element, ContentWorldShape.VANILLA_MIN + SLIDE);
         if (slide != null) {
-            slide.addProperty("from_y", floor);
-            slide.addProperty("to_y", floor + SLIDE);
+            slide.addProperty(LineCompat.GRADIENT_FROM, floor);
+            slide.addProperty(LineCompat.GRADIENT_TO, floor + SLIDE);
             return element;
         }
         if (names(element, VANILLA_NOODLE)) { return new JsonPrimitive(noodleId); }
@@ -141,7 +142,7 @@ public final class ContentDeepCaves {
 
     @Nullable private static JsonObject gradient(JsonElement element, int toY) {
         JsonObject gradient = typed(element, GRADIENT);
-        if (gradient == null || GsonHelper.getAsInt(gradient, "from_y", 0) != ContentWorldShape.VANILLA_MIN || GsonHelper.getAsInt(gradient, "to_y", 0) != toY) { return null; }
+        if (gradient == null || GsonHelper.getAsInt(gradient, LineCompat.GRADIENT_FROM, 0) != ContentWorldShape.VANILLA_MIN || GsonHelper.getAsInt(gradient, LineCompat.GRADIENT_TO, 0) != toY) { return null; }
         return gradient;
     }
 }

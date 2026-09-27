@@ -3,10 +3,10 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
 import mctmods.resourcedatapackloader.compat.ClientCompat;
+import mctmods.resourcedatapackloader.compat.LineClientCompat;
 import mctmods.resourcedatapackloader.content.compat.ContentCurios;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -14,8 +14,6 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
-import org.lwjgl.glfw.GLFW;
-
 import javax.annotation.Nullable;
 
 public final class PouchKey {
@@ -27,7 +25,7 @@ public final class PouchKey {
 
     public static void register(RegisterKeyMappingsEvent event) {
         if (ContentCurios.missing()) { return; }
-        key = new KeyMapping(NAME, KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
+        key = new KeyMapping(NAME, KeyConflictContext.IN_GAME, LineClientCompat.keyV(), CATEGORY);
         event.registerCategory(CATEGORY);
         event.register(key);
     }

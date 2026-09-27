@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -21,7 +22,7 @@ public final class ContentFormats {
     public static final String BIOME_MODIFIERS = "neoforge/biome_modifier";
     public static final String ADD_FEATURES = "neoforge:add_features";
     public static final String ANY_HOLDER_SET = "neoforge:any";
-    public static final String CONFIGURED_FEATURES = "worldgen/configured_feature";
+    public static final String CONFIGURED_FEATURES = LineCompat.FEATURES;
     public static final String PLACED_FEATURES = "worldgen/placed_feature";
     public static final String CONVENTION = "c";
     public static final String CONVENTION_HOLDER_SETS = "neoforge";

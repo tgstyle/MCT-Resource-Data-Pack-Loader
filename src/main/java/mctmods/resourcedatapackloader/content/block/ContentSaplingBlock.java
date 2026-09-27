@@ -1,24 +1,19 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.BonemealableBlock;
-import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -33,7 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
-public final class ContentSaplingBlock extends VegetationBlock implements BonemealableBlock {
+public final class ContentSaplingBlock extends LineCompat.SaplingBase {
     private static final ThreadLocal<IntegerProperty> PENDING = new ThreadLocal<>();
     private final BlockDef def;
     private final SaplingDef sapling;
@@ -53,11 +48,9 @@ public final class ContentSaplingBlock extends VegetationBlock implements Boneme
         this.def = def;
         this.sapling = sapling;
         this.stage = stage;
-        this.grower = new TreeGrower(id.toString(), Optional.empty(), Optional.of(ResourceKey.create(Registries.CONFIGURED_FEATURE, Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), Optional.empty());
+        this.grower = LineCompat.treeGrower(id, Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"));
         registerDefaultState(stateDefinition.any().setValue(stage, 0));
     }
-
-    @Override @Nonnull protected MapCodec<? extends VegetationBlock> codec() { return MapCodec.unit(this); }
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(PENDING.get()); }
 
@@ -74,11 +67,7 @@ public final class ContentSaplingBlock extends VegetationBlock implements Boneme
         advance(level, pos, state, random);
     }
 
-    @Override public boolean isValidBonemealTarget(@Nonnull LevelReader level, @Nonnull BlockPos pos, @Nonnull BlockState state) { return true; }
-
-    @Override public boolean isBonemealSuccess(@Nonnull Level level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state) { return true; }
-
-    @Override public void performBonemeal(@Nonnull ServerLevel level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state) { advance(level, pos, state, random); }
+    @Override protected void grow(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) { advance(level, pos, state, random); }
 
     private void advance(ServerLevel level, BlockPos pos, BlockState state, RandomSource random) {
         int current = state.getValue(stage);
@@ -93,7 +82,7 @@ public final class ContentSaplingBlock extends VegetationBlock implements Boneme
     private void placeStructure(ServerLevel level, BlockPos pos, RandomSource random) {
         String grown = sapling.growsInto(random);
         Identifier named = Identifier.tryParse(grown);
-        Optional<StructureTemplate> held = named == null ? Optional.empty() : level.getStructureManager().get(named);
+        Optional<StructureTemplate> held = named == null ? Optional.empty() : LineCompat.templates(level.getServer()).get(named);
         if (held.isEmpty()) {
             ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.key(), grown);
             return;

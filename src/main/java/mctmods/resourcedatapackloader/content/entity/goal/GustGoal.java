@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -68,7 +69,7 @@ public final class GustGoal extends Goal {
             Compat.knockback(other, power, mob.getX() - other.getX(), mob.getZ() - other.getZ(), source, 1.0F);
             Vec3 motion = other.getDeltaMovement();
             other.setDeltaMovement(motion.x, motion.y + 0.25D * power, motion.z);
-            other.hurtMarked = true;
+            LineCompat.markVelocity(other);
         }
     }
 }

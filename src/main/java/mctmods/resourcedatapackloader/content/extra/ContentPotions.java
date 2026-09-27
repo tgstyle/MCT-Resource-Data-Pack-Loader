@@ -30,8 +30,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionBrewing;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -206,7 +204,15 @@ public final class ContentPotions {
         if (count > 0) { Summary.info("content_potion_types", "Registered " + count + " potion type(s) from packs"); }
     }
 
-    public static void applyBrewing(PotionBrewing.Builder builder) {
+    public interface Brewing {
+        void mix(Holder<Potion> from, Item ingredient, Holder<Potion> to);
+
+        void recipe(Item input, Item ingredient, ItemStack output);
+
+        void container(Item item);
+    }
+
+    public static void applyBrewing(Brewing brewing) {
         load();
         int count = 0;
         for (BrewingDef def : BREWING) {
@@ -217,17 +223,17 @@ public final class ContentPotions {
                 Holder<Potion> from = type(def.key(), def.from());
                 Holder<Potion> to = type(def.key(), def.to());
                 if (from == null || to == null) { continue; }
-                builder.addMix(from, ingredient.getItem(), to);
+                brewing.mix(from, ingredient.getItem(), to);
                 count++;
                 continue;
             }
             ItemStack input = ContentStacks.parse(def.key(), def.input(), 1);
             ItemStack output = ContentStacks.parse(def.key(), def.output(), 1);
             if (input.isEmpty() || output.isEmpty()) { continue; }
-            builder.addRecipe(Ingredient.of(input.getItem()), Ingredient.of(ingredient.getItem()), output);
+            brewing.recipe(input.getItem(), ingredient.getItem(), output);
             count++;
         }
-        containers(builder::addContainer);
+        containers(brewing::container);
         if (count > 0) { Summary.info("content_brewing", "Added " + count + " brewing recipe(s) from packs"); }
     }
 

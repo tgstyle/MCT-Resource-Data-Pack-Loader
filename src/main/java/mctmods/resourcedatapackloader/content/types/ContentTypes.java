@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.types;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
@@ -29,42 +30,42 @@ public final class ContentTypes {
     private ContentTypes() {}
 
     static {
-        material("air", MapColor.NONE, false, false, false, true, PushReaction.NORMAL);
-        material("grass", MapColor.GRASS, true, false, false, false, PushReaction.NORMAL);
-        material("ground", MapColor.DIRT, true, false, false, false, PushReaction.NORMAL);
-        material("wood", MapColor.WOOD, true, false, true, false, PushReaction.NORMAL);
-        material("rock", MapColor.STONE, true, true, false, false, PushReaction.NORMAL);
-        material("iron", MapColor.METAL, true, true, false, false, PushReaction.NORMAL);
-        material("anvil", MapColor.METAL, true, true, false, false, PushReaction.BLOCK);
-        material("water", MapColor.WATER, false, false, false, true, PushReaction.DESTROY);
-        material("lava", MapColor.FIRE, false, false, false, true, PushReaction.DESTROY);
-        material("leaves", MapColor.PLANT, true, false, true, false, PushReaction.DESTROY);
-        material("plants", MapColor.PLANT, false, false, false, false, PushReaction.DESTROY);
-        material("vine", MapColor.PLANT, false, false, true, true, PushReaction.DESTROY);
-        material("sponge", MapColor.COLOR_YELLOW, true, false, false, false, PushReaction.NORMAL);
-        material("cloth", MapColor.WOOL, true, false, true, false, PushReaction.NORMAL);
-        material("fire", MapColor.NONE, false, false, false, true, PushReaction.DESTROY);
-        material("sand", MapColor.SAND, true, false, false, false, PushReaction.NORMAL);
-        material("circuits", MapColor.NONE, false, false, false, false, PushReaction.DESTROY);
-        material("carpet", MapColor.WOOL, false, false, true, false, PushReaction.NORMAL);
-        material("glass", MapColor.NONE, true, false, false, false, PushReaction.NORMAL);
-        material("redstone_light", MapColor.NONE, true, false, false, false, PushReaction.NORMAL);
-        material("tnt", MapColor.FIRE, true, false, true, false, PushReaction.NORMAL);
-        material("coral", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
-        material("ice", MapColor.ICE, true, false, false, false, PushReaction.NORMAL);
-        material("packed_ice", MapColor.ICE, true, false, false, false, PushReaction.NORMAL);
-        material("snow", MapColor.SNOW, false, true, false, true, PushReaction.DESTROY);
-        material("crafted_snow", MapColor.SNOW, true, true, false, false, PushReaction.NORMAL);
-        material("cactus", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
-        material("clay", MapColor.CLAY, true, false, false, false, PushReaction.NORMAL);
-        material("gourd", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
-        material("dragon_egg", MapColor.PLANT, true, false, false, false, PushReaction.DESTROY);
-        material("portal", MapColor.NONE, false, false, false, false, PushReaction.BLOCK);
-        material("cake", MapColor.NONE, true, false, false, false, PushReaction.DESTROY);
-        material("web", MapColor.WOOL, false, true, false, false, PushReaction.DESTROY);
-        material("piston", MapColor.STONE, true, false, false, false, PushReaction.BLOCK);
-        material("barrier", MapColor.NONE, true, true, false, false, PushReaction.BLOCK);
-        material("structure_void", MapColor.NONE, false, false, false, true, PushReaction.NORMAL);
+        material("air", MapColor.NONE, false, false, false, true, LineCompat.PUSH_NORMAL);
+        material("grass", MapColor.GRASS, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("ground", MapColor.DIRT, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("wood", MapColor.WOOD, true, false, true, false, LineCompat.PUSH_NORMAL);
+        material("rock", MapColor.STONE, true, true, false, false, LineCompat.PUSH_NORMAL);
+        material("iron", MapColor.METAL, true, true, false, false, LineCompat.PUSH_NORMAL);
+        material("anvil", MapColor.METAL, true, true, false, false, LineCompat.PUSH_BLOCK);
+        material("water", MapColor.WATER, false, false, false, true, LineCompat.PUSH_DESTROY);
+        material("lava", MapColor.FIRE, false, false, false, true, LineCompat.PUSH_DESTROY);
+        material("leaves", MapColor.PLANT, true, false, true, false, LineCompat.PUSH_DESTROY);
+        material("plants", MapColor.PLANT, false, false, false, false, LineCompat.PUSH_DESTROY);
+        material("vine", MapColor.PLANT, false, false, true, true, LineCompat.PUSH_DESTROY);
+        material("sponge", MapColor.COLOR_YELLOW, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("cloth", MapColor.WOOL, true, false, true, false, LineCompat.PUSH_NORMAL);
+        material("fire", MapColor.NONE, false, false, false, true, LineCompat.PUSH_DESTROY);
+        material("sand", MapColor.SAND, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("circuits", MapColor.NONE, false, false, false, false, LineCompat.PUSH_DESTROY);
+        material("carpet", MapColor.WOOL, false, false, true, false, LineCompat.PUSH_NORMAL);
+        material("glass", MapColor.NONE, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("redstone_light", MapColor.NONE, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("tnt", MapColor.FIRE, true, false, true, false, LineCompat.PUSH_NORMAL);
+        material("coral", MapColor.PLANT, true, false, false, false, LineCompat.PUSH_DESTROY);
+        material("ice", MapColor.ICE, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("packed_ice", MapColor.ICE, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("snow", MapColor.SNOW, false, true, false, true, LineCompat.PUSH_DESTROY);
+        material("crafted_snow", MapColor.SNOW, true, true, false, false, LineCompat.PUSH_NORMAL);
+        material("cactus", MapColor.PLANT, true, false, false, false, LineCompat.PUSH_DESTROY);
+        material("clay", MapColor.CLAY, true, false, false, false, LineCompat.PUSH_NORMAL);
+        material("gourd", MapColor.PLANT, true, false, false, false, LineCompat.PUSH_DESTROY);
+        material("dragon_egg", MapColor.PLANT, true, false, false, false, LineCompat.PUSH_DESTROY);
+        material("portal", MapColor.NONE, false, false, false, false, LineCompat.PUSH_BLOCK);
+        material("cake", MapColor.NONE, true, false, false, false, LineCompat.PUSH_DESTROY);
+        material("web", MapColor.WOOL, false, true, false, false, LineCompat.PUSH_DESTROY);
+        material("piston", MapColor.STONE, true, false, false, false, LineCompat.PUSH_BLOCK);
+        material("barrier", MapColor.NONE, true, true, false, false, LineCompat.PUSH_BLOCK);
+        material("structure_void", MapColor.NONE, false, false, false, true, LineCompat.PUSH_NORMAL);
         MAP_COLORS.put("air", MapColor.NONE);
         MAP_COLORS.put("grass", MapColor.GRASS);
         MAP_COLORS.put("sand", MapColor.SAND);
@@ -135,9 +136,9 @@ public final class ContentTypes {
         };
     }
 
-    @SuppressWarnings("deprecation") public static boolean washedAway(BlockState state) {
+    public static boolean washedAway(BlockState state) {
         ContentRegistry.BlockEntry entry = ContentRegistry.entry(state.getBlock());
-        return entry != null && !state.blocksMotion() && !HOLDS_BACK_LIQUID.contains(materialName(entry.def()));
+        return entry != null && LineCompat.passable(state) &&!HOLDS_BACK_LIQUID.contains(materialName(entry.def()));
     }
 
     private static String modelledType(String type) { return ContentBlockTypes.borrowsModel(type) ? ContentBlockTypes.BASIC : type; }

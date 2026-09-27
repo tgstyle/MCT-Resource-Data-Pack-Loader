@@ -309,7 +309,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     private List<BoundingBox> underAnother(StructureManager manager, ChunkPos chunk, BoundingBox near) {
         List<BoundingBox> found = new ArrayList<>();
-        for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
+        for (StructureStart start : CityCrown.cities(manager, chunk)) {
             if (!start.getPieces().contains(this)) { continue; }
             for (StructurePiece piece : start.getPieces()) {
                 if (piece == this) { continue; }

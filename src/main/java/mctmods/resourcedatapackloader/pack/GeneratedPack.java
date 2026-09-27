@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
+
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -27,13 +29,7 @@ public final class GeneratedPack implements PackResources {
         this.type = type;
     }
 
-    public static Pack.ResourcesSupplier supplier(PackType type) {
-        return new Pack.ResourcesSupplier() {
-            @Override @Nonnull public PackResources openPrimary(@Nonnull PackLocationInfo location) { return new GeneratedPack(location, type); }
-
-            @Override @Nonnull public PackResources openFull(@Nonnull PackLocationInfo location, @Nonnull Pack.Metadata metadata) { return new GeneratedPack(location, type); }
-        };
-    }
+    public static Pack.ResourcesSupplier supplier(PackType type) { return LineCompat.packSupplier(location -> new GeneratedPack(location, type)); }
 
     @Override @Nonnull public PackLocationInfo location() { return location; }
 

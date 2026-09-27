@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -38,7 +40,7 @@ public final class GameData {
 
     @Nullable private static JsonObject fromVanilla(Identifier at) {
         if (vanilla == null) { vanilla = ServerPacksSource.createVanillaPackSource(); }
-        IoSupplier<InputStream> supplier = vanilla.getResource(PackType.SERVER_DATA, at);
+        IoSupplier<InputStream> supplier = LineCompat.vanillaResource(vanilla, PackType.SERVER_DATA, at);
         if (supplier == null) { return null; }
         try (InputStream in = supplier.get(); Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) { return GSON.fromJson(reader, JsonObject.class); }
         catch (IOException | JsonParseException failed) { return null; }

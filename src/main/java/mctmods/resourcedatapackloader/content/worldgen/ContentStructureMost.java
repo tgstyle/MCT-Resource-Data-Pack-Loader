@@ -85,7 +85,7 @@ public final class ContentStructureMost {
         Registry<Structure> registry = registries.lookupOrThrow(Registries.STRUCTURE);
         Identifier id = registry.getKey(structure);
         Integer most = id == null ? null : caps().get(id);
-        if (most == null || ContentStructureSpread.pinned(chunk)) { return false; }
+        if (most == null || ContentStructurePins.pinned(chunk)) { return false; }
         int founded = villagesFounded(level);
         if (founded < most) { return false; }
         ContentLog.LOGGER.debug("Villages and cities have been founded {} time(s) in {}, their structureMost, so chunk {} founds no {}", founded, level.dimension().identifier(), chunk, id);
@@ -119,7 +119,7 @@ public final class ContentStructureMost {
 
     public static boolean mayFound(ServerLevel level, ChunkPos chunk) {
         int most = cityMost();
-        if (most <= 0 || ContentStructureSpread.pinned(chunk)) { return true; }
+        if (most <= 0 || ContentStructurePins.pinned(chunk)) { return true; }
         Identifier marker = cityMarker(level, chunk);
         if (marker == null || ContentStructureCounts.count(level, marker) > 0) { return true; }
         return villagesFounded(level) < most;

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
@@ -22,9 +23,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.OreFeature;
-import net.minecraft.world.level.levelgen.feature.ScatteredOreFeature;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -40,7 +38,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public record ContentOreControl() implements BiomeModifier {
+public record ContentOreControl() implements LineCompat.BiomeEdit {
     public static final String ID = "ore_control";
     public static final MapCodec<ContentOreControl> CODEC = MapCodec.unit(new ContentOreControl());
     private static final String CUSTOM = "CUSTOM";
@@ -72,7 +70,7 @@ public record ContentOreControl() implements BiomeModifier {
         if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres()) && !whitelist.contains("minecraft")) { ContentLog.LOGGER.warn("oreWhitelist leaves out minecraft, but blockOres is off, so nothing is being blocked by mod. Turn blockOres on for the whitelist to mean anything"); }
     }
 
-    @Override public void modify(@Nonnull Holder<Biome> biome, @Nonnull Phase phase, @Nonnull ModifiableBiomeInfo.BiomeInfo.Builder builder) {
+    @Override public void edit(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder) {
         if (phase != Phase.REMOVE || !enabled() || !dimensions().isEmpty()) { return; }
         Set<String> whitelist = whitelist();
         List<String> types = types();
@@ -102,11 +100,6 @@ public record ContentOreControl() implements BiomeModifier {
         scoped = next;
     }
 
-    private static boolean ore(PlacedFeature feature) {
-        Feature<?> kind = feature.feature().value().feature();
-        return kind instanceof OreFeature || kind instanceof ScatteredOreFeature;
-    }
-
     public static boolean refuses(ChunkGenerator generator, PlacedFeature feature) {
         Set<PlacedFeature> held = scoped.get(generator);
         return held != null && held.contains(feature);
@@ -115,7 +108,7 @@ public record ContentOreControl() implements BiomeModifier {
     @Override @Nonnull public MapCodec<? extends BiomeModifier> codec() { return CODEC; }
 
     private static boolean blocked(@Nullable Identifier id, PlacedFeature feature, Set<String> whitelist, List<String> types, boolean byMod, boolean blacklist) {
-        if (id == null || !ore(feature) || ContentWorldgen.entry(id) != null) { return false; }
+        if (id == null || ContentFeatureTypes.nonOre(feature) || ContentWorldgen.entry(id) != null) { return false; }
         String type = typeOf(id.getPath());
         boolean denied = !types.isEmpty() && types.contains(type) == blacklist;
         if (!denied && byMod && !whitelist.contains(id.getNamespace())) { denied = true; }

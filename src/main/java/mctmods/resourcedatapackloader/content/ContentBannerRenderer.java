@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.compat.LineClientCompat;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentWallBannerBlock;
@@ -90,8 +91,8 @@ public final class ContentBannerRenderer implements BlockEntityRenderer<ContentB
     public void submitItem(Block block, PoseStack pose, SubmitNodeCollector collector, int light, int overlay, int outline) { submit(pose, collector, standing, standingFlag, texture(block), light, overlay, 0.0F, outline); }
 
     private static void submit(PoseStack pose, SubmitNodeCollector collector, BannerModel model, BannerFlagModel flag, Identifier texture, int light, int overlay, float phase, int outline) {
-        collector.submitModel(model, Unit.INSTANCE, pose, texture, light, overlay, outline, null);
-        collector.submitModel(flag, phase, pose, texture, light, overlay, outline, null);
+        LineClientCompat.submitModel(collector, model, Unit.INSTANCE, pose, texture, light, overlay, outline);
+        LineClientCompat.submitModel(collector, flag, phase, pose, texture, light, overlay, outline);
     }
 
     private Identifier texture(Block block) {

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
@@ -21,7 +22,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -31,7 +31,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public record ContentEntitySpawns() implements BiomeModifier {
+public record ContentEntitySpawns() implements LineCompat.BiomeEdit {
     public static final String ID = "entity_spawns";
     public static final MapCodec<ContentEntitySpawns> CODEC = MapCodec.unit(new ContentEntitySpawns());
     private static final Map<String, String> SHOWN = Map.<String, String>ofEntries(
@@ -71,7 +71,7 @@ public record ContentEntitySpawns() implements BiomeModifier {
         return spawning;
     }
 
-    @Override public void modify(@Nonnull Holder<Biome> biome, @Nonnull Phase phase, @Nonnull ModifiableBiomeInfo.BiomeInfo.Builder builder) {
+    @Override public void edit(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder) {
         if (phase != Phase.ADD) { return; }
         Identifier id = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
         for (EntityType<?> type : ContentEntities.types().values()) {
@@ -79,7 +79,7 @@ public record ContentEntitySpawns() implements BiomeModifier {
             if (def == null || def.spawns().isEmpty() || !matches(biome, id, def)) { continue; }
             for (SpawnEntryDef entry : def.spawns()) {
                 MobCategory category = category(entry.creatureType());
-                if (category != null) { builder.getMobSpawnSettings().addSpawn(category, entry.weight(), new MobSpawnSettings.SpawnerData(type, entry.min(), Math.max(entry.min(), entry.max()))); }
+                if (category != null) { LineCompat.addSpawn(builder.getMobSpawnSettings(), category, type, entry.weight(), entry.min(), Math.max(entry.min(), entry.max())); }
             }
         }
     }

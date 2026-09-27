@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -277,7 +278,7 @@ public final class ContentTeams {
             ItemStack stack = ContentStacks.parse(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "teams/" + def.name()), one.item(), one.count());
             if (stack.isEmpty()) { continue; }
             if (one.unbreakable()) { stack.set(DataComponents.UNBREAKABLE, Unit.INSTANCE); }
-            if (!player.getInventory().add(stack)) { player.drop(stack, false); }
+            if (!player.getInventory().add(stack)) { LineCompat.drop(player, stack); }
         }
         player.inventoryMenu.broadcastChanges();
     }

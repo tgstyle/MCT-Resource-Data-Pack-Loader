@@ -1,12 +1,12 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.raid.ActiveRaid;
 import mctmods.resourcedatapackloader.content.raid.RaidStorage;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
@@ -64,7 +64,7 @@ public final class RaidBreakDoorGoal extends Goal {
         mob.getLookControl().setLookAt(door.getX() + 0.5D, door.getY() + 0.5D, door.getZ() + 0.5D, 30.0F, 30.0F);
         if (mob.getRandom().nextInt(20) == 0) {
             level.levelEvent(LevelEvent.SOUND_ZOMBIE_WOODEN_DOOR, door, 0);
-            mob.swing(InteractionHand.MAIN_HAND);
+            LineCompat.swing(mob);
         }
         breaking++;
         int progress = (int) ((float) breaking / BREAK_TICKS * 10.0F);

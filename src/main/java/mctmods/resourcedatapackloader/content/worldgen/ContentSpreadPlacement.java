@@ -1,9 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -15,28 +14,17 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.placement.PlacementContext;
-import net.minecraft.world.level.levelgen.placement.PlacementModifier;
-import net.minecraft.world.level.levelgen.placement.PlacementModifierType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentSpreadPlacement extends PlacementModifier {
-    public static final MapCodec<ContentSpreadPlacement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Identifier.CODEC.fieldOf("entry").forGetter(ContentSpreadPlacement::entry)).apply(instance, ContentSpreadPlacement::new));
-    public static final PlacementModifierType<ContentSpreadPlacement> TYPE = () -> CODEC;
+public final class ContentSpreadPlacement {
     private static final int SNAP_STEPS = 24;
-    private final Identifier entry;
 
-    public ContentSpreadPlacement(Identifier entry) { this.entry = entry; }
+    private ContentSpreadPlacement() {}
 
-    public Identifier entry() { return entry; }
-
-    @Override @Nonnull public PlacementModifierType<?> type() { return TYPE; }
-
-    @Override @Nonnull public Stream<BlockPos> getPositions(@Nonnull PlacementContext context, @Nonnull RandomSource random, @Nonnull BlockPos origin) {
+    public static Stream<BlockPos> placed(Identifier entry, PlacementContext context, RandomSource random, BlockPos origin) {
         ContentWorldgen.Entry held = ContentWorldgen.entry(entry);
         return held == null ? Stream.empty() : positions(held, context, random, origin);
     }
@@ -81,11 +69,11 @@ public final class ContentSpreadPlacement extends PlacementModifier {
         return Stream.of(ground(level, pinned[0], context.getHeight(Heightmap.Types.MOTION_BLOCKING, pinned[0], pinned[1]), pinned[1]));
     }
 
-    @SuppressWarnings("deprecation") private static BlockPos ground(WorldGenLevel level, int x, int top, int z) {
+    private static BlockPos ground(WorldGenLevel level, int x, int top, int z) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos(x, top, z);
         while (at.getY() > level.getMinY()) {
             BlockState below = level.getBlockState(at.below());
-            if (below.blocksMotion() && !below.is(BlockTags.LEAVES)) { break; }
+            if (!LineCompat.passable(below) && !below.is(BlockTags.LEAVES)) { break; }
             at.move(Direction.DOWN);
         }
         return at.immutable();

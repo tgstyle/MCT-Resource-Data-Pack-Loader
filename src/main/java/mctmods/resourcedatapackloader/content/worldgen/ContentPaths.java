@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Registered;
@@ -9,7 +10,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -17,7 +17,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import javax.annotation.Nullable;
 
@@ -38,19 +37,17 @@ public final class ContentPaths {
         BlockPos pos = event.getPos();
         Player player = event.getEntity();
         Block block = level.getBlockState(pos).getBlock();
-        if (held.canPerformAction(ItemAbilities.SHOVEL_FLATTEN)) {
+        if (LineCompat.flattens(held)) {
             if (!Config.content.shovelPaths()) { return; }
             if (player.isShiftKeyDown() && block == Blocks.DIRT_PATH) {
-                apply(event, level, pos, face, player, held, named(Config.content.shovelPathReverts(), Blocks.DIRT), SoundEvents.SHOVEL_FLATTEN);
+                apply(event, level, pos, face, player, held, named(Config.content.shovelPathReverts(), Blocks.DIRT), LineCompat.flattenSound());
                 return;
             }
             if (ContentRegistry.lacks(PATH, block) || blocked(level, pos)) { return; }
-            apply(event, level, pos, face, player, held, named(Config.content.shovelPathBecomes(), Blocks.DIRT_PATH), SoundEvents.SHOVEL_FLATTEN);
+            apply(event, level, pos, face, player, held, named(Config.content.shovelPathBecomes(), Blocks.DIRT_PATH), LineCompat.flattenSound());
             return;
         }
-        if (!held.canPerformAction(ItemAbilities.HOE_TILL) || !Config.content.hoeTilling()) { return; }
-        if (ContentRegistry.lacks(TILL, block) || blocked(level, pos)) { return; }
-        apply(event, level, pos, face, player, held, named(Config.content.hoeTillsInto(), Blocks.FARMLAND), SoundEvents.HOE_TILL);
+        if (LineCompat.tills(held) && Config.content.hoeTilling() && !ContentRegistry.lacks(TILL, block) && !blocked(level, pos)) { apply(event, level, pos, face, player, held, named(Config.content.hoeTillsInto(), Blocks.FARMLAND), LineCompat.tillSound()); }
     }
 
     private static boolean blocked(Level level, BlockPos pos) { return !Config.tweaks.lenientPaths() && !level.isEmptyBlock(pos.above()); }

@@ -82,8 +82,8 @@ public class ContentBellRenderer implements BlockEntityRenderer<ContentBellBlock
         if (state.body.isEmpty()) { return; }
         pose.pushPose();
         pose.translate(0.5D, PIVOT_Y, 0.5D);
-        pose.mulPose(Axis.ZP.rotation(state.tiltZ));
-        pose.mulPose(Axis.XP.rotation(state.tiltX));
+        pose.last().rotate(Axis.ZP.rotation(state.tiltZ));
+        pose.last().rotate(Axis.XP.rotation(state.tiltX));
         pose.translate(-0.5D, -PIVOT_Y, -0.5D);
         collector.submitBlockModel(pose, ClientCompat.cutoutBlockSheet(), state.body, BlockModelRenderState.EMPTY_TINTS, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
         pose.popPose();

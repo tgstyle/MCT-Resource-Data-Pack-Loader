@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.DropDef;
 
 import com.mojang.serialization.Codec;
@@ -10,15 +11,13 @@ import net.minecraft.world.item.ItemInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-public final class DropRoll extends LootItemConditionalFunction {
-    public static final MapCodec<DropRoll> CODEC = RecordCodecBuilder.mapCodec(instance -> commonFields(instance)
+public final class DropRoll extends LineCompat.LootFunction {
+    public static final MapCodec<DropRoll> CODEC = RecordCodecBuilder.mapCodec(instance -> LineCompat.LootFunction.fields(instance)
             .and(instance.group(
                     Codec.INT.optionalFieldOf("chance", 100).forGetter(function -> function.chance),
                     Codec.INT.listOf().optionalFieldOf("bonusChance", List.of()).forGetter(function -> Arrays.stream(function.bonusChance).boxed().toList())))
@@ -26,7 +25,7 @@ public final class DropRoll extends LootItemConditionalFunction {
     private final int chance;
     private final int[] bonusChance;
 
-    private DropRoll(List<LootItemCondition> conditions, int chance, List<Integer> bonusChance) {
+    private DropRoll(LineCompat.Conditions conditions, int chance, List<Integer> bonusChance) {
         super(conditions);
         this.chance = chance;
         this.bonusChance = new IntArrayList(bonusChance).toIntArray();
@@ -35,7 +34,7 @@ public final class DropRoll extends LootItemConditionalFunction {
     @Override @Nonnull public MapCodec<DropRoll> codec() { return CODEC; }
 
     @Override @Nonnull protected ItemStack run(@Nonnull ItemStack stack, @Nonnull LootContext context) {
-        ItemInstance tool = context.getOptionalParameter(LootContextParams.TOOL);
+        ItemInstance tool = LineCompat.param(context, LootContextParams.TOOL);
         int fortune = tool == null ? 0 : BlockDrops.level(context.getLevel(), tool, Enchantments.FORTUNE);
         stack.setCount(stack.getCount() * DropDef.copies(context.getRandom(), chance, bonusChance, fortune));
         return stack;

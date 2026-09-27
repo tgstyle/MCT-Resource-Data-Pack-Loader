@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
@@ -52,7 +53,7 @@ public final class ContentImprint implements IContentShape {
         String named = shape.structures().isEmpty() ? shape.structure() : PickDef.pick(shape.structures(), random);
         Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
         if (template == null) { return null; }
-        Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
+        Optional<StructureTemplate> held = LineCompat.templates(level.getLevel().getServer()).get(template);
         if (held.isEmpty()) {
             if (report) { ContentLog.LOGGER.error("Worldgen {} places structure '{}', which could not be loaded, so nothing generates", key, named); }
             return null;
@@ -104,7 +105,7 @@ public final class ContentImprint implements IContentShape {
         Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
         if (template == null) { return false; }
         WorldGenLevel level = placer.level();
-        Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
+        Optional<StructureTemplate> held = LineCompat.templates(level.getLevel().getServer()).get(template);
         if (held.isEmpty()) {
             ContentLog.LOGGER.error("Worldgen {} places structure '{}', which could not be loaded, so nothing generates", key, named);
             return false;

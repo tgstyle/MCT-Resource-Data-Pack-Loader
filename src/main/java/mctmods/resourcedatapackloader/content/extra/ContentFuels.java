@@ -17,10 +17,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.event.furnace.FurnaceFuelBurnTimeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentFuels {
@@ -76,19 +75,15 @@ public final class ContentFuels {
         }
     }
 
-    public static void onFuelBurnTime(FurnaceFuelBurnTimeEvent event) {
-        if (!load()) { return; }
-        ItemStack fuel = event.getItemStack();
-        if (fuel.isEmpty()) { return; }
+    public static int burnTime(Item fuel, Predicate<TagKey<Item>> tagged) {
+        if (!load()) { return 0; }
         for (Entry entry : ENTRIES) {
-            if (entry.matches(fuel)) {
-                event.setBurnTime(entry.burnTime());
-                return;
-            }
+            if (entry.matches(fuel, tagged)) { return entry.burnTime(); }
         }
+        return 0;
     }
 
     private record Entry(@Nullable Item item, @Nullable TagKey<Item> tag, int burnTime) {
-        private boolean matches(ItemStack fuel) { return tag != null ? fuel.is(tag) : item != null && fuel.is(item); }
+        private boolean matches(Item fuel, Predicate<TagKey<Item>> tagged) { return tag != null ? tagged.test(tag) : fuel == item; }
     }
 }

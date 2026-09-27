@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.serialization.Codec;
@@ -15,17 +16,14 @@ import net.minecraft.world.entity.vehicle.minecart.AbstractMinecartContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.phys.Vec3;
 import java.util.IllegalFormatException;
-import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class KilledName extends LootItemConditionalFunction {
-    public static final MapCodec<KilledName> CODEC = RecordCodecBuilder.mapCodec(instance -> commonFields(instance)
+public final class KilledName extends LineCompat.LootFunction {
+    public static final MapCodec<KilledName> CODEC = RecordCodecBuilder.mapCodec(instance -> LineCompat.LootFunction.fields(instance)
             .and(instance.group(
                     Codec.STRING.optionalFieldOf("format", "%s").forGetter(function -> function.format),
                     Codec.STRING.optionalFieldOf("tag", "").forGetter(function -> function.tag)))
@@ -33,7 +31,7 @@ public final class KilledName extends LootItemConditionalFunction {
     private final String format;
     private final String tag;
 
-    private KilledName(List<LootItemCondition> conditions, String format, String tag) {
+    private KilledName(LineCompat.Conditions conditions, String format, String tag) {
         super(conditions);
         this.format = format;
         this.tag = tag;
@@ -57,12 +55,12 @@ public final class KilledName extends LootItemConditionalFunction {
     }
 
     @Nullable private static Entity looted(LootContext context) {
-        if (context.getOptionalParameter(LootContextParams.THIS_ENTITY) instanceof FishingHook) { return null; }
-        Vec3 origin = context.getOptionalParameter(LootContextParams.ORIGIN);
-        if (origin == null || context.hasParameter(LootContextParams.DAMAGE_SOURCE) || context.hasParameter(LootContextParams.BLOCK_STATE) || context.hasParameter(LootContextParams.TOOL)) { return context.getOptionalParameter(LootContextParams.THIS_ENTITY); }
-        if (context.getOptionalParameter(LootContextParams.ATTACKING_ENTITY) instanceof AbstractMinecartContainer cart) { return cart; }
+        if (LineCompat.param(context,LootContextParams.THIS_ENTITY) instanceof FishingHook) { return null; }
+        Vec3 origin = LineCompat.param(context,LootContextParams.ORIGIN);
+        if (origin == null || context.hasParameter(LootContextParams.DAMAGE_SOURCE) || context.hasParameter(LootContextParams.BLOCK_STATE) || context.hasParameter(LootContextParams.TOOL)) { return LineCompat.param(context,LootContextParams.THIS_ENTITY); }
+        if (LineCompat.param(context,LootContextParams.ATTACKING_ENTITY) instanceof AbstractMinecartContainer cart) { return cart; }
         BlockPos pos = BlockPos.containing(origin);
         if (origin.equals(Vec3.atCenterOf(pos)) && context.getLevel().getBlockEntity(pos) instanceof RandomizableContainer) { return null; }
-        return context.getOptionalParameter(LootContextParams.THIS_ENTITY);
+        return LineCompat.param(context,LootContextParams.THIS_ENTITY);
     }
 }

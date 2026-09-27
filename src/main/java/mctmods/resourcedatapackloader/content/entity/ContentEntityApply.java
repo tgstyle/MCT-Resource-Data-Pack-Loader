@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
@@ -63,7 +64,7 @@ final class ContentEntityApply {
         if (def.flags().silent()) { entity.setSilent(true); }
         if (def.flags().glowing()) { entity.setGlowingTag(true); }
         if (def.flags().invisible()) { entity.setInvisible(true); }
-        if (def.flags().invulnerable()) { entity.setInvulnerable(true); }
+        if (def.flags().invulnerable()) { LineCompat.makeInvulnerable(entity); }
         if (!(entity instanceof LivingEntity living)) { return; }
         if (first) {
             if (def.absorption() > 0.0F) { living.setAbsorptionAmount(def.absorption()); }

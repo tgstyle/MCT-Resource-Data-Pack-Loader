@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
@@ -7,8 +8,6 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
@@ -18,25 +17,20 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import java.util.Optional;
 
-public final class ContentCaveStructureFeature extends Feature<ContentCaveStructureFeature.Setup> {
-    public static final ContentCaveStructureFeature INSTANCE = new ContentCaveStructureFeature();
+public final class ContentCaveStructureFeature {
     private static final int FLAGS = 2;
     private static final Rotation[] TURNS = Rotation.values();
 
-    private ContentCaveStructureFeature() { super(Setup.CODEC); }
+    private ContentCaveStructureFeature() {}
 
-    @Override public boolean place(FeaturePlaceContext<Setup> context) {
-        CaveRegionDef region = ContentCaveRegions.def(context.config().region());
+    public static boolean place(WorldGenLevel level, BlockPos origin, Identifier id) {
+        CaveRegionDef region = ContentCaveRegions.def(id);
         if (region == null || !region.hasStructures()) { return false; }
-        WorldGenLevel level = context.level();
-        ChunkPos center = ChunkPos.containing(context.origin());
+        ChunkPos center = ChunkPos.containing(origin);
         int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells()));
         int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY()));
         int spanXZ = cellsXZ >> 2;
@@ -99,7 +93,7 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
         if (template == null) { return false; }
         WorldGenLevel level = placer.level();
-        Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
+        Optional<StructureTemplate> held = LineCompat.templates(level.getLevel().getServer()).get(template);
         if (held.isEmpty()) {
             ContentLog.LOGGER.error("Cave region {} places structure '{}', which could not be loaded, so nothing generates", region.key(), named);
             return false;
@@ -120,11 +114,5 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         }
         ContentLog.LOGGER.debug("Cave region {} placed {} at {} {} {} turned {}", region.key(), named, x, y, z, rotation);
         return true;
-    }
-
-
-    public record Setup(Identifier region) implements FeatureConfiguration {
-        public static final Codec<Setup> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                Identifier.CODEC.fieldOf("region").forGetter(Setup::region)).apply(instance, Setup::new));
     }
 }

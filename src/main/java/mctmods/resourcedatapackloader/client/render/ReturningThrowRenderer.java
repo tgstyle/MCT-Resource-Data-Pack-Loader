@@ -41,8 +41,8 @@ public final class ReturningThrowRenderer extends EntityRenderer<ReturningThrow,
         if (state.item.isEmpty()) { return; }
         pose.pushPose();
         pose.translate(0.0F, 0.25F, 0.0F);
-        pose.mulPose(Axis.YP.rotationDegrees(state.yaw - 90.0F));
-        pose.mulPose(Axis.ZP.rotationDegrees(state.ageInTicks * -45.0F));
+        pose.last().rotate(Axis.YP.rotationDegrees(state.yaw - 90.0F));
+        pose.last().rotate(Axis.ZP.rotationDegrees(state.ageInTicks * -45.0F));
         state.item.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
         pose.popPose();
         super.submit(state, pose, collector, camera);

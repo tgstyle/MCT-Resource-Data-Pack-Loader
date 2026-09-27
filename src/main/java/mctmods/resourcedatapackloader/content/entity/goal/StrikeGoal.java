@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.compat.LineCompat;
+
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
@@ -16,7 +17,7 @@ public final class StrikeGoal extends MeleeAttackGoal {
     @Override protected void checkAndPerformAttack(@Nonnull LivingEntity target) {
         if (!canPerformAttack(target)) { return; }
         resetAttackCooldown();
-        mob.swing(InteractionHand.MAIN_HAND);
+        LineCompat.swing(mob);
         DamageSource source = mob.damageSources().mobAttack(mob);
         if (mob.level() instanceof ServerLevel level && target.hurtServer(level, source, (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE))) { EnchantmentHelper.doPostAttackEffects(level, target, source); }
     }

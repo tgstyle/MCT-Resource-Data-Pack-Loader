@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
@@ -277,7 +278,7 @@ public final class ContentWorldShape {
         boolean overworld = OVERWORLD.equals(dimension);
         boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
         if (!always && !((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked(dimension))) || flatBedrock || seamed)) { return null; }
-        JsonObject settings = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings(shape, dimension) + ".json"));
+        JsonObject settings = LineCompat.worldgenIn("worldgen/noise_settings/" + vanillaSettings(shape, dimension) + ".json");
         if (settings == null) { return null; }
         if (overworld) { shapeNoise(settings, shape); }
         if (overworld && ContentOreControl.veinsBlocked(dimension)) {
@@ -297,7 +298,7 @@ public final class ContentWorldShape {
 
     static JsonObject voidGenerator(JsonObject source, String vanillaSettings, Identifier id) {
         JsonObject generator = new JsonObject();
-        JsonObject settings = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
+        JsonObject settings = LineCompat.worldgenIn("worldgen/noise_settings/" + vanillaSettings + ".json");
         if (settings == null) {
             generator.addProperty("type", "minecraft:flat");
             JsonObject flat = new JsonObject();
@@ -318,7 +319,8 @@ public final class ContentWorldShape {
         surface.add("sequence", new JsonArray());
         settings.add("surface_rule", surface);
         GsonHelper.getAsJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
-        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
+        String settingsPath = "worldgen/noise_settings/" + id.getPath() + ".json";
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), settingsPath, LineCompat.worldgenOut(settingsPath, settings).toString());
         generator.addProperty("type", "minecraft:noise");
         generator.add("biome_source", source);
         generator.addProperty("settings", id.toString());
@@ -366,7 +368,8 @@ public final class ContentWorldShape {
 
     private static String made(Shape shape, String suffix, String folder, JsonObject json) {
         Identifier id = ownId(shape, suffix);
-        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), folder + "/" + id.getPath() + ".json", json.toString());
+        String path = folder + "/" + id.getPath() + ".json";
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), path, LineCompat.worldgenOut(path, json).toString());
         MADE.add(id);
         return id.toString();
     }
@@ -521,7 +524,7 @@ public final class ContentWorldShape {
         Unvoided held = UNVOIDED.get(settings.identifier());
         if (held != null && held.seed() == context.seed()) { return held; }
         Holder<NoiseGeneratorSettings> shape = context.registryAccess().lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(original);
-        Unvoided made = new Unvoided(context.seed(), new NoiseBasedChunkGenerator(noise.getBiomeSource(), shape), RandomState.create(shape.value(), context.registryAccess().lookupOrThrow(Registries.NOISE), context.seed()));
+        Unvoided made = new Unvoided(context.seed(), new NoiseBasedChunkGenerator(noise.getBiomeSource(), shape), LineCompat.randomState(shape.value(), context.registryAccess(), context.seed()));
         UNVOIDED.put(settings.identifier(), made);
         return made;
     }

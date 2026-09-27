@@ -16,6 +16,7 @@ plugins {
 
 rootProject.name = 'MCT-Resource-Data-Pack-Loader'
 
-include ':26.1.2', ':26.2'
+include ':26.1.2', ':26.2', ':26.3'
 project(':26.1.2').projectDir = file('versions/26.1.2')
 project(':26.2').projectDir = file('versions/26.2')
+project(':26.3').projectDir = file('versions/26.3')
