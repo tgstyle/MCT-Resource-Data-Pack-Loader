@@ -127,7 +127,7 @@ public final class ContentCaveRegions {
             if (ceiling != null) { states.add(ceiling); }
             ContentPalette palette = states.isEmpty() ? null : new ContentPalette(states, List.of(1, 1), Set.of(), Set.of(), Set.of(), Set.of(), Set.of());
             MADE.put(def.key(), new Made(def, point, cover, palette));
-            if (cover != null) { writeFeature(def, COVER_FEATURE, "_cover", "top_layer_modification"); }
+            if (cover != null) { writeFeature(def, COVER_FEATURE, "_cover", "local_modifications"); }
             if (def.hasStructures()) {
                 writeFeature(def, STRUCTURE_FEATURE, "_structures", "underground_structures");
                 structured++;

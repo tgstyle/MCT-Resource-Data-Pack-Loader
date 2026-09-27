@@ -69,6 +69,7 @@ final class ModernWorld {
         if (fixed >= 0) {
             int light = skyLight(fixed);
             if (light < FULL_SKY_LIGHT) { attributes.addProperty(GAMEPLAY + "sky_light_level", (float) light); }
+            attributes.addProperty(VISUAL + "sun_angle", (float) (timeOfDay(fixed) * 360.0));
             json.addProperty("has_fixed_time", true);
             json.addProperty("timelines", "#minecraft:universal");
             note.accept("'" + file + "' has the fixed time " + fixed + ": it became a dimension with no day cycle and sky light " + light + ", as this version writes the nether");
@@ -83,9 +84,13 @@ final class ModernWorld {
 
     private static boolean flag(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() && json.get(key).getAsBoolean(); }
 
-    private static int skyLight(long time) {
+    private static double timeOfDay(long time) {
         double turn = (time / 24000.0 - 0.25) - Math.floor(time / 24000.0 - 0.25);
-        double day = (turn * 2.0 + (0.5 - Math.cos(turn * Math.PI) / 2.0)) / 3.0;
+        return (turn * 2.0 + (0.5 - Math.cos(turn * Math.PI) / 2.0)) / 3.0;
+    }
+
+    private static int skyLight(long time) {
+        double day = timeOfDay(time);
         double dark = 1.0 - Math.clamp(1.0 - (Math.cos(day * Math.PI * 2.0) * 2.0 + 0.5), 0.0, 1.0);
         return FULL_SKY_LIGHT - (int) ((1.0 - dark) * 11.0);
     }
