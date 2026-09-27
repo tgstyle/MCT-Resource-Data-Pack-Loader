@@ -46,6 +46,7 @@ public final class Ported {
     private static final int DIMENSION_SPAN = 9000;
     private final String name;
     private final Path root;
+    @Nullable private final Downed down;
     private final Set<String> namespaces = new LinkedHashSet<>();
     private final Map<String, Own> ownBlocks = new HashMap<>();
     private final Map<String, Own> ownItems = new HashMap<>();
@@ -71,6 +72,7 @@ public final class Ported {
     public Ported(String name, Path root) {
         this.name = name;
         this.root = root;
+        this.down = Downed.of(root);
     }
 
     static final class Own {
@@ -119,9 +121,7 @@ public final class Ported {
         for (String namespace : assets.keySet()) {
             if (!"minecraft".equals(namespace)) { namespaces.add(namespace); }
             for (String path : assets.get(namespace)) {
-                if (path.startsWith("textures/")) {
-                    textures.add(namespace + ":" + Port.texturePath(path));
-                }
+                if (path.startsWith("textures/")) { textures.add(namespace + ":" + Port.texturePath(path)); }
             }
         }
         List<JsonObject> itemTags = new ArrayList<>();
@@ -134,7 +134,7 @@ public final class Ported {
             String ns = namespace.getKey();
             Path home = root.resolve(Port.DATA).resolve(ns);
             for (String path : namespace.getValue()) {
-                Port.Mapped mapped = Port.data(path);
+                Port.Mapped mapped = Port.data(down == null ? path : down.path(path));
                 String from = "data/" + ns + "/" + path;
                 switch (mapped.kind) {
                     case DROPPED:
@@ -181,10 +181,12 @@ public final class Ported {
         return out;
     }
 
-    private void exposeAsset(String namespace, String path) {
+    private void exposeAsset(String namespace, String written) {
+        String path = down == null ? written : down.asset(this, namespace, written);
+        if (path == null) { return; }
         Port.Mapped mapped = Port.assets(path);
-        Path real = root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(path);
-        String from = "assets/" + namespace + "/" + path;
+        Path real = root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(written);
+        String from = "assets/" + namespace + "/" + written;
         switch (mapped.kind) {
             case DROPPED:
                 drop(from, mapped.why);
@@ -216,7 +218,12 @@ public final class Ported {
                 break;
         }
         expose(namespace, mapped.path, new Source(real, mapped.kind, from, null));
-        if (!mapped.path.equals(path)) { movedLine(from, namespace, mapped.path); }
+        if (!mapped.path.equals(written)) { movedLine(from, namespace, mapped.path); }
+    }
+
+    void alias(String namespace, String path, Path real, String from, @Nullable byte[] made) {
+        expose(namespace, path, new Source(real, made == null ? Port.Kind.RAW : Port.Kind.MODEL, from, made));
+        if (made == null) { movedLine(from, namespace, path); }
     }
 
     private String overrideTarget(String path, String from) {
@@ -231,7 +238,7 @@ public final class Ported {
     }
 
     private void recipe(String namespace, String path, Port.Mapped mapped, Path real, String from) {
-        JsonObject json = readJson(real);
+        JsonObject json = down == null ? readJson(real) : down.json(real, from, this);
         String type = json != null && json.has("type") && json.get("type").isJsonPrimitive() ? Ids.namespaced(json.get("type").getAsString()) : "";
         if (json != null && ("minecraft:smelting".equals(type))) {
             JsonObject entry = ConvertRecipes.smelting(json, this);
@@ -429,17 +436,12 @@ public final class Ported {
 
     boolean ownsNamespace(String namespace) { return namespaces.contains(namespace) && !"minecraft".equals(namespace); }
 
-    @Nullable Own ownBlock(String id) {
-        Own held = ownBlocks.get(id);
-        return held != null ? held : ownFiles.get(BLOCKS + ":" + id);
-    }
+    @Nullable Own ownBlock(String id) { return ownBlocks.getOrDefault(id, ownFiles.get(BLOCKS + ":" + id)); }
 
     boolean ownFluid(String id) { return ownFluids.contains(id); }
 
     @Nullable Own ownItem(String id) {
-        Own held = ownItems.get(id);
-        if (held != null) { return held; }
-        held = ownFiles.get(ITEMS + ":" + id);
+        Own held = ownItems.getOrDefault(id, ownFiles.get(ITEMS + ":" + id));
         return held != null ? held : ownBlock(id);
     }
 
@@ -462,20 +464,16 @@ public final class Ported {
     int shiftIn(String dimension) {
         String id = Ids.namespaced(dimension.trim());
         if ("minecraft:overworld".equals(id) || "0".equals(dimension.trim())) { return overworldShift(); }
-        Integer held = dimensionShifts.get(id);
-        return held == null ? 0 : held;
+        return dimensionShifts.getOrDefault(id, 0);
     }
 
-    int dimensionShift(String id) {
-        Integer held = dimensionShifts.get(id);
-        return held == null ? 0 : held;
-    }
+    int dimensionShift(String id) { return dimensionShifts.getOrDefault(id, 0); }
 
     @Nullable public InputStream open(String namespace, String path) throws IOException {
         Map<String, Source> paths = exposed.get(namespace);
         Source source = paths == null ? null : paths.get(path);
         if (source == null) { return null; }
-        if (source.made != null || source.real == null) { return new ByteArrayInputStream(source.made == null ? new byte[0] : source.made); }
+        if (source.real == null) { return new ByteArrayInputStream(source.made == null ? new byte[0] : source.made); }
         if (source.kind == Port.Kind.RAW) { return Files.newInputStream(source.real); }
         String key = namespace + "/" + path;
         byte[] held = cache.get(key);
@@ -487,7 +485,8 @@ public final class Ported {
     }
 
     private byte[] convert(Source source, Path real, String namespace, String path) throws IOException {
-        byte[] raw = Files.readAllBytes(real);
+        byte[] read = source.made != null ? source.made : Files.readAllBytes(real);
+        byte[] raw = down == null ? read : down.read(read, source.from, this);
         String folder = path.indexOf('/') < 0 ? "" : path.substring(0, path.indexOf('/'));
         try {
             String out;
@@ -527,7 +526,7 @@ public final class Ported {
 
     public void report() {
         reported = true;
-        ContentLog.LOGGER.info("Pack '{}' is written for a modern Minecraft (1.20.1 or 1.21.1) and is read through the port to 1.12.2: {} file(s) moved, {} converted into new files, {} left out", name, moved, converted, dropped);
+        ContentLog.LOGGER.info("Pack '{}' is written for {} and is read through the port to 1.12.2: {} file(s) moved, {} converted into new files, {} left out", name, down == null ? "a modern Minecraft (1.20.1 or 1.21.1)" : down.title(), moved, converted, dropped);
         List<String> said;
         synchronized (notes) { said = new ArrayList<>(notes); }
         for (String line : said) { ContentLog.LOGGER.info("  {}", line); }
