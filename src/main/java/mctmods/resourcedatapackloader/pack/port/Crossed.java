@@ -27,7 +27,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
-public final class Crossed implements PackPort {
+public final class Crossed implements IPackPort {
     private static final String JSON = ".json";
     private static final String TAGS = "tags/";
     private static final String BIOME_MODIFIERS = "/biome_modifier/";

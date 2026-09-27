@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.PieceLaid;
+import mctmods.resourcedatapackloader.util.IPieceLaid;
 
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -17,16 +17,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(StructureStart.class) public abstract class MixinStructureStart {
     @Inject(method = "placeInChunk", at = @At("HEAD"))
     private void rdpl$layingPieces(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random, BoundingBox box, ChunkPos chunkPos, CallbackInfo ci) {
-        if (level instanceof PieceLaid laid) { laid.rdpl$laying(true); }
+        if (level instanceof IPieceLaid laid) { laid.rdpl$laying(true); }
     }
 
     @Inject(method = "placeInChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/structure/Structure;afterPlace(Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/levelgen/structure/BoundingBox;Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/levelgen/structure/pieces/PiecesContainer;)V"))
     private void rdpl$piecesLaid(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random, BoundingBox box, ChunkPos chunkPos, CallbackInfo ci) {
-        if (level instanceof PieceLaid laid) { laid.rdpl$laying(false); }
+        if (level instanceof IPieceLaid laid) { laid.rdpl$laying(false); }
     }
 
     @Inject(method = "placeInChunk", at = @At("RETURN"))
     private void rdpl$placed(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random, BoundingBox box, ChunkPos chunkPos, CallbackInfo ci) {
-        if (level instanceof PieceLaid laid) { laid.rdpl$laying(false); }
+        if (level instanceof IPieceLaid laid) { laid.rdpl$laying(false); }
     }
 }

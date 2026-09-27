@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-public final class ContentCityBulbPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityBulbPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityBulbPiece::new;
     private static final int CLEAR = 4;
     static final int VERGE = 6;

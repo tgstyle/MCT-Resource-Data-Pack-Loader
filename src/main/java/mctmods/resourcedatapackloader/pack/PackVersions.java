@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
-import mctmods.resourcedatapackloader.pack.port.PackPort;
+import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.FileMoves;
 
@@ -28,7 +28,7 @@ final class PackVersions {
         return Files.isDirectory(home) ? home : null;
     }
 
-    @Nullable static Path write(Path zip, PackPort ported) {
+    @Nullable static Path write(Path zip, IPackPort ported) {
         Path written = null;
         try {
             written = Files.createTempFile(zip.getParent(), zip.getFileName().toString(), ".converting");

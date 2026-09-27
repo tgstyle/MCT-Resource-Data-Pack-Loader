@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
-public final class ContentCityPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPiece::new;
     private static final int CLEAR = 4;
     private static final int VERGE = 1;

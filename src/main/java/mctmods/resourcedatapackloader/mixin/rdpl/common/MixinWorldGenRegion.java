@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.PieceLaid;
+import mctmods.resourcedatapackloader.util.IPieceLaid;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(WorldGenRegion.class) public abstract class MixinWorldGenRegion implements PieceLaid {
+@Mixin(WorldGenRegion.class) public abstract class MixinWorldGenRegion implements IPieceLaid {
     @Unique private final LongSet rdpl$laidBlocks = new LongOpenHashSet();
     @Unique private boolean rdpl$layingPieces;
 

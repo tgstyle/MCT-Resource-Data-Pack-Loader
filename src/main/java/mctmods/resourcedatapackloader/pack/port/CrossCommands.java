@@ -217,9 +217,9 @@ final class CrossCommands {
         args.addAll(2, out);
     }
 
-    private interface Options { String of(String[] values); }
+    private interface IOptions { String of(String[] values); }
 
-    private static void options(List<String> args, String name, int count, Options made) {
+    private static void options(List<String> args, String name, int count, IOptions made) {
         if (args.size() < 2 + count) { throw new Commands.Kept("its particle has fewer options than it needs"); }
         String[] values = args.subList(2, 2 + count).toArray(new String[0]);
         args.subList(2, 2 + count).clear();

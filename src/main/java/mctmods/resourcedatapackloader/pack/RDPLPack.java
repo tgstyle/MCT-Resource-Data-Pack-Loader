@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.pack;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.pack.port.Crossed;
-import mctmods.resourcedatapackloader.pack.port.PackPort;
+import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -42,7 +42,7 @@ public final class RDPLPack {
     private final Map<PackType, Map<String, Set<String>>> index = new EnumMap<>(PackType.class);
     private final Set<String> fromOwn = new HashSet<>();
     @Nullable private final Port.Line crossRoot;
-    @Nullable private final PackPort ported;
+    @Nullable private final IPackPort ported;
     private int fileCount;
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
@@ -70,7 +70,7 @@ public final class RDPLPack {
 
     public boolean isFromMod() { return ownedNamespaces != null; }
 
-    @Nullable public PackPort ported() { return ported; }
+    @Nullable public IPackPort ported() { return ported; }
 
     public String getName() { return name; }
 

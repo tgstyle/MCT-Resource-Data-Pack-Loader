@@ -154,7 +154,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         List<String> rows = mouth == null ? List.of() : mouth.mouth();
         int ring = paved + walk;
         BoundingBox held = getBoundingBox();
-        List<BoundingBox> others = ContentCityTrees.foreign(manager, chunk, this, held, piece -> piece instanceof ContentCityTrees.Felling && !(piece instanceof ContentCityPiece) || piece instanceof ContentCityWellPiece);
+        List<BoundingBox> others = ContentCityTrees.foreign(manager, chunk, this, held, piece -> piece instanceof ContentCityTrees.IFelling && !(piece instanceof ContentCityPiece) || piece instanceof ContentCityWellPiece);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         List<BlockPos> open = new ArrayList<>();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {

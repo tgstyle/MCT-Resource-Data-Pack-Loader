@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
-import mctmods.resourcedatapackloader.pack.port.PackPort;
+import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -246,7 +246,7 @@ public final class PackManager {
                 zip.close();
                 return null;
             }
-            PackPort port = pack.ported();
+            IPackPort port = pack.ported();
             if (port == null) { return pack; }
             Path written = PackVersions.write(entry, port);
             if (written == null) { return pack; }

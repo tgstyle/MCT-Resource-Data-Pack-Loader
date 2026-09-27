@@ -74,9 +74,10 @@ public final class ContentExposures {
             if (immune != null && player.hasEffect(immune)) { return 0; }
         }
         int most = def.levels().size();
-        int reached = scanItems(def, player, most);
+        ServerLevel level = player.serverLevel();
+        int reached = Math.max(def.dimensions().getOrDefault(level.dimension().location(), 0), scanItems(def, player, most));
         if (reached >= most) { return most; }
-        return Math.max(reached, scanWorld(def, player, most));
+        return Math.max(reached, scanWorld(def, player, level, most));
     }
 
     @Nullable private static Holder<MobEffect> immunity(ExposureDef def) {
@@ -106,11 +107,10 @@ public final class ContentExposures {
         return reached;
     }
 
-    private static int scanWorld(ExposureDef def, ServerPlayer player, int most) {
+    private static int scanWorld(ExposureDef def, ServerPlayer player, ServerLevel level, int most) {
         Map<Block, Integer> levels = blockLevels(def);
         int radius = def.range();
         if (levels.isEmpty() || radius <= 0) { return 0; }
-        ServerLevel level = player.serverLevel();
         int radiusSq = radius * radius;
         int centerX = Mth.floor(player.getX());
         int centerY = Mth.floor(player.getY());
@@ -182,7 +182,7 @@ public final class ContentExposures {
             int timer = data.getInt(tag) + 1;
             if (timer >= active.damageInterval()) {
                 timer = 0;
-                player.hurt(source(def, player), active.damage());
+                player.hurt(source(def, player, player.serverLevel()), active.damage());
             }
             data.putInt(tag, timer);
         }
@@ -210,9 +210,9 @@ public final class ContentExposures {
         return found;
     }
 
-    private static DamageSource source(ExposureDef def, ServerPlayer player) {
+    private static DamageSource source(ExposureDef def, ServerPlayer player, ServerLevel level) {
         ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, def.key());
-        Holder<DamageType> type = player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(key).orElse(null);
+        Holder<DamageType> type = level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(key).orElse(null);
         return type == null ? player.damageSources().magic() : new ExposureDamage(type);
     }
 

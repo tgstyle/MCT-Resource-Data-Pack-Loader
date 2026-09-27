@@ -38,7 +38,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ContentCityPlotPiece extends TemplateStructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityPlotPiece extends TemplateStructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.StructureTemplateType) ContentCityPlotPiece::new;
     private static final String ROTATION = "Rot";
     private static final String INTEGRITY = "Int";

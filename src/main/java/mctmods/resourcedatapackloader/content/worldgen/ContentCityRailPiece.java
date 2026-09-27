@@ -34,7 +34,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityRailPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityRailPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityRailPiece::new;
     public static final int CLEAR = CityRails.CLEAR;
     private static final int LEG = 4;
@@ -135,7 +135,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     @Override public int fellFloor() { return level - 2; }
 
-    @Override @Nullable public BoundingBox felled() { return bored || crossed ? strip(fellFloor()) : ContentCityTrees.Felling.super.felled(); }
+    @Override @Nullable public BoundingBox felled() { return bored || crossed ? strip(fellFloor()) : ContentCityTrees.IFelling.super.felled(); }
 
     @Override public BoundingBox crowned() { return strip(level + 1); }
 
