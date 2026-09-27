@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.LineNote;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -39,6 +40,7 @@ public final class Crossed implements IPackPort {
     private final Port.Line from;
     @Nullable private final Port.Line to;
     private final boolean down;
+    private final boolean lined;
     private final Map<PackType, Map<String, Map<String, Source>>> exposed = new EnumMap<>(PackType.class);
     private final Map<String, Definition> definitions = new HashMap<>();
     private final Map<String, byte[]> cache = new ConcurrentHashMap<>();
@@ -52,7 +54,8 @@ public final class Crossed implements IPackPort {
         this.root = root;
         this.from = from;
         this.to = step(from);
-        this.down = from == Port.Line.V26;
+        this.down = from == Port.Line.V26 || from == Port.Line.V26_3;
+        this.lined = from == Port.Line.V26_3;
     }
 
     private record Source(Path real, String file, Port.Kind kind, boolean same) {}
@@ -78,8 +81,11 @@ public final class Crossed implements IPackPort {
     }
 
     public static boolean moves(String namespace, String path, Port.Line from) {
-        if (step(from) == null) { return false; }
-        Target target = target(namespace, path, from, null);
+        boolean stepped = step(from) != null;
+        boolean lined = from == Port.Line.V26_3;
+        if (!stepped && !lined) { return false; }
+        String renamed = lined ? LinePort.path(path) : path;
+        Target target = stepped ? target(namespace, renamed, from, null) : new Target(namespace, renamed);
         return !target.namespace().equals(namespace) || !target.path().equals(path);
     }
 
@@ -122,7 +128,8 @@ public final class Crossed implements IPackPort {
             return;
         }
         for (String path : realPaths) {
-            Target target = to == null ? new Target(namespace, path) : target(namespace, path, from, this);
+            String renamed = lined ? LinePort.path(path) : path;
+            Target target = to == null ? new Target(namespace, renamed) : target(namespace, renamed, from, this);
             boolean same = target.namespace().equals(namespace) && target.path().equals(path);
             if (!same) { moved++; }
             expose(type, target.namespace(), target.path(), new Source(home.resolve(path), RDPLPack.DATA + "/" + namespace + "/" + path, kind(target.path()), same));
@@ -132,10 +139,14 @@ public final class Crossed implements IPackPort {
     private void assets(Path home, String namespace, List<String> realPaths) {
         String base = RDPLPack.ASSETS + "/" + namespace + "/";
         Set<String> present = new HashSet<>(realPaths);
-        for (String path : realPaths) {
-            Path real = home.resolve(path);
+        for (String written : realPaths) {
+            Path real = home.resolve(written);
+            String path = lined ? LinePort.assetPath(written) : written;
             boolean model = path.startsWith("models/") && path.endsWith(JSON);
-            expose(PackType.CLIENT_RESOURCES, namespace, path, new Source(real, base + path, model ? Port.Kind.MODEL : Port.Kind.RAW, true));
+            boolean same = path.equals(written);
+            if (!same) { moved++; }
+            Port.Kind kind = model ? Port.Kind.MODEL : lined && path.endsWith(JSON) ? Port.Kind.DEFINITION : Port.Kind.RAW;
+            expose(PackType.CLIENT_RESOURCES, namespace, path, new Source(real, base + written, kind, same));
             String alias = DownAssets.moved(path);
             if (alias != null && !present.contains(alias)) {
                 expose(PackType.CLIENT_RESOURCES, namespace, alias, new Source(real, base + path, Port.Kind.RAW, false));
@@ -202,31 +213,51 @@ public final class Crossed implements IPackPort {
         String contents = new String(original, StandardCharsets.UTF_8);
         try {
             if (source.kind() == Port.Kind.FUNCTION) {
-                String out = down ? Down.function(contents, source.file(), this::note) : contents;
+                String out = lined ? LinePort.function(contents, said(source)) : contents;
+                if (down) { out = Down.function(out, source.file(), this::note); }
                 if (to != null) { out = CrossCommands.function(out, source.file(), this); }
                 return out.equals(contents) ? original : out.getBytes(StandardCharsets.UTF_8);
             }
-            JsonElement json = JsonParser.parseString(contents);
-            if (!json.isJsonObject()) { return original; }
-            JsonObject before = json.getAsJsonObject().deepCopy();
-            JsonObject held = json.getAsJsonObject();
-            if (down) { downgrade(held, source, path); }
-            if (to != null && source.kind() != Port.Kind.MODEL) {
-                switch (source.kind()) {
-                    case RECIPE -> CrossJson.recipe(held, source.file(), this);
-                    case LOOT -> CrossLoot.loot(held, source.file(), this);
-                    case ADVANCEMENT -> CrossJson.advancement(held, source.file(), this);
-                    default -> CrossJson.definition(held, CrossIds.registry(to == Port.Line.V1_21 ? path : singular(path)), source.file(), this);
-                }
-            }
-            if (held.equals(before)) { return original; }
+            JsonElement before = JsonParser.parseString(contents);
+            boolean asset = source.file().startsWith(RDPLPack.ASSETS + "/");
+            JsonElement json = !lined ? before.deepCopy() : asset ? LinePort.asset(before.deepCopy(), path, said(source)) : LinePort.data(before.deepCopy(), singular(path), said(source));
+            if (json.isJsonObject() && (!asset || source.kind() == Port.Kind.MODEL)) { ported(json.getAsJsonObject(), source, path); }
+            if (json.equals(before)) { return original; }
             rewritten++;
-            return Ported.GSON.toJson(held).getBytes(StandardCharsets.UTF_8);
+            return Ported.GSON.toJson(json).getBytes(StandardCharsets.UTF_8);
         }
         catch (RuntimeException failed) {
             note("'" + source.file() + "' could not be ported and is served as written: " + failed);
             return original;
         }
+    }
+
+    private void ported(JsonObject held, Source source, String path) {
+        if (down) { downgrade(held, source, path); }
+        if (to == null || source.kind() == Port.Kind.MODEL) { return; }
+        switch (source.kind()) {
+            case RECIPE -> CrossJson.recipe(held, source.file(), this);
+            case LOOT -> CrossLoot.loot(held, source.file(), this);
+            case ADVANCEMENT -> CrossJson.advancement(held, source.file(), this);
+            default -> CrossJson.definition(held, CrossIds.registry(to == Port.Line.V1_21 ? path : singular(path)), source.file(), this);
+        }
+    }
+
+    private LineNote said(Source source) {
+        return new LineNote() {
+            @Override public void accept(String said) { note("'" + source.file() + "' " + said); }
+
+            @Override @Nullable public JsonElement carried(String folder, String id) { return Crossed.this.carried(folder, id); }
+        };
+    }
+
+    @Nullable private JsonElement carried(String folder, String id) {
+        int colon = id.indexOf(':');
+        String namespace = colon < 0 ? "minecraft" : id.substring(0, colon);
+        Source source = exposed.getOrDefault(PackType.SERVER_DATA, Map.of()).getOrDefault(namespace, Map.of()).get(folder + "/" + id.substring(colon + 1) + JSON);
+        if (source == null) { return null; }
+        try { return JsonParser.parseString(Files.readString(source.real(), StandardCharsets.UTF_8)); }
+        catch (IOException | RuntimeException failed) { return null; }
     }
 
     private void downgrade(JsonObject held, Source source, String path) {

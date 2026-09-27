@@ -24,6 +24,10 @@ final class CrossJson {
     private static final Set<String> TAG_KEYS = Set.of("tag", "tags");
     private static final Set<String> STRING_RESULTS = Set.of("minecraft:smelting", "minecraft:blasting", "minecraft:smoking", "minecraft:campfire_cooking", "minecraft:stonecutting");
     private static final String STONECUTTING = "minecraft:stonecutting";
+    private static final String WORLDGEN = "/worldgen/";
+    private static final String VALUE = "value";
+    private static final Set<String> PROVIDERS = Set.of("minecraft:uniform", "minecraft:biased_to_bottom", "minecraft:clamped", "minecraft:clamped_normal", "minecraft:trapezoid");
+    private static final Set<String> BOUNDS = Set.of("min_inclusive", "max_inclusive", "max_exclusive", "min", "max", "mean", "deviation", "plateau", "source");
 
     private CrossJson() {}
 
@@ -70,7 +74,37 @@ final class CrossJson {
 
     static void definition(JsonObject json, @Nullable String registry, String file, Crossed pack) {
         if (pack.to() == Port.Line.V1_20) { structures(json, file, pack); }
-        replace(json, walk(json, "", registry, file, pack).getAsJsonObject());
+        JsonElement walked = walk(json, "", registry, file, pack);
+        replace(json, (file.contains(WORLDGEN) ? providers(walked, pack.to() == Port.Line.V1_20) : walked).getAsJsonObject());
+    }
+
+    private static JsonElement providers(JsonElement element, boolean down) {
+        if (element.isJsonArray()) {
+            JsonArray out = new JsonArray();
+            element.getAsJsonArray().forEach(inner -> out.add(providers(inner, down)));
+            return out;
+        }
+        if (!element.isJsonObject()) { return element; }
+        JsonObject out = new JsonObject();
+        element.getAsJsonObject().entrySet().forEach(entry -> out.add(entry.getKey(), providers(entry.getValue(), down)));
+        String type = out.has(TYPE) && out.get(TYPE).isJsonPrimitive() ? out.get(TYPE).getAsString() : "";
+        if (!PROVIDERS.contains(type.indexOf(':') < 0 ? "minecraft:" + type : type)) { return out; }
+        JsonObject inner = down ? out : out.size() == 2 && out.has(VALUE) && out.get(VALUE).isJsonObject() ? out.getAsJsonObject(VALUE) : null;
+        if (inner == null || !bounded(inner)) { return out; }
+        JsonObject moved = new JsonObject();
+        moved.add(TYPE, out.get(TYPE));
+        JsonObject bounds = down ? new JsonObject() : moved;
+        inner.entrySet().forEach(entry -> { if (!TYPE.equals(entry.getKey())) { bounds.add(entry.getKey(), entry.getValue()); } });
+        if (down) { moved.add(VALUE, bounds); }
+        return moved;
+    }
+
+    private static boolean bounded(JsonObject provider) {
+        for (String key : provider.keySet()) {
+            if (!TYPE.equals(key) && !BOUNDS.contains(key)) { return false; }
+        }
+        JsonElement low = provider.has("min_inclusive") ? provider.get("min_inclusive") : provider.get("min");
+        return low != null && low.isJsonPrimitive() && low.getAsJsonPrimitive().isNumber();
     }
 
     private static void structures(JsonObject json, String file, Crossed pack) {
